@@ -1,5 +1,5 @@
 from fastapi import FastAPI, APIRouter
-from hyperadmin.views import ModelView
+from .views import ModelView
 
 class Admin:
     """

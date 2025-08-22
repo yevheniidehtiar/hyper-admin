@@ -1,8 +1,11 @@
 from fastapi import APIRouter, Request, HTTPException
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
+import os
 
-templates = Jinja2Templates(directory="hyperadmin/templates")
+# The templates are now in src/hyperadmin/templates
+template_dir = os.path.join(os.path.dirname(__file__), 'templates')
+templates = Jinja2Templates(directory=template_dir)
 
 class ModelView:
     """

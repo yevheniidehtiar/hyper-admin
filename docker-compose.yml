@@ -1,0 +1,11 @@
+services:
+
+  devcontainer:
+    build:
+      target: dev
+    volumes:
+      - ..:/workspaces
+      - command-history-volume:/home/user/.history/
+
+volumes:
+  command-history-volume:

@@ -1,11 +1,5 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-import sys
-import os
-
-# Add the root directory to the Python path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
 from hyperadmin.main import Admin
 from hyperadmin.views import ModelView
 
@@ -37,7 +31,6 @@ admin.register(UserAdmin)
 # 6. Mount the admin interface
 admin.mount(path="/admin")
 
-# Optional: add a root endpoint to confirm the app is running
 @app.get("/")
 def read_root():
     return {"message": "Go to /admin/user to see the admin interface."}

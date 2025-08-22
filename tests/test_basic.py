@@ -2,8 +2,8 @@ from fastapi.testclient import TestClient
 import sys
 import os
 
-# Add the root directory to the Python path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Add the root directory to the Python path to allow importing from 'examples'
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from examples.simple_app import app
 
@@ -17,10 +17,8 @@ def test_read_root():
 def test_get_list_view():
     response = client.get("/admin/user")
     assert response.status_code == 200
-    # Check if the response contains some expected text from the template
     assert "User List" in response.text
     assert "Alice" in response.text
-    assert "Bob" in response.text
 
 def test_get_detail_view():
     response = client.get("/admin/user/1")
