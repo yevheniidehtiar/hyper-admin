@@ -1,10 +1,13 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import APIRouter, FastAPI
+
 from .views import ModelView
+
 
 class Admin:
     """
     The main Admin class that holds the admin interface.
     """
+
     def __init__(self, app: FastAPI):
         self.app = app
         self.router = APIRouter()
@@ -14,10 +17,7 @@ class Admin:
         Registers a ModelView class with the admin interface.
         """
         view_instance = model_view_class()
-        self.router.include_router(
-            view_instance.router,
-            tags=[view_instance.model.__name__]
-        )
+        self.router.include_router(view_instance.router, tags=[view_instance.model.__name__])
 
     def mount(self, path: str):
         """
