@@ -1,0 +1,52 @@
+@layer components {
+    /* Flowbite-enhanced form components */
+    .flowbite-form-group {
+        @apply mb-6;
+    }
+    
+    .flowbite-label {
+        @apply block mb-2 text-sm font-medium text-gray-900;
+    }
+    
+    .flowbite-input {
+        @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5;
+    }
+    
+    .flowbite-select {
+        @apply bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5;
+    }
+    
+    .flowbite-textarea {
+        @apply block p-2.5 w-full text-sm text-gray-900 bg-gray-50 rounded-lg border border-gray-300 focus:ring-blue-500 focus:border-blue-500;
+    }
+    
+    .flowbite-checkbox {
+        @apply w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2;
+    }
+    
+    .flowbite-radio {
+        @apply w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 focus:ring-2;
+    }
+    
+    /* Form validation states */
+    .form-input-error {
+        @apply border-red-500 focus:ring-red-500 focus:border-red-500;
+    }
+    
+    .form-input-success {
+        @apply border-green-500 focus:ring-green-500 focus:border-green-500;
+    }
+    
+    /* Input groups */
+    .input-group {
+        @apply flex;
+    }
+    
+    .input-group-text {
+        @apply px-3 py-2 text-sm text-gray-900 bg-gray-200 border border-gray-300 border-r-0 rounded-l-md;
+    }
+    
+    .input-group .form-input {
+        @apply rounded-l-none border-l-0;
+    }
+}

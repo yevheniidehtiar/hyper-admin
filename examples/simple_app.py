@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from sqlmodel import Field, SQLModel, Session, create_engine
+from sqlmodel import Field, Session, SQLModel, create_engine, select
 
 from hyperadmin.main import Admin
 from hyperadmin.views import ModelView
@@ -19,7 +19,7 @@ engine = create_engine("sqlite:///example.db", connect_args={"check_same_thread"
 def create_db_and_tables():
     SQLModel.metadata.create_all(engine)
     with Session(engine) as session:
-        if not session.exec(User).first():
+        if not session.exec(select(User)).first():
             session.add(User(name="Alice", email="alice@example.com"))
             session.add(User(name="Bob", email="bob@example.com"))
             session.add(User(name="Charlie", email="charlie@example.com"))
@@ -33,7 +33,7 @@ class UserAdmin(ModelView):
 
 # 4. Create a FastAPI app and an Admin instance
 app = FastAPI()
-admin = Admin(app, engine=engine)
+admin = Admin(app)
 
 
 @app.on_event("startup")

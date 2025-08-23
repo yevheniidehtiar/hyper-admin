@@ -1,0 +1,24 @@
+{
+  "name": "sqladmin-ui",
+  "version": "1.0.0",
+  "description": "UI build system for SQLAdmin-HTMX",
+  "scripts": {
+    "build": "npm run build:css && npm run build:js",
+    "build:css": "tailwindcss -i ./src/css/main.css -o ./dist/css/main.css --minify",
+    "build:js": "node scripts/build.js",
+    "watch": "npm run watch:css & npm run watch:js",
+    "watch:css": "tailwindcss -i ./src/css/main.css -o ./dist/css/main.css --watch",
+    "watch:js": "node scripts/watch.js",
+    "dev": "npm run watch"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.0",
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.32",
+    "postcss-cli": "^11.0.0",
+    "chokidar": "^3.5.3"
+  },
+  "dependencies": {
+    "flowbite": "^2.2.1"
+  }
+}

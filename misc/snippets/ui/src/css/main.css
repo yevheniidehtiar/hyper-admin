@@ -1,0 +1,109 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* SQLAdmin Base Components */
+@layer components {
+    /* Existing form components */
+    .form-label {
+        @apply block text-sm font-medium text-gray-700 mb-1;
+    }
+    
+    .form-input {
+        @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200;
+    }
+    
+    .form-error {
+        @apply text-red-500 text-sm mt-1;
+    }
+    
+    .form-help {
+        @apply text-gray-600 text-sm mt-1;
+    }
+    
+    /* Enhanced with Flowbite patterns */
+    .admin-card {
+        @apply bg-white border border-gray-200 rounded-lg shadow-sm;
+    }
+    
+    .admin-table {
+        @apply w-full text-sm text-left text-gray-500 bg-white;
+    }
+    
+    .admin-table th {
+        @apply px-6 py-3 text-xs text-gray-700 uppercase bg-gray-50;
+    }
+    
+    .admin-table td {
+        @apply px-6 py-4 font-medium text-gray-900 whitespace-nowrap;
+    }
+    
+    /* Flowbite-enhanced buttons */
+    .btn-flowbite-primary {
+        @apply text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 focus:outline-none;
+    }
+    
+    .btn-flowbite-secondary {
+        @apply text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-200 font-medium rounded-lg text-sm px-5 py-2.5;
+    }
+    
+    .btn-flowbite-danger {
+        @apply text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 focus:outline-none;
+    }
+    
+    /* Existing button components for backward compatibility */
+    .btn-primary {
+        @apply px-4 py-2 text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200;
+    }
+    
+    .btn-secondary {
+        @apply px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors duration-200;
+    }
+    
+    .btn-danger {
+        @apply px-4 py-2 text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors duration-200;
+    }
+    
+    /* Card components */
+    .card {
+        @apply bg-white shadow-md rounded-lg overflow-hidden;
+    }
+    
+    .card-header {
+        @apply px-6 py-4 bg-gray-50 border-b border-gray-200;
+    }
+    
+    .card-body {
+        @apply px-6 py-4;
+    }
+    
+    .card-footer {
+        @apply px-6 py-4 bg-gray-50 border-t border-gray-200;
+    }
+    
+    /* Badge components */
+    .badge {
+        @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+    }
+    
+    .badge-primary {
+        @apply bg-blue-100 text-blue-800;
+    }
+    
+    .badge-success {
+        @apply bg-green-100 text-green-800;
+    }
+    
+    .badge-danger {
+        @apply bg-red-100 text-red-800;
+    }
+    
+    .badge-warning {
+        @apply bg-yellow-100 text-yellow-800;
+    }
+}
+
+/* Import component-specific styles */
+@import './components/forms.css';
+@import './components/tables.css';
+@import './components/modals.css';

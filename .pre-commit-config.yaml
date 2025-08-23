@@ -68,6 +68,6 @@ repos:
         types_or: [python, pyi]
       - id: mypy
         name: mypy
-        entry: mypy
+        entry: mypy src/hyperadmin/
         language: system
         types: [python]
