@@ -8,7 +8,7 @@
     },
     "overrideCommand": true,
     "remoteUser": "user",
-    "postStartCommand": "sudo chown -R user:user /opt/ && uv sync --python ${localEnv:PYTHON_VERSION:3.10} --resolution ${localEnv:RESOLUTION_STRATEGY:highest} --all-extras && pre-commit install --install-hooks",
+    "postStartCommand": "sudo chown -R user:user /opt/ && uv sync --python ${localEnv:PYTHON_VERSION:3.12} --resolution ${localEnv:RESOLUTION_STRATEGY:highest} --all-extras && pre-commit install --install-hooks",
     "customizations": {
         "jetbrains": {
             "backend": "PyCharm",
@@ -50,10 +50,10 @@
                     100
                 ],
                 "files.autoSave": "onFocusChange",
-                "github.copilot.chat.agent.enabled": true,
-                "github.copilot.chat.codesearch.enabled": true,
-                "github.copilot.chat.edits.enabled": true,
-                "github.copilot.nextEditSuggestions.enabled": true,
+                "github.copilot.chat.agent.enabled": false,
+                "github.copilot.chat.codesearch.enabled": false,
+                "github.copilot.chat.edits.enabled": false,
+                "github.copilot.nextEditSuggestions.enabled": false,
                 "jupyter.kernels.excludePythonEnvironments": [
                     "/usr/local/bin/python"
                 ],

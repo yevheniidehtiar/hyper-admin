@@ -8,7 +8,8 @@ version = "0.0.0"
 description = "A modern, Pydantic-native admin interface for FastAPI, powered by HTMX."
 readme = "README.md"
 authors = [
-  { name = "Jules", email = "jules@example.com" },
+  { name = "Yevhenii Dehtiar", email = "yevhenii.dehtiar@gmail.com" },
+  { name = "Jules", email = "jules@google.com" },
 ]
 requires-python = ">=3.10,<4.0"
 dependencies = [
@@ -17,15 +18,17 @@ dependencies = [
   "uvicorn>=0.20.0",
   "jinja2>=3.0",
   "python-multipart>=0.0.9",
+  "sqlalchemy>=2.0",
+  "sqlmodel>=0.0.12",
 ]
 
 [project.urls]  # https://packaging.python.org/en/latest/specifications/well-known-project-urls/#well-known-labels
-homepage = "https://github.com/your-username/hyperadmin"
-source = "https://github.com/your-username/hyperadmin"
-changelog = "https://github.com/your-username/hyperadmin/blob/main/CHANGELOG.md"
-releasenotes = "https://github.com/your-username/hyperadmin/releases"
-documentation = "https://github.com/your-username/hyperadmin"
-issues = "https://github.com/your-username/hyperadmin/issues"
+homepage = "https://github.com/yevheniidehtiar/hyperadmin"
+source = "https://github.com/yevheniidehtiar/hyperadmin"
+changelog = "https://github.com/yevheniidehtiar/hyperadmin/blob/main/CHANGELOG.md"
+releasenotes = "https://github.com/yevheniidehtiar/hyperadmin/releases"
+documentation = "https://github.com/yevheniidehtiar/hyperadmin"
+issues = "https://github.com/yevheniidehtiar/hyperadmin/issues"
 
 [project.optional-dependencies]
 dev = [
@@ -48,6 +51,7 @@ dev = [
   "pytest-mock (>=3.14.0)",
   "pytest-xdist (>=3.6.1)",
   "ruff (>=0.9.2)",
+  
 ]
 
 [tool.commitizen]  # https://commitizen-tools.github.io/commitizen/config/
@@ -65,7 +69,7 @@ skip_covered = true
 output = "reports/coverage.xml"
 
 [tool.mypy]  # https://mypy.readthedocs.io/en/latest/config_file.html
-junit_xml = "reports/mypy.xml"
+junit_xml = "$MYPY_CONFIG_FILE_DIR/reports/mypy.xml"
 mypy_path = "src"
 ignore_missing_imports = true
 pretty = true
@@ -76,7 +80,7 @@ warn_unreachable = true
 
 [tool.pytest.ini_options]  # https://docs.pytest.org/en/latest/reference/reference.html#ini-options-ref
 addopts = "--color=yes --doctest-modules --exitfirst --failed-first --verbosity=2 --junitxml=reports/pytest.xml --cov=src --cov-report=term-missing --cov-report=xml:reports/coverage.xml"
-testpaths = ["src", "tests"]
+testpaths = ["tests"]
 xfail_strict = true
 
 [tool.ruff]  # https://docs.astral.sh/ruff/settings/
@@ -89,9 +93,10 @@ target-version = "py310"
 docstring-code-format = true
 
 [tool.ruff.lint]
-select = ["A", "ASYNC", "B", "C4", "C90", "D", "DTZ", "E", "F", "FLY", "FURB", "I", "ISC", "LOG", "N", "NPY", "PERF", "PGH", "PIE", "PL", "PT", "Q", "RET", "RUF", "RSE", "SIM", "TID", "UP", "W", "YTT"]
-ignore = ["D203", "D213", "E501", "PGH002", "PGH003", "RET504", "S101", "S307"]
-unfixable = ["F401", "F841"]
+select = ["A", "ASYNC", "E", "F", "FLY", "FURB", "I", "ISC", "LOG", "N", "NPY", "PERF", "PGH", "PIE", "PL", "PT", "Q", "RET", "RUF", "RSE", "SIM", "TID", "UP", "W", "YTT"]
+ignore = ["E501", "G010", "PGH003", "RET504", "S101", "S307"]
+unfixable = []
+fixable = ["ALL"]
 
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"
@@ -154,6 +159,11 @@ type = "simple"
     { cmd = "pytest" },
   ]
 
+  [tool.poe.tasks."test:unit"]
+  help = "Run unit tests with pytests"
+  sequence = [
+    { cmd = "pytest -vv -q tests/unit" },
+  ]
   [tool.poe.tasks."test:e2e"]
   help = "Run end-to-end tests with Playwright"
   sequence = [
