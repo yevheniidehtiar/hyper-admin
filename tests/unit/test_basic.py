@@ -1,12 +1,5 @@
-import os
-import sys
-
-from fastapi.testclient import TestClient
-
-# Add the root directory to the Python path to allow importing from 'examples'
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
 from examples.simple_app import app
+from fastapi.testclient import TestClient
 
 client = TestClient(app)
 

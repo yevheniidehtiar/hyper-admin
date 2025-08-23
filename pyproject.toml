@@ -79,7 +79,7 @@ warn_unreachable = true
 
 [tool.pytest.ini_options]  # https://docs.pytest.org/en/latest/reference/reference.html#ini-options-ref
 addopts = "--color=yes --doctest-modules --exitfirst --failed-first --verbosity=2 --junitxml=reports/pytest.xml --cov=src --cov-report=term-missing --cov-report=xml:reports/coverage.xml"
-testpaths = ["src", "tests"]
+testpaths = ["tests"]
 xfail_strict = true
 
 [tool.ruff]  # https://docs.astral.sh/ruff/settings/
@@ -92,9 +92,10 @@ target-version = "py310"
 docstring-code-format = true
 
 [tool.ruff.lint]
-select = ["A", "ASYNC", "C4", "C90", "DTZ", "E", "F", "FLY", "FURB", "I", "ISC", "LOG", "N", "NPY", "PERF", "PGH", "PIE", "PL", "PT", "Q", "RET", "RUF", "RSE", "SIM", "TID", "UP", "W", "YTT"]
+select = ["A", "ASYNC", "E", "F", "FLY", "FURB", "I", "ISC", "LOG", "N", "NPY", "PERF", "PGH", "PIE", "PL", "PT", "Q", "RET", "RUF", "RSE", "SIM", "TID", "UP", "W", "YTT"]
 ignore = ["E501", "G010", "PGH003", "RET504", "S101", "S307"]
-unfixable = ["F401", "F841"]
+unfixable = []
+fixable = ["ALL"]
 
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"

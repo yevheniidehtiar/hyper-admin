@@ -6,7 +6,7 @@ import socket
 import subprocess
 import sys
 import time
-from collections.abc import Generator, Iterator
+from collections.abc import Iterator
 from contextlib import closing
 
 import pytest

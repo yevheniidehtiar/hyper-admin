@@ -1,10 +1,10 @@
 import os
-from collections.abc import Sequence
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.templating import Jinja2Templates
-from pydantic import BaseModel
 from sqlmodel import Session, SQLModel
+
+from hyperadmin.db import get_session
 
 # The templates are now in src/hyperadmin/templates
 template_dir = os.path.join(os.path.dirname(__file__), "templates")
@@ -19,24 +19,14 @@ class ModelView:
 
     model: type[SQLModel]
 
-    def __init__(self, engine):
+    def __init__(self):
         if not hasattr(self, "model"):
             raise ValueError("ModelView subclass must define a 'model' attribute.")
-        self.engine = engine
         self.router = APIRouter()
         self.add_routes()
 
-    def get_session(self):
-        """
-        Returns a new database session.
-        """
-        with Session(self.engine) as session:
-            yield session
-
     def add_routes(self):
-        """
-        Adds the list, detail, and create view routes to the router.
-        """
+        """Adds the list, detail, and create view routes to the router."""
         self.router.add_api_route(
             f"/{self.model.__name__.lower()}",
             self.list_view,
@@ -68,10 +58,8 @@ class ModelView:
             name=f"{self.model.__name__.lower()}-delete",
         )
 
-    async def delete_action(self, item_id: int, session: Session = Depends(self.get_session)):
-        """
-        Deletes an item.
-        """
+    async def delete_action(self, item_id: int, session: Session = Depends(get_session)):
+        """Deletes an item."""
         item = session.get(self.model, item_id)
         if not item:
             raise HTTPException(status_code=404, detail="Item not found")
@@ -82,10 +70,10 @@ class ModelView:
         # HTMX will expect an empty response to remove the element
         return {}
 
-    async def update_view(self, request: Request, item_id: int, session: Session = Depends(self.get_session)):
-        """
-        Renders the update view and handles form submission for updating an item.
-        """
+    async def update_view(
+        self, request: Request, item_id: int, session: Session = Depends(get_session)
+    ):
+        """Renders the update view and handles form submission for updating an item."""
         item = session.get(self.model, item_id)
         if not item:
             raise HTTPException(status_code=404, detail="Item not found")
@@ -108,10 +96,8 @@ class ModelView:
         }
         return templates.TemplateResponse("update.html", context)
 
-    async def create_view(self, request: Request, session: Session = Depends(self.get_session)):
-        """
-        Renders the create view and handles form submission for creating a new item.
-        """
+    async def create_view(self, request: Request, session: Session = Depends(get_session)):
+        """Renders the create view and handles form submission for creating a new item."""
         if request.method == "POST":
             form_data = await request.form()
             item = self.model(**form_data)
@@ -119,7 +105,7 @@ class ModelView:
             session.commit()
             session.refresh(item)
             # For now, let's redirect to the list view. HTMX will be added later.
-            return {"message": "Item created successfully"} # This will be improved later
+            return {"message": "Item created successfully"}  # This will be improved later
 
         context = {
             "request": request,
@@ -128,10 +114,8 @@ class ModelView:
         }
         return templates.TemplateResponse("create.html", context)
 
-    async def list_view(self, request: Request, session: Session = Depends(self.get_session)):
-        """
-        Renders the list view for the model.
-        """
+    async def list_view(self, request: Request, session: Session = Depends(get_session)):
+        """Renders the list view for the model."""
         items = session.query(self.model).all()
         context = {
             "request": request,
@@ -141,7 +125,9 @@ class ModelView:
         }
         return templates.TemplateResponse("list.html", context)
 
-    async def detail_view(self, request: Request, item_id: int, session: Session = Depends(self.get_session)):
+    async def detail_view(
+        self, request: Request, item_id: int, session: Session = Depends(get_session)
+    ):
         """
         Renders the detail view for a single item.
         Assumes the model has an 'id' field.
