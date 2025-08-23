@@ -1,0 +1,13 @@
+_commit: a87baf8
+_src_path: gh:yevheniidehtiar/python-scaffold
+author_email: jules@example.com
+author_name: Jules
+project_description: A modern, Pydantic-native admin interface for FastAPI, powered
+    by HTMX.
+project_name: HyperAdmin
+project_type: package
+project_url: https://github.com/your-username/hyperadmin
+python_version: '3.10'
+typing: optional
+with_conventional_commits: true
+with_typer_cli: false
