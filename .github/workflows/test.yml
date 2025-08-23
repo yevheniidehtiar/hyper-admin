@@ -14,7 +14,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.12"]
+        python-version: ["3.12"]
         resolution-strategy: ["highest", "lowest-direct"]
 
     name: Python ${{ matrix.python-version }} (resolution=${{ matrix.resolution-strategy }})
@@ -41,6 +41,12 @@ jobs:
 
       - name: Lint package
         run: devcontainer exec --workspace-folder . poe lint
+      
+      - name: Security checks 
+        run: devcontainer exec --workspace-folder . poe security-check
 
       - name: Test package
-        run: devcontainer exec --workspace-folder . poe test
+        run: devcontainer exec --workspace-folder . poe test:unit
+      
+      - name: E2E Test package
+        run: devcontainer exec --workspace-folder . poe test:e2e
