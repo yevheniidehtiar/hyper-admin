@@ -48,11 +48,12 @@ class ModelView:
         Renders the list view for the model.
         """
         context = {
+            "request": request,
             "model_name": self.model.__name__,
             "fields": list(self.model.model_fields.keys()),
             "items": [item.model_dump() for item in self.data],
         }
-        return templates.TemplateResponse(name="list.html", context=context, request=request)
+        return templates.TemplateResponse("list.html", context)
 
     async def detail_view(self, request: Request, item_id: int):
         """
@@ -66,7 +67,8 @@ class ModelView:
             raise HTTPException(status_code=404, detail="Item not found")
 
         context = {
+            "request": request,
             "item_name": f"{self.model.__name__} #{getattr(item, 'id', 'N/A')}",
             "item": item.model_dump(),
         }
-        return templates.TemplateResponse(name="detail.html", context=context, request=request)
+        return templates.TemplateResponse("detail.html", context)
