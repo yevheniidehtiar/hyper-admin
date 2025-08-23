@@ -15,7 +15,7 @@ class User(SQLModel, table=True):
 
 
 # 2. Create a database engine
-engine = create_engine("sqlite:///example.db", connect_args={"check_same_thread": False})
+engine = create_engine("sqlite:///simple_app.db", connect_args={"check_same_thread": False})
 
 
 def create_db_and_tables():
