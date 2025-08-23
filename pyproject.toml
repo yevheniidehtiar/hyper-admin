@@ -12,11 +12,11 @@ authors = [
 ]
 requires-python = ">=3.10,<4.0"
 dependencies = [
-  "fastapi",
-  "pydantic",
-  "uvicorn",
-  "jinja2",
-  "python-multipart",
+  "fastapi>=0.100.0",
+  "pydantic>=2.0",
+  "uvicorn>=0.20.0",
+  "jinja2>=3.0",
+  "python-multipart>=0.0.9",
 ]
 
 [project.urls]  # https://packaging.python.org/en/latest/specifications/well-known-project-urls/#well-known-labels

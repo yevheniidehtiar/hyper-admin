@@ -1,4 +1,5 @@
 import os
+from collections.abc import Sequence
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.templating import Jinja2Templates
@@ -16,7 +17,7 @@ class ModelView:
     """
 
     model: type[BaseModel]
-    data: list[BaseModel] = []
+    data: Sequence[BaseModel] = []
 
     def __init__(self):
         if not hasattr(self, "model"):
@@ -64,5 +65,8 @@ class ModelView:
         if not item:
             raise HTTPException(status_code=404, detail="Item not found")
 
-        context = {"item_name": f"{self.model.__name__} #{item.id}", "item": item.model_dump()}
+        context = {
+            "item_name": f"{self.model.__name__} #{getattr(item, 'id', 'N/A')}",
+            "item": item.model_dump(),
+        }
         return templates.TemplateResponse(name="detail.html", context=context, request=request)
