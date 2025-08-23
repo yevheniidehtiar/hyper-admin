@@ -149,7 +149,10 @@ type = "simple"
 
   [tool.poe.tasks.test]
   help = "Test this package"
-  cmd = "pytest"
+  sequence = [
+    { shell = "playwright install --with-deps" },
+    { cmd = "pytest" },
+  ]
 
   [tool.poe.tasks."test:e2e"]
   help = "Run end-to-end tests with Playwright"
