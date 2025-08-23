@@ -18,5 +18,7 @@ class Admin:
         self.router.include_router(view_instance.router, tags=[view_instance.model.__name__])
 
     def mount(self, path: str):
-        """Mounts the admin interface on the FastAPI application."""
+        """
+        Mounts the admin interface on the FastAPI application.
+        """
         self.app.include_router(self.router, prefix=path, tags=["HyperAdmin"])
