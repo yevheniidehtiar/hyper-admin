@@ -38,7 +38,7 @@ dev = [
   "pdoc (>=15.0.1)",
   "pip-audit (>=2.7.3)",
   "pip-licenses (>=4.3.5)",
-  "httpx",
+  "httpx>=0.23.0",
   "playwright (>=1.46.0)",
   "poethepoet (>=0.32.1)",
   "pre-commit (>=4.0.1)",
