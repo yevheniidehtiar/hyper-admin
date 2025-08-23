@@ -1,7 +1,20 @@
-from examples.simple_app import app
+import pytest
+from examples.simple_app import User, app
 from fastapi.testclient import TestClient
 
+from hyperadmin.db import get_session
+
 client = TestClient(app)
+
+
+@pytest.fixture(autouse=True)
+def mock_users():
+    session = next(get_session())
+    session.add(User(name="Alice", email="alice@example.com"))
+    session.add(User(name="Bob", email="bob@example.com"))
+    session.add(User(name="Charlie", email="charlie@example.com"))
+    session.commit()
+    return session
 
 
 def test_read_root():

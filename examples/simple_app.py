@@ -1,3 +1,5 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from sqlmodel import Field, Session, SQLModel, create_engine, select
 
@@ -31,14 +33,16 @@ class UserAdmin(ModelView):
     model = User
 
 
-# 4. Create a FastAPI app and an Admin instance
-app = FastAPI()
-admin = Admin(app)
-
-
-@app.on_event("startup")
-def on_startup():
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Load the ML model
     create_db_and_tables()
+    yield
+
+
+# 4. Create a FastAPI app and an Admin instance
+app = FastAPI(lifespan=lifespan)
+admin = Admin(app)
 
 
 # 5. Register the ModelView
