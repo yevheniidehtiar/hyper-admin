@@ -36,16 +36,16 @@ jobs:
         run: uv sync --all-extras --resolution ${{ matrix.resolution }}
 
       - name: Lint package
-        run: poe lint
+        run: uv run poe lint
 
       - name: Test package
-        run: poe test:unit
+        run: uv run poe test:unit
 
       - name: Security checks 
-        run: poe security-check
+        run: uv run poe security-check
 
       - name: Test package
-        run: poe test:unit
+        run: uv run poe test:unit
       
       - name: E2E Test package
-        run: poe test:e2e
+        run: uv run poe test:e2e
