@@ -1,11 +1,12 @@
 import threading
-from typing import Any, Dict, List, Type
+from typing import Any
+
 
 class SiteRegistry:
     """A thread-safe registry for managing model registrations."""
 
     def __init__(self) -> None:
-        self._registry: Dict[Any, Any] = {}
+        self._registry: dict[Any, Any] = {}
         self._lock = threading.Lock()
 
     def register(self, model: Any, admin_class: Any = None) -> None:
@@ -39,7 +40,7 @@ class SiteRegistry:
                 raise ValueError(f"Model {model} is not registered.")
             del self._registry[model]
 
-    def get_registered_models(self) -> List[Any]:
+    def get_registered_models(self) -> list[Any]:
         """
         Returns a list of all registered models.
 
