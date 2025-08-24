@@ -37,3 +37,4 @@ I understand and have updated my internal guidelines. Here is a summary of my ne
         No blockers listed in the description.
         No "in-progress" label.
         No existing branch with the name issue-X.
+    Passed `poe lint` and `poe test` are mandatory before put task "Ready for review".
