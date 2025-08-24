@@ -1,5 +1,6 @@
+import builtins
 from abc import ABC, abstractmethod
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 
 class BaseAdapter(ABC):
@@ -29,9 +30,9 @@ class BaseAdapter(ABC):
         page: int = 1,
         page_size: int = 10,
         search: str = None,
-        filters: Dict[str, Any] = None,
+        filters: dict[str, Any] = None,
         order_by: str = None,
-    ) -> Tuple[List[Any], int]:
+    ) -> tuple[list[Any], int]:
         """
         Retrieves a list of objects with optional pagination, searching, and filtering.
 
@@ -48,7 +49,7 @@ class BaseAdapter(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def create(self, data: Dict[str, Any]) -> Any:
+    async def create(self, data: dict[str, Any]) -> Any:
         """
         Creates a new object.
 
@@ -61,7 +62,7 @@ class BaseAdapter(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def update(self, pk: Any, data: Dict[str, Any]) -> Any:
+    async def update(self, pk: Any, data: dict[str, Any]) -> Any:
         """
         Updates an existing object.
 
@@ -85,7 +86,7 @@ class BaseAdapter(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def get_releated(self, pk: Any, field: str) -> List[Any]:
+    async def get_releated(self, pk: Any, field: str) -> builtins.list[Any]:
         """
         Retrieves related objects for a given object and field.
 
@@ -99,7 +100,7 @@ class BaseAdapter(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def get_schema(self) -> Dict[str, Any]:
+    async def get_schema(self) -> dict[str, Any]:
         """
         Retrieves the schema definition for the model.
 
