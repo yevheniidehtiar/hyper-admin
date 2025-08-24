@@ -13,6 +13,7 @@ authors = [
 ]
 requires-python = ">=3.10,<4.0"
 dependencies = [
+  "appnope>=0.1.3",
   "fastapi>=0.100.0",
   "pydantic>=2.6",
   "uvicorn>=0.20.0",
@@ -20,7 +21,9 @@ dependencies = [
   "python-multipart>=0.0.9",
   "sqlalchemy>=2.0",
   "sqlmodel>=0.0.12",
-  "greenlet>=1.0.0"
+  "httpx>=0.23.0",
+  "greenlet>=1.0.1; python_version < '3.13'",
+  "greenlet>=3.1.0; python_version >= '3.13'"
 ]
 
 [project.urls]  # https://packaging.python.org/en/latest/specifications/well-known-project-urls/#well-known-labels
