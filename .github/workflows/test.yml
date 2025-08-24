@@ -14,33 +14,35 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.12"]
-        resolution-strategy: ["highest", "lowest-direct"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
+        resolution: ["highest", "lowest-direct", "lowest"]
 
-    name: Python ${{ matrix.python-version }} (resolution=${{ matrix.resolution-strategy }})
+    name: Python ${{ matrix.python-version }} (resolution=${{ matrix.resolution }})
 
     steps:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
         with:
-          node-version: 23
+          python-version: ${{ matrix.python-version }}
 
-      - name: Install @devcontainers/cli
-        run: npm install --location=global @devcontainers/cli@0.76.0
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+        shell: bash
 
-      - name: Start Dev Container
+      - name: Install dependencies
+        run: uv sync --all-extras --resolution ${{ matrix.resolution }}
+
+      - name: Add `test:unit` poe task
         run: |
-          git config --global init.defaultBranch main
-          devcontainer up --workspace-folder .
-        env:
-          PYTHON_VERSION: ${{ matrix.python-version }}
-          RESOLUTION_STRATEGY: ${{ matrix.resolution-strategy }}
+          pip install poethepoet
+          poe --version
+          python -c "import toml; pyproject = toml.load('pyproject.toml'); pyproject['tool']['poe']['tasks']['test:unit'] = {'help': 'Run unit tests with Pytest', 'cmd': 'pytest --ignore=tests/e2e'}; toml.dump(pyproject, open('pyproject.toml', 'w'))"
 
       - name: Lint package
-        run: devcontainer exec --workspace-folder . poe lint
+        run: poe lint
 
       - name: Test package
-        run: devcontainer exec --workspace-folder . poe test
+        run: poe test:unit
