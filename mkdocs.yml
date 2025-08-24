@@ -9,7 +9,7 @@ theme:
   features:
     - content.code.copy
   logo: assets/logo.svg
-  favicon: assets/logo.svg
+  favicon: assets/favicon.ico
 
 repo_name: yevheniidehtiar/hyper-admin
 repo_url: https://github.com/yevheniidehtiar/hyper-admin
@@ -46,7 +46,5 @@ extra:
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/yevheniidehtiar
-    - icon: fontawesome/brands/twitter
-      link: https://twitter.com/yevheniidehtiar
     - icon: fontawesome/brands/linkedin
-      link: https://www.linkedin.com/in/yevhenii-dehtiar-9a527382/
+      link: https://www.linkedin.com/in/yevheniidehtiar/
