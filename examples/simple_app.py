@@ -1,20 +1,13 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-from sqlmodel import Field, Session, SQLModel, create_engine, select
+from sqlmodel import Session, SQLModel, create_engine, select
 
+from examples.models import User
 from hyperadmin.main import Admin
-from hyperadmin.views import ModelView
 
 
-# 1. Define a SQLModel model
-class User(SQLModel, table=True):
-    id: int | None = Field(default=None, primary_key=True)
-    name: str
-    email: str
-
-
-# 2. Create a database engine
+# 1. Create a database engine
 engine = create_engine("sqlite:///simple_app.db", connect_args={"check_same_thread": False})
 
 
@@ -28,11 +21,6 @@ def create_db_and_tables():
             session.commit()
 
 
-# 3. Create a ModelView for the User model
-class UserAdmin(ModelView):
-    model = User
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Load the ML model
@@ -40,15 +28,12 @@ async def lifespan(app: FastAPI):
     yield
 
 
-# 4. Create a FastAPI app and an Admin instance
+# 2. Create a FastAPI app and an Admin instance with auto-discovery
 app = FastAPI(lifespan=lifespan)
-admin = Admin(app)
+admin = Admin(app, discover_apps=["examples"])
 
 
-# 5. Register the ModelView
-admin.register(UserAdmin)
-
-# 6. Mount the admin interface
+# 3. Mount the admin interface
 admin.mount(path="/admin")
 
 

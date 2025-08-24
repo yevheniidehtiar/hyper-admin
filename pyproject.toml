@@ -168,7 +168,9 @@ type = "simple"
   [tool.poe.tasks."test:unit"]
   help = "Run unit tests with pytests"
   sequence = [
+    { shell = "mkdir -p test_apps/app_with_admin && touch test_apps/app_with_admin/__init__.py && echo \"print('admin.py loaded')\" > test_apps/app_with_admin/admin.py && mkdir -p test_apps/app_without_admin && touch test_apps/app_without_admin/__init__.py" },
     { cmd = "pytest -vv -q tests/unit" },
+    { shell = "rm -rf test_apps" },
   ]
   [tool.poe.tasks."test:e2e"]
   help = "Run end-to-end tests with Playwright"

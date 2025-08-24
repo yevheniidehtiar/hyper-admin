@@ -1,0 +1,20 @@
+2025-08-24 21:28:22,027 INFO sqlalchemy.engine.Engine BEGIN (implicit)
+INFO:sqlalchemy.engine.Engine:BEGIN (implicit)
+2025-08-24 21:28:22,027 INFO sqlalchemy.engine.Engine PRAGMA main.table_info("user")
+INFO:sqlalchemy.engine.Engine:PRAGMA main.table_info("user")
+2025-08-24 21:28:22,027 INFO sqlalchemy.engine.Engine [raw sql] ()
+INFO:sqlalchemy.engine.Engine:[raw sql] ()
+2025-08-24 21:28:22,028 INFO sqlalchemy.engine.Engine COMMIT
+INFO:sqlalchemy.engine.Engine:COMMIT
+INFO:hyperadmin.discover:Successfully imported app module: examples
+INFO:hyperadmin.discover:Successfully discovered and imported admin module: examples.admin
+INFO:     Started server process [13683]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+ERROR:    [Errno 98] error while attempting to bind on address ('127.0.0.1', 8000): [errno 98] address already in use
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+Importing examples.admin
+Registered UserAdmin
+Registering views from site registry: {<class 'examples.models.User'>: <class 'examples.admin.UserAdmin'>}
+Registering view for model: <class 'examples.models.User'>
