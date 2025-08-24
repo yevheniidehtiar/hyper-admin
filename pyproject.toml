@@ -17,6 +17,9 @@ dependencies = [
   "uvicorn>=0.20.0",
   "jinja2>=3.0",
   "python-multipart>=0.0.9",
+  "httpx>=0.23.0",
+  "poethepoet (>=0.32.1)",
+  "pytest (>=8.3.4)",
 ]
 
 [project.urls]  # https://packaging.python.org/en/latest/specifications/well-known-project-urls/#well-known-labels
@@ -38,11 +41,8 @@ dev = [
   "pdoc (>=15.0.1)",
   "pip-audit (>=2.7.3)",
   "pip-licenses (>=4.3.5)",
-  "httpx>=0.23.0",
   "playwright (>=1.46.0)",
-  "poethepoet (>=0.32.1)",
   "pre-commit (>=4.0.1)",
-  "pytest (>=8.3.4)",
   "pytest-cov (>=5.0.0)",
   "pytest-playwright (>=0.5.1)",
   "pytest-mock (>=3.14.0)",
@@ -153,6 +153,10 @@ type = "simple"
     { shell = "playwright install --with-deps" },
     { cmd = "pytest" },
   ]
+
+  [tool.poe.tasks."test:unit"]
+  help = "Run unit tests with Pytest"
+  cmd = "pytest --ignore=tests/e2e"
 
   [tool.poe.tasks."test:e2e"]
   help = "Run end-to-end tests with Playwright"

@@ -5,35 +5,64 @@ set -e
 PYTHON_VERSIONS=("3.8" "3.9" "3.10" "3.11" "3.12" "3.13")
 RESOLUTION_STRATEGIES=("highest" "lowest-direct" "lowest")
 
-mkdir -p logs
+# Create a file to store the report
+REPORT_FILE="TEST_MATRIX_REPORT.md"
+echo "# Python Version Compatibility Matrix" > "$REPORT_FILE"
+echo "" >> "$REPORT_FILE"
+echo "| Python Version | Resolution Strategy | Status |" >> "$REPORT_FILE"
+echo "|----------------|---------------------|--------|" >> "$REPORT_FILE"
 
-for py_version in "${PYTHON_VERSIONS[@]}"; do
+for python_version in "${PYTHON_VERSIONS[@]}"; do
   for resolution in "${RESOLUTION_STRATEGIES[@]}"; do
-    echo "--- Running tests for Python $py_version with $resolution resolution ---"
-    log_file="logs/py${py_version}_${resolution}.log"
+    echo "================================================================================"
+    echo "Testing with Python $python_version and resolution strategy $resolution"
+    echo "================================================================================"
 
-    # Run the test commands and redirect output to log file
-    {
-      echo "--- Running: uv sync --no-cache --python $py_version --resolution $resolution ---"
-      # Removed --all-extras as per user instruction
-      uv sync --no-cache --python "$py_version" --resolution "$resolution"
+    LOG_FILE="test_log_${python_version}_${resolution}.log"
 
-      # If sync was successful, the virtual env is active and contains the dependencies.
-      # We can now run linting and tests.
-
-      # Activate the virtual environment to make `pytest` available.
-      # The venv is created by `uv sync` in `.venv`.
+    # The `script` command will capture all output, including stderr
+    script -q -c "
+      set -e
+      # Create a virtual environment with the specified Python version
+      uv venv --python \"$python_version\" .venv
+      # Activate the virtual environment
       source .venv/bin/activate
+      # Install dependencies
+      uv sync --resolution \"$resolution\"
+      # Run linting and tests
+      poe lint
+      poe test:unit
+    " "$LOG_FILE"
 
-      echo "--- Running: PYTEST_ADDOPTS=\"\" pytest ---"
-      # Clear addopts to avoid issues with missing pytest-cov
-      PYTEST_ADDOPTS="" pytest
+    # Check the exit code of the script command
+    if [ $? -eq 0 ]; then
+      STATUS="✅ Pass"
+      echo "| $python_version | $resolution | $STATUS |" >> "$REPORT_FILE"
+      rm "$LOG_FILE" # Clean up log file on success
+    else
+      STATUS="❌ Fail"
+      echo "| $python_version | $resolution | $STATUS |" >> "$REPORT_FILE"
+      echo "" >> "$REPORT_FILE"
+      echo "### 🪵 Logs for Python $python_version with $resolution resolution" >> "$REPORT_FILE"
+      echo "" >> "$REPORT_FILE"
+      echo '```' >> "$REPORT_FILE"
+      cat "$LOG_FILE" >> "$REPORT_FILE"
+      echo '```' >> "$REPORT_FILE"
+      echo "" >> "$REPORT_FILE"
+      rm "$LOG_FILE" # Clean up log file after appending
+    fi
 
-    } > "$log_file" 2>&1 || true # continue even if a command fails
+    # Deactivate and remove the virtual environment
+    # The subshell from `script` will handle deactivation, but we still need to remove the directory
+    rm -rf .venv
 
-    echo "--- Finished tests for Python $py_version with $resolution resolution ---"
-    echo ""
+    # Clean up temporary Python downloads
+    rm -rf /home/jules/.local/share/uv/python/.temp
+
+    echo "================================================================================"
+    echo "Finished testing with Python $python_version and resolution strategy $resolution. Status: $STATUS"
+    echo "================================================================================"
   done
 done
 
-echo "--- All tests finished ---"
+echo "Test matrix execution complete. Report generated at $REPORT_FILE"
