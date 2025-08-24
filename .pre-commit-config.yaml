@@ -16,7 +16,7 @@ repos:
       - id: rst-inline-touching-normal
       - id: text-unicode-replacement-char
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: check-added-large-files
       - id: check-ast
@@ -47,27 +47,29 @@ repos:
     hooks:
       - id: commitizen
         name: commitizen
-        entry: cz check
+        entry: uv run cz check
         args: [--commit-msg-file]
         require_serial: true
         language: system
         stages: [commit-msg]
       - id: ruff-check
         name: ruff check
-        entry: ruff check
+        entry: uv run ruff check
         args: ["--force-exclude", "--extend-fixable=F401,F841", "--fix-only"]
         require_serial: true
         language: system
         types_or: [python, pyi]
       - id: ruff-format
         name: ruff format
-        entry: ruff format
+        entry: uv run ruff format
         args: [--force-exclude]
         require_serial: true
         language: system
         types_or: [python, pyi]
       - id: mypy
         name: mypy
-        entry: mypy
+        entry: uv run mypy
+        args: [src]
         language: system
         types: [python]
+        pass_filenames: false

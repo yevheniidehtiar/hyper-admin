@@ -67,3 +67,7 @@ uv.lock
 
 # VS Code
 .vscode/
+
+*.sqlite3
+*.db
+.coverage
