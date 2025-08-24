@@ -1,0 +1,70 @@
+import threading
+
+import pytest
+
+from hyperadmin.core.registry import SiteRegistry
+
+
+class DummyModel:
+    pass
+
+
+class DummyAdmin:
+    pass
+
+
+@pytest.fixture
+def registry() -> SiteRegistry:
+    return SiteRegistry()
+
+
+def test_register_model(registry: SiteRegistry) -> None:
+    registry.register(DummyModel, DummyAdmin)
+    assert DummyModel in registry.get_registered_models()
+
+
+def test_unregister_model(registry: SiteRegistry) -> None:
+    registry.register(DummyModel, DummyAdmin)
+    registry.unregister(DummyModel)
+    assert DummyModel not in registry.get_registered_models()
+
+
+def test_register_duplicate_model_raises_error(registry: SiteRegistry) -> None:
+    registry.register(DummyModel, DummyAdmin)
+    with pytest.raises(ValueError, match="Model .* is already registered."):
+        registry.register(DummyModel, DummyAdmin)
+
+
+def test_unregister_nonexistent_model_raises_error(registry: SiteRegistry) -> None:
+    with pytest.raises(ValueError, match="Model .* is not registered."):
+        registry.unregister(DummyModel)
+
+
+def test_get_registered_models(registry: SiteRegistry) -> None:
+    registry.register(DummyModel, DummyAdmin)
+    assert registry.get_registered_models() == [DummyModel]
+
+
+def test_thread_safe_registration(registry: SiteRegistry) -> None:
+    threads = []
+    num_threads = 10
+
+    class Model:
+        pass
+
+    def register_model(model_class: type) -> None:
+        try:
+            registry.register(model_class)
+        except ValueError:
+            pass
+
+    for i in range(num_threads):
+        model_class = type(f"Model{i}", (Model,), {})
+        thread = threading.Thread(target=register_model, args=(model_class,))
+        threads.append(thread)
+        thread.start()
+
+    for thread in threads:
+        thread.join()
+
+    assert len(registry.get_registered_models()) == num_threads
