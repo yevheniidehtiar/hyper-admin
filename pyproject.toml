@@ -39,6 +39,7 @@ issues = "https://github.com/yevheniidehtiar/hyperadmin/issues"
 dev = [
   "commitizen (>=4.3.0)",
   "coverage[toml] (>=7.6.10)",
+  "decorator (>=3.5)",
   "ipykernel (>=6.29.4)",
   "ipython (>=8.18.0)",
   "ipywidgets (>=8.1.2)",
