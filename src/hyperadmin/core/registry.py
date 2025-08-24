@@ -3,7 +3,12 @@ from typing import Any
 
 
 class SiteRegistry:
-    """A thread-safe registry for managing model registrations."""
+    """A central, thread-safe registry for managing administrative models.
+
+    This registry acts as a single source of truth for all models that HyperAdmin
+    manages. It uses a `threading.Lock` to ensure that registrations and other
+    operations are atomic, making it safe for use in multi-threaded web applications.
+    """
 
     def __init__(self) -> None:
         self._registry: dict[Any, Any] = {}
