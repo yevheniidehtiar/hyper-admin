@@ -67,3 +67,14 @@ You are encouraged to use Playwright not just for final tests, but as a developm
 ## Submitting Changes
 
 This project follows the Conventional Commits specification. When you are ready to submit your work, please use `cz bump` to create a compliant commit message.
+
+---
+I understand and have updated my internal guidelines. Here is a summary of my new process:
+
+    Check GitHub Issues: When given a task with a keyword, I will first check the GitHub issues for a corresponding issue.
+    Branch Creation: After the plan is approved, I will create a new empty branch named issue-X (where X is the issue number) and push it to the repository immediately.
+    Issue Selection Criteria: I will only work on issues that meet the following criteria:
+        No blockers listed in the description.
+        No "in-progress" label.
+        No existing branch with the name issue-X.
+    Passed `poe lint` and `poe test` are mandatory before put task "Ready for review".
