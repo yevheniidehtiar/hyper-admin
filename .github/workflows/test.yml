@@ -14,39 +14,38 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.12"]
-        resolution-strategy: ["highest"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+        resolution: ["highest", "lowest-direct"]
 
-    name: Python ${{ matrix.python-version }} (resolution=${{ matrix.resolution-strategy }})
+    name: Python ${{ matrix.python-version }} (resolution=${{ matrix.resolution }})
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
         with:
-          node-version: 23
+          python-version: ${{ matrix.python-version }}
 
-      - name: Install @devcontainers/cli
-        run: npm install --location=global @devcontainers/cli@0.76.0
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+        shell: bash
 
-      - name: Start Dev Container
-        run: |
-          git config --global init.defaultBranch main
-          devcontainer up --workspace-folder .
-        env:
-          PYTHON_VERSION: ${{ matrix.python-version }}
-          RESOLUTION_STRATEGY: ${{ matrix.resolution-strategy }}
+      - name: Install dependencies
+        run: uv sync --all-extras --python ${{ matrix.python-version}} --resolution ${{ matrix.resolution }}
 
       - name: Lint package
-        run: devcontainer exec --workspace-folder . poe lint
-      
-      - name: Security checks 
-        run: devcontainer exec --workspace-folder . poe security-check
+        run: uv run poe lint
 
       - name: Test package
-        run: devcontainer exec --workspace-folder . poe test:unit
+        run: uv run poe test:unit
+
+      - name: Security checks 
+        run: uv run poe security-check
+
+      - name: Test package
+        run: uv run poe test:unit
       
       - name: E2E Test package
-        run: devcontainer exec --workspace-folder . poe test:e2e
+        run: uv run poe test:e2e
