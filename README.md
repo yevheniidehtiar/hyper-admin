@@ -76,4 +76,6 @@ The following development environments are supported:
 - Run `uv sync --upgrade` from within the development environment to upgrade all dependencies to the latest versions allowed by `pyproject.toml`. Add `--only-dev` to upgrade the development dependencies only.
 - Run `cz bump` to bump the package's version, update the `CHANGELOG.md`, and create a git tag. Then push the changes and the git tag with `git push origin main --tags`.
 
+- To build and serve the documentation locally, run `poe docs:serve`. The documentation will be available at `http://127.0.0.1:8000`.
+
 </details>

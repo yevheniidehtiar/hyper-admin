@@ -68,6 +68,9 @@ uv.lock
 # VS Code
 .vscode/
 
+# MkDocs
+site/
+
 *.sqlite3
 *.db
 .coverage

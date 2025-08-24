@@ -29,12 +29,12 @@ dependencies = [
 ]
 
 [project.urls]  # https://packaging.python.org/en/latest/specifications/well-known-project-urls/#well-known-labels
-homepage = "https://github.com/yevheniidehtiar/hyperadmin"
-source = "https://github.com/yevheniidehtiar/hyperadmin"
-changelog = "https://github.com/yevheniidehtiar/hyperadmin/blob/main/CHANGELOG.md"
-releasenotes = "https://github.com/yevheniidehtiar/hyperadmin/releases"
-documentation = "https://github.com/yevheniidehtiar/hyperadmin"
-issues = "https://github.com/yevheniidehtiar/hyperadmin/issues"
+homepage = "https://github.com/yevheniidehtiar/hyper-admin"
+source = "https://github.com/yevheniidehtiar/hyper-admin"
+changelog = "https://github.com/yevheniidehtiar/hyper-admin/blob/main/CHANGELOG.md"
+releasenotes = "https://github.com/yevheniidehtiar/hyper-admin/releases"
+documentation = "https://github.com/yevheniidehtiar/hyper-admin"
+issues = "https://github.com/yevheniidehtiar/hyper-admin/issues"
 
 [project.optional-dependencies]
 dev = [
@@ -57,6 +57,14 @@ dev = [
   "pytest-xdist (>=3.6.1)",
   "pyzmq (>=27.0.2)",
   "ruff (>=0.9.2)",
+  "mkdocs>=1.6.0",
+  "mkdocs-material>=9.0.0",
+  "mkdocstrings[python]>=0.24.0",
+  "mkdocs-macros-plugin>=1.0.0",
+  "mdx-include>=1.4.1",
+  "mkdocs-redirects>=1.2.1",
+  "griffe-typingdoc>=0.2.0",
+  "pyyaml>=6.0",
   "setuptools (>=79.0.0)",
   "numpy (>=2.0.2); python_version >= '3.12'",
 ]
@@ -118,6 +126,18 @@ convention = "numpy"
 type = "simple"
 
 [tool.poe.tasks]
+
+  [tool.poe.tasks."docs:build"]
+  help = "Build the documentation site"
+  cmd = "mkdocs build"
+
+  [tool.poe.tasks."docs:serve"]
+  help = "Serve the documentation site"
+  cmd = "mkdocs serve --dev-addr localhost:8080"
+
+  [tool.poe.tasks."docs:deploy"]
+  help = "Deploy the documentation to GitHub Pages"
+  cmd = "mkdocs gh-deploy --force"
 
   [tool.poe.tasks.lint]
   help = "Lint this package"

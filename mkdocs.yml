@@ -1,0 +1,50 @@
+site_name: HyperAdmin
+site_description: A modern, Pydantic-native admin interface for FastAPI, powered by HTMX.
+site_url: https://yevheniidehtiar.github.io/hyper-admin/
+
+theme:
+  name: "material"
+  palette:
+    primary: white
+  features:
+    - content.code.copy
+  logo: assets/logo.svg
+  favicon: assets/favicon.ico
+
+repo_name: yevheniidehtiar/hyper-admin
+repo_url: https://github.com/yevheniidehtiar/hyper-admin
+edit_uri: ""
+
+nav:
+  - Introduction: "index.md"
+  - Getting Started: "getting-started.md"
+  - Tutorial: "tutorial.md"
+  - API Reference:
+      - Application: "api/application.md"
+      - Views: "api/views.md"
+
+markdown_extensions:
+  - markdown.extensions.codehilite:
+      guess_lang: false
+  - admonition
+  - pymdownx.details
+  - pymdownx.highlight
+  - pymdownx.tabbed
+  - pymdownx.superfences
+
+plugins:
+  - search
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          options:
+            show_root_heading: true
+            show_source: false
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/yevheniidehtiar
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/in/yevheniidehtiar/
