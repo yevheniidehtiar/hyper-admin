@@ -26,6 +26,7 @@ dependencies = [
   "greenlet>=1.0.1; python_version < '3.13'",
   "greenlet>=3.1.0; python_version >= '3.13'",
   "pillow>=11.3.0",
+  "typing-extensions>=4.14.1",
 ]
 
 [project.urls]  # https://packaging.python.org/en/latest/specifications/well-known-project-urls/#well-known-labels

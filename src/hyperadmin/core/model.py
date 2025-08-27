@@ -1,7 +1,13 @@
 """This module will contain the base HyperAdminModel class."""
 
 import abc
-from typing import Any, Self
+import sys
+from typing import Any
+
+if sys.version_info >= (3, 11):
+    from typing import Self
+else:
+    from typing_extensions import Self
 
 from pydantic import BaseModel
 
