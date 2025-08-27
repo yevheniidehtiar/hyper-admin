@@ -66,4 +66,7 @@ def test_discover_admin_modules_non_existent_app(mock_import_module, caplog):
     with caplog.at_level(logging.ERROR):
         discover_admin_modules(["non_existent_app"])
 
-    assert "Failed to import app module non_existent_app: No module named 'non_existent_app'" in caplog.text
+    assert (
+        "Failed to import app module non_existent_app: No module named 'non_existent_app'"
+        in caplog.text
+    )
