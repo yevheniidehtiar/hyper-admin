@@ -8,6 +8,18 @@ This project is a Python `package` generated from a template. It is configured w
 
 The main source code for this project is located in the `src/hyperadmin` directory. Tests are in the `tests/` directory.
 
+## Code Structure and Naming Conventions
+
+To maintain simplicity and adhere to the DRY (Don't Repeat Yourself) principle, please follow these conventions for structuring and naming your code:
+
+- **Group by Feature:** Group related modules or implementations into subdirectories named after their common purpose. For instance, different data backend adapters should reside within a `src/hyperadmin/adapters/` directory.
+- **Specific File Names:** Name the files within these subdirectories after their specific implementation.
+- **Example:**
+    - **Prefer this structure:** `src/hyperadmin/adapters/sqlmodel.py`
+    - **Over this one:** `src/hyperadmin/sqlmodel_adapter.py`
+
+This approach avoids long, combined file names and keeps the project structure organized and predictable as new features are added.
+
 ## Dependency Management
 
 This project uses `uv` for dependency management. Dependencies are defined in `pyproject.toml`.
@@ -66,7 +78,21 @@ You are encouraged to use Playwright not just for final tests, but as a developm
 
 ## Submitting Changes
 
+Before committing any code, you must perform the following checks:
+1.  Run `poe test` and ensure all tests pass.
+2.  Run `poe lint` and ensure there are no linting errors.
+3.  Perform a self-review using the following guide:
+    > Self-review checklist:
+    > 1. Code is clear & readable.
+    > 2. Follows project style.
+    > 3. Logic is correct.
+    > 4. No regressions.
+    > 5. Tests are added/updated.
+    > 6. Docs are updated.
+
 This project follows the Conventional Commits specification. When you are ready to submit your work, please use `cz bump` to create a compliant commit message.
+
+After you have created a Pull Request, you must check the PR page and ensure all pipeline checks are green. If any are red, you must investigate and fix the issues.
 
 ---
 I understand and have updated my internal guidelines. Here is a summary of my new process:
