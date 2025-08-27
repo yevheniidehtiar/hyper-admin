@@ -163,7 +163,8 @@ type = "simple"
   help = "Test this package"
   sequence = [
     { shell = "playwright install --with-deps" },
-    { cmd = "pytest" },
+    { ref = "test:unit" },
+    { ref = "test:e2e" },
   ]
 
   [tool.poe.tasks."test:unit"]
