@@ -1,15 +1,15 @@
 """
 This module provides the auto-discovery mechanism for admin modules.
 """
+
 import importlib
 import logging
 import os
-from typing import List
 
 logger = logging.getLogger(__name__)
 
 
-def discover_admin_modules(app_modules: List[str]):
+def discover_admin_modules(app_modules: list[str]):
     """
     Discovers and imports `admin.py` modules from a list of app modules.
 
@@ -36,7 +36,9 @@ def discover_admin_modules(app_modules: List[str]):
                 try:
                     # Import the admin.py module
                     importlib.import_module(admin_module_str)
-                    logger.info(f"Successfully discovered and imported admin module: {admin_module_str}")
+                    logger.info(
+                        f"Successfully discovered and imported admin module: {admin_module_str}"
+                    )
                 except ImportError as e:
                     logger.error(f"Failed to import admin module {admin_module_str}: {e}")
             else:

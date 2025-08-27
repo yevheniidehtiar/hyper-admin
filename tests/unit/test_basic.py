@@ -1,9 +1,9 @@
 import pytest
+from examples.models import User
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlmodel import delete
 
-from examples.models import User
 from hyperadmin.db import get_session
 from hyperadmin.main import Admin
 from hyperadmin.views import ModelView

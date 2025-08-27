@@ -6,7 +6,6 @@ from sqlmodel import Session, SQLModel, create_engine, select
 from examples.models import User
 from hyperadmin.main import Admin
 
-
 # 1. Create a database engine
 engine = create_engine("sqlite:///simple_app.db", connect_args={"check_same_thread": False})
 

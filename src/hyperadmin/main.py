@@ -1,5 +1,3 @@
-from typing import List, Optional
-
 from fastapi import APIRouter, FastAPI
 
 from hyperadmin.core.registry import site
@@ -11,7 +9,7 @@ from hyperadmin.views import ModelView
 class Admin:
     """The main Admin class that holds the admin interface."""
 
-    def __init__(self, app: FastAPI, discover_apps: Optional[List[str]] = None):
+    def __init__(self, app: FastAPI, discover_apps: list[str] | None = None):
         self.app = app
         self.router = APIRouter()
         create_db_and_tables()
