@@ -29,9 +29,9 @@ class BaseAdapter(ABC):
         self,
         page: int = 1,
         page_size: int = 10,
-        search: str = None,
-        filters: dict[str, Any] = None,
-        order_by: str = None,
+        search: str | None = None,
+        filters: dict[str, Any] | None = None,
+        order_by: str | None = None,
     ) -> tuple[list[Any], int]:
         """
         Retrieves a list of objects with optional pagination, searching, and filtering.

@@ -26,9 +26,9 @@ def test_concrete_adapter_must_implement_all_methods():
             self,
             page: int = 1,
             page_size: int = 10,
-            search: str = None,
-            filters: dict[str, Any] = None,
-            order_by: str = None,
+            search: str | None = None,
+            filters: dict[str, Any] | None = None,
+            order_by: str | None = None,
         ) -> tuple[list[Any], int]:
             pass
 
@@ -56,6 +56,7 @@ def test_incomplete_adapter_raises_error():
     Tests that a concrete implementation of BaseAdapter that misses some abstract methods
     raises a TypeError.
     """
+
     class IncompleteAdapter(BaseAdapter):
         async def get(self, pk: Any) -> Any:
             pass
