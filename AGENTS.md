@@ -8,6 +8,18 @@ This project is a Python `package` generated from a template. It is configured w
 
 The main source code for this project is located in the `src/hyperadmin` directory. Tests are in the `tests/` directory.
 
+## Code Structure and Naming Conventions
+
+To maintain simplicity and adhere to the DRY (Don't Repeat Yourself) principle, please follow these conventions for structuring and naming your code:
+
+- **Group by Feature:** Group related modules or implementations into subdirectories named after their common purpose. For instance, different data backend adapters should reside within a `src/hyperadmin/adapters/` directory.
+- **Specific File Names:** Name the files within these subdirectories after their specific implementation.
+- **Example:**
+    - **Prefer this structure:** `src/hyperadmin/adapters/sqlmodel.py`
+    - **Over this one:** `src/hyperadmin/sqlmodel_adapter.py`
+
+This approach avoids long, combined file names and keeps the project structure organized and predictable as new features are added.
+
 ## Dependency Management
 
 This project uses `uv` for dependency management. Dependencies are defined in `pyproject.toml`.
