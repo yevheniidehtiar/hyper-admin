@@ -68,3 +68,30 @@ def test_thread_safe_registration(registry: SiteRegistry) -> None:
         thread.join()
 
     assert len(registry.get_registered_models()) == num_threads
+
+
+from hyperadmin.core.model import HyperAdminModel
+
+
+def test_register_hyper_admin_model(registry: SiteRegistry) -> None:
+    """Tests that a HyperAdminModel subclass can be registered."""
+
+    class MyAdminModel(HyperAdminModel):
+        name: str
+
+        @classmethod
+        async def create(cls, data):
+            pass
+
+        @classmethod
+        async def get(cls, pk):
+            pass
+
+        async def update(self, data):
+            pass
+
+        async def delete(self):
+            pass
+
+    registry.register(MyAdminModel)
+    assert MyAdminModel in registry.get_registered_models()
