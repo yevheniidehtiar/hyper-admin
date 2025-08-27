@@ -1,8 +1,25 @@
 import pytest
-from examples.simple_app import User, app
+from examples.models import User
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from sqlmodel import delete
 
 from hyperadmin.db import get_session
+from hyperadmin.main import Admin
+from hyperadmin.views import ModelView
+
+# Create a test-specific app
+app = FastAPI()
+admin = Admin(app)
+
+
+class UserAdmin(ModelView):
+    model = User
+
+
+admin.register(UserAdmin)
+admin.mount(path="/admin")
+
 
 client = TestClient(app)
 
@@ -10,17 +27,14 @@ client = TestClient(app)
 @pytest.fixture(autouse=True)
 def mock_users():
     session = next(get_session())
+    session.exec(delete(User))
+    session.commit()
+
     session.add(User(name="Alice", email="alice@example.com"))
     session.add(User(name="Bob", email="bob@example.com"))
     session.add(User(name="Charlie", email="charlie@example.com"))
     session.commit()
     return session
-
-
-def test_read_root():
-    response = client.get("/")
-    assert response.status_code == 200
-    assert response.json() == {"message": "Go to /admin/user to see the admin interface."}
 
 
 def test_get_list_view():

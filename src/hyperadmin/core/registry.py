@@ -54,3 +54,6 @@ class SiteRegistry:
         """
         with self._lock:
             return list(self._registry.keys())
+
+
+site = SiteRegistry()
