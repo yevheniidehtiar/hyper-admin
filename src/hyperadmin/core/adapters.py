@@ -86,7 +86,7 @@ class BaseAdapter(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def get_releated(self, pk: Any, field: str) -> builtins.list[Any]:
+    async def get_related(self, pk: Any, field: str) -> builtins.list[Any]:
         """
         Retrieves related objects for a given object and field.
 

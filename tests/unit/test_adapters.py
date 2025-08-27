@@ -41,7 +41,7 @@ def test_concrete_adapter_must_implement_all_methods():
         async def delete(self, pk: Any) -> None:
             pass
 
-        async def get_releated(self, pk: Any, field: str) -> builtins.list[Any]:
+        async def get_related(self, pk: Any, field: str) -> builtins.list[Any]:
             pass
 
         async def get_schema(self) -> dict[str, Any]:
