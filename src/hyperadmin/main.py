@@ -20,9 +20,8 @@ class Admin:
 
     def _register_views(self):
         """Registers the views from the site registry."""
-        for model, admin_class in site._registry.items():
-            if admin_class:
-                self.register(admin_class)
+        for admin_class in site._registry.values():
+            self.register(admin_class)
 
     def register(self, model_view_class: type[ModelView]):
         """Registers a ModelView class with the admin interface."""
