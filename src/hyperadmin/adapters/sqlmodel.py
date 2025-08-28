@@ -1,11 +1,11 @@
 import builtins
 from typing import Any
 
-from sqlalchemy import func, or_, select
-from sqlmodel import SQLModel
+from sqlalchemy import func, or_
+from sqlmodel import SQLModel, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from ..core.adapters import BaseAdapter
+from hyperadmin.core.adapters import BaseAdapter
 
 
 class SQLModelAdapter(BaseAdapter):
@@ -68,7 +68,7 @@ class SQLModelAdapter(BaseAdapter):
         # Get total count
         count_query = select(func.count()).select_from(query.subquery())
         total_count_result = await self.session.exec(count_query)
-        total_count = total_count_result.scalar_one()
+        total_count = total_count_result.one()
 
         # Apply pagination
         offset = (page - 1) * page_size
@@ -76,7 +76,7 @@ class SQLModelAdapter(BaseAdapter):
 
         # Get the rows
         results = await self.session.exec(query)
-        return results.scalars().all(), total_count
+        return list(results.all()), total_count
 
     async def create(self, data: dict[str, Any]) -> Any:
         """
@@ -95,13 +95,54 @@ class SQLModelAdapter(BaseAdapter):
         return db_obj
 
     async def update(self, pk: Any, data: dict[str, Any]) -> Any:
-        ...
+        """
+        Updates an existing object.
+
+        Args:
+            pk: The primary key of the object to update.
+            data: A dictionary of data to update the object with.
+
+        Returns:
+            The updated object.
+        """
+        db_obj = await self.get(pk)
+        for key, value in data.items():
+            setattr(db_obj, key, value)
+        self.session.add(db_obj)
+        await self.session.commit()
+        await self.session.refresh(db_obj)
+        return db_obj
 
     async def delete(self, pk: Any) -> None:
-        ...
+        """
+        Deletes an object.
+
+        Args:
+            pk: The primary key of the object to delete.
+        """
+        db_obj = await self.get(pk)
+        await self.session.delete(db_obj)
+        await self.session.commit()
 
     async def get_related(self, pk: Any, field: str) -> builtins.list[Any]:
-        ...
+        """
+        Retrieves related objects for a given object and field.
+
+        Args:
+            pk: The primary key of the object.
+            field: The name of the related field.
+
+        Returns:
+            A list of related objects.
+        """
+        db_obj = await self.get(pk)
+        return getattr(db_obj, field)
 
     async def get_schema(self) -> dict[str, Any]:
-        ...
+        """
+        Returns the JSON schema for the model.
+
+        Returns:
+            A dictionary representing the JSON schema.
+        """
+        return self.model.model_json_schema()

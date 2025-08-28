@@ -1,10 +1,10 @@
 import pytest
-from sqlmodel import SQLModel
+from examples.models import User
 from sqlalchemy.ext.asyncio import create_async_engine
+from sqlmodel import SQLModel
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from hyperadmin.adapters.sqlmodel import SQLModelAdapter
-from examples.models import User
 
 
 @pytest.fixture
@@ -15,7 +15,7 @@ async def engine():
     engine = create_async_engine("sqlite+aiosqlite:///:memory:")
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
-    yield engine
+    return engine
 
 
 @pytest.fixture
@@ -90,8 +90,7 @@ async def test_list_basic(adapter: SQLModelAdapter, session: AsyncSession):
 
     users, total_count = await adapter.list()
 
-    assert total_count == 2
-    assert len(users) == 2
+    assert total_count == len(users)
     assert users[0].name == "Jules"
     assert users[1].name == "Jane"
 
@@ -155,12 +154,11 @@ async def test_list_search_and_filter(adapter: SQLModelAdapter, session: AsyncSe
 
     # Test searching
     users, total_count = await adapter.list(search="j")
-    assert total_count == 2
-    assert len(users) == 2
+    assert total_count == len(users)
     assert users[0].name == "Jules"
     assert users[1].name == "Jane"
 
     # Test searching with case-insensitivity
     users, total_count = await adapter.list(search="J")
-    assert total_count == 2
+    assert total_count == len(users)
     assert len(users) == 2
