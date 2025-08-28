@@ -1,11 +1,10 @@
-import asyncio
 import builtins
-from typing import Any, Type
+from typing import Any
 
-from sqlalchemy import func, or_, select
-from sqlalchemy.engine import Engine
+from sqlalchemy import and_, func, or_, select
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy.inspection import inspect
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import selectinload
 from sqlalchemy.sql.sqltypes import String
 from sqlmodel import SQLModel
 
@@ -13,17 +12,16 @@ from hyperadmin.core.adapters import BaseAdapter
 
 
 class SQLAlchemyAdapter(BaseAdapter):
-    def __init__(self, model: Type[SQLModel], engine: Engine) -> None:
+    def __init__(self, model: type[SQLModel], engine: AsyncEngine) -> None:
         self.model = model
         self.engine = engine
-        self.inspector = inspect(self.model)
+        self.inspector = inspect(model)
+        if self.inspector is None:
+            raise ValueError("Could not inspect model. Is it a valid SQLAlchemy model?")
 
     async def get(self, pk: Any) -> Any:
-        def sync_get() -> Any:
-            with Session(self.engine) as session:
-                return session.get(self.model, pk)
-
-        return await asyncio.to_thread(sync_get)
+        async with AsyncSession(self.engine) as session:
+            return await session.get(self.model, pk)
 
     async def list(
         self,
@@ -33,88 +31,95 @@ class SQLAlchemyAdapter(BaseAdapter):
         filters: dict[str, Any] | None = None,
         order_by: str | None = None,
     ) -> tuple[list[Any], int]:
-        def sync_list() -> tuple[list[Any], int]:
-            query = select(self.model)
-            if filters:
-                query = query.filter_by(**filters)
+        where_conditions = []
+        if filters:
+            for key, value in filters.items():
+                where_conditions.append(getattr(self.model, key) == value)
 
-            if search:
+        if search:
+            if self.inspector:
                 search_clauses = []
                 for column in self.inspector.c:
                     if isinstance(column.type, String):
-                        search_clauses.append(column.ilike(f"%{search}%"))
+                        search_clauses.append(getattr(self.model, column.name).ilike(f"%{search}%"))
                 if search_clauses:
-                    query = query.where(or_(*search_clauses))
+                    where_conditions.append(or_(*search_clauses))
 
-            if order_by:
-                if order_by.startswith("-"):
-                    query = query.order_by(getattr(self.model, order_by[1:]).desc())
-                else:
-                    query = query.order_by(getattr(self.model, order_by).asc())
+        items_query = select(self.model)
+        if where_conditions:
+            items_query = items_query.where(and_(*where_conditions))
 
-            with Session(self.engine) as session:
-                count_query = select(func.count()).select_from(query.subquery())
-                total_count = session.exec(count_query).one()
+        count_query = select(func.count()).select_from(self.model)
+        if where_conditions:
+            count_query = count_query.where(and_(*where_conditions))
 
-                paginated_query = query.offset((page - 1) * page_size).limit(page_size)
-                items = session.exec(paginated_query).all()
-                return items, total_count
+        if order_by:
+            if order_by.startswith("-"):
+                items_query = items_query.order_by(getattr(self.model, order_by[1:]).desc())
+            else:
+                items_query = items_query.order_by(getattr(self.model, order_by).asc())
 
-        return await asyncio.to_thread(sync_list)
+        paginated_items_query = items_query.offset((page - 1) * page_size).limit(page_size)
+
+        async with AsyncSession(self.engine) as session:
+            total_count_result = await session.execute(count_query)
+            total_count = total_count_result.scalar_one()
+
+            items_result = await session.execute(paginated_items_query)
+            items = items_result.scalars().all()
+
+            return list(items), total_count
 
     async def create(self, data: dict[str, Any]) -> Any:
-        def sync_create() -> Any:
-            db_obj = self.model.model_validate(data)
-            with Session(self.engine) as session:
-                session.add(db_obj)
-                session.commit()
-                session.refresh(db_obj)
-            return db_obj
-
-        return await asyncio.to_thread(sync_create)
+        db_obj = self.model.model_validate(data)
+        async with AsyncSession(self.engine) as session:
+            session.add(db_obj)
+            await session.commit()
+            await session.refresh(db_obj)
+        return db_obj
 
     async def update(self, pk: Any, data: dict[str, Any]) -> Any:
-        def sync_update() -> Any:
-            with Session(self.engine) as session:
-                db_obj = session.get(self.model, pk)
-                if db_obj:
-                    for key, value in data.items():
-                        setattr(db_obj, key, value)
-                    session.add(db_obj)
-                    session.commit()
-                    session.refresh(db_obj)
-                return db_obj
-
-        return await asyncio.to_thread(sync_update)
+        async with AsyncSession(self.engine) as session:
+            db_obj = await session.get(self.model, pk)
+            if db_obj:
+                for key, value in data.items():
+                    setattr(db_obj, key, value)
+                session.add(db_obj)
+                await session.commit()
+                await session.refresh(db_obj)
+            return db_obj
 
     async def delete(self, pk: Any) -> None:
-        def sync_delete() -> None:
-            with Session(self.engine) as session:
-                db_obj = session.get(self.model, pk)
-                if db_obj:
-                    session.delete(db_obj)
-                    session.commit()
-
-        await asyncio.to_thread(sync_delete)
+        async with AsyncSession(self.engine) as session:
+            db_obj = await session.get(self.model, pk)
+            if db_obj:
+                await session.delete(db_obj)
+                await session.commit()
 
     async def get_related(self, pk: Any, field: str) -> builtins.list[Any]:
-        def sync_get_related() -> builtins.list[Any]:
-            with Session(self.engine) as session:
-                db_obj = session.get(self.model, pk)
-                if not db_obj:
-                    return []
+        if not self.inspector:
+            return []
+        async with AsyncSession(self.engine) as session:
+            query = (
+                select(self.model)
+                .where(self.inspector.primary_key[0] == pk)
+                .options(selectinload(getattr(self.model, field)))
+            )
+            result = await session.execute(query)
+            db_obj = result.scalar_one_or_none()
 
-                try:
-                    related = getattr(db_obj, field)
-                    if related is None:
-                        return []
-                    if isinstance(related, list):
-                        return list(related)
-                    return [related]
-                except AttributeError:
-                    return []
+            if not db_obj:
+                return []
 
-        return await asyncio.to_thread(sync_get_related)
+            try:
+                related = getattr(db_obj, field)
+                if related is None:
+                    return []
+                if isinstance(related, list):
+                    return list(related)
+                return [related]
+            except AttributeError:
+                return []
 
     async def get_schema(self) -> dict[str, Any]:
         return self.model.model_json_schema()
