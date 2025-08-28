@@ -15,13 +15,13 @@ requires-python = ">=3.10,<4.0"
 dependencies = [
   "appnope>=0.1.3",
   "fastapi>=0.100.0",
-  "pydantic>=2.6; python_version < '3.13'",
+  "pydantic>=2.7; python_version < '3.13'",
   "pydantic>=2.11; python_version >= '3.13'",
   "uvicorn>=0.20.0",
-  "jinja2>=3.0",
+  "jinja2>=3.1.6",
   "python-multipart>=0.0.9",
-  "sqlalchemy>=2.0",
-  "sqlmodel>=0.0.12",
+  "sqlalchemy>=2.0.14",
+  "sqlmodel>=0.0.19",
   "httpx>=0.23.0",
   "greenlet>=1.0.1; python_version < '3.13'",
   "greenlet>=3.1.0; python_version >= '3.13'",
@@ -164,7 +164,7 @@ type = "simple"
   [tool.poe.tasks.test]
   help = "Test this package"
   sequence = [
-    { shell = "playwright install --with-deps" },
+    { shell = "playwright install chromium" },
     { ref = "test:unit" },
     { ref = "test:e2e" },
   ]
@@ -177,6 +177,6 @@ type = "simple"
   [tool.poe.tasks."test:e2e"]
   help = "Run end-to-end tests with Playwright"
   sequence = [
-    { shell = "playwright install --with-deps" },
+    { shell = "playwright install chromium" },
     { cmd = "pytest tests/e2e" },
   ]

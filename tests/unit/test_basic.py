@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 import pytest
 from examples.models import User
 from fastapi import FastAPI
@@ -39,18 +41,18 @@ def mock_users():
 
 def test_get_list_view():
     response = client.get("/admin/user")
-    assert response.status_code == 200
+    assert response.status_code == HTTPStatus.OK
     assert "User List" in response.text
     assert "Alice" in response.text
 
 
 def test_get_detail_view():
     response = client.get("/admin/user/1")
-    assert response.status_code == 200
+    assert response.status_code == HTTPStatus.OK
     assert "User #1" in response.text
     assert "alice@example.com" in response.text
 
 
 def test_get_detail_view_not_found():
     response = client.get("/admin/user/999")
-    assert response.status_code == 404
+    assert response.status_code == HTTPStatus.NOT_FOUND

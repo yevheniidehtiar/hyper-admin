@@ -89,11 +89,12 @@ class ModelView:
             return {"message": "Item updated successfully"}
 
         context = {
+            "request": request,
             "model_name": self.model.__name__,
             "item": item,
             "fields": list(self.model.model_fields.keys()),
         }
-        return templates.TemplateResponse(request, "update.html", context)
+        return templates.TemplateResponse("update.html", context)
 
     async def create_view(self, request: Request, session: Session = Depends(get_session)):
         """Renders the create view and handles form submission for creating a new item."""
@@ -107,20 +108,22 @@ class ModelView:
             return {"message": "Item created successfully"}  # This will be improved later
 
         context = {
+            "request": request,
             "model_name": self.model.__name__,
             "fields": list(self.model.model_fields.keys()),
         }
-        return templates.TemplateResponse(request, "create.html", context)
+        return templates.TemplateResponse("create.html", context)
 
     async def list_view(self, request: Request, session: Session = Depends(get_session)):
         """Renders the list view for the model."""
         items = session.exec(select(self.model)).all()
         context = {
+            "request": request,
             "model_name": self.model.__name__,
             "fields": list(self.model.model_fields.keys()),
             "items": items,
         }
-        return templates.TemplateResponse(request, "list.html", context)
+        return templates.TemplateResponse("list.html", context)
 
     async def detail_view(
         self, request: Request, item_id: int, session: Session = Depends(get_session)
@@ -135,7 +138,8 @@ class ModelView:
             raise HTTPException(status_code=404, detail="Item not found")
 
         context = {
+            "request": request,
             "item_name": f"{self.model.__name__} #{getattr(item, 'id', 'N/A')}",
             "item": item.model_dump(),
         }
-        return templates.TemplateResponse(request, "detail.html", context)
+        return templates.TemplateResponse("detail.html", context)
