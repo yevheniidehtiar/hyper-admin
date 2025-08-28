@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm import selectinload
 from sqlalchemy.sql.sqltypes import String
-from sqlmodel import SQLModel
+from sqlmodel import AutoString, SQLModel
 
 from hyperadmin.core.adapters import BaseAdapter
 
@@ -40,7 +40,7 @@ class SQLAlchemyAdapter(BaseAdapter):
             if self.inspector:
                 search_clauses = []
                 for column in self.inspector.c:
-                    if isinstance(column.type, String):
+                    if isinstance(column.type, AutoString) or isinstance(column.type, String):
                         search_clauses.append(getattr(self.model, column.name).ilike(f"%{search}%"))
                 if search_clauses:
                     where_conditions.append(or_(*search_clauses))
