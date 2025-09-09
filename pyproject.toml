@@ -55,7 +55,7 @@ dev = [
   "pytest-cov (>=5.0.0)",
   "pytest-playwright (>=0.5.1)",
   "pytest-mock (>=3.14.0)",
-  "pytest-asyncio (>=0.21.1)",
+  
   "aiosqlite (>=0.21.0)",
   "pytest-xdist (>=3.6.1)",
   "pyzmq (>=27.0.2)",
@@ -100,6 +100,7 @@ warn_unreachable = true
 addopts = "--color=yes --doctest-modules --exitfirst --failed-first --verbosity=2 --junitxml=reports/pytest.xml --cov=src --cov-report=term-missing --cov-report=xml:reports/coverage.xml"
 testpaths = ["tests"]
 xfail_strict = true
+filterwarnings = "ignore:The `name` is not the first parameter anymore:DeprecationWarning"
 
 [tool.ruff]  # https://docs.astral.sh/ruff/settings/
 fix = true
@@ -177,6 +178,5 @@ type = "simple"
   [tool.poe.tasks."test:e2e"]
   help = "Run end-to-end tests with Playwright"
   sequence = [
-    { shell = "playwright install chromium" },
     { cmd = "pytest tests/e2e" },
   ]
