@@ -51,7 +51,7 @@ jobs:
         run: uv run poe security-check
 
       - name: E2E Test package
-        run: uv run poe test:e2e
+        run: playwright install && uv run poe test:e2e
 
   test-pr:
     if: github.event_name == 'pull_request'

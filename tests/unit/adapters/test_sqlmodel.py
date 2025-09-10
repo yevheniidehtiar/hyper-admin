@@ -28,11 +28,11 @@ async def session(engine):
 
 
 @pytest.fixture
-async def adapter(session: AsyncSession):
+async def adapter(engine):
     """
     Creates an instance of SQLModelAdapter for testing.
     """
-    return SQLModelAdapter(model=User, session=session)
+    return SQLModelAdapter(model=User, engine=engine)
 
 
 @pytest.mark.anyio

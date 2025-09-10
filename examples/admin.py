@@ -1,10 +1,10 @@
 from examples.models import User
+from hyperadmin.core.model import ModelAdmin
 from hyperadmin.core.registry import site
-from hyperadmin.views import ModelView
 
 
-class UserAdmin(ModelView):
-    model = User
+class UserAdmin(ModelAdmin):
+    pass
 
 
 site.register(User, UserAdmin)

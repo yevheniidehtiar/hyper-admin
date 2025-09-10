@@ -55,7 +55,6 @@ dev = [
   "pytest-cov (>=5.0.0)",
   "pytest-playwright (>=0.5.1)",
   "pytest-mock (>=3.14.0)",
-
   "aiosqlite (>=0.21.0)",
   "pytest-xdist (>=3.6.1)",
   "pyzmq (>=27.0.2)",
@@ -177,6 +176,5 @@ type = "simple"
   [tool.poe.tasks."test:e2e"]
   help = "Run end-to-end tests with Playwright"
   sequence = [
-    { shell = "playwright install chromium" },
     { cmd = "pytest tests/e2e" },
   ]
