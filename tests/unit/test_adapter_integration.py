@@ -1,5 +1,3 @@
-import os
-
 import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
@@ -7,7 +5,7 @@ from sqlmodel import Field, SQLModel
 
 from hyperadmin.core.model import ModelAdmin
 from hyperadmin.core.registry import site
-from hyperadmin.db import create_db_and_tables, sqlite_file_name
+from hyperadmin.db import create_db_and_tables
 from hyperadmin.main import Admin
 
 
@@ -22,17 +20,8 @@ class CategoryAdmin(ModelAdmin):
     pass
 
 
-@pytest.fixture(scope="function")
-def cleanup_db():
-    """A fixture to clean up the database file after a test."""
-    yield
-    # Teardown: remove the database file
-    if os.path.exists(sqlite_file_name):
-        os.remove(sqlite_file_name)
-
-
 @pytest.mark.anyio
-async def test_list_view_integration(cleanup_db):
+async def test_list_view_integration():
     """
     Tests that the list view for a registered model can be accessed.
     This validates the end-to-end integration of the adapter.
