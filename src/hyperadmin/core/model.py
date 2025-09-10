@@ -68,7 +68,7 @@ class HyperAdminModel(BaseModel, abc.ABC):
         """Lifecycle hook called after deleting the model."""
 
 
-from hyperadmin.views import ModelView
+from hyperadmin.views.static import ModelView
 
 
 class ModelAdmin:
