@@ -23,10 +23,16 @@ class HyperAdminRouter:
                 name=f"{model_name}-list",
             )
             self.router.add_api_route(
-                f"/{model_name}/create",
+                f"/{model_name}",
                 view.create_view,
-                methods=["GET", "POST"],
+                methods=["POST"],
                 name=f"{model_name}-create",
+            )
+            self.router.add_api_route(
+                f"/{model_name}/create",
+                view.create_form_view,
+                methods=["GET"],
+                name=f"{model_name}-create-form",
             )
             self.router.add_api_route(
                 f"/{model_name}/{{item_id}}",
@@ -35,14 +41,20 @@ class HyperAdminRouter:
                 name=f"{model_name}-detail",
             )
             self.router.add_api_route(
-                f"/{model_name}/{{item_id}}/update",
+                f"/{model_name}/{{item_id}}",
                 view.update_view,
-                methods=["GET", "POST"],
+                methods=["PUT"],
                 name=f"{model_name}-update",
             )
             self.router.add_api_route(
-                f"/{model_name}/{{item_id}}/delete",
+                f"/{model_name}/{{item_id}}/edit",
+                view.update_form_view,
+                methods=["GET"],
+                name=f"{model_name}-update-form",
+            )
+            self.router.add_api_route(
+                f"/{model_name}/{{item_id}}",
                 view.delete_action,
-                methods=["POST"],
+                methods=["DELETE"],
                 name=f"{model_name}-delete",
             )

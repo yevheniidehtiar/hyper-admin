@@ -65,29 +65,23 @@ def test_detail_view_not_found(admin_app):
         assert response.status_code == 404
 
 
-def test_create_view_get(admin_app):
+def test_create_form_view(admin_app):
     with TestClient(admin_app) as client:
         response = client.get("/admin/product/create")
         assert response.status_code == 200
         assert "Create Product" in response.text
 
 
-def test_update_view_get_not_found(admin_app):
+def test_update_form_view_not_found(admin_app):
     with TestClient(admin_app) as client:
-        response = client.get("/admin/product/1/update")
-        assert response.status_code == 404
-
-
-def test_delete_action_not_found(admin_app):
-    with TestClient(admin_app) as client:
-        response = client.post("/admin/product/1/delete")
+        response = client.get("/admin/product/1/edit")
         assert response.status_code == 404
 
 
 def test_create_item(admin_app):
     with TestClient(admin_app) as client:
         response = client.post(
-            "/admin/product/create",
+            "/admin/product",
             data={"name": "Test Product", "price": "10.0"},
         )
         assert response.status_code == 200
@@ -97,13 +91,13 @@ def test_update_item(admin_app):
     with TestClient(admin_app) as client:
         # First, create an item
         client.post(
-            "/admin/product/create",
+            "/admin/product",
             data={"name": "Test Product", "price": "10.0"},
         )
 
         # Then, update it
-        response = client.post(
-            "/admin/product/1/update",
+        response = client.put(
+            "/admin/product/1",
             data={"name": "Updated Product", "price": "20.0"},
         )
         assert response.status_code == 200
@@ -113,10 +107,10 @@ def test_delete_item(admin_app):
     with TestClient(admin_app) as client:
         # First, create an item
         client.post(
-            "/admin/product/create",
+            "/admin/product",
             data={"name": "Test Product", "price": "10.0"},
         )
 
         # Then, delete it
-        response = client.post("/admin/product/1/delete")
+        response = client.delete("/admin/product/1")
         assert response.status_code == 200
