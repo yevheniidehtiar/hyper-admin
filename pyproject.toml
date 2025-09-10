@@ -176,5 +176,6 @@ type = "simple"
   [tool.poe.tasks."test:e2e"]
   help = "Run end-to-end tests with Playwright"
   sequence = [
+    { shell = "playwright install chromium" },
     { cmd = "pytest tests/e2e" },
   ]
