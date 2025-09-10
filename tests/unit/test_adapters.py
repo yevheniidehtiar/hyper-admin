@@ -10,7 +10,7 @@ def test_base_adapter_is_abstract():
     Tests that BaseAdapter is an abstract class and cannot be instantiated.
     """
     with pytest.raises(TypeError):
-        BaseAdapter()
+        BaseAdapter(model=None, engine=None)
 
 
 def test_concrete_adapter_must_implement_all_methods():
@@ -48,7 +48,7 @@ def test_concrete_adapter_must_implement_all_methods():
             pass
 
     # This should not raise an error
-    ConcreteAdapter()
+    ConcreteAdapter(model=None, engine=None)
 
 
 def test_incomplete_adapter_raises_error():
@@ -62,4 +62,4 @@ def test_incomplete_adapter_raises_error():
             pass
 
     with pytest.raises(TypeError):
-        IncompleteAdapter()
+        IncompleteAdapter(model=None, engine=None)
