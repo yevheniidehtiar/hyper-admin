@@ -1,6 +1,9 @@
 import threading
 from typing import Any
 
+from hyperadmin.adapters.registry import adapter_registry
+from hyperadmin.core.model import ModelAdmin
+
 
 class SiteRegistry:
     """A central, thread-safe registry for managing administrative models.
@@ -18,17 +21,28 @@ class SiteRegistry:
         """
         Registers a model with an optional admin class.
 
+        This method also discovers the appropriate adapter for the model and attaches
+        it to the admin instance.
+
         Args:
             model: The model class or instance to register.
-            admin_class: The admin class to associate with the model.
+            admin_class: The admin class to associate with the model. If None,
+              ModelAdmin will be used.
 
         Raises:
             ValueError: If the model is already registered.
+            AdapterNotFound: If no suitable adapter can be found for the model.
         """
+        if admin_class is None:
+            admin_class = ModelAdmin
+
         with self._lock:
             if model in self._registry:
                 raise ValueError(f"Model {model} is already registered.")
-            self._registry[model] = admin_class
+
+            admin_instance = admin_class(model)
+            admin_instance.adapter_class = adapter_registry.find_adapter_for_model(model)
+            self._registry[model] = admin_instance
 
     def unregister(self, model: Any) -> None:
         """

@@ -2,8 +2,8 @@ import builtins
 from typing import Any
 
 from sqlalchemy import func, or_
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlmodel import SQLModel, select
-from sqlmodel.ext.asyncio.session import AsyncSession
 
 from hyperadmin.core.adapters import BaseAdapter
 
@@ -13,9 +13,9 @@ class SQLModelAdapter(BaseAdapter):
     Data adapter for SQLModel.
     """
 
-    def __init__(self, model: type[SQLModel], session: AsyncSession):
+    def __init__(self, model: type[SQLModel], engine: AsyncEngine):
         self.model = model
-        self.session = session
+        self.engine = engine
 
     async def get(self, pk: Any) -> Any:
         """
@@ -27,7 +27,8 @@ class SQLModelAdapter(BaseAdapter):
         Returns:
             The retrieved object, or None if not found.
         """
-        return await self.session.get(self.model, pk)
+        async with AsyncSession(self.engine) as session:
+            return await session.get(self.model, pk)
 
     async def list(
         self,
@@ -40,43 +41,44 @@ class SQLModelAdapter(BaseAdapter):
         """
         Retrieves a list of objects with optional pagination, searching, and filtering.
         """
-        query = select(self.model)
+        async with AsyncSession(self.engine) as session:
+            query = select(self.model)
 
-        # Apply filtering
-        if filters:
-            for key, value in filters.items():
-                query = query.where(getattr(self.model, key) == value)
+            # Apply filtering
+            if filters:
+                for key, value in filters.items():
+                    query = query.where(getattr(self.model, key) == value)
 
-        # Apply searching
-        if search:
-            # For now, we'll search on name and email.
-            # This should be made more generic in a real application.
-            query = query.where(
-                or_(
-                    getattr(self.model, "name").ilike(f"%{search}%"),
-                    getattr(self.model, "email").ilike(f"%{search}%"),
+            # Apply searching
+            if search:
+                # For now, we'll search on name and email.
+                # This should be made more generic in a real application.
+                query = query.where(
+                    or_(
+                        getattr(self.model, "name").ilike(f"%{search}%"),
+                        getattr(self.model, "email").ilike(f"%{search}%"),
+                    )
                 )
-            )
 
-        # Apply ordering
-        if order_by:
-            if order_by.startswith("-"):
-                query = query.order_by(getattr(self.model, order_by[1:]).desc())
-            else:
-                query = query.order_by(getattr(self.model, order_by).asc())
+            # Apply ordering
+            if order_by:
+                if order_by.startswith("-"):
+                    query = query.order_by(getattr(self.model, order_by[1:]).desc())
+                else:
+                    query = query.order_by(getattr(self.model, order_by).asc())
 
-        # Get total count
-        count_query = select(func.count()).select_from(query.subquery())
-        total_count_result = await self.session.exec(count_query)
-        total_count = total_count_result.one()
+            # Get total count
+            count_query = select(func.count()).select_from(query.subquery())
+            total_count_result = await session.execute(count_query)
+            total_count = total_count_result.scalar_one()
 
-        # Apply pagination
-        offset = (page - 1) * page_size
-        query = query.offset(offset).limit(page_size)
+            # Apply pagination
+            offset = (page - 1) * page_size
+            query = query.offset(offset).limit(page_size)
 
-        # Get the rows
-        results = await self.session.exec(query)
-        return list(results.all()), total_count
+            # Get the rows
+            results = await session.execute(query)
+            return list(results.scalars().all()), total_count
 
     async def create(self, data: dict[str, Any]) -> Any:
         """
@@ -88,11 +90,12 @@ class SQLModelAdapter(BaseAdapter):
         Returns:
             The created object.
         """
-        db_obj = self.model(**data)
-        self.session.add(db_obj)
-        await self.session.commit()
-        await self.session.refresh(db_obj)
-        return db_obj
+        async with AsyncSession(self.engine) as session:
+            db_obj = self.model(**data)
+            session.add(db_obj)
+            await session.commit()
+            await session.refresh(db_obj)
+            return db_obj
 
     async def update(self, pk: Any, data: dict[str, Any]) -> Any:
         """
@@ -105,13 +108,15 @@ class SQLModelAdapter(BaseAdapter):
         Returns:
             The updated object.
         """
-        db_obj = await self.get(pk)
-        for key, value in data.items():
-            setattr(db_obj, key, value)
-        self.session.add(db_obj)
-        await self.session.commit()
-        await self.session.refresh(db_obj)
-        return db_obj
+        async with AsyncSession(self.engine) as session:
+            db_obj = await session.get(self.model, pk)
+            if db_obj:
+                for key, value in data.items():
+                    setattr(db_obj, key, value)
+                session.add(db_obj)
+                await session.commit()
+                await session.refresh(db_obj)
+            return db_obj
 
     async def delete(self, pk: Any) -> None:
         """
@@ -120,9 +125,11 @@ class SQLModelAdapter(BaseAdapter):
         Args:
             pk: The primary key of the object to delete.
         """
-        db_obj = await self.get(pk)
-        await self.session.delete(db_obj)
-        await self.session.commit()
+        async with AsyncSession(self.engine) as session:
+            db_obj = await session.get(self.model, pk)
+            if db_obj:
+                await session.delete(db_obj)
+                await session.commit()
 
     async def get_related(self, pk: Any, field: str) -> builtins.list[Any]:
         """
@@ -135,8 +142,11 @@ class SQLModelAdapter(BaseAdapter):
         Returns:
             A list of related objects.
         """
-        db_obj = await self.get(pk)
-        return getattr(db_obj, field)
+        async with AsyncSession(self.engine) as session:
+            db_obj = await session.get(self.model, pk)
+            if db_obj:
+                return getattr(db_obj, field)
+            return []
 
     async def get_schema(self) -> dict[str, Any]:
         """

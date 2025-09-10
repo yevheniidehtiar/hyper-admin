@@ -4,6 +4,8 @@ import abc
 import sys
 from typing import Any
 
+from hyperadmin.core.adapters import BaseAdapter
+
 if sys.version_info >= (3, 11):
     from typing import Self
 else:
@@ -64,3 +66,14 @@ class HyperAdminModel(BaseModel, abc.ABC):
 
     async def after_delete(self) -> None:
         """Lifecycle hook called after deleting the model."""
+
+
+from hyperadmin.views import ModelView
+
+
+class ModelAdmin:
+    view_class = ModelView
+    adapter_class: type[BaseAdapter]
+
+    def __init__(self, model: Any):
+        self.model = model
