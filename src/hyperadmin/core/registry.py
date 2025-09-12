@@ -2,6 +2,7 @@ import threading
 from typing import Any
 
 from hyperadmin.adapters.registry import adapter_registry
+from hyperadmin.core.options import AdminOptions
 
 
 class SiteRegistry:
@@ -16,9 +17,15 @@ class SiteRegistry:
         self._registry: dict[Any, Any] = {}
         self._lock = threading.Lock()
 
-    def register(self, model: Any, admin_class: Any = None, app_label: str | None = None) -> None:
+    def register(
+        self,
+        model: Any,
+        admin_class: Any = None,
+        options: AdminOptions | None = None,
+        app_label: str | None = None,
+    ) -> None:
         """
-        Registers a model with an optional admin class.
+        Registers a model with an optional admin class and admin options.
 
         This method also discovers the appropriate adapter for the model and attaches
         it to the admin instance.
@@ -27,6 +34,8 @@ class SiteRegistry:
             model: The model class or instance to register.
             admin_class: The admin class to associate with the model. If None,
               ModelAdmin will be used.
+            options: The admin options to associate with the model. If None,
+                default options will be used.
             app_label: The label of the application that the model belongs to.
 
         Raises:
@@ -37,11 +46,15 @@ class SiteRegistry:
             from hyperadmin.core.model import ModelAdmin
             admin_class = ModelAdmin
 
+        if options is None:
+            options = AdminOptions()
+
         with self._lock:
             if model in self._registry:
                 raise ValueError(f"Model {model} is already registered.")
 
             admin_class.app_label = app_label
+            admin_class.options = options
             admin_class.adapter_class = adapter_registry.find_adapter_for_model(model)
             self._registry[model] = admin_class
 

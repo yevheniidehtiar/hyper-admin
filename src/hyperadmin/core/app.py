@@ -1,11 +1,12 @@
 import os
+from typing import Any
+
 from fastapi import APIRouter, FastAPI
 from fastapi.templating import Jinja2Templates
 
-from hyperadmin.db import create_db_and_tables, engine
+from hyperadmin.db import create_db_and_tables
+from hyperadmin.db import engine as default_engine
 from hyperadmin.discover import discover_admin_modules
-
-template_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "templates")
 
 
 class Admin:
@@ -16,12 +17,14 @@ class Admin:
         app: FastAPI,
         discover_apps: list[str] | None = None,
         create_tables: bool = True,
+        engine: Any = None,
         template_dirs: list[str] | None = None,
     ):
         self.app = app
         self.router = APIRouter()
-        self.engine = engine
+        self.engine = engine or default_engine
         self.template_dirs = template_dirs or []
+        template_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "templates")
         self.templates = Jinja2Templates(directory=[template_dir] + self.template_dirs)
 
         if create_tables:
@@ -37,9 +40,11 @@ class Admin:
         """Registers the views from the site registry."""
         from hyperadmin.routing import HyperAdminRouter
 
-        router = HyperAdminRouter(engine=self.engine, templates=self.templates)
-        router.generate_routes()
-        self.router.include_router(router.router)
+        admin_router = HyperAdminRouter(engine=self.engine, templates=self.templates)
+        admin_router.generate_routes()
+        routers = admin_router.get_routers()
+        for router in routers:
+            self.router.include_router(router)
 
     def mount(self, path: str):
         """

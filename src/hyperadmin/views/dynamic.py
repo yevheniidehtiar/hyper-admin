@@ -4,6 +4,7 @@ from fastapi.templating import Jinja2Templates
 from starlette.responses import RedirectResponse
 
 from hyperadmin.core.adapters import BaseAdapter
+from hyperadmin.core.options import AdminOptions
 from hyperadmin.core.registry import site
 from hyperadmin.discover import app_label_var
 
@@ -22,10 +23,16 @@ class ModelView:
 
 
 class DynamicModelView:
-    def __init__(self, adapter: BaseAdapter, templates: Jinja2Templates, app_label: str | None):
+    def __init__(
+        self,
+        adapter: BaseAdapter,
+        options: AdminOptions,
+        templates: Jinja2Templates,
+        app_label: str | None,
+    ):
         self.adapter = adapter
         self.model = adapter.model
-        print(f"Initializing DynamicModelView with model: {self.model}, name: {self.model.__name__}")
+        self.options = options
         self.templates = templates
         self.app_label = app_label
 
@@ -45,17 +52,10 @@ class DynamicModelView:
             "default.html",
         ])
 
-        # This is not ideal as it checks the filesystem on every request.
-        # Jinja2's loader caching should mitigate this, but it's worth noting.
-        # A better approach might be to have a custom loader that can be primed
-        # with the search paths, but that's more complex.
-        print(f"Potential templates: {potential_templates}")
         for template_path in potential_templates:
             for search_path in self.templates.env.loader.searchpath:
                 full_path = os.path.join(search_path, template_path)
-                exists = os.path.exists(full_path)
-                print(f"Checking {full_path}: {exists}")
-                if exists:
+                if os.path.exists(full_path):
                     return template_path
 
         return f"{view_name}.html"

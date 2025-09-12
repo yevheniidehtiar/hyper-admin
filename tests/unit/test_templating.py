@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from fastapi.templating import Jinja2Templates
 
+from hyperadmin.core.options import AdminOptions
 from hyperadmin.views.dynamic import DynamicModelView
 
 
@@ -27,13 +28,22 @@ def mock_adapter():
     return adapter
 
 
-def test_get_template_name_hierarchy(mock_adapter, mock_templates):
+@pytest.fixture
+def mock_options():
+    return MagicMock(spec=AdminOptions)
+
+
+def test_get_template_name_hierarchy(mock_adapter, mock_templates, mock_options):
     # Arrange
     app_label = "my_app"
     view_name = "list"
-    model_name = "mymodel"  # This should be mockmodel
 
-    view = DynamicModelView(adapter=mock_adapter, templates=mock_templates, app_label=app_label)
+    view = DynamicModelView(
+        adapter=mock_adapter,
+        templates=mock_templates,
+        app_label=app_label,
+        options=mock_options,
+    )
 
     search_paths = ["/custom_templates"]
     view.templates.env.loader.searchpath = search_paths

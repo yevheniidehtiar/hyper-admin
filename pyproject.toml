@@ -100,6 +100,7 @@ addopts = "--color=yes --doctest-modules --exitfirst --failed-first --verbosity=
 testpaths = ["tests"]
 xfail_strict = true
 filterwarnings = "ignore:The `name` is not the first parameter anymore:DeprecationWarning"
+asyncio_mode = "auto"
 
 [tool.ruff]  # https://docs.astral.sh/ruff/settings/
 fix = true
