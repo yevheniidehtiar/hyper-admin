@@ -1,20 +1,27 @@
 """This module will contain the dynamic routing engine for HyperAdmin."""
 
 from fastapi import APIRouter
+from fastapi.templating import Jinja2Templates
 
 
 class HyperAdminRouter:
-    def __init__(self, engine):
+    def __init__(self, engine, templates: Jinja2Templates):
         self.router = APIRouter()
         self.engine = engine
+        self.templates = templates
 
     def generate_routes(self):
         """Generates the routes for the registered models."""
         from hyperadmin.core.registry import site
         from hyperadmin.views.dynamic import DynamicModelView
 
-        for model, admin_instance in site._registry.items():
-            view = DynamicModelView(adapter=admin_instance.adapter_class(model, engine=self.engine))
+        for model, admin_class in site._registry.items():
+            admin_instance = admin_class(model)
+            view = DynamicModelView(
+                adapter=admin_instance.adapter_class(model, engine=self.engine),
+                templates=self.templates,
+                app_label=admin_class.app_label,
+            )
             model_name = model.__name__.lower()
             self.router.add_api_route(
                 f"/{model_name}",

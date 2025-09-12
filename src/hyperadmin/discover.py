@@ -5,8 +5,11 @@ This module provides the auto-discovery mechanism for admin modules.
 import importlib
 import logging
 import os
+from contextvars import ContextVar
 
 logger = logging.getLogger(__name__)
+
+app_label_var: ContextVar[str | None] = ContextVar("app_label", default=None)
 
 
 def discover_admin_modules(app_modules: list[str]):
@@ -33,6 +36,7 @@ def discover_admin_modules(app_modules: list[str]):
             # Check if admin.py exists
             if os.path.exists(admin_py_path):
                 admin_module_str = f"{app_module_str}.admin"
+                token = app_label_var.set(app_module_str)
                 try:
                     # Import the admin.py module
                     importlib.import_module(admin_module_str)
@@ -41,6 +45,8 @@ def discover_admin_modules(app_modules: list[str]):
                     )
                 except ImportError as e:
                     logger.error(f"Failed to import admin module {admin_module_str}: {e}")
+                finally:
+                    app_label_var.reset(token)
             else:
                 logger.debug(f"No admin.py file found in {app_module_str}")
 
