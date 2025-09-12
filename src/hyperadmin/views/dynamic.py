@@ -4,6 +4,7 @@ from fastapi import HTTPException, Request
 from fastapi.templating import Jinja2Templates
 
 from hyperadmin.core.adapters import BaseAdapter
+from hyperadmin.core.options import AdminOptions
 
 template_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "templates")
 templates = Jinja2Templates(directory=template_dir)
@@ -13,9 +14,10 @@ from starlette.responses import RedirectResponse
 
 
 class DynamicModelView:
-    def __init__(self, adapter: BaseAdapter):
+    def __init__(self, adapter: BaseAdapter, options: AdminOptions):
         self.adapter = adapter
         self.model = adapter.model
+        self.options = options
 
     async def list_view(self, request: Request):
         """Renders the list view for the model."""
