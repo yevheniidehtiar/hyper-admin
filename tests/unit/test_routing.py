@@ -1,11 +1,12 @@
+from unittest.mock import MagicMock
+
 import anyio
 import pytest
 from fastapi import FastAPI
+from fastapi.templating import Jinja2Templates
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlmodel import Field, SQLModel
-from unittest.mock import MagicMock
-from fastapi.templating import Jinja2Templates
 
 from hyperadmin.adapters.sqlmodel import SQLModelAdapter
 from hyperadmin.core.model import ModelAdmin

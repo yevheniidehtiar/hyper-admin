@@ -1,4 +1,5 @@
 """Unit tests for the hyperadmin.core module."""
+
 from unittest.mock import MagicMock
 
 import pytest

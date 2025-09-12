@@ -44,6 +44,7 @@ class SiteRegistry:
         """
         if admin_class is None:
             from hyperadmin.core.model import ModelAdmin
+
             admin_class = ModelAdmin
 
         if options is None:

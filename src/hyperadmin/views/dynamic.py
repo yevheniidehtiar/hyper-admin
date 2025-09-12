@@ -1,4 +1,5 @@
 import os
+
 from fastapi import HTTPException, Request
 from fastapi.templating import Jinja2Templates
 from starlette.responses import RedirectResponse
@@ -41,22 +42,27 @@ class DynamicModelView:
 
         potential_templates = []
         if self.app_label:
-            potential_templates.extend([
-                f"{self.app_label}/{model_name}/{view_name}.html",
-                f"{self.app_label}/{model_name}/default.html",
-                f"{self.app_label}/{view_name}.html",
-                f"{self.app_label}/default.html",
-            ])
-        potential_templates.extend([
-            f"{view_name}.html",
-            "default.html",
-        ])
+            potential_templates.extend(
+                [
+                    f"{self.app_label}/{model_name}/{view_name}.html",
+                    f"{self.app_label}/{model_name}/default.html",
+                    f"{self.app_label}/{view_name}.html",
+                    f"{self.app_label}/default.html",
+                ]
+            )
+        potential_templates.extend(
+            [
+                f"{view_name}.html",
+                "default.html",
+            ]
+        )
 
         for template_path in potential_templates:
-            for search_path in self.templates.env.loader.searchpath:
-                full_path = os.path.join(search_path, template_path)
-                if os.path.exists(full_path):
-                    return template_path
+            if self.templates.env.loader:
+                for search_path in self.templates.env.loader.searchpath:
+                    full_path = os.path.join(search_path, template_path)
+                    if os.path.exists(full_path):
+                        return template_path
 
         return f"{view_name}.html"
 

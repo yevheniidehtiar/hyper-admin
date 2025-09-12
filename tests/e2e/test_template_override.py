@@ -33,7 +33,9 @@ def override_app_dir() -> Iterator[Path]:
         templates_dir.mkdir()
         (templates_dir / "my_app").mkdir()
         (templates_dir / "my_app" / "mymodel").mkdir()
-        (templates_dir / "my_app" / "mymodel" / "list.html").write_text("<h1>Overridden List Page</h1>")
+        (templates_dir / "my_app" / "mymodel" / "list.html").write_text(
+            "<h1>Overridden List Page</h1>"
+        )
 
         # Create main app file
         (app_dir / "main.py").write_text("""
