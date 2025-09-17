@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="form-container">
+        <h2>{% block form_title %}{% endblock %}</h2>
+        <form {% block form_attributes %}{% endblock %}>
+            {% block form_body %}{% endblock %}
+        </form>
+    </div>
+{% endblock %}
