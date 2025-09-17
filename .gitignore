@@ -74,3 +74,5 @@ site/
 *.sqlite3
 *.db
 .coverage
+.gemini/
+gha-creds-*.json
