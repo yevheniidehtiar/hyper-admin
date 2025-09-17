@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="list-container">
+        <h2>{% block list_title %}{% endblock %}</h2>
+        <div class="list-table">
+            {% block list_table %}{% endblock %}
+        </div>
+    </div>
+{% endblock %}
