@@ -1,23 +1,74 @@
 import os
+from typing import cast
 
 from fastapi import HTTPException, Request
 from fastapi.templating import Jinja2Templates
+from jinja2 import FileSystemLoader
+from starlette.responses import RedirectResponse
 
 from hyperadmin.core.adapters import BaseAdapter
 from hyperadmin.core.options import AdminOptions
+from hyperadmin.core.registry import site
+from hyperadmin.discover import app_label_var
 
-template_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "templates")
-templates = Jinja2Templates(directory=template_dir)
 
+class ModelView:
+    def __init__(self, model):
+        self.model = model
 
-from starlette.responses import RedirectResponse
+    def __init_subclass__(cls, **kwargs):
+        model = kwargs.pop("model", None)
+        super().__init_subclass__(**kwargs)
+        if model:
+            cls.model = model
+            app_label = app_label_var.get()
+            site.register(model, admin_class=cls, app_label=app_label)
 
 
 class DynamicModelView:
-    def __init__(self, adapter: BaseAdapter, options: AdminOptions):
+    def __init__(
+        self,
+        adapter: BaseAdapter,
+        options: AdminOptions,
+        templates: Jinja2Templates,
+        app_label: str | None,
+    ):
         self.adapter = adapter
         self.model = adapter.model
         self.options = options
+        self.templates = templates
+        self.app_label = app_label
+
+    def _get_template_name(self, view_name: str) -> str:
+        model_name = self.model.__name__.lower()
+
+        potential_templates = []
+        if self.app_label:
+            potential_templates.extend(
+                [
+                    f"{self.app_label}/{model_name}/{view_name}.html",
+                    f"{self.app_label}/{model_name}/default.html",
+                    f"{self.app_label}/{view_name}.html",
+                    f"{self.app_label}/default.html",
+                ]
+            )
+        potential_templates.extend(
+            [
+                f"{view_name}.html",
+                "default.html",
+            ]
+        )
+
+        for template_path in potential_templates:
+            if self.templates.env.loader:
+                # Cast to FileSystemLoader to access the searchpath attribute
+                loader = cast(FileSystemLoader, self.templates.env.loader)
+                for search_path in loader.searchpath:
+                    full_path = os.path.join(search_path, template_path)
+                    if os.path.exists(full_path):
+                        return template_path
+
+        return f"{view_name}.html"
 
     async def list_view(self, request: Request):
         """Renders the list view for the model."""
@@ -28,7 +79,8 @@ class DynamicModelView:
             "fields": list(self.model.model_fields.keys()),
             "items": items,
         }
-        return templates.TemplateResponse("list.html", context)
+        template_name = self._get_template_name("list")
+        return self.templates.TemplateResponse(template_name, context)
 
     async def detail_view(self, request: Request, item_id: int):
         """
@@ -45,7 +97,8 @@ class DynamicModelView:
             "item_name": f"{self.model.__name__} #{getattr(item, 'id', 'N/A')}",
             "item": item.model_dump(),
         }
-        return templates.TemplateResponse("detail.html", context)
+        template_name = self._get_template_name("detail")
+        return self.templates.TemplateResponse(template_name, context)
 
     async def create_form_view(self, request: Request):
         """Renders the create form."""
@@ -54,7 +107,8 @@ class DynamicModelView:
             "model_name": self.model.__name__,
             "fields": list(self.model.model_fields.keys()),
         }
-        return templates.TemplateResponse("create.html", context)
+        template_name = self._get_template_name("create")
+        return self.templates.TemplateResponse(template_name, context)
 
     async def create_view(self, request: Request):
         """Handles form submission for creating a new item."""
@@ -74,7 +128,8 @@ class DynamicModelView:
             "item": item,
             "fields": list(self.model.model_fields.keys()),
         }
-        return templates.TemplateResponse("update.html", context)
+        template_name = self._get_template_name("update")
+        return self.templates.TemplateResponse(template_name, context)
 
     async def update_view(self, request: Request, item_id: int):
         """Handles form submission for updating an item."""

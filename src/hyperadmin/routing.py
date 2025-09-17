@@ -3,6 +3,7 @@
 from typing import Any
 
 from fastapi import APIRouter
+from fastapi.templating import Jinja2Templates
 from sqlmodel import SQLModel
 
 from hyperadmin.core.options import AdminOptions
@@ -11,18 +12,22 @@ from hyperadmin.views.dynamic import DynamicModelView
 
 def create_admin_router(
     model: type[SQLModel],
+    admin_class: Any,
     admin_instance: Any,
     options: AdminOptions,
     engine: Any,
+    templates: Jinja2Templates,
 ) -> APIRouter:
     """
     Creates an APIRouter for a given model with the specified admin options.
 
     Args:
         model: The SQLModel class.
+        admin_class: The admin class for the model.
         admin_instance: The admin instance for the model.
         options: The AdminOptions for the model.
         engine: The database engine.
+        templates: The Jinja2Templates instance.
 
     Returns:
         An APIRouter instance with the generated routes.
@@ -31,6 +36,8 @@ def create_admin_router(
     view = DynamicModelView(
         adapter=admin_instance.adapter_class(model, engine=engine),
         options=options,
+        templates=templates,
+        app_label=admin_class.app_label,
     )
     model_name = model.__name__.lower()
 
@@ -92,8 +99,9 @@ def create_admin_router(
 
 
 class HyperAdminRouter:
-    def __init__(self, engine: Any):
+    def __init__(self, engine: Any, templates: Jinja2Templates):
         self.engine = engine
+        self.templates = templates
         self.routers: list[APIRouter] = []
 
     def generate_routes(self) -> None:
@@ -101,13 +109,16 @@ class HyperAdminRouter:
         from hyperadmin.core.registry import site
 
         self.routers = []
-        for model, admin_instance in site._registry.items():
+        for model, admin_class in site._registry.items():
+            admin_instance = admin_class(model)
             options = getattr(admin_instance, "options", AdminOptions())
             router = create_admin_router(
                 model=model,
+                admin_class=admin_class,
                 admin_instance=admin_instance,
                 options=options,
                 engine=self.engine,
+                templates=self.templates,
             )
             self.routers.append(router)
 
