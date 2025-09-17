@@ -1,0 +1,21 @@
+{#-
+    Renders a button element with customizable text, type, and HTMX attributes.
+
+    **Macro: button**
+
+    - `text` (string): The text to display on the button.
+    - `type` (string, optional, default='button'): The type of the button (e.g., 'button', 'submit').
+    - `hx_post` (string, optional): The URL to POST to when the button is clicked.
+    - `hx_target` (string, optional): The target element to update with the response.
+    - `class` (string, optional): Additional CSS classes to apply to the button.
+-#}
+{% macro button(text, type='button', hx_post=None, hx_target=None, class='') %}
+    <button
+        type="{{ type }}"
+        {% if hx_post %} hx-post="{{ hx_post }}" {% endif %}
+        {% if hx_target %} hx-target="{{ hx_target }}" {% endif %}
+        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded {{ class }}"
+    >
+        {{ text }}
+    </button>
+{% endmacro %}

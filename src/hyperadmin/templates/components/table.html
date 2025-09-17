@@ -1,0 +1,33 @@
+{#-
+    Renders a table with a header and rows.
+
+    **Macro: table**
+
+    - `headers` (list): A list of strings for the table headers.
+    - `rows` (list of lists): A list of lists, where each inner list represents a row.
+    - `class` (string, optional): Additional CSS classes to apply to the table.
+-#}
+{% macro table(headers, rows, class='') %}
+    <table class="min-w-full divide-y divide-gray-200 {{ class }}">
+        <thead class="bg-gray-50">
+            <tr>
+                {% for header in headers %}
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {{ header }}
+                    </th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+            {% for row in rows %}
+                <tr>
+                    {% for cell in row %}
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {{ cell }}
+                        </td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endmacro %}
