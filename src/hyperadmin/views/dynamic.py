@@ -1,7 +1,9 @@
 import os
+from typing import cast
 
 from fastapi import HTTPException, Request
 from fastapi.templating import Jinja2Templates
+from jinja2 import FileSystemLoader
 from starlette.responses import RedirectResponse
 
 from hyperadmin.core.adapters import BaseAdapter
@@ -59,7 +61,9 @@ class DynamicModelView:
 
         for template_path in potential_templates:
             if self.templates.env.loader:
-                for search_path in self.templates.env.loader.searchpath:
+                # Cast to FileSystemLoader to access the searchpath attribute
+                loader = cast(FileSystemLoader, self.templates.env.loader)
+                for search_path in loader.searchpath:
                     full_path = os.path.join(search_path, template_path)
                     if os.path.exists(full_path):
                         return template_path
