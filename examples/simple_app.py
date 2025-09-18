@@ -1,6 +1,7 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 from sqlmodel import Field, Session, SQLModel, create_engine, select
 
 from hyperadmin.main import Admin
@@ -42,6 +43,7 @@ async def lifespan(app: FastAPI):
 
 # 4. Create a FastAPI app and an Admin instance
 app = FastAPI(lifespan=lifespan)
+app.mount("/static", StaticFiles(directory="src/hyperadmin/static"), name="static")
 admin = Admin(app)
 
 
