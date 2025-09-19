@@ -1,8 +1,8 @@
 from sqlmodel import Session, SQLModel
 from sqlmodel.sql.expression import select
 
-from examples.rbac_app.db import engine
-from examples.rbac_app.models import Group, Permission, User, UserGroup, UserPermissions
+from .db import engine
+from .models import Group, Permission, User, UserGroup, UserPermissions
 
 
 # Database initialization

@@ -176,3 +176,7 @@ type = "simple"
     { shell = "playwright install --with-deps" },
     { cmd = "pytest tests/e2e" },
   ]
+
+  [tool.poe.tasks.run]
+  help = "Run the example rbac_app"
+  cmd = "uvicorn examples.rbac_app.main:app --host 0.0.0.0 --port 8000 --reload"

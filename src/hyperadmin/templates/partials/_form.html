@@ -1,0 +1,42 @@
+<form
+    id="entity-form"
+    hx-post="{{ request.url.path }}"
+    hx-target="this"
+    hx-swap="outerHTML"
+    class="needs-validation"
+    novalidate
+>
+    {% for field in fields %}
+        {% if field not in ['id', 'created_at', 'updated_at'] and 'user_groups' not in field and 'user_permissions' not in field %}
+            <div class="mb-3">
+                <label for="{{ field }}" class="form-label">{{ field.replace('_', ' ')|title }}</label>
+
+                {% set value = getattr(item, field, '') %}
+                {% if value is none %}{% set value = '' %}{% endif %}
+
+                <input
+                    type="text"
+                    class="form-control {% if errors and errors[field] %}is-invalid{% endif %}"
+                    id="{{ field }}"
+                    name="{{ field }}"
+                    value="{{ value }}"
+                >
+
+                {% if errors and errors[field] %}
+                    <div class="invalid-feedback">
+                        {{ errors[field] }}
+                    </div>
+                {% endif %}
+            </div>
+        {% endif %}
+    {% endfor %}
+
+    <div class="mt-4">
+        <button type="submit" class="btn btn-primary">
+            Save
+        </button>
+        <a href="{{ url_for(model_name|lower ~ '-list') }}" class="btn btn-secondary">
+            Cancel
+        </a>
+    </div>
+</form>

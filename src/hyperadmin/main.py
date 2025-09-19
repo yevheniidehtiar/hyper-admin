@@ -1,24 +1,33 @@
 from fastapi import APIRouter, FastAPI
+from sqlmodel import SQLModel
 
-from hyperadmin.db import create_db_and_tables
 from hyperadmin.views import ModelView
 
 
 class Admin:
     """The main Admin class that holds the admin interface."""
 
-    def __init__(self, app: FastAPI):
+    def __init__(
+        self,
+        app: FastAPI,
+        engine: "Engine",
+        title: str = "HyperAdmin",
+        base_url: str = "/admin",
+    ):
         self.app = app
+        self.engine = engine
+        self.title = title
+        self.base_url = base_url
         self.router = APIRouter()
-        create_db_and_tables()
+        self.app.include_router(self.router, prefix=base_url)
 
-    def register(self, model_view_class: type[ModelView]):
-        """Registers a ModelView class with the admin interface."""
-        view_instance = model_view_class()
-        self.router.include_router(view_instance.router, tags=[view_instance.model.__name__])
-
-    def mount(self, path: str):
+    def add_view(self, view: type[ModelView]) -> None:
         """
-        Mounts the admin interface on the FastAPI application.
+        Registers a ModelView class with the admin interface.
         """
-        self.app.include_router(self.router, prefix=path, tags=["HyperAdmin"])
+        view_instance = view()
+        self.router.include_router(
+            view_instance.router,
+            prefix=f"/{view_instance.model.__name__.lower()}",
+            tags=[view_instance.model.__name__],
+        )

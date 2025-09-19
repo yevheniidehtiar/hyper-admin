@@ -1,0 +1,7 @@
+Poe => uvicorn examples.rbac_app.main:app --host 0.0.0.0 --port 8000 --reload
+INFO:     Will watch for changes in these directories: ['/app']
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     Started reloader process [13045] using StatReload
+INFO:     Started server process [13047]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.

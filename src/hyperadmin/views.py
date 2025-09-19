@@ -1,7 +1,9 @@
 import os
+from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from fastapi.templating import Jinja2Templates
+from pydantic import ValidationError
 from sqlmodel import Session, SQLModel, select
 
 from hyperadmin.db import get_session
@@ -9,6 +11,16 @@ from hyperadmin.db import get_session
 # The templates are now in src/hyperadmin/templates
 template_dir = os.path.join(os.path.dirname(__file__), "templates")
 templates = Jinja2Templates(directory=template_dir)
+
+
+def get_error_messages(exc: ValidationError) -> dict[str, Any]:
+    """Extracts error messages from a Pydantic ValidationError."""
+    errors: dict[str, Any] = {}
+    for error in exc.errors():
+        if error["loc"]:
+            field = error["loc"][0]
+            errors[field] = error["msg"]
+    return errors
 
 
 class ModelView:
@@ -28,31 +40,31 @@ class ModelView:
     def add_routes(self):
         """Adds the list, detail, and create view routes to the router."""
         self.router.add_api_route(
-            f"/{self.model.__name__.lower()}",
+            "/",
             self.list_view,
             methods=["GET"],
             name=f"{self.model.__name__.lower()}-list",
         )
         self.router.add_api_route(
-            f"/{self.model.__name__.lower()}/create",
+            "/create",
             self.create_view,
             methods=["GET", "POST"],
             name=f"{self.model.__name__.lower()}-create",
         )
         self.router.add_api_route(
-            f"/{self.model.__name__.lower()}/{{item_id}}",
+            "/{item_id}",
             self.detail_view,
             methods=["GET"],
             name=f"{self.model.__name__.lower()}-detail",
         )
         self.router.add_api_route(
-            f"/{self.model.__name__.lower()}/{{item_id}}/update",
+            "/{item_id}/update",
             self.update_view,
             methods=["GET", "POST"],
             name=f"{self.model.__name__.lower()}-update",
         )
         self.router.add_api_route(
-            f"/{self.model.__name__.lower()}/{{item_id}}/delete",
+            "/{item_id}/delete",
             self.delete_action,
             methods=["POST"],
             name=f"{self.model.__name__.lower()}-delete",
@@ -78,37 +90,93 @@ class ModelView:
         if not item:
             raise HTTPException(status_code=404, detail="Item not found")
 
+        form_fields = (
+            [column.name for column in self.form_columns]
+            if hasattr(self, "form_columns")
+            else list(self.model.model_fields.keys())
+        )
+        print(f"Form fields: {form_fields}")
+
         if request.method == "POST":
             form_data = await request.form()
-            for key, value in form_data.items():
-                setattr(item, key, value)
-            session.add(item)
-            session.commit()
-            session.refresh(item)
-            # For now, let's redirect to the list view. HTMX will be added later.
-            return {"message": "Item updated successfully"}
+            try:
+                for key, value in form_data.items():
+                    setattr(item, key, value)
+                session.add(item)
+                session.commit()
+                session.refresh(item)
+                return Response(
+                    headers={
+                        "HX-Redirect": str(
+                            request.url_for(
+                                f"{self.model.__name__.lower()}-detail", item_id=item.id
+                            )
+                        )
+                    }
+                )
+            except ValidationError as e:
+                context = {
+                    "request": request,
+                    "model_name": self.model.__name__,
+                    "item": item,
+                    "fields": form_fields,
+                    "errors": get_error_messages(e),
+                }
+                return templates.TemplateResponse(request, "update.html", context)
 
         context = {
+            "request": request,
             "model_name": self.model.__name__,
             "item": item,
-            "fields": list(self.model.model_fields.keys()),
+            "fields": form_fields,
+            "errors": None,
         }
         return templates.TemplateResponse(request, "update.html", context)
 
     async def create_view(self, request: Request, session: Session = Depends(get_session)):
         """Renders the create view and handles form submission for creating a new item."""
+        form_fields = (
+            [column.name for column in self.form_columns]
+            if hasattr(self, "form_columns")
+            else list(self.model.model_fields.keys())
+        )
+
         if request.method == "POST":
             form_data = await request.form()
-            item = self.model(**form_data)
-            session.add(item)
-            session.commit()
-            session.refresh(item)
-            # For now, let's redirect to the list view. HTMX will be added later.
-            return {"message": "Item created successfully"}  # This will be improved later
+            try:
+                item = self.model(**form_data)
+                session.add(item)
+                session.commit()
+                session.refresh(item)
+                return Response(
+                    headers={
+                        "HX-Redirect": str(
+                            request.url_for(
+                                f"{self.model.__name__.lower()}-detail", item_id=item.id
+                            )
+                        )
+                    }
+                )
+            except ValidationError as e:
+                context = {
+                    "request": request,
+                    "model_name": self.model.__name__,
+                    "fields": form_fields,
+                    "item": self.model(**form_data),  # Preserve entered data
+                    "errors": get_error_messages(e),
+                }
+                return templates.TemplateResponse(
+                    request,
+                    "partials/_form.html",
+                    context,
+                )
 
         context = {
+            "request": request,
             "model_name": self.model.__name__,
-            "fields": list(self.model.model_fields.keys()),
+            "fields": form_fields,
+            "item": self.model(),  # Empty item for the form
+            "errors": None,
         }
         return templates.TemplateResponse(request, "create.html", context)
 
@@ -116,6 +184,7 @@ class ModelView:
         """Renders the list view for the model."""
         items = session.exec(select(self.model)).all()
         context = {
+            "request": request,
             "model_name": self.model.__name__,
             "fields": list(self.model.model_fields.keys()),
             "items": items,

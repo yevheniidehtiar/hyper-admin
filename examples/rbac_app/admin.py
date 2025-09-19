@@ -1,12 +1,12 @@
-from rbac_app.models import Group, Permission, User, UserGroup, UserPermissions
-
+from .models import Group, Permission, User, UserGroup, UserPermissions
 from hyperadmin.views import ModelView
 
 
 # Model Views for Admin Interface
-class UserAdmin(ModelView, model=User):
+class UserAdmin(ModelView):
     """Admin interface for User model."""
 
+    model = User
     list = [
         User.id,
         User.username,
@@ -45,9 +45,10 @@ class UserAdmin(ModelView, model=User):
     icon = "fa-solid fa-user"
 
 
-class GroupAdmin(ModelView, model=Group):
+class GroupAdmin(ModelView):
     """Admin interface for Group model."""
 
+    model = Group
     column_list = [
         Group.id,
         Group.name,
@@ -73,9 +74,10 @@ class GroupAdmin(ModelView, model=Group):
     icon = "fa-solid fa-users"
 
 
-class UserGroupAdmin(ModelView, model=UserGroup):
+class UserGroupAdmin(ModelView):
     """Admin interface for UserGroup model."""
 
+    model = UserGroup
     column_list = [
         UserGroup.user,
         UserGroup.group,
@@ -104,9 +106,10 @@ class UserGroupAdmin(ModelView, model=UserGroup):
     icon = "fa-solid fa-link"
 
 
-class PermissionAdmin(ModelView, model=Permission):
+class PermissionAdmin(ModelView):
     """Admin interface for Permission model."""
 
+    model = Permission
     column_list = [
         Permission.id,
         Permission.name,
@@ -147,9 +150,10 @@ class PermissionAdmin(ModelView, model=Permission):
     icon = "fa-solid fa-key"
 
 
-class UserPermissionsAdmin(ModelView, model=UserPermissions):
+class UserPermissionsAdmin(ModelView):
     """Admin interface for UserPermissions model."""
 
+    model = UserPermissions
     column_list = [
         UserPermissions.id,
         UserPermissions.user,

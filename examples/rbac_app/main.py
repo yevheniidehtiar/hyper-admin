@@ -6,6 +6,13 @@ from fastapi import FastAPI
 
 from examples.rbac_app.create_sample_data import create_sample_data, create_tables
 from examples.rbac_app.db import SQLITE_PATH, engine
+from examples.rbac_app.admin import (
+    GroupAdmin,
+    PermissionAdmin,
+    UserAdmin,
+    UserGroupAdmin,
+    UserPermissionsAdmin,
+)
 from hyperadmin import Admin
 
 
@@ -35,12 +42,12 @@ app = FastAPI(
 admin = Admin(app, engine, title="Demo Admin", base_url="/admin")
 
 
-# # Add views to admin
-# admin.add_view(UserAdmin)
-# admin.add_view(GroupAdmin)
-# admin.add_view(UserGroupAdmin)
-# admin.add_view(PermissionAdmin)
-# admin.add_view(UserPermissionsAdmin)
+# Add views to admin
+admin.add_view(UserAdmin)
+admin.add_view(GroupAdmin)
+admin.add_view(UserGroupAdmin)
+admin.add_view(PermissionAdmin)
+admin.add_view(UserPermissionsAdmin)
 
 
 @app.get("/")
