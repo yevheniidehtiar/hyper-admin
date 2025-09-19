@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import os
 import signal
 import socket
@@ -8,6 +6,7 @@ import sys
 import time
 from collections.abc import Iterator
 from contextlib import closing
+from http import HTTPStatus
 
 import pytest
 
@@ -75,7 +74,7 @@ def demo_base_url(e2e_port: int) -> Iterator[str]:
         while time.time() < deadline:
             try:
                 r = requests.get(base + "/", timeout=0.5)
-                if r.status_code == 200:
+                if r.status_code == HTTPStatus.OK:
                     break
             except Exception as e:
                 last_err = e
