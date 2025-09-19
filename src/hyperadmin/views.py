@@ -1,8 +1,10 @@
+import math
 import os
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.templating import Jinja2Templates
-from sqlmodel import Session, SQLModel, select
+from sqlalchemy.types import String
+from sqlmodel import Session, SQLModel, func, or_, select
 
 from hyperadmin.db import get_session
 
@@ -112,15 +114,71 @@ class ModelView:
         }
         return templates.TemplateResponse(request, "create.html", context)
 
-    async def list_view(self, request: Request, session: Session = Depends(get_session)):
-        """Renders the list view for the model."""
-        items = session.exec(select(self.model)).all()
+    async def list_view(
+        self,
+        request: Request,
+        session: Session = Depends(get_session),
+        page: int = Query(1, ge=1),
+        page_size: int = Query(10, ge=1, le=100),
+        search: str = Query(""),
+        sort_by: str = Query(None),
+        sort_direction: str = Query("asc", pattern="^(asc|desc)$"),
+    ):
+        """Renders the list view for the model with pagination, sorting, and filtering."""
+        query = select(self.model)
+
+        # Filtering
+        if search:
+            search_clauses = []
+            for column in self.model.__table__.columns:
+                if isinstance(column.type, String):
+                    search_clauses.append(column.ilike(f"%{search}%"))
+            if search_clauses:
+                query = query.where(or_(*search_clauses))
+
+        # Count total items for pagination after filtering
+        count_query = select(func.count()).select_from(query.subquery())
+        total_items = session.exec(count_query).one()
+        total_pages = math.ceil(total_items / page_size) if page_size > 0 else 0
+
+        # Sorting
+        sort_column = sort_by or list(self.model.model_fields.keys())[0]
+        if hasattr(self.model, sort_column):
+            column = getattr(self.model, sort_column)
+            if sort_direction == "desc":
+                query = query.order_by(column.desc())
+            else:
+                query = query.order_by(column.asc())
+
+        # Pagination
+        offset = (page - 1) * page_size
+        if page_size > 0:
+            query = query.offset(offset).limit(page_size)
+
+        items = session.exec(query).all()
+
         context = {
+            "request": request,
             "model_name": self.model.__name__,
             "fields": list(self.model.model_fields.keys()),
             "items": items,
+            "pagination": {
+                "page": page,
+                "page_size": page_size,
+                "total_items": total_items,
+                "total_pages": total_pages,
+                "start_index": offset + 1,
+                "end_index": min(offset + page_size, total_items),
+            },
+            "search_query": search,
+            "sort_by": sort_column,
+            "sort_direction": sort_direction,
         }
-        return templates.TemplateResponse(request, "list.html", context)
+
+        template_name = (
+            "components/table.html" if request.headers.get("hx-request") else "list.html"
+        )
+        return templates.TemplateResponse(template_name, context)
 
     async def detail_view(
         self, request: Request, item_id: int, session: Session = Depends(get_session)

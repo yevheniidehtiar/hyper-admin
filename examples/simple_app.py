@@ -15,10 +15,13 @@ class User(SQLModel, table=True):
 
 
 # 2. Create a database engine
-engine = create_engine("sqlite:///simple_app.db", connect_args={"check_same_thread": False})
+db_path = "simple_app.db"
+engine = create_engine(f"sqlite:///{db_path}", connect_args={"check_same_thread": False})
+print(f"Database path: {db_path}")
 
 
 def create_db_and_tables():
+    print("Creating database and tables...")
     SQLModel.metadata.create_all(engine)
     with Session(engine) as session:
         if not session.exec(select(User)).first():

@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}{{ model_name }} List | HyperAdmin{% endblock %}
+
+{% block content %}
+    <h1 class="text-2xl font-bold mb-4">{{ model_name }} List</h1>
+    <div class="mb-4">
+        <a href="{{ url_for(model_name|lower ~ '-create') }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            Create New {{ model_name }}
+        </a>
+    </div>
+
+    {% include "components/search_input.html" %}
+
+    <div id="list-container"
+         hx-target="this"
+         hx-swap="outerHTML">
+        {% block list_container %}
+            {% include "components/table.html" %}
+        {% endblock %}
+    </div>
+{% endblock %}
