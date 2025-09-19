@@ -1,3 +1,3 @@
-from .main import Admin
+from hyperadmin.main import Admin
 
 __all__ = ["Admin"]

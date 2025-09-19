@@ -26,7 +26,7 @@ class Admin:
         self.engine = engine or default_engine
         self.template_dirs = template_dirs or []
         template_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "templates")
-        self.templates = Jinja2Templates(directory=[template_dir] + self.template_dirs)
+        self.templates = Jinja2Templates(directory=[template_dir, *self.template_dirs])
 
         # Mount static files for the admin interface
         static_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")
