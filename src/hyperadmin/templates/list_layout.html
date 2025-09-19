@@ -5,7 +5,7 @@
 {% block content %}
     <h1 class="text-2xl font-bold mb-4">{{ model_name }} List</h1>
     <div class="mb-4">
-        <a href="{{ url_for(model_name|lower ~ '-create') }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+        <a href="{{ url_for(model_name|lower ~ '-create-form') }}" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
             Create New {{ model_name }}
         </a>
     </div>
