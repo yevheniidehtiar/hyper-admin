@@ -1,37 +1,32 @@
-{#-
-    Renders pagination links.
-
-    **Macro: pagination**
-
-    - `pagination` (object): A pagination object with attributes like `page`, `pages`, `has_prev`, `has_next`, `prev_num`, `next_num`.
-    - `endpoint` (string): The endpoint to use for generating the pagination links.
-    - `hx_target` (string, optional): The target element to update with the response.
--#}
-{% macro pagination(pagination, endpoint, hx_target=None) %}
-    <nav class="flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
-        <div class="flex flex-1 justify-between sm:justify-end">
-            {% if pagination.has_prev %}
-                <a href="{{ url_for(endpoint, page=pagination.prev_num) }}"
-                   {% if hx_target %}
-                       hx-get="{{ url_for(endpoint, page=pagination.prev_num) }}"
-                       hx-target="{{ hx_target }}"
-                       hx-swap="outerHTML"
-                   {% endif %}
-                   class="relative inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-                    Previous
-                </a>
+<div class="py-4 px-3">
+    <div class="flex items-center justify-between">
+        <div class="text-sm text-gray-700">
+            Showing {{ pagination.start_index }} to {{ pagination.end_index }} of {{ pagination.total_items }} results
+        </div>
+        <div class="flex items-center">
+            {% if pagination.page > 1 %}
+            <a href="{{ url_for(model_name|lower ~ '-list') }}?page={{ pagination.page - 1 }}&search={{ search_query }}&sort_by={{ sort_by }}&sort_direction={{ sort_direction }}"
+               hx-get="{{ url_for(model_name|lower ~ '-list') }}?page={{ pagination.page - 1 }}&search={{ search_query }}&sort_by={{ sort_by }}&sort_direction={{ sort_direction }}"
+               hx-target="#model-list"
+               hx-swap="outerHTML"
+               class="px-3 py-1 border rounded text-gray-700 hover:bg-gray-200">
+                Previous
+            </a>
             {% endif %}
-            {% if pagination.has_next %}
-                <a href="{{ url_for(endpoint, page=pagination.next_num) }}"
-                   {% if hx_target %}
-                       hx-get="{{ url_for(endpoint, page=pagination.next_num) }}"
-                       hx-target="{{ hx_target }}"
-                       hx-swap="outerHTML"
-                   {% endif %}
-                   class="relative ml-3 inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-                    Next
-                </a>
+
+            <div class="px-3 py-1 text-gray-700">
+                Page {{ pagination.page }} of {{ pagination.total_pages }}
+            </div>
+
+            {% if pagination.page < pagination.total_pages %}
+            <a href="{{ url_for(model_name|lower ~ '-list') }}?page={{ pagination.page + 1 }}&search={{ search_query }}&sort_by={{ sort_by }}&sort_direction={{ sort_direction }}"
+               hx-get="{{ url_for(model_name|lower ~ '-list') }}?page={{ pagination.page + 1 }}&search={{ search_query }}&sort_by={{ sort_by }}&sort_direction={{ sort_direction }}"
+               hx-target="#model-list"
+               hx-swap="outerHTML"
+               class="px-3 py-1 border rounded text-gray-700 hover:bg-gray-200">
+                Next
+            </a>
             {% endif %}
         </div>
-    </nav>
-{% endmacro %}
+    </div>
+</div>
