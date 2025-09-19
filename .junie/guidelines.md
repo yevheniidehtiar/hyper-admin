@@ -29,7 +29,7 @@ src/hyperadmin/
 ├── __init__.py
 ├── db.py              # Database utilities
 ├── discover.py        # Discovery functionality
-├── main.py           # Main entry point
+├── main.py            # Main entry point
 └── routing.py        # Route definitions
 ```
 
