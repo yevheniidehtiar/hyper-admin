@@ -104,7 +104,10 @@ def demo_base_url(e2e_port: int) -> Iterator[str]:
                 proc.kill()
 
 
-@pytest.fixture(autouse=True)
-def set_test_timeout(page: Page) -> None:
+    if timeout_str := os.environ.get("E2E_TEST_TIMEOUT"):
+        try:
+            page.set_default_timeout(int(timeout_str))
+        except ValueError:
+            pytest.fail(f"Invalid value for E2E_TEST_TIMEOUT: '{timeout_str}'. Must be an integer.")
     if timeout_str := os.environ.get("E2E_TEST_TIMEOUT"):
         page.set_default_timeout(int(timeout_str))
