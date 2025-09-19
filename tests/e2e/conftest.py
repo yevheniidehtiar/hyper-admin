@@ -9,6 +9,7 @@ from contextlib import closing
 from http import HTTPStatus
 
 import pytest
+from playwright.sync_api import Page
 
 
 def _find_free_port() -> int:
@@ -65,7 +66,7 @@ def demo_base_url(e2e_port: int) -> Iterator[str]:
         text=True,
     )
 
-    base = f"http://127.0.0.1:{e2e_port}"
+    base = f"http://localhost:{e2e_port}"
 
     try:
         # Wait for server readiness
@@ -101,3 +102,9 @@ def demo_base_url(e2e_port: int) -> Iterator[str]:
                 proc.wait(timeout=5)
             except Exception:
                 proc.kill()
+
+
+@pytest.fixture(autouse=True)
+def set_test_timeout(page: Page) -> None:
+    if timeout_str := os.environ.get("E2E_TEST_TIMEOUT"):
+        page.set_default_timeout(int(timeout_str))
