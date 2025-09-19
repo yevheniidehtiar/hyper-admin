@@ -2,6 +2,7 @@ import os
 from typing import Any
 
 from fastapi import APIRouter, FastAPI
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from hyperadmin.db import create_db_and_tables
@@ -26,6 +27,11 @@ class Admin:
         self.template_dirs = template_dirs or []
         template_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "templates")
         self.templates = Jinja2Templates(directory=[template_dir] + self.template_dirs)
+
+        # Mount static files for the admin interface
+        static_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")
+        if os.path.exists(static_dir):
+            app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
         if create_tables:
 
