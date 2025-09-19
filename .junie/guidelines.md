@@ -151,7 +151,7 @@ uv sync --upgrade
 - **Playwright**: End-to-end testing
 
 ## Submission Requirements
-
+# Add development dependency  
 Before submitting changes, ensure:
 
 1. ✅ All tests pass (`poe test`)
