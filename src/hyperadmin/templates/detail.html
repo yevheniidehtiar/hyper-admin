@@ -1,20 +1,30 @@
-{% extends "base.html" %}
+{% extends "detail_layout.html" %}
+{% from "ui_components.html" import button %}
 
 {% block title %}{{ item_name }} | HyperAdmin{% endblock %}
 
-{% block content %}
-    <h1 class="text-2xl font-bold mb-4">{{ item_name }}</h1>
-    <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
-        {% for key, value in item.items() %}
-        <div class="mb-4">
-            <label class="block text-gray-700 text-sm font-bold mb-2">
-                {{ key }}
-            </label>
-            <div class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                {{ value }}
-            </div>
+{% block page_heading %}{{ item_name }}{% endblock %}
+
+{% block actions %}
+    <a
+        href="./update"
+        class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+        hx-get="./update"
+        hx-target="#content-container"
+        hx-swap="outerHTML"
+    >Update</a>
+    {{ button('Delete', 'post', './delete', extra_classes='bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded') }}
+{% endblock %}
+
+{% block fields %}
+    {% for key, value in item.items() %}
+    <div class="mb-4">
+        <label class="block text-gray-700 text-sm font-bold mb-2">
+            {{ key }}
+        </label>
+        <div class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            {{ value }}
         </div>
-        {% endfor %}
     </div>
-    <a href="../" class="text-indigo-600 hover:text-indigo-900">Back to list</a>
+    {% endfor %}
 {% endblock %}
