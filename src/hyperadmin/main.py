@@ -1,3 +1,3 @@
-from .core.app import Admin
+from hyperadmin.core.app import Admin
 
 __all__ = ["Admin"]

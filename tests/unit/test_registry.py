@@ -1,3 +1,4 @@
+import contextlib
 import threading
 
 import pytest
@@ -69,10 +70,8 @@ def test_thread_safe_registration(registry: SiteRegistry, mocker) -> None:
         pass
 
     def register_model(model_class: type) -> None:
-        try:
+        with contextlib.suppress(ValueError):
             registry.register(model_class)
-        except ValueError:
-            pass
 
     for i in range(num_threads):
         model_class = type(f"Model{i}", (Model,), {})
