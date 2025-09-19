@@ -70,7 +70,7 @@ To mitigate integration risks early:
 1. **Build a Skeleton First**: Start with a simple, end-to-end working version using placeholders/stubs
 2. **Define and Verify Data Flow**: Focus on how data moves through the system
 3. **Iterate and Add Detail**: Once the structure is verified, flesh out component details
-
+2. **Write the minimal code** to make the test pass  
 ## Testing Requirements
 
 ### Test Execution
