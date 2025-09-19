@@ -185,7 +185,7 @@ type = "simple"
   help = "Run end-to-end tests with Playwright (fast with screenshots)"
   sequence = [
     { shell = "playwright install chromium" },
-    { cmd = "pytest tests/e2e --screenshot on", vars = { "E2E_TEST_TIMEOUT" = "5000" } },
+    { shell = "E2E_TEST_TIMEOUT=5000 pytest tests/e2e --screenshot on" },
   ]
 
   [tool.poe.tasks."static:build-css"]
