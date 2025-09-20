@@ -6,7 +6,7 @@ from fastapi.templating import Jinja2Templates
 from jinja2 import FileSystemLoader
 from starlette.responses import RedirectResponse
 
-from hyperadmin.core.adapters import BaseAdapter
+from hyperadmin.adapters import SQLAlchemyAdapter, SQLModelAdapter
 from hyperadmin.core.options import AdminOptions
 from hyperadmin.core.registry import site
 from hyperadmin.discover import app_label_var
@@ -28,7 +28,7 @@ class ModelView:
 class DynamicModelView:
     def __init__(
         self,
-        adapter: BaseAdapter,
+        adapter: SQLAlchemyAdapter | SQLModelAdapter,
         options: AdminOptions,
         templates: Jinja2Templates,
         app_label: str | None,

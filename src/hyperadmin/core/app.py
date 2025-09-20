@@ -4,8 +4,8 @@ from typing import Any
 from fastapi import APIRouter, FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from sqlmodel import SQLModel
 
-from hyperadmin.db import create_db_and_tables
 from hyperadmin.db import engine as default_engine
 from hyperadmin.discover import discover_admin_modules
 
@@ -37,10 +37,15 @@ class Admin:
 
             @app.on_event("startup")
             async def startup_event():
-                await create_db_and_tables()
+                await self._create_db_and_tables()
 
         if discover_apps:
             discover_admin_modules(discover_apps)
+
+    async def _create_db_and_tables(self):
+        """Creates the database and all tables using the configured engine."""
+        async with self.engine.begin() as conn:
+            await conn.run_sync(SQLModel.metadata.create_all)
 
     def _register_views(self):
         """Registers the views from the site registry."""
