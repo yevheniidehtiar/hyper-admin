@@ -1,12 +1,12 @@
 import os
 from typing import cast
 
-from fastapi import HTTPException, Request
+from fastapi import HTTPException, Query, Request
 from fastapi.templating import Jinja2Templates
 from jinja2 import FileSystemLoader
 from starlette.responses import RedirectResponse
 
-from hyperadmin.core.adapters import BaseAdapter
+from hyperadmin.adapters import SQLAlchemyAdapter, SQLModelAdapter
 from hyperadmin.core.options import AdminOptions
 from hyperadmin.core.registry import site
 from hyperadmin.discover import app_label_var
@@ -28,7 +28,7 @@ class ModelView:
 class DynamicModelView:
     def __init__(
         self,
-        adapter: BaseAdapter,
+        adapter: SQLAlchemyAdapter | SQLModelAdapter,
         options: AdminOptions,
         templates: Jinja2Templates,
         app_label: str | None,
@@ -70,16 +70,79 @@ class DynamicModelView:
 
         return f"{view_name}.html"
 
-    async def list_view(self, request: Request):
-        """Renders the list view for the model."""
-        items, _ = await self.adapter.list()
+    async def list_view(
+        self,
+        request: Request,
+        page: int = Query(1, ge=1),
+        page_size: int = Query(10, ge=1, le=100),
+        search: str = Query(""),
+        sort_by: str = Query(None),
+        sort_direction: str = Query("asc", pattern="^(asc|desc)$"),
+    ):
+        """Renders the list view for the model with pagination, sorting, and filtering."""
+
+        # Get default sort column if none specified
+        if not sort_by:
+            sort_by = (
+                next(iter(self.model.model_fields.keys())) if self.model.model_fields else "id"
+            )
+
+        # Format order_by for adapter (use negative prefix for descending)
+        order_by = f"-{sort_by}" if sort_direction == "desc" else sort_by
+
+        try:
+            # Use adapter's list method
+            items, total_items = await self.adapter.list(
+                page=page, page_size=page_size, search=search if search else None, order_by=order_by
+            )
+
+            # Calculate pagination info
+            import math
+
+            total_pages = math.ceil(total_items / page_size) if page_size > 0 else 0
+            start_index = (page - 1) * page_size + 1 if total_items > 0 else 0
+            end_index = min(page * page_size, total_items)
+
+            pagination = {
+                "page": page,
+                "page_size": page_size,
+                "total_items": total_items,
+                "total_pages": total_pages,
+                "start_index": start_index,
+                "end_index": end_index,
+            }
+
+        except Exception:
+            # Handle errors gracefully
+            items = []
+            pagination = {
+                "page": 1,
+                "page_size": page_size,
+                "total_items": 0,
+                "total_pages": 0,
+                "start_index": 0,
+                "end_index": 0,
+            }
+            # In a real application, you might want to log this error
+            # For now, we'll just show empty results
+
         context = {
             "request": request,
             "model_name": self.model.__name__,
             "fields": list(self.model.model_fields.keys()),
             "items": items,
+            "pagination": pagination,
+            "search_query": search,
+            "sort_by": sort_by,
+            "sort_direction": sort_direction,
         }
-        template_name = self._get_template_name("list")
+
+        # Use table template for HTMX requests, full layout for regular requests
+        template_name = (
+            "components/table.html"
+            if request.headers.get("hx-request")
+            else self._get_template_name("list")
+        )
         return self.templates.TemplateResponse(template_name, context)
 
     async def detail_view(self, request: Request, item_id: int):

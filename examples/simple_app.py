@@ -2,29 +2,35 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from sqlmodel import Session, SQLModel, create_engine, select
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlmodel import SQLModel, select
 
 from examples.models import User
 from hyperadmin.main import Admin
 
 # 1. Create a database engine
-engine = create_engine("sqlite:///simple_app.db", connect_args={"check_same_thread": False})
+engine = create_async_engine(
+    "sqlite+aiosqlite:///simple_app.db", connect_args={"check_same_thread": False}
+)
 
 
-def create_db_and_tables():
-    SQLModel.metadata.create_all(engine)
-    with Session(engine) as session:
-        if not session.exec(select(User)).first():
+async def create_db_and_tables():
+    async with engine.begin() as conn:
+        await conn.run_sync(SQLModel.metadata.create_all)
+
+    async with AsyncSession(engine) as session:
+        result = await session.execute(select(User))
+        if not result.first():
             session.add(User(name="Alice", email="alice@example.com"))
             session.add(User(name="Bob", email="bob@example.com"))
             session.add(User(name="Charlie", email="charlie@example.com"))
-            session.commit()
+            await session.commit()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Load the ML model
-    create_db_and_tables()
+    await create_db_and_tables()
     yield
 
 
@@ -32,7 +38,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 app.mount("/static", StaticFiles(directory="src/hyperadmin/static"), name="static")
-admin = Admin(app)
+admin = Admin(app, engine=engine, discover_apps=["examples"])
 
 # 3. Mount the admin interface
 admin.mount(path="/admin")

@@ -17,7 +17,9 @@
         {% include "_navbar.html" %}
         <div class="flex">
             {% include "_sidebar.html" %}
-            {% include "_content.html" %}
+            <main class="flex-1 p-6 bg-gray-50">
+                {% block content %}{% endblock %}
+            </main>
         </div>
     </div>
 </body>

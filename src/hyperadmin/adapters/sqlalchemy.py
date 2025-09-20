@@ -13,8 +13,7 @@ from hyperadmin.core.adapters import BaseAdapter
 
 class SQLAlchemyAdapter(BaseAdapter):
     def __init__(self, model: type[SQLModel], engine: AsyncEngine) -> None:
-        self.model = model
-        self.engine = engine
+        super().__init__(model=model, engine=engine)
         self.inspector = inspect(model)
         if self.inspector is None:
             raise ValueError("Could not inspect model. Is it a valid SQLAlchemy model?")
