@@ -14,8 +14,7 @@ class SQLModelAdapter(BaseAdapter):
     """
 
     def __init__(self, model: type[SQLModel], engine: AsyncEngine):
-        self.model = model
-        self.engine = engine
+        super().__init__(model, engine)
 
     async def get(self, pk: Any) -> Any:
         """

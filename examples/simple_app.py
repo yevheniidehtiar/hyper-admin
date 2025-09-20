@@ -38,7 +38,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 app.mount("/static", StaticFiles(directory="src/hyperadmin/static"), name="static")
-admin = Admin(app, discover_apps=["examples"])
+admin = Admin(app, engine=engine, discover_apps=["examples"])
 
 # 3. Mount the admin interface
 admin.mount(path="/admin")
