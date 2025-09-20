@@ -177,3 +177,115 @@ When working as an AI agent on this project:
 - **Pragmatism**: Use expert judgment while following these guidelines
 - **No Shortcuts**: Never commit code that breaks existing tests or leaves commented-out code
 - **Scope**: Do not make changes outside the assigned task without explicit approval
+
+
+## MCP Integration Guidelines
+
+As an AI agent, you have access to Model Context Protocol (MCP) servers that provide additional capabilities beyond standard tools. You must check for available integrations and use them appropriately.
+
+### Available MCP Integrations
+
+#### Fetch MCP Server (`mcp_docker-mcp_fetch`)
+
+**Capabilities:**
+- Fetch content from URLs
+- Extract content as markdown
+- Access up-to-date information from the internet
+
+**When to Use:**
+- To gather current information about technologies, APIs, or documentation
+- When you need to check external resources or documentation
+- For research purposes during development
+
+**Usage Pattern:**
+```python
+# Example: Fetch documentation
+mcp_docker-mcp_fetch(
+    url="https://fastapi.tiangolo.com/tutorial/",
+    max_length=5000
+)
+```
+
+#### Browser MCP Server (`mcp_docker-mcp_browser_*`)
+
+**Capabilities:**
+- Web page navigation, interaction, and testing
+- Screenshot and accessibility snapshot capture
+- Form filling, clicking, typing
+- JavaScript evaluation
+- Network request monitoring
+
+**When to Use:**
+- For end-to-end testing of web interfaces
+- When debugging UI issues that require browser interaction
+- To validate web application functionality
+- For automated browser-based testing scenarios
+
+**Usage Pattern:**
+```python
+# Example: Navigate and test a page
+mcp_docker-mcp_browser_navigate(url="http://localhost:8000/admin")
+mcp_docker-mcp_browser_snapshot()  # Better than screenshots for actions
+mcp_docker-mcp_browser_click(element="Login button", ref="button_ref")
+```
+
+### Integration Discovery Process
+
+**Before starting any task, you must:**
+
+1. **Assess Available Integrations**: Review the functions available in your current session
+2. **Match Capabilities to Task**: Determine which integrations could assist with your specific task
+3. **Plan Integration Usage**: Incorporate appropriate MCP tools into your development plan
+4. **Validate Integration Appropriateness**: Ensure the integration aligns with project goals and constraints
+
+### Integration Best Practices
+
+#### Research Integration
+
+**When encountering unfamiliar technologies:**
+1. Use fetch MCP to access current documentation
+2. Verify API compatibility and best practices
+3. Research security implications of new dependencies
+4. Debug HTML pages in case Browser MCP has issues
+
+
+####  Browser Testing Integration
+**For UI-related tasks:**
+1. Use browser MCP for end-to-end validation
+2. Capture accessibility snapshots, not just screenshots
+3. Validate functionality from the user's perspective
+4. Test responsive design and cross-browser compatibility
+
+
+### Integration Safety Guidelines
+
+**Security Considerations:**
+- Never expose sensitive information through MCP calls
+- Validate external content before incorporating into code
+- Be cautious with browser automation on production systems
+- Review security analysis results before implementing suggestions
+
+**Performance Considerations:**
+- Use MCP integrations judiciously to avoid unnecessary overhead
+- Cache results when appropriate to avoid redundant calls
+- Prefer targeted analysis over broad scans when possible
+
+### Integration Workflow Example
+
+```
+1. Task Assignment → Check available MCP integrations
+2. Plan Development → Incorporate relevant MCP tools
+3. Before Coding → Run code analysis on existing code
+4. During Development → Use TDD guidance and security scanning
+5. After Implementation → Run test coverage analysis
+6. UI Testing → Use browser MCP for end-to-end validation
+7. Final Review → Security analysis and pattern compliance
+```
+
+### Reporting Integration Usage
+
+When using MCP integrations, you must:
+- Document which integrations were used and why
+- Report any significant findings from analysis tools
+- Include integration results in your development summary
+- Recommend follow-up actions based on integration insights
