@@ -1,5 +1,7 @@
 """End-to-end tests for list view functionality including pagination, search, and sorting."""
 
+import re
+
 from playwright.sync_api import Page, expect
 
 
@@ -309,12 +311,12 @@ def test_action_buttons_present(page: Page, demo_base_url: str) -> None:
         rows = page.locator("tbody tr")
         if rows.count() > 0:
             # Check that action links/buttons exist
-            view_links = page.locator("a").filter(has_text="View")
-            edit_links = page.locator("a").filter(has_text="Edit")
-            delete_buttons = page.locator("button").filter(has_text="Delete")
+            view_links = rows.first.locator("a").filter(has_text="View")
+            edit_links = rows.first.locator("a").filter(has_text="Edit")
+            delete_buttons = rows.first.locator("button").filter(has_text="Delete")
 
             # At least one of each should exist if there's data
-            expect(view_links.or_(edit_links).or_(delete_buttons)).to_have_count_greater_than(0)
+            expect(view_links.or_(edit_links).or_(delete_buttons)).to_have_count(3)
 
 
 def test_create_new_button(page: Page, demo_base_url: str) -> None:
@@ -334,7 +336,7 @@ def test_create_new_button(page: Page, demo_base_url: str) -> None:
         create_button.click()
 
         # Should navigate to create form (we don't test form details here)
-        expect(page).to_have_url_regex(r".*/user.*create")
+        expect(page).to_have_url(re.compile(".*/user.*create"))
 
 
 def test_responsive_design_elements(page: Page, demo_base_url: str) -> None:
