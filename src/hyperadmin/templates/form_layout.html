@@ -1,10 +1,24 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <div class="form-container">
-        <h2>{% block form_title %}{% endblock %}</h2>
-        <form {% block form_attributes %}{% endblock %}>
-            {% block form_body %}{% endblock %}
-        </form>
-    </div>
+<div class="container mx-auto py-8">
+    <h1 class="text-2xl font-bold mb-4">{% block form_title %}{% endblock %}</h1>
+    <form hx-post="." hx-target="body" hx-swap="outerHTML" class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+        {% csrf_token %}
+        {% for field in form %}
+            <div class="mb-4">
+                <label for="{{ field.id_for_label }}" class="block text-gray-700 text-sm font-bold mb-2">{{ field.label }}</label>
+                {{ field }}
+                {% if field.help_text %}
+                    <p class="text-gray-600 text-xs italic">{{ field.help_text }}</p>
+                {% endif %}
+                {% for error in field.errors %}
+                    <p class="text-red-500 text-xs italic">{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endfor %}
+        {% block form_actions %}
+        {% endblock %}
+    </form>
+</div>
 {% endblock %}

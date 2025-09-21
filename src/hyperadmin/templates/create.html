@@ -1,16 +1,10 @@
-{% extends "base.html" %}
+{% extends "form_layout.html" %}
 
-{% block content %}
-<h1>Create {{ model_name }}</h1>
-<form action="{{ url_for(model_name|lower ~ '-create') }}" method="post">
-    {% for field in fields %}
-    {% if field != 'id' %}
-    <div class="mb-3">
-        <label for="{{ field }}" class="form-label">{{ field.title() }}</label>
-        <input type="text" class="form-control" id="{{ field }}" name="{{ field }}">
-    </div>
-    {% endif %}
-    {% endfor %}
-    <button type="submit" class="btn btn-primary">Create</button>
-</form>
+{% block title %}Create {{ opts.verbose_name }}{% endblock %}
+{% block form_title %}Create {{ opts.verbose_name }}{% endblock %}
+
+{% block form_actions %}
+<button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+    Save
+</button>
 {% endblock %}
