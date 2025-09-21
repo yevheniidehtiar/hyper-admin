@@ -43,7 +43,7 @@ def demo_base_url(e2e_port: int) -> Iterator[str]:
     requests = pytest.importorskip("requests")  # type: ignore[assignment]
 
     cmd = [
-        sys.executable,
+        "/app/.venv/bin/python",
         "-m",
         "uvicorn",
         "examples.simple_app:app",
@@ -56,6 +56,7 @@ def demo_base_url(e2e_port: int) -> Iterator[str]:
     ]
 
     env = os.environ.copy()
+    env["E2E_TESTING"] = "1"
 
     proc = subprocess.Popen(
         cmd,
@@ -69,7 +70,7 @@ def demo_base_url(e2e_port: int) -> Iterator[str]:
 
     try:
         # Wait for server readiness
-        deadline = time.time() + 5
+        deadline = time.time() + 10
         last_err: Exception | None = None
         while time.time() < deadline:
             try:
@@ -84,11 +85,11 @@ def demo_base_url(e2e_port: int) -> Iterator[str]:
 
         yield base
     finally:
-        # stdout, stderr = proc.communicate()
-        # print("\n--- Uvicorn stdout ---")
-        # print(stdout)
-        # print("--- Uvicorn stderr ---")
-        # print(stderr)
+        stdout, stderr = proc.communicate()
+        print("\n--- Uvicorn stdout ---")
+        print(stdout)
+        print("--- Uvicorn stderr ---")
+        print(stderr)
         if proc.poll() is None:
             try:
                 if os.name == "nt":

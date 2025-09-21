@@ -4,7 +4,8 @@ from typing import cast
 from fastapi import HTTPException, Query, Request
 from fastapi.templating import Jinja2Templates
 from jinja2 import FileSystemLoader
-from starlette.responses import RedirectResponse
+from pydantic import ValidationError
+from starlette.responses import RedirectResponse, Response
 
 from hyperadmin.adapters import SQLAlchemyAdapter, SQLModelAdapter
 from hyperadmin.core.options import AdminOptions
@@ -169,6 +170,8 @@ class DynamicModelView:
             "request": request,
             "model_name": self.model.__name__,
             "fields": list(self.model.model_fields.keys()),
+            "values": {},
+            "errors": {},
         }
         template_name = self._get_template_name("create")
         return self.templates.TemplateResponse(template_name, context)
@@ -176,8 +179,44 @@ class DynamicModelView:
     async def create_view(self, request: Request):
         """Handles form submission for creating a new item."""
         form_data = await request.form()
-        await self.adapter.create(data=dict(form_data))
-        return RedirectResponse(url=f"/admin/{self.model.__name__.lower()}", status_code=303)
+        data = dict(form_data)
+        errors = {}
+
+        try:
+            # Validate the data with the model
+            self.model.model_validate(data)
+
+            new_item = await self.adapter.create(data=data)
+
+            item_id = getattr(new_item, "id", None)
+            if item_id:
+                redirect_url = request.url_for(
+                    f"{self.model.__name__.lower()}-detail", item_id=item_id
+                )
+            else:
+                redirect_url = request.url_for(f"{self.model.__name__.lower()}-list")
+
+            if "hx-request" in request.headers:
+                return Response(status_code=200, headers={"HX-Redirect": str(redirect_url)})
+
+            return RedirectResponse(url=redirect_url, status_code=303)
+
+        except ValidationError as e:
+            for error in e.errors():
+                field_name = error["loc"][0]
+                errors[field_name] = error["msg"]
+
+            context = {
+                "request": request,
+                "model_name": self.model.__name__,
+                "fields": list(self.model.model_fields.keys()),
+                "values": data,
+                "errors": errors,
+            }
+            template_name = self._get_template_name("create")
+            return self.templates.TemplateResponse(
+                template_name, context, status_code=422
+            )
 
     async def update_form_view(self, request: Request, item_id: int):
         """Renders the update form."""
