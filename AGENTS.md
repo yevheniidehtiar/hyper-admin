@@ -59,6 +59,11 @@ This project uses `poethepoet` for task automation. Key tasks are defined in `py
 
 ## 5. Rules and Constraints
 
+- **You must**, before starting any task, ensure your local environment is synchronized with the latest `develop` branch by running the following commands:
+  ```bash
+  git fetch --all
+  git reset --hard origin/develop
+  ```
 - **You must** run `poe lint` and `poe test` and ensure they pass before submitting any changes.
 - **You must** write clear commit messages that follow the [Conventional Commits specification](https://www.conventionalcommits.org/). Use `cz bump` to ensure compliance.
 - **You must** perform a self-review of your changes against the checklist below before requesting a final review.
