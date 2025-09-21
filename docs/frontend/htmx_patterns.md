@@ -1,3 +1,8 @@
+---
+title: HTMX Integration Patterns
+render_with_liquid: false
+---
+
 # HTMX Integration Patterns
 
 This document outlines the best practices and patterns for integrating HTMX into Jinja2 templates within the HyperAdmin interface. Following these patterns ensures a consistent, efficient, and user-friendly experience.
