@@ -3,6 +3,7 @@ title: HTMX Integration Patterns
 render_with_liquid: false
 ---
 
+{% raw %}
 # HTMX Integration Patterns
 
 This document outlines the best practices and patterns for integrating HTMX into Jinja2 templates within the HyperAdmin interface. Following these patterns ensures a consistent, efficient, and user-friendly experience.
@@ -458,3 +459,5 @@ While HTMX handles server interactions, Alpine.js is excellent for purely client
 -   **ARIA Attributes**: Use ARIA attributes (`aria-busy`, `aria-live`) to inform screen reader users about dynamic content changes. For example, mark a target region with `aria-live="polite"` so that its updates are announced.
 
 This document provides a foundation. As the project evolves, new patterns may emerge and should be documented here.
+
+{% endraw %}
