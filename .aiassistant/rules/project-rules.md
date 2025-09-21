@@ -1,3 +1,7 @@
+---
+apply: always
+---
+
 # AI Collaboration Rules (JetBrains AI & Junie Agent)
 
 This document distills project rules for AI assistants, based on the operational guidelines and development practices defined for this repository.

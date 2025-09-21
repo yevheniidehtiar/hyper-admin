@@ -57,6 +57,8 @@ Before marking work ready for review:
 - No regressions; logic sound and documented as needed.
 - New tests included for new behavior or fixes.
 - Follow Conventional Commits for messages.
+- **Commit messages MUST include the issue number** (e.g., `feat: Implement user login endpoint (#83)`). This is crucial
+  for tracking and dependency management.
 - Perform a self-review against this checklist.
 
 ## Constraints
