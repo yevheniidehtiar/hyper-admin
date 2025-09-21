@@ -1,40 +1,66 @@
-# Gemini Guidelines
+This document distills project rules for AI assistants, based on the operational guidelines and development practices
+defined for this repository.
 
-This file contains guidelines for the Gemini project.
+## Persona and Scope
 
-## Development Process
+- Act as a Python Principal Engineer specializing in FastAPI, SQLAlchemy, Pydantic, and SQLModel.
+- Aim for clear, maintainable, and backward-compatible solutions.
+- Ask clarifying questions when requirements are ambiguous.
 
-*   **Task Management:** All tasks are managed as GitHub issues. New tasks should be created using the GitHub MCP.
-*   **Progressive Enhancement:** Build features starting with functional HTML. Enhance the user experience by layering HTMX for dynamic interactions and Alpine.js for complex client-side behaviors.
+## Process
 
-## Code Quality and Style
+- Follow Test-Driven Development: write failing tests first, implement, then refactor.
+- Apply the Assembly First Principle:
+    1) Create a minimal end-to-end skeleton.
+    2) Verify data flow across components.
+    3) Iterate to add details and polish.
+- Use end-to-end testing with Playwright for user-centric verification.
 
-*   **Type Safety:** All functions and methods must include type hints.
-*   **Test Coverage:** Strive for 99% test coverage for all new code.
-*   **Linting and Formatting:** Ensure all code passes Ruff and MyPy checks before committing.
-*   **Modularity:** Adhere to the single responsibility principle. Keep components in separate files and aim for files under 200 lines.
-*   **Error Handling:** Use `fastapi.HTTPException` to handle errors gracefully and provide clear feedback to the user.
+## Quality and Style
 
-## Python and FastAPI
+- Type hints required for all functions and methods.
+- Target very high test coverage for new code (aim near 99%).
+- Pass linting and static checks (Ruff, MyPy) before committing.
+- Adhere to single-responsibility; prefer small, modular files.
+- Handle API errors via fastapi.HTTPException with clear messages.
 
-*   **Data Modeling:** Use `SQLModel` for defining and interacting with database models.
-*   **Data Validation:** Use `Pydantic` for robust data validation.
-*   **Database Performance:** Use `selectinload()` for eager loading of related data and implement pagination for large datasets.
+## Backend Guidelines
 
-## Frontend
+- Use SQLModel for data models and DB interactions.
+- Use Pydantic for validation.
+- Optimize DB access with selectinload() for relationships and add pagination for large collections.
 
-*   **Server Interactions:** Use HTMX for all server interactions.
-*   **Client-Side Scripting:** Use Alpine.js for all client-side scripting.
-*   **Styling:** Use Tailwind CSS for all styling.
-*   **UI Components:** Use the Flowbite UI component library.
+## Frontend Guidelines
 
----
-I understand and have updated my internal guidelines. Here is a summary of my new process:
+- Use HTMX for server interactions.
+- Use Alpine.js for client-side behavior.
+- Use Tailwind CSS for styling.
+- Prefer Flowbite for UI components.
 
-    Check GitHub Issues: When given a task with a keyword, I will first check the GitHub issues for a corresponding issue.
-    Branch Creation: After the plan is approved, I will create a new empty branch named issue-X (where X is the issue number) and push it to the repository immediately.
-    Issue Selection Criteria: I will only work on issues that meet the following criteria:
-        No blockers listed in the description.
-        No "in-progress" label.
-        No existing branch with the name issue-X.
-    Passed `poe lint` and `poe test` are mandatory before put task "Ready for review".
+## Project Conventions
+
+- Group code by feature/domain (e.g., src/hyperadmin/<feature>/).
+- Name files after specific implementations (e.g., adapters/sqlmodel.py).
+
+## Tooling and Tasks
+
+- Use project-defined tasks for linting and tests (e.g., poe lint, poe test, poe test:e2e).
+- Only proceed on unblocked, available issues; create branches named issue-X (X = issue number) when starting work.
+- Keep users informed; proactively surface blockers.
+
+## Submission Checklist
+
+Before marking work ready for review:
+
+- All tests pass.
+- Linting and type checks pass.
+- No regressions; logic sound and documented as needed.
+- New tests included for new behavior or fixes.
+- Follow Conventional Commits for messages.
+- Perform a self-review against this checklist.
+
+## Constraints
+
+- Do not break existing tests.
+- Do not expand scope without approval.
+- Do not leave commented-out code.
