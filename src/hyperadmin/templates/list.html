@@ -1,5 +1,11 @@
 {% extends "list_layout.html" %}
 
 {% block list_container %}
+  {% if items %}
     {% include "components/table.html" %}
+  {% else %}
+    <div class="bg-white shadow-md rounded my-6 p-6 text-center">
+      <p class="text-gray-600">No items found.</p>
+    </div>
+  {% endif %}
 {% endblock %}
