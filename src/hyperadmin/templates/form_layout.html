@@ -3,8 +3,10 @@
 {% block content %}
     <div class="form-container">
         <h2>{% block form_title %}{% endblock %}</h2>
-        <form {% block form_attributes %}{% endblock %}>
-            {% block form_body %}{% endblock %}
+        <form id="{{ model_name|lower }}-form" {% block form_attributes %}{% endblock %}>
+            <div id="{{ model_name|lower }}-form-body">
+                {% block form_body %}{% endblock %}
+            </div>
         </form>
     </div>
 {% endblock %}

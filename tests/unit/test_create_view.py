@@ -90,7 +90,7 @@ def test_create_view_successful_submission(client: TestClient):
 
 
 def test_create_view_validation_error(client: TestClient):
-    """Test that submitting invalid data returns the form with errors."""
+    """Test that submitting invalid data returns only form body with errors for HTMX."""
     form_data = {
         "description": "A product with no name.",
         "price": "19.99",
@@ -100,6 +100,13 @@ def test_create_view_validation_error(client: TestClient):
         "/admin/testproduct", data=form_data, headers=headers, follow_redirects=False
     )
 
+    # HTMX fragment should be returned with 422 and include error text
     assert response.status_code == 422
     assert "Field required" in response.text
-    assert 'hx-post="http://testserver/admin/testproduct"' in response.text  # Check if form is re-rendered
+
+    # Should not include the full page or form wrapper when returning fragment
+    assert "<html" not in response.text.lower()
+    assert "<form" not in response.text.lower()
+
+    # The inner inputs should still be present
+    assert '<input id="name" name="name"' in response.text

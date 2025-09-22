@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
 from sqlmodel import SQLModel
 
@@ -101,6 +101,9 @@ def create_admin_router(
 class HyperAdminRouter:
     def __init__(self, engine: Any, templates: Jinja2Templates):
         self.engine = engine
+        # Enable global whitespace trimming
+        templates.env.trim_blocks = True
+        templates.env.lstrip_blocks = True
         self.templates = templates
         self.routers: list[APIRouter] = []
 
@@ -109,6 +112,17 @@ class HyperAdminRouter:
         from hyperadmin.core.registry import site
 
         self.routers = []
+
+        # Add the main admin dashboard route
+        dashboard_router = APIRouter()
+        dashboard_router.add_api_route(
+            "/",
+            self.get_admin_dashboard_view(),
+            methods=["GET"],
+            name="admin-dashboard",
+        )
+        self.routers.append(dashboard_router)
+
         for model, admin_class in site._registry.items():
             admin_instance = admin_class(model)
             options = getattr(admin_instance, "options", AdminOptions())
@@ -121,6 +135,14 @@ class HyperAdminRouter:
                 templates=self.templates,
             )
             self.routers.append(router)
+
+    def get_admin_dashboard_view(self):
+        from hyperadmin.views.dynamic import admin_dashboard
+
+        async def admin_dashboard_view(request: Request):
+            return await admin_dashboard(request, self.templates)
+
+        return admin_dashboard_view
 
     def get_routers(self) -> list[APIRouter]:
         """Returns the list of generated APIRouters."""
