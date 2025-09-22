@@ -67,6 +67,8 @@ This project uses `poethepoet` for task automation. Key tasks are defined in `py
 - **You must** run `poe lint` and `poe test` and ensure they pass before submitting any changes.
 - **You must** write clear commit messages that follow the [Conventional Commits specification](https://www.conventionalcommits.org/). Use `cz bump` to ensure compliance.
 - **You must** perform a self-review of your changes against the checklist below before requesting a final review.
+- **You must not** try to play with virtual environment. If command `uv run <command-you-want-to-run>` failing due to
+  unexpected error you should stop and report me.
 - **You must not** commit code that breaks existing tests.
 - **You must not** make changes outside the scope of the assigned task without explicit user approval.
 - **You must not** leave commented-out code in the codebase.
