@@ -6,8 +6,8 @@
 
 {% block form_attributes %}
     hx-post="{{ url_for(model_name|lower ~ '-create') }}"
-    hx-target="body"
-    hx-swap="outerHTML"
+    hx-target="#{{ model_name|lower }}-form-body"
+    hx-swap="innerHTML"
 {% endblock %}
 
 {% block form_body %}

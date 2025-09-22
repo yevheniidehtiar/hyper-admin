@@ -1,3 +1,4 @@
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -7,8 +8,6 @@ from sqlmodel import SQLModel, select
 
 from examples.models import User
 from hyperadmin.main import Admin
-
-import os
 
 # 1. Create a database engine
 DB_URL = (

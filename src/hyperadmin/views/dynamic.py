@@ -11,6 +11,7 @@ from hyperadmin.adapters import SQLAlchemyAdapter, SQLModelAdapter
 from hyperadmin.core.options import AdminOptions
 from hyperadmin.core.registry import site
 from hyperadmin.discover import app_label_var
+from hyperadmin.views.htmx import HtmxTemplateResponse
 
 
 class ModelView:
@@ -164,23 +165,38 @@ class DynamicModelView:
         template_name = self._get_template_name("detail")
         return self.templates.TemplateResponse(template_name, context)
 
-    async def create_form_view(self, request: Request):
-        """Renders the create form."""
+    async def create_form_view(
+        self,
+        request: Request,
+        values: dict | None = None,
+        errors: dict | None = None,
+        status_code: int = 200,
+    ):
+        """Renders the create form.
+
+        For HTMX requests, only the inner form body is returned to prevent nesting the full page
+        into the target container.
+        """
         context = {
             "request": request,
             "model_name": self.model.__name__,
             "fields": list(self.model.model_fields.keys()),
-            "values": {},
-            "errors": {},
+            "values": values or {},
+            "errors": errors or {},
         }
         template_name = self._get_template_name("create")
-        return self.templates.TemplateResponse(template_name, context)
+        return HtmxTemplateResponse(self.templates).render(
+            template_name=template_name,
+            context=context,
+            request=request,
+            block="form_body",
+            status_code=status_code,
+        )
 
     async def create_view(self, request: Request):
         """Handles form submission for creating a new item."""
         form_data = await request.form()
         data = dict(form_data)
-        errors = {}
 
         try:
             # Validate the data with the model
@@ -202,21 +218,15 @@ class DynamicModelView:
             return RedirectResponse(url=redirect_url, status_code=303)
 
         except ValidationError as e:
-            for error in e.errors():
-                field_name = error["loc"][0]
-                errors[field_name] = error["msg"]
-
-            context = {
-                "request": request,
-                "model_name": self.model.__name__,
-                "fields": list(self.model.model_fields.keys()),
-                "values": data,
-                "errors": errors,
-            }
-            template_name = self._get_template_name("create")
-            return self.templates.TemplateResponse(
-                template_name, context, status_code=422
+            return await self.create_form_view(
+                request,
+                values=data,
+                errors={error["loc"][0]: error["msg"] for error in e.errors()},
+                status_code=422,
             )
+
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Internal Server Error: {e}")
 
     async def update_form_view(self, request: Request, item_id: int):
         """Renders the update form."""
@@ -231,7 +241,12 @@ class DynamicModelView:
             "fields": list(self.model.model_fields.keys()),
         }
         template_name = self._get_template_name("update")
-        return self.templates.TemplateResponse(template_name, context)
+        return HtmxTemplateResponse(self.templates).render(
+            template_name=template_name,
+            context=context,
+            request=request,
+            block="form_body",
+        )
 
     async def update_view(self, request: Request, item_id: int):
         """Handles form submission for updating an item."""
@@ -245,6 +260,10 @@ class DynamicModelView:
         if not item:
             raise HTTPException(status_code=404, detail="Item not found")
 
-        await self.adapter.delete(pk=item_id)
-
         return RedirectResponse(url=f"/admin/{self.model.__name__.lower()}", status_code=303)
+
+
+async def admin_dashboard(request: Request, templates: Jinja2Templates):
+    """Renders the main admin dashboard page."""
+    context = {"request": request}
+    return templates.TemplateResponse("dashboard.html", context)
