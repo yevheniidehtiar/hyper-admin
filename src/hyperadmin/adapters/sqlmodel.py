@@ -3,6 +3,7 @@ from typing import Any
 
 from sqlalchemy import func, or_
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from sqlalchemy.orm import selectinload
 from sqlmodel import SQLModel, select
 
 from hyperadmin.core.adapters import BaseAdapter
@@ -142,7 +143,13 @@ class SQLModelAdapter(BaseAdapter):
             A list of related objects.
         """
         async with AsyncSession(self.engine) as session:
-            db_obj = await session.get(self.model, pk)
+            query = (
+                select(self.model)
+                .where(self.model.id == pk)
+                .options(selectinload(getattr(self.model, field)))
+            )
+            result = await session.execute(query)
+            db_obj = result.scalar_one_or_none()
             if db_obj:
                 return getattr(db_obj, field)
             return []

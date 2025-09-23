@@ -13,7 +13,7 @@ from hyperadmin.core.model import ModelAdmin
 from hyperadmin.core.options import AdminOptions
 from hyperadmin.core.registry import site
 from hyperadmin.main import Admin
-from hyperadmin.routing import create_admin_router
+from hyperadmin.routing import HyperAdminRouter, create_admin_router
 
 
 class Product(SQLModel, table=True):
@@ -23,6 +23,10 @@ class Product(SQLModel, table=True):
 
 
 class ProductAdmin(ModelAdmin):
+    adapter_class = SQLModelAdapter
+
+
+class ProductAdminNoOptions(ModelAdmin):
     adapter_class = SQLModelAdapter
 
 
@@ -142,3 +146,24 @@ def test_admin_integration_with_default_options(client_factory):
     response = client.get("/admin/product")
     assert response.status_code == 200
     assert "Product" in response.text
+
+
+async def test_generate_routes_no_options(engine, anyio_backend):
+    """Tests that default AdminOptions are used when not present on the admin class."""
+    site.register(Product, ProductAdminNoOptions)
+    mock_templates = MagicMock(spec=Jinja2Templates)
+    mock_templates.env = MagicMock()
+    admin_router = HyperAdminRouter(engine=engine, templates=mock_templates)
+    admin_router.generate_routes()
+
+    # Find the router for the Product model
+    product_router = None
+    for router in admin_router.get_routers():
+        if router.routes and router.routes[0].path.startswith("/product"):
+            product_router = router
+            break
+
+    assert product_router is not None
+    routes = {route.name for route in product_router.routes}
+    # Check for a default route to confirm default options were used
+    assert "product-list" in routes

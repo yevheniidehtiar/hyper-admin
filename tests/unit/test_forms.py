@@ -59,6 +59,15 @@ def test_form_field_label_fallback():
     assert field.label == "Test field"
 
 
+def test_form_field_input_type_attribute_error():
+    class NoName:
+        pass
+
+    field_info = MockFieldInfo(annotation=NoName())
+    field = FormField(name="test_field", model_field=field_info, widget=TextInput())
+    assert field.input_type == "text"
+
+
 class PydanticModel(BaseModel):
     name: str = Field(title="Name")
     age: int = Field(title="Age")
@@ -75,6 +84,16 @@ def test_pydantic_form_fields():
 
 def test_pydantic_form_include_exclude():
     form = PydanticForm(model=PydanticModel, include=["name"], exclude=["age"])
+    assert len(form.fields) == 1
+    assert form.fields[0].name == "name"
+
+
+def test_pydantic_form_excludes_id_field():
+    class ModelWithId(BaseModel):
+        id: int
+        name: str
+
+    form = PydanticForm(model=ModelWithId)
     assert len(form.fields) == 1
     assert form.fields[0].name == "name"
 

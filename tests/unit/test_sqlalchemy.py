@@ -1,3 +1,5 @@
+from unittest.mock import MagicMock, patch
+
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlmodel import Field, Relationship, SQLModel
@@ -38,6 +40,12 @@ async def engine():
 
 
 # Tests
+def test_adapter_init_invalid_model(engine):
+    with patch("hyperadmin.adapters.sqlalchemy.inspect", return_value=None):
+        with pytest.raises(ValueError, match="Could not inspect model"):
+            SQLAlchemyAdapter(model=MagicMock(), engine=engine)
+
+
 @pytest.mark.anyio
 async def test_create(engine):
     hero_adapter = SQLAlchemyAdapter(model=Hero, engine=engine)
@@ -125,6 +133,13 @@ async def test_update(engine):
 
 
 @pytest.mark.anyio
+async def test_update_not_found(engine):
+    hero_adapter = SQLAlchemyAdapter(model=Hero, engine=engine)
+    updated_hero = await hero_adapter.update(pk=999, data={"name": "Deadpool"})
+    assert updated_hero is None
+
+
+@pytest.mark.anyio
 async def test_delete(engine):
     hero_adapter = SQLAlchemyAdapter(model=Hero, engine=engine)
     async with AsyncSession(engine) as session:
@@ -139,6 +154,12 @@ async def test_delete(engine):
     async with AsyncSession(engine) as session:
         hero_in_db = await session.get(Hero, pk)
         assert hero_in_db is None
+
+
+@pytest.mark.anyio
+async def test_delete_not_found(engine):
+    hero_adapter = SQLAlchemyAdapter(model=Hero, engine=engine)
+    await hero_adapter.delete(pk=999)
 
 
 @pytest.mark.anyio
@@ -172,3 +193,55 @@ async def test_get_related(engine):
     retrieved_team = await hero_adapter.get_related(pk=hero_pk, field="team")
     assert len(retrieved_team) == 1
     assert retrieved_team[0].name == "Preventers"
+
+
+@pytest.mark.anyio
+async def test_get_related_no_inspector(engine):
+    team_adapter = SQLAlchemyAdapter(model=Team, engine=engine)
+    with patch.object(team_adapter, "inspector", None):
+        related = await team_adapter.get_related(pk=1, field="heroes")
+        assert related == []
+
+
+@pytest.mark.anyio
+async def test_get_related_not_found(engine):
+    team_adapter = SQLAlchemyAdapter(model=Team, engine=engine)
+    related = await team_adapter.get_related(pk=999, field="heroes")
+    assert related == []
+
+
+@pytest.mark.anyio
+async def test_get_related_is_none(engine):
+    hero_adapter = SQLAlchemyAdapter(model=Hero, engine=engine)
+    team_adapter = SQLAlchemyAdapter(model=Team, engine=engine)
+    async with AsyncSession(engine) as session:
+        team = Team(name="Team with no heroes", headquarters="Empty Base")
+        hero = Hero(name="Lonely", secret_name="Alone", team=None)
+        session.add(team)
+        session.add(hero)
+        await session.commit()
+        await session.refresh(team)
+        await session.refresh(hero)
+        team_pk = team.id
+        hero_pk = hero.id
+
+    # Test many-to-one relationship when it's None
+    related_team = await hero_adapter.get_related(pk=hero_pk, field="team")
+    assert related_team == []
+
+    # Test one-to-many relationship when it's empty
+    related_heroes = await team_adapter.get_related(pk=team_pk, field="heroes")
+    assert related_heroes == []
+
+
+@pytest.mark.anyio
+async def test_get_related_attribute_error(engine):
+    team_adapter = SQLAlchemyAdapter(model=Team, engine=engine)
+    async with AsyncSession(engine) as session:
+        team = Team(name="Team", headquarters="Base")
+        session.add(team)
+        await session.commit()
+        await session.refresh(team)
+        pk = team.id
+    related = await team_adapter.get_related(pk=pk, field="non_existent_field")
+    assert related == []
