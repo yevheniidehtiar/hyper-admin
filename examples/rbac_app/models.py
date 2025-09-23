@@ -24,7 +24,7 @@ class User(SQLModel, table=True):
     last_name: str = Field(max_length=50)
     is_active: bool = Field(default=True)
     is_superuser: bool = Field(default=False)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime | None = Field(default=None)
 
     # File upload fields
@@ -81,7 +81,7 @@ class Group(SQLModel, table=True):
     name: str = Field(index=True, max_length=80, unique=True)
     description: str | None = Field(default=None, max_length=255)
     is_active: bool = Field(default=True)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=datetime.now)
 
     # Relationships
     user_groups: list["UserGroup"] = Relationship(
@@ -109,7 +109,7 @@ class UserGroup(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="users.id", index=True)
     group_id: int = Field(foreign_key="groups.id", index=True)
-    joined_at: datetime = Field(default_factory=datetime.utcnow)
+    joined_at: datetime = Field(default_factory=datetime.now)
     is_active: bool = Field(default=True)
     # Relationships
     user: User | None = Relationship(
@@ -135,7 +135,7 @@ class Permission(SQLModel, table=True):
     codename: str = Field(index=True, max_length=100, unique=True)
     description: str | None = Field(default=None, max_length=255)
     content_type: str | None = Field(default=None, max_length=100)  # e.g., 'user', 'group', etc.
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=datetime.now)
 
     # Relationships
     user_permissions: list["UserPermissions"] = Relationship(
@@ -163,7 +163,7 @@ class UserPermissions(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="users.id", index=True)
     permission_id: int = Field(foreign_key="permissions.id", index=True)
-    granted_at: datetime = Field(default_factory=datetime.utcnow)
+    granted_at: datetime = Field(default_factory=datetime.now)
     granted_by: int | None = Field(default=None, foreign_key="users.id")
     is_active: bool = Field(default=True)
 

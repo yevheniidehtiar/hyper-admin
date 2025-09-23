@@ -1,8 +1,6 @@
-import pytest
 from playwright.sync_api import Page, expect
 
 
-@pytest.mark.e2e
 def test_admin_dashboard_loads_correctly(page: Page, demo_base_url):
     """Test that the admin dashboard loads correctly and displays expected content."""
     page.goto(f"{demo_base_url}/admin/")

@@ -8,6 +8,6 @@ class User(SQLModel, table=True):
     name: str = Field(min_length=1)
     email: str | None = None
     is_active: bool = True
-    created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
+    created_at: datetime = Field(default_factory=datetime.now, nullable=False)
     rating: float = 0.0
     user_type: str = "standard"
