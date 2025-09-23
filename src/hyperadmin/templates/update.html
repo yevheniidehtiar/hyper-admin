@@ -1,16 +1,29 @@
-{% extends "base.html" %}
+{% extends "form_layout.html" %}
 
-{% block content %}
-<h1>Update {{ model_name }}</h1>
-<form action="{{ url_for(model_name|lower ~ '-update', item_id=item.id) }}" method="post">
-    {% for field in fields %}
-    {% if field != 'id' %}
-    <div class="mb-3">
-        <label for="{{ field }}" class="form-label">{{ field.title() }}</label>
-        <input type="text" class="form-control" id="{{ field }}" name="{{ field }}" value="{{ item[field] }}">
-    </div>
-    {% endif %}
+{% block form_title %}
+    Update {{ item_name }}
+{% endblock %}
+
+{% block form_attributes %}
+    hx-post="{{ url_for(model_name|lower ~ '-update', item_id=item.id) }}"
+    hx-target="#{{ model_name|lower }}-form-body"
+    hx-swap="innerHTML"
+{% endblock %}
+
+{% block form_body %}
+    {% for field in form.fields %}
+        {% set widget = field.widget %}
+        {% include field.widget.template_path %}
     {% endfor %}
-    <button type="submit" class="btn btn-primary">Update</button>
-</form>
+{% endblock %}
+
+{% block form_actions %}
+    <div class="flex items-center justify-between">
+        <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline">
+            Update
+        </button>
+        <a href="{{ url_for(model_name|lower ~ '-list') }}" class="inline-block align-baseline font-bold text-sm text-blue-500 hover:text-blue-800">
+            Cancel
+        </a>
+    </div>
 {% endblock %}

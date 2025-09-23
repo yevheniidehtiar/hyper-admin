@@ -95,8 +95,8 @@ def test_create_form_view_uses_block_for_htmx(request_factory, tmp_path):
     resp = anyio.run(call)
 
     assert isinstance(resp, Response)
-    assert resp.text.startswith("BLOCK:")
-    assert resp.text.endswith("create.html")
+    assert resp.body.decode(resp.charset).startswith("BLOCK:")
+    assert resp.body.decode(resp.charset).endswith("create.html")
 
 
 def test_update_form_view_uses_block_for_htmx(request_factory, tmp_path):
@@ -118,5 +118,5 @@ def test_update_form_view_uses_block_for_htmx(request_factory, tmp_path):
     resp = anyio.run(call)
 
     assert isinstance(resp, Response)
-    assert resp.text.startswith("BLOCK:")
-    assert resp.text.endswith("update.html")
+    assert resp.body.decode(resp.charset).startswith("BLOCK:")
+    assert resp.body.decode(resp.charset).endswith("update.html")

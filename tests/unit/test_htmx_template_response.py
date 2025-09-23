@@ -73,7 +73,7 @@ def test_htmx_renders_only_block_when_hx_and_block_present(request_factory):
     assert isinstance(resp, Response)
     assert resp.status_code == 422
     assert resp.media_type == "text/html"
-    assert resp.text == "<div>Fragment</div>"
+    assert resp.body.decode(resp.charset) == "<div>Fragment</div>"
 
 
 def test_htmx_missing_block_falls_back_to_full_template(request_factory):
@@ -91,7 +91,7 @@ def test_htmx_missing_block_falls_back_to_full_template(request_factory):
 
     # Should use TemplateResponse fallback path
     assert isinstance(resp, Response)
-    assert resp.text.startswith("FULL:")
+    assert resp.body.decode(resp.charset).startswith("FULL:")
     assert templates._last_template_name == "create.html"
     assert templates._last_context == {"request": req}
 
@@ -110,4 +110,4 @@ def test_non_htmx_always_full_template_even_with_block(request_factory):
     )
 
     assert isinstance(resp, Response)
-    assert resp.text == "FULL:something.html"
+    assert resp.body.decode(resp.charset) == "FULL:something.html"

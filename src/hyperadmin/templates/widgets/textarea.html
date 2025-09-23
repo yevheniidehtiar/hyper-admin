@@ -1,0 +1,7 @@
+<div class="form-control">
+  <label for="{{ field.name }}" class="form-label">{{ field.label }}{% if field.required %}<span class="req">*</span>{% endif %}</label>
+  <textarea id="{{ field.name }}" name="{{ field.name }}" class="input" aria-invalid="{{ 'true' if field.errors else 'false' }}">{{ field.value or '' }}</textarea>
+  {% if field.errors %}
+    <ul class="errors text-red-500 text-xs italic" aria-live="polite">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+  {% endif %}
+</div>

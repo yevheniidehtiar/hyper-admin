@@ -4,13 +4,13 @@ from typing import cast
 from fastapi import HTTPException, Query, Request
 from fastapi.templating import Jinja2Templates
 from jinja2 import FileSystemLoader
-from pydantic import ValidationError
 from starlette.responses import RedirectResponse, Response
 
 from hyperadmin.adapters import SQLAlchemyAdapter, SQLModelAdapter
 from hyperadmin.core.options import AdminOptions
 from hyperadmin.core.registry import site
 from hyperadmin.discover import app_label_var
+from hyperadmin.views.forms import PydanticForm
 from hyperadmin.views.htmx import HtmxTemplateResponse
 
 
@@ -177,10 +177,20 @@ class DynamicModelView:
         For HTMX requests, only the inner form body is returned to prevent nesting the full page
         into the target container.
         """
+        # Build a Pydantic-backed form abstraction for templates
+        form = PydanticForm(self.model, initial=values or {})
+        if errors:
+            # Bind raw values and attach errors to fields
+            form.bind(values or {})
+            norm_errors = {k: (v if isinstance(v, list) else [v]) for k, v in errors.items()}
+            form.errors = norm_errors
+            for f in form.fields:
+                f.errors = norm_errors.get(f.name)
+
         context = {
             "request": request,
             "model_name": self.model.__name__,
-            "fields": list(self.model.model_fields.keys()),
+            "form": form,
             "values": values or {},
             "errors": errors or {},
         }
@@ -198,10 +208,22 @@ class DynamicModelView:
         form_data = await request.form()
         data = dict(form_data)
 
-        try:
-            # Validate the data with the model
-            self.model.model_validate(data)
+        # Use PydanticForm for consistent binding/validation
+        form = PydanticForm(self.model)
+        form.bind(data)
+        instance, errs = form.validate(data)
 
+        if errs:
+            # Keep legacy errors map of single string per field for backward-compat
+            legacy_errs = {k: v[0] for k, v in errs.items() if v}
+            return await self.create_form_view(
+                request,
+                values=data,
+                errors=legacy_errs,
+                status_code=422,
+            )
+
+        try:
             new_item = await self.adapter.create(data=data)
 
             item_id = getattr(new_item, "id", None)
@@ -217,14 +239,6 @@ class DynamicModelView:
 
             return RedirectResponse(url=redirect_url, status_code=303)
 
-        except ValidationError as e:
-            return await self.create_form_view(
-                request,
-                values=data,
-                errors={error["loc"][0]: error["msg"] for error in e.errors()},
-                status_code=422,
-            )
-
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Internal Server Error: {e}")
 
@@ -234,10 +248,16 @@ class DynamicModelView:
         if not item:
             raise HTTPException(status_code=404, detail="Item not found")
 
+        # Prefill form with existing item's values (assumes Pydantic/SQLModel with model_dump)
+        initial = getattr(item, "model_dump", None)
+        initial_values = initial() if callable(initial) else getattr(item, "__dict__", {})
+        form = PydanticForm(self.model, initial=initial_values)
         context = {
             "request": request,
             "model_name": self.model.__name__,
             "item": item,
+            "form": form,
+            # Legacy keys for compatibility
             "fields": list(self.model.model_fields.keys()),
         }
         template_name = self._get_template_name("update")

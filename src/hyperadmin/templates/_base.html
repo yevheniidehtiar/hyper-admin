@@ -8,6 +8,28 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <script>
+      // Allow HTMX to process 422 (Unprocessable Entity) responses by forcing a swap
+      // and treating the response as a normal (non-error) update. This is the
+      // recommended pattern from the HTMX docs for server-side validation.
+      document.addEventListener('htmx:beforeSwap', function (evt) {
+        try {
+          var xhr = evt.detail && evt.detail.xhr;
+          if (xhr && xhr.status === 422) {
+            // Force swap of the response HTML into the target and clear error state
+            evt.detail.shouldSwap = true;
+            evt.detail.isError = false;
+            // Fallback: ensure the target gets updated even if default swapping is skipped
+            var target = evt.detail && evt.detail.target;
+            if (target && typeof xhr.responseText === 'string') {
+              requestAnimationFrame(function(){ target.innerHTML = xhr.responseText; });
+            }
+          }
+        } catch (e) {
+          // no-op: defensive guard to avoid breaking the page if something goes wrong
+        }
+      });
+    </script>
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <link rel="stylesheet" href="{{ url_for('static', path='/css/output.css') }}">
 </head>
