@@ -1,10 +1,24 @@
 import pytest
 from examples.models import User
 from sqlalchemy.ext.asyncio import create_async_engine
-from sqlmodel import SQLModel
+from sqlmodel import Field, Relationship, SQLModel
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from hyperadmin.adapters.sqlmodel import SQLModelAdapter
+
+
+class Post(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    title: str
+    content: str
+    comments: list["Comment"] = Relationship(back_populates="post")
+
+
+class Comment(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    text: str
+    post_id: int | None = Field(default=None, foreign_key="post.id")
+    post: Post | None = Relationship(back_populates="comments")
 
 
 @pytest.fixture
@@ -33,6 +47,11 @@ async def adapter(engine):
     Creates an instance of SQLModelAdapter for testing.
     """
     return SQLModelAdapter(model=User, engine=engine)
+
+
+@pytest.fixture
+async def post_adapter(engine):
+    return SQLModelAdapter(model=Post, engine=engine)
 
 
 @pytest.mark.anyio
@@ -162,3 +181,100 @@ async def test_list_search_and_filter(adapter: SQLModelAdapter, session: AsyncSe
     users, total_count = await adapter.list(search="J")
     assert total_count == len(users)
     assert len(users) == 2
+
+
+@pytest.mark.anyio
+async def test_update(adapter: SQLModelAdapter, session: AsyncSession):
+    """
+    Tests that the update method correctly updates a user in the database.
+    """
+    user_data = {"name": "Jules", "email": "jules@example.com"}
+    created_user = await adapter.create(user_data)
+
+    updated_data = {"name": "Julian"}
+    updated_user = await adapter.update(pk=created_user.id, data=updated_data)
+
+    assert updated_user.name == updated_data["name"]
+
+    # Verify the user is updated in the database
+    user_in_db = await session.get(User, created_user.id)
+    assert user_in_db.name == updated_data["name"]
+
+
+@pytest.mark.anyio
+async def test_update_not_found(adapter: SQLModelAdapter):
+    """
+    Tests that the update method does nothing when the user is not found.
+    """
+    updated_user = await adapter.update(pk=999, data={"name": "Ghost"})
+    assert updated_user is None
+
+
+@pytest.mark.anyio
+async def test_delete(adapter: SQLModelAdapter, session: AsyncSession):
+    """
+    Tests that the delete method correctly removes a user from the database.
+    """
+    user_data = {"name": "Jules", "email": "jules@example.com"}
+    created_user = await adapter.create(user_data)
+
+    await adapter.delete(pk=created_user.id)
+
+    # Verify the user is deleted from the database
+    user_in_db = await session.get(User, created_user.id)
+    assert user_in_db is None
+
+
+@pytest.mark.anyio
+async def test_delete_not_found(adapter: SQLModelAdapter):
+    """
+    Tests that the delete method does nothing when the user is not found.
+    """
+    # This should not raise any exception
+    await adapter.delete(pk=999)
+
+
+@pytest.mark.anyio
+async def test_get_related(post_adapter: SQLModelAdapter, session: AsyncSession):
+    """
+    Tests that the get_related method correctly retrieves related objects.
+    """
+    post = Post(title="Test Post", content="Test Content")
+    comment1 = Comment(text="Test Comment 1", post=post)
+    comment2 = Comment(text="Test Comment 2", post=post)
+
+    session.add(post)
+    session.add(comment1)
+    session.add(comment2)
+    await session.commit()
+    await session.refresh(post)
+
+    related_comments = await post_adapter.get_related(pk=post.id, field="comments")
+
+    assert len(related_comments) == 2
+    assert related_comments[0].text == "Test Comment 1"
+    assert related_comments[1].text == "Test Comment 2"
+
+
+@pytest.mark.anyio
+async def test_get_related_not_found(post_adapter: SQLModelAdapter):
+    """
+    Tests that get_related returns an empty list when the object is not found.
+    """
+    related_items = await post_adapter.get_related(pk=999, field="comments")
+    assert related_items == []
+
+
+@pytest.mark.anyio
+async def test_get_schema(adapter: SQLModelAdapter):
+    """
+    Tests that the get_schema method correctly returns the JSON schema of the model.
+    """
+    schema = await adapter.get_schema()
+    assert isinstance(schema, dict)
+    assert "title" in schema
+    assert schema["title"] == "User"
+    assert "properties" in schema
+    assert "id" in schema["properties"]
+    assert "name" in schema["properties"]
+    assert "email" in schema["properties"]

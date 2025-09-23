@@ -95,7 +95,7 @@ class SQLAlchemyAdapter(BaseAdapter):
                 await session.commit()
 
     async def get_related(self, pk: Any, field: str) -> builtins.list[Any]:
-        if not self.inspector:
+        if not self.inspector or not hasattr(self.model, field):
             return []
         async with AsyncSession(self.engine) as session:
             query = (

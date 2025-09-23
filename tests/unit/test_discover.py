@@ -49,7 +49,15 @@ def test_discover_admin_modules_import_error(mock_exists, mock_import_module, ca
     mock_exists.return_value = True
     mock_app_module = MagicMock()
     mock_app_module.__file__ = "/path/to/app/app_with_admin/__init__.py"
-    mock_import_module.side_effect = [mock_app_module, ImportError("Test import error")]
+
+    def import_module_side_effect(module_name):
+        if module_name == "app_with_admin":
+            return mock_app_module
+        if module_name == "app_with_admin.admin":
+            raise ImportError("Test import error")
+        return MagicMock()
+
+    mock_import_module.side_effect = import_module_side_effect
 
     with caplog.at_level(logging.ERROR):
         discover_admin_modules(["app_with_admin"])

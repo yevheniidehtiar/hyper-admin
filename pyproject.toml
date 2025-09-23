@@ -81,6 +81,9 @@ version_provider = "uv"
 precision = 1
 show_missing = true
 skip_covered = true
+exclude_lines = [
+    "raise NotImplementedError",
+]
 
 [tool.coverage.xml]  # https://coverage.readthedocs.io/en/latest/config.html#xml
 output = "reports/coverage.xml"
