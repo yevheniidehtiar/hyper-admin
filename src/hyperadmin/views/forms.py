@@ -146,6 +146,17 @@ class PydanticForm:
             return SelectInput()
         return TextInput()
 
+    @staticmethod
+    def _is_auto_now_field(field: FieldInfo) -> bool:
+        if isinstance(field, FieldInfo):
+            sa_column_kwargs = getattr(field, "sa_column_kwargs", None)
+            if sa_column_kwargs and isinstance(sa_column_kwargs, dict):
+                if "server_default" in sa_column_kwargs or "onupdate" in sa_column_kwargs:
+                    return True
+            if field.default_factory == datetime.now:
+                return True
+        return False
+
     @property
     def fields(self) -> list[FormField]:
         if self._fields:
@@ -157,6 +168,8 @@ class PydanticForm:
                 continue
             # Exclude common primary key name by default for create/update forms
             if name == "id":
+                continue
+            if self._is_auto_now_field(field):
                 continue
             widget = self._pick_widget(name, field)
             # Pydantic FieldInfo.default may be PydanticUndefined; use None in that case
