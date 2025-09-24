@@ -44,6 +44,11 @@ class NumberInput(HtmxWidget):
         super().__init__(template_path="widgets/number_input.html")
 
 
+class FloatInput(HtmxWidget):
+    def __init__(self):
+        super().__init__(template_path="widgets/float_input.html")
+
+
 class Textarea(HtmxWidget):
     def __init__(self):
         super().__init__(template_path="widgets/textarea.html")
@@ -131,8 +136,10 @@ class PydanticForm:
 
         if ann == bool:
             return CheckboxInput()
-        if ann in (int, float):
+        if ann == int:
             return NumberInput()
+        if ann == float:
+            return FloatInput()
         if ann == datetime:
             return DateTimeInput()
         if isinstance(ann, type) and issubclass(ann, Enum):
@@ -154,6 +161,8 @@ class PydanticForm:
             widget = self._pick_widget(name, field)
             # Pydantic FieldInfo.default may be PydanticUndefined; use None in that case
             default_val = getattr(field, "default", None)
+            if str(default_val) == "PydanticUndefined":
+                default_val = None
             value = self.initial.get(name, default_val if default_val is not None else None)
             self._fields.append(FormField(name=name, model_field=field, widget=widget, value=value))
         return self._fields
