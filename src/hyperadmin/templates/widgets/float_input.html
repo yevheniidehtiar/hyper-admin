@@ -1,0 +1,19 @@
+{%- set value = field.value if field.value is not none else '' -%}
+<div class="mb-4">
+    <label for="{{- field.name -}}" class="block text-gray-700 text-sm font-bold mb-2">
+        {{- field.label -}}{%- if field.required -%}<span class="text-red-500">*</span>{%- endif -%}
+    </label>
+    <input id="{{- field.name -}}" {# -#}
+           name="{{- field.name -}}" {# -#}
+           type="number"
+           step="any"
+           value="{{- value -}}"
+           class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+           aria-invalid="{{- 'true' if field.errors else 'false' -}}"
+    />
+    {%- if field.errors -%}
+        <ul class="text-red-500 text-xs italic" aria-live="polite">
+            {%- for e in field.errors -%}<li>{{- e -}}</li>{%- endfor -%}
+        </ul>
+    {%- endif -%}
+</div>
