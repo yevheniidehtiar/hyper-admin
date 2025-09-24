@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any
+from datetime import datetime
+from enum import Enum
+from typing import Any, Union, get_args, get_origin
 
 from markupsafe import Markup
 from pydantic import BaseModel, ValidationError
@@ -45,6 +47,21 @@ class NumberInput(HtmxWidget):
 class Textarea(HtmxWidget):
     def __init__(self):
         super().__init__(template_path="widgets/textarea.html")
+
+
+class CheckboxInput(HtmxWidget):
+    def __init__(self):
+        super().__init__(template_path="widgets/checkbox_input.html")
+
+
+class SelectInput(HtmxWidget):
+    def __init__(self):
+        super().__init__(template_path="widgets/select_input.html")
+
+
+class DateTimeInput(HtmxWidget):
+    def __init__(self):
+        super().__init__(template_path="widgets/datetime_input.html")
 
 
 @dataclass(slots=True)
@@ -102,9 +119,24 @@ class PydanticForm:
         lower = name.lower()
         if lower in {"description", "text", "body", "content"}:
             return Textarea()
+
         ann = getattr(field, "annotation", None)
+        origin = get_origin(ann)
+        args = get_args(ann)
+
+        if origin is not None and args:
+            # Handle Optional[T]
+            if origin is Union and type(None) in args:
+                ann = next(arg for arg in args if arg is not type(None))
+
+        if ann == bool:
+            return CheckboxInput()
         if ann in (int, float):
             return NumberInput()
+        if ann == datetime:
+            return DateTimeInput()
+        if isinstance(ann, type) and issubclass(ann, Enum):
+            return SelectInput()
         return TextInput()
 
     @property

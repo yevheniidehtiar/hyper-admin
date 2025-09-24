@@ -1,6 +1,12 @@
 from datetime import datetime
+from enum import Enum
 
 from sqlmodel import Field, SQLModel
+
+
+class UserType(str, Enum):
+    STANDARD = "standard"
+    ADMIN = "admin"
 
 
 class User(SQLModel, table=True):
@@ -10,4 +16,4 @@ class User(SQLModel, table=True):
     is_active: bool = True
     created_at: datetime = Field(default_factory=datetime.now, nullable=False)
     rating: float = 0.0
-    user_type: str = "standard"
+    user_type: UserType = Field(default=UserType.STANDARD, nullable=False)
