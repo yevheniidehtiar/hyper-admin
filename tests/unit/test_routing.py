@@ -17,6 +17,8 @@ from hyperadmin.routing import HyperAdminRouter, create_admin_router
 
 
 class Product(SQLModel, table=True):
+    __table_args__ = {"extend_existing": True}
+
     id: int | None = Field(default=None, primary_key=True)
     name: str
     price: float
