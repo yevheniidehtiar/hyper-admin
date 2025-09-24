@@ -2,22 +2,22 @@
     <table class="min-w-full table-auto">
         <thead>
             <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
-                {% for field in fields %}
-                    {% include "components/sortable_header.html" %}
-                {% endfor %}
+                {%- for field in fields -%}
+                    {%- include "components/sortable_header.html" -%}
+                {%- endfor -%}
                 <th class="py-3 px-6 text-center">Actions</th>
             </tr>
         </thead>
         <tbody class="text-gray-600 text-sm font-light">
-            {% for item in items %}
+            {%- for item in items -%}
             <tr class="border-b border-gray-200 hover:bg-gray-100">
-                {% for field in fields %}
-                    <td class="py-3 px-6 text-left whitespace-nowrap">{{ item[field] }}</td>
-                {% endfor %}
+                {%- for field in fields -%}
+                    <td class="py-3 px-6 text-left whitespace-nowrap">{{- item[field] -}}</td>
+                {%- endfor -%}
                 <td class="py-3 px-6 text-center">
-                    <a href="{{ url_for(model_name|lower ~ '-detail', item_id=item.id) }}" class="text-indigo-600 hover:text-indigo-900">View</a>
-                    <a href="{{ url_for(model_name|lower ~ '-update', item_id=item.id) }}" class="text-indigo-600 hover:text-indigo-900 ml-2">Edit</a>
-                    <button hx-post="{{ url_for(model_name|lower ~ '-delete', item_id=item.id) }}"
+                    <a href="{{- url_for(model_name|lower ~ '-detail', item_id=item.id) -}}" class="text-indigo-600 hover:text-indigo-900">View</a>
+                    <a href="{{- url_for(model_name|lower ~ '-update', item_id=item.id) -}}" class="text-indigo-600 hover:text-indigo-900 ml-2">Edit</a>
+                    <button hx-post="{{- url_for(model_name|lower ~ '-delete', item_id=item.id) -}}"
                             hx-confirm="Are you sure you want to delete this item?"
                             hx-target="closest tr"
                             hx-swap="outerHTML"
@@ -26,8 +26,8 @@
                     </button>
                 </td>
             </tr>
-            {% endfor %}
+            {%- endfor -%}
         </tbody>
     </table>
-    {% include "components/pagination.html" %}
+    {%- include "components/pagination.html" -%}
 </div>

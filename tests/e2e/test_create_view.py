@@ -22,8 +22,10 @@ def test_create_user_validation_error(page: Page, demo_base_url: str):
     """Test that submitting an invalid form for User model shows an error message."""
     page.goto(f"{demo_base_url}/admin/user/create")
     page.locator('button[type="submit"]').click()
-    expect(page.locator(".text-red-500")).to_be_visible()
-    expect(page.locator(".text-red-500")).to_contain_text("Field required")
+
+    validation_error = page.locator(".mb-4").locator("ul.text-red-500")
+    expect(validation_error).to_be_visible()
+    expect(validation_error).to_contain_text("String should have at least 1 character")
 
 
 def test_create_user_successful_submission(page: Page, demo_base_url: str):

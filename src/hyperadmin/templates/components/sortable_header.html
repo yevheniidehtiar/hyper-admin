@@ -1,16 +1,16 @@
 <th class="py-3 px-6 text-left">
-    <a href="{{ url_for(model_name|lower ~ '-list') }}?sort_by={{ field }}&sort_direction={{ 'desc' if sort_by == field and sort_direction == 'asc' else 'asc' }}&search={{ search_query }}&page={{ pagination.page }}"
-       hx-get="{{ url_for(model_name|lower ~ '-list') }}?sort_by={{ field }}&sort_direction={{ 'desc' if sort_by == field and sort_direction == 'asc' else 'asc' }}&search={{ search_query }}&page={{ pagination.page }}"
+    <a href="{{- url_for(model_name|lower ~ '-list') }}?sort_by={{ field }}&sort_direction={{ 'desc' if sort_by == field and sort_direction == 'asc' else 'asc' }}&search={{ search_query }}&page={{ pagination.page -}}"
+       hx-get="{{- url_for(model_name|lower ~ '-list') }}?sort_by={{ field }}&sort_direction={{ 'desc' if sort_by == field and sort_direction == 'asc' else 'asc' }}&search={{ search_query }}&page={{ pagination.page -}}"
        hx-target="#model-list"
        hx-swap="outerHTML"
        class="hover:underline">
-        {{ field }}
-        {% if sort_by == field %}
-            {% if sort_direction == 'asc' %}
+        {{- field -}}
+        {%- if sort_by == field -%}
+            {%- if sort_direction == 'asc' -%}
                 &#9650;
-            {% else %}
+            {%- else -%}
                 &#9660;
-            {% endif %}
-        {% endif %}
+            {%- endif -%}
+        {%- endif -%}
     </a>
 </th>
