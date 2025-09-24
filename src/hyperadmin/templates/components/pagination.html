@@ -1,32 +1,32 @@
 <div class="py-4 px-3">
     <div class="flex items-center justify-between">
         <div class="text-sm text-gray-700">
-            Showing {{ pagination.start_index }} to {{ pagination.end_index }} of {{ pagination.total_items }} results
+            Showing {{- pagination.start_index }} to {{ pagination.end_index }} of {{ pagination.total_items }} results
         </div>
         <div class="flex items-center">
-            {% if pagination.page > 1 %}
-            <a href="{{ url_for(model_name|lower ~ '-list') }}?page={{ pagination.page - 1 }}&search={{ search_query }}&sort_by={{ sort_by }}&sort_direction={{ sort_direction }}"
-               hx-get="{{ url_for(model_name|lower ~ '-list') }}?page={{ pagination.page - 1 }}&search={{ search_query }}&sort_by={{ sort_by }}&sort_direction={{ sort_direction }}"
+            {%- if pagination.page > 1 -%}
+            <a href="{{- url_for(model_name|lower ~ '-list') }}?page={{ pagination.page - 1 }}&search={{ search_query }}&sort_by={{ sort_by }}&sort_direction={{ sort_direction -}}"
+               hx-get="{{- url_for(model_name|lower ~ '-list') }}?page={{ pagination.page - 1 }}&search={{ search_query }}&sort_by={{ sort_by }}&sort_direction={{ sort_direction -}}"
                hx-target="#model-list"
                hx-swap="outerHTML"
                class="px-3 py-1 border rounded text-gray-700 hover:bg-gray-200">
                 Previous
             </a>
-            {% endif %}
+            {%- endif -%}
 
             <div class="px-3 py-1 text-gray-700">
                 Page {{ pagination.page }} of {{ pagination.total_pages }}
             </div>
 
-            {% if pagination.page < pagination.total_pages %}
-            <a href="{{ url_for(model_name|lower ~ '-list') }}?page={{ pagination.page + 1 }}&search={{ search_query }}&sort_by={{ sort_by }}&sort_direction={{ sort_direction }}"
-               hx-get="{{ url_for(model_name|lower ~ '-list') }}?page={{ pagination.page + 1 }}&search={{ search_query }}&sort_by={{ sort_by }}&sort_direction={{ sort_direction }}"
+            {%- if pagination.page < pagination.total_pages -%}
+            <a href="{{- url_for(model_name|lower ~ '-list') }}?page={{ pagination.page + 1 }}&search={{ search_query }}&sort_by={{ sort_by }}&sort_direction={{ sort_direction -}}"
+               hx-get="{{- url_for(model_name|lower ~ '-list') }}?page={{ pagination.page + 1 }}&search={{ search_query }}&sort_by={{ sort_by }}&sort_direction={{ sort_direction -}}"
                hx-target="#model-list"
                hx-swap="outerHTML"
                class="px-3 py-1 border rounded text-gray-700 hover:bg-gray-200">
                 Next
             </a>
-            {% endif %}
+            {%- endif -%}
         </div>
     </div>
 </div>
