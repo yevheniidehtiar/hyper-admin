@@ -214,7 +214,6 @@ class DynamicModelView:
         instance, errs = form.validate(data)
 
         if errs:
-            # Keep legacy errors map of single string per field for backward-compat
             legacy_errs = {k: v[0] for k, v in errs.items() if v}
             return await self.create_form_view(
                 request,
@@ -223,8 +222,16 @@ class DynamicModelView:
                 status_code=422,
             )
 
+        if not instance:
+            return await self.create_form_view(
+                request,
+                values=data,
+                errors=errs,
+                status_code=422,
+            )
+
         try:
-            new_item = await self.adapter.create(data=data)
+            new_item = await self.adapter.create(data=instance.model_dump())
 
             item_id = getattr(new_item, "id", None)
             if item_id:

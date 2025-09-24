@@ -9,7 +9,7 @@ class AdapterNotFound(Exception):
 
 class AdapterRegistry:
     def __init__(self):
-        self._registry: dict[type, type[BaseAdapter]] = {}
+        self._registry: dict[type, type[BaseAdapter]] = {}  # type: ignore
 
     def register(self, orm_base_class: type, adapter_class: type[BaseAdapter]) -> None:
         """

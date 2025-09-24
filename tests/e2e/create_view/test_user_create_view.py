@@ -9,21 +9,28 @@ def debug_page(page: Page):
     # List to store network requests and responses
     network_logs = []
 
-    # Listen for all requests and responses
-    page.on("request", lambda request: print(f"Request: {request.method} {request.url}"))
+    def parse_body(_response):
+        try:
+            return _response.text() if _response.status < 400 else f"Error:{_response.status}"
+        except Exception:
+            return _response.content
+
+    # Listen to all requests and responses
+    page.on("request", lambda _r: print(f"Request: {_r.method} {_r.url}"))
     page.on(
         "response",
-        lambda response: network_logs.append(
+        lambda _r: network_logs.append(
             {
-                "url": response.url,
-                "status": response.status,
-                "headers": response.all_headers(),
-                "body": response.text() if response.status < 400 else f"Error: {response.status}",
+                "url": _r.url,
+                "status": _r.status,
+                "headers": _r.all_headers(),
+                "body": parse_body(_r),
                 # Only capture body for successful responses to avoid large logs
             }
         ),
     )
-    return page
+    yield page
+    print(f"Network logs: {network_logs}")
 
 
 def test_create_user_form_rendering(page: Page, demo_base_url: str):
@@ -65,12 +72,15 @@ def test_create_user_successful_submission(debug_page: Page, demo_base_url: str)
     page.locator('input[name="rating"]').fill("4.5")
     page.locator('select[name="user_type"]').select_option("ADMIN")
     page.locator('button[type="submit"]').click()
-    page.screenshot(timeout=2000)
+    page.screenshot(
+        timeout=1000, path="./.agent-artifacts/create_user_form_submit.png", full_page=True
+    )
     # The redirect is handled by HTMX, so we need to wait for the URL to change.
     expect(page).to_have_url(re.compile(r".*/admin/user/\d+"))
     expect(page.get_by_role("heading", name=re.compile(r"User #"))).to_contain_text("User #")
-    expect(page.locator("dd")).to_contain_text("Test User")
-    expect(page.locator("dd")).to_contain_text("test@example.com")
-    expect(page.locator("dd")).to_contain_text("True")
-    expect(page.locator("dd")).to_contain_text("4.5")
-    expect(page.locator("dd")).to_contain_text("admin")
+    expect(page.locator(".detail-fields")).to_contain_text("Test User")
+    expect(page.locator(".detail-fields")).to_contain_text("test@example.com")
+    expect(page.locator(".detail-fields")).to_contain_text("True")
+    expect(page.locator(".detail-fields")).to_contain_text("4.5")
+    expect(page.locator(".detail-fields")).to_contain_text("UserType.ADMIN")
+    expect(page.locator(".detail-fields")).to_contain_text("created_at")

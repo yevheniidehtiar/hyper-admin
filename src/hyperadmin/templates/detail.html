@@ -1,9 +1,8 @@
-{%- extends "base.html" -%}
+{%- extends "detail_layout.html" -%}
 
-{%- block title -%}{{ item_name }} | HyperAdmin{%- endblock -%}
+{%- block detail_title -%}{{ item_name }}{%- endblock -%}
 
-{%- block content -%}
-    <h1 class="text-2xl font-bold mb-4">{{- item_name -}}</h1>
+{%- block detail_fields -%}
     <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
         {%- for key, value in item.items() -%}
         <div class="mb-4">
