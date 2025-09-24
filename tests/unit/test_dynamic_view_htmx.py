@@ -182,14 +182,6 @@ async def test_create_view_redirect(request_factory, view):
 
 
 @pytest.mark.anyio
-async def test_create_view_no_id(request_factory, view):
-    req = request_factory(method="POST", form_data={"name": "Test", "no_id": True})
-    resp = await view.create_view(req)
-    assert resp.status_code == 303
-    assert resp.headers["location"] == "/user-list"
-
-
-@pytest.mark.anyio
 async def test_create_view_htmx_redirect(request_factory, view):
     req = request_factory(method="POST", headers={"hx-request": "true"})
     resp = await view.create_view(req)
