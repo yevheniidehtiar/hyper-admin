@@ -163,8 +163,13 @@ class PydanticForm:
             f.value = data.get(f.name, None)
 
     def validate(self, data: dict[str, Any]) -> tuple[BaseModel | None, dict[str, list[str]]]:
+        cleaned_data = data.copy()
+        for f in self.fields:
+            if not f.required and cleaned_data.get(f.name) == "":
+                cleaned_data[f.name] = None
+
         try:
-            instance = self.model.model_validate(data)
+            instance = self.model.model_validate(cleaned_data)
             self.errors = {}
             return instance, {}
         except ValidationError as e:
