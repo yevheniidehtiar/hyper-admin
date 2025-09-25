@@ -72,9 +72,6 @@ def test_create_user_successful_submission(debug_page: Page, demo_base_url: str)
     page.locator('input[name="rating"]').fill("4.5")
     page.locator('select[name="user_type"]').select_option("ADMIN")
     page.locator('button[type="submit"]').click()
-    page.screenshot(
-        timeout=1000, path="./.agent-artifacts/create_user_form_submit.png", full_page=True
-    )
     # The redirect is handled by HTMX, so we need to wait for the URL to change.
     expect(page).to_have_url(re.compile(r".*/admin/user/\d+"))
     expect(page.get_by_role("heading", name=re.compile(r"User #"))).to_contain_text("User #")

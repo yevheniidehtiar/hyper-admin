@@ -1,81 +1,119 @@
-[![Open in GitHub Codespaces](https://img.shields.io/static/v1?label=GitHub%20Codespaces&message=Open&color=blue&logo=github)](https://github.com/codespaces/new/your-username/hyperadmin)
+<div align="center">
+  <a href="https://yevheniidehtiar.github.io/hyper-admin/" target="_blank">
+    <img src="https://yevheniidehtiar.github.io/hyper-admin/assets/logo.svg" alt="HyperAdmin Logo" width="150"/>
+  </a>
+  <h1>HyperAdmin</h1>
+  <p>A modern, Pydantic-native admin interface for FastAPI, powered by HTMX.</p>
 
-# HyperAdmin
+  <!-- Badges -->
+  <p>
+    <a href="https://github.com/yevheniidehtiar/hyper-admin/actions/workflows/ci.yml" target="_blank">
+      <img alt="CI" src="https://github.com/yevheniidehtiar/hyper-admin/actions/workflows/ci.yml/badge.svg"/>
+    </a>
+    <a href="https://codecov.io/gh/yevheniidehtiar/hyper-admin" target="_blank">
+      <img alt="Codecov" src="https://codecov.io/gh/yevheniidehtiar/hyper-admin/branch/main/graph/badge.svg"/>
+    </a>
+    <a href="https://pypi.org/project/hyperadmin/" target="_blank">
+      <img alt="PyPI" src="https://img.shields.io/pypi/v/hyperadmin.svg"/>
+    </a>
+    <a href="https://pypi.org/project/hyperadmin/" target="_blank">
+      <img alt="PyPI - Python Version" src="https://img.shields.io/pypi/pyversions/hyperadmin.svg"/>
+    </a>
+     <a href="https://github.com/yevheniidehtiar/hyper-admin/blob/main/LICENSE" target="_blank">
+      <img alt="License" src="https://img.shields.io/pypi/l/hyperadmin"/>
+    </a>
+  </p>
+</div>
 
-A modern, Pydantic-native admin interface for FastAPI, powered by HTMX.
+---
 
-## Installing
+**HyperAdmin** is a framework for building administrative interfaces on top of FastAPI applications. It leverages the power of **Pydantic** for data validation and **HTMX** for creating dynamic, modern user interfaces with minimal JavaScript. It is designed to be highly extensible and easy to use, allowing developers to quickly create rich, data-driven admin panels.
 
-To install this package, run:
+<div align="center">
+  <!-- TODO: Add a screenshot or GIF of the admin interface -->
+  <img src="https://placehold.co/800x400?text=HyperAdmin+Screenshot" alt="HyperAdmin Screenshot"/>
+</div>
+
+## ✨ Key Features
+
+- **Pydantic-Native:** Define your admin interfaces directly from your Pydantic models.
+- **FastAPI Integration:** Mounts seamlessly into any FastAPI application.
+- **HTMX-Powered:** Delivers a rich, interactive user experience without writing complex JavaScript.
+- **SQLModel & SQLAlchemy Support:** Works out-of-the-box with popular database libraries.
+- **Automatic CRUD:** Generates list, detail, create, and update views from your data models.
+- **Extensible:** Easily customize views, templates, and actions to fit your needs.
+
+## 📚 Documentation
+
+For a full guide on how to install, configure, and use HyperAdmin, please see the [**official documentation**](https://yevheniidehtiar.github.io/hyper-admin/).
+
+## 🚀 Getting Started
+
+### Installation
 
 ```sh
 pip install hyperadmin
 ```
 
-## Using
-
-Example usage:
+### Example Usage
 
 ```python
-import hyperadmin
+from fastapi import FastAPI
+from hyperadmin.admin import Admin
+from hyperadmin.views import ModelView
+from sqlmodel import SQLModel, Field
 
-...
+# 1. Define your data model
+class Product(SQLModel, table=True):
+    id: int = Field(default=None, primary_key=True)
+    name: str
+    price: float
+
+# 2. Create a FastAPI app
+app = FastAPI()
+
+# 3. Create an admin instance and register your model
+admin = Admin()
+admin.register_model(ModelView(Product))
+
+# 4. Mount the admin to your app
+admin.mount_to(app)
 ```
+This will automatically create a full CRUD interface for your `Product` model at `/admin`.
 
-## Contributing
+## 🤝 Contributing
+
+Contributions are welcome! Please see the [Contributing Guide](https://yevheniidehtiar.github.io/hyper-admin/contributing/) for more details on how to get started.
 
 <details>
-<summary>Prerequisites</summary>
+<summary>Development Environment</summary>
 
-1. [Generate an SSH key](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent#generating-a-new-ssh-key) and [add the SSH key to your GitHub account](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account).
-1. Configure SSH to automatically load your SSH keys:
+This project uses `uv` for dependency management and `poe` for task automation.
 
+1.  **Clone the repository:**
     ```sh
-    cat << EOF >> ~/.ssh/config
-
-    Host *
-      AddKeysToAgent yes
-      IgnoreUnknown UseKeychain
-      UseKeychain yes
-      ForwardAgent yes
-    EOF
+    git clone https://github.com/yevheniidehtiar/hyper-admin.git
+    cd hyper-admin
     ```
 
-1. [Install VS Code](https://code.visualstudio.com/). Alternatively, install [PyCharm](https://www.jetbrains.com/pycharm/download/).
-1. _Optional:_ install a [Nerd Font](https://www.nerdfonts.com/font-downloads) such as [FiraCode Nerd Font](https://github.com/ryanoasis/nerd-fonts/tree/master/patched-fonts/FiraCode) and [configure VS Code](https://github.com/tonsky/FiraCode/wiki/VS-Code-Instructions) or [PyCharm](https://github.com/tonsky/FiraCode/wiki/Intellij-products-instructions) to use it.
-
-</details>
-
-<details open>
-<summary>Development environments</summary>
-
-The following development environments are supported:
-
-1. ⭐️ _GitHub Codespaces_: click on [Open in GitHub Codespaces](https://github.com/codespaces/new/your-username/hyperadmin) to start developing in your browser.
-1. ⭐️ _uv_: clone this repository and run the following from root of the repository:
-
+2.  **Create and sync the virtual environment:**
     ```sh
-    # Create and install a virtual environment
     uv sync --python 3.10 --all-extras
-
-    # Activate the virtual environment
-    source .venv/bin/activate
-
-    # Install the pre-commit hooks
-    pre-commit install --install-hooks
     ```
 
-</details>
+3.  **Activate the virtual environment:**
+    ```sh
+    source .venv/bin/activate
+    ```
 
-<details open>
-<summary>Developing</summary>
-
-- This project follows the [Conventional Commits](https://www.conventionalcommits.org/) standard to automate [Semantic Versioning](https://semver.org/) and [Keep A Changelog](https://keepachangelog.com/) with [Commitizen](https://github.com/commitizen-tools/commitizen).
-- Run `poe` from within the development environment to print a list of [Poe the Poet](https://github.com/nat-n/poethepoet) tasks available to run on this project.
-- Run `uv add {package}` from within the development environment to install a run time dependency and add it to `pyproject.toml` and `uv.lock`. Add `--dev` to install a development dependency.
-- Run `uv sync --upgrade` from within the development environment to upgrade all dependencies to the latest versions allowed by `pyproject.toml`. Add `--only-dev` to upgrade the development dependencies only.
-- Run `cz bump` to bump the package's version, update the `CHANGELOG.md`, and create a git tag. Then push the changes and the git tag with `git push origin main --tags`.
-
-- To build and serve the documentation locally, run `poe docs:serve`. The documentation will be available at `http://127.0.0.1:8000`.
+4.  **Install pre-commit hooks:**
+    ```sh
+    pre-commit install
+    ```
+Now you're ready to start developing! Run `poe` to see a list of available tasks.
 
 </details>
+
+## 📄 License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
