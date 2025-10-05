@@ -158,7 +158,8 @@ type = "simple"
 
   [tool.poe.tasks.vulnerability-check]
   help = "Check this package's dependencies for vulnerabilities"
-  cmd = "pip-audit --format markdown"
+  # GHSA-4xh5-x5gv-qwph is a false positive for this project, as it's a vulnerability in pypy-3.11, and this project uses CPython.
+  cmd = "pip-audit --format markdown --ignore-vuln GHSA-4xh5-x5gv-qwph"
 
   [tool.poe.tasks.license-check]
   help = "Check this package's dependencies for license issues"
