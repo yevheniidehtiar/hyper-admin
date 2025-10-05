@@ -9,8 +9,9 @@
     - `placeholder` (string, optional): The placeholder text for the input.
     - `value` (string, optional): The initial value of the input.
     - `class` (string, optional): Additional CSS classes to apply to the input.
+    - `readonly` (boolean, optional, default=False): Whether the input is read-only.
 -#}
-{% macro input(name, label, type='text', placeholder='', value='', class='') %}
+{% macro input(name, label, type='text', placeholder='', value='', class='', readonly=False) %}
     <div class="mb-4">
         <label for="{{ name }}" class="block text-gray-700 text-sm font-bold mb-2">{{ label }}</label>
         <input
@@ -20,6 +21,7 @@
             placeholder="{{ placeholder }}"
             value="{{ value }}"
             class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline {{ class }}"
+            {% if readonly %}readonly{% endif %}
         >
     </div>
 {% endmacro %}

@@ -1,20 +1,25 @@
-{% extends "base.html" %}
+{% extends "_base.html" %}
+{% from "components/button.html" import button %}
+{% from "components/input.html" import input %}
 
 {% block title %}{{ item_name }} | HyperAdmin{% endblock %}
 
 {% block content %}
-    <h1 class="text-2xl font-bold mb-4">{{ item_name }}</h1>
+    <div class="flex justify-between items-center mb-4">
+        <h1 class="text-2xl font-bold">{{ item_name }}</h1>
+        <div class="flex space-x-2">
+            <a href="./update" class="bg-yellow-500 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded">
+                Update
+            </a>
+            {{ button(text='Delete', hx_post='./delete', hx_target='body', class='bg-red-500 hover:bg-red-700') }}
+        </div>
+    </div>
+
     <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
         {% for key, value in item.items() %}
-        <div class="mb-4">
-            <label class="block text-gray-700 text-sm font-bold mb-2">
-                {{ key }}
-            </label>
-            <div class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
-                {{ value }}
-            </div>
-        </div>
+            {{ input(name=key, label=key, value=value, class='bg-gray-100', readonly=True) }}
         {% endfor %}
     </div>
+
     <a href="../" class="text-indigo-600 hover:text-indigo-900">Back to list</a>
 {% endblock %}
