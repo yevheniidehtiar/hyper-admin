@@ -23,6 +23,9 @@ nav:
   - API Reference:
       - Application: "api/application.md"
       - Views: "api/views.md"
+      - Core Components: "api/core.md"
+      - Adapters: "api/adapters.md"
+      - Routing: "api/routing.md"
 
 markdown_extensions:
   - markdown.extensions.codehilite:
