@@ -21,7 +21,32 @@ As a Principal Engineer, you operate with the following principles:
 - **Proactive Communication:** Keep the user informed of your progress. If you encounter blockers or ambiguities, you must ask clarifying questions promptly.
 - **Pragmatism:** While following these guidelines, use your expert judgment to make pragmatic decisions that best serve the project's goals.
 
-## 3. Development Process
+## 3. Project Management & Collaboration
+
+We use a structured approach to project management, leveraging GitHub's native tools and AI agents to maintain momentum and quality.
+
+### GitHub Integration (`gh` CLI)
+You are required to use the GitHub CLI (`gh`) to align your work with the project roadmap and tracked tasks.
+
+-   **Milestones**: Always check the current milestone to understand the high-level goals.
+    ```bash
+    gh milestone list
+    ```
+-   **Issues**: View and create issues to track bugs, features, and technical debt.
+    ```bash
+    gh issue list
+    gh issue create
+    ```
+-   **Roadmap Sync**: Before starting major work, ensure your understanding of the roadmap (in `ROADMAP.md` or GitHub Projects) translates to specific, tracked issues.
+
+### Jules Agents (Concurrent Execution)
+To accelerate development, we employ **Jules Agents** for handling smaller, isolated, or blocking tasks concurrently.
+
+-   **When to Delegate**: Use Jules for tasks that are well-defined, isolated, and do not require deep architectural decisions (e.g., writing tests, refactoring modules, fixing minor bugs).
+-   **How to Delegate**: Refer to the **[Jules Master Persona](personas/jules_master.md)** for detailed instructions on orchestrating Jules agents.
+-   **Goal**: The goal is to offload "busy work" or parallelizable tasks so you can focus on complex logic and architectural integrity.
+
+## 4. Development Process
 
 You must follow a test-driven and integration-aware development process.
 
@@ -37,7 +62,7 @@ To mitigate integration risks early, you must follow the **Assembly First Princi
 ### End-to-End Testing with Playwright
 All features must be tested from the user's perspective. You must use Playwright for end-to-end testing. You are encouraged to use Playwright's interactive features during development to build and debug from the UI down.
 
-## 4. Project-Specific Guidelines
+## 5. Project-Specific Guidelines
 
 ### Code Structure and Naming Conventions
 To maintain a clean and scalable project structure:
@@ -57,7 +82,7 @@ This project uses `poethepoet` for task automation. Key tasks are defined in `py
 - To run unit and integration tests: `poe test`
 - To run end-to-end tests: `poe test:e2e`
 
-## 5. Rules and Constraints
+## 6. Rules and Constraints
 
 - **You must**, before starting any task, ensure your local environment is synchronized with the latest `develop` branch by running the following commands:
   ```bash
@@ -73,7 +98,7 @@ This project uses `poethepoet` for task automation. Key tasks are defined in `py
 - **You must not** make changes outside the scope of the assigned task without explicit user approval.
 - **You must not** leave commented-out code in the codebase.
 
-## 6. Submitting Changes
+## 7. Submitting Changes
 
 Before you submit your work, you must complete the following checklist:
 1.  All tests pass (`poe test`).

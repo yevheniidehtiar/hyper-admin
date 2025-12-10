@@ -25,7 +25,21 @@ src/hyperadmin/
 ├── views/             # UI views
 │   ├── __init__.py
 │   ├── dynamic.py     # Dynamic content views
+│   ├── forms.py       # Form handling views
+│   ├── htmx.py        # HTMX-specific utilities
 │   └── static.py      # Static content views
+├── static/            # Static assets
+│   ├── css/          # CSS files
+│   ├── dist/         # Built assets (Tailwind output)
+│   ├── images/       # Image assets
+│   │   ├── logo/
+│   │   └── user/
+│   └── js/           # JavaScript files
+├── templates/         # Jinja2 templates
+│   ├── components/   # Reusable template components
+│   ├── tailadmin/    # TailAdmin theme templates
+│   │   └── partials/
+│   └── widgets/      # Form and UI widgets
 ├── __init__.py
 ├── db.py              # Database utilities
 ├── discover.py        # Discovery functionality
@@ -70,7 +84,21 @@ To mitigate integration risks early:
 1. **Build a Skeleton First**: Start with a simple, end-to-end working version using placeholders/stubs
 2. **Define and Verify Data Flow**: Focus on how data moves through the system
 3. **Iterate and Add Detail**: Once the structure is verified, flesh out component details
-2. **Write the minimal code** to make the test pass  
+
+### Git Workflow
+Before starting any task, ensure your local environment is synchronized:
+```bash
+git fetch --all
+git reset --hard origin/develop
+```
+
+**Create branches named `issue-X`** where X is the issue number when starting work.
+
+### Tool Execution
+- Use `uv run <command>` to execute commands in the virtual environment
+- If `uv run` fails with unexpected errors, stop and report the issue
+- Do not try to manually manipulate the virtual environment
+
 ## Testing Requirements
 
 ### Test Execution
@@ -88,10 +116,14 @@ poe test
 1. **Unit Tests**: `poe test:unit` - Run with pytest on `tests/unit/`
 2. **End-to-End Tests**: `poe test:e2e` - Run with Playwright on `tests/e2e/`
 
+### Test Coverage
+- Target near 99% test coverage for new code
+- All features must be tested from the user's perspective using Playwright
+- Use Playwright's interactive features during development to build and debug from the UI down
+
 ### Test Structure
 - Unit tests: `tests/unit/`
 - E2E tests: `tests/e2e/`
-- All features must be tested from the user's perspective using Playwright
 
 ## Task Management
 
@@ -109,6 +141,11 @@ poe security-check    # Run security and license checks
 poe static:build-css  # Build Tailwind CSS using Docker
 ```
 
+### Branch Management
+- Only proceed on unblocked, available issues
+- Create branches named `issue-X` (X = issue number) when starting work
+- Keep users informed; proactively surface blockers
+
 ## Code Quality Standards
 
 ### Linting and Formatting
@@ -121,6 +158,21 @@ poe static:build-css  # Build Tailwind CSS using Docker
 - Follow numpy-style docstrings
 - Use type hints consistently
 - Target Python 3.10+
+- Target near 99% test coverage for new code
+- Type hints required for all functions and methods
+- Adhere to single-responsibility; prefer small, modular files
+
+## Backend Guidelines
+- Use SQLModel for data models and DB interactions
+- Use Pydantic for validation
+- Optimize DB access with `selectinload()` for relationships and add pagination for large collections
+- Handle API errors via `fastapi.HTTPException` with clear messages
+
+## Frontend Guidelines
+- Use HTMX for server interactions
+- Use Alpine.js for client-side behavior
+- Use Tailwind CSS for styling
+- Prefer Flowbite for UI components
 
 ## Dependency Management
 
@@ -161,6 +213,8 @@ Before submitting changes, ensure:
 5. ✅ New tests added for new features/fixes
 6. ✅ Documentation updated where necessary
 7. ✅ Code follows project style guidelines
+8. ✅ Commit messages include issue numbers
+9. ✅ Perform a self-review against this checklist
 
 ### Commit Standards
 - Follow [Conventional Commits](https://www.conventionalcommits.org/) specification
@@ -177,6 +231,12 @@ When working as an AI agent on this project:
 - **Pragmatism**: Use expert judgment while following these guidelines
 - **No Shortcuts**: Never commit code that breaks existing tests or leaves commented-out code
 - **Scope**: Do not make changes outside the assigned task without explicit approval
+
+**Constraints:**
+- **Do not** try to manipulate the virtual environment manually
+- **Do not** break existing tests
+- **Do not** expand scope without approval
+- **Do not** leave commented-out code
 
 
 ## MCP Integration Guidelines
@@ -220,14 +280,6 @@ mcp_docker-mcp_fetch(
 - When debugging UI issues that require browser interaction
 - To validate web application functionality
 - For automated browser-based testing scenarios
-
-**Usage Pattern:**
-```python
-# Example: Navigate and test a page
-mcp_docker-mcp_browser_navigate(url="http://localhost:8000/admin")
-mcp_docker-mcp_browser_snapshot()  # Better than screenshots for actions
-mcp_docker-mcp_browser_click(element="Login button", ref="button_ref")
-```
 
 ### Integration Discovery Process
 
