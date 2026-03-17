@@ -1,27 +1,27 @@
-<div id="model-list" class="bg-white shadow-md rounded my-6">
-    <table class="min-w-full table-auto">
+<div id="model-list" class="ha-table-wrapper">
+    <table class="ha-table">
         <thead>
-            <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
+            <tr class="ha-table-header">
                 {%- for field in fields -%}
                     {%- include "components/sortable_header.html" -%}
                 {%- endfor -%}
-                <th class="py-3 px-6 text-center">Actions</th>
+                <th class="ha-table-th ha-table-th-center">Actions</th>
             </tr>
         </thead>
-        <tbody class="text-gray-600 text-sm font-light">
+        <tbody class="ha-table-body">
             {%- for item in items -%}
-            <tr class="border-b border-gray-200 hover:bg-gray-100">
+            <tr class="ha-table-row">
                 {%- for field in fields -%}
-                    <td class="py-3 px-6 text-left whitespace-nowrap">{{- item[field] -}}</td>
+                    <td class="ha-table-cell">{{- item[field] -}}</td>
                 {%- endfor -%}
-                <td class="py-3 px-6 text-center">
-                    <a href="{{- url_for(model_name|lower ~ '-detail', item_id=item.id) -}}" class="text-indigo-600 hover:text-indigo-900">View</a>
-                    <a href="{{- url_for(model_name|lower ~ '-update', item_id=item.id) -}}" class="text-indigo-600 hover:text-indigo-900 ml-2">Edit</a>
+                <td class="ha-table-cell ha-table-cell-center">
+                    <a href="{{- url_for(model_name|lower ~ '-detail', item_id=item.id) -}}" class="ha-action-link">View</a>
+                    <a href="{{- url_for(model_name|lower ~ '-update', item_id=item.id) -}}" class="ha-action-link">Edit</a>
                     <button hx-post="{{- url_for(model_name|lower ~ '-delete', item_id=item.id) -}}"
                             hx-confirm="Are you sure you want to delete this item?"
                             hx-target="closest tr"
                             hx-swap="outerHTML"
-                            class="text-red-600 hover:text-red-900 ml-2">
+                            class="ha-action-delete">
                         Delete
                     </button>
                 </td>

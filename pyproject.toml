@@ -190,6 +190,3 @@ type = "simple"
     { shell = "E2E_TEST_TIMEOUT=5000 pytest tests/e2e --screenshot on" },
   ]
 
-  [tool.poe.tasks."static:build-css"]
-  help = "Build Tailwind CSS using Docker"
-  cmd = "docker build -f Dockerfile.static -t hyperadmin-tailwind-builder --output type=local,dest=./src/hyperadmin/static/css ."

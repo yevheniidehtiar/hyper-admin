@@ -1,18 +1,18 @@
-<div class="mb-4">
-    <label for="{{- field.name -}}" class="flex items-center">
+<div class="ha-form-group">
+    <label for="{{- field.name -}}" class="ha-checkbox-label">
         <input id="{{- field.name -}}" {# -#}
                name="{{- field.name -}}" {# -#}
                type="checkbox" value="true" {# -#}
-               class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+               class="ha-checkbox"
                {%- if field.value -%}checked{%- endif -%}
         />
-        <span class="ml-2 text-sm font-medium text-gray-900 dark:text-gray-300">
-            {{- field.label -}}{%- if field.required -%}<span class="text-red-500">*</span>{%- endif -%}
+        <span class="ha-checkbox-text">
+            {{- field.label -}}{%- if field.required -%}<span class="ha-required">*</span>{%- endif -%}
         </span>
     </label>
-    {%- if field.help_text -%}<p class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{- field.help_text -}}</p>{%- endif -%}
+    {%- if field.help_text -%}<p class="ha-help-text">{{- field.help_text -}}</p>{%- endif -%}
     {%- if field.errors -%}
-        <ul class="text-red-500 text-xs italic" aria-live="polite">
+        <ul class="ha-field-errors" aria-live="polite">
             {%- for e in field.errors -%}<li>{{- e -}}</li>{%- endfor -%}
         </ul>
     {%- endif -%}

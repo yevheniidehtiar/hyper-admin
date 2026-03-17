@@ -8,16 +8,15 @@
       Can be 'info', 'success', 'warning', or 'error'.
 -#}
 {%- macro alert(message, level='info') -%}
-    {%- set base_class = 'p-4 rounded' -%}
     {%- set level_class = {
-        'info': 'bg-blue-100 border border-blue-400 text-blue-700',
-        'success': 'bg-green-100 border border-green-400 text-green-700',
-        'warning': 'bg-yellow-100 border border-yellow-400 text-yellow-700',
-        'error': 'bg-red-100 border border-red-400 text-red-700'
+        'info': 'ha-alert-info',
+        'success': 'ha-alert-success',
+        'warning': 'ha-alert-warning',
+        'error': 'ha-alert-error'
     } -%}
 
-    <div class="{{- base_class }} {{ level_class.get(level, 'bg-gray-100 border border-gray-400 text-gray-700') -}}" role="alert">
-        <p class="font-bold">
+    <div class="ha-alert {{ level_class.get(level, 'ha-alert-info') }}" role="alert">
+        <p class="ha-alert-title">
             {%- if level == 'info' -%}Info{%- endif -%}
             {%- if level == 'success' -%}Success{%- endif -%}
             {%- if level == 'warning' -%}Warning{%- endif -%}

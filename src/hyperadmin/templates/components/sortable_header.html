@@ -1,9 +1,9 @@
-<th class="py-3 px-6 text-left">
+<th class="ha-table-th">
     <a href="{{- url_for(model_name|lower ~ '-list') }}?sort_by={{ field }}&sort_direction={{ 'desc' if sort_by == field and sort_direction == 'asc' else 'asc' }}&search={{ search_query }}&page={{ pagination.page -}}"
        hx-get="{{- url_for(model_name|lower ~ '-list') }}?sort_by={{ field }}&sort_direction={{ 'desc' if sort_by == field and sort_direction == 'asc' else 'asc' }}&search={{ search_query }}&page={{ pagination.page -}}"
        hx-target="#model-list"
        hx-swap="outerHTML"
-       class="hover:underline">
+       class="ha-table-sort-link">
         {{- field -}}
         {%- if sort_by == field -%}
             {%- if sort_direction == 'asc' -%}

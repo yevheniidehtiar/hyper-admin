@@ -1,0 +1,784 @@
+/*
+ * HyperAdmin — Semantic Stylesheet
+ *
+ * Framework-independent CSS using design tokens (custom properties).
+ * No build tooling required — this is the only stylesheet the app needs.
+ */
+
+/* ==========================================================================
+   Design Tokens
+   ========================================================================== */
+
+:root {
+  /* Colors */
+  --ha-color-primary: #2563eb;
+  --ha-color-primary-hover: #1d4ed8;
+  --ha-color-primary-light: #dbeafe;
+  --ha-color-primary-text: #1e40af;
+  --ha-color-danger: #dc2626;
+  --ha-color-danger-hover: #b91c1c;
+  --ha-color-danger-light: #fee2e2;
+  --ha-color-danger-text: #991b1b;
+  --ha-color-success: #16a34a;
+  --ha-color-success-light: #dcfce7;
+  --ha-color-success-text: #166534;
+  --ha-color-warning: #ca8a04;
+  --ha-color-warning-light: #fef9c3;
+  --ha-color-warning-text: #854d0e;
+  --ha-color-info-light: #dbeafe;
+  --ha-color-info-text: #1e40af;
+  --ha-color-info-border: #60a5fa;
+  --ha-color-text: #374151;
+  --ha-color-text-muted: #6b7280;
+  --ha-color-text-strong: #111827;
+  --ha-color-bg: #f3f4f6;
+  --ha-color-bg-light: #f9fafb;
+  --ha-color-surface: #ffffff;
+  --ha-color-border: #d1d5db;
+  --ha-color-border-light: #e5e7eb;
+  --ha-color-link: #4f46e5;
+  --ha-color-link-hover: #312e81;
+
+  /* Spacing */
+  --ha-space-1: 0.25rem;
+  --ha-space-2: 0.5rem;
+  --ha-space-3: 0.75rem;
+  --ha-space-4: 1rem;
+  --ha-space-6: 1.5rem;
+  --ha-space-8: 2rem;
+
+  /* Typography */
+  --ha-font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  --ha-font-size-xs: 0.75rem;
+  --ha-font-size-sm: 0.875rem;
+  --ha-font-size-base: 1rem;
+  --ha-font-size-lg: 1.125rem;
+  --ha-font-size-xl: 1.25rem;
+  --ha-font-size-2xl: 1.5rem;
+  --ha-font-size-3xl: 1.875rem;
+  --ha-line-height: 1.5;
+
+  /* Borders & Shapes */
+  --ha-radius: 0.375rem;
+  --ha-radius-lg: 0.5rem;
+  --ha-border-width: 1px;
+
+  /* Shadows */
+  --ha-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  --ha-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  --ha-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+
+  /* Transitions */
+  --ha-transition: 150ms ease-in-out;
+
+  /* Layout */
+  --ha-sidebar-width: 16rem;
+}
+
+/* ==========================================================================
+   Dark Mode Tokens
+   ========================================================================== */
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ha-color-text: #e5e7eb;
+    --ha-color-text-muted: #9ca3af;
+    --ha-color-text-strong: #f9fafb;
+    --ha-color-bg: #111827;
+    --ha-color-bg-light: #1f2937;
+    --ha-color-surface: #1f2937;
+    --ha-color-border: #4b5563;
+    --ha-color-border-light: #374151;
+    --ha-color-link: #818cf8;
+    --ha-color-link-hover: #a5b4fc;
+  }
+}
+
+/* ==========================================================================
+   Base / Reset
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--ha-font-family);
+  font-size: var(--ha-font-size-base);
+  line-height: var(--ha-line-height);
+  color: var(--ha-color-text);
+  background-color: var(--ha-color-bg);
+}
+
+/* ==========================================================================
+   Layout
+   ========================================================================== */
+
+.ha-page {
+  background-color: var(--ha-color-bg);
+  min-height: 100vh;
+}
+
+.ha-container {
+  max-width: 1280px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: var(--ha-space-4);
+}
+
+.ha-layout {
+  display: flex;
+}
+
+.ha-content {
+  flex: 1;
+  padding: var(--ha-space-6);
+  background-color: var(--ha-color-bg-light);
+}
+
+/* ==========================================================================
+   Navbar
+   ========================================================================== */
+
+.ha-navbar {
+  background-color: var(--ha-color-surface);
+  box-shadow: var(--ha-shadow-md);
+}
+
+.ha-navbar-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 var(--ha-space-4);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 3.5rem;
+}
+
+.ha-navbar-brand {
+  font-size: var(--ha-font-size-xl);
+  font-weight: 700;
+  color: var(--ha-color-text-strong);
+  text-decoration: none;
+}
+
+.ha-navbar-brand:hover {
+  color: var(--ha-color-text-strong);
+}
+
+.ha-navbar-user {
+  position: relative;
+}
+
+.ha-navbar-user-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--ha-space-2);
+  color: var(--ha-color-text-muted);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: var(--ha-font-size-sm);
+  padding: var(--ha-space-2);
+}
+
+.ha-navbar-user-btn:hover {
+  color: var(--ha-color-text);
+}
+
+/* ==========================================================================
+   Dropdown
+   ========================================================================== */
+
+.ha-dropdown {
+  position: absolute;
+  right: 0;
+  margin-top: var(--ha-space-2);
+  width: 12rem;
+  background-color: var(--ha-color-surface);
+  border-radius: var(--ha-radius);
+  box-shadow: var(--ha-shadow-lg);
+  padding: var(--ha-space-1) 0;
+  z-index: 10;
+}
+
+.ha-dropdown-item {
+  display: block;
+  padding: var(--ha-space-2) var(--ha-space-4);
+  font-size: var(--ha-font-size-sm);
+  color: var(--ha-color-text);
+  text-decoration: none;
+}
+
+.ha-dropdown-item:hover {
+  background-color: var(--ha-color-bg);
+}
+
+/* ==========================================================================
+   Sidebar
+   ========================================================================== */
+
+.ha-sidebar {
+  width: var(--ha-sidebar-width);
+  background-color: var(--ha-color-surface);
+  box-shadow: var(--ha-shadow-md);
+}
+
+.ha-sidebar-inner {
+  padding: var(--ha-space-4);
+}
+
+.ha-sidebar-title {
+  font-size: var(--ha-font-size-lg);
+  font-weight: 700;
+  margin: 0 0 var(--ha-space-4);
+}
+
+.ha-sidebar-nav {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ha-sidebar-link {
+  display: block;
+  padding: var(--ha-space-2) var(--ha-space-4);
+  color: var(--ha-color-text);
+  text-decoration: none;
+  border-radius: var(--ha-radius);
+  transition: background-color var(--ha-transition);
+}
+
+.ha-sidebar-link:hover {
+  background-color: var(--ha-color-bg);
+}
+
+/* ==========================================================================
+   Page Headers
+   ========================================================================== */
+
+.ha-page-title {
+  font-size: var(--ha-font-size-3xl);
+  font-weight: 700;
+  color: var(--ha-color-text-strong);
+  margin: 0 0 var(--ha-space-6);
+}
+
+.ha-section-title {
+  font-size: var(--ha-font-size-2xl);
+  font-weight: 700;
+  margin: 0 0 var(--ha-space-4);
+}
+
+.ha-text-muted {
+  color: var(--ha-color-text-muted);
+}
+
+/* ==========================================================================
+   Cards
+   ========================================================================== */
+
+.ha-card {
+  background-color: var(--ha-color-surface);
+  box-shadow: var(--ha-shadow-md);
+  border-radius: var(--ha-radius);
+  padding: var(--ha-space-6) var(--ha-space-8);
+  margin-bottom: var(--ha-space-4);
+}
+
+/* ==========================================================================
+   Data Table
+   ========================================================================== */
+
+.ha-table-wrapper {
+  background-color: var(--ha-color-surface);
+  box-shadow: var(--ha-shadow-md);
+  border-radius: var(--ha-radius);
+  margin: var(--ha-space-6) 0;
+  overflow: hidden;
+}
+
+.ha-table {
+  width: 100%;
+  min-width: 100%;
+  table-layout: auto;
+  border-collapse: collapse;
+}
+
+.ha-table-header {
+  background-color: var(--ha-color-bg);
+  color: var(--ha-color-text-muted);
+  text-transform: uppercase;
+  font-size: var(--ha-font-size-sm);
+  line-height: 1.25rem;
+}
+
+.ha-table-th {
+  padding: var(--ha-space-3) var(--ha-space-6);
+  text-align: left;
+  font-weight: 600;
+}
+
+.ha-table-th-center {
+  text-align: center;
+}
+
+.ha-table-body {
+  color: var(--ha-color-text-muted);
+  font-size: var(--ha-font-size-sm);
+  font-weight: 300;
+}
+
+.ha-table-row {
+  border-bottom: var(--ha-border-width) solid var(--ha-color-border-light);
+  transition: background-color var(--ha-transition);
+}
+
+.ha-table-row:hover {
+  background-color: var(--ha-color-bg);
+}
+
+.ha-table-cell {
+  padding: var(--ha-space-3) var(--ha-space-6);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.ha-table-cell-center {
+  text-align: center;
+}
+
+.ha-table-sort-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.ha-table-sort-link:hover {
+  text-decoration: underline;
+}
+
+/* ==========================================================================
+   Table Actions (View / Edit / Delete links in rows)
+   ========================================================================== */
+
+.ha-action-link {
+  color: var(--ha-color-link);
+  text-decoration: none;
+  transition: color var(--ha-transition);
+}
+
+.ha-action-link:hover {
+  color: var(--ha-color-link-hover);
+}
+
+.ha-action-link + .ha-action-link,
+.ha-action-link + .ha-action-delete,
+.ha-action-delete + .ha-action-link {
+  margin-left: var(--ha-space-2);
+}
+
+.ha-action-delete {
+  color: var(--ha-color-danger);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+  transition: color var(--ha-transition);
+}
+
+.ha-action-delete:hover {
+  color: var(--ha-color-danger-hover);
+}
+
+/* ==========================================================================
+   Pagination
+   ========================================================================== */
+
+.ha-pagination {
+  padding: var(--ha-space-4) var(--ha-space-3);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ha-pagination-info {
+  font-size: var(--ha-font-size-sm);
+  color: var(--ha-color-text);
+}
+
+.ha-pagination-controls {
+  display: flex;
+  align-items: center;
+}
+
+.ha-pagination-btn {
+  padding: var(--ha-space-1) var(--ha-space-3);
+  border: var(--ha-border-width) solid var(--ha-color-border);
+  border-radius: var(--ha-radius);
+  color: var(--ha-color-text);
+  text-decoration: none;
+  font-size: var(--ha-font-size-sm);
+  transition: background-color var(--ha-transition);
+}
+
+.ha-pagination-btn:hover {
+  background-color: var(--ha-color-bg);
+}
+
+.ha-pagination-page {
+  padding: var(--ha-space-1) var(--ha-space-3);
+  color: var(--ha-color-text);
+  font-size: var(--ha-font-size-sm);
+}
+
+/* ==========================================================================
+   Search
+   ========================================================================== */
+
+.ha-search-group {
+  margin-bottom: var(--ha-space-4);
+}
+
+.ha-search-input {
+  width: 100%;
+  padding: var(--ha-space-2) var(--ha-space-3);
+  border: var(--ha-border-width) solid var(--ha-color-border);
+  border-radius: var(--ha-radius);
+  font-size: var(--ha-font-size-base);
+  font-family: var(--ha-font-family);
+  color: var(--ha-color-text);
+  background-color: var(--ha-color-surface);
+}
+
+.ha-search-input:focus {
+  outline: none;
+  border-color: var(--ha-color-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.ha-search-indicator {
+  font-size: var(--ha-font-size-sm);
+  color: var(--ha-color-text-muted);
+}
+
+/* ==========================================================================
+   Forms
+   ========================================================================== */
+
+.ha-form-group {
+  margin-bottom: var(--ha-space-4);
+}
+
+.ha-label {
+  display: block;
+  font-size: var(--ha-font-size-sm);
+  font-weight: 700;
+  color: var(--ha-color-text);
+  margin-bottom: var(--ha-space-2);
+}
+
+.ha-required {
+  color: var(--ha-color-danger);
+}
+
+.ha-input {
+  display: block;
+  width: 100%;
+  padding: 0.625rem;
+  font-size: var(--ha-font-size-sm);
+  font-family: var(--ha-font-family);
+  color: var(--ha-color-text);
+  background-color: var(--ha-color-bg-light);
+  border: var(--ha-border-width) solid var(--ha-color-border);
+  border-radius: var(--ha-radius-lg);
+  transition: border-color var(--ha-transition), box-shadow var(--ha-transition);
+}
+
+.ha-input:focus {
+  outline: none;
+  border-color: var(--ha-color-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.ha-select {
+  display: block;
+  width: 100%;
+  padding: 0.625rem;
+  font-size: var(--ha-font-size-sm);
+  font-family: var(--ha-font-family);
+  color: var(--ha-color-text);
+  background-color: var(--ha-color-bg-light);
+  border: var(--ha-border-width) solid var(--ha-color-border);
+  border-radius: var(--ha-radius-lg);
+  transition: border-color var(--ha-transition), box-shadow var(--ha-transition);
+}
+
+.ha-select:focus {
+  outline: none;
+  border-color: var(--ha-color-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.ha-textarea {
+  display: block;
+  width: 100%;
+  padding: 0.625rem;
+  font-size: var(--ha-font-size-sm);
+  font-family: var(--ha-font-family);
+  color: var(--ha-color-text);
+  background-color: var(--ha-color-bg-light);
+  border: var(--ha-border-width) solid var(--ha-color-border);
+  border-radius: var(--ha-radius-lg);
+  resize: vertical;
+  transition: border-color var(--ha-transition), box-shadow var(--ha-transition);
+}
+
+.ha-textarea:focus {
+  outline: none;
+  border-color: var(--ha-color-primary);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.ha-checkbox-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.ha-checkbox {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--ha-color-primary);
+  border-radius: var(--ha-radius);
+}
+
+.ha-checkbox-text {
+  margin-left: var(--ha-space-2);
+  font-size: var(--ha-font-size-sm);
+  font-weight: 500;
+  color: var(--ha-color-text-strong);
+}
+
+.ha-help-text {
+  margin-top: var(--ha-space-2);
+  font-size: var(--ha-font-size-sm);
+  color: var(--ha-color-text-muted);
+}
+
+.ha-field-errors {
+  list-style: none;
+  margin: var(--ha-space-1) 0 0;
+  padding: 0;
+  font-size: var(--ha-font-size-xs);
+  font-style: italic;
+  color: var(--ha-color-danger);
+}
+
+/* Detail view — read-only field value */
+.ha-field-value {
+  padding: var(--ha-space-2) var(--ha-space-3);
+  border: var(--ha-border-width) solid var(--ha-color-border);
+  border-radius: var(--ha-radius);
+  background-color: var(--ha-color-surface);
+  color: var(--ha-color-text);
+  box-shadow: var(--ha-shadow);
+}
+
+/* ==========================================================================
+   Buttons
+   ========================================================================== */
+
+.ha-btn {
+  display: inline-block;
+  padding: var(--ha-space-2) var(--ha-space-4);
+  font-size: var(--ha-font-size-base);
+  font-weight: 700;
+  font-family: var(--ha-font-family);
+  text-align: center;
+  text-decoration: none;
+  border: none;
+  border-radius: var(--ha-radius);
+  cursor: pointer;
+  transition: background-color var(--ha-transition);
+}
+
+.ha-btn:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3);
+}
+
+.ha-btn-primary {
+  background-color: var(--ha-color-primary);
+  color: #ffffff;
+}
+
+.ha-btn-primary:hover {
+  background-color: var(--ha-color-primary-hover);
+}
+
+.ha-btn-danger {
+  background-color: var(--ha-color-danger);
+  color: #ffffff;
+}
+
+.ha-btn-danger:hover {
+  background-color: var(--ha-color-danger-hover);
+}
+
+/* Text-styled link button */
+.ha-btn-link {
+  background: none;
+  color: var(--ha-color-primary);
+  font-weight: 700;
+  font-size: var(--ha-font-size-sm);
+  padding: 0;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.ha-btn-link:hover {
+  color: var(--ha-color-primary-hover);
+}
+
+/* ==========================================================================
+   Form Actions Bar (Create / Update page footer)
+   ========================================================================== */
+
+.ha-form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--ha-space-4);
+}
+
+.ha-cancel-link {
+  font-size: var(--ha-font-size-sm);
+  font-weight: 700;
+  color: var(--ha-color-primary);
+  text-decoration: none;
+}
+
+.ha-cancel-link:hover {
+  color: var(--ha-color-primary-hover);
+}
+
+/* ==========================================================================
+   Alerts / Messages
+   ========================================================================== */
+
+.ha-alert {
+  padding: var(--ha-space-4);
+  border: var(--ha-border-width) solid;
+  border-radius: var(--ha-radius);
+  margin-bottom: var(--ha-space-4);
+}
+
+.ha-alert-info {
+  background-color: var(--ha-color-info-light);
+  border-color: var(--ha-color-info-border);
+  color: var(--ha-color-info-text);
+}
+
+.ha-alert-success {
+  background-color: var(--ha-color-success-light);
+  border-color: var(--ha-color-success);
+  color: var(--ha-color-success-text);
+}
+
+.ha-alert-warning {
+  background-color: var(--ha-color-warning-light);
+  border-color: var(--ha-color-warning);
+  color: var(--ha-color-warning-text);
+}
+
+.ha-alert-error {
+  background-color: var(--ha-color-danger-light);
+  border-color: var(--ha-color-danger);
+  color: var(--ha-color-danger-text);
+}
+
+.ha-alert-title {
+  font-weight: 700;
+}
+
+/* Toast container (fixed top-right) */
+.ha-toast-container {
+  position: fixed;
+  top: 0;
+  right: 0;
+  padding: var(--ha-space-4);
+  width: 100%;
+  max-width: 20rem;
+  z-index: 50;
+}
+
+.ha-toast {
+  position: relative;
+  padding: var(--ha-space-3) var(--ha-space-4);
+  border-radius: var(--ha-radius);
+  border: var(--ha-border-width) solid;
+}
+
+.ha-toast-close {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  padding: var(--ha-space-3) var(--ha-space-4);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.7;
+}
+
+.ha-toast-close:hover {
+  opacity: 1;
+}
+
+/* ==========================================================================
+   Utility — Links
+   ========================================================================== */
+
+.ha-text-link {
+  color: var(--ha-color-link);
+  text-decoration: none;
+}
+
+.ha-text-link:hover {
+  color: var(--ha-color-link-hover);
+}
+
+/* ==========================================================================
+   Utility — SVG icons inherit color
+   ========================================================================== */
+
+.ha-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  fill: none;
+  stroke: currentColor;
+}
+
+.ha-icon-sm {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* ==========================================================================
+   HTMX Indicator
+   ========================================================================== */
+
+.htmx-indicator {
+  display: none;
+}
+
+.htmx-request .htmx-indicator,
+.htmx-request.htmx-indicator {
+  display: inline;
+}
