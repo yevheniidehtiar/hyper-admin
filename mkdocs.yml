@@ -20,6 +20,10 @@ nav:
   - Introduction: "index.md"
   - Getting Started: "getting-started.md"
   - Tutorial: "tutorial.md"
+  - Frontend:
+      - Overview: "frontend/overview.md"
+      - Widgets: "frontend/widgets.md"
+      - HTMX Patterns: "frontend/htmx_patterns.md"
   - API Reference:
       - Application: "api/application.md"
       - Views: "api/views.md"

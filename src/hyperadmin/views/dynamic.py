@@ -95,7 +95,7 @@ class DynamicModelView:
         try:
             # Use adapter's list method
             items, total_items = await self.adapter.list(
-                page=page, page_size=page_size, search=search if search else None, order_by=order_by
+                page=page, page_size=page_size, search=search or None, order_by=order_by
             )
 
             # Calculate pagination info

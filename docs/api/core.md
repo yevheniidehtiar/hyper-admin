@@ -6,10 +6,10 @@ The core components of HyperAdmin provide the foundational building blocks for c
 
 The `Admin` class is the main entry point for creating an admin interface. It is responsible for managing admin views, handling requests, and rendering templates.
 
-::: hyperadmin.core.admin.Admin
+::: hyperadmin.core.app.Admin
 
-## AdminSite
+## SiteRegistry
 
-The `AdminSite` class is a container for admin views. It is used to group related views together and provides a way to register and unregister views.
+The `SiteRegistry` class is a container for registered admin models. It maintains the mapping between models and their admin options.
 
-::: hyperadmin.core.sites.AdminSite
+::: hyperadmin.core.registry.SiteRegistry

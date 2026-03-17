@@ -1,17 +1,17 @@
-<div class="mb-4">
-    <label for="{{- field.name -}}" class="block mb-2 text-sm font-bold text-gray-700">
-        {{- field.label -}}{%- if field.required -%}<span class="text-red-500">*</span>{%- endif -%}
+<div class="ha-form-group">
+    <label for="{{- field.name -}}" class="ha-label">
+        {{- field.label -}}{%- if field.required -%}<span class="ha-required">*</span>{%- endif -%}
     </label>
     <select id="{{- field.name -}}" {# -#}
             name="{{- field.name -}}" {# -#}
-            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+            class="ha-select">
         {%- for choice in field.model_field.annotation -%}
             <option value="{{- choice.value -}}" {%- if choice == field.value -%}selected{%- endif -%}>{{- choice.name -}}</option>
         {%- endfor -%}
     </select>
-    {%- if field.help_text -%}<p class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{- field.help_text -}}</p>{%- endif -%}
+    {%- if field.help_text -%}<p class="ha-help-text">{{- field.help_text -}}</p>{%- endif -%}
     {%- if field.errors -%}
-        <ul class="text-red-500 text-xs italic" aria-live="polite">
+        <ul class="ha-field-errors" aria-live="polite">
             {%- for e in field.errors -%}<li>{{- e -}}</li>{%- endfor -%}
         </ul>
     {%- endif -%}

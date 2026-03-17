@@ -2,20 +2,20 @@
 
 Views are the core components of HyperAdmin that are responsible for rendering the admin interface for your models. They define how data is displayed and how users can interact with it.
 
-## BaseView
+## DynamicModelView
 
-The `BaseView` is the foundation for all views in HyperAdmin. It provides the basic structure and functionality that all other views build upon.
+The `DynamicModelView` handles all CRUD views for a registered model: list, detail, create, and update. Routes are generated automatically by `HyperAdminRouter`.
 
-::: hyperadmin.views.base.BaseView
+::: hyperadmin.views.dynamic.DynamicModelView
 
-## ModelView
+## PydanticForm
 
-The `ModelView` is used to create CRUD interfaces for your data models. It automatically generates list, detail, create, and update views.
+`PydanticForm` binds a Pydantic/SQLModel class to a set of widgets, validates submitted data, and collects field-level errors for re-rendering.
 
-::: hyperadmin.views.model.ModelView
+::: hyperadmin.views.forms.PydanticForm
 
-## AdminView
+## HtmxWidget
 
-The `AdminView` is a view that is not tied to a specific model. It can be used to create custom pages in your admin interface.
+The base widget class. Pairs a Jinja2 template with optional HTMX attributes and static assets.
 
-::: hyperadmin.views.admin.AdminView
+::: hyperadmin.views.forms.HtmxWidget

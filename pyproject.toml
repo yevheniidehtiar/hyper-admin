@@ -9,7 +9,6 @@ description = "A modern, Pydantic-native admin interface for FastAPI, powered by
 readme = "README.md"
 authors = [
   { name = "Yevhenii Dehtiar", email = "yevhenii.dehtiar@gmail.com" },
-  { name = "Jules", email = "jules@google.com" },
 ]
 requires-python = ">=3.10,<4.0"
 dependencies = [
@@ -58,7 +57,7 @@ dev = [
   "aiosqlite (>=0.21.0)",
   "pytest-xdist (>=3.6.1)",
   "pyzmq (>=27.0.2)",
-  "ruff (>=0.9.2)",
+  "ruff (==0.15.6)",
   "mkdocs>=1.6.0",
   "mkdocs-material>=9.0.0",
   "mkdocstrings[python]>=0.24.0",
@@ -191,6 +190,3 @@ type = "simple"
     { shell = "E2E_TEST_TIMEOUT=5000 pytest tests/e2e --screenshot on" },
   ]
 
-  [tool.poe.tasks."static:build-css"]
-  help = "Build Tailwind CSS using Docker"
-  cmd = "docker build -f Dockerfile.static -t hyperadmin-tailwind-builder --output type=local,dest=./src/hyperadmin/static/css ."

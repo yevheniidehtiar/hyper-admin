@@ -182,7 +182,7 @@ class PydanticForm:
 
     def bind(self, data: dict[str, Any]) -> None:
         for f in self.fields:
-            f.value = data.get(f.name, None)
+            f.value = data.get(f.name)
 
     def validate(self, data: dict[str, Any]) -> tuple[BaseModel | None, dict[str, list[str]]]:
         cleaned_data = data.copy()

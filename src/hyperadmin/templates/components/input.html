@@ -11,15 +11,15 @@
     - `class` (string, optional): Additional CSS classes to apply to the input.
 -#}
 {%- macro input(name, label, type='text', placeholder='', value='', class='') -%}
-    <div class="mb-4">
-        <label for="{{- name -}}" class="block text-gray-700 text-sm font-bold mb-2">{{- label -}}</label>
+    <div class="ha-form-group">
+        <label for="{{- name -}}" class="ha-label">{{- label -}}</label>
         <input
             type="{{- type -}}"
             id="{{- name -}}"
             name="{{- name -}}"
             placeholder="{{- placeholder -}}"
             value="{{- value -}}"
-            class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline {{- class -}}"
+            class="ha-input {{- class -}}"
         >
     </div>
 {%- endmacro -%}

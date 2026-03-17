@@ -76,5 +76,9 @@ site/
 *.db
 .coverage
 .coverage*
+# Claude Code
+.claude/settings.local.json
+
 .gemini/
 gha-creds-*.json
+misc/tailadmin-free-tailwind-dashboard-template-main/*

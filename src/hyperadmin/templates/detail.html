@@ -3,17 +3,17 @@
 {%- block detail_title -%}{{ item_name }}{%- endblock -%}
 
 {%- block detail_fields -%}
-    <div class="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+    <div class="ha-card">
         {%- for key, value in item.items() -%}
-        <div class="mb-4">
-            <label class="block text-gray-700 text-sm font-bold mb-2">
+        <div class="ha-form-group">
+            <label class="ha-label">
                 {{- key -}}
             </label>
-            <div class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline">
+            <div class="ha-field-value">
                 {{- value -}}
             </div>
         </div>
         {%- endfor -%}
     </div>
-    <a href="../" class="text-indigo-600 hover:text-indigo-900">Back to list</a>
+    <a href="../" class="ha-text-link">Back to list</a>
 {%- endblock -%}

@@ -57,7 +57,7 @@ def test_create_user_validation_error(page: Page, demo_base_url: str):
     page.goto(f"{demo_base_url}/admin/user/create")
     page.locator('input[name="name"]').fill("")
     page.locator('button[type="submit"]').click()
-    validation_error = page.locator('input[name="name"] ~ ul.text-red-500')
+    validation_error = page.locator('input[name="name"] ~ ul.ha-field-errors')
     expect(validation_error).to_be_visible()
     expect(validation_error).to_contain_text("String should have at least 1 character")
 
