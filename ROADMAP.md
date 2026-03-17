@@ -22,10 +22,10 @@ The goal of this phase is to build a complete and visually appealing admin inter
     - [x] Implement **Delete Action** with HTMX for a seamless UI experience.
 
 - **Admin UI Epics**:
-    - [ ] **Navigation Sidebar**: Design and implement a collapsible sidebar for easy navigation between different admin views.
-    - [ ] **Data Table Component**: Create a reusable and feature-rich data table with sorting, pagination, and filtering capabilities.
-    - [ ] **Forms & Widgets**: Develop a set of standardized form elements and dashboard widgets for a consistent and modern look and feel.
-    - [ ] **Styling & Theming**: Implement a clean and modern design system, with support for custom theming.
+    - [/] **Navigation Sidebar**: Design and implement a collapsible sidebar for easy navigation between different admin views. (Basic implementation exists)
+    - [x] **Data Table Component**: Create a reusable and feature-rich data table with sorting, pagination, and filtering capabilities.
+    - [x] **Forms & Widgets**: Develop a set of standardized form elements and dashboard widgets for a consistent and modern look and feel.
+    - [x] **Styling & Theming**: Implement a clean and modern design system, with support for custom theming.
 
 - **Documentation & Community Outreach**:
     - [x] Set up a documentation site using MkDocs with the `mkdocs-material` theme.

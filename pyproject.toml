@@ -9,7 +9,6 @@ description = "A modern, Pydantic-native admin interface for FastAPI, powered by
 readme = "README.md"
 authors = [
   { name = "Yevhenii Dehtiar", email = "yevhenii.dehtiar@gmail.com" },
-  { name = "Jules", email = "jules@google.com" },
 ]
 requires-python = ">=3.10,<4.0"
 dependencies = [
