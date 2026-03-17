@@ -40,10 +40,10 @@ async def engine():
 
 
 # Tests
-def test_adapter_init_invalid_model(engine):
+def test_adapter_init_invalid_model():
     with patch("hyperadmin.adapters.sqlalchemy.inspect", return_value=None):
         with pytest.raises(ValueError, match="Could not inspect model"):
-            SQLAlchemyAdapter(model=MagicMock(), engine=engine)
+            SQLAlchemyAdapter(model=MagicMock(), engine=MagicMock())
 
 
 @pytest.mark.anyio
