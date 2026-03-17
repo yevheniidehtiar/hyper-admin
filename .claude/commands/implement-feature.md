@@ -20,7 +20,8 @@ For each component (adapter, view, form):
 - Verify: `poe test`
 
 ### 4. Polish & UI
-- Style with Tailwind CSS classes matching the design system
+- Style using `ha-*` CSS classes from `hyperadmin.css` — no Tailwind, no inline styles
+- Use existing classes: `ha-form-group`, `ha-input`, `ha-btn`, `ha-table`, etc. (see `docs/frontend/overview.md`)
 - Add HTMX dynamic behaviors (`hx-post`, `hx-target`, etc.)
 - Update E2E test to assert full functionality (interactions, data persistence)
 

@@ -5,7 +5,7 @@ Pydantic-native admin interface for FastAPI, powered by HTMX. Python package at 
 ## Stack
 
 - **Backend**: FastAPI + SQLModel/SQLAlchemy + Pydantic v2
-- **Frontend**: HTMX + Alpine.js + Tailwind CSS + Flowbite + Jinja2 templates
+- **Frontend**: HTMX + Alpine.js + custom CSS (`ha-*` design system) + Jinja2 templates
 - **Package manager**: uv (NOT pip, NOT poetry)
 - **Task runner**: poethepoet (`poe`)
 - **Tests**: pytest (unit) + Playwright (E2E)
@@ -21,7 +21,6 @@ poe test:unit         # Unit tests only (pytest with coverage)
 poe test:e2e          # E2E tests with Playwright
 poe docs:serve        # Serve docs locally on port 8080
 poe docs:build        # Build documentation
-poe static:build-css  # Build Tailwind CSS via Docker
 uv sync --all-extras  # Install all dependencies
 uv run <cmd>          # Run commands in the virtual environment
 ```
