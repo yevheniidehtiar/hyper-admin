@@ -32,48 +32,6 @@ uv run <cmd>          # Run commands in the virtual environment
 - **Commits**: [Conventional Commits](https://www.conventionalcommits.org/) (enforced by commitizen pre-commit hook)
 - **Include issue number**: `feat: description (#42)`
 
-## Code Conventions
-
-- Group by feature: `src/hyperadmin/<feature>/` (e.g., `adapters/`, `views/`, `core/`)
-- Name files by implementation: `adapters/sqlmodel.py` not `sqlmodel_adapter.py`
-- Type hints required on all functions and methods
-- Line length: 100 characters
-- No commented-out code, no `pass`/`TODO` placeholders in final code
-- Handle API errors via `fastapi.HTTPException` with clear messages
-- Use SQLModel for data models, Pydantic for validation
-- Optimize DB access with `selectinload()` for relationships; add pagination for large collections
-- Use HTMX for server interactions, Alpine.js for client-side behavior
-
-## Testing
-
-- **TDD**: Write a failing test first, implement to pass, then refactor
-- **Unit tests**: `tests/unit/`
-- **E2E tests**: `tests/e2e/` (Playwright)
-- Always run `poe lint` and `poe test` before submitting changes
-- Target near 99% coverage for new code
-
-### E2E Prerequisites
-
-`poe test:e2e` installs the Chromium browser automatically. Running `pytest tests/e2e/` directly requires the browser to be installed first:
-
-```bash
-uv run playwright install chromium
-```
-
-### CSS Class Convention in E2E Tests
-
-Templates use custom `ha-*` CSS classes (not raw Tailwind utilities). Use these class names in Playwright selectors:
-
-| Element | Class |
-|---------|-------|
-| `body` | `ha-page` |
-| `nav` | `ha-navbar` |
-| `aside` | `ha-sidebar` |
-| `main` | `ha-content` |
-| Validation error list | `ha-field-errors` |
-
-When templates change class names, update the corresponding E2E selectors to match.
-
 ## Constraints
 
 - Do NOT manipulate `.venv` manually; use `uv run` to execute commands
@@ -81,3 +39,8 @@ When templates change class names, update the corresponding E2E selectors to mat
 - Do NOT expand scope without explicit approval
 - Do NOT leave commented-out code in the codebase
 - Check `ROADMAP.md` before starting major work to confirm priority and scope
+
+## Rules
+
+- @.claude/rules/code-style.md
+- @.claude/rules/testing.md
