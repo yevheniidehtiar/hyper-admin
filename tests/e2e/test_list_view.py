@@ -67,20 +67,20 @@ def test_admin_interface_styling(page: Page, demo_base_url: str) -> None:
     page.goto(demo_base_url + "/admin/user")
 
     # Check that CSS is loaded
-    expect(page.locator("body")).to_have_class("bg-gray-100")
+    expect(page.locator("body")).to_have_class("ha-page")
 
     # Check that main element has proper styling
     main_element = page.locator("main")
     expect(main_element).to_be_attached()
-    expect(main_element).to_have_class("flex-1 p-6 bg-gray-50")
+    expect(main_element).to_have_class("ha-content")
 
     # Check that navigation has styling
     nav = page.locator("nav")
-    expect(nav).to_have_class("bg-white shadow-md")
+    expect(nav).to_have_class("ha-navbar")
 
     # Check sidebar styling
     aside = page.locator("aside")
-    expect(aside).to_have_class("w-64 bg-white shadow-md")
+    expect(aside).to_have_class("ha-sidebar")
 
 
 def test_admin_interface_accessibility(page: Page, demo_base_url: str) -> None:
