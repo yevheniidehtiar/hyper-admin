@@ -34,6 +34,6 @@ For each component (adapter, view, form):
   - [ ] No commented-out code or TODO placeholders
 
 ### 6. Submit
-- Commit: `git commit -m "feat: <description> (#<IssueID>)"`
+- Commit: `git -c user.name="Claude Code" -c user.email="noreply+claude-code@anthropic.com" commit -m "feat: <description> (#<IssueID>)"`
 - Push: `git push origin HEAD`
-- PR: `gh pr create --fill`
+- PR: `GH_TOKEN="$CLAUDE_GH_TOKEN" gh pr create --fill` (stop if `CLAUDE_GH_TOKEN` is not set)
