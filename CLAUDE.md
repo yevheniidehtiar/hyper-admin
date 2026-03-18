@@ -44,3 +44,4 @@ uv run <cmd>          # Run commands in the virtual environment
 
 - @.claude/rules/code-style.md
 - @.claude/rules/testing.md
+- @.claude/rules/git-workflow.md

@@ -44,7 +44,10 @@ All must pass. Fix any failures before continuing.
 
 ### 7. Commit and PR
 ```bash
-git commit -m "fix: <description> (#$ARGUMENTS)"
+git -c user.name="Claude Code" -c user.email="noreply+claude-code@anthropic.com" \
+  commit -m "fix: <description> (#$ARGUMENTS)"
 git push origin HEAD
-gh pr create --fill
+GH_TOKEN="$CLAUDE_GH_TOKEN" gh pr create --fill
 ```
+
+**Important**: if `CLAUDE_GH_TOKEN` is not set, stop and ask the user to add it — do not create the PR under their identity.
