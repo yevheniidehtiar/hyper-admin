@@ -223,7 +223,7 @@ async def test_update_view(request_factory, view):
     req = request_factory(method="POST")
     resp = await view.update_view(req, item_id=1)
     assert resp.status_code == 303
-    assert resp.headers["location"] == "/admin/user"
+    assert resp.headers["location"] == "/user-list"
 
 
 @pytest.mark.anyio
@@ -231,7 +231,7 @@ async def test_delete_action(request_factory, view):
     req = request_factory(method="POST")
     resp = await view.delete_action(req, item_id=1)
     assert resp.status_code == 303
-    assert resp.headers["location"] == "/admin/user"
+    assert resp.headers["location"] == "/user-list"
 
 
 @pytest.mark.anyio
