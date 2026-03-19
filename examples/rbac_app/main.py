@@ -11,17 +11,17 @@ from hyperadmin import Admin
 
 @asynccontextmanager
 async def lifespan(app_: FastAPI):
-    # Cleanup old db
-    if os.path.exists(SQLITE_PATH):
-        os.remove(SQLITE_PATH)
-    # create sample data
+    # Ensure parent directory exists (needed when DATABASE_URL points to a volume path)
+    if SQLITE_PATH:
+        db_dir = os.path.dirname(SQLITE_PATH)
+        if db_dir:
+            os.makedirs(db_dir, exist_ok=True)
+
+    # Create tables and seed sample data (idempotent — skips if data exists)
     create_tables()
     create_sample_data()
 
     yield
-    # Remove existing database if it exists
-    if os.path.exists(SQLITE_PATH):
-        os.remove(SQLITE_PATH)
 
 
 # Create FastAPI app
@@ -31,16 +31,9 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Create admin interface
-admin = Admin(app, engine, title="Demo Admin", base_url="/admin")
-
-
-# # Add views to admin
-# admin.add_view(UserAdmin)
-# admin.add_view(GroupAdmin)
-# admin.add_view(UserGroupAdmin)
-# admin.add_view(PermissionAdmin)
-# admin.add_view(UserPermissionsAdmin)
+# Create admin interface — discover admin.py from the rbac_app package
+admin = Admin(app, engine=engine, create_tables=False, discover_apps=["examples.rbac_app"])
+admin.mount("/admin")
 
 
 @app.get("/")

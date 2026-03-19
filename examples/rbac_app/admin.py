@@ -1,7 +1,6 @@
 from typing import ClassVar
 
-from rbac_app.models import Group, Permission, User, UserGroup, UserPermissions
-
+from examples.rbac_app.models import Group, Permission, User, UserGroup, UserPermissions
 from hyperadmin.views import ModelView
 
 
