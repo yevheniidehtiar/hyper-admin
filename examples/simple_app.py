@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.sessions import SessionMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlmodel import SQLModel, select
 
@@ -40,6 +41,7 @@ async def lifespan(app: FastAPI):
 
 # 2. Create a FastAPI app and an Admin instance with auto-discovery
 app = FastAPI(lifespan=lifespan)
+app.add_middleware(SessionMiddleware, secret_key="simple-secret")
 
 app.mount("/static", StaticFiles(directory="src/hyperadmin/static"), name="static")
 admin = Admin(app, engine=engine, discover_apps=["examples"])

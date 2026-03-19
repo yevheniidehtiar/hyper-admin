@@ -60,6 +60,9 @@ class Admin:
         if os.path.exists(static_dir):
             app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
+        # Expose admin to the app for dependencies
+        app.state.hyperadmin_admin = self
+
         if create_tables:
 
             @app.on_event("startup")

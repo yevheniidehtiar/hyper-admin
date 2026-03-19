@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 
 import uvicorn
 from fastapi import FastAPI, Request
+from starlette.middleware.sessions import SessionMiddleware
 
 from examples.rbac_app.create_sample_data import create_sample_data, create_tables
 from examples.rbac_app.db import SQLITE_PATH, engine
@@ -35,6 +36,12 @@ app = FastAPI(
     description="Demo application showcasing SQLAdmin with HTMX",
     lifespan=lifespan,
     debug=True,
+)
+
+# Add session middleware for authentication
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=os.environ.get("SESSION_SECRET_KEY", "temporary-secret-key-for-dev"),
 )
 
 # Create admin interface — discover admin.py from the rbac_app package

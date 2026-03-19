@@ -2,10 +2,14 @@
 
 from typing import Any
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.templating import Jinja2Templates
-from sqlmodel import SQLModel
+from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.responses import RedirectResponse
+from sqlmodel import SQLModel, select
 
+from hyperadmin.auth.backend import verify_password
+from hyperadmin.auth.middleware import get_current_user
 from hyperadmin.core.options import AdminOptions
 from hyperadmin.views.dynamic import DynamicModelView
 
@@ -38,6 +42,68 @@ def _extract_column_names(raw: list[Any] | None, model: type | None = None) -> l
     return names
 
 
+async def require_admin_user(request: Request, user: Any = Depends(get_current_user)):
+    """Dependency that ensures a user is authenticated."""
+    if not user:
+        login_url = request.url_for("admin-login")
+        raise HTTPException(
+            status_code=303,
+            headers={"Location": str(login_url)},
+        )
+    return user
+
+
+def create_auth_router(templates: Jinja2Templates, engine: Any) -> APIRouter:
+    """Creates an APIRouter for authentication (login/logout)."""
+    router = APIRouter()
+
+    @router.get("/login", name="admin-login")
+    async def login_page(request: Request):
+        return templates.TemplateResponse("auth/login.html", {"request": request})
+
+    @router.post("/login", name="admin-login")
+    async def login(
+        request: Request,
+        username: str = Form(...),
+        password: str = Form(...),
+    ):
+        from hyperadmin.core.registry import site
+
+        # Find the User model in the registry
+        user_model = None
+        for model in site.get_registered_models():
+            if model.__name__ == "User":
+                user_model = model
+                break
+
+        if not user_model:
+            return templates.TemplateResponse(
+                "auth/login.html",
+                {"request": request, "error": "Authentication system not configured."},
+            )
+
+        async with AsyncSession(engine) as session:
+            statement = select(user_model).where(user_model.username == username)
+            results = await session.execute(statement)
+            user = results.scalar_one_or_none()
+
+            if user and verify_password(password, user.password_hash):
+                request.session["user_id"] = user.id
+                return RedirectResponse(url=str(request.url_for("admin-dashboard")), status_code=303)
+
+        return templates.TemplateResponse(
+            "auth/login.html",
+            {"request": request, "error": "Invalid username or password."},
+        )
+
+    @router.get("/logout", name="admin-logout")
+    async def logout(request: Request):
+        request.session.clear()
+        return RedirectResponse(url=str(request.url_for("admin-login")), status_code=303)
+
+    return router
+
+
 def create_admin_router(  # noqa: PLR0913
     model: type[SQLModel],
     admin_class: Any,
@@ -50,7 +116,7 @@ def create_admin_router(  # noqa: PLR0913
     column_list: list[str] | None = None,
 ) -> APIRouter:
     """Creates an APIRouter for a given model with the specified admin options."""
-    router = APIRouter()
+    router = APIRouter(dependencies=[Depends(require_admin_user)])
     view = DynamicModelView(
         adapter=admin_instance.adapter_class(model, engine=engine),
         options=options,
@@ -142,11 +208,25 @@ class HyperAdminRouter:
         """Generates the routes for the registered models."""
         from hyperadmin.core.registry import site
 
+        # Inject this router into the request scope for dependencies
+        async def inject_router_middleware(request: Request, call_next):
+            request.scope["hyperadmin_router"] = self
+            return await call_next(request)
+
+        # We can't easily add middleware to APIRouter, but we can use request.app
+        # However, generate_routes is called during mount.
+        # Let's try another approach: put it in the globals of templates
+        self.templates.env.globals["hyperadmin_router"] = self
+
         self.routers = []
         nav_items: list[dict[str, str]] = []
 
+        # Add the authentication router
+        auth_router = create_auth_router(self.templates, self.engine)
+        self.routers.append(auth_router)
+
         # Add the main admin dashboard route
-        dashboard_router = APIRouter()
+        dashboard_router = APIRouter(dependencies=[Depends(require_admin_user)])
         dashboard_router.add_api_route(
             "/",
             self.get_admin_dashboard_view(),

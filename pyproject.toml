@@ -27,6 +27,9 @@ dependencies = [
   "greenlet>=3.1.0; python_version >= '3.13'",
   "pillow>=11.3.0",
   "typing-extensions>=4.14.1",
+  "argon2-cffi>=23.1",
+  "itsdangerous>=2.2.0",
+  "aiosqlite>=0.22.1",
 ]
 
 [project.urls]  # https://packaging.python.org/en/latest/specifications/well-known-project-urls/#well-known-labels

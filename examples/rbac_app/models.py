@@ -20,6 +20,7 @@ class User(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     username: str = Field(index=True, max_length=50, unique=True)
     email: str = Field(index=True, max_length=100, unique=True)
+    password_hash: str = Field(default="", exclude=True)
     first_name: str = Field(max_length=50)
     last_name: str = Field(max_length=50)
     is_active: bool = Field(default=True)

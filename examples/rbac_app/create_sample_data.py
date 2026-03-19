@@ -3,6 +3,7 @@ from sqlmodel.sql.expression import select
 
 from examples.rbac_app.db import sync_engine as engine
 from examples.rbac_app.models import Group, Permission, User, UserGroup, UserPermissions
+from hyperadmin.auth.backend import hash_password
 
 
 # Database initialization
@@ -54,6 +55,7 @@ def create_sample_data():
             User(
                 username="admin",
                 email="admin@example.com",
+                password_hash=hash_password("admin123"),
                 first_name="Admin",
                 last_name="User",
                 is_superuser=True,
@@ -61,12 +63,14 @@ def create_sample_data():
             User(
                 username="editor",
                 email="editor@example.com",
+                password_hash=hash_password("editor123"),
                 first_name="Editor",
                 last_name="User",
             ),
             User(
                 username="viewer",
                 email="viewer@example.com",
+                password_hash=hash_password("viewer123"),
                 first_name="Viewer",
                 last_name="User",
             ),
