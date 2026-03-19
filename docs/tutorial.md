@@ -59,3 +59,7 @@ The available options are:
 - `can_delete`: Enable or disable the delete functionality.
 - `can_list`: Enable or disable the list view.
 - `can_detail`: Enable or disable the detail view.
+
+---
+
+Next: [Examples](examples.md)

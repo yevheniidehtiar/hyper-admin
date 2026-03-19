@@ -11,7 +11,21 @@ from hyperadmin.discover import discover_admin_modules
 
 
 class Admin:
-    """The main Admin class that holds the admin interface."""
+    """The main entry point for HyperAdmin.
+
+    Mounts static files, wires the database engine, optionally discovers admin
+    modules, and registers all model routes on the FastAPI application.
+
+    Example:
+        ```python
+        from fastapi import FastAPI
+        from hyperadmin import Admin
+
+        app = FastAPI()
+        admin = Admin(app, engine=engine, discover_apps=["myapp"])
+        admin.mount("/admin")
+        ```
+    """
 
     def __init__(
         self,
@@ -21,6 +35,19 @@ class Admin:
         engine: Any = None,
         template_dirs: list[str] | None = None,
     ):
+        """Initialise HyperAdmin and attach it to a FastAPI application.
+
+        Args:
+            app: The FastAPI application instance to attach the admin to.
+            discover_apps: List of Python module paths to auto-discover
+                ``admin.py`` files in (e.g. ``["myapp", "otherapp"]``).
+            create_tables: When ``True``, registers an ``on_event("startup")``
+                handler that calls ``SQLModel.metadata.create_all``.
+            engine: An async SQLAlchemy engine. Defaults to the built-in
+                ``hyperadmin.db.engine`` if not provided.
+            template_dirs: Additional Jinja2 template directories searched
+                before the built-in HyperAdmin templates.
+        """
         self.app = app
         self.router = APIRouter()
         self.engine = engine or default_engine
