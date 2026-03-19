@@ -1,35 +1,46 @@
 {%- if filter_metadata -%}
-<div class="ha-card" style="padding: var(--ha-space-4); margin-bottom: var(--ha-space-4);" data-testid="filter-bar">
-    <div style="display: flex; flex-wrap: wrap; gap: var(--ha-space-4); align-items: flex-end;">
-        {%- for filter in filter_metadata -%}
-        <div class="ha-form-group" style="margin-bottom: 0;">
-            <label class="ha-label" for="filter-{{ filter.name }}">{{ filter.label }}</label>
-            <select id="filter-{{ filter.name }}"
-                    name="filter_{{ filter.name }}"
-                    class="ha-select"
-                    data-testid="filter-{{ filter.name }}"
-                    hx-get="{{- url_for(model_name|lower ~ '-list') -}}"
-                    hx-target="#model-list"
-                    hx-push-url="true"
-                    hx-include="[name^='filter_'], [name='search'], [name='sort_by'], [name='sort_direction']">
-                <option value="">Any</option>
-                {%- for choice in filter.choices -%}
-                <option value="{{ choice.value }}" {% if active_filters.get(filter.name) == choice.value|string %}selected{% endif %}>
-                    {{- choice.label -}}
-                </option>
-                {%- endfor -%}
-            </select>
-        </div>
-        {%- endfor -%}
+<div class="ha-card ha-filter-bar" data-testid="filter-bar">
+    <button type="button"
+            class="ha-filter-toggle"
+            onclick="document.getElementById('filter-content').classList.toggle('hidden'); this.querySelector('.ha-icon').classList.toggle('rotate-180')">
+        <svg class="ha-icon ha-icon-sm {% if not active_filters %}rotate-0{% else %}rotate-180{% endif %}" viewBox="0 0 24 24">
+            <path d="M19 9l-7 7-7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Filters
+    </button>
 
-        <div style="margin-bottom: 0;">
-            <a href="{{- url_for(model_name|lower ~ '-list') -}}"
-               class="ha-btn-link"
-               hx-get="{{- url_for(model_name|lower ~ '-list') -}}"
-               hx-target="#model-list"
-               hx-push-url="true">
-                Clear all filters
-            </a>
+    <div id="filter-content" class="ha-filter-content {% if not active_filters %}hidden{% endif %}">
+        <div class="ha-filter-container">
+            {%- for filter in filter_metadata -%}
+            <div class="ha-form-group ha-filter-group">
+                <label class="ha-label" for="filter-{{ filter.name }}">{{ filter.label }}</label>
+                <select id="filter-{{ filter.name }}"
+                        name="filter_{{ filter.name }}"
+                        class="ha-select"
+                        data-testid="filter-{{ filter.name }}"
+                        hx-get="{{- url_for(model_name|lower ~ '-list') -}}"
+                        hx-target="#model-list"
+                        hx-push-url="true"
+                        hx-include="[name^='filter_'], [name='search'], [name='sort_by'], [name='sort_direction']">
+                    <option value="">Any</option>
+                    {%- for choice in filter.choices -%}
+                    <option value="{{ choice.value }}" {% if active_filters.get(filter.name) == choice.value|string %}selected{% endif %}>
+                        {{- choice.label -}}
+                    </option>
+                    {%- endfor -%}
+                </select>
+            </div>
+            {%- endfor -%}
+
+            <div class="ha-filter-clear">
+                <a href="{{- url_for(model_name|lower ~ '-list') }}?search={{ search_query }}&sort_by={{ sort_by }}&sort_direction={{ sort_direction -}}"
+                   class="ha-btn-link"
+                   hx-get="{{- url_for(model_name|lower ~ '-list') }}?search={{ search_query }}&sort_by={{ sort_by }}&sort_direction={{ sort_direction -}}"
+                   hx-target="#model-list"
+                   hx-push-url="true">
+                    Clear all filters
+                </a>
+            </div>
         </div>
     </div>
 </div>

@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from jinja2 import FileSystemLoader
 
 from hyperadmin.adapters import SQLAlchemyAdapter, SQLModelAdapter
+from hyperadmin.core.discovery import build_filter_metadata
 from hyperadmin.core.options import AdminOptions
 from hyperadmin.core.registry import site
 from hyperadmin.discover import app_label_var
@@ -115,86 +116,7 @@ class DynamicModelView:
 
     async def _get_filter_metadata(self) -> list[dict[str, Any]]:
         """Introspects list_filter fields to build metadata for filter UI."""
-        metadata = []
-        for field_name in self.options.list_filter:
-            if field_name not in self.model.model_fields:
-                continue
-
-            field = self.model.model_fields[field_name]
-            label = getattr(field, "title", None) or field_name.replace("_", " ").title()
-
-            ann = getattr(field, "annotation", None)
-            origin = get_origin(ann)
-            args = get_args(ann)
-            if origin is Union and type(None) in args:
-                ann = next(arg for arg in args if arg is not type(None))
-
-            # Boolean filter
-            if ann is bool:
-                metadata.append(
-                    {
-                        "name": field_name,
-                        "label": label,
-                        "type": "bool",
-                        "choices": [
-                            {"value": "true", "label": "Yes"},
-                            {"value": "false", "label": "No"},
-                        ],
-                    }
-                )
-            # Enum filter
-            elif isinstance(ann, type) and issubclass(ann, Enum):
-                metadata.append(
-                    {
-                        "name": field_name,
-                        "label": label,
-                        "type": "enum",
-                        "choices": [{"value": m.value, "label": str(m)} for m in ann],
-                    }
-                )
-            # FK / Relationship filter (heuristic: field name ends with _id or has relationship)
-            else:
-                from sqlalchemy import inspect
-
-                mapper = inspect(self.model)
-                rel = next((r for r in mapper.relationships if r.key == field_name), None)
-                fk_col = next((c for c in mapper.columns if c.key == field_name), None)
-
-                target_model = None
-                if rel:
-                    target_model = rel.mapper.class_
-                elif fk_col and fk_col.foreign_keys:
-                    # Try to find relationship for this FK column
-                    target_rel = next(
-                        (r for r in mapper.relationships if fk_col in r.local_columns), None
-                    )
-                    if target_rel:
-                        target_model = target_rel.mapper.class_
-
-                if target_model:
-                    # Fetch all related objects for the dropdown
-                    from hyperadmin.adapters.registry import adapter_registry
-
-                    try:
-                        target_adapter_cls = adapter_registry.find_adapter_for_model(target_model)
-                        target_adapter = target_adapter_cls(target_model, self.adapter.engine)
-                        # We use a large page_size to get "all" related objects for now
-                        related_items, _ = await target_adapter.list(page_size=1000)
-                        metadata.append(
-                            {
-                                "name": field_name,
-                                "label": label,
-                                "type": "fk",
-                                "choices": [
-                                    {"value": str(getattr(item, "id", "")), "label": str(item)}
-                                    for item in related_items
-                                ],
-                            }
-                        )
-                    except Exception:
-                        logger.exception(f"Failed to build FK filter for {field_name}")
-
-        return metadata
+        return await build_filter_metadata(self.model, self.options.list_filter, self.adapter)
 
     async def list_view(
         self,

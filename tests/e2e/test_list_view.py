@@ -246,6 +246,9 @@ def test_filter_bar_renders(page: Page, demo_base_url: str) -> None:
     filter_bar = page.get_by_test_id("filter-bar")
     expect(filter_bar).to_be_visible()
 
+    # Toggle filters to make them visible
+    page.get_by_role("button", name="Filters").click()
+
     # Check for specific filters
     expect(page.get_by_test_id("filter-is_active")).to_be_visible()
     expect(page.get_by_test_id("filter-user_type")).to_be_visible()
@@ -261,6 +264,9 @@ def test_filter_functionality(page: Page, demo_base_url: str) -> None:
     # We might not know the exact count if other tests modified it,
     # but there should be some rows.
     initial_count = rows.count()
+
+    # Toggle filters to make them visible
+    page.get_by_role("button", name="Filters").click()
 
     # Apply a filter that matches nothing (or something specific)
     # Since we don't have many records, let's filter for No on is_active
