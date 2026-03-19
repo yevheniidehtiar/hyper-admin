@@ -20,7 +20,7 @@ class User(SQLModel, table=True):
     name: str
     email: str
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI()
 admin = Admin(app, engine=engine, discover_apps=["examples"])
 admin.mount("/admin")
 ```

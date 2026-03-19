@@ -15,7 +15,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "STATUS=$(jq -r '.tool_input.status // empty'); [[ \"$STATUS\" == \"completed\" ]] && bash /Users/yevheniidehtiar/.projects/hyper-admin/scripts/redeploy-example.sh 2>/dev/null || true",
+            "command": "STATUS=$(jq -r '.tool_input.status // empty'); [[ \"$STATUS\" == \"completed\" ]] && bash scripts/redeploy-example.sh 2>/dev/null || true",
             "statusMessage": "Redeploying example app..."
           }
         ]

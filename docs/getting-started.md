@@ -29,7 +29,8 @@ The minimal setup needs three things: an engine, model registration, and a mount
 
 ```python
 from fastapi import FastAPI
-from sqlmodel import SQLModel, Field, create_engine
+from sqlalchemy.ext.asyncio import create_async_engine
+from sqlmodel import SQLModel, Field
 from hyperadmin import Admin
 from hyperadmin.core.registry import site
 
@@ -40,6 +41,7 @@ class Product(SQLModel, table=True):
     price: float
 
 # 2. Create app and admin
+engine = create_async_engine("sqlite+aiosqlite:///app.db")
 app = FastAPI()
 admin = Admin(app, engine=engine)
 

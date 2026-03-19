@@ -4,9 +4,11 @@
 
 ```python
 from fastapi import FastAPI
+from sqlalchemy.ext.asyncio import create_async_engine
 from hyperadmin import Admin
 
 app = FastAPI()
+engine = create_async_engine("sqlite+aiosqlite:///app.db")
 
 # Minimal setup — register models manually then mount
 admin = Admin(app, engine=engine)
