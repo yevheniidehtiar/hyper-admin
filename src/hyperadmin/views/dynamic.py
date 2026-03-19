@@ -325,8 +325,11 @@ class DynamicModelView:
         if not item:
             raise HTTPException(status_code=404, detail="Item not found")
 
-        initial = getattr(item, "model_dump", None)
-        initial_values = initial() if callable(initial) else getattr(item, "__dict__", {})
+        initial_func = getattr(item, "model_dump", None)
+        initial_values = cast(
+            "dict[str, Any]",
+            initial_func() if callable(initial_func) else getattr(item, "__dict__", {}),
+        )
 
         # Override with re-submitted values on validation failure
         if values:
