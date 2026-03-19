@@ -190,3 +190,37 @@ type = "simple"
     { shell = "E2E_TEST_TIMEOUT=5000 pytest tests/e2e --screenshot on" },
   ]
 
+  [tool.poe.tasks."deps:bump"]
+  help = "Bump dev deps to latest and verify across the compatibility matrix"
+  shell = """
+set -e
+
+cleanup() {
+  echo ""
+  echo "==> Restoring default environment (highest resolution)..."
+  uv sync --all-extras --resolution highest 2>/dev/null || true
+}
+trap cleanup EXIT
+
+echo "==> Upgrading lock file to latest compatible versions..."
+uv lock --upgrade
+
+COMBOS="3.10:lowest-direct 3.13:lowest-direct 3.13:highest"
+
+for combo in $COMBOS; do
+  pyver="${combo%%:*}"
+  resolution="${combo##*:}"
+  echo ""
+  echo "=========================================="
+  echo "==> Python $pyver + $resolution"
+  echo "=========================================="
+  uv sync --all-extras --python "$pyver" --resolution "$resolution"
+  uv run poe lint
+  uv run poe test:unit
+  uv run poe security-check
+done
+
+echo ""
+echo "==> All checks passed across the compatibility matrix."
+"""
+
