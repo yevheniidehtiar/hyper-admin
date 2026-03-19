@@ -34,6 +34,7 @@ class Admin:
         create_tables: bool = True,
         engine: Any = None,
         template_dirs: list[str] | None = None,
+        auth_enabled: bool = True,
     ):
         """Initialise HyperAdmin and attach it to a FastAPI application.
 
@@ -47,13 +48,19 @@ class Admin:
                 ``hyperadmin.db.engine`` if not provided.
             template_dirs: Additional Jinja2 template directories searched
                 before the built-in HyperAdmin templates.
+            auth_enabled: Whether to enable authentication for admin routes.
         """
         self.app = app
         self.router = APIRouter()
         self.engine = engine or default_engine
         self.template_dirs = template_dirs or []
+        self.auth_enabled = auth_enabled
         template_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "templates")
         self.templates = Jinja2Templates(directory=[template_dir, *self.template_dirs])
+
+        # Share configuration via app.state for middleware/dependencies
+        app.state.admin_engine = self.engine
+        app.state.admin_auth_enabled = self.auth_enabled
 
         # Mount static files for the admin interface
         static_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")
@@ -74,11 +81,15 @@ class Admin:
         async with self.engine.begin() as conn:
             await conn.run_sync(SQLModel.metadata.create_all)
 
-    def _register_views(self):
+    def _register_views(self, admin_prefix: str):
         """Registers the views from the site registry."""
         from hyperadmin.routing import HyperAdminRouter
 
-        admin_router = HyperAdminRouter(engine=self.engine, templates=self.templates)
+        admin_router = HyperAdminRouter(
+            engine=self.engine,
+            templates=self.templates,
+            auth_enabled=self.auth_enabled,
+        )
         admin_router.generate_routes()
         routers = admin_router.get_routers()
         for router in routers:
@@ -88,6 +99,8 @@ class Admin:
         """
         Mounts the admin interface on the FastAPI application.
         """
-        self._register_views()
-        self.templates.env.globals["admin_prefix"] = path.rstrip("/")
+        admin_prefix = path.rstrip("/")
+        self.app.state.admin_prefix = admin_prefix
+        self._register_views(admin_prefix)
+        self.templates.env.globals["admin_prefix"] = admin_prefix
         self.app.include_router(self.router, prefix=path, tags=["HyperAdmin"])

@@ -1,8 +1,8 @@
 """This module will contain the dynamic routing engine for HyperAdmin."""
 
-from typing import Any
+from typing import Any, Callable
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 from fastapi.templating import Jinja2Templates
 from sqlmodel import SQLModel
 
@@ -48,9 +48,11 @@ def create_admin_router(  # noqa: PLR0913
     form_include: list[str] | None = None,
     form_create_exclude: list[str] | None = None,
     column_list: list[str] | None = None,
+    auth_dependency: Callable | None = None,
 ) -> APIRouter:
     """Creates an APIRouter for a given model with the specified admin options."""
-    router = APIRouter()
+    dependencies = [Depends(auth_dependency)] if auth_dependency else []
+    router = APIRouter(dependencies=dependencies)
     view = DynamicModelView(
         adapter=admin_instance.adapter_class(model, engine=engine),
         options=options,
@@ -128,10 +130,12 @@ class HyperAdminRouter:
     Args:
         engine: The async SQLAlchemy engine passed to every adapter.
         templates: The shared ``Jinja2Templates`` instance used across all views.
+        auth_enabled: Whether to enable authentication for the generated routes.
     """
 
-    def __init__(self, engine: Any, templates: Jinja2Templates):
+    def __init__(self, engine: Any, templates: Jinja2Templates, auth_enabled: bool = True):
         self.engine = engine
+        self.auth_enabled = auth_enabled
         # Enable global whitespace trimming
         templates.env.trim_blocks = True
         templates.env.lstrip_blocks = True
@@ -140,18 +144,29 @@ class HyperAdminRouter:
 
     def generate_routes(self) -> None:
         """Generates the routes for the registered models."""
+        from hyperadmin.auth.middleware import require_authenticated_user
         from hyperadmin.core.registry import site
+        from hyperadmin.views.auth import logout_view
 
         self.routers = []
         nav_items: list[dict[str, str]] = []
 
+        auth_dep = require_authenticated_user if self.auth_enabled else None
+        dependencies = [Depends(auth_dep)] if auth_dep else []
+
         # Add the main admin dashboard route
-        dashboard_router = APIRouter()
+        dashboard_router = APIRouter(dependencies=dependencies)
         dashboard_router.add_api_route(
             "/",
             self.get_admin_dashboard_view(),
             methods=["GET"],
             name="admin-dashboard",
+        )
+        dashboard_router.add_api_route(
+            "/logout",
+            logout_view,
+            methods=["GET"],
+            name="admin-logout",
         )
         self.routers.append(dashboard_router)
 
@@ -182,6 +197,7 @@ class HyperAdminRouter:
                 form_include=form_include,
                 form_create_exclude=form_create_exclude,
                 column_list=column_list,
+                auth_dependency=auth_dep,
             )
             self.routers.append(router)
 

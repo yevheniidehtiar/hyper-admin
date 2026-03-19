@@ -15,8 +15,13 @@
                     <td class="ha-table-cell">{{- item[field] -}}</td>
                 {%- endfor -%}
                 <td class="ha-table-cell ha-table-cell-center">
+                    {% if not user or user.has_perm('detail_' ~ model_name|lower) %}
                     <a href="{{- url_for(model_name|lower ~ '-detail', item_id=item.id) -}}" class="ha-action-link" data-testid="row-view-link">View</a>
+                    {% endif %}
+                    {% if not user or user.has_perm('edit_' ~ model_name|lower) %}
                     <a href="{{- url_for(model_name|lower ~ '-update-form', item_id=item.id) -}}" class="ha-action-link" data-testid="row-edit-link">Edit</a>
+                    {% endif %}
+                    {% if not user or user.has_perm('delete_' ~ model_name|lower) %}
                     <button hx-delete="{{- url_for(model_name|lower ~ '-delete', item_id=item.id) -}}"
                             hx-confirm="Are you sure you want to delete this item?"
                             hx-target="closest tr"
@@ -25,6 +30,7 @@
                             data-testid="row-delete-btn">
                         Delete
                     </button>
+                    {% endif %}
                 </td>
             </tr>
             {%- endfor -%}

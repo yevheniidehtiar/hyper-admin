@@ -4,7 +4,7 @@ import os
 import re
 from typing import TYPE_CHECKING, Any, Union, cast, get_args, get_origin
 
-from fastapi import HTTPException, Query, Request
+from fastapi import Depends, HTTPException, Query, Request
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.exc import IntegrityError
 from starlette.responses import RedirectResponse, Response
@@ -118,6 +118,27 @@ class DynamicModelView:
         """Introspects list_filter fields to build metadata for filter UI."""
         return await build_filter_metadata(self.model, self.options.list_filter, self.adapter)
 
+    async def _check_permission(self, request: Request, action: str):
+        """Helper to check permissions and raise 403 if denied."""
+        if not getattr(request.app.state, "admin_auth_enabled", True):
+            return
+
+        user = getattr(request.state, "user", None)
+        if not user:
+            # Should be handled by require_authenticated_user dependency
+            return
+
+        model_name = self.model.__name__.lower()
+        codename = f"{action}_{model_name}"
+
+        # Combine static AdminOptions flags with dynamic per-user permissions
+        can_do = getattr(self.options, f"can_{action}", True)
+        if not (can_do and user.has_perm(codename)):
+            raise HTTPException(
+                status_code=403,
+                detail=f"You do not have permission to {action} {model_name}.",
+            )
+
     async def list_view(
         self,
         request: Request,
@@ -128,6 +149,7 @@ class DynamicModelView:
         sort_direction: str = Query("asc", pattern="^(asc|desc)$"),
     ):
         """Renders the list view for the model with pagination, sorting, and filtering."""
+        await self._check_permission(request, "list")
 
         # Parse filters from query params
         active_filters: dict[str, str] = {}
@@ -210,6 +232,7 @@ class DynamicModelView:
 
         context = {
             "request": request,
+            "user": getattr(request.state, "user", None),
             "model_name": self.model.__name__,
             "fields": display_fields,
             "items": rows,
@@ -234,6 +257,7 @@ class DynamicModelView:
         Renders the detail view for a single item.
         Assumes the model has an 'id' field.
         """
+        await self._check_permission(request, "detail")
         item = await self.adapter.get(pk=item_id)
 
         if not item:
@@ -241,6 +265,7 @@ class DynamicModelView:
 
         context = {
             "request": request,
+            "user": getattr(request.state, "user", None),
             "item_name": get_display_name(item),
             "item": item.model_dump(),
         }
@@ -259,6 +284,7 @@ class DynamicModelView:
         For HTMX requests, only the inner form body is returned to prevent nesting the full page
         into the target container.
         """
+        await self._check_permission(request, "create")
         # Build a Pydantic-backed form abstraction for templates
         # Create forms exclude form_create_exclude fields (e.g. updated_at)
         create_include = self.form_include
@@ -279,6 +305,7 @@ class DynamicModelView:
 
         context = {
             "request": request,
+            "user": getattr(request.state, "user", None),
             "model_name": self.model.__name__,
             "form": form,
             "values": values or {},
@@ -295,6 +322,7 @@ class DynamicModelView:
 
     async def create_view(self, request: Request):
         """Handles form submission for creating a new item."""
+        await self._check_permission(request, "create")
         form_data = await request.form()
         data = dict(form_data)
 
@@ -352,6 +380,7 @@ class DynamicModelView:
         status_code: int = 200,
     ):
         """Renders the update form, optionally pre-filled with submitted values and errors."""
+        await self._check_permission(request, "edit")
         item = await self.adapter.get(pk=item_id)
         if not item:
             raise HTTPException(status_code=404, detail="Item not found")
@@ -377,6 +406,7 @@ class DynamicModelView:
 
         context = {
             "request": request,
+            "user": getattr(request.state, "user", None),
             "model_name": self.model.__name__,
             "item": item,
             "form": form,
@@ -396,6 +426,7 @@ class DynamicModelView:
 
     async def update_view(self, request: Request, item_id: int):
         """Handles form submission for updating an item."""
+        await self._check_permission(request, "edit")
         form_data = await request.form()
         data: dict[str, Any] = dict(form_data)
 
@@ -439,6 +470,7 @@ class DynamicModelView:
 
     async def delete_action(self, request: Request, item_id: int):
         """Deletes an item."""
+        await self._check_permission(request, "delete")
         item = await self.adapter.get(pk=item_id)
         if not item:
             raise HTTPException(status_code=404, detail="Item not found")
@@ -455,5 +487,5 @@ class DynamicModelView:
 
 async def admin_dashboard(request: Request, templates: Jinja2Templates):
     """Renders the main admin dashboard page."""
-    context = {"request": request}
+    context = {"request": request, "user": getattr(request.state, "user", None)}
     return templates.TemplateResponse("dashboard.html", context)
