@@ -79,6 +79,8 @@ site/
 # Claude Code
 .claude/settings.local.json
 
-.gemini/
+# .gemini/ — track styleguide, ignore temp files
+!.gemini/
+.gemini/context/
 gha-creds-*.json
 misc/tailadmin-free-tailwind-dashboard-template-main/*
