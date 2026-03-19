@@ -34,9 +34,6 @@ class UserAdmin(ModelView, model=User):
         User.email,
         User.first_name,
         User.last_name,
-        User.updated_at,
-        User.avatar,
-        User.personal_key,
         User.is_active,
         User.is_superuser,
     ]

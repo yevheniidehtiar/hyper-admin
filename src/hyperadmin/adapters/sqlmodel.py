@@ -1,7 +1,7 @@
 import builtins
 from typing import Any
 
-from sqlalchemy import func, or_
+from sqlalchemy import func, inspect, or_
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy.orm import selectinload
 from sqlmodel import SQLModel, select
@@ -28,7 +28,11 @@ class SQLModelAdapter(BaseAdapter):
             The retrieved object, or None if not found.
         """
         async with AsyncSession(self.engine) as session:
-            return await session.get(self.model, pk)
+            mapper = inspect(self.model)
+            options = [selectinload(getattr(self.model, rel.key)) for rel in mapper.relationships]
+            query = select(self.model).where(self.model.id == pk).options(*options)
+            result = await session.execute(query)
+            return result.scalar_one_or_none()
 
     async def list(
         self,
@@ -43,6 +47,11 @@ class SQLModelAdapter(BaseAdapter):
         """
         async with AsyncSession(self.engine) as session:
             query = select(self.model)
+
+            # Eagerly load all relationships to avoid DetachedInstanceError
+            mapper = inspect(self.model)
+            for rel in mapper.relationships:
+                query = query.options(selectinload(getattr(self.model, rel.key)))
 
             # Apply filtering
             if filters:

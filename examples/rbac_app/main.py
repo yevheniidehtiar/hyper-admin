@@ -1,12 +1,17 @@
+import logging
 import os
+import time
 from contextlib import asynccontextmanager
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 
 from examples.rbac_app.create_sample_data import create_sample_data, create_tables
 from examples.rbac_app.db import SQLITE_PATH, engine
 from hyperadmin import Admin
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+logger = logging.getLogger("rbac_app")
 
 
 @asynccontextmanager
@@ -29,11 +34,23 @@ app = FastAPI(
     title="SQLAdmin Demo",
     description="Demo application showcasing SQLAdmin with HTMX",
     lifespan=lifespan,
+    debug=True,
 )
 
 # Create admin interface — discover admin.py from the rbac_app package
 admin = Admin(app, engine=engine, create_tables=False, discover_apps=["examples.rbac_app"])
 admin.mount("/admin")
+
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    start = time.perf_counter()
+    response = await call_next(request)
+    elapsed_ms = (time.perf_counter() - start) * 1000
+    logger.info(
+        "%s %s %d %.1fms", request.method, request.url.path, response.status_code, elapsed_ms
+    )
+    return response
 
 
 @app.get("/")

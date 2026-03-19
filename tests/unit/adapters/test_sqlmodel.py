@@ -278,3 +278,44 @@ async def test_get_schema(adapter: SQLModelAdapter):
     assert "id" in schema["properties"]
     assert "name" in schema["properties"]
     assert "email" in schema["properties"]
+
+
+@pytest.mark.anyio
+async def test_list_eagerly_loads_relationships(post_adapter: SQLModelAdapter, engine):
+    """Relationships are accessible after list() returns (session is closed)."""
+    async with AsyncSession(engine) as session:
+        post = Post(title="Eager Post", content="Content")
+        session.add(post)
+        await session.commit()
+        await session.refresh(post)
+
+        comment = Comment(text="Eager Comment", post_id=post.id)
+        session.add(comment)
+        await session.commit()
+
+    items, total = await post_adapter.list()
+    assert total == 1
+    # Access the relationship outside the adapter's session — would raise
+    # DetachedInstanceError without selectinload
+    assert len(items[0].comments) == 1
+    assert items[0].comments[0].text == "Eager Comment"
+
+
+@pytest.mark.anyio
+async def test_get_eagerly_loads_relationships(post_adapter: SQLModelAdapter, engine):
+    """Relationships are accessible after get() returns (session is closed)."""
+    async with AsyncSession(engine) as session:
+        post = Post(title="Get Eager", content="Content")
+        session.add(post)
+        await session.commit()
+        await session.refresh(post)
+        post_id = post.id
+
+        comment = Comment(text="Get Comment", post_id=post_id)
+        session.add(comment)
+        await session.commit()
+
+    item = await post_adapter.get(pk=post_id)
+    assert item is not None
+    assert len(item.comments) == 1
+    assert item.comments[0].text == "Get Comment"
