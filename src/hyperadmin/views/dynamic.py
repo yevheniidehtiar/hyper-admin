@@ -13,9 +13,9 @@ if TYPE_CHECKING:
     from jinja2 import FileSystemLoader
 
 from hyperadmin.adapters import SQLAlchemyAdapter, SQLModelAdapter
+from hyperadmin.core.display import get_display_name
 from hyperadmin.core.options import AdminOptions
 from hyperadmin.core.registry import site
-from hyperadmin.core.utils import get_display_name
 from hyperadmin.discover import app_label_var
 from hyperadmin.views.forms import CheckboxInput, PydanticForm
 from hyperadmin.views.htmx import HtmxTemplateResponse
