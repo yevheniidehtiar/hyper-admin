@@ -36,10 +36,11 @@ class SQLAlchemyAdapter(BaseAdapter):
                 where_conditions.append(getattr(self.model, key) == value)
 
         if search and self.inspector:
-            search_clauses = []
-            for column in self.inspector.c:
-                if isinstance(column.type, AutoString | String):
-                    search_clauses.append(getattr(self.model, column.name).ilike(f"%{search}%"))
+            search_clauses = [
+                getattr(self.model, column.name).ilike(f"%{search}%")
+                for column in self.inspector.c
+                if isinstance(column.type, AutoString | String)
+            ]
             if search_clauses:
                 where_conditions.append(or_(*search_clauses))
 

@@ -42,12 +42,12 @@ def test_register_duplicate_model_raises_error(registry: SiteRegistry, mocker) -
         "hyperadmin.core.registry.adapter_registry.find_adapter_for_model", return_value=None
     )
     registry.register(DummyModel, DummyAdmin)
-    with pytest.raises(ValueError, match="Model .* is already registered."):
+    with pytest.raises(ValueError, match=r"Model .* is already registered\."):
         registry.register(DummyModel, DummyAdmin)
 
 
 def test_unregister_nonexistent_model_raises_error(registry: SiteRegistry) -> None:
-    with pytest.raises(ValueError, match="Model .* is not registered."):
+    with pytest.raises(ValueError, match=r"Model .* is not registered\."):
         registry.unregister(DummyModel)
 
 

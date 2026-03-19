@@ -38,7 +38,7 @@ def _extract_column_names(raw: list[Any] | None, model: type | None = None) -> l
     return names
 
 
-def create_admin_router(
+def create_admin_router(  # noqa: PLR0913
     model: type[SQLModel],
     admin_class: Any,
     admin_instance: Any,

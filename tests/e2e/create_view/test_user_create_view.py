@@ -4,7 +4,7 @@ import pytest
 from playwright.sync_api import Page, expect
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 def debug_page(page: Page):
     network_logs = []
 

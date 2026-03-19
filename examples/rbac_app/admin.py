@@ -16,10 +16,6 @@ class UserAdmin(ModelView, model=User):
         User.is_active,
         User.created_at,
     ]
-    # column_details_list = [
-    #     User.id, User.username, User.email, User.first_name, User.last_name,
-    #     User.is_active, User.is_superuser, User.created_at, User.updated_at
-    # ]
     column_searchable_list: ClassVar = [
         User.username,
         User.email,

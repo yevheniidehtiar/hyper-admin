@@ -113,19 +113,100 @@ target-version = "py310"
 docstring-code-format = true
 
 [tool.ruff.lint]
-select = ["A", "ASYNC", "E", "F", "FLY", "FURB", "I", "ISC", "LOG", "N", "NPY", "PERF", "PGH", "PIE", "PL", "PT", "Q", "RET", "RUF", "RSE", "SIM", "TID", "UP", "W", "YTT"]
-ignore = ["E501", "G010", "PGH003", "RET504", "S101", "S307"]
+select = [
+  "A",      # flake8-builtins (shadowing builtins)
+  "ARG",    # flake8-unused-arguments
+  "ASYNC",  # flake8-async
+  "B",      # flake8-bugbear (common bug patterns)
+  "C4",     # flake8-comprehensions (simplify comprehensions)
+  "DTZ",    # flake8-datetimez (timezone-aware datetime)
+  "E",      # pycodestyle errors
+  "ERA",    # eradicate (commented-out code)
+  "F",      # pyflakes (unused imports, undefined names)
+  "FLY",    # flynt (f-string conversion)
+  "FURB",   # refurb (modernize)
+  "I",      # isort (import ordering)
+  "ISC",    # flake8-implicit-str-concat
+  "LOG",    # flake8-logging
+  "N",      # pep8-naming
+  "NPY",    # numpy-specific
+  "PERF",   # perflint (performance anti-patterns)
+  "PGH",    # pygrep-hooks
+  "PIE",    # flake8-pie (misc. lint)
+  "PL",     # pylint subset (PLR, PLC, PLE, PLW)
+  "PT",     # flake8-pytest-style (test conventions)
+  "Q",      # flake8-quotes
+  "RET",    # flake8-return (return statement issues)
+  "RSE",    # flake8-raise (raise statement issues)
+  "RUF",    # ruff-specific rules
+  "S",      # flake8-bandit (security)
+  "SIM",    # flake8-simplify
+  "T20",    # flake8-print (leftover prints)
+  "TCH",    # flake8-type-checking (TYPE_CHECKING imports)
+  "TID",    # flake8-tidy-imports
+  "UP",     # pyupgrade (modernize syntax)
+  "W",      # pycodestyle warnings
+  "YTT",    # flake8-2020
+]
+ignore = [
+  "E501",    # line too long (handled by formatter)
+  "G010",    # logging.warn deprecated
+  "PGH003",  # blanket type: ignore
+  "RET504",  # unnecessary variable before return
+  "S307",    # eval usage (used intentionally)
+]
 unfixable = []
 fixable = ["ALL"]
 
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = [
+  "ARG001",   # unused function arguments (fixtures)
+  "ARG002",   # unused method arguments (fixtures)
+  "ARG005",   # unused lambda arguments (mock factories)
+  "E402",     # module-level import not at top (test setup)
+  "PLC0415",  # import outside top-level (lazy imports in fixtures)
+  "PLR0913",  # too many arguments (parametrized tests)
+  "PLR2004",  # magic value comparisons (assert against literals)
+  "RUF012",   # mutable class default (test helper classes)
+  "S101",     # assert usage (tests must use assert)
+  "S104",     # binding to all interfaces (test server fixtures)
+  "S105",     # hardcoded password (test fixtures)
+  "S106",     # hardcoded credentials (test fixtures)
+  "S110",     # try-except-pass (process cleanup in fixtures)
+  "S603",     # subprocess without shell (test server fixtures)
+  "T20",      # print statements (test debugging output)
+]
+"src/hyperadmin/core/app.py" = ["PLC0415"]      # lazy imports to break circular deps
+"src/hyperadmin/core/model.py" = ["E402"]        # late import to break circular deps
+"src/hyperadmin/core/registry.py" = ["PLC0415"]  # lazy imports to break circular deps
+"src/hyperadmin/routing.py" = ["PLC0415"]        # lazy imports to break circular deps
+"examples/**/*.py" = [
+  "ARG001",   # unused function arguments (lifespan signature)
+  "S101",     # assert in examples
+  "S104",     # binding to all interfaces (examples run locally)
+  "T20",      # print statements in examples
+]
+"main.py" = ["S104"]  # binding to all interfaces (local dev entry point)
+
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"
+
+[tool.ruff.lint.flake8-unused-arguments]
+ignore-variadic-names = true
+
+[tool.ruff.lint.isort]
+known-first-party = ["hyperadmin"]
 
 [tool.ruff.lint.pycodestyle]
 max-doc-length = 100
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
+
+[tool.ruff.lint.pylint]
+max-args = 7
+max-returns = 8
+max-branches = 12
 
 [tool.poe.executor]  # https://github.com/nat-n/poethepoet
 type = "simple"

@@ -1,8 +1,10 @@
 from __future__ import annotations
 
-from collections.abc import Callable
 from types import SimpleNamespace
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 import pytest
 from starlette.requests import Request
@@ -22,13 +24,13 @@ class FakeTemplate:
 class FakeTemplates:
     def __init__(self, template: FakeTemplate):
         # env with get_template
-        self.env = SimpleNamespace(get_template=lambda name: template)
+        self.env = SimpleNamespace(get_template=lambda _name: template)
         # TemplateResponse fallback path
         self._last_template_name: str | None = None
         self._last_context: dict[str, Any] | None = None
         self._last_status: int | None = None
 
-    def TemplateResponse(
+    def TemplateResponse(  # noqa: N802
         self, template_name: str, context: dict[str, Any], status_code: int | None = None
     ):
         self._last_template_name = template_name
@@ -57,7 +59,7 @@ def request_factory():
 
 def test_htmx_renders_only_block_when_hx_and_block_present(request_factory):
     # Given a template with a block named 'fragment'
-    template = FakeTemplate(blocks={"fragment": lambda ctx: ["<div>Fragment</div>"]})
+    template = FakeTemplate(blocks={"fragment": lambda _ctx: ["<div>Fragment</div>"]})
     templates = FakeTemplates(template)
 
     req = request_factory({"hx-request": "true"})
@@ -97,7 +99,7 @@ def test_htmx_missing_block_falls_back_to_full_template(request_factory):
 
 
 def test_non_htmx_always_full_template_even_with_block(request_factory):
-    template = FakeTemplate(blocks={"fragment": lambda ctx: ["X"]})
+    template = FakeTemplate(blocks={"fragment": lambda _ctx: ["X"]})
     templates = FakeTemplates(template)
 
     req = request_factory()  # no HX header

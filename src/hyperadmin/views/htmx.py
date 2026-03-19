@@ -1,11 +1,13 @@
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from fastapi.templating import Jinja2Templates
-from starlette.requests import Request
 from starlette.responses import Response
-from starlette.templating import _TemplateResponse
+
+if TYPE_CHECKING:
+    from fastapi.templating import Jinja2Templates
+    from starlette.requests import Request
+    from starlette.templating import _TemplateResponse
 
 
 class HtmxTemplateResponse:

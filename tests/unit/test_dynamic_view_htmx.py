@@ -86,7 +86,7 @@ def request_factory():
             "headers": [(k.lower().encode(), v.encode()) for k, v in (headers or {}).items()],
             "app": SimpleNamespace(
                 url_path_for=lambda name, **kw: SimpleNamespace(
-                    make_absolute_url=lambda base_url: URL(f"/{name}")
+                    make_absolute_url=lambda _base_url: URL(f"/{name}")
                 )
             ),
         }
@@ -196,9 +196,8 @@ async def test_create_view_exception(request_factory, view, monkeypatch):
 
     monkeypatch.setattr(view.adapter, "create", fake_create)
     req = request_factory(method="POST")
-    with pytest.raises(Exception) as exc_info:
+    with pytest.raises(Exception, match="DB error"):
         await view.create_view(req)
-    assert "DB error" in str(exc_info.value)
 
 
 @pytest.mark.anyio
@@ -213,9 +212,8 @@ async def test_update_form_view_uses_block_for_htmx(request_factory, view):
 @pytest.mark.anyio
 async def test_update_form_view_not_found(request_factory, view):
     req = request_factory({"hx-request": "true"})
-    with pytest.raises(Exception) as exc_info:
+    with pytest.raises(Exception, match="Item not found"):
         await view.update_form_view(req, item_id=999)
-    assert "Item not found" in str(exc_info.value)
 
 
 @pytest.mark.anyio
@@ -237,9 +235,8 @@ async def test_delete_action(request_factory, view):
 @pytest.mark.anyio
 async def test_delete_action_not_found(request_factory, view):
     req = request_factory(method="POST")
-    with pytest.raises(Exception) as exc_info:
+    with pytest.raises(Exception, match="Item not found"):
         await view.delete_action(req, item_id=999)
-    assert "Item not found" in str(exc_info.value)
 
 
 @pytest.mark.anyio

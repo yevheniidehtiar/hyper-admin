@@ -64,8 +64,8 @@ class SQLModelAdapter(BaseAdapter):
                 # This should be made more generic in a real application.
                 query = query.where(
                     or_(
-                        getattr(self.model, "name").ilike(f"%{search}%"),
-                        getattr(self.model, "email").ilike(f"%{search}%"),
+                        self.model.name.ilike(f"%{search}%"),
+                        self.model.email.ilike(f"%{search}%"),
                     )
                 )
 

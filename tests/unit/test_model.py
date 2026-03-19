@@ -13,7 +13,7 @@ class ConcreteAdminModel(HyperAdminModel):
         return cls(**data)
 
     @classmethod
-    async def get(cls, pk):
+    async def get(cls, _pk):
         return None
 
     async def update(self, data):

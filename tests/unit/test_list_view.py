@@ -140,7 +140,7 @@ async def test_list_view_custom_column_list(mock_templates, mock_request, anyio_
 
 async def test_list_view_basic(view_instance, mock_request, mock_templates, anyio_backend):
     """Test basic list view functionality."""
-    result = await view_instance.list_view(
+    await view_instance.list_view(
         request=mock_request, page=1, page_size=10, search="", sort_by=None, sort_direction="asc"
     )
 
@@ -171,7 +171,7 @@ async def test_list_view_with_pagination(
     view_instance, mock_request, mock_templates, anyio_backend
 ):
     """Test list view with pagination parameters."""
-    result = await view_instance.list_view(
+    await view_instance.list_view(
         request=mock_request, page=2, page_size=2, search="", sort_by=None, sort_direction="asc"
     )
 
@@ -189,7 +189,7 @@ async def test_list_view_with_pagination(
 
 async def test_list_view_with_search(view_instance, mock_request, mock_templates, anyio_backend):
     """Test list view with search functionality."""
-    result = await view_instance.list_view(
+    await view_instance.list_view(
         request=mock_request,
         page=1,
         page_size=10,
@@ -211,7 +211,7 @@ async def test_list_view_with_search(view_instance, mock_request, mock_templates
 
 async def test_list_view_with_sorting(view_instance, mock_request, mock_templates, anyio_backend):
     """Test list view with sorting parameters."""
-    result = await view_instance.list_view(
+    await view_instance.list_view(
         request=mock_request, page=1, page_size=10, search="", sort_by="name", sort_direction="desc"
     )
 
@@ -228,7 +228,7 @@ async def test_list_view_htmx_request(
     view_instance, mock_htmx_request, mock_templates, anyio_backend
 ):
     """Test that HTMX requests use the table component template."""
-    result = await view_instance.list_view(
+    await view_instance.list_view(
         request=mock_htmx_request,
         page=1,
         page_size=10,
@@ -249,7 +249,7 @@ async def test_list_view_default_sort_column(
     view_instance, mock_request, mock_templates, anyio_backend
 ):
     """Test that default sort column is set when none provided."""
-    result = await view_instance.list_view(
+    await view_instance.list_view(
         request=mock_request, page=1, page_size=10, search="", sort_by=None, sort_direction="asc"
     )
 
@@ -266,7 +266,7 @@ async def test_list_view_error_handling(view_instance, mock_request, mock_templa
     # Mock adapter to raise an exception
     view_instance.adapter.list = AsyncMock(side_effect=Exception("Database error"))
 
-    result = await view_instance.list_view(
+    await view_instance.list_view(
         request=mock_request, page=1, page_size=10, search="", sort_by=None, sort_direction="asc"
     )
 
@@ -285,7 +285,7 @@ async def test_list_view_empty_results(view_instance, mock_request, mock_templat
     # Mock adapter to return empty results
     view_instance.adapter.list = AsyncMock(return_value=([], 0))
 
-    result = await view_instance.list_view(
+    await view_instance.list_view(
         request=mock_request, page=1, page_size=10, search="", sort_by=None, sort_direction="asc"
     )
 

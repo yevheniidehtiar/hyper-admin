@@ -1,15 +1,18 @@
 from __future__ import annotations
 
-from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Any, Union, get_args, get_origin
+from typing import TYPE_CHECKING, Any, Union, get_args, get_origin
 
 from markupsafe import Markup
 from pydantic import BaseModel, ValidationError
 from pydantic.fields import FieldInfo
-from starlette.templating import Jinja2Templates
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
+
+    from starlette.templating import Jinja2Templates
 
 
 @dataclass(slots=True)
@@ -31,7 +34,7 @@ class HtmxWidget:
             "field": form_field,
             "widget": self,
         }
-        return Markup(templates.get_template(self.template_path).render(context))
+        return Markup(templates.get_template(self.template_path).render(context))  # noqa: S704
 
 
 class TextInput(HtmxWidget):
@@ -129,18 +132,16 @@ class PydanticForm:
         origin = get_origin(ann)
         args = get_args(ann)
 
-        if origin is not None and args:
-            # Handle Optional[T]
-            if origin is Union and type(None) in args:
-                ann = next(arg for arg in args if arg is not type(None))
+        if origin is not None and args and origin is Union and type(None) in args:
+            ann = next(arg for arg in args if arg is not type(None))
 
-        if ann == bool:
+        if ann is bool:
             return CheckboxInput()
-        if ann == int:
+        if ann is int:
             return NumberInput()
-        if ann == float:
+        if ann is float:
             return FloatInput()
-        if ann == datetime:
+        if ann is datetime:
             return DateTimeInput()
         if isinstance(ann, type) and issubclass(ann, Enum):
             return SelectInput()
@@ -150,9 +151,12 @@ class PydanticForm:
     def _is_auto_now_field(field: FieldInfo) -> bool:
         if isinstance(field, FieldInfo):
             sa_column_kwargs = getattr(field, "sa_column_kwargs", None)
-            if sa_column_kwargs and isinstance(sa_column_kwargs, dict):
-                if "server_default" in sa_column_kwargs or "onupdate" in sa_column_kwargs:
-                    return True
+            if (
+                sa_column_kwargs
+                and isinstance(sa_column_kwargs, dict)
+                and ("server_default" in sa_column_kwargs or "onupdate" in sa_column_kwargs)
+            ):
+                return True
             if field.default_factory == datetime.now:
                 return True
         return False
