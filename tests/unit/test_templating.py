@@ -57,10 +57,10 @@ def test_get_template_name_hierarchy(mock_adapter, mock_templates, mock_options)
         ("default.html", True),
     ]
 
-    for template_path, should_exist in test_cases:
+    for template_path, _should_exist in test_cases:
         with patch("os.path.exists") as mock_exists:
-            mock_exists.side_effect = lambda path, T=template_path: (
-                path == os.path.join(search_paths[0], T)
+            mock_exists.side_effect = lambda path, t=template_path: (
+                path == os.path.join(search_paths[0], t)
             )
 
             # Act

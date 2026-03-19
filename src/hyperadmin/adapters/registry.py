@@ -3,7 +3,7 @@ from typing import Any
 from hyperadmin.core.adapters import BaseAdapter
 
 
-class AdapterNotFound(Exception):
+class AdapterNotFoundError(Exception):
     """Raised when no suitable adapter is found for a given model."""
 
 
@@ -24,7 +24,7 @@ class AdapterRegistry:
         for base in model_class.__mro__:
             if base in self._registry:
                 return self._registry[base]
-        raise AdapterNotFound(
+        raise AdapterNotFoundError(
             f"No suitable adapter found for model {model_class.__name__}. "
             f"Please register an adapter for one of its base classes."
         )

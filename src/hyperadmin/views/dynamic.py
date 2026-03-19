@@ -1,13 +1,16 @@
 import logging
+import math
 import os
 import re
-from typing import Any, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from fastapi import HTTPException, Query, Request
 from fastapi.templating import Jinja2Templates
-from jinja2 import FileSystemLoader
 from sqlalchemy.exc import IntegrityError
 from starlette.responses import RedirectResponse, Response
+
+if TYPE_CHECKING:
+    from jinja2 import FileSystemLoader
 
 from hyperadmin.adapters import SQLAlchemyAdapter, SQLModelAdapter
 from hyperadmin.core.options import AdminOptions
@@ -22,12 +25,12 @@ logger = logging.getLogger(__name__)
 def _integrity_error_to_field_errors(exc: IntegrityError) -> dict[str, str]:
     """Parse an IntegrityError into {field_name: message} for form display."""
     msg = str(exc.orig) if exc.orig else str(exc)
-    # SQLite: "UNIQUE constraint failed: users.username"
+    # SQLite: "UNIQUE constraint failed: users.username"  # noqa: ERA001
     match = re.search(r"UNIQUE constraint failed:\s*\S+\.(\w+)", msg)
     if match:
         field = match.group(1)
         return {field: f"{field.replace('_', ' ').title()} already exists."}
-    # PostgreSQL: 'duplicate key value violates unique constraint "users_username_key"'
+    # PostgreSQL: 'duplicate key ... unique constraint "users_username_key"'  # noqa: ERA001
     match = re.search(r'duplicate key value violates unique constraint "(\w+)"', msg)
     if match:
         constraint = match.group(1)
@@ -101,7 +104,7 @@ class DynamicModelView:
         for template_path in potential_templates:
             if self.templates.env.loader:
                 # Cast to FileSystemLoader to access the searchpath attribute
-                loader = cast(FileSystemLoader, self.templates.env.loader)
+                loader = cast("FileSystemLoader", self.templates.env.loader)
                 for search_path in loader.searchpath:
                     full_path = os.path.join(search_path, template_path)
                     if os.path.exists(full_path):
@@ -136,8 +139,6 @@ class DynamicModelView:
             )
 
             # Calculate pagination info
-            import math
-
             total_pages = math.ceil(total_items / page_size) if page_size > 0 else 0
             start_index = (page - 1) * page_size + 1 if total_items > 0 else 0
             end_index = min(page * page_size, total_items)

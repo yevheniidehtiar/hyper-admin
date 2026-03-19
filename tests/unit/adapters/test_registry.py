@@ -1,7 +1,7 @@
 from unittest.mock import MagicMock
 
 import pytest
-from src.hyperadmin.adapters.registry import AdapterNotFound, AdapterRegistry
+from src.hyperadmin.adapters.registry import AdapterNotFoundError, AdapterRegistry
 from src.hyperadmin.core.adapters import BaseAdapter
 
 
@@ -29,7 +29,7 @@ def test_find_adapter_not_found():
     model_class.__name__ = "TestModel"
 
     # Act & Assert
-    with pytest.raises(AdapterNotFound) as exc_info:
+    with pytest.raises(AdapterNotFoundError) as exc_info:
         registry.find_adapter_for_model(model_class)
 
     assert "No suitable adapter found for model TestModel" in str(exc_info.value)

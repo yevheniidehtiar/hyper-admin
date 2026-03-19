@@ -49,7 +49,7 @@ async def test_admin_create_tables(mock_fastapi_app):
     mock_engine = MagicMock()
     mock_conn = AsyncMock()
     mock_engine.begin.return_value.__aenter__.return_value = mock_conn
-    admin = Admin(app=mock_fastapi_app, create_tables=True, engine=mock_engine)
+    Admin(app=mock_fastapi_app, create_tables=True, engine=mock_engine)
 
     # Act
     mock_fastapi_app.on_event.assert_called_once_with("startup")

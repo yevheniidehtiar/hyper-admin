@@ -40,7 +40,7 @@ class SiteRegistry:
 
         Raises:
             ValueError: If the model is already registered.
-            AdapterNotFound: If no suitable adapter can be found for the model.
+            AdapterNotFoundError: If no suitable adapter can be found for the model.
         """
         if admin_class is None:
             from hyperadmin.core.model import ModelAdmin
