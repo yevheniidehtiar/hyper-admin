@@ -1,9 +1,12 @@
+import logging
 import os
+import re
 from typing import Any, cast
 
 from fastapi import HTTPException, Query, Request
 from fastapi.templating import Jinja2Templates
 from jinja2 import FileSystemLoader
+from sqlalchemy.exc import IntegrityError
 from starlette.responses import RedirectResponse, Response
 
 from hyperadmin.adapters import SQLAlchemyAdapter, SQLModelAdapter
@@ -12,6 +15,27 @@ from hyperadmin.core.registry import site
 from hyperadmin.discover import app_label_var
 from hyperadmin.views.forms import CheckboxInput, PydanticForm
 from hyperadmin.views.htmx import HtmxTemplateResponse
+
+logger = logging.getLogger(__name__)
+
+
+def _integrity_error_to_field_errors(exc: IntegrityError) -> dict[str, str]:
+    """Parse an IntegrityError into {field_name: message} for form display."""
+    msg = str(exc.orig) if exc.orig else str(exc)
+    # SQLite: "UNIQUE constraint failed: users.username"
+    match = re.search(r"UNIQUE constraint failed:\s*\S+\.(\w+)", msg)
+    if match:
+        field = match.group(1)
+        return {field: f"{field.replace('_', ' ').title()} already exists."}
+    # PostgreSQL: 'duplicate key value violates unique constraint "users_username_key"'
+    match = re.search(r'duplicate key value violates unique constraint "(\w+)"', msg)
+    if match:
+        constraint = match.group(1)
+        # Try to extract field name from constraint name (e.g. "users_username_key" → "username")
+        parts = constraint.rsplit("_key", 1)[0].split("_", 1)
+        field = parts[1] if len(parts) > 1 else parts[0]
+        return {field: f"{field.replace('_', ' ').title()} already exists."}
+    return {"__all__": "A record with these values already exists."}
 
 
 class ModelView:
@@ -267,7 +291,14 @@ class DynamicModelView:
                 status_code=422,
             )
 
-        new_item = await self.adapter.create(data=instance.model_dump())
+        try:
+            new_item = await self.adapter.create(data=instance.model_dump())
+        except IntegrityError as exc:
+            logger.exception("IntegrityError during create")
+            field_errors = _integrity_error_to_field_errors(exc)
+            return await self.create_form_view(
+                request, values=data, errors=field_errors, status_code=422
+            )
 
         item_id = getattr(new_item, "id", None)
         if item_id:
@@ -355,7 +386,14 @@ class DynamicModelView:
             )
 
         # exclude_none: id is not submitted by the form and must not overwrite the PK
-        await self.adapter.update(pk=item_id, data=instance.model_dump(exclude_none=True))
+        try:
+            await self.adapter.update(pk=item_id, data=instance.model_dump(exclude_none=True))
+        except IntegrityError as exc:
+            logger.exception("IntegrityError during update")
+            field_errors = _integrity_error_to_field_errors(exc)
+            return await self.update_form_view(
+                request, item_id=item_id, values=data, errors=field_errors, status_code=422
+            )
 
         redirect_url = request.url_for(f"{self.model.__name__.lower()}-list")
 
