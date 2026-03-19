@@ -60,19 +60,39 @@ uv run <cmd>          # Run commands in the virtual environment
 uv run playwright install chromium
 ```
 
-### CSS Class Convention in E2E Tests
+### E2E Selector Convention
 
-Templates use custom `ha-*` CSS classes (not raw Tailwind utilities). Use these class names in Playwright selectors:
+E2E tests use Playwright's accessibility-first locators. Query priority (highest to lowest):
 
-| Element | Class |
-|---------|-------|
-| `body` | `ha-page` |
-| `nav` | `ha-navbar` |
-| `aside` | `ha-sidebar` |
-| `main` | `ha-content` |
-| Validation error list | `ha-field-errors` |
+1. `page.get_by_role()` — buttons, links, headings, rows
+2. `page.get_by_label()` — form inputs (matched via `<label for>`)
+3. `page.get_by_text()` — static content assertions
+4. `page.get_by_test_id()` — elements without a natural accessible role
 
-When templates change class names, update the corresponding E2E selectors to match.
+**Do NOT** use `page.locator('.ha-*')` or positional DOM selectors in E2E tests. `ha-*` classes are for styling only and must not appear in test selectors.
+
+#### `data-testid` reference
+
+| Template element | `data-testid` |
+|-----------------|---------------|
+| Sidebar `<aside>` | `sidebar` |
+| List table | `list-table` |
+| Each table row | `list-row` |
+| View action link | `row-view-link` |
+| Edit action link | `row-edit-link` |
+| Delete action button | `row-delete-btn` |
+| Search input | `search-input` |
+| Pagination info | `pagination-info` |
+| Pagination previous | `pagination-prev` |
+| Pagination next | `pagination-next` |
+| Pagination current page | `pagination-page` |
+| Sort link (per field) | `sort-{field_name}` |
+| Create New link | `create-link` |
+| Form (create/update) | `model-form` |
+| Field error list | `{field_name}-errors` |
+| Detail fields container | `detail-fields` |
+
+When adding new interactive or assertable elements to templates, add a `data-testid` following the `<view>-<element>` naming pattern.
 
 ## Constraints
 
