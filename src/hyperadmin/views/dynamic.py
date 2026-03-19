@@ -267,24 +267,18 @@ class DynamicModelView:
                 status_code=422,
             )
 
-        try:
-            new_item = await self.adapter.create(data=instance.model_dump())
+        new_item = await self.adapter.create(data=instance.model_dump())
 
-            item_id = getattr(new_item, "id", None)
-            if item_id:
-                redirect_url = request.url_for(
-                    f"{self.model.__name__.lower()}-detail", item_id=item_id
-                )
-            else:
-                redirect_url = request.url_for(f"{self.model.__name__.lower()}-list")
+        item_id = getattr(new_item, "id", None)
+        if item_id:
+            redirect_url = request.url_for(f"{self.model.__name__.lower()}-detail", item_id=item_id)
+        else:
+            redirect_url = request.url_for(f"{self.model.__name__.lower()}-list")
 
-            if "hx-request" in request.headers:
-                return Response(status_code=200, headers={"HX-Redirect": str(redirect_url)})
+        if "hx-request" in request.headers:
+            return Response(status_code=200, headers={"HX-Redirect": str(redirect_url)})
 
-            return RedirectResponse(url=redirect_url, status_code=303)
-
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Internal Server Error: {e}")
+        return RedirectResponse(url=redirect_url, status_code=303)
 
     async def update_form_view(
         self,
