@@ -2,15 +2,16 @@
     <div class="ha-sidebar-inner">
         <h2 class="ha-sidebar-title">Menu</h2>
         <ul class="ha-sidebar-nav">
+            {%- for item in nav_items -%}
             <li>
-                <a href="/admin/user" class="ha-sidebar-link">Users</a>
+                <a href="{{ request.scope['root_path'] }}{{ item.url }}" class="ha-sidebar-link">
+                    {%- if item.icon -%}
+                    <i class="{{ item.icon }}"></i>
+                    {%- endif -%}
+                    {{ item.name }}
+                </a>
             </li>
-            <li>
-                <a href="#" class="ha-sidebar-link">Groups</a>
-            </li>
-            <li>
-                <a href="#" class="ha-sidebar-link">Permissions</a>
-            </li>
+            {%- endfor -%}
         </ul>
     </div>
 </aside>

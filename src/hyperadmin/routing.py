@@ -10,6 +10,13 @@ from hyperadmin.core.options import AdminOptions
 from hyperadmin.views.dynamic import DynamicModelView
 
 
+def _extract_column_names(raw: list[Any] | None) -> list[str] | None:
+    """Extract field name strings from a list of SQLAlchemy column attributes."""
+    if not raw:
+        return None
+    return [col.key if hasattr(col, "key") else str(col) for col in raw]
+
+
 def create_admin_router(
     model: type[SQLModel],
     admin_class: Any,
@@ -17,27 +24,20 @@ def create_admin_router(
     options: AdminOptions,
     engine: Any,
     templates: Jinja2Templates,
+    form_include: list[str] | None = None,
+    form_create_exclude: list[str] | None = None,
+    column_list: list[str] | None = None,
 ) -> APIRouter:
-    """
-    Creates an APIRouter for a given model with the specified admin options.
-
-    Args:
-        model: The SQLModel class.
-        admin_class: The admin class for the model.
-        admin_instance: The admin instance for the model.
-        options: The AdminOptions for the model.
-        engine: The database engine.
-        templates: The Jinja2Templates instance.
-
-    Returns:
-        An APIRouter instance with the generated routes.
-    """
+    """Creates an APIRouter for a given model with the specified admin options."""
     router = APIRouter()
     view = DynamicModelView(
         adapter=admin_instance.adapter_class(model, engine=engine),
         options=options,
         templates=templates,
         app_label=admin_class.app_label,
+        form_include=form_include,
+        form_create_exclude=form_create_exclude,
+        column_list=column_list,
     )
     model_name = model.__name__.lower()
 
@@ -122,6 +122,7 @@ class HyperAdminRouter:
         from hyperadmin.core.registry import site
 
         self.routers = []
+        nav_items: list[dict[str, str]] = []
 
         # Add the main admin dashboard route
         dashboard_router = APIRouter()
@@ -136,6 +137,15 @@ class HyperAdminRouter:
         for model, admin_class in site._registry.items():
             admin_instance = admin_class(model)
             options = getattr(admin_instance, "options", AdminOptions())
+
+            form_include = _extract_column_names(getattr(admin_class, "form_columns", None))
+            form_create_exclude = _extract_column_names(
+                getattr(admin_class, "form_create_exclude", None)
+            )
+            column_list = _extract_column_names(
+                getattr(admin_class, "column_list", None) or getattr(admin_class, "list", None)
+            )
+
             router = create_admin_router(
                 model=model,
                 admin_class=admin_class,
@@ -143,8 +153,23 @@ class HyperAdminRouter:
                 options=options,
                 engine=self.engine,
                 templates=self.templates,
+                form_include=form_include,
+                form_create_exclude=form_create_exclude,
+                column_list=column_list,
             )
             self.routers.append(router)
+
+            model_name = model.__name__
+            nav_items.append(
+                {
+                    "name": getattr(admin_class, "name_plural", None)
+                    or getattr(admin_class, "name", model_name) + "s",
+                    "url": f"/{model_name.lower()}",
+                    "icon": getattr(admin_class, "icon", ""),
+                }
+            )
+
+        self.templates.env.globals["nav_items"] = nav_items
 
     def get_admin_dashboard_view(self):
         from hyperadmin.views.dynamic import admin_dashboard

@@ -117,6 +117,27 @@ def view_instance(mock_templates):
     return view
 
 
+async def test_list_view_custom_column_list(mock_templates, mock_request, anyio_backend):
+    """Test list view with explicit column_list."""
+    adapter = MockAdapter(SampleModel, None)
+    options = AdminOptions()
+    view = DynamicModelView(
+        adapter=adapter,
+        options=options,
+        templates=mock_templates,
+        app_label="test",
+        column_list=["id", "name", "email"],
+    )
+    view._get_template_name = MagicMock(side_effect=lambda name: f"{name}.html")
+
+    await view.list_view(
+        request=mock_request, page=1, page_size=10, search="", sort_by=None, sort_direction="asc"
+    )
+    context = mock_templates.TemplateResponse.call_args[0][1]
+    assert context["fields"] == ["id", "name", "email"]
+    assert context["items"][0]["name"] == "Alice"
+
+
 async def test_list_view_basic(view_instance, mock_request, mock_templates, anyio_backend):
     """Test basic list view functionality."""
     result = await view_instance.list_view(
@@ -136,8 +157,11 @@ async def test_list_view_basic(view_instance, mock_request, mock_templates, anyi
 
     # Verify context structure
     assert context["model_name"] == "SampleModel"
-    assert context["fields"] == ["id", "name", "email", "age"]
+    # Default column_list is ["id", "__str__"] when no column_list is configured
+    assert context["fields"] == ["id", "__str__"]
     assert len(context["items"]) == 3
+    # Items are now row dicts with column_list keys
+    assert context["items"][0]["id"] == 1
     assert context["pagination"]["total_items"] == 3
     assert context["pagination"]["page"] == 1
     assert context["pagination"]["page_size"] == 10
@@ -181,7 +205,7 @@ async def test_list_view_with_search(view_instance, mock_request, mock_templates
     # Verify search results
     assert context["search_query"] == "alice"
     assert len(context["items"]) == 1
-    assert context["items"][0].name == "Alice"
+    assert context["items"][0]["id"] == 1
     assert context["pagination"]["total_items"] == 1
 
 

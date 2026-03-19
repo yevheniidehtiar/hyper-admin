@@ -1,3 +1,7 @@
+{%- set display_name = model_name if field == '__str__' else field.replace('_', ' ').title() -%}
+{%- if field == '__str__' -%}
+<th class="ha-table-th">{{ display_name }}</th>
+{%- else -%}
 <th class="ha-table-th">
     <a href="{{- url_for(model_name|lower ~ '-list') }}?sort_by={{ field }}&sort_direction={{ 'desc' if sort_by == field and sort_direction == 'asc' else 'asc' }}&search={{ search_query }}&page={{ pagination.page -}}"
        hx-get="{{- url_for(model_name|lower ~ '-list') }}?sort_by={{ field }}&sort_direction={{ 'desc' if sort_by == field and sort_direction == 'asc' else 'asc' }}&search={{ search_query }}&page={{ pagination.page -}}"
@@ -5,7 +9,7 @@
        hx-swap="outerHTML"
        class="ha-table-sort-link"
        data-testid="sort-{{ field }}">
-        {{- field -}}
+        {{- display_name -}}
         {%- if sort_by == field -%}
             {%- if sort_direction == 'asc' -%}
                 &#9650;
@@ -15,3 +19,4 @@
         {%- endif -%}
     </a>
 </th>
+{%- endif -%}

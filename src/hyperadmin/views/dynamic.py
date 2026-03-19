@@ -41,12 +41,18 @@ class DynamicModelView:
         options: AdminOptions,
         templates: Jinja2Templates,
         app_label: str | None,
+        form_include: list[str] | None = None,
+        form_create_exclude: list[str] | None = None,
+        column_list: list[str] | None = None,
     ):
         self.adapter = adapter
         self.model = adapter.model
         self.options = options
         self.templates = templates
         self.app_label = app_label
+        self.form_include = form_include
+        self.form_create_exclude = form_create_exclude or []
+        self.column_list = column_list or ["id", "__str__"]
 
     def _get_template_name(self, view_name: str) -> str:
         model_name = self.model.__name__.lower()
@@ -135,11 +141,24 @@ class DynamicModelView:
             # In a real application, you might want to log this error
             # For now, we'll just show empty results
 
+        # Convert items to row dicts using column_list
+        display_fields = self.column_list
+        rows = []
+        for item in items:
+            row: dict[str, Any] = {}
+            for field in display_fields:
+                if field == "__str__":
+                    row[field] = str(item)
+                else:
+                    row[field] = getattr(item, field, None)
+            row["id"] = getattr(item, "id", None)
+            rows.append(row)
+
         context = {
             "request": request,
             "model_name": self.model.__name__,
-            "fields": list(self.model.model_fields.keys()),
-            "items": items,
+            "fields": display_fields,
+            "items": rows,
             "pagination": pagination,
             "search_query": search,
             "sort_by": sort_by,
@@ -185,9 +204,17 @@ class DynamicModelView:
         into the target container.
         """
         # Build a Pydantic-backed form abstraction for templates
-        form = PydanticForm(self.model, initial=values or {})
+        # Create forms exclude form_create_exclude fields (e.g. updated_at)
+        create_include = self.form_include
+        if create_include and self.form_create_exclude:
+            create_include = [f for f in create_include if f not in self.form_create_exclude]
+        form = PydanticForm(
+            self.model,
+            include=create_include,
+            exclude=self.form_create_exclude,
+            initial=values or {},
+        )
         if errors:
-            # Bind raw values and attach errors to fields
             form.bind(values or {})
             norm_errors = {k: (v if isinstance(v, list) else [v]) for k, v in errors.items()}
             form.errors = norm_errors
@@ -216,7 +243,10 @@ class DynamicModelView:
         data = dict(form_data)
 
         # Use PydanticForm for consistent binding/validation
-        form = PydanticForm(self.model)
+        create_include = self.form_include
+        if create_include and self.form_create_exclude:
+            create_include = [f for f in create_include if f not in self.form_create_exclude]
+        form = PydanticForm(self.model, include=create_include, exclude=self.form_create_exclude)
         form.bind(data)
         instance, errs = form.validate(data)
 
@@ -276,7 +306,7 @@ class DynamicModelView:
         if values:
             initial_values.update(values)
 
-        form = PydanticForm(self.model, initial=initial_values)
+        form = PydanticForm(self.model, include=self.form_include, initial=initial_values)
 
         if errors:
             form.bind(values or {})
@@ -309,7 +339,7 @@ class DynamicModelView:
         form_data = await request.form()
         data: dict[str, Any] = dict(form_data)
 
-        form = PydanticForm(self.model)
+        form = PydanticForm(self.model, include=self.form_include)
 
         # Unchecked checkboxes are absent from form data — inject False before validation
         for field in form.fields:
