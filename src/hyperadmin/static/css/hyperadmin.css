@@ -298,7 +298,7 @@ body {
   box-shadow: var(--ha-shadow-md);
   border-radius: var(--ha-radius);
   margin: var(--ha-space-6) 0;
-  overflow: hidden;
+  overflow-x: auto;
 }
 
 .ha-table {
@@ -781,4 +781,61 @@ body {
 .htmx-request .htmx-indicator,
 .htmx-request.htmx-indicator {
   display: inline;
+}
+
+/* ==========================================================================
+   Filter Bar
+   ========================================================================== */
+
+.ha-filter-bar {
+  padding: var(--ha-space-4);
+  margin-bottom: var(--ha-space-4);
+}
+
+.ha-filter-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ha-space-4);
+  align-items: flex-end;
+}
+
+.ha-filter-group {
+  margin-bottom: 0;
+}
+
+.ha-filter-clear {
+  margin-bottom: 0;
+}
+
+.ha-filter-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--ha-space-2);
+  margin-bottom: var(--ha-space-4);
+  font-weight: 600;
+  color: var(--ha-color-text-strong);
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+}
+
+.ha-filter-toggle:hover {
+  color: var(--ha-color-primary);
+}
+
+.ha-filter-content {
+  display: block;
+}
+
+.ha-filter-content.hidden {
+  display: none;
+}
+
+.rotate-180 {
+  transform: rotate(180deg);
+}
+
+.ha-filter-toggle .ha-icon {
+  transition: transform 0.2s;
 }

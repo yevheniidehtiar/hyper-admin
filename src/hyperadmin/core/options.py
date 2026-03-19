@@ -26,3 +26,5 @@ class AdminOptions(BaseModel):
     """Whether the List view and GET (collection) endpoint are generated."""
     can_detail: bool = True
     """Whether the Detail view and GET (single item) endpoint are generated."""
+    list_filter: list[str] = []
+    """List of field names to show in the filter bar."""
