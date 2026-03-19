@@ -33,7 +33,7 @@ class SiteRegistry:
         Args:
             model: The model class or instance to register.
             admin_class: The admin class to associate with the model. If None,
-              ModelAdmin will be used.
+                ModelAdmin will be used.
             options: The admin options to associate with the model. If None,
                 default options will be used.
             app_label: The label of the application that the model belongs to.

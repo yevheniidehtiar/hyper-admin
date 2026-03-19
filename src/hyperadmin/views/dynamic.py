@@ -28,6 +28,13 @@ class ModelView:
 
 
 class DynamicModelView:
+    """View handler that serves all CRUD endpoints for a registered model.
+
+    One instance is created per model by ``HyperAdminRouter``. It delegates
+    all database operations to its ``adapter`` and renders Jinja2 templates
+    resolved through the template-search hierarchy.
+    """
+
     def __init__(
         self,
         adapter: SQLAlchemyAdapter | SQLModelAdapter,

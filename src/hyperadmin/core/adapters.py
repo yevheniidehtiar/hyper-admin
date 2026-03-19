@@ -4,13 +4,19 @@ from typing import Any
 
 
 class BaseAdapter(ABC):
-    model: Any
-    """
-    Abstract base class for data adapters.
+    """Abstract base class for data adapters.
 
-    This class defines the contract for all data operations (get, list, create, update, delete)
-    in HyperAdmin. It serves as the foundation for all ORM-specific adapters.
+    Defines the contract for all data operations (get, list, create, update, delete).
+    Subclass this to add support for a new ORM or data source.
+
+    Example:
+        ```python
+        class MyAdapter(BaseAdapter):
+            async def get(self, pk): ...
+        ```
     """
+
+    model: Any
 
     def __init__(self, model: Any, engine: Any) -> None:
         self.model = model

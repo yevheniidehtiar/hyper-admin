@@ -99,6 +99,16 @@ def create_admin_router(
 
 
 class HyperAdminRouter:
+    """Generates and owns all FastAPI routers for HyperAdmin.
+
+    Called internally by ``Admin.mount()``. Iterates ``SiteRegistry`` and
+    calls ``create_admin_router`` for each registered model.
+
+    Args:
+        engine: The async SQLAlchemy engine passed to every adapter.
+        templates: The shared ``Jinja2Templates`` instance used across all views.
+    """
+
     def __init__(self, engine: Any, templates: Jinja2Templates):
         self.engine = engine
         # Enable global whitespace trimming
