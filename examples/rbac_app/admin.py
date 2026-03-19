@@ -8,7 +8,7 @@ from hyperadmin.views import ModelView
 class UserAdmin(ModelView, model=User):
     """Admin interface for User model."""
 
-    list: ClassVar = [
+    column_list: ClassVar = [
         User.id,
         User.username,
         User.email,
@@ -49,53 +49,15 @@ class GroupAdmin(ModelView, model=Group):
         Group.is_active,
         Group.created_at,
     ]
-    column_details_list: ClassVar = [
-        Group.id,
-        Group.name,
-        Group.description,
-        Group.is_active,
-        Group.created_at,
-    ]
-    column_searchable_list: ClassVar = [Group.name, Group.description]
+    column_searchable_list: ClassVar = [Group.name]
     column_sortable_list: ClassVar = [Group.id, Group.name, Group.created_at]
-    column_filters: ClassVar = [Group.is_active, Group.created_at]
+    column_filters: ClassVar = [Group.is_active]
 
     form_columns: ClassVar = [Group.name, Group.description, Group.is_active]
 
     name = "Group"
     name_plural = "Groups"
     icon = "fa-solid fa-users"
-
-
-class UserGroupAdmin(ModelView, model=UserGroup):
-    """Admin interface for UserGroup model."""
-
-    column_list: ClassVar = [
-        UserGroup.user,
-        UserGroup.group,
-        UserGroup.joined_at,
-        UserGroup.is_active,
-    ]
-    column_details_list: ClassVar = [
-        UserGroup.id,
-        UserGroup.user,
-        UserGroup.group,
-        UserGroup.joined_at,
-        UserGroup.is_active,
-    ]
-    column_sortable_list: ClassVar = [UserGroup.id, UserGroup.joined_at]
-    column_filters: ClassVar = [UserGroup.is_active, UserGroup.joined_at]
-
-    form_columns: ClassVar = [
-        UserGroup.user,
-        UserGroup.group,
-        UserGroup.joined_at,
-        UserGroup.is_active,
-    ]
-
-    name = "User Group"
-    name_plural = "User Groups"
-    icon = "fa-solid fa-link"
 
 
 class PermissionAdmin(ModelView, model=Permission):
@@ -108,26 +70,15 @@ class PermissionAdmin(ModelView, model=Permission):
         Permission.content_type,
         Permission.created_at,
     ]
-    column_details_list: ClassVar = [
-        Permission.id,
-        Permission.name,
-        Permission.codename,
-        Permission.description,
-        Permission.content_type,
-        Permission.created_at,
-    ]
     column_searchable_list: ClassVar = [
         Permission.name,
         Permission.codename,
-        Permission.description,
     ]
     column_sortable_list: ClassVar = [
         Permission.id,
         Permission.name,
         Permission.codename,
-        Permission.created_at,
     ]
-    column_filters: ClassVar = [Permission.content_type, Permission.created_at]
 
     form_columns: ClassVar = [
         Permission.name,
@@ -141,20 +92,37 @@ class PermissionAdmin(ModelView, model=Permission):
     icon = "fa-solid fa-key"
 
 
+class UserGroupAdmin(ModelView, model=UserGroup):
+    """Admin interface for UserGroup model."""
+
+    column_list: ClassVar = [
+        UserGroup.id,
+        UserGroup.user_id,
+        UserGroup.group_id,
+        UserGroup.joined_at,
+        UserGroup.is_active,
+    ]
+    column_sortable_list: ClassVar = [UserGroup.id, UserGroup.joined_at]
+    column_filters: ClassVar = [UserGroup.is_active, UserGroup.joined_at]
+
+    form_columns: ClassVar = [
+        UserGroup.user_id,
+        UserGroup.group_id,
+        UserGroup.is_active,
+    ]
+
+    name = "User Group"
+    name_plural = "User Groups"
+    icon = "fa-solid fa-link"
+
+
 class UserPermissionsAdmin(ModelView, model=UserPermissions):
     """Admin interface for UserPermissions model."""
 
     column_list: ClassVar = [
         UserPermissions.id,
-        UserPermissions.user,
-        UserPermissions.permission,
-        UserPermissions.granted_at,
-        UserPermissions.is_active,
-    ]
-    column_details_list: ClassVar = [
-        UserPermissions.id,
-        UserPermissions.user,
-        UserPermissions.permission,
+        UserPermissions.user_id,
+        UserPermissions.permission_id,
         UserPermissions.granted_at,
         UserPermissions.granted_by,
         UserPermissions.is_active,
@@ -163,8 +131,8 @@ class UserPermissionsAdmin(ModelView, model=UserPermissions):
     column_filters: ClassVar = [UserPermissions.is_active, UserPermissions.granted_at]
 
     form_columns: ClassVar = [
-        UserPermissions.user,
-        UserPermissions.permission,
+        UserPermissions.user_id,
+        UserPermissions.permission_id,
         UserPermissions.granted_by,
         UserPermissions.is_active,
     ]
