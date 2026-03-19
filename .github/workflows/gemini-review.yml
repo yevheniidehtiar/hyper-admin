@@ -78,6 +78,6 @@ jobs:
         run: |-
           npx -y @google/gemini-cli@latest \
             --gemini-api-key "${{ secrets.GEMINI_API_KEY }}" \
-            --model "${{ vars.GEMINI_MODEL || 'gemini-2.0-flash-exp' }}" \
+            --model "${{ vars.GEMINI_MODEL || 'gemini-2.0-flash' }}" \
             --settings "${SETTINGS}" \
             --prompt-file ".github/commands/gemini-review.toml"
