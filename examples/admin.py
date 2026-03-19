@@ -6,6 +6,7 @@ from hyperadmin.core.registry import site
 
 class UserAdmin(ModelAdmin):
     adapter_class = SQLModelAdapter
+    list_filter = ["is_active", "user_type"]
 
 
 class ProductAdmin(ModelAdmin):

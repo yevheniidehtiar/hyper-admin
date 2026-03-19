@@ -1,5 +1,6 @@
 """Tests for the enhanced list view functionality."""
 
+from enum import Enum
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
@@ -12,11 +13,18 @@ from hyperadmin.core.options import AdminOptions
 from hyperadmin.views.dynamic import DynamicModelView
 
 
+class SampleEnum(str, Enum):
+    RED = "red"
+    BLUE = "blue"
+
+
 class SampleModel(SQLModel, table=True):
     id: int | None = Field(default=None, primary_key=True)
     name: str
     email: str
     age: int
+    is_active: bool = True
+    color: SampleEnum = SampleEnum.RED
 
 
 class MockAdapter(BaseAdapter):
@@ -322,5 +330,57 @@ async def test_list_view_parameter_validation(
         page=2,
         page_size=5,
         search="test",
+        filters={},
         order_by="-name",  # Should be prefixed with - for desc
     )
+
+
+async def test_list_view_with_filters(view_instance, mock_request, mock_templates, anyio_backend):
+    """Test list view with filter parameters."""
+    # Mock query params
+    mock_request.query_params = {"filter_is_active": "true", "filter_color": "red"}
+
+    # Mock the adapter
+    mock_list = AsyncMock(return_value=([], 0))
+    view_instance.adapter.list = mock_list
+
+    await view_instance.list_view(
+        request=mock_request, page=1, page_size=10, search="", sort_by=None, sort_direction="asc"
+    )
+
+    # Verify adapter was called with correct filters
+    mock_list.assert_called_once_with(
+        page=1,
+        page_size=10,
+        search=None,
+        filters={"is_active": True, "color": "red"},
+        order_by="id",
+    )
+
+
+async def test_filter_metadata_builder_bool(view_instance, anyio_backend):
+    """Test filter metadata generation for boolean fields."""
+    view_instance.options.list_filter = ["is_active"]
+
+    metadata = await view_instance._get_filter_metadata()
+
+    assert len(metadata) == 1
+    assert metadata[0]["name"] == "is_active"
+    assert metadata[0]["type"] == "bool"
+    assert len(metadata[0]["choices"]) == 2
+    assert metadata[0]["choices"][0]["value"] == "true"
+    assert metadata[0]["choices"][1]["value"] == "false"
+
+
+async def test_filter_metadata_builder_enum(view_instance, anyio_backend):
+    """Test filter metadata generation for enum fields."""
+    view_instance.options.list_filter = ["color"]
+
+    metadata = await view_instance._get_filter_metadata()
+
+    assert len(metadata) == 1
+    assert metadata[0]["name"] == "color"
+    assert metadata[0]["type"] == "enum"
+    assert len(metadata[0]["choices"]) == 2
+    assert metadata[0]["choices"][0]["value"] == "red"
+    assert metadata[0]["choices"][1]["value"] == "blue"

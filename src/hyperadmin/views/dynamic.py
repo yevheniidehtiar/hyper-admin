@@ -2,7 +2,8 @@ import logging
 import math
 import os
 import re
-from typing import TYPE_CHECKING, Any, cast
+from enum import Enum
+from typing import TYPE_CHECKING, Any, Union, cast, get_args, get_origin
 
 from fastapi import HTTPException, Query, Request
 from fastapi.templating import Jinja2Templates
@@ -112,6 +113,89 @@ class DynamicModelView:
 
         return f"{view_name}.html"
 
+    async def _get_filter_metadata(self) -> list[dict[str, Any]]:
+        """Introspects list_filter fields to build metadata for filter UI."""
+        metadata = []
+        for field_name in self.options.list_filter:
+            if field_name not in self.model.model_fields:
+                continue
+
+            field = self.model.model_fields[field_name]
+            label = getattr(field, "title", None) or field_name.replace("_", " ").title()
+
+            ann = getattr(field, "annotation", None)
+            origin = get_origin(ann)
+            args = get_args(ann)
+            if origin is Union and type(None) in args:
+                ann = next(arg for arg in args if arg is not type(None))
+
+            # Boolean filter
+            if ann is bool:
+                metadata.append(
+                    {
+                        "name": field_name,
+                        "label": label,
+                        "type": "bool",
+                        "choices": [
+                            {"value": "true", "label": "Yes"},
+                            {"value": "false", "label": "No"},
+                        ],
+                    }
+                )
+            # Enum filter
+            elif isinstance(ann, type) and issubclass(ann, Enum):
+                metadata.append(
+                    {
+                        "name": field_name,
+                        "label": label,
+                        "type": "enum",
+                        "choices": [{"value": m.value, "label": str(m)} for m in ann],
+                    }
+                )
+            # FK / Relationship filter (heuristic: field name ends with _id or has relationship)
+            else:
+                from sqlalchemy import inspect
+
+                mapper = inspect(self.model)
+                rel = next((r for r in mapper.relationships if r.key == field_name), None)
+                fk_col = next((c for c in mapper.columns if c.key == field_name), None)
+
+                target_model = None
+                if rel:
+                    target_model = rel.mapper.class_
+                elif fk_col and fk_col.foreign_keys:
+                    # Try to find relationship for this FK column
+                    target_rel = next(
+                        (r for r in mapper.relationships if fk_col in r.local_columns), None
+                    )
+                    if target_rel:
+                        target_model = target_rel.mapper.class_
+
+                if target_model:
+                    # Fetch all related objects for the dropdown
+                    from hyperadmin.adapters.registry import adapter_registry
+
+                    try:
+                        target_adapter_cls = adapter_registry.find_adapter_for_model(target_model)
+                        target_adapter = target_adapter_cls(target_model, self.adapter.engine)
+                        # We use a large page_size to get "all" related objects for now
+                        related_items, _ = await target_adapter.list(page_size=1000)
+                        metadata.append(
+                            {
+                                "name": field_name,
+                                "label": label,
+                                "type": "fk",
+                                "choices": [
+                                    {"value": str(getattr(item, "id", "")), "label": str(item)}
+                                    for item in related_items
+                                ],
+                            }
+                        )
+                    except Exception:
+                        logger.exception(f"Failed to build FK filter for {field_name}")
+
+        return metadata
+
     async def list_view(
         self,
         request: Request,
@@ -122,6 +206,22 @@ class DynamicModelView:
         sort_direction: str = Query("asc", pattern="^(asc|desc)$"),
     ):
         """Renders the list view for the model with pagination, sorting, and filtering."""
+
+        # Parse filters from query params
+        active_filters = {}
+        filters_to_apply = {}
+        for key, value in request.query_params.items():
+            if key.startswith("filter_") and value:
+                field_name = key[7:]
+                active_filters[field_name] = value
+
+                # Type conversion for bool
+                if field_name in self.model.model_fields:
+                    ann = self.model.model_fields[field_name].annotation
+                    if ann is bool or (get_origin(ann) is Union and bool in get_args(ann)):
+                        filters_to_apply[field_name] = value.lower() == "true"
+                    else:
+                        filters_to_apply[field_name] = value
 
         # Get default sort column if none specified
         if not sort_by:
@@ -135,7 +235,11 @@ class DynamicModelView:
         try:
             # Use adapter's list method
             items, total_items = await self.adapter.list(
-                page=page, page_size=page_size, search=search or None, order_by=order_by
+                page=page,
+                page_size=page_size,
+                search=search or None,
+                filters=filters_to_apply,
+                order_by=order_by,
             )
 
             # Calculate pagination info
@@ -179,6 +283,9 @@ class DynamicModelView:
             row["id"] = getattr(item, "id", None)
             rows.append(row)
 
+        # Get filter metadata if list_filter is configured
+        filter_metadata = await self._get_filter_metadata() if self.options.list_filter else []
+
         context = {
             "request": request,
             "model_name": self.model.__name__,
@@ -188,6 +295,8 @@ class DynamicModelView:
             "search_query": search,
             "sort_by": sort_by,
             "sort_direction": sort_direction,
+            "filter_metadata": filter_metadata,
+            "active_filters": active_filters,
         }
 
         # Use table template for HTMX requests, full layout for regular requests

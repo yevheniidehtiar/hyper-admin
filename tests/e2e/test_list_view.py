@@ -239,3 +239,54 @@ def test_error_handling_graceful(page: Page, demo_base_url: str) -> None:
     search_input.clear()
     page.wait_for_timeout(500)
     expect(page.get_by_role("main")).to_be_attached()
+
+def test_filter_bar_renders(page: Page, demo_base_url: str) -> None:
+    page.goto(demo_base_url + "/admin/user")
+
+    filter_bar = page.get_by_test_id("filter-bar")
+    expect(filter_bar).to_be_visible()
+
+    # Check for specific filters
+    expect(page.get_by_test_id("filter-is_active")).to_be_visible()
+    expect(page.get_by_test_id("filter-user_type")).to_be_visible()
+
+def test_filter_functionality(page: Page, demo_base_url: str) -> None:
+    page.goto(demo_base_url + "/admin/user")
+
+    # Wait for table to load
+    expect(page.get_by_test_id("list-table")).to_be_visible()
+
+    # Initial row count (should be 3 based on simple_app.py)
+    rows = page.get_by_test_id("list-row")
+    # We might not know the exact count if other tests modified it,
+    # but there should be some rows.
+    initial_count = rows.count()
+
+    # Apply a filter that matches nothing (or something specific)
+    # Since we don't have many records, let's filter for No on is_active
+    page.get_by_test_id("filter-is_active").select_option("false")
+
+    # Wait for HTMX reload
+    page.wait_for_timeout(500)
+
+    # All initial users are active by default in simple_app.py
+    # So filtering for is_active=No should yield 0 rows
+    expect(page.get_by_test_id("list-row")).to_have_count(0)
+
+    # Clear filters
+    page.get_by_role("link", name="Clear all filters").click()
+    page.wait_for_timeout(500)
+    expect(page.get_by_test_id("list-row")).to_have_count(initial_count)
+
+def test_table_overflow_scroll(page: Page, demo_base_url: str) -> None:
+    page.goto(demo_base_url + "/admin/user")
+
+    # Set a very narrow viewport
+    page.set_viewport_size({"width": 300, "height": 600})
+
+    wrapper = page.locator(".ha-table-wrapper")
+    expect(wrapper).to_be_visible()
+
+    # Check that overflow-x is auto
+    overflow_x = wrapper.evaluate("el => window.getComputedStyle(el).overflowX")
+    assert overflow_x == "auto"

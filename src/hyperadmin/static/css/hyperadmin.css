@@ -298,7 +298,7 @@ body {
   box-shadow: var(--ha-shadow-md);
   border-radius: var(--ha-radius);
   margin: var(--ha-space-6) 0;
-  overflow: hidden;
+  overflow-x: auto;
 }
 
 .ha-table {

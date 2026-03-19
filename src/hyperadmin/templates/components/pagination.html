@@ -3,9 +3,12 @@
         Showing {{- pagination.start_index }} to {{ pagination.end_index }} of {{ pagination.total_items }} results
     </div>
     <div class="ha-pagination-controls">
+        {%- set filter_params -%}
+            {%- for key, value in active_filters.items() -%}&filter_{{ key }}={{ value }}{%- endfor -%}
+        {%- endset -%}
         {%- if pagination.page > 1 -%}
-        <a href="{{- url_for(model_name|lower ~ '-list') }}?page={{ pagination.page - 1 }}&search={{ search_query }}&sort_by={{ sort_by }}&sort_direction={{ sort_direction -}}"
-           hx-get="{{- url_for(model_name|lower ~ '-list') }}?page={{ pagination.page - 1 }}&search={{ search_query }}&sort_by={{ sort_by }}&sort_direction={{ sort_direction -}}"
+        <a href="{{- url_for(model_name|lower ~ '-list') }}?page={{ pagination.page - 1 }}&search={{ search_query }}&sort_by={{ sort_by }}&sort_direction={{ sort_direction }}{{ filter_params -}}"
+           hx-get="{{- url_for(model_name|lower ~ '-list') }}?page={{ pagination.page - 1 }}&search={{ search_query }}&sort_by={{ sort_by }}&sort_direction={{ sort_direction }}{{ filter_params -}}"
            hx-target="#model-list"
            hx-swap="outerHTML"
            class="ha-pagination-btn"
@@ -19,8 +22,8 @@
         </div>
 
         {%- if pagination.page < pagination.total_pages -%}
-        <a href="{{- url_for(model_name|lower ~ '-list') }}?page={{ pagination.page + 1 }}&search={{ search_query }}&sort_by={{ sort_by }}&sort_direction={{ sort_direction -}}"
-           hx-get="{{- url_for(model_name|lower ~ '-list') }}?page={{ pagination.page + 1 }}&search={{ search_query }}&sort_by={{ sort_by }}&sort_direction={{ sort_direction -}}"
+        <a href="{{- url_for(model_name|lower ~ '-list') }}?page={{ pagination.page + 1 }}&search={{ search_query }}&sort_by={{ sort_by }}&sort_direction={{ sort_direction }}{{ filter_params -}}"
+           hx-get="{{- url_for(model_name|lower ~ '-list') }}?page={{ pagination.page + 1 }}&search={{ search_query }}&sort_by={{ sort_by }}&sort_direction={{ sort_direction }}{{ filter_params -}}"
            hx-target="#model-list"
            hx-swap="outerHTML"
            class="ha-pagination-btn"

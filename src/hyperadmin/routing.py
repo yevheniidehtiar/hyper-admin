@@ -157,7 +157,11 @@ class HyperAdminRouter:
 
         for model, admin_class in site._registry.items():
             admin_instance = admin_class(model)
-            options = getattr(admin_instance, "options", AdminOptions())
+            # Prioritize options set on admin_class, then fall back to defaults
+            options = getattr(admin_class, "options", None) or AdminOptions()
+            # If admin_class has list_filter set directly (legacy or class-style)
+            if hasattr(admin_class, "list_filter") and not options.list_filter:
+                options.list_filter = admin_class.list_filter
 
             form_include = _extract_column_names(getattr(admin_class, "form_columns", None), model)
             form_create_exclude = _extract_column_names(

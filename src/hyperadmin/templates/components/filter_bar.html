@@ -1,0 +1,36 @@
+{%- if filter_metadata -%}
+<div class="ha-card" style="padding: var(--ha-space-4); margin-bottom: var(--ha-space-4);" data-testid="filter-bar">
+    <div style="display: flex; flex-wrap: wrap; gap: var(--ha-space-4); align-items: flex-end;">
+        {%- for filter in filter_metadata -%}
+        <div class="ha-form-group" style="margin-bottom: 0;">
+            <label class="ha-label" for="filter-{{ filter.name }}">{{ filter.label }}</label>
+            <select id="filter-{{ filter.name }}"
+                    name="filter_{{ filter.name }}"
+                    class="ha-select"
+                    data-testid="filter-{{ filter.name }}"
+                    hx-get="{{- url_for(model_name|lower ~ '-list') -}}"
+                    hx-target="#model-list"
+                    hx-push-url="true"
+                    hx-include="[name^='filter_'], [name='search'], [name='sort_by'], [name='sort_direction']">
+                <option value="">Any</option>
+                {%- for choice in filter.choices -%}
+                <option value="{{ choice.value }}" {% if active_filters.get(filter.name) == choice.value|string %}selected{% endif %}>
+                    {{- choice.label -}}
+                </option>
+                {%- endfor -%}
+            </select>
+        </div>
+        {%- endfor -%}
+
+        <div style="margin-bottom: 0;">
+            <a href="{{- url_for(model_name|lower ~ '-list') -}}"
+               class="ha-btn-link"
+               hx-get="{{- url_for(model_name|lower ~ '-list') -}}"
+               hx-target="#model-list"
+               hx-push-url="true">
+                Clear all filters
+            </a>
+        </div>
+    </div>
+</div>
+{%- endif -%}
