@@ -2,7 +2,6 @@ import logging
 import math
 import os
 import re
-from enum import Enum
 from typing import TYPE_CHECKING, Any, Union, cast, get_args, get_origin
 
 from fastapi import HTTPException, Query, Request
@@ -130,8 +129,8 @@ class DynamicModelView:
         """Renders the list view for the model with pagination, sorting, and filtering."""
 
         # Parse filters from query params
-        active_filters = {}
-        filters_to_apply = {}
+        active_filters: dict[str, str] = {}
+        filters_to_apply: dict[str, Any] = {}
         for key, value in request.query_params.items():
             if key.startswith("filter_") and value:
                 field_name = key[7:]

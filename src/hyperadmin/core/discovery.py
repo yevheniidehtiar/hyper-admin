@@ -2,12 +2,14 @@ import logging
 from enum import Enum
 from typing import Any, Union, get_args, get_origin
 
-from sqlalchemy import inspect
+from sqlalchemy import inspect as sa_inspect
 
 logger = logging.getLogger(__name__)
 
 
-async def build_filter_metadata(model: type, field_names: list[str], adapter: Any) -> list[dict[str, Any]]:
+async def build_filter_metadata(
+    model: Any, field_names: list[str], adapter: Any
+) -> list[dict[str, Any]]:
     """Introspects model fields to build metadata for filter UI.
 
     Args:
@@ -57,7 +59,7 @@ async def build_filter_metadata(model: type, field_names: list[str], adapter: An
             )
         # FK / Relationship filter
         else:
-            mapper = inspect(model)
+            mapper: Any = sa_inspect(model)
             rel = next((r for r in mapper.relationships if r.key == field_name), None)
             fk_col = next((c for c in mapper.columns if c.key == field_name), None)
 

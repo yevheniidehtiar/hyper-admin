@@ -240,6 +240,7 @@ def test_error_handling_graceful(page: Page, demo_base_url: str) -> None:
     page.wait_for_timeout(500)
     expect(page.get_by_role("main")).to_be_attached()
 
+
 def test_filter_bar_renders(page: Page, demo_base_url: str) -> None:
     page.goto(demo_base_url + "/admin/user")
 
@@ -252,6 +253,7 @@ def test_filter_bar_renders(page: Page, demo_base_url: str) -> None:
     # Check for specific filters
     expect(page.get_by_test_id("filter-is_active")).to_be_visible()
     expect(page.get_by_test_id("filter-user_type")).to_be_visible()
+
 
 def test_filter_functionality(page: Page, demo_base_url: str) -> None:
     page.goto(demo_base_url + "/admin/user")
@@ -283,6 +285,7 @@ def test_filter_functionality(page: Page, demo_base_url: str) -> None:
     page.get_by_role("link", name="Clear all filters").click()
     page.wait_for_timeout(500)
     expect(page.get_by_test_id("list-row")).to_have_count(initial_count)
+
 
 def test_table_overflow_scroll(page: Page, demo_base_url: str) -> None:
     page.goto(demo_base_url + "/admin/user")
