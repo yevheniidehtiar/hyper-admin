@@ -1,6 +1,34 @@
 # Views
 
-Views are the core components of HyperAdmin that are responsible for rendering the admin interface for your models. They define how data is displayed and how users can interact with it.
+## ModelView class attributes
+
+When subclassing `ModelView`, these class-level attributes control the generated admin UI:
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `column_list` | `list` | Fields shown as columns in the list view |
+| `column_details_list` | `list` | Fields shown on the detail page |
+| `column_searchable_list` | `list` | Fields searched when using the search box |
+| `column_sortable_list` | `list` | Fields that render a sort link in the list header |
+| `column_filters` | `list` | Fields available as filter dropdowns |
+| `form_columns` | `list` | Fields included in create/edit forms |
+| `icon` | `str` | Sidebar icon name (from the icon set) |
+| `name_plural` | `str` | Human-readable plural name shown in the sidebar |
+
+Example:
+
+```python
+from hyperadmin.views.dynamic import ModelView
+from myapp.models import User
+
+class UserAdmin(ModelView, model=User):
+    column_list = [User.username, User.email, User.is_active]
+    column_searchable_list = [User.username, User.email]
+    column_sortable_list = [User.username, User.created_at]
+    form_columns = [User.username, User.email, User.first_name, User.last_name]
+    icon = "person"
+    name_plural = "Users"
+```
 
 ## DynamicModelView
 

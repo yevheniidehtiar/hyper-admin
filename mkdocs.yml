@@ -20,6 +20,7 @@ nav:
   - Introduction: "index.md"
   - Getting Started: "getting-started.md"
   - Tutorial: "tutorial.md"
+  - Examples: "examples.md"
   - Frontend:
       - Overview: "frontend/overview.md"
       - Widgets: "frontend/widgets.md"

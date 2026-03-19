@@ -8,49 +8,48 @@
 
 ---
 
-**HyperAdmin** is a framework for building administrative interfaces on top of FastAPI applications. It leverages the power of **Pydantic** for data validation and **HTMX** for creating dynamic, modern user interfaces with minimal JavaScript. It is designed to be highly extensible and easy to use, allowing developers to quickly create rich, data-driven admin panels.
+```bash
+pip install hyperadmin
+```
 
-## ✨ Key Features
+**HyperAdmin** is a framework for building administrative interfaces on top of FastAPI. It uses **Pydantic** for data validation and **HTMX** for dynamic UIs with minimal JavaScript.
 
-- **Pydantic-Native:** Define your admin interfaces directly from your Pydantic models.
-- **FastAPI Integration:** Mounts seamlessly into any FastAPI application.
-- **HTMX-Powered:** Delivers a rich, interactive user experience without writing complex JavaScript.
-- **SQLModel & SQLAlchemy Support:** Works out-of-the-box with popular database libraries.
-- **Automatic CRUD:** Generates list, detail, create, and update views from your data models.
-- **Extensible:** Easily customize views, templates, and actions to fit your needs.
-
-## 📚 Navigation
-
-- **[Getting Started](getting-started.md):** A guide to installing and configuring HyperAdmin.
-- **[Tutorial](tutorial.md):** A step-by-step tutorial on how to use HyperAdmin.
-- **[API Reference](api/):** Detailed documentation of the HyperAdmin API.
-
-## 🚀 Example Usage
+## Quick example
 
 ```python
 from fastapi import FastAPI
-from hyperadmin.admin import Admin
-from hyperadmin.views import ModelView
 from sqlmodel import SQLModel, Field
+from hyperadmin import Admin
+from hyperadmin.core.registry import site
 
-# 1. Define your data model
 class Product(SQLModel, table=True):
-    id: int = Field(default=None, primary_key=True)
+    id: int | None = Field(default=None, primary_key=True)
     name: str
     price: float
 
-# 2. Create a FastAPI app
 app = FastAPI()
-
-# 3. Create an admin instance and register your model
-admin = Admin()
-admin.register_model(ModelView(Product))
-
-# 4. Mount the admin to your app
-admin.mount_to(app)
+admin = Admin(app, engine=engine)
+site.register(Product)
+admin.mount("/admin")
 ```
-This will automatically create a full CRUD interface for your `Product` model at `/admin`.
 
-## 🤝 Contributing
+## Where to go next
 
-Contributions are welcome! Please see the [Contributing Guide](https://github.com/yevheniidehtiar/hyper-admin/blob/main/CONTRIBUTING.md) for more details on how to get started.
+- [Getting Started](getting-started.md) — Installation, prerequisites, and your first admin
+- [Tutorial](tutorial.md) — Step-by-step walkthrough building a complete app
+- [Examples](examples.md) — Two runnable example apps (simple + full RBAC)
+- [Frontend](frontend/overview.md) — Templates, CSS tokens, widgets, and HTMX patterns
+- [API Reference](api/application.md) — Full class and method documentation
+
+## Key features
+
+- **Pydantic-native** — define admin interfaces directly from your models
+- **FastAPI integration** — mounts seamlessly into any FastAPI app
+- **HTMX-powered** — rich interactive UI without complex JavaScript
+- **SQLModel & SQLAlchemy** — works out of the box with both ORMs
+- **Automatic CRUD** — list, detail, create, and update views generated automatically
+- **Extensible** — override templates, customize views, and add custom actions
+
+---
+
+Next: [Getting Started](getting-started.md)
