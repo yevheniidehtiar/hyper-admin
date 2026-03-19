@@ -1,5 +1,5 @@
 <div class="ha-pagination">
-    <div class="ha-pagination-info">
+    <div class="ha-pagination-info" data-testid="pagination-info">
         Showing {{- pagination.start_index }} to {{ pagination.end_index }} of {{ pagination.total_items }} results
     </div>
     <div class="ha-pagination-controls">
@@ -8,12 +8,13 @@
            hx-get="{{- url_for(model_name|lower ~ '-list') }}?page={{ pagination.page - 1 }}&search={{ search_query }}&sort_by={{ sort_by }}&sort_direction={{ sort_direction -}}"
            hx-target="#model-list"
            hx-swap="outerHTML"
-           class="ha-pagination-btn">
+           class="ha-pagination-btn"
+           data-testid="pagination-prev">
             Previous
         </a>
         {%- endif -%}
 
-        <div class="ha-pagination-page">
+        <div class="ha-pagination-page" data-testid="pagination-page">
             Page {{ pagination.page }} of {{ pagination.total_pages }}
         </div>
 
@@ -22,7 +23,8 @@
            hx-get="{{- url_for(model_name|lower ~ '-list') }}?page={{ pagination.page + 1 }}&search={{ search_query }}&sort_by={{ sort_by }}&sort_direction={{ sort_direction -}}"
            hx-target="#model-list"
            hx-swap="outerHTML"
-           class="ha-pagination-btn">
+           class="ha-pagination-btn"
+           data-testid="pagination-next">
             Next
         </a>
         {%- endif -%}

@@ -11,7 +11,7 @@
     </select>
     {%- if field.help_text -%}<p class="ha-help-text">{{- field.help_text -}}</p>{%- endif -%}
     {%- if field.errors -%}
-        <ul class="ha-field-errors" aria-live="polite">
+        <ul class="ha-field-errors" aria-live="polite" data-testid="{{ field.name }}-errors">
             {%- for e in field.errors -%}<li>{{- e -}}</li>{%- endfor -%}
         </ul>
     {%- endif -%}

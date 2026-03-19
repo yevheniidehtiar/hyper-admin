@@ -1,5 +1,5 @@
 import os
-from typing import cast
+from typing import Any, cast
 
 from fastapi import HTTPException, Query, Request
 from fastapi.templating import Jinja2Templates
@@ -10,7 +10,7 @@ from hyperadmin.adapters import SQLAlchemyAdapter, SQLModelAdapter
 from hyperadmin.core.options import AdminOptions
 from hyperadmin.core.registry import site
 from hyperadmin.discover import app_label_var
-from hyperadmin.views.forms import PydanticForm
+from hyperadmin.views.forms import CheckboxInput, PydanticForm
 from hyperadmin.views.htmx import HtmxTemplateResponse
 
 
@@ -249,21 +249,42 @@ class DynamicModelView:
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Internal Server Error: {e}")
 
-    async def update_form_view(self, request: Request, item_id: int):
-        """Renders the update form."""
+    async def update_form_view(
+        self,
+        request: Request,
+        item_id: int,
+        values: dict | None = None,
+        errors: dict | None = None,
+        status_code: int = 200,
+    ):
+        """Renders the update form, optionally pre-filled with submitted values and errors."""
         item = await self.adapter.get(pk=item_id)
         if not item:
             raise HTTPException(status_code=404, detail="Item not found")
 
-        # Prefill form with existing item's values (assumes Pydantic/SQLModel with model_dump)
         initial = getattr(item, "model_dump", None)
         initial_values = initial() if callable(initial) else getattr(item, "__dict__", {})
+
+        # Override with re-submitted values on validation failure
+        if values:
+            initial_values.update(values)
+
         form = PydanticForm(self.model, initial=initial_values)
+
+        if errors:
+            form.bind(values or {})
+            norm_errors = {k: (v if isinstance(v, list) else [v]) for k, v in errors.items()}
+            form.errors = norm_errors
+            for f in form.fields:
+                f.errors = norm_errors.get(f.name)
+
         context = {
             "request": request,
             "model_name": self.model.__name__,
             "item": item,
             "form": form,
+            "values": values or initial_values,
+            "errors": errors or {},
             # Legacy keys for compatibility
             "fields": list(self.model.model_fields.keys()),
         }
@@ -273,13 +294,44 @@ class DynamicModelView:
             context=context,
             request=request,
             block="form_body",
+            status_code=status_code,
         )
 
     async def update_view(self, request: Request, item_id: int):
         """Handles form submission for updating an item."""
         form_data = await request.form()
-        await self.adapter.update(pk=item_id, data=dict(form_data))
-        return RedirectResponse(url=f"/admin/{self.model.__name__.lower()}", status_code=303)
+        data: dict[str, Any] = dict(form_data)
+
+        form = PydanticForm(self.model)
+
+        # Unchecked checkboxes are absent from form data — inject False before validation
+        for field in form.fields:
+            if isinstance(field.widget, CheckboxInput) and field.name not in data:
+                data[field.name] = False
+
+        form.bind(data)
+        instance, errs = form.validate(data)
+
+        if errs:
+            legacy_errs = {k: v[0] for k, v in errs.items() if v}
+            return await self.update_form_view(
+                request, item_id=item_id, values=data, errors=legacy_errs, status_code=422
+            )
+
+        if not instance:
+            return await self.update_form_view(
+                request, item_id=item_id, values=data, errors={}, status_code=422
+            )
+
+        # exclude_none: id is not submitted by the form and must not overwrite the PK
+        await self.adapter.update(pk=item_id, data=instance.model_dump(exclude_none=True))
+
+        redirect_url = request.url_for(f"{self.model.__name__.lower()}-list")
+
+        if "hx-request" in request.headers:
+            return Response(status_code=200, headers={"HX-Redirect": str(redirect_url)})
+
+        return RedirectResponse(url=redirect_url, status_code=303)
 
     async def delete_action(self, request: Request, item_id: int):
         """Deletes an item."""
@@ -287,7 +339,14 @@ class DynamicModelView:
         if not item:
             raise HTTPException(status_code=404, detail="Item not found")
 
-        return RedirectResponse(url=f"/admin/{self.model.__name__.lower()}", status_code=303)
+        await self.adapter.delete(pk=item_id)
+
+        redirect_url = request.url_for(f"{self.model.__name__.lower()}-list")
+
+        if "hx-request" in request.headers:
+            return Response(status_code=200, headers={"HX-Redirect": str(redirect_url)})
+
+        return RedirectResponse(url=redirect_url, status_code=303)
 
 
 async def admin_dashboard(request: Request, templates: Jinja2Templates):

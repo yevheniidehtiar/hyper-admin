@@ -5,7 +5,7 @@
 {%- endblock -%}
 
 {%- block form_attributes -%}
-    hx-post="{{- url_for(model_name|lower ~ '-update', item_id=item.id) -}}"
+    hx-put="{{- url_for(model_name|lower ~ '-update', item_id=item.id) -}}"
     hx-target="#{{- model_name|lower -}}-form-body"
     hx-swap="innerHTML"
 {%- endblock -%}

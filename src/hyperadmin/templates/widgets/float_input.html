@@ -12,7 +12,7 @@
            aria-invalid="{{- 'true' if field.errors else 'false' -}}"
     />
     {%- if field.errors -%}
-        <ul class="ha-field-errors" aria-live="polite">
+        <ul class="ha-field-errors" aria-live="polite" data-testid="{{ field.name }}-errors">
             {%- for e in field.errors -%}<li>{{- e -}}</li>{%- endfor -%}
         </ul>
     {%- endif -%}
