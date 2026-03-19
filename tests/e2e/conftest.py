@@ -56,6 +56,7 @@ def demo_base_url(e2e_port: int) -> Iterator[str]:
     ]
 
     env = os.environ.copy()
+    env["E2E_TESTING"] = "1"
 
     proc = subprocess.Popen(
         cmd,

@@ -86,7 +86,7 @@ def request_factory():
             "headers": [(k.lower().encode(), v.encode()) for k, v in (headers or {}).items()],
             "app": SimpleNamespace(
                 url_path_for=lambda name, **kw: SimpleNamespace(
-                    make_absolute_url=lambda _base_url: URL(f"/{name}")
+                    make_absolute_url=lambda base_url=None, **kwargs: URL(f"/{name}")
                 )
             ),
         }
