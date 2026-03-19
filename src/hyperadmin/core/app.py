@@ -89,4 +89,5 @@ class Admin:
         Mounts the admin interface on the FastAPI application.
         """
         self._register_views()
+        self.templates.env.globals["admin_prefix"] = path.rstrip("/")
         self.app.include_router(self.router, prefix=path, tags=["HyperAdmin"])

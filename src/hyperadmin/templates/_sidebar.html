@@ -4,7 +4,7 @@
         <ul class="ha-sidebar-nav">
             {%- for item in nav_items -%}
             <li>
-                <a href="{{ request.scope['root_path'] }}{{ item.url }}" class="ha-sidebar-link">
+                <a href="{{ admin_prefix }}{{ item.url }}" class="ha-sidebar-link">
                     {%- if item.icon -%}
                     <i class="{{ item.icon }}"></i>
                     {%- endif -%}
