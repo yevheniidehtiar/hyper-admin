@@ -68,6 +68,29 @@ E2E tests use Playwright's accessibility-first locators. Query priority (highest
 | Detail fields container | `detail-fields` |
 
 When adding new interactive or assertable elements to templates, add a `data-testid` following the `<view>-<element>` naming pattern.
+
+#### `data-testid` reference
+
+| Template element | `data-testid` |
+|-----------------|---------------|
+| Sidebar `<aside>` | `sidebar` |
+| List table | `list-table` |
+| Each table row | `list-row` |
+| View action link | `row-view-link` |
+| Edit action link | `row-edit-link` |
+| Delete action button | `row-delete-btn` |
+| Search input | `search-input` |
+| Pagination info | `pagination-info` |
+| Pagination previous | `pagination-prev` |
+| Pagination next | `pagination-next` |
+| Pagination current page | `pagination-page` |
+| Sort link (per field) | `sort-{field_name}` |
+| Create New link | `create-link` |
+| Form (create/update) | `model-form` |
+| Field error list | `{field_name}-errors` |
+| Detail fields container | `detail-fields` |
+
+When adding new interactive or assertable elements to templates, add a `data-testid` following the `<view>-<element>` naming pattern.
 1. Begin the response by explicitly naming the rules being applied.
 2. Make the plan consistent with those rules.
 3. Keep the rules visible in the response so the user can see what drove
