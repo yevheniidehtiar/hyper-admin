@@ -27,7 +27,12 @@ dependencies = [
   "greenlet>=3.1.0; python_version >= '3.13'",
   "pillow>=11.3.0",
   "typing-extensions>=4.14.1",
+  "typer>=0.12",
+  "argon2-cffi",
 ]
+
+[project.scripts]
+hyperadmin = "hyperadmin.__main__:app"
 
 [project.urls]  # https://packaging.python.org/en/latest/specifications/well-known-project-urls/#well-known-labels
 homepage = "https://github.com/yevheniidehtiar/hyper-admin"
