@@ -61,7 +61,9 @@ def test_create_product_successful_submission(page: Page, demo_base_url: str):
 
     # The redirect is handled by HTMX, so we need to wait for the URL to change.
     expect(page).to_have_url(re.compile(r".*/admin/product/\d+"))
-    expect(page.get_by_role("heading", name=re.compile(r"Product #"))).to_contain_text("Product #")
+    expect(page.get_by_role("heading", name=re.compile(r"Test Product"))).to_contain_text(
+        "Test Product"
+    )
     expect(page.locator(".detail-fields")).to_contain_text("Test Product")
     expect(page.locator(".detail-fields")).to_contain_text("A great product")
     expect(page.locator(".detail-fields")).to_contain_text("12.34")

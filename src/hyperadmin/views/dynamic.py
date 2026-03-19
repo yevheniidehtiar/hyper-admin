@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 
 from hyperadmin.adapters import SQLAlchemyAdapter, SQLModelAdapter
 from hyperadmin.core.discovery import build_filter_metadata
+from hyperadmin.core.display import get_display_name
 from hyperadmin.core.options import AdminOptions
 from hyperadmin.core.registry import site
 from hyperadmin.discover import app_label_var
@@ -198,7 +199,7 @@ class DynamicModelView:
             row: dict[str, Any] = {}
             for field in display_fields:
                 if field == "__str__":
-                    row[field] = str(item)
+                    row[field] = get_display_name(item)
                 else:
                     row[field] = getattr(item, field, None)
             row["id"] = getattr(item, "id", None)
@@ -240,7 +241,7 @@ class DynamicModelView:
 
         context = {
             "request": request,
-            "item_name": f"{self.model.__name__} #{getattr(item, 'id', 'N/A')}",
+            "item_name": get_display_name(item),
             "item": item.model_dump(),
         }
         template_name = self._get_template_name("detail")
