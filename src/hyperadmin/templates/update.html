@@ -1,0 +1,29 @@
+{%- extends "form_layout.html" -%}
+
+{%- block form_title -%}
+    Update {{ item_name }}
+{%- endblock -%}
+
+{%- block form_attributes -%}
+    hx-put="{{- url_for(model_name|lower ~ '-update', item_id=item.id) -}}"
+    hx-target="#{{- model_name|lower -}}-form-body"
+    hx-swap="innerHTML"
+{%- endblock -%}
+
+{%- block form_body -%}
+    {%- for field in form.fields -%}
+        {%- set widget = field.widget -%}
+        {%- include field.widget.template_path -%}
+    {%- endfor -%}
+{%- endblock -%}
+
+{%- block form_actions -%}
+    <div class="ha-form-actions">
+        <button type="submit" class="ha-btn ha-btn-primary">
+            Update
+        </button>
+        <a href="{{- url_for(model_name|lower ~ '-list') -}}" class="ha-cancel-link">
+            Cancel
+        </a>
+    </div>
+{%- endblock -%}

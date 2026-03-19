@@ -1,39 +1,50 @@
+import os
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
-from pydantic import BaseModel
+from fastapi.staticfiles import StaticFiles
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlmodel import SQLModel, select
 
+from examples.models import User
 from hyperadmin.main import Admin
-from hyperadmin.views import ModelView
+
+# 1. Create a database engine
+DB_URL = (
+    "sqlite+aiosqlite:///:memory:"
+    if os.environ.get("E2E_TESTING")
+    else "sqlite+aiosqlite:///simple_app.db"
+)
+engine = create_async_engine(DB_URL, connect_args={"check_same_thread": False})
 
 
-# 1. Define a Pydantic model
-class User(BaseModel):
-    id: int
-    name: str
-    email: str
+async def create_db_and_tables():
+    async with engine.begin() as conn:
+        await conn.run_sync(SQLModel.metadata.create_all)
+
+    async with AsyncSession(engine) as session:
+        result = await session.execute(select(User))
+        if not result.first():
+            session.add(User(name="Alice", email="alice@example.com"))
+            session.add(User(name="Bob", email="bob@example.com"))
+            session.add(User(name="Charlie", email="charlie@example.com"))
+            await session.commit()
 
 
-# 2. Create some in-memory data
-users_data = [
-    User(id=1, name="Alice", email="alice@example.com"),
-    User(id=2, name="Bob", email="bob@example.com"),
-    User(id=3, name="Charlie", email="charlie@example.com"),
-]
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Load the ML model
+    await create_db_and_tables()
+    yield
 
 
-# 3. Create a ModelView for the User model
-class UserAdmin(ModelView):
-    model = User
-    data = users_data
+# 2. Create a FastAPI app and an Admin instance with auto-discovery
+app = FastAPI(lifespan=lifespan)
 
+app.mount("/static", StaticFiles(directory="src/hyperadmin/static"), name="static")
+admin = Admin(app, engine=engine, discover_apps=["examples"])
 
-# 4. Create a FastAPI app and an Admin instance
-app = FastAPI()
-admin = Admin(app)
-
-# 5. Register the ModelView
-admin.register(UserAdmin)
-
-# 6. Mount the admin interface
+# 3. Mount the admin interface
 admin.mount(path="/admin")
 
 

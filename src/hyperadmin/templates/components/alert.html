@@ -1,0 +1,27 @@
+{#-
+    Renders an alert message with different styles based on the alert level.
+
+    **Macro: alert**
+
+    - `message` (string): The message to display in the alert.
+    - `level` (string, optional, default='info'): The level of the alert.
+      Can be 'info', 'success', 'warning', or 'error'.
+-#}
+{%- macro alert(message, level='info') -%}
+    {%- set level_class = {
+        'info': 'ha-alert-info',
+        'success': 'ha-alert-success',
+        'warning': 'ha-alert-warning',
+        'error': 'ha-alert-error'
+    } -%}
+
+    <div class="ha-alert {{ level_class.get(level, 'ha-alert-info') }}" role="alert">
+        <p class="ha-alert-title">
+            {%- if level == 'info' -%}Info{%- endif -%}
+            {%- if level == 'success' -%}Success{%- endif -%}
+            {%- if level == 'warning' -%}Warning{%- endif -%}
+            {%- if level == 'error' -%}Error{%- endif -%}
+        </p>
+        <p>{{- message -}}</p>
+    </div>
+{%- endmacro -%}

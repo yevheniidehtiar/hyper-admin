@@ -1,0 +1,12 @@
+{%- extends "base.html" -%}
+
+{%- block title -%}{{ model_name }} Detail | HyperAdmin{%- endblock -%}
+
+{%- block content -%}
+    <div class="detail-container">
+        <h2>{%- block detail_title -%}{%- endblock -%}</h2>
+        <div class="detail-fields" data-testid="detail-fields">
+            {%- block detail_fields -%}{%- endblock -%}
+        </div>
+    </div>
+{%- endblock -%}

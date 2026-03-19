@@ -1,0 +1,25 @@
+{#-
+    Renders a text input field with a label.
+
+    **Macro: input**
+
+    - `name` (string): The name of the input field.
+    - `label` (string): The text for the label.
+    - `type` (string, optional, default='text'): The type of the input (e.g., 'text', 'email', 'password').
+    - `placeholder` (string, optional): The placeholder text for the input.
+    - `value` (string, optional): The initial value of the input.
+    - `class` (string, optional): Additional CSS classes to apply to the input.
+-#}
+{%- macro input(name, label, type='text', placeholder='', value='', class='') -%}
+    <div class="ha-form-group">
+        <label for="{{- name -}}" class="ha-label">{{- label -}}</label>
+        <input
+            type="{{- type -}}"
+            id="{{- name -}}"
+            name="{{- name -}}"
+            placeholder="{{- placeholder -}}"
+            value="{{- value -}}"
+            class="ha-input {{- class -}}"
+        >
+    </div>
+{%- endmacro -%}

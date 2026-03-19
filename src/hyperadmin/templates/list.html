@@ -1,33 +1,5 @@
-{% extends "base.html" %}
+{%- extends "list_layout.html" -%}
 
-{% block title %}{{ model_name }} List | HyperAdmin{% endblock %}
-
-{% block content %}
-    <h1 class="text-2xl font-bold mb-4">{{ model_name }} List</h1>
-    <div class="bg-white shadow-md rounded my-6">
-        <table class="min-w-full table-auto">
-            <thead>
-                <tr class="bg-gray-200 text-gray-600 uppercase text-sm leading-normal">
-                    <!-- Headers will go here -->
-                    {% for field in fields %}
-                        <th class="py-3 px-6 text-left">{{ field }}</th>
-                    {% endfor %}
-                    <th class="py-3 px-6 text-center">Actions</th>
-                </tr>
-            </thead>
-            <tbody class="text-gray-600 text-sm font-light">
-                <!-- Rows will go here -->
-                {% for item in items %}
-                <tr class="border-b border-gray-200 hover:bg-gray-100">
-                    {% for field in fields %}
-                        <td class="py-3 px-6 text-left whitespace-nowrap">{{ item[field] }}</td>
-                    {% endfor %}
-                    <td class="py-3 px-6 text-center">
-                        <a href="./{{ item.id }}" class="text-indigo-600 hover:text-indigo-900">View</a>
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
-{% endblock %}
+{%- block list_container -%}
+    {%- include "components/table.html" -%}
+{%- endblock -%}

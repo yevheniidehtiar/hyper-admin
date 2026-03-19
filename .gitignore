@@ -11,6 +11,7 @@ reports/
 *.pickle*
 *.xls*
 *.zip*
+*.log*
 data/
 
 # direnv
@@ -67,3 +68,17 @@ uv.lock
 
 # VS Code
 .vscode/
+
+# MkDocs
+site/
+
+*.sqlite3
+*.db
+.coverage
+.coverage*
+# Claude Code
+.claude/settings.local.json
+
+.gemini/
+gha-creds-*.json
+misc/tailadmin-free-tailwind-dashboard-template-main/*

@@ -1,0 +1,17 @@
+{%- extends "base.html" -%}
+
+{%- block content -%}
+    <div class="ha-container">
+        <h2 class="ha-section-title">{%- block form_title -%}{%- endblock -%}</h2>
+        <form id="{{- model_name|lower -}}-form" data-testid="model-form" {%- block form_attributes -%}{%- endblock -%}>
+            <div id="{{- model_name|lower -}}-form-body" class="ha-card">
+                {%- block form_body -%}{%- endblock -%}
+            </div>
+            <div class="ha-form-actions">
+                {%- block form_actions -%}
+                <button type="submit" class="ha-btn ha-btn-primary">Save</button>
+                {%- endblock -%}
+            </div>
+        </form>
+    </div>
+{%- endblock -%}

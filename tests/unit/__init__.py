@@ -1,0 +1,1 @@
+"""HyperAdmin test suite."""
