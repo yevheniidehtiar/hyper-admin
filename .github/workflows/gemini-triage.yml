@@ -55,6 +55,9 @@ jobs:
             core.info(`Found ${labelNames.length} labels: ${labelNames.join(', ')}`);
             return labelNames;
 
+      - name: 'Setup Gemini CLI environment'
+        run: mkdir -p ~/.gemini
+
       - name: 'Run Gemini issue analysis'
         id: 'gemini_analysis'
         if: |-
