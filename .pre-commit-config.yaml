@@ -86,18 +86,18 @@ repos:
         language: system
         pass_filenames: false
         stages: [pre-push]
-        always_run: true
+        types_or: [python, html, css, javascript]
       - id: test-e2e
         name: e2e tests
         entry: uv run pytest tests/e2e
         language: system
         pass_filenames: false
         stages: [pre-push]
-        always_run: true
+        types_or: [python, html, css, javascript]
       - id: security-check
         name: security check
         entry: uv run poe security-check
         language: system
         pass_filenames: false
         stages: [pre-push]
-        always_run: true
+        files: (pyproject\.toml|uv\.lock)$
