@@ -37,7 +37,7 @@ admin.mount("/admin")
 
 - [Getting Started](getting-started.md) — Installation, prerequisites, and your first admin
 - [Tutorial](tutorial.md) — Step-by-step walkthrough building a complete app
-- [Examples](examples.md) — Two runnable example apps (simple + full RBAC)
+- [Examples](examples.md) — Two runnable example apps (simple + Bookkeeping ERP)
 - [Frontend](frontend/overview.md) — Templates, CSS tokens, widgets, and HTMX patterns
 - [API Reference](api/application.md) — Full class and method documentation
 

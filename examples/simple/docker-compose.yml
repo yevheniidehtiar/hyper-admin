@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  simple_app:
+    build:
+      context: ../../
+      dockerfile: examples/simple/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - E2E_TESTING=false
