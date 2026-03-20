@@ -15,7 +15,7 @@ fake = Faker()
 
 
 async def seed_db():
-    async with AsyncSession(engine) as session:
+    async with AsyncSession(engine, expire_on_commit=False) as session:
         # Check if already seeded
         result = await session.execute(select(Contact))
         if result.first():

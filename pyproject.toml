@@ -323,3 +323,8 @@ echo ""
 echo "==> All checks passed across the compatibility matrix."
 """
 
+[dependency-groups]
+dev = [
+    "faker>=40.11.0",
+]
+

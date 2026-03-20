@@ -14,13 +14,15 @@ from hyperadmin.main import Admin
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Data seeding runs after Admin creates tables (Admin startup hook)
-    # Wait for tables to be created by HyperAdmin
-    import asyncio
+    # 1. Create tables
+    await admin._create_db_and_tables()
 
+    # 2. Sync permissions (required for auth)
+    await admin._sync_permissions()
+
+    # 3. Seed data
     from examples.erp.seed import seed_db
 
-    await asyncio.sleep(0.5)
     await seed_db()
     yield
 
@@ -32,10 +34,9 @@ app.mount("/static", StaticFiles(directory="src/hyperadmin/static"), name="stati
 app.include_router(reports_router)
 
 # Auth setup
-session_store = DBSessionStore(engine)
-auth_backend = SessionAuthBackend(engine=engine, session_store=session_store)
-permission_registry = DatabasePermissionRegistry(engine=engine)
-permission_checker = RoleBasedPermissionChecker(engine=engine)
+auth_backend = SessionAuthBackend(engine=engine)
+permission_registry = PermissionSyncService(engine=engine)
+permission_checker = ModelPermissionChecker(engine=engine)
 
 # Path to custom templates for this ERP app
 base_dir = os.path.dirname(__file__)
@@ -44,6 +45,7 @@ template_dir = os.path.join(base_dir, "templates")
 admin = Admin(
     app,
     engine=engine,
+    create_tables=False,
     discover_apps=[
         "examples.erp.contacts",
         "examples.erp.sales",
