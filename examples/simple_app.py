@@ -3,9 +3,9 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from starlette.middleware.sessions import SessionMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlmodel import SQLModel, select
+from starlette.middleware.sessions import SessionMiddleware
 
 from examples.models import User
 from hyperadmin.main import Admin

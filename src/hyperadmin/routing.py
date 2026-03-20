@@ -5,8 +5,8 @@ from typing import Any
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.responses import RedirectResponse
 from sqlmodel import SQLModel, select
+from starlette.responses import RedirectResponse
 
 from hyperadmin.auth.backend import verify_password
 from hyperadmin.auth.middleware import get_current_user
@@ -89,7 +89,9 @@ def create_auth_router(templates: Jinja2Templates, engine: Any) -> APIRouter:
 
             if user and verify_password(password, user.password_hash):
                 request.session["user_id"] = user.id
-                return RedirectResponse(url=str(request.url_for("admin-dashboard")), status_code=303)
+                return RedirectResponse(
+                    url=str(request.url_for("admin-dashboard")), status_code=303
+                )
 
         return templates.TemplateResponse(
             "auth/login.html",

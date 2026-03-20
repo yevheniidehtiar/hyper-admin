@@ -30,7 +30,6 @@ async def get_current_user(request: Request, session: Any = None) -> Any | None:
         return results.scalar_one_or_none()
 
     # Fallback to creating a session from the engine if not provided
-    from hyperadmin.routing import HyperAdminRouter
 
     # Try to find the router in template globals
     # This is a bit of a hack but avoids passing engine everywhere for now
