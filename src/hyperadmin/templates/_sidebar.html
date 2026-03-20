@@ -3,6 +3,7 @@
         <h2 class="ha-sidebar-title">Menu</h2>
         <ul class="ha-sidebar-nav">
             {%- for item in nav_items -%}
+            {%- if not auth_enabled or not request.state.user or item.get('visible', true) -%}
             <li>
                 <a href="{{ admin_prefix }}{{ item.url }}" class="ha-sidebar-link">
                     {%- if item.icon -%}
@@ -11,6 +12,7 @@
                     {{ item.name }}
                 </a>
             </li>
+            {%- endif -%}
             {%- endfor -%}
         </ul>
     </div>

@@ -29,6 +29,7 @@ dependencies = [
   "typing-extensions>=4.14.1",
   "typer>=0.12",
   "argon2-cffi",
+  "itsdangerous>=2.0",
 ]
 
 [project.scripts]

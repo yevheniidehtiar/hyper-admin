@@ -73,6 +73,7 @@ class DynamicModelView:
         form_include: list[str] | None = None,
         form_create_exclude: list[str] | None = None,
         column_list: list[str] | None = None,
+        permission_checker: Any = None,
     ):
         self.adapter = adapter
         self.model = adapter.model
@@ -82,6 +83,22 @@ class DynamicModelView:
         self.form_include = form_include
         self.form_create_exclude = form_create_exclude or []
         self.column_list = column_list or ["id", "__str__"]
+        self.permission_checker = permission_checker
+        self._model_name_lower = self.model.__name__.lower()
+
+    async def _check_permission(self, request: Request, action: str) -> None:
+        """Raise 403 if the user lacks the required permission.
+
+        Does nothing when ``permission_checker`` is ``None`` (auth disabled).
+        """
+        if self.permission_checker is None:
+            return
+        user = getattr(request.state, "user", None)
+        if user is None:
+            raise HTTPException(status_code=403, detail="Authentication required")
+        codename = f"{action}_{self._model_name_lower}"
+        if not await self.permission_checker.has_permission(user, codename):
+            raise HTTPException(status_code=403, detail="Permission denied")
 
     def _get_template_name(self, view_name: str) -> str:
         model_name = self.model.__name__.lower()
@@ -128,6 +145,7 @@ class DynamicModelView:
         sort_direction: str = Query("asc", pattern="^(asc|desc)$"),
     ):
         """Renders the list view for the model with pagination, sorting, and filtering."""
+        await self._check_permission(request, "view")
 
         # Parse filters from query params
         active_filters: dict[str, str] = {}
@@ -234,6 +252,7 @@ class DynamicModelView:
         Renders the detail view for a single item.
         Assumes the model has an 'id' field.
         """
+        await self._check_permission(request, "view")
         item = await self.adapter.get(pk=item_id)
 
         if not item:
@@ -259,6 +278,7 @@ class DynamicModelView:
         For HTMX requests, only the inner form body is returned to prevent nesting the full page
         into the target container.
         """
+        await self._check_permission(request, "add")
         # Build a Pydantic-backed form abstraction for templates
         # Create forms exclude form_create_exclude fields (e.g. updated_at)
         create_include = self.form_include
@@ -295,6 +315,7 @@ class DynamicModelView:
 
     async def create_view(self, request: Request):
         """Handles form submission for creating a new item."""
+        await self._check_permission(request, "add")
         form_data = await request.form()
         data = dict(form_data)
 
@@ -352,6 +373,7 @@ class DynamicModelView:
         status_code: int = 200,
     ):
         """Renders the update form, optionally pre-filled with submitted values and errors."""
+        await self._check_permission(request, "change")
         item = await self.adapter.get(pk=item_id)
         if not item:
             raise HTTPException(status_code=404, detail="Item not found")
@@ -396,6 +418,7 @@ class DynamicModelView:
 
     async def update_view(self, request: Request, item_id: int):
         """Handles form submission for updating an item."""
+        await self._check_permission(request, "change")
         form_data = await request.form()
         data: dict[str, Any] = dict(form_data)
 
@@ -439,6 +462,7 @@ class DynamicModelView:
 
     async def delete_action(self, request: Request, item_id: int):
         """Deletes an item."""
+        await self._check_permission(request, "delete")
         item = await self.adapter.get(pk=item_id)
         if not item:
             raise HTTPException(status_code=404, detail="Item not found")

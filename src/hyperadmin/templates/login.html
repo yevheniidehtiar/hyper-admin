@@ -1,0 +1,51 @@
+{%- extends "_base.html" -%}
+
+{%- block title -%}Login — HyperAdmin{%- endblock -%}
+
+{%- block messages -%}{%- endblock -%}
+{%- block navbar -%}{%- endblock -%}
+{%- block sidebar -%}{%- endblock -%}
+
+{%- block content -%}
+<div class="ha-login-container">
+    <div class="ha-login-card">
+        <h1 class="ha-login-title">HyperAdmin</h1>
+        <p class="ha-text-muted">Sign in to your account</p>
+
+        {%- if error -%}
+        <div class="ha-alert ha-alert-error" data-testid="login-error">
+            {{ error }}
+        </div>
+        {%- endif -%}
+
+        <form method="post" action="{{ admin_prefix }}/login" data-testid="login-form">
+            <div class="ha-form-group">
+                <label for="username" class="ha-label">Username</label>
+                <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    class="ha-input"
+                    data-testid="login-username"
+                    required
+                    autofocus
+                >
+            </div>
+            <div class="ha-form-group">
+                <label for="password" class="ha-label">Password</label>
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    class="ha-input"
+                    data-testid="login-password"
+                    required
+                >
+            </div>
+            <button type="submit" class="ha-btn ha-btn-primary ha-btn-block" data-testid="login-submit">
+                Sign in
+            </button>
+        </form>
+    </div>
+</div>
+{%- endblock -%}

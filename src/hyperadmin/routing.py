@@ -48,6 +48,7 @@ def create_admin_router(  # noqa: PLR0913
     form_include: list[str] | None = None,
     form_create_exclude: list[str] | None = None,
     column_list: list[str] | None = None,
+    permission_checker: Any = None,
 ) -> APIRouter:
     """Creates an APIRouter for a given model with the specified admin options."""
     router = APIRouter()
@@ -59,6 +60,7 @@ def create_admin_router(  # noqa: PLR0913
         form_include=form_include,
         form_create_exclude=form_create_exclude,
         column_list=column_list,
+        permission_checker=permission_checker,
     )
     model_name = model.__name__.lower()
 
@@ -130,8 +132,9 @@ class HyperAdminRouter:
         templates: The shared ``Jinja2Templates`` instance used across all views.
     """
 
-    def __init__(self, engine: Any, templates: Jinja2Templates):
+    def __init__(self, engine: Any, templates: Jinja2Templates, permission_checker: Any = None):
         self.engine = engine
+        self.permission_checker = permission_checker
         # Enable global whitespace trimming
         templates.env.trim_blocks = True
         templates.env.lstrip_blocks = True
@@ -182,6 +185,7 @@ class HyperAdminRouter:
                 form_include=form_include,
                 form_create_exclude=form_create_exclude,
                 column_list=column_list,
+                permission_checker=self.permission_checker,
             )
             self.routers.append(router)
 
