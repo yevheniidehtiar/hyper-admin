@@ -20,9 +20,9 @@ $ARGUMENTS
 
 ### 1. Analyze
 
-- Read CONSTITUTION.md, ROADMAP.md, and any files relevant to the request
+- Read CONSTITUTION.md, ROADMAP.md, .claude/rules/planning-playbook.md, and any files relevant to the request
 - Break the request into discrete, independently implementable tasks
-- Order tasks by dependency (upstream first)
+- Order tasks strictly by dependency and architectural layer (Architecture/Models -> Business Logic -> View/Middleware -> UI), following the Planning Playbook.
 
 ### 2. Size each task
 
