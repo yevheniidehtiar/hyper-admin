@@ -4,7 +4,7 @@ import os
 import re
 from typing import TYPE_CHECKING, Any, Union, cast, get_args, get_origin
 
-from fastapi import Depends, HTTPException, Query, Request
+from fastapi import HTTPException, Query, Request
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.exc import IntegrityError
 from starlette.responses import RedirectResponse, Response

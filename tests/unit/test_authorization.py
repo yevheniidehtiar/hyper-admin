@@ -1,11 +1,12 @@
 import pytest
 from fastapi import FastAPI, HTTPException
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import selectinload
 from sqlmodel import SQLModel, select
 
-from hyperadmin.auth.models import User, Permission, UserPermissions
 from hyperadmin.auth.middleware import require_authenticated_user
+from hyperadmin.auth.models import Permission, User, UserPermissions
+
 
 @pytest.fixture
 async def engine():
@@ -13,6 +14,7 @@ async def engine():
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
     return engine
+
 
 @pytest.mark.anyio
 async def test_require_authenticated_user_no_session(engine):
@@ -33,10 +35,13 @@ async def test_require_authenticated_user_no_session(engine):
     assert excinfo.value.status_code == 302
     assert excinfo.value.headers["Location"] == "/admin/login"
 
+
 @pytest.mark.anyio
 async def test_require_authenticated_user_valid_session(engine):
     async with AsyncSession(engine) as session:
-        user = User(username="testuser", email="test@example.com", first_name="Test", last_name="User")
+        user = User(
+            username="testuser", email="test@example.com", first_name="Test", last_name="User"
+        )
         session.add(user)
         await session.commit()
         await session.refresh(user)
@@ -50,17 +55,24 @@ async def test_require_authenticated_user_valid_session(engine):
         def __init__(self):
             self.session = {"user_id": user_id}
             self.app = app
-            self.state = type('state', (), {})()
+            self.state = type("state", (), {})()
 
     request = MockRequest()
     result = await require_authenticated_user(request)
     assert result.id == user_id
     assert request.state.user.id == user_id
 
+
 @pytest.mark.anyio
 async def test_user_has_perm(engine):
     async with AsyncSession(engine) as session:
-        user = User(username="staff", email="staff@example.com", first_name="Staff", last_name="User", is_superuser=False)
+        user = User(
+            username="staff",
+            email="staff@example.com",
+            first_name="Staff",
+            last_name="User",
+            is_superuser=False,
+        )
         perm = Permission(name="Can create user", codename="create_user")
         session.add_all([user, perm])
         await session.commit()
@@ -86,8 +98,15 @@ async def test_user_has_perm(engine):
         assert user_with_perms.has_perm("create_user") is True
         assert user_with_perms.has_perm("delete_user") is False
 
+
 @pytest.mark.anyio
 async def test_superuser_has_all_perms():
-    user = User(username="admin", email="admin@example.com", first_name="Admin", last_name="User", is_superuser=True)
+    user = User(
+        username="admin",
+        email="admin@example.com",
+        first_name="Admin",
+        last_name="User",
+        is_superuser=True,
+    )
     assert user.has_perm("any_perm") is True
     assert user.has_perm("create_product") is True

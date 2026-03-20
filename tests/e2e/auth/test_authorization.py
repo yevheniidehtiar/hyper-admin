@@ -1,6 +1,3 @@
-import pytest
-import os
-import signal
 import socket
 import subprocess
 import sys
@@ -8,13 +5,17 @@ import time
 from collections.abc import Iterator
 from contextlib import closing
 from http import HTTPStatus
+
+import pytest
 from playwright.sync_api import Page, expect
+
 
 def _find_free_port() -> int:
     with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
         s.bind(("127.0.0.1", 0))
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         return int(s.getsockname()[1])
+
 
 @pytest.fixture
 def auth_app_url() -> Iterator[str]:
@@ -36,6 +37,7 @@ def auth_app_url() -> Iterator[str]:
     try:
         deadline = time.time() + 5
         import requests
+
         while time.time() < deadline:
             try:
                 r = requests.get(base + "/", timeout=0.5)
@@ -49,10 +51,12 @@ def auth_app_url() -> Iterator[str]:
         proc.terminate()
         proc.wait()
 
+
 def test_auth_redirect(page: Page, auth_app_url):
     # Go to admin dashboard, should redirect to /admin/login
     page.goto(f"{auth_app_url}/admin/")
     expect(page).to_have_url(f"{auth_app_url}/admin/login")
+
 
 def test_superuser_access(page: Page, auth_app_url):
     # Log in as admin
@@ -62,7 +66,8 @@ def test_superuser_access(page: Page, auth_app_url):
     page.goto(f"{auth_app_url}/admin/")
     expect(page).to_have_url(f"{auth_app_url}/admin/")
     expect(page.get_by_text("Welcome to HyperAdmin Dashboard")).to_be_visible()
-    expect(page.get_by_role("button", name="admin")).to_be_visible() # Username in navbar
+    expect(page.get_by_role("button", name="admin")).to_be_visible()  # Username in navbar
+
 
 def test_restricted_user_forbidden(page: Page, auth_app_url):
     # Log in as restricted user
@@ -73,6 +78,7 @@ def test_restricted_user_forbidden(page: Page, auth_app_url):
 
     # We expect a 403.
     expect(page.get_by_text("You do not have permission to list user.")).to_be_visible()
+
 
 def test_staff_user_access(page: Page, auth_app_url):
     # Log in as staff user
@@ -89,6 +95,7 @@ def test_staff_user_access(page: Page, auth_app_url):
 
     # Should not see "Create New User" because it doesn't have create_user permission
     expect(page.get_by_role("link", name="Create New User")).not_to_be_visible()
+
 
 def test_logout(page: Page, auth_app_url):
     # Log in

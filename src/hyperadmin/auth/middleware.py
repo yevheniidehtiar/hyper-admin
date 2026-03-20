@@ -1,6 +1,5 @@
 from fastapi import HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
-from starlette.responses import RedirectResponse
 
 from hyperadmin.auth.models import User
 
@@ -20,16 +19,10 @@ async def require_authenticated_user(request: Request) -> User:
         )
 
     from sqlalchemy import select
-    from sqlalchemy.orm import selectinload
-    from hyperadmin.auth.models import UserPermissions
 
     engine = request.app.state.admin_engine
     async with AsyncSession(engine) as session:
-        result = await session.execute(
-            select(User)
-            .where(User.id == user_id)
-            .options(selectinload(User.user_permissions).selectinload(UserPermissions.permission))
-        )
+        result = await session.execute(select(User).where(User.id == user_id))
         user = result.scalar_one_or_none()
         if not user or not user.is_active:
             admin_prefix = request.app.state.admin_prefix

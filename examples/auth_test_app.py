@@ -1,17 +1,17 @@
-import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
-from starlette.middleware.sessions import SessionMiddleware
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlmodel import SQLModel, select
+from starlette.middleware.sessions import SessionMiddleware
 
-from hyperadmin.auth.models import User, Permission, UserPermissions
+from hyperadmin.auth.models import Permission, User, UserPermissions
 from hyperadmin.core.app import Admin
 
 # Use a test-specific engine
 DB_URL = "sqlite+aiosqlite:///:memory:"
 engine = create_async_engine(DB_URL, connect_args={"check_same_thread": False})
+
 
 async def create_db_and_tables():
     async with engine.begin() as conn:
@@ -24,7 +24,7 @@ async def create_db_and_tables():
             email="admin@example.com",
             first_name="Admin",
             last_name="User",
-            is_superuser=True
+            is_superuser=True,
         )
         # Create a regular user
         staff_user = User(
@@ -32,7 +32,7 @@ async def create_db_and_tables():
             email="staff@example.com",
             first_name="Staff",
             last_name="User",
-            is_superuser=False
+            is_superuser=False,
         )
         # Create a restricted user
         restricted_user = User(
@@ -40,7 +40,7 @@ async def create_db_and_tables():
             email="restricted@example.com",
             first_name="Restricted",
             last_name="User",
-            is_superuser=False
+            is_superuser=False,
         )
         session.add_all([admin_user, staff_user, restricted_user])
         await session.commit()
@@ -56,10 +56,12 @@ async def create_db_and_tables():
         session.add(up)
         await session.commit()
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await create_db_and_tables()
     yield
+
 
 app = FastAPI(lifespan=lifespan)
 app.add_middleware(SessionMiddleware, secret_key="test-secret")
@@ -67,14 +69,19 @@ app.add_middleware(SessionMiddleware, secret_key="test-secret")
 admin = Admin(app, engine=engine, auth_enabled=True)
 
 from hyperadmin.views.dynamic import ModelView
+
+
 class UserAdmin(ModelView, model=User):
     pass
 
+
 admin.mount(path="/admin")
+
 
 @app.get("/")
 def read_root():
     return {"message": "Auth test app"}
+
 
 @app.get("/login/{username}")
 async def login(username: str, request: Request):

@@ -1,6 +1,7 @@
 """This module will contain the dynamic routing engine for HyperAdmin."""
 
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.templating import Jinja2Templates

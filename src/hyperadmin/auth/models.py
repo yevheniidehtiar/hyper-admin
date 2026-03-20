@@ -1,13 +1,12 @@
 from datetime import datetime
 
-from sqlalchemy import Column
 from sqlmodel import Field, Relationship, SQLModel
 
 
 class User(SQLModel, table=True):
     """User model with authentication and profile information."""
 
-    __tablename__ = "users"
+    __tablename__ = "users"  # type: ignore[reportIncompatibleVariableOverride]
 
     id: int | None = Field(default=None, primary_key=True)
     username: str = Field(index=True, max_length=50, unique=True)
@@ -50,7 +49,7 @@ class User(SQLModel, table=True):
 class Permission(SQLModel, table=True):
     """Permission model for defining what actions users can perform."""
 
-    __tablename__ = "permissions"
+    __tablename__ = "permissions"  # type: ignore[reportIncompatibleVariableOverride]
 
     id: int | None = Field(default=None, primary_key=True)
     name: str = Field(index=True, max_length=100, unique=True)
@@ -75,7 +74,7 @@ class Permission(SQLModel, table=True):
 class UserPermissions(SQLModel, table=True):
     """Many-to-many relationship between User and Permission."""
 
-    __tablename__ = "user_permissions"
+    __tablename__ = "user_permissions"  # type: ignore[reportIncompatibleVariableOverride]
 
     id: int | None = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="users.id", index=True)
