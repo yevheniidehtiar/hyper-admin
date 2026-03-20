@@ -10,6 +10,8 @@ from examples.erp.contacts.models import Contact, ContactType
 from examples.erp.db import engine
 from examples.erp.purchases.models import Bill, BillItem, BillStatus
 from examples.erp.sales.models import Invoice, InvoiceItem, InvoiceStatus
+from hyperadmin.auth.backend import hash_password
+from hyperadmin.auth.models import User
 
 fake = Faker()
 
@@ -22,6 +24,19 @@ async def seed_db():
             return  # Already seeded
 
         print("Seeding database with Faker data...")
+
+        # 0. Create superuser
+        admin_user = User(
+            username="admin",
+            email="admin@example.com",
+            password_hash=hash_password("admin"),
+            is_superuser=True,
+            first_name="Admin",
+            last_name="ERP",
+        )
+        session.add(admin_user)
+        await session.commit()
+        await session.refresh(admin_user)
 
         # 1. Accounts
         accounts = [

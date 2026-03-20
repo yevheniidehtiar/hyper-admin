@@ -16,6 +16,6 @@ Run it from the project root using `uv`:
 uv run fastapi dev examples/erp/main.py
 ```
 
-The database (`erp.db`) will be automatically seeded with thousands of realistic records on the first run, using `Faker`.
+The database (`erp.db`) will be automatically seeded with thousands of realistic records on the first run, using `Faker`. It also creates a superuser with username `admin` and password `admin`.
 
-Visit [http://127.0.0.1:8000/admin](http://127.0.0.1:8000/admin) to explore the system.
+Visit [http://127.0.0.1:8000/admin](http://127.0.0.1:8000/admin) to explore the system. Login with `admin`/`admin`.

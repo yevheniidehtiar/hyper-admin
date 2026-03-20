@@ -67,7 +67,7 @@ class Admin:
         self.session_secret = session_secret
         self.template_dirs = template_dirs or []
         template_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "templates")
-        self.templates = Jinja2Templates(directory=[template_dir, *self.template_dirs])
+        self.templates = Jinja2Templates(directory=[*self.template_dirs, template_dir])
 
         # Mount static files for the admin interface
         static_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")

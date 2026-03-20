@@ -6,9 +6,8 @@ from fastapi.staticfiles import StaticFiles
 
 from examples.erp.db import engine
 from examples.erp.reports.views import router as reports_router
-from hyperadmin.auth.backend import SessionAuthBackend
-from hyperadmin.auth.permissions import DatabasePermissionRegistry, RoleBasedPermissionChecker
-from hyperadmin.auth.session import DBSessionStore
+from hyperadmin.auth.permissions import ModelPermissionChecker, PermissionSyncService
+from hyperadmin.auth.session import SessionAuthBackend
 from hyperadmin.main import Admin
 
 
