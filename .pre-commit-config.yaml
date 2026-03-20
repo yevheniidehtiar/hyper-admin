@@ -1,5 +1,5 @@
 # https://pre-commit.com
-default_install_hook_types: [commit-msg, pre-commit]
+default_install_hook_types: [commit-msg, pre-commit, pre-push]
 default_stages: [pre-commit, manual]
 fail_fast: true
 repos:
@@ -80,3 +80,9 @@ repos:
         language: system
         types: [python]
         pass_filenames: false
+      - id: lint-gate
+        name: lint gate (pre-push)
+        entry: uv run poe lint
+        language: system
+        pass_filenames: false
+        stages: [pre-push]

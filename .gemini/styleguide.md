@@ -7,8 +7,9 @@
 ### Required verification sequence
 
 ```bash
-# 1. Install dependencies
+# 1. Install dependencies and git hooks (MUST run on every fresh clone)
 uv sync --all-extras
+uv run pre-commit install  # installs commit-msg, pre-commit, AND pre-push hooks
 
 # 2. Run ALL linters (ruff check, ruff format, mypy, basedpyright)
 uv run poe lint

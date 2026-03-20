@@ -1,8 +1,7 @@
 import pytest
+from examples.rbac_app.models import Group, Permission, User, UserGroup
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlmodel import SQLModel, select
-
-from examples.rbac_app.models import Group, Permission, User, UserGroup
 
 
 @pytest.fixture

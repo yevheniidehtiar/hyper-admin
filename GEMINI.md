@@ -21,6 +21,7 @@ The project uses `uv` for fast dependency management and `poe` (poethepoet) as a
 ### Setup (MUST run first)
 ```bash
 uv sync --all-extras
+uv run pre-commit install  # installs commit-msg, pre-commit, AND pre-push hooks
 ```
 
 ### Key Commands
