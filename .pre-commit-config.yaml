@@ -1,6 +1,6 @@
 # https://pre-commit.com
-default_install_hook_types: [commit-msg, pre-commit]
-default_stages: [pre-commit, manual]
+default_install_hook_types: [commit-msg, pre-commit, pre-push]
+default_stages: [pre-commit]
 fail_fast: true
 repos:
   - repo: meta
@@ -80,3 +80,24 @@ repos:
         language: system
         types: [python]
         pass_filenames: false
+      - id: test-unit
+        name: unit tests
+        entry: uv run pytest -vv -q tests/unit
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+        types_or: [python, html, css, javascript]
+      - id: test-e2e
+        name: e2e tests
+        entry: uv run pytest tests/e2e
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+        types_or: [python, html, css, javascript]
+      - id: security-check
+        name: security check
+        entry: uv run poe security-check
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+        files: (pyproject\.toml|uv\.lock)$
