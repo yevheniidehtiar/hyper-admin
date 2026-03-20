@@ -51,10 +51,10 @@
 </head>
 <body class="ha-page">
     <div class="ha-container">
-        {% include "_messages.html" %}
-        {% include "_navbar.html" %}
+        {% block messages %}{% include "_messages.html" %}{% endblock %}
+        {% block navbar %}{% include "_navbar.html" %}{% endblock %}
         <div class="ha-layout">
-            {% include "_sidebar.html" %}
+            {% block sidebar %}{% include "_sidebar.html" %}{% endblock %}
             <main class="ha-content">
                 {% block content %}{% endblock %}
             </main>

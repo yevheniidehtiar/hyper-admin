@@ -1,55 +1,51 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login — HyperAdmin</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', path='/css/hyperadmin.css') }}">
-</head>
-<body class="ha-page">
-    <div class="ha-login-container">
-        <div class="ha-login-card">
-            <h1 class="ha-login-title">HyperAdmin</h1>
-            <p class="ha-text-muted">Sign in to your account</p>
+{%- extends "_base.html" -%}
 
-            {% if error %}
-            <div class="ha-alert ha-alert-error" data-testid="login-error">
-                {{ error }}
-            </div>
-            {% endif %}
+{%- block title -%}Login — HyperAdmin{%- endblock -%}
 
-            <form method="post" action="{{ admin_prefix }}/login" data-testid="login-form">
-                <div class="ha-form-group">
-                    <label for="username" class="ha-label">Username</label>
-                    <input
-                        type="text"
-                        id="username"
-                        name="username"
-                        class="ha-input"
-                        data-testid="login-username"
-                        required
-                        autofocus
-                    >
-                </div>
-                <div class="ha-form-group">
-                    <label for="password" class="ha-label">Password</label>
-                    <input
-                        type="password"
-                        id="password"
-                        name="password"
-                        class="ha-input"
-                        data-testid="login-password"
-                        required
-                    >
-                </div>
-                <button type="submit" class="ha-btn ha-btn-primary ha-btn-block" data-testid="login-submit">
-                    Sign in
-                </button>
-            </form>
+{%- block messages -%}{%- endblock -%}
+{%- block navbar -%}{%- endblock -%}
+{%- block sidebar -%}{%- endblock -%}
+
+{%- block content -%}
+<div class="ha-login-container">
+    <div class="ha-login-card">
+        <h1 class="ha-login-title">HyperAdmin</h1>
+        <p class="ha-text-muted">Sign in to your account</p>
+
+        {%- if error -%}
+        <div class="ha-alert ha-alert-error" data-testid="login-error">
+            {{ error }}
         </div>
+        {%- endif -%}
+
+        <form method="post" action="{{ admin_prefix }}/login" data-testid="login-form">
+            <div class="ha-form-group">
+                <label for="username" class="ha-label">Username</label>
+                <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    class="ha-input"
+                    data-testid="login-username"
+                    required
+                    autofocus
+                >
+            </div>
+            <div class="ha-form-group">
+                <label for="password" class="ha-label">Password</label>
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    class="ha-input"
+                    data-testid="login-password"
+                    required
+                >
+            </div>
+            <button type="submit" class="ha-btn ha-btn-primary ha-btn-block" data-testid="login-submit">
+                Sign in
+            </button>
+        </form>
     </div>
-</body>
-</html>
+</div>
+{%- endblock -%}
