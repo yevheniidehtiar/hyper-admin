@@ -46,7 +46,7 @@ def demo_base_url(e2e_port: int) -> Iterator[str]:
         sys.executable,
         "-m",
         "uvicorn",
-        "examples.simple_app:app",
+        "examples.simple.main:app",
         "--host",
         "0.0.0.0",
         "--port",

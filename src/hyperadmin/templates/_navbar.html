@@ -12,7 +12,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                 </svg>
             </button>
-            <div x-show="open" @click.away="open = false" class="ha-dropdown">
+            <div x-show="open" @click.away="open = false" x-cloak class="ha-dropdown">
                 <form method="post" action="{{ admin_prefix }}/logout">
                     <button type="submit" class="ha-dropdown-item" data-testid="logout-btn">Logout</button>
                 </form>
@@ -27,7 +27,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                 </svg>
             </button>
-            <div x-show="open" @click.away="open = false" class="ha-dropdown">
+            <div x-show="open" @click.away="open = false" x-cloak class="ha-dropdown">
                 <a href="#" class="ha-dropdown-item">Profile</a>
                 <a href="#" class="ha-dropdown-item">Settings</a>
             </div>

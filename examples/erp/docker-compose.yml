@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  erp_app:
+    build:
+      context: ../../
+      dockerfile: examples/erp/Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=production

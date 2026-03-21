@@ -1,0 +1,32 @@
+{%- extends "_base.html" -%}
+
+{%- block title -%}ERP Dashboard{%- endblock -%}
+
+{%- block content -%}
+    <div class="ha-card ha-mb-4">
+        <div class="ha-card-header">
+            <h1 class="ha-card-title">Welcome to the ERP Administration</h1>
+        </div>
+        <div class="ha-card-body">
+            <p class="ha-text-muted">You are logged into the Bookkeeping ERP system. Use the sidebar to manage your accounts or access custom reports below.</p>
+            <div class="ha-mt-4">
+                <a href="{{ admin_prefix }}/reports/profit-loss" class="ha-btn ha-btn-primary">
+                    <i class="ha-icon-chart"></i> View Annual Profit & Loss
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="ha-grid">
+        <div class="ha-card">
+            <div class="ha-card-header"><h3 class="ha-card-title">Quick Actions</h3></div>
+            <div class="ha-card-body">
+                <ul class="ha-list">
+                    <li><a href="{{ admin_prefix }}/invoice/create">Create New Invoice</a></li>
+                    <li><a href="{{ admin_prefix }}/bill/create">Record New Bill</a></li>
+                    <li><a href="{{ admin_prefix }}/contact/create">Add New Contact</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+{%- endblock -%}

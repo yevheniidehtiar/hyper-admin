@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlmodel import SQLModel, select
 
-from examples.models import User
+from examples.simple.models import User
 from hyperadmin.main import Admin
 
 # 1. Create a database engine
@@ -42,7 +42,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 app.mount("/static", StaticFiles(directory="src/hyperadmin/static"), name="static")
-admin = Admin(app, engine=engine, discover_apps=["examples"])
+admin = Admin(app, engine=engine, discover_apps=["examples.simple"])
 
 # 3. Mount the admin interface
 admin.mount(path="/admin")

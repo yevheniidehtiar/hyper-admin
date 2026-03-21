@@ -2,12 +2,12 @@
 
 Two runnable example apps ship with HyperAdmin.
 
-## simple_app — Basic CRUD
+## simple — Basic CRUD
 
 Shows a single-model admin with auto-discovery and async SQLite.
 
 ```python
-# examples/simple_app.py
+# examples/simple/main.py
 from fastapi import FastAPI
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlmodel import SQLModel, Field
@@ -21,28 +21,28 @@ class User(SQLModel, table=True):
     email: str
 
 app = FastAPI()
-admin = Admin(app, engine=engine, discover_apps=["examples"])
+admin = Admin(app, engine=engine, discover_apps=["examples.simple"])
 admin.mount("/admin")
 ```
 
 **Run locally:**
 
 ```bash
-uv run uvicorn examples.simple_app:app --reload
+uv run fastapi dev examples/simple/main.py
 ```
 
 Open [http://localhost:8000/admin/](http://localhost:8000/admin/)
 
 ---
 
-## rbac_app — Full RBAC Demo
+## erp — Bookkeeping ERP (Modular)
 
-Shows 5 related models (User, Group, UserGroup, Permission, UserPermissions) with search, sort, filters, and file/image uploads. Sample data is seeded automatically.
+Shows a complex, domain-driven ERP system with multiple modules (Contacts, Sales, Purchases, Accounting) and built-in RBAC. Sample data is seeded automatically with thousands of records.
 
 **Run with Docker** (recommended — zero setup):
 
 ```bash
-docker compose -f examples/docker-compose.yml up --build
+docker compose -f examples/erp/docker-compose.yml up --build
 ```
 
 Open [http://localhost:8000/admin/](http://localhost:8000/admin/)
@@ -51,26 +51,25 @@ Open [http://localhost:8000/admin/](http://localhost:8000/admin/)
 
 ```bash
 uv sync --all-extras
-uv run uvicorn examples.rbac_app.main:app --reload
+uv run fastapi dev examples/erp/main.py
 ```
 
-### Seeded data
+### Features
 
-| Entity | Values |
-|--------|--------|
-| Users | `admin`, `editor`, `viewer` |
-| Groups | Administrators, Editors, Viewers |
-| Permissions | 8 permissions (add/change/delete/view for user and group) |
+- **Double-entry bookkeeping**: Automatic journal entries created for invoices and bills.
+- **Role-Based Access Control**: Built-in `hyperadmin.auth` integration.
+- **Custom Reports**: Includes a custom Annual Profit & Loss report.
+- **Large Dataset**: Demonstrates performance and pagination with 1000+ seeded records.
 
 ### Models overview
 
-| Model | Description |
-|-------|-------------|
-| `User` | Profile with avatar (image) and personal key (file) fields |
-| `Group` | Named group for organizing users |
-| `UserGroup` | Many-to-many join: User ↔ Group |
-| `Permission` | Codename-based permission definition |
-| `UserPermissions` | Many-to-many join: User ↔ Permission |
+| Module | Key Models |
+|--------|------------|
+| `contacts` | `Contact` (Customers, Suppliers) |
+| `sales` | `Invoice`, `InvoiceItem` |
+| `purchases` | `Bill` (Expenses), `BillItem` |
+| `accounting` | `Account`, `JournalEntry`, `JournalLine` |
+| `auth` | `User`, `Group`, `Permission` |
 
 ---
 

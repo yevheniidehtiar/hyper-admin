@@ -193,24 +193,40 @@ body {
    Dropdown
    ========================================================================== */
 
+[x-cloak] {
+  display: none !important;
+}
+
 .ha-dropdown {
   position: absolute;
   right: 0;
   margin-top: var(--ha-space-2);
   width: 12rem;
   background-color: var(--ha-color-surface);
+  border: var(--ha-border-width) solid var(--ha-color-border-light);
   border-radius: var(--ha-radius);
   box-shadow: var(--ha-shadow-lg);
   padding: var(--ha-space-1) 0;
   z-index: 10;
 }
 
+/* Fallback: show on hover if Alpine is slow or disabled */
+.ha-navbar-user:hover .ha-dropdown {
+  display: block;
+}
+
 .ha-dropdown-item {
   display: block;
+  width: 100%;
+  text-align: left;
   padding: var(--ha-space-2) var(--ha-space-4);
   font-size: var(--ha-font-size-sm);
   color: var(--ha-color-text);
   text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
 }
 
 .ha-dropdown-item:hover {
