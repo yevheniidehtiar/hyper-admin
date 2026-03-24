@@ -1,0 +1,39 @@
+
+name: Release Agent
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'New version (patch/minor/major/x.y.z)'
+        required: true
+        default: 'patch'
+
+jobs:
+  prepare-release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --all-extras
+      - name: Release Candidate Report
+        uses: anthropics/claude-code-action@v1
+        with:
+          model: claude-sonnet-4-6
+          prompt: |
+            Analyze the project's readiness for version #{{ github.event.inputs.version }}.
+            Review closed issues in the current milestone, QA results, and changelog.
+            Produce a Release Candidate (RC) report as specified in docs/agentic-workflow/release-agent.md.
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      - name: Automated Bump
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          uv run cz bump --yes
+          git push origin main --tags
+

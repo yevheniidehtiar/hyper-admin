@@ -41,11 +41,13 @@ class HtmxTemplateResponse:
             if not block_fn:
                 # Fallback to full template when block not found
                 return self.templates.TemplateResponse(
-                    template_name, context, status_code=status_code
+                    request, template_name, context, status_code=status_code
                 )
 
             html = "".join(block_fn(jinja_context))
             return Response(content=html, media_type="text/html", status_code=status_code)
 
         # Non-HTMX or no block specified: render full template
-        return self.templates.TemplateResponse(template_name, context, status_code=status_code)
+        return self.templates.TemplateResponse(
+            request, template_name, context, status_code=status_code
+        )

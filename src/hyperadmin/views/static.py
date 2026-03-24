@@ -84,7 +84,7 @@ class ModelView:
             "item": item,
             "fields": list(self.model.model_fields.keys()),
         }
-        return templates.TemplateResponse("update.html", context)
+        return templates.TemplateResponse(request, "update.html", context)
 
     async def create_view(self, request: Request):
         """Renders the create view and handles form submission for creating a new item."""
@@ -99,7 +99,7 @@ class ModelView:
             "model_name": self.model.__name__,
             "fields": list(self.model.model_fields.keys()),
         }
-        return templates.TemplateResponse("create.html", context)
+        return templates.TemplateResponse(request, "create.html", context)
 
     async def list_view(self, request: Request):
         """Renders the list view for the model."""
@@ -110,7 +110,7 @@ class ModelView:
             "fields": list(self.model.model_fields.keys()),
             "items": items,
         }
-        return templates.TemplateResponse("list.html", context)
+        return templates.TemplateResponse(request, "list.html", context)
 
     async def detail_view(self, request: Request, item_id: int):
         """
@@ -127,4 +127,4 @@ class ModelView:
             "item_name": f"{self.model.__name__} #{getattr(item, 'id', 'N/A')}",
             "item": item.model_dump(),
         }
-        return templates.TemplateResponse("detail.html", context)
+        return templates.TemplateResponse(request, "detail.html", context)
