@@ -31,7 +31,11 @@ class FakeTemplates:
         self._last_status: int | None = None
 
     def TemplateResponse(  # noqa: N802
-        self, template_name: str, context: dict[str, Any], status_code: int | None = None
+        self,
+        request: Any,
+        template_name: str,
+        context: dict[str, Any],
+        status_code: int | None = None,
     ):
         self._last_template_name = template_name
         self._last_context = context
