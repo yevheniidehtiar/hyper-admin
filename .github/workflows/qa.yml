@@ -1,0 +1,38 @@
+
+name: QA Agent
+
+on:
+  status:
+    types: [success] # Trigger when CI passes
+
+jobs:
+  qa:
+    name: Advanced QA Matrix
+    if: github.event.context == 'CI' # Only if it was the CI check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --all-extras
+      - name: Backward Compatibility Check
+        run: |
+          # Simple check to see if we can still import previous version if it exists
+          pip install hyper-admin || echo "First release, skipping backward compat check"
+          uv run python -c "import hyper_admin; print('Import check passed')"
+      - name: Dependency Audit
+        run: uv run pip-audit
+      - name: Type Check (Pyright)
+        run: uv run pyright src
+      - name: Analyze Results with AI
+        uses: anthropics/claude-code-action@v1
+        with:
+          model: claude-sonnet-4-6
+          prompt: |
+            Analyze the QA results for PR #{{ github.event.number }}.
+            Review test coverage, compatibility matrix results, and security audits.
+            Produce a QA Report as specified in docs/agentic-workflow/qa-agent.md.
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+

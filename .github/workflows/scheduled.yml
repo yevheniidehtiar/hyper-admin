@@ -1,0 +1,33 @@
+
+name: Scheduled Health Agent
+
+on:
+  schedule:
+    - cron: '0 0 * * 1' # Every Monday at 00:00 UTC
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  health-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      - run: uv sync --all-extras
+      - name: Dependency Audit
+        run: uv run pip-audit --format=json > audit.json || true
+      - name: Complexity Check
+        run: uv run radon cc src -n C -j > complexity.json || true
+      - name: Weekly Analysis with AI
+        uses: anthropics/claude-code-action@v1
+        with:
+          model: claude-sonnet-4-6
+          prompt: |
+            Perform a weekly health check for the project.
+            Inputs: audit.json, complexity.json, recent GitHub stats.
+            Produce a Community Health Report as specified in docs/agentic-workflow/scheduled-agent.md.
+            If critical issues found (e.g. CVEs), draft an issue with label 'scheduled:auto'.
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+

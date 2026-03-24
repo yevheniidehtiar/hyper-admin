@@ -245,7 +245,7 @@ class DynamicModelView:
             if request.headers.get("hx-request")
             else self._get_template_name("list")
         )
-        return self.templates.TemplateResponse(template_name, context)
+        return self.templates.TemplateResponse(request, template_name, context)
 
     async def detail_view(self, request: Request, item_id: int):
         """
@@ -264,7 +264,7 @@ class DynamicModelView:
             "item": item.model_dump(),
         }
         template_name = self._get_template_name("detail")
-        return self.templates.TemplateResponse(template_name, context)
+        return self.templates.TemplateResponse(request, template_name, context)
 
     async def create_form_view(
         self,
@@ -480,4 +480,4 @@ class DynamicModelView:
 async def admin_dashboard(request: Request, templates: Jinja2Templates):
     """Renders the main admin dashboard page."""
     context = {"request": request}
-    return templates.TemplateResponse("dashboard.html", context)
+    return templates.TemplateResponse(request, "dashboard.html", context)

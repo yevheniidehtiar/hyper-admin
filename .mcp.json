@@ -1,0 +1,20 @@
+
+{
+  "mcpServers": {
+
+    "slack": {
+      "type": "url",
+      "url": "https://mcp.slack.com/mcp",
+      "name": "slack-mcp"
+    }
+
+  },
+  "defaultModel": "claude-sonnet-4-6",
+  "projectContext": {
+    "name": "HyperAdmin",
+    "slug": "hyper-admin",
+    "org": "yevheniidehtiar",
+    "language": "python"
+  }
+}
+

@@ -1,0 +1,30 @@
+
+name: Community Signal Ingestion Agent
+
+on:
+  issues:
+    types: [opened]
+  pull_request:
+    types: [opened]
+  issue_comment:
+    types: [created]
+
+jobs:
+  triage:
+    if: github.event.sender.type != 'Bot'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Triage External Signal
+        uses: anthropics/claude-code-action@v1
+        with:
+          model: claude-sonnet-4-6
+          prompt: |
+            Triage the new community interaction.
+            Classify as: Bug, Feature, Question, Duplicate, or Spam.
+            Apply appropriate labels and follow the Contributor Experience
+            workflow in docs/agentic-workflow/community-ingestion.md.
+            On PRs, ensure the contributor is added to CONTRIBUTORS.md if missing.
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
