@@ -141,7 +141,7 @@ async def test_list_view_custom_column_list(mock_templates, mock_request, anyio_
     await view.list_view(
         request=mock_request, page=1, page_size=10, search="", sort_by=None, sort_direction="asc"
     )
-    context = mock_templates.TemplateResponse.call_args[0][1]
+    context = mock_templates.TemplateResponse.call_args[0][2]
     assert context["fields"] == ["id", "name", "email"]
     assert context["items"][0]["name"] == "Alice"
 
@@ -157,8 +157,8 @@ async def test_list_view_basic(view_instance, mock_request, mock_templates, anyi
 
     # Get the context passed to the template
     call_args = mock_templates.TemplateResponse.call_args
-    template_name = call_args[0][0]
-    context = call_args[0][1]
+    template_name = call_args[0][1]
+    context = call_args[0][2]
 
     # Verify template name
     assert template_name.endswith("list.html")
@@ -185,7 +185,7 @@ async def test_list_view_with_pagination(
 
     # Get the context
     call_args = mock_templates.TemplateResponse.call_args
-    context = call_args[0][1]
+    context = call_args[0][2]
 
     # Verify pagination context
     assert context["pagination"]["page"] == 2
@@ -208,7 +208,7 @@ async def test_list_view_with_search(view_instance, mock_request, mock_templates
 
     # Get the context
     call_args = mock_templates.TemplateResponse.call_args
-    context = call_args[0][1]
+    context = call_args[0][2]
 
     # Verify search results
     assert context["search_query"] == "alice"
@@ -225,7 +225,7 @@ async def test_list_view_with_sorting(view_instance, mock_request, mock_template
 
     # Get the context
     call_args = mock_templates.TemplateResponse.call_args
-    context = call_args[0][1]
+    context = call_args[0][2]
 
     # Verify sorting context
     assert context["sort_by"] == "name"
@@ -247,7 +247,7 @@ async def test_list_view_htmx_request(
 
     # Get the template name used
     call_args = mock_templates.TemplateResponse.call_args
-    template_name = call_args[0][0]
+    template_name = call_args[0][1]
 
     # Verify HTMX requests use table component
     assert template_name == "components/table.html"
@@ -263,7 +263,7 @@ async def test_list_view_default_sort_column(
 
     # Get the context
     call_args = mock_templates.TemplateResponse.call_args
-    context = call_args[0][1]
+    context = call_args[0][2]
 
     # Should default to first field (id)
     assert context["sort_by"] == "id"
@@ -280,7 +280,7 @@ async def test_list_view_error_handling(view_instance, mock_request, mock_templa
 
     # Get the context
     call_args = mock_templates.TemplateResponse.call_args
-    context = call_args[0][1]
+    context = call_args[0][2]
 
     # Should handle error gracefully
     assert context["items"] == []
@@ -299,7 +299,7 @@ async def test_list_view_empty_results(view_instance, mock_request, mock_templat
 
     # Get the context
     call_args = mock_templates.TemplateResponse.call_args
-    context = call_args[0][1]
+    context = call_args[0][2]
 
     # Verify empty results are handled correctly
     assert context["items"] == []
