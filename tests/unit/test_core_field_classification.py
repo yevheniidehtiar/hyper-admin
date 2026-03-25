@@ -6,7 +6,7 @@ import pytest
 from pydantic import BaseModel, Field
 from sqlalchemy.exc import NoInspectionAvailable
 
-from hyperadmin.core.discovery import classify_field
+from hyperadmin.core.fields import classify_field
 
 
 class Status(Enum):
@@ -20,6 +20,7 @@ class MockModel(BaseModel):
     tags: List[str]
     roles: List[Status]
     optional_status: Optional[Status]
+    optional_tags: Optional[List[str]]
     other: int
 
 
@@ -59,6 +60,15 @@ def test_classify_static_list():
     assert meta.preload is True
 
 
+def test_classify_optional_static_list():
+    field_info = MockModel.model_fields["optional_tags"]
+    meta = classify_field(field_info, MockModel)
+    assert meta is not None
+    assert meta.choices_source == "static"
+    assert meta.multiple is True
+    assert meta.preload is True
+
+
 def test_classify_non_select():
     field_info = MockModel.model_fields["name"]
     meta = classify_field(field_info, MockModel)
@@ -69,7 +79,7 @@ def test_classify_non_select():
     assert meta is None
 
 
-@patch("hyperadmin.core.discovery.sa_inspect")
+@patch("hyperadmin.core.fields.sa_inspect")
 def test_classify_sqlalchemy_fk(mock_inspect):
     mock_mapper = MagicMock()
     mock_inspect.return_value = mock_mapper
@@ -93,7 +103,7 @@ def test_classify_sqlalchemy_fk(mock_inspect):
     assert meta.preload is False
 
 
-@patch("hyperadmin.core.discovery.sa_inspect")
+@patch("hyperadmin.core.fields.sa_inspect")
 def test_classify_sqlalchemy_relationship(mock_inspect):
     mock_mapper = MagicMock()
     mock_inspect.return_value = mock_mapper
@@ -117,7 +127,7 @@ def test_classify_sqlalchemy_relationship(mock_inspect):
     assert meta.preload is False
 
 
-@patch("hyperadmin.core.discovery.sa_inspect")
+@patch("hyperadmin.core.fields.sa_inspect")
 def test_classify_sqlalchemy_m2m(mock_inspect):
     mock_mapper = MagicMock()
     mock_inspect.return_value = mock_mapper
@@ -141,7 +151,7 @@ def test_classify_sqlalchemy_m2m(mock_inspect):
     assert meta.preload is False
 
 
-@patch("hyperadmin.core.discovery.sa_inspect")
+@patch("hyperadmin.core.fields.sa_inspect")
 def test_classify_no_inspection(mock_inspect):
     mock_inspect.side_effect = NoInspectionAvailable("No inspection")
 
