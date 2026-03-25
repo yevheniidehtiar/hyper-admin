@@ -1,4 +1,18 @@
+from dataclasses import dataclass
+
 from pydantic import BaseModel
+
+
+@dataclass
+class FieldsetSpec:
+    """Configuration for a group of fields in the form view."""
+
+    title: str
+    """The title of the fieldset."""
+    fields: list[str]
+    """List of field names to include in this fieldset."""
+    collapsible: bool = False
+    """Whether the fieldset can be collapsed in the UI."""
 
 
 class AdminOptions(BaseModel):
@@ -28,3 +42,5 @@ class AdminOptions(BaseModel):
     """Whether the Detail view and GET (single item) endpoint are generated."""
     list_filter: list[str] = []
     """List of field names to show in the filter bar."""
+    fieldsets: list[FieldsetSpec] | None = None
+    """Optional list of fieldsets to organize fields in Create/Edit/Detail views."""
