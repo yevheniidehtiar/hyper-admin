@@ -28,5 +28,5 @@ class AdminOptions(BaseModel):
     """Whether the Detail view and GET (single item) endpoint are generated."""
     list_filter: list[str] = []
     """List of field names to show in the filter bar."""
-    preload_fields: list[str] = []
-    """List of field names that should preload their choices (if select/multiselect)."""
+    preload_fields: set[str] = set()
+    """Set of field names that should preload their choices (if select/multiselect)."""

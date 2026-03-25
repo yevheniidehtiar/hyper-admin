@@ -13,16 +13,20 @@ from sqlalchemy import inspect as sa_inspect
 from sqlalchemy.exc import NoInspectionAvailable
 
 from hyperadmin.core.choices import SelectFieldMeta
+from hyperadmin.core.options import AdminOptions
 
 logger = logging.getLogger(__name__)
 
 
-def classify_field(field_info: FieldInfo, model_cls: type) -> SelectFieldMeta | None:
+def classify_field(
+    field_info: FieldInfo, model_cls: type, options: AdminOptions | None = None
+) -> SelectFieldMeta | None:
     """Classifies a model field to determine its widget and behavior.
 
     Args:
         field_info: Pydantic FieldInfo for the field.
         model_cls: The model class containing the field.
+        options: Optional AdminOptions for the model to override defaults.
 
     Returns:
         SelectFieldMeta if the field is a choice field, otherwise None.
@@ -42,13 +46,29 @@ def classify_field(field_info: FieldInfo, model_cls: type) -> SelectFieldMeta | 
         origin = get_origin(ann)
         args = get_args(ann)
 
+    # Determine the field name to check for preload overrides
+    field_name = None
+    for name, info in getattr(model_cls, "model_fields", {}).items():
+        if info is field_info:
+            field_name = name
+            break
+
+    def _get_preload(default: bool) -> bool:
+        if options and field_name and field_name in options.preload_fields:
+            return True
+        return default
+
     # 1. Enum check
     if isinstance(ann, type) and issubclass(ann, Enum):
-        return SelectFieldMeta(choices_source="enum", multiple=False, preload=True)
+        return SelectFieldMeta(
+            choices_source="enum", multiple=False, preload=_get_preload(default=True)
+        )
 
     # 2. list[Enum] check
     if origin is list and args and isinstance(args[0], type) and issubclass(args[0], Enum):
-        return SelectFieldMeta(choices_source="enum", multiple=True, preload=True)
+        return SelectFieldMeta(
+            choices_source="enum", multiple=True, preload=_get_preload(default=True)
+        )
 
     # 3. SQLAlchemy/SQLModel relation check
     try:
@@ -69,20 +89,24 @@ def classify_field(field_info: FieldInfo, model_cls: type) -> SelectFieldMeta | 
                 return SelectFieldMeta(
                     choices_source="relation",
                     multiple=rel.uselist,
-                    preload=False,
+                    preload=_get_preload(default=False),
                 )
 
             # Check if it's a FK column
             fk_col = next((c for c in mapper.columns if c.key == field_name), None)
             if fk_col and fk_col.foreign_keys:
-                return SelectFieldMeta(choices_source="relation", multiple=False, preload=False)
+                return SelectFieldMeta(
+                    choices_source="relation", multiple=False, preload=_get_preload(default=False)
+                )
 
     except NoInspectionAvailable:
         pass
 
     # 4. list[str] static check
     if origin is list and args and args[0] is str:
-        return SelectFieldMeta(choices_source="static", multiple=True, preload=True)
+        return SelectFieldMeta(
+            choices_source="static", multiple=True, preload=_get_preload(default=True)
+        )
 
     # 5. Handle Optional[list[str]] case
     # If the annotation was Optional[list[str]], then ann is list[str] at this point.

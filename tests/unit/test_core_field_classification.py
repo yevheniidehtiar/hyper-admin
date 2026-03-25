@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.exc import NoInspectionAvailable
 
 from hyperadmin.core.fields import classify_field
+from hyperadmin.core.options import AdminOptions
 
 
 class Status(Enum):
@@ -161,3 +162,34 @@ def test_classify_no_inspection(mock_inspect):
     field_info = PurePydanticModel.model_fields["name"]
     meta = classify_field(field_info, PurePydanticModel)
     assert meta is None
+
+
+@patch("hyperadmin.core.fields.sa_inspect")
+def test_classify_preload_override(mock_inspect):
+    mock_mapper = MagicMock()
+    mock_inspect.return_value = mock_mapper
+
+    # Mock relationship
+    mock_rel = MagicMock()
+    mock_rel.key = "team"
+    mock_rel.uselist = False
+    mock_mapper.relationships = [mock_rel]
+    mock_mapper.columns = []
+
+    class SQLAlchemyModel(BaseModel):
+        team: Optional[dict] = None
+
+    field_info = SQLAlchemyModel.model_fields["team"]
+
+    # 1. Default (no preload for relations)
+    meta = classify_field(field_info, SQLAlchemyModel)
+    assert meta is not None
+    assert meta.choices_source == "relation"
+    assert meta.preload is False
+
+    # 2. Force preload via options
+    options = AdminOptions(preload_fields={"team"})
+    meta = classify_field(field_info, SQLAlchemyModel, options=options)
+    assert meta is not None
+    assert meta.choices_source == "relation"
+    assert meta.preload is True
