@@ -10,6 +10,11 @@
 | **Trigger** | Manual — `/oss-triage-audit [dry-run\|live]` |
 | **Purpose** | Full audit of issues, PRs, milestones: detect spam, enforce lifecycle, clean duplicates |
 | **Est. Cost** | 10k–50k tokens per audit (scales with open issue count) |
+| **Implementation** | `scripts/triage_audit.py` — pre-written, code-reviewed Python script |
+| **Invocation** | `uv run scripts/triage_audit.py [dry-run\|live] [--repo owner/repo]` |
+
+> **Security note:** All audit logic runs through the pre-written script — the agent never
+> constructs `gh` commands dynamically from untrusted GitHub content. See the Security section below.
 
 ## Inspiration
 

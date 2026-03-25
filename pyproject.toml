@@ -296,6 +296,10 @@ type = "simple"
     { shell = "E2E_TEST_TIMEOUT=5000 pytest tests/e2e --screenshot on" },
   ]
 
+  [tool.poe.tasks."triage:audit"]
+  help = "Run OSS triage audit (dry-run by default). Pass 'live' for mutations."
+  cmd = "python scripts/triage_audit.py"
+
   [tool.poe.tasks."deps:bump"]
   help = "Bump dev deps to latest and verify across the compatibility matrix"
   shell = """
