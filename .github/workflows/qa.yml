@@ -5,6 +5,9 @@ on:
   status:
     types: [success] # Trigger when CI passes
 
+permissions:
+  contents: read
+
 jobs:
   qa:
     name: Advanced QA Matrix

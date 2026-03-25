@@ -5,8 +5,9 @@ echo "==> Bootstrapping development environment..."
 
 # Check for just
 if ! command -v just &> /dev/null; then
-    echo "❌ 'just' is not installed. Install it from https://github.com/casey/just"
-    exit 1
+    echo "==> Installing just..."
+    curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to ~/.local/bin
+    export PATH="$HOME/.local/bin:$PATH"
 fi
 
 # Check for uv
