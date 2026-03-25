@@ -1,10 +1,9 @@
 version: 2
-
 updates:
-  - package-ecosystem: github-actions
-    directory: /
+  - package-ecosystem: "github-actions"
+    directory: "/"
     schedule:
-      interval: monthly
+      interval: "weekly"
     commit-message:
       prefix: "ci"
       prefix-development: "ci"
@@ -13,17 +12,17 @@ updates:
       ci-dependencies:
         patterns:
           - "*"
-  - package-ecosystem: pip
-    directory: /
+  - package-ecosystem: "pip"
+    directory: "/"
     schedule:
-      interval: monthly
+      interval: "weekly"
     commit-message:
       prefix: "chore"
       prefix-development: "build"
       include: scope
     allow:
-      - dependency-type: development
-    versioning-strategy: increase
+      - dependency-type: "development"
+    versioning-strategy: "increase"
     groups:
       development-dependencies:
-        dependency-type: development
+        dependency-type: "development"

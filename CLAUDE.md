@@ -138,3 +138,32 @@ Do not produce planning or code output silently.
 
 Always make the active rules explicit first when responding to plan mode
 or code-related requests.
+
+---
+
+## Agentic Workflow
+
+This project follows an 8-agent OSS development workflow. See `docs/agentic-workflow/` for full specs:
+
+1. **Deep Research** → clarify ideas via structured Q&A (Opus)
+2. **Roadmap Planning** → decompose into GitHub milestones/epics/tasks
+3. **Dev Agents** → tiered implementation (Jules/Gemini CLI/Claude Code)
+4. **Code Review** → automated audit trail on PRs
+5. **QA** → compatibility matrix + test analysis
+6. **Release** → changelog, semver, publish
+7. **Scheduled** → weekly health monitoring
+8. **Community** → triage external contributions
+
+## MCP Servers in Use
+
+See `.mcp.json` for active MCP servers. Default model: `claude-sonnet-4-6`.
+
+## Key Files
+
+| Path | Purpose |
+|------|---------|
+| `justfile` | All dev targets |
+| `scripts/` | Automation helpers |
+| `.claude/commands/` | Claude slash commands |
+| `docs/` | MkDocs source |
+| `docs/agentic-workflow/` | OSS agentic workflow specs |
