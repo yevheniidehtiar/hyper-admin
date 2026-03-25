@@ -50,7 +50,7 @@ test:
 
 # Run tests with coverage (fail under 80%)
 test-cov:
-    uv run pytest --tb=short --cov=src/hyper_admin --cov-report=term-missing --cov-fail-under=80
+    uv run pytest --tb=short --cov=src/hyperadmin --cov-report=term-missing --cov-fail-under=80
 
 # ── Build ─────────────────────────────────────────────────────
 

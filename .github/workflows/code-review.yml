@@ -11,10 +11,11 @@ jobs:
     permissions:
       contents: read
       pull-requests: write
+      id-token: write
     steps:
       - uses: anthropics/claude-code-action@v1
+        if: false # TODO: Enable after setting up ANTHROPIC_API_KEY
         with:
-          model: claude-sonnet-4-6
           prompt: |
             Review this PR against its linked issue specification.
             Check: correctness, backward compat, test coverage, style.

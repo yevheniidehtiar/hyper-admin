@@ -7,6 +7,8 @@ on:
 
 permissions:
   contents: read
+  pull-requests: write
+  id-token: write
 
 jobs:
   qa:
@@ -23,15 +25,15 @@ jobs:
         run: |
           # Simple check to see if we can still import previous version if it exists
           pip install hyper-admin || echo "First release, skipping backward compat check"
-          uv run python -c "import hyper_admin; print('Import check passed')"
+          uv run python -c "import hyperadmin; print('Import check passed')"
       - name: Dependency Audit
         run: uv run pip-audit
       - name: Type Check (Pyright)
         run: uv run pyright src
       - name: Analyze Results with AI
+        if: false # TODO: Enable after setting up ANTHROPIC_API_KEY
         uses: anthropics/claude-code-action@v1
         with:
-          model: claude-sonnet-4-6
           prompt: |
             Analyze the QA results for PR #{{ github.event.number }}.
             Review test coverage, compatibility matrix results, and security audits.
