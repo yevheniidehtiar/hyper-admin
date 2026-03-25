@@ -13,6 +13,7 @@ permissions:
   contents: read
   issues: write
   pull-requests: write
+  id-token: write
 
 jobs:
   triage:
@@ -21,9 +22,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Triage External Signal
+        if: false # TODO: Enable after setting up ANTHROPIC_API_KEY
         uses: anthropics/claude-code-action@v1
         with:
-          model: claude-sonnet-4-6
           prompt: |
             Triage the new community interaction.
             Classify as: Bug, Feature, Question, Duplicate, or Spam.

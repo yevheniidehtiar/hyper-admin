@@ -9,6 +9,7 @@ on:
 permissions:
   contents: read
   issues: write
+  id-token: write
 
 jobs:
   health-check:
@@ -24,9 +25,9 @@ jobs:
       - name: Complexity Check
         run: uv run radon cc src -n C -j > complexity.json || true
       - name: Weekly Analysis with AI
+        if: false # TODO: Enable after setting up ANTHROPIC_API_KEY
         uses: anthropics/claude-code-action@v1
         with:
-          model: claude-sonnet-4-6
           prompt: |
             Perform a weekly health check for the project.
             Inputs: audit.json, complexity.json, recent GitHub stats.

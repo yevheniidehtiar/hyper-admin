@@ -11,6 +11,7 @@ on:
 
 permissions:
   contents: write
+  id-token: write
 
 jobs:
   prepare-release:
@@ -24,9 +25,9 @@ jobs:
           enable-cache: true
       - run: uv sync --all-extras
       - name: Release Candidate Report
+        if: false # TODO: Enable after setting up ANTHROPIC_API_KEY
         uses: anthropics/claude-code-action@v1
         with:
-          model: claude-sonnet-4-6
           prompt: |
             Analyze the project's readiness for version #{{ github.event.inputs.version }}.
             Review closed issues in the current milestone, QA results, and changelog.

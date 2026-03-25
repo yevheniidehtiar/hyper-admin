@@ -47,6 +47,7 @@ jobs:
           echo "{}" > ~/.gemini/projects.json
 
       - name: 'Run Gemini pull request review'
+        if: false # TODO: Enable after setting up GEMINI_API_KEY
         env:
           GITHUB_TOKEN: '${{ steps.mint_identity_token.outputs.token || secrets.GITHUB_TOKEN || github.token }}'
           ISSUE_TITLE: '${{ github.event.pull_request.title || github.event.issue.title }}'

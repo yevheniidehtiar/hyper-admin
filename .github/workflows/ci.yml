@@ -14,6 +14,8 @@ jobs:
   test:
     name: Test (Py ${{ matrix.python-version }} on ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
+    env:
+      UV_PYTHON: ${{ matrix.python-version }}
     strategy:
       fail-fast: false
       matrix:
@@ -29,7 +31,7 @@ jobs:
       - run: uv run ruff check .
       - run: uv run ruff format --check .
       - run: uv run mypy src
-      - run: uv run pytest --tb=short --cov=hyper_admin --cov-report=xml
+      - run: uv run pytest --tb=short --cov=src/hyperadmin --cov-report=xml
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
         with:

@@ -26,6 +26,8 @@ jobs:
         resolution: ["highest", "lowest-direct"]
 
     name: Python ${{ matrix.python-version }} (resolution=${{ matrix.resolution }})
+    env:
+      UV_PYTHON: ${{ matrix.python-version }}
 
     steps:
       - name: Checkout
@@ -69,6 +71,8 @@ jobs:
             resolution: "lowest-direct"
 
     name: Python ${{ matrix.python-version }} (resolution=${{ matrix.resolution }})
+    env:
+      UV_PYTHON: ${{ matrix.python-version }}
 
     steps:
       - name: Checkout
