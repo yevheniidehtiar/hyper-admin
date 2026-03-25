@@ -7,20 +7,26 @@
 
   <!-- Badges -->
   <p>
-    <a href="https://github.com/yevheniidehtiar/hyper-admin/actions/workflows/ci.yml" target="_blank">
-      <img alt="CI" src="https://github.com/yevheniidehtiar/hyper-admin/actions/workflows/ci.yml/badge.svg"/>
+    <a href="https://github.com/yevheniidehtiar/hyper-admin/actions/workflows/ci.yml">
+      <img src="https://github.com/yevheniidehtiar/hyper-admin/actions/workflows/ci.yml/badge.svg" alt="CI">
     </a>
-    <a href="https://codecov.io/gh/yevheniidehtiar/hyper-admin" target="_blank">
-      <img alt="Codecov" src="https://codecov.io/gh/yevheniidehtiar/hyper-admin/branch/main/graph/badge.svg"/>
+    <a href="https://codecov.io/gh/yevheniidehtiar/hyper-admin">
+      <img src="https://codecov.io/gh/yevheniidehtiar/hyper-admin/branch/main/graph/badge.svg" alt="Coverage">
     </a>
-    <a href="https://pypi.org/project/hyperadmin/" target="_blank">
-      <img alt="PyPI" src="https://img.shields.io/pypi/v/hyperadmin.svg"/>
+    <a href="https://pypi.org/project/hyperadmin/">
+      <img src="https://img.shields.io/pypi/v/hyperadmin.svg" alt="PyPI">
     </a>
-    <a href="https://pypi.org/project/hyperadmin/" target="_blank">
-      <img alt="PyPI - Python Version" src="https://img.shields.io/pypi/pyversions/hyperadmin.svg"/>
+    <a href="https://pypi.org/project/hyperadmin/">
+      <img src="https://img.shields.io/pypi/pyversions/hyperadmin.svg" alt="Python Versions">
     </a>
-     <a href="https://github.com/yevheniidehtiar/hyper-admin/blob/main/LICENSE" target="_blank">
-      <img alt="License" src="https://img.shields.io/pypi/l/hyperadmin"/>
+    <a href="https://github.com/astral-sh/ruff">
+      <img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json" alt="Ruff">
+    </a>
+    <a href="https://yevheniidehtiar.github.io/hyper-admin">
+      <img src="https://img.shields.io/badge/docs-latest-blue.svg" alt="Docs">
+    </a>
+    <a href="LICENSE">
+      <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License">
     </a>
   </p>
 </div>
@@ -51,7 +57,7 @@ For a full guide on how to install, configure, and use HyperAdmin, please see th
 
 ### Installation
 
-```sh
+```bash
 pip install hyperadmin
 ```
 
@@ -81,39 +87,29 @@ admin.mount_to(app)
 ```
 This will automatically create a full CRUD interface for your `Product` model at `/admin`.
 
+## 🛠️ Development
+
+```bash
+# Install just (task runner)
+# https://github.com/casey/just
+
+# Bootstrap dev environment
+just bootstrap
+
+# Run linter + formatter
+just lint
+
+# Run tests
+just test
+
+# Serve docs locally
+just docs
+```
+
 ## 🤝 Contributing
 
-Contributions are welcome! Please see the [Contributing Guide](https://yevheniidehtiar.github.io/hyper-admin/contributing/) for more details on how to get started.
-
-<details>
-<summary>Development Environment</summary>
-
-This project uses `uv` for dependency management and `poe` for task automation.
-
-1.  **Clone the repository:**
-    ```sh
-    git clone https://github.com/yevheniidehtiar/hyper-admin.git
-    cd hyper-admin
-    ```
-
-2.  **Create and sync the virtual environment:**
-    ```sh
-    uv sync --python 3.10 --all-extras
-    ```
-
-3.  **Activate the virtual environment:**
-    ```sh
-    source .venv/bin/activate
-    ```
-
-4.  **Install pre-commit hooks:**
-    ```sh
-    pre-commit install
-    ```
-Now you're ready to start developing! Run `poe` to see a list of available tasks.
-
-</details>
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## 📄 License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+MIT — see [LICENSE](LICENSE) for details.

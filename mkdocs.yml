@@ -1,45 +1,30 @@
-site_name: HyperAdmin
-site_description: A modern, Pydantic-native admin interface for FastAPI, powered by HTMX.
-site_url: https://yevheniidehtiar.github.io/hyper-admin/
+site_name: "HyperAdmin"
+site_description: "A modern, Pydantic-native admin interface for FastAPI, powered by HTMX."
+site_url: "https://yevheniidehtiar.github.io/hyper-admin"
+repo_url: "https://github.com/yevheniidehtiar/hyper-admin"
+repo_name: "yevheniidehtiar/hyper-admin"
 
 theme:
-  name: "material"
-  palette:
-    primary: white
-  features:
-    - navigation.tabs
-    - content.code.copy
+  name: material
   logo: assets/logo.svg
   favicon: assets/favicon.ico
-
-repo_name: yevheniidehtiar/hyper-admin
-repo_url: https://github.com/yevheniidehtiar/hyper-admin
-edit_uri: ""
-
-nav:
-  - Introduction: "index.md"
-  - Getting Started: "getting-started.md"
-  - Tutorial: "tutorial.md"
-  - Examples: "examples.md"
-  - Frontend:
-      - Overview: "frontend/overview.md"
-      - Widgets: "frontend/widgets.md"
-      - HTMX Patterns: "frontend/htmx_patterns.md"
-  - API Reference:
-      - Application: "api/application.md"
-      - Views: "api/views.md"
-      - Core Components: "api/core.md"
-      - Adapters: "api/adapters.md"
-      - Routing: "api/routing.md"
-
-markdown_extensions:
-  - markdown.extensions.codehilite:
-      guess_lang: false
-  - admonition
-  - pymdownx.details
-  - pymdownx.highlight
-  - pymdownx.tabbed
-  - pymdownx.superfences
+  palette:
+    - scheme: default
+      primary: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - content.code.copy
+    - search.suggest
 
 plugins:
   - search
@@ -49,7 +34,20 @@ plugins:
         python:
           options:
             show_root_heading: true
-            show_source: false
+            show_source: true
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - pymdownx.highlight
 
 extra:
   social:
@@ -57,3 +55,33 @@ extra:
       link: https://github.com/yevheniidehtiar
     - icon: fontawesome/brands/linkedin
       link: https://www.linkedin.com/in/yevheniidehtiar/
+
+nav:
+  - Introduction: index.md
+  - Getting Started: getting-started.md
+  - Tutorial: tutorial.md
+  - Examples: examples.md
+  - Frontend:
+      - Overview: frontend/overview.md
+      - Widgets: frontend/widgets.md
+      - HTMX Patterns: frontend/htmx_patterns.md
+  - API Reference:
+      - Application: api/application.md
+      - Views: api/views.md
+      - Core Components: api/core.md
+      - Adapters: api/adapters.md
+      - Routing: api/routing.md
+  - Contributing: contributing.md
+  - Changelog: changelog.md
+  - Agentic Workflow:
+    - Overview: agentic-workflow/index.md
+    - Cost Model: agentic-workflow/cost-model.md
+    - Deep Research Agent: agentic-workflow/deep-research-agent.md
+    - Roadmap Planning Agent: agentic-workflow/roadmap-planning-agent.md
+    - Dev Agents: agentic-workflow/dev-agents.md
+    - Code Review Agent: agentic-workflow/code-review-agent.md
+    - QA Agent: agentic-workflow/qa-agent.md
+    - Release Agent: agentic-workflow/release-agent.md
+    - Scheduled Agent: agentic-workflow/scheduled-agent.md
+    - Community Ingestion: agentic-workflow/community-ingestion.md
+    - Orchestration: agentic-workflow/orchestration.md
