@@ -49,6 +49,7 @@ idea → researched → planned → approved → in-progress → review → qa-p
 | `community` | `#BFDADC` | From external contributor |
 | `scheduled:auto` | `#FEF2C0` | Created by scheduled agent (high confidence) |
 | `scheduled:review-needed` | `#F9D0C4` | Needs human review |
+| `suspicious` | `#D93F0B` | Flagged by [OSS Triage Auditor](oss-triage-auditor.md) — needs human review |
 
 ## Project Memory
 
