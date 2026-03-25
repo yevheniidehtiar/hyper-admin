@@ -77,11 +77,6 @@ def classify_field(
         # Note: SQLModel Relationship fields might not be in model_fields if they are not simple types,
         # but the prompt says classify_field(field_info, model_cls), so we assume the field IS in model_fields.
         # In SQLModel, Relationship names usually match the attribute name.
-        field_name = None
-        for name, info in getattr(model_cls, "model_fields", {}).items():
-            if info is field_info:
-                field_name = name
-                break
 
         if field_name:
             rel = next((r for r in mapper.relationships if r.key == field_name), None)
