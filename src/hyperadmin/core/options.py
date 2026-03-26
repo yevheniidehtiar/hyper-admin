@@ -28,3 +28,8 @@ class AdminOptions(BaseModel):
     """Whether the Detail view and GET (single item) endpoint are generated."""
     list_filter: list[str] = []
     """List of field names to show in the filter bar."""
+    dependent_fields: dict[str, str] = {}
+    """Cascading select configuration: maps child field name → parent field name.
+
+    Example: ``{"city": "country_id"}`` makes the city select reload when country_id changes.
+    """

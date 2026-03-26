@@ -107,12 +107,14 @@ class RelationSelectWidget(HtmxWidget):
     choices: list[ChoiceItem]
     choices_url: str
     preload: bool
+    dependent_on: str | None
 
     def __init__(
         self,
         choices_url: str,
         choices: list[ChoiceItem] | None = None,
         preload: bool = True,
+        dependent_on: str | None = None,
     ) -> None:
         object.__setattr__(self, "template_path", "widgets/relation_select_input.html")
         object.__setattr__(self, "static_list", ())
@@ -120,6 +122,7 @@ class RelationSelectWidget(HtmxWidget):
         self.choices = choices or []
         self.choices_url = choices_url
         self.preload = preload
+        self.dependent_on = dependent_on
 
 
 class RelationMultiSelectWidget(HtmxWidget):
@@ -128,12 +131,14 @@ class RelationMultiSelectWidget(HtmxWidget):
     choices: list[ChoiceItem]
     choices_url: str
     preload: bool
+    dependent_on: str | None
 
     def __init__(
         self,
         choices_url: str,
         choices: list[ChoiceItem] | None = None,
         preload: bool = True,
+        dependent_on: str | None = None,
     ) -> None:
         object.__setattr__(self, "template_path", "widgets/relation_multiselect_input.html")
         object.__setattr__(self, "static_list", ())
@@ -141,6 +146,7 @@ class RelationMultiSelectWidget(HtmxWidget):
         self.choices = choices or []
         self.choices_url = choices_url
         self.preload = preload
+        self.dependent_on = dependent_on
 
 
 def hybrid_to_python(raw: str | list[str], storage: Literal["json", "csv"]) -> list[str]:
