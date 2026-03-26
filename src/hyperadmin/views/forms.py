@@ -1,13 +1,16 @@
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Union, get_args, get_origin
+from typing import TYPE_CHECKING, Any, Literal, Union, get_args, get_origin
 
 from markupsafe import Markup
 from pydantic import BaseModel, ValidationError
 from pydantic.fields import FieldInfo
+
+from hyperadmin.core.choices import ChoiceItem
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -67,9 +70,55 @@ class SelectInput(HtmxWidget):
         super().__init__(template_path="widgets/select_input.html")
 
 
+class SelectWidget(HtmxWidget):
+    """Widget for a single-select with a pre-built choices list."""
+
+    choices: list[ChoiceItem]
+
+    def __init__(self, choices: list[ChoiceItem] | None = None) -> None:
+        # HtmxWidget is slots=True; bypass super().__init__ to avoid the
+        # zero-arg super() cell-variable issue introduced by @dataclass(slots=True).
+        object.__setattr__(self, "template_path", "widgets/select_input.html")
+        object.__setattr__(self, "static_list", ())
+        object.__setattr__(self, "htmx_attrs", None)
+        self.choices = choices or []
+
+
+class MultiSelectWidget(HtmxWidget):
+    """Widget for a multi-select with a pre-built choices list."""
+
+    choices: list[ChoiceItem]
+
+    def __init__(self, choices: list[ChoiceItem] | None = None) -> None:
+        object.__setattr__(self, "template_path", "widgets/multiselect_input.html")
+        object.__setattr__(self, "static_list", ())
+        object.__setattr__(self, "htmx_attrs", None)
+        self.choices = choices or []
+
+
 class DateTimeInput(HtmxWidget):
     def __init__(self):
         super().__init__(template_path="widgets/datetime_input.html")
+
+
+def hybrid_to_python(raw: str | list[str], storage: Literal["json", "csv"]) -> list[str]:
+    """Deserialise a stored hybrid list field back to a Python list of strings."""
+    if isinstance(raw, list):
+        return [str(v) for v in raw]
+    if not raw:
+        return []
+    if storage == "json":
+        parsed = json.loads(raw)
+        return [str(v) for v in parsed]
+    # csv
+    return [v.strip() for v in raw.split(",") if v.strip()]
+
+
+def hybrid_to_storage(value: list[str], storage: Literal["json", "csv"]) -> str:
+    """Serialise a Python list of strings to the chosen storage format."""
+    if storage == "json":
+        return json.dumps(value)
+    return ",".join(value)
 
 
 @dataclass(slots=True)

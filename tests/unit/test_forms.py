@@ -9,10 +9,14 @@ from pydantic import BaseModel, Field
 from hyperadmin.views.forms import (
     FormField,
     HtmxWidget,
+    MultiSelectWidget,
     NumberInput,
     PydanticForm,
+    SelectWidget,
     Textarea,
     TextInput,
+    hybrid_to_python,
+    hybrid_to_storage,
 )
 
 
@@ -131,6 +135,73 @@ def test_pydantic_form_validation_error():
     instance, errors = form.validate(data)
     assert instance is None
     assert "age" in errors
+
+
+def test_select_widget_holds_choices():
+    choices = [
+        {"value": "1", "label": "Option A", "selected": False},
+        {"value": "2", "label": "Option B", "selected": True},
+    ]
+    widget = SelectWidget(choices=choices)
+    assert widget.template_path == "widgets/select_input.html"
+    assert widget.choices == choices
+
+
+def test_select_widget_empty_by_default():
+    widget = SelectWidget()
+    assert widget.choices == []
+
+
+def test_multiselect_widget_holds_choices():
+    choices = [
+        {"value": "a", "label": "Apple", "selected": True},
+        {"value": "b", "label": "Banana", "selected": False},
+    ]
+    widget = MultiSelectWidget(choices=choices)
+    assert widget.template_path == "widgets/multiselect_input.html"
+    assert widget.choices == choices
+
+
+def test_multiselect_widget_empty_by_default():
+    widget = MultiSelectWidget()
+    assert widget.choices == []
+
+
+def test_hybrid_to_python_csv():
+    assert hybrid_to_python("a,b,c", "csv") == ["a", "b", "c"]
+
+
+def test_hybrid_to_python_json():
+    assert hybrid_to_python('["x", "y"]', "json") == ["x", "y"]
+
+
+def test_hybrid_to_python_list_passthrough():
+    assert hybrid_to_python(["p", "q"], "csv") == ["p", "q"]
+
+
+def test_hybrid_to_python_empty_string():
+    assert hybrid_to_python("", "csv") == []
+    assert hybrid_to_python("", "json") == []
+
+
+def test_hybrid_to_storage_csv():
+    assert hybrid_to_storage(["a", "b"], "csv") == "a,b"
+
+
+def test_hybrid_to_storage_json():
+    import json
+
+    assert json.loads(hybrid_to_storage(["x", "y"], "json")) == ["x", "y"]
+
+
+def test_hybrid_round_trip_csv():
+    original = ["red", "green", "blue"]
+    assert hybrid_to_python(hybrid_to_storage(original, "csv"), "csv") == original
+
+
+def test_hybrid_round_trip_json():
+    original = ["one", "two", "three"]
+    assert hybrid_to_python(hybrid_to_storage(original, "json"), "json") == original
 
 
 def test_pydantic_form_media():
