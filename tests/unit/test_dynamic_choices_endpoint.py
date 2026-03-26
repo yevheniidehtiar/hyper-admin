@@ -71,11 +71,12 @@ class StubAdapter(BaseAdapter):
         ]
 
 
-def _make_request() -> Request:
+def _make_request(query_string: str = "") -> Request:
     scope = {
         "type": "http",
         "method": "GET",
         "path": "/",
+        "query_string": query_string.encode(),
         "headers": [],
         "app": SimpleNamespace(
             url_path_for=lambda name, **kw: SimpleNamespace(
