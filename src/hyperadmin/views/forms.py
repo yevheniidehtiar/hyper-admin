@@ -101,6 +101,48 @@ class DateTimeInput(HtmxWidget):
         super().__init__(template_path="widgets/datetime_input.html")
 
 
+class RelationSelectWidget(HtmxWidget):
+    """Widget for a single FK relation field — supports preload and lazy (HTMX) strategies."""
+
+    choices: list[ChoiceItem]
+    choices_url: str
+    preload: bool
+
+    def __init__(
+        self,
+        choices_url: str,
+        choices: list[ChoiceItem] | None = None,
+        preload: bool = True,
+    ) -> None:
+        object.__setattr__(self, "template_path", "widgets/relation_select_input.html")
+        object.__setattr__(self, "static_list", ())
+        object.__setattr__(self, "htmx_attrs", None)
+        self.choices = choices or []
+        self.choices_url = choices_url
+        self.preload = preload
+
+
+class RelationMultiSelectWidget(HtmxWidget):
+    """Widget for a M2M relation field — supports preload and lazy (HTMX) strategies."""
+
+    choices: list[ChoiceItem]
+    choices_url: str
+    preload: bool
+
+    def __init__(
+        self,
+        choices_url: str,
+        choices: list[ChoiceItem] | None = None,
+        preload: bool = True,
+    ) -> None:
+        object.__setattr__(self, "template_path", "widgets/relation_multiselect_input.html")
+        object.__setattr__(self, "static_list", ())
+        object.__setattr__(self, "htmx_attrs", None)
+        self.choices = choices or []
+        self.choices_url = choices_url
+        self.preload = preload
+
+
 def hybrid_to_python(raw: str | list[str], storage: Literal["json", "csv"]) -> list[str]:
     """Deserialise a stored hybrid list field back to a Python list of strings."""
     if isinstance(raw, list):

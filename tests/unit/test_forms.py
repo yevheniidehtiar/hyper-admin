@@ -12,6 +12,8 @@ from hyperadmin.views.forms import (
     MultiSelectWidget,
     NumberInput,
     PydanticForm,
+    RelationMultiSelectWidget,
+    RelationSelectWidget,
     SelectWidget,
     Textarea,
     TextInput,
@@ -202,6 +204,42 @@ def test_hybrid_round_trip_csv():
 def test_hybrid_round_trip_json():
     original = ["one", "two", "three"]
     assert hybrid_to_python(hybrid_to_storage(original, "json"), "json") == original
+
+
+def test_relation_select_widget_preload():
+    choices = [
+        {"value": "1", "label": "UK", "selected": True},
+        {"value": "2", "label": "FR", "selected": False},
+    ]
+    widget = RelationSelectWidget(choices_url="/city/choices/country", choices=choices)
+    assert widget.template_path == "widgets/relation_select_input.html"
+    assert widget.preload is True
+    assert widget.choices_url == "/city/choices/country"
+    assert len(widget.choices) == 2
+    assert widget.choices[0]["selected"] is True
+
+
+def test_relation_select_widget_lazy():
+    widget = RelationSelectWidget(choices_url="/city/choices/country", preload=False)
+    assert widget.preload is False
+    assert widget.choices == []
+
+
+def test_relation_multiselect_widget_preload():
+    choices = [
+        {"value": "1", "label": "London", "selected": False},
+        {"value": "2", "label": "Paris", "selected": True},
+    ]
+    widget = RelationMultiSelectWidget(choices_url="/country/choices/cities", choices=choices)
+    assert widget.template_path == "widgets/relation_multiselect_input.html"
+    assert widget.preload is True
+    assert len(widget.choices) == 2
+
+
+def test_relation_multiselect_widget_lazy():
+    widget = RelationMultiSelectWidget(choices_url="/country/choices/cities", preload=False)
+    assert widget.preload is False
+    assert widget.choices == []
 
 
 def test_pydantic_form_media():

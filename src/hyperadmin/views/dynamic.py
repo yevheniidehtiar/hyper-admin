@@ -13,12 +13,20 @@ if TYPE_CHECKING:
     from jinja2 import FileSystemLoader
 
 from hyperadmin.adapters import SQLAlchemyAdapter, SQLModelAdapter
+from hyperadmin.core.choices import ChoiceItem, SelectFieldMeta
 from hyperadmin.core.discovery import build_filter_metadata
 from hyperadmin.core.display import get_display_name
+from hyperadmin.core.fields import classify_field
 from hyperadmin.core.options import AdminOptions
 from hyperadmin.core.registry import site
 from hyperadmin.discover import app_label_var
-from hyperadmin.views.forms import CheckboxInput, PydanticForm
+from hyperadmin.views.forms import (
+    CheckboxInput,
+    HtmxWidget,
+    PydanticForm,
+    RelationMultiSelectWidget,
+    RelationSelectWidget,
+)
 from hyperadmin.views.htmx import HtmxTemplateResponse
 
 logger = logging.getLogger(__name__)
@@ -266,6 +274,46 @@ class DynamicModelView:
         template_name = self._get_template_name("detail")
         return self.templates.TemplateResponse(request, template_name, context)
 
+    async def _build_relation_widgets(
+        self,
+        field_names: list[str],
+        selected_values: dict[str, Any] | None = None,
+    ) -> dict[str, HtmxWidget]:
+        """Return a widget override dict for relation fields detected by classify_field().
+
+        For each field in *field_names* that resolves to a relation, this method
+        either pre-fetches choices (preload=True) or creates a lazy HTMX widget
+        (preload=False) pointing at the choices endpoint for that field.
+        """
+        widgets: dict[str, HtmxWidget] = {}
+        sv = selected_values or {}
+        for name, field_info in self.model.model_fields.items():
+            if field_names and name not in field_names:
+                continue
+            meta: SelectFieldMeta | None = classify_field(field_info, self.model)
+            if meta is None or meta.choices_source != "relation":
+                continue
+            choices_url = f"/{self._model_name_lower}/choices/{name}"
+            choices: list[ChoiceItem]
+            if meta.preload:
+                raw_choices = await self.adapter.get_choices(name)
+                current = str(sv.get(name, ""))
+                choices = [
+                    ChoiceItem(value=c["value"], label=c["label"], selected=c["value"] == current)
+                    for c in raw_choices
+                ]
+            else:
+                choices = []
+            if meta.multiple:
+                widgets[name] = RelationMultiSelectWidget(
+                    choices_url=choices_url, choices=choices, preload=meta.preload
+                )
+            else:
+                widgets[name] = RelationSelectWidget(
+                    choices_url=choices_url, choices=choices, preload=meta.preload
+                )
+        return widgets
+
     async def create_form_view(
         self,
         request: Request,
@@ -284,8 +332,12 @@ class DynamicModelView:
         create_include = self.form_include
         if create_include and self.form_create_exclude:
             create_include = [f for f in create_include if f not in self.form_create_exclude]
+        relation_widgets = await self._build_relation_widgets(
+            field_names=create_include or [], selected_values=values
+        )
         form = PydanticForm(
             self.model,
+            widgets=relation_widgets,
             include=create_include,
             exclude=self.form_create_exclude,
             initial=values or {},
@@ -388,7 +440,12 @@ class DynamicModelView:
         if values:
             initial_values.update(values)
 
-        form = PydanticForm(self.model, include=self.form_include, initial=initial_values)
+        relation_widgets = await self._build_relation_widgets(
+            field_names=self.form_include or [], selected_values=initial_values
+        )
+        form = PydanticForm(
+            self.model, widgets=relation_widgets, include=self.form_include, initial=initial_values
+        )
 
         if errors:
             form.bind(values or {})
