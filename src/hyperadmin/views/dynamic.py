@@ -288,17 +288,31 @@ class DynamicModelView:
         widgets: dict[str, HtmxWidget] = {}
         sv = selected_values or {}
         dependent_fields: dict[str, str] = getattr(self.options, "dependent_fields", {})
+
+        # Pre-build FK-column → relationship-name mapping via the adapter's inspector
+        # so that country_id → "country" for get_choices() and the HTMX URL.
+        fk_to_rel: dict[str, str] = {}
+        inspector = getattr(self.adapter, "inspector", None)
+        if inspector:
+            for rel in inspector.relationships:
+                for col in rel.local_columns:
+                    col_key = getattr(col, "key", None) or getattr(col, "name", None)
+                    if col_key:
+                        fk_to_rel[col_key] = rel.key
+
         for name, field_info in self.model.model_fields.items():
             if field_names and name not in field_names:
                 continue
             meta: SelectFieldMeta | None = classify_field(field_info, self.model)
             if meta is None or meta.choices_source != "relation":
                 continue
-            choices_url = f"/{self._model_name_lower}/choices/{name}"
+            # Resolve FK column name to relationship name (e.g. country_id → country)
+            rel_name: str = fk_to_rel.get(name) or name
+            choices_url = f"/{self._model_name_lower}/choices/{rel_name}"
             dependent_on = meta.dependent_on or dependent_fields.get(name)
             choices: list[ChoiceItem]
             if meta.preload:
-                raw_choices = await self.adapter.get_choices(name)
+                raw_choices = await self.adapter.get_choices(rel_name)
                 current = str(sv.get(name, ""))
                 choices = [
                     ChoiceItem(value=c["value"], label=c["label"], selected=c["value"] == current)

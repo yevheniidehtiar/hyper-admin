@@ -30,11 +30,11 @@ class StubAdapter(BaseAdapter):
     def __init__(self, model):
         self.model = model
         # Simulate inspector with a "country" relationship
-        rel = SimpleNamespace(key="country")
-        self.inspector = SimpleNamespace(
-            relationships=[rel],
-            c=[],
+        rel = SimpleNamespace(
+            key="country",
+            local_columns=[SimpleNamespace(key="country_id", name="country_id")],
         )
+        self.inspector = SimpleNamespace(relationships=[rel], c=[])
 
     async def get(self, pk: Any) -> Any:
         return None

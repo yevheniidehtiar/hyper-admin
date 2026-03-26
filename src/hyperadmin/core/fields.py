@@ -123,7 +123,7 @@ def _inspect_orm_field(model_cls: type, field_name: str) -> SelectFieldMeta | No
         if getattr(col, "key", None) == field_name and getattr(col, "foreign_keys", None):
             return SelectFieldMeta(
                 choices_source="relation",
-                preload=False,
+                preload=True,  # FK columns are typically small; preload by default
                 multiple=False,
             )
 
