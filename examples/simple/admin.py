@@ -1,4 +1,4 @@
-from examples.simple.models import Product, User
+from examples.simple.models import City, Country, Product, User
 from hyperadmin.adapters.sqlmodel import SQLModelAdapter
 from hyperadmin.core.model import ModelAdmin
 from hyperadmin.core.registry import site
@@ -13,5 +13,15 @@ class ProductAdmin(ModelAdmin):
     adapter_class = SQLModelAdapter
 
 
+class CountryAdmin(ModelAdmin):
+    adapter_class = SQLModelAdapter
+
+
+class CityAdmin(ModelAdmin):
+    adapter_class = SQLModelAdapter
+
+
 site.register(User, UserAdmin)
 site.register(Product, ProductAdmin)
+site.register(Country, CountryAdmin)
+site.register(City, CityAdmin)

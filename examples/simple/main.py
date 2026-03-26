@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlmodel import SQLModel, select
 
-from examples.simple.models import User
+from examples.simple.models import City, Country, User
 from hyperadmin.main import Admin
 
 # 1. Create a database engine
@@ -28,6 +28,24 @@ async def create_db_and_tables():
             session.add(User(name="Alice", email="alice@example.com"))
             session.add(User(name="Bob", email="bob@example.com"))
             session.add(User(name="Charlie", email="charlie@example.com"))
+            await session.commit()
+
+    async with AsyncSession(engine) as session:
+        result = await session.execute(select(Country))
+        if not result.first():
+            uk = Country(name="United Kingdom")
+            fr = Country(name="France")
+            session.add_all([uk, fr])
+            await session.commit()
+            await session.refresh(uk)
+            await session.refresh(fr)
+            session.add_all(
+                [
+                    City(name="London", country_id=uk.id),
+                    City(name="Manchester", country_id=uk.id),
+                    City(name="Paris", country_id=fr.id),
+                ]
+            )
             await session.commit()
 
 

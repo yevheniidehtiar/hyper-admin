@@ -11,24 +11,24 @@ from sqlmodel import Field, Relationship, SQLModel, select
 # ---------------------------------------------------------------------------
 
 
-class Country(SQLModel, table=True):
+class ChoiceCountry(SQLModel, table=True):
     __tablename__: str = "countries_choices"
     id: int | None = Field(default=None, primary_key=True)
     name: str
 
-    cities: Mapped[list["City"]] = Relationship(back_populates="country")
+    cities: Mapped[list["ChoiceCity"]] = Relationship(back_populates="country")
 
     def __str__(self) -> str:
         return self.name
 
 
-class City(SQLModel, table=True):
+class ChoiceCity(SQLModel, table=True):
     __tablename__: str = "cities_choices"
     id: int | None = Field(default=None, primary_key=True)
     name: str
     country_id: int | None = Field(default=None, foreign_key="countries_choices.id")
 
-    country: Mapped[Country | None] = Relationship(back_populates="cities")
+    country: Mapped[ChoiceCountry | None] = Relationship(back_populates="cities")
 
     def __str__(self) -> str:
         return self.name
@@ -48,17 +48,17 @@ async def engine() -> AsyncEngine:
 @pytest.fixture
 async def populated_db(engine: AsyncEngine) -> None:
     async with AsyncSession(engine) as session:
-        uk = Country(name="United Kingdom")
-        fr = Country(name="France")
+        uk = ChoiceCountry(name="United Kingdom")
+        fr = ChoiceCountry(name="France")
         session.add_all([uk, fr])
         await session.commit()
         await session.refresh(uk)
         await session.refresh(fr)
         session.add_all(
             [
-                City(name="London", country_id=uk.id),
-                City(name="Manchester", country_id=uk.id),
-                City(name="Paris", country_id=fr.id),
+                ChoiceCity(name="London", country_id=uk.id),
+                ChoiceCity(name="Manchester", country_id=uk.id),
+                ChoiceCity(name="Paris", country_id=fr.id),
             ]
         )
         await session.commit()
@@ -89,7 +89,7 @@ def query_counter(engine: AsyncEngine) -> list[str]:
 async def test_get_choices_fk_single_query(engine: AsyncEngine, populated_db: None) -> None:
     from hyperadmin.adapters.sqlmodel import SQLModelAdapter
 
-    adapter = SQLModelAdapter(City, engine)
+    adapter = SQLModelAdapter(ChoiceCity, engine)
     log = query_counter(engine)
 
     choices = await adapter.get_choices("country")
@@ -107,7 +107,7 @@ async def test_get_choices_fk_single_query(engine: AsyncEngine, populated_db: No
 async def test_get_choices_search_filters_results(engine: AsyncEngine, populated_db: None) -> None:
     from hyperadmin.adapters.sqlmodel import SQLModelAdapter
 
-    adapter = SQLModelAdapter(City, engine)
+    adapter = SQLModelAdapter(ChoiceCity, engine)
     choices = await adapter.get_choices("country", q="uni")
 
     assert len(choices) == 1
@@ -118,7 +118,7 @@ async def test_get_choices_search_filters_results(engine: AsyncEngine, populated
 async def test_get_choices_pagination(engine: AsyncEngine, populated_db: None) -> None:
     from hyperadmin.adapters.sqlmodel import SQLModelAdapter
 
-    adapter = SQLModelAdapter(City, engine)
+    adapter = SQLModelAdapter(ChoiceCity, engine)
     page1 = await adapter.get_choices("country", limit=1, offset=0)
     page2 = await adapter.get_choices("country", limit=1, offset=1)
 
@@ -132,11 +132,13 @@ async def test_get_choices_cascading_filter(engine: AsyncEngine, populated_db: N
     from hyperadmin.adapters.sqlmodel import SQLModelAdapter
 
     async with AsyncSession(engine) as session:
-        result = await session.execute(select(Country).where(Country.name == "United Kingdom"))
+        result = await session.execute(
+            select(ChoiceCountry).where(ChoiceCountry.name == "United Kingdom")
+        )
         uk = result.scalar_one()
         uk_id = uk.id
 
-    adapter = SQLModelAdapter(Country, engine)
+    adapter = SQLModelAdapter(ChoiceCountry, engine)
     choices = await adapter.get_choices("cities", country_id=uk_id)
 
     assert len(choices) == 2
@@ -149,7 +151,7 @@ async def test_get_choices_cascading_filter(engine: AsyncEngine, populated_db: N
 async def test_get_choices_limit_exceeds_max_raises(engine: AsyncEngine) -> None:
     from hyperadmin.adapters.sqlmodel import SQLModelAdapter
 
-    adapter = SQLModelAdapter(City, engine)
+    adapter = SQLModelAdapter(ChoiceCity, engine)
     with pytest.raises(ValueError, match="exceeds maximum"):
         await adapter.get_choices("country", limit=201)
 
@@ -158,6 +160,6 @@ async def test_get_choices_limit_exceeds_max_raises(engine: AsyncEngine) -> None
 async def test_get_choices_unknown_field_returns_empty(engine: AsyncEngine) -> None:
     from hyperadmin.adapters.sqlmodel import SQLModelAdapter
 
-    adapter = SQLModelAdapter(City, engine)
+    adapter = SQLModelAdapter(ChoiceCity, engine)
     choices = await adapter.get_choices("nonexistent_field")
     assert choices == []
