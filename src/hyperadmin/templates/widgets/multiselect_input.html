@@ -4,16 +4,11 @@
     </label>
     <select id="{{- field.name -}}" {# -#}
             name="{{- field.name -}}" {# -#}
-            class="ha-select">
-        {%- if widget.choices is defined and widget.choices -%}
-            {%- for choice in widget.choices -%}
-                <option value="{{- choice.value -}}" {%- if choice.selected -%} selected{%- endif -%}>{{- choice.label -}}</option>
-            {%- endfor -%}
-        {%- else -%}
-            {%- for choice in field.model_field.annotation -%}
-                <option value="{{- choice.value -}}" {%- if choice == field.value -%} selected{%- endif -%}>{{- choice.name -}}</option>
-            {%- endfor -%}
-        {%- endif -%}
+            multiple {# -#}
+            class="ha-select ha-select--multi">
+        {%- for choice in widget.choices -%}
+            <option value="{{- choice.value -}}" {%- if choice.selected -%} selected{%- endif -%}>{{- choice.label -}}</option>
+        {%- endfor -%}
     </select>
     {%- if field.help_text -%}<p class="ha-help-text">{{- field.help_text -}}</p>{%- endif -%}
     {%- if field.errors -%}
