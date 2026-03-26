@@ -46,11 +46,15 @@ qa: lint type-check audit test-cov
 
 # Run tests
 test:
-    uv run pytest --tb=short -q
+    uv run poe test:unit
 
 # Run tests with coverage (fail under 80%)
 test-cov:
     uv run pytest --tb=short --cov=src/hyperadmin --cov-report=term-missing --cov-fail-under=80
+
+# Run e2e tests
+test-e2e:
+    uv run poe test:e2e
 
 # ── Build ─────────────────────────────────────────────────────
 
@@ -103,6 +107,14 @@ setup-github repo="":
 secure repo="":
     bash scripts/secure-repo.sh {{ repo }}
 
+# -- Local dev -------------────────────────────────────────────
+
+# Run erp example
+run-erp:
+    uv run uvicorn examples.erp.main:app --log-level debug --reload --port 8001
+
+run-simple:
+    uv run uvicorn examples.simple.main:app --log-level debug --reload --port 8002
 
 # ── Utils ─────────────────────────────────────────────────────
 
