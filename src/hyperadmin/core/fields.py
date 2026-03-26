@@ -2,8 +2,22 @@
 
 from __future__ import annotations
 
+import sys
 from enum import Enum
 from typing import Any, Union, get_args, get_origin
+
+# Python 3.10+ introduces X | Y union syntax (types.UnionType).  We must
+# detect both typing.Union and types.UnionType when unwrapping Optional[X].
+if sys.version_info >= (3, 10):
+    import types as _types
+
+    def _is_optional_union(origin: Any, args: tuple) -> bool:
+        return (origin is Union or origin is _types.UnionType) and type(None) in args
+else:
+
+    def _is_optional_union(origin: Any, args: tuple) -> bool:
+        return origin is Union and type(None) in args
+
 
 from pydantic.fields import FieldInfo
 
@@ -33,10 +47,10 @@ def classify_field(field_info: FieldInfo, model_cls: type) -> SelectFieldMeta | 
     if ann is None:
         return None
 
-    # Unwrap Optional[X] → X
+    # Unwrap Optional[X] → X  (handles both typing.Union and types.UnionType)
     origin = get_origin(ann)
     args = get_args(ann)
-    if origin is Union and type(None) in args:
+    if _is_optional_union(origin, args):
         ann = next(a for a in args if a is not type(None))
         origin = get_origin(ann)
         args = get_args(ann)
