@@ -49,6 +49,8 @@ node_modules/
 
 # pytest
 .pytest_cache/
+.coverage
+.coverage*
 
 # Python
 __pycache__/
@@ -72,10 +74,10 @@ uv.lock
 # MkDocs
 site/
 
+# Sqlite
 *.sqlite3
 *.db
-.coverage
-.coverage*
+
 # Claude Code
 .claude/settings.local.json
 
@@ -83,4 +85,7 @@ site/
 !.gemini/
 .gemini/context/
 gha-creds-*.json
-misc/tailadmin-free-tailwind-dashboard-template-main/*
+
+# git worktrees
+/.worktrees/
+
