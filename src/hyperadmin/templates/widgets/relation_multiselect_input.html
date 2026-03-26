@@ -6,7 +6,9 @@
     <select id="{{- field.name -}}" {# -#}
             name="{{- field.name -}}" {# -#}
             multiple {# -#}
-            class="ha-select ha-select--multi ha-select--relation">
+            aria-multiselectable="true" {# -#}
+            class="ha-select ha-select--multi ha-select--relation" {# -#}
+            data-testid="{{- field.name -}}-relation-multiselect">
         {%- for choice in widget.choices -%}
             <option value="{{- choice.value -}}" {%- if choice.selected -%} selected{%- endif -%}>{{- choice.label -}}</option>
         {%- endfor -%}
@@ -15,7 +17,9 @@
     <select id="{{- field.name -}}" {# -#}
             name="{{- field.name -}}" {# -#}
             multiple {# -#}
+            aria-multiselectable="true" {# -#}
             class="ha-select ha-select--multi ha-select--relation ha-select--lazy" {# -#}
+            data-testid="{{- field.name -}}-relation-multiselect" {# -#}
             hx-get="{{- widget.choices_url -}}?q=" {# -#}
             {%- if widget.dependent_on -%}
             hx-trigger="focus delay:200ms, input changed delay:300ms, change from:[name={{- widget.dependent_on -}}]" {# -#}
@@ -23,7 +27,8 @@
             {%- else -%}
             hx-trigger="focus delay:200ms, input changed delay:300ms" {# -#}
             {%- endif -%}
-            hx-target="#{{- field.name -}}-options">
+            hx-target="#{{- field.name -}}-options" {# -#}
+            hx-swap="innerHTML">
         {%- for choice in widget.choices -%}
             <option value="{{- choice.value -}}" {%- if choice.selected -%} selected{%- endif -%}>{{- choice.label -}}</option>
         {%- endfor -%}

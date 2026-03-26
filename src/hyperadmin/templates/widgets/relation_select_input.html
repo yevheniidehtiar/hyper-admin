@@ -5,7 +5,8 @@
     {%- if widget.preload -%}
     <select id="{{- field.name -}}" {# -#}
             name="{{- field.name -}}" {# -#}
-            class="ha-select ha-select--relation">
+            class="ha-select ha-select--relation" {# -#}
+            data-testid="{{- field.name -}}-relation-select">
         <option value="">---------</option>
         {%- for choice in widget.choices -%}
             <option value="{{- choice.value -}}" {%- if choice.selected -%} selected{%- endif -%}>{{- choice.label -}}</option>
@@ -15,6 +16,7 @@
     <select id="{{- field.name -}}" {# -#}
             name="{{- field.name -}}" {# -#}
             class="ha-select ha-select--relation ha-select--lazy" {# -#}
+            data-testid="{{- field.name -}}-relation-select" {# -#}
             hx-get="{{- widget.choices_url -}}?q=" {# -#}
             {%- if widget.dependent_on -%}
             hx-trigger="focus delay:200ms, input changed delay:300ms, change from:[name={{- widget.dependent_on -}}]" {# -#}
@@ -22,7 +24,8 @@
             {%- else -%}
             hx-trigger="focus delay:200ms, input changed delay:300ms" {# -#}
             {%- endif -%}
-            hx-target="#{{- field.name -}}-options">
+            hx-target="#{{- field.name -}}-options" {# -#}
+            hx-swap="innerHTML">
         <option value="">---------</option>
         {%- for choice in widget.choices -%}
             <option value="{{- choice.value -}}" {%- if choice.selected -%} selected{%- endif -%}>{{- choice.label -}}</option>
