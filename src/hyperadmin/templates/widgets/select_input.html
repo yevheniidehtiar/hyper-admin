@@ -4,7 +4,8 @@
     </label>
     <select id="{{- field.name -}}" {# -#}
             name="{{- field.name -}}" {# -#}
-            class="ha-select">
+            class="ha-select" {# -#}
+            data-testid="{{- field.name -}}-select">
         {%- if widget.choices is defined and widget.choices -%}
             {%- for choice in widget.choices -%}
                 <option value="{{- choice.value -}}" {%- if choice.selected -%} selected{%- endif -%}>{{- choice.label -}}</option>
