@@ -7,14 +7,17 @@ from typing import Any, Union, get_args, get_origin
 
 from pydantic.fields import FieldInfo
 
+from hyperadmin.core.choices import SelectFieldMeta
+
 try:
-    import sqlalchemy  # noqa: F401
+    from sqlalchemy import inspect as sa_inspect
+    from sqlalchemy.exc import NoInspectionAvailable
 
     _HAS_SQLALCHEMY = True
 except ImportError:  # pragma: no cover
     _HAS_SQLALCHEMY = False
-
-from hyperadmin.core.choices import SelectFieldMeta
+    sa_inspect = None  # type: ignore[assignment]
+    NoInspectionAvailable = Exception  # type: ignore[assignment,misc]
 
 
 def classify_field(field_info: FieldInfo, model_cls: type) -> SelectFieldMeta | None:
@@ -82,10 +85,8 @@ def _inspect_orm_field(model_cls: type, field_name: str) -> SelectFieldMeta | No
 
     Returns ``None`` when *model_cls* has no SQLAlchemy mapper.
     """
-    if not _HAS_SQLALCHEMY:  # pragma: no cover
+    if not _HAS_SQLALCHEMY or sa_inspect is None:  # pragma: no cover
         return None
-    from sqlalchemy import inspect as sa_inspect
-    from sqlalchemy.exc import NoInspectionAvailable
 
     try:
         mapper: Any = sa_inspect(model_cls)
