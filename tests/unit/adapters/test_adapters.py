@@ -47,6 +47,16 @@ def test_concrete_adapter_must_implement_all_methods():
         async def get_schema(self) -> dict[str, Any]:
             pass
 
+        async def get_choices(
+            self,
+            field: str,
+            q: str = "",
+            limit: int = 50,
+            offset: int = 0,
+            **filters: Any,
+        ) -> builtins.list:
+            pass
+
     # This should not raise an error
     ConcreteAdapter(model=None, engine=None)
 

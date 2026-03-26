@@ -44,6 +44,9 @@ class DummyAdapter(BaseAdapter):
     async def get_schema(self):
         return {}
 
+    async def get_choices(self, field, q="", limit=50, offset=0, **filters):
+        return []
+
 
 class User(BaseModel):
     name: str

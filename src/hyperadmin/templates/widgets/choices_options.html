@@ -1,0 +1,3 @@
+{%- for choice in choices -%}
+<option value="{{- choice.value -}}" {%- if choice.selected -%} selected{%- endif -%}>{{- choice.label -}}</option>
+{%- endfor -%}
