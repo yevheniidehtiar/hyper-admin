@@ -2,6 +2,8 @@ import builtins
 from abc import ABC, abstractmethod
 from typing import Any
 
+from hyperadmin.core.choices import ChoiceItem
+
 
 class BaseAdapter(ABC):
     """Abstract base class for data adapters.
@@ -117,5 +119,31 @@ class BaseAdapter(ABC):
 
         Returns:
             A dictionary representing the model's schema.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    async def get_choices(
+        self,
+        field: str,
+        q: str = "",
+        limit: int = 50,
+        offset: int = 0,
+        **filters: Any,
+    ) -> builtins.list[ChoiceItem]:
+        """Return paginated, searchable choices for a relation field.
+
+        Args:
+            field: The relation field name on this adapter's model.
+            q: Optional search string (ILIKE match on string columns).
+            limit: Max results to return. Must not exceed 200.
+            offset: Number of rows to skip for pagination.
+            **filters: Extra equality filters forwarded to the query (cascading support).
+
+        Returns:
+            A list of ``ChoiceItem`` dicts with ``value``, ``label``, ``selected=False``.
+
+        Raises:
+            ValueError: When ``limit`` exceeds 200.
         """
         raise NotImplementedError

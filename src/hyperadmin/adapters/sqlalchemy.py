@@ -9,6 +9,7 @@ from sqlalchemy.sql.sqltypes import String
 from sqlmodel import AutoString, SQLModel
 
 from hyperadmin.core.adapters import BaseAdapter
+from hyperadmin.core.choices import ChoiceItem
 
 
 class SQLAlchemyAdapter(BaseAdapter):
@@ -122,3 +123,58 @@ class SQLAlchemyAdapter(BaseAdapter):
 
     async def get_schema(self) -> dict[str, Any]:
         return self.model.model_json_schema()
+
+    async def get_choices(
+        self,
+        field: str,
+        q: str = "",
+        limit: int = 50,
+        offset: int = 0,
+        **filters: Any,
+    ) -> builtins.list[ChoiceItem]:
+        """Return paginated, searchable choices for a relation field.
+
+        Performs a single SELECT on the related model — no N+1.
+        """
+        if limit > 200:
+            raise ValueError(f"limit {limit} exceeds maximum of 200")
+
+        if not self.inspector:
+            return []
+
+        target_model = None
+        for rel in self.inspector.relationships:
+            if rel.key == field:
+                target_model = rel.mapper.class_
+                break
+
+        if target_model is None:
+            return []
+
+        target_inspector = inspect(target_model)
+        async with AsyncSession(self.engine) as session:
+            query = select(target_model)
+
+            if q:
+                str_cols = [
+                    c for c in target_inspector.c if isinstance(c.type, AutoString | String)
+                ]
+                if str_cols:
+                    query = query.where(or_(*[c.ilike(f"%{q}%") for c in str_cols[:3]]))
+
+            for key, value in filters.items():
+                if hasattr(target_model, key):
+                    query = query.where(getattr(target_model, key) == value)
+
+            query = query.offset(offset).limit(limit)
+            result = await session.execute(query)
+            items = result.scalars().all()
+
+        return [
+            ChoiceItem(
+                value=str(getattr(item, "id", "")),
+                label=str(item),
+                selected=False,
+            )
+            for item in items
+        ]
