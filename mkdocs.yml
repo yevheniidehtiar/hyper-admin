@@ -74,6 +74,7 @@ nav:
   - Contributing: contributing.md
   - Changelog: changelog.md
   - Agentic Workflow:
+    - CLI Onboarding: agentic-workflow/onboarding.md
     - Overview: agentic-workflow/index.md
     - Cost Model: agentic-workflow/cost-model.md
     - Deep Research Agent: agentic-workflow/deep-research-agent.md

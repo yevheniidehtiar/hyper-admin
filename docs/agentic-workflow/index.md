@@ -1,5 +1,8 @@
 # OSS Library Agentic Workflow
 
+!!! tip "New here?"
+    Start with the [Agentic CLI Onboarding](onboarding.md) guide for a quick orientation of all AI agent configuration in this project.
+
 This project follows an 8-agent workflow for AI-assisted open-source library development. Each agent has a specific role, trigger, and output contract, orchestrated through GitHub's native event system.
 
 ## Architecture
