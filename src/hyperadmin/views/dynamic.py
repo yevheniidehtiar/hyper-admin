@@ -287,6 +287,7 @@ class DynamicModelView:
         """
         widgets: dict[str, HtmxWidget] = {}
         sv = selected_values or {}
+        dependent_fields: dict[str, str] = getattr(self.options, "dependent_fields", {})
         for name, field_info in self.model.model_fields.items():
             if field_names and name not in field_names:
                 continue
@@ -294,6 +295,7 @@ class DynamicModelView:
             if meta is None or meta.choices_source != "relation":
                 continue
             choices_url = f"/{self._model_name_lower}/choices/{name}"
+            dependent_on = meta.dependent_on or dependent_fields.get(name)
             choices: list[ChoiceItem]
             if meta.preload:
                 raw_choices = await self.adapter.get_choices(name)
@@ -306,11 +308,17 @@ class DynamicModelView:
                 choices = []
             if meta.multiple:
                 widgets[name] = RelationMultiSelectWidget(
-                    choices_url=choices_url, choices=choices, preload=meta.preload
+                    choices_url=choices_url,
+                    choices=choices,
+                    preload=meta.preload,
+                    dependent_on=dependent_on,
                 )
             else:
                 widgets[name] = RelationSelectWidget(
-                    choices_url=choices_url, choices=choices, preload=meta.preload
+                    choices_url=choices_url,
+                    choices=choices,
+                    preload=meta.preload,
+                    dependent_on=dependent_on,
                 )
         return widgets
 
@@ -527,7 +535,10 @@ class DynamicModelView:
     ) -> Response:
         """HTMX endpoint: returns an HTML `<option>` fragment for a relation field.
 
-        GET /{model_name}/choices/{field_name}?q=&limit=50&offset=0
+        GET /{model_name}/choices/{field_name}?q=&limit=50&offset=0[&{parent_field}={value}]
+
+        Extra query parameters (beyond q/limit/offset) are forwarded as equality filters
+        to ``adapter.get_choices()`` to support cascading selects.
         """
         await self._check_permission(request, "view")
         if limit > 200:
@@ -539,7 +550,13 @@ class DynamicModelView:
         if field_name not in known_fields:
             raise HTTPException(status_code=404, detail=f"Unknown relation field: {field_name!r}")
 
-        choices = await self.adapter.get_choices(field_name, q=q, limit=limit, offset=offset)
+        # Forward any extra query params as cascading filters (e.g. country_id=1)
+        reserved = {"q", "limit", "offset"}
+        extra_filters = {k: v for k, v in request.query_params.items() if k not in reserved}
+
+        choices = await self.adapter.get_choices(
+            field_name, q=q, limit=limit, offset=offset, **extra_filters
+        )
         context = {"request": request, "choices": choices}
         template = self.templates.get_template("widgets/choices_options.html")
         html = template.render(context)

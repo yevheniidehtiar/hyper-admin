@@ -17,7 +17,12 @@
             multiple {# -#}
             class="ha-select ha-select--multi ha-select--relation ha-select--lazy" {# -#}
             hx-get="{{- widget.choices_url -}}?q=" {# -#}
+            {%- if widget.dependent_on -%}
+            hx-trigger="focus delay:200ms, input changed delay:300ms, change from:[name={{- widget.dependent_on -}}]" {# -#}
+            hx-include="[name={{- widget.dependent_on -}}]" {# -#}
+            {%- else -%}
             hx-trigger="focus delay:200ms, input changed delay:300ms" {# -#}
+            {%- endif -%}
             hx-target="#{{- field.name -}}-options">
         {%- for choice in widget.choices -%}
             <option value="{{- choice.value -}}" {%- if choice.selected -%} selected{%- endif -%}>{{- choice.label -}}</option>
