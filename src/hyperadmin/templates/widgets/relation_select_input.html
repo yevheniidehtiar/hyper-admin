@@ -1,0 +1,34 @@
+<div class="ha-form-group">
+    <label for="{{- field.name -}}" class="ha-label">
+        {{- field.label -}}{%- if field.required -%}<span class="ha-required">*</span>{%- endif -%}
+    </label>
+    {%- if widget.preload -%}
+    <select id="{{- field.name -}}" {# -#}
+            name="{{- field.name -}}" {# -#}
+            class="ha-select ha-select--relation">
+        <option value="">---------</option>
+        {%- for choice in widget.choices -%}
+            <option value="{{- choice.value -}}" {%- if choice.selected -%} selected{%- endif -%}>{{- choice.label -}}</option>
+        {%- endfor -%}
+    </select>
+    {%- else -%}
+    <select id="{{- field.name -}}" {# -#}
+            name="{{- field.name -}}" {# -#}
+            class="ha-select ha-select--relation ha-select--lazy" {# -#}
+            hx-get="{{- widget.choices_url -}}?q=" {# -#}
+            hx-trigger="focus delay:200ms, input changed delay:300ms" {# -#}
+            hx-target="#{{- field.name -}}-options">
+        <option value="">---------</option>
+        {%- for choice in widget.choices -%}
+            <option value="{{- choice.value -}}" {%- if choice.selected -%} selected{%- endif -%}>{{- choice.label -}}</option>
+        {%- endfor -%}
+        <span id="{{- field.name -}}-options"></span>
+    </select>
+    {%- endif -%}
+    {%- if field.help_text -%}<p class="ha-help-text">{{- field.help_text -}}</p>{%- endif -%}
+    {%- if field.errors -%}
+        <ul class="ha-field-errors" aria-live="polite" data-testid="{{ field.name }}-errors">
+            {%- for e in field.errors -%}<li>{{- e -}}</li>{%- endfor -%}
+        </ul>
+    {%- endif -%}
+</div>
