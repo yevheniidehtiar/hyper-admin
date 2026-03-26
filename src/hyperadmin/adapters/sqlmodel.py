@@ -18,6 +18,7 @@ class SQLModelAdapter(BaseAdapter):
 
     def __init__(self, model: type[SQLModel], engine: AsyncEngine):
         super().__init__(model, engine)
+        self.inspector = inspect(model)
 
     async def get(self, pk: Any) -> Any:
         """
