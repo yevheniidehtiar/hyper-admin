@@ -84,6 +84,9 @@ class MockAdapter(BaseAdapter):
     async def get_schema(self):
         return SampleModel.model_json_schema()
 
+    async def get_choices(self, field, q="", limit=50, offset=0, **filters):
+        return []
+
 
 @pytest.fixture
 def mock_request():

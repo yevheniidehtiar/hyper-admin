@@ -118,6 +118,13 @@ def create_admin_router(  # noqa: PLR0913
             name=f"{model_name}-delete",
         )
 
+    router.add_api_route(
+        f"{prefix}/choices/{{field_name}}",
+        view.choices_view,
+        methods=["GET"],
+        name=f"{model_name}-choices",
+    )
+
     return router
 
 

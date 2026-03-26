@@ -517,6 +517,34 @@ class DynamicModelView:
 
         return RedirectResponse(url=redirect_url, status_code=303)
 
+    async def choices_view(
+        self,
+        request: Request,
+        field_name: str,
+        q: str = "",
+        limit: int = 50,
+        offset: int = 0,
+    ) -> Response:
+        """HTMX endpoint: returns an HTML `<option>` fragment for a relation field.
+
+        GET /{model_name}/choices/{field_name}?q=&limit=50&offset=0
+        """
+        await self._check_permission(request, "view")
+        if limit > 200:
+            raise HTTPException(status_code=400, detail=f"limit {limit} exceeds maximum of 200")
+
+        # Validate that field_name is a known relation on this model
+        inspector = getattr(self.adapter, "inspector", None)
+        known_fields = {rel.key for rel in inspector.relationships} if inspector else set()
+        if field_name not in known_fields:
+            raise HTTPException(status_code=404, detail=f"Unknown relation field: {field_name!r}")
+
+        choices = await self.adapter.get_choices(field_name, q=q, limit=limit, offset=offset)
+        context = {"request": request, "choices": choices}
+        template = self.templates.get_template("widgets/choices_options.html")
+        html = template.render(context)
+        return Response(content=html, media_type="text/html")
+
     async def delete_action(self, request: Request, item_id: int):
         """Deletes an item."""
         await self._check_permission(request, "delete")
