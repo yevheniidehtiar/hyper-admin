@@ -35,8 +35,8 @@ def test_city_create_form_preloaded_country_options_present(page: Page, demo_bas
     assert "France" in option_texts
 
 
-def test_city_create_form_submit_redirects_to_list(page: Page, demo_base_url: str) -> None:
-    """Submitting the create form with a selected country redirects to the city list."""
+def test_city_create_form_submit_redirects_to_detail(page: Page, demo_base_url: str) -> None:
+    """Submitting the create form with a selected country redirects to the city detail page."""
     page.goto(demo_base_url + "/admin/city/create")
 
     page.get_by_label("Name*").fill("Bristol")
@@ -47,8 +47,8 @@ def test_city_create_form_submit_redirects_to_list(page: Page, demo_base_url: st
 
     page.get_by_role("button", name="Create").click()
 
-    expect(page).to_have_url(re.compile(r"/admin/city$"))
-    expect(page.get_by_test_id("list-table")).to_contain_text("Bristol")
+    expect(page).to_have_url(re.compile(r"/admin/city/\d+$"))
+    expect(page.get_by_test_id("detail-fields")).to_contain_text("Bristol")
 
 
 def test_city_update_form_preselects_current_country(page: Page, demo_base_url: str) -> None:
