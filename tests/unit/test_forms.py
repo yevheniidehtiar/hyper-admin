@@ -6,6 +6,7 @@ from typing import Any
 from markupsafe import Markup
 from pydantic import BaseModel, Field
 
+from hyperadmin.views import forms as forms_module
 from hyperadmin.views.forms import (
     FormField,
     HtmxWidget,
@@ -240,6 +241,125 @@ def test_relation_multiselect_widget_lazy():
     widget = RelationMultiSelectWidget(choices_url="/country/choices/cities", preload=False)
     assert widget.preload is False
     assert widget.choices == []
+
+
+def test_pick_widget_enum_auto_detects_select_widget():
+    """classify_field → enum → SelectWidget with choices."""
+    from enum import Enum
+    from unittest.mock import patch
+
+    class Color(Enum):
+        RED = "red"
+        BLUE = "blue"
+
+    class ColorModel(BaseModel):
+        color: Color
+
+    with (
+        patch.object(forms_module, "_HAS_CLASSIFY", True),
+        patch.object(forms_module, "_classify_field") as mock_classify,
+    ):
+        from hyperadmin.core.choices import SelectFieldMeta
+
+        mock_classify.return_value = SelectFieldMeta(
+            choices_source="enum", preload=True, multiple=False
+        )
+        form = PydanticForm(model=ColorModel)
+        widget = form._pick_widget("color", ColorModel.model_fields["color"])
+
+    assert isinstance(widget, SelectWidget)
+    assert len(widget.choices) == 2
+    labels = {c["label"] for c in widget.choices}
+    assert "RED" in labels
+    assert "BLUE" in labels
+
+
+def test_pick_widget_enum_multiple_detects_multiselect_widget():
+    """classify_field → enum + multiple → MultiSelectWidget."""
+    from enum import Enum
+    from unittest.mock import patch
+
+    class Tag(Enum):
+        A = "a"
+        B = "b"
+
+    class TagModel(BaseModel):
+        tags: list[Tag]
+
+    with (
+        patch.object(forms_module, "_HAS_CLASSIFY", True),
+        patch.object(forms_module, "_classify_field") as mock_classify,
+    ):
+        from hyperadmin.core.choices import SelectFieldMeta
+
+        mock_classify.return_value = SelectFieldMeta(
+            choices_source="enum", preload=True, multiple=True
+        )
+        form = PydanticForm(model=TagModel)
+        widget = form._pick_widget("tags", TagModel.model_fields["tags"])
+
+    assert isinstance(widget, MultiSelectWidget)
+
+
+def test_pick_widget_relation_detects_relation_select_widget():
+    """classify_field → relation → RelationSelectWidget."""
+    from unittest.mock import patch
+
+    class RelModel(BaseModel):
+        country_id: int | None = None
+
+    with (
+        patch.object(forms_module, "_HAS_CLASSIFY", True),
+        patch.object(forms_module, "_classify_field") as mock_classify,
+    ):
+        from hyperadmin.core.choices import SelectFieldMeta
+
+        mock_classify.return_value = SelectFieldMeta(
+            choices_source="relation", preload=False, multiple=False
+        )
+        form = PydanticForm(model=RelModel, choices_base_url="/relmodel/choices")
+        widget = form._pick_widget("country_id", RelModel.model_fields["country_id"])
+
+    assert isinstance(widget, RelationSelectWidget)
+    assert widget.choices_url == "/relmodel/choices/country_id"
+    assert widget.preload is False
+
+
+def test_pick_widget_relation_multiple_detects_relation_multiselect():
+    """classify_field → relation + multiple → RelationMultiSelectWidget."""
+    from unittest.mock import patch
+
+    class M2MModel(BaseModel):
+        tags_ids: list[int] = []
+
+    with (
+        patch.object(forms_module, "_HAS_CLASSIFY", True),
+        patch.object(forms_module, "_classify_field") as mock_classify,
+    ):
+        from hyperadmin.core.choices import SelectFieldMeta
+
+        mock_classify.return_value = SelectFieldMeta(
+            choices_source="relation", preload=False, multiple=True
+        )
+        form = PydanticForm(model=M2MModel, choices_base_url="/m2mmodel/choices")
+        widget = form._pick_widget("tags_ids", M2MModel.model_fields["tags_ids"])
+
+    assert isinstance(widget, RelationMultiSelectWidget)
+    assert widget.choices_url == "/m2mmodel/choices/tags_ids"
+
+
+def test_pick_widget_classify_none_falls_through_to_heuristics():
+    """When classify_field returns None, legacy heuristics still apply."""
+    from unittest.mock import patch
+
+    with (
+        patch.object(forms_module, "_HAS_CLASSIFY", True),
+        patch.object(forms_module, "_classify_field", return_value=None),
+    ):
+        form = PydanticForm(model=PydanticModel)
+        widget = form._pick_widget("age", PydanticModel.model_fields["age"])
+
+    assert isinstance(widget, NumberInput)
 
 
 def test_pydantic_form_media():

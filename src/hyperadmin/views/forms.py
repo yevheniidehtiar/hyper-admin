@@ -12,6 +12,14 @@ from pydantic.fields import FieldInfo
 
 from hyperadmin.core.choices import ChoiceItem
 
+try:
+    from hyperadmin.core.fields import classify_field as _classify_field
+
+    _HAS_CLASSIFY = True
+except ImportError:
+    _classify_field = None  # type: ignore[assignment]
+    _HAS_CLASSIFY = False
+
 if TYPE_CHECKING:
     from collections.abc import Mapping
 
@@ -208,19 +216,73 @@ class PydanticForm:
         include: list[str] | None = None,
         exclude: list[str] | None = None,
         initial: dict[str, Any] | None = None,
+        choices_base_url: str = "",
     ) -> None:
         self.model = model
         self.widgets = widgets or {}
         self.include = set(include or [])
         self.exclude = set(exclude or [])
         self.initial = initial or {}
+        self.choices_base_url = choices_base_url
         self.errors: dict[str, list[str]] = {}
         self._fields: list[FormField] = []
+
+    @staticmethod
+    def _enum_choices(enum_cls: type[Enum]) -> list[ChoiceItem]:
+        return [
+            ChoiceItem(
+                value=member.value if not isinstance(member.value, str) else member.value,
+                label=member.name,
+                selected=False,
+            )
+            for member in enum_cls
+        ]
 
     def _pick_widget(self, name: str, field: FieldInfo) -> HtmxWidget:
         if name in self.widgets:
             return self.widgets[name]
-        # Heuristics for common fields
+
+        # --- classify_field auto-detection (requires SQLAlchemy) ---
+        if _HAS_CLASSIFY and _classify_field is not None:
+            from hyperadmin.core.choices import SelectFieldMeta  # noqa: PLC0415
+
+            meta: SelectFieldMeta | None = _classify_field(field, self.model)
+            if meta is not None:
+                choices_url = f"{self.choices_base_url}/{name}" if self.choices_base_url else ""
+                if meta.choices_source == "enum":
+                    # Extract enum type for choices
+                    ann = getattr(field, "annotation", None)
+                    origin = get_origin(ann)
+                    args = get_args(ann)
+                    if origin is not None and args and origin is Union and type(None) in args:
+                        ann = next(a for a in args if a is not type(None))
+                    # Unwrap list[Enum]
+                    if get_origin(ann) is list and get_args(ann):
+                        ann = get_args(ann)[0]
+                    enum_choices = (
+                        self._enum_choices(ann)
+                        if isinstance(ann, type) and issubclass(ann, Enum)
+                        else []
+                    )
+                    if meta.multiple:
+                        return MultiSelectWidget(choices=enum_choices)
+                    return SelectWidget(choices=enum_choices)
+                if meta.choices_source == "static" and meta.multiple:
+                    return MultiSelectWidget()
+                if meta.choices_source == "relation":
+                    if meta.multiple:
+                        return RelationMultiSelectWidget(
+                            choices_url=choices_url,
+                            preload=meta.preload,
+                            dependent_on=meta.dependent_on,
+                        )
+                    return RelationSelectWidget(
+                        choices_url=choices_url,
+                        preload=meta.preload,
+                        dependent_on=meta.dependent_on,
+                    )
+
+        # --- Legacy heuristics ---
         lower = name.lower()
         if lower in {"description", "text", "body", "content"}:
             return Textarea()
