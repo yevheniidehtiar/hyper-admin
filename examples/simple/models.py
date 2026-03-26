@@ -1,7 +1,8 @@
 from datetime import datetime
 from enum import Enum
 
-from sqlmodel import Field, SQLModel
+from sqlalchemy.orm import Mapped
+from sqlmodel import Field, Relationship, SQLModel
 
 
 class UserType(str, Enum):
@@ -33,3 +34,24 @@ class Product(SQLModel, table=True):
     is_available: bool = True
     category: ProductCategory = Field(default=ProductCategory.ELECTRONICS, nullable=False)
     release_date: datetime | None = Field(default_factory=datetime.now)
+
+
+class Country(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    name: str = Field(min_length=1)
+
+    cities: Mapped[list["City"]] = Relationship(back_populates="country")
+
+    def __str__(self) -> str:
+        return self.name
+
+
+class City(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    name: str = Field(min_length=1)
+    country_id: int | None = Field(default=None, foreign_key="country.id")
+
+    country: Mapped[Country | None] = Relationship(back_populates="cities")
+
+    def __str__(self) -> str:
+        return self.name
