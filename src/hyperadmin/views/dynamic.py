@@ -99,6 +99,9 @@ class DynamicModelView:
         self.actions: list[ActionDef] = actions or []
         self._action_map: dict[str, ActionDef] = {a.name: a for a in self.actions}
         self._admin_instance = admin_instance
+        # Expose the live adapter on the admin instance so action handlers can use self.adapter
+        if admin_instance is not None:
+            admin_instance.adapter = self.adapter
 
     async def _check_permission(self, request: Request, action: str) -> None:
         """Raise 403 if the user lacks the required permission.
