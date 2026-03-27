@@ -17,6 +17,7 @@ Start here. Each row tells you which file to read, why, and when.
 | **Must — before code style** | `.claude/rules/code-style.md` | Python conventions — feature-grouped layout, type hints, 100-char lines, HTMX/Alpine.js | Before writing Python |
 | **Must — before commits** | `.claude/rules/git-workflow.md` | Claude Code commit identity, `CLAUDE_GH_TOKEN` for PRs, Conventional Commits | Before first commit |
 | **Must — before tests** | `.claude/rules/testing.md` | TDD, unit/E2E split, `data-testid` reference, Playwright Chromium install | Before writing tests |
+| **Reference** | `.claude/project-config.md` | Shared constants (public repo, branch, cycle limits) + label state machine + runtime derivation pattern | Always `@`-include in commands/agents that use GitHub |
 | **Reference** | `ROADMAP.md` | Current phase and reserved Phase 3 domains | When scoping a feature |
 | **Reference** | `GEMINI.md` | Gemini CLI conventions (size:S tasks) | When dispatching to Gemini |
 | **Reference** | `JULES.md` | Jules async task conventions (size:M tasks) | When dispatching to Jules |
@@ -83,6 +84,7 @@ Skills are multi-step agentic workflows invoked as `/skill-name`.
 | `/plan-roadmap` | Roadmap Planning Agent — reads codebase, decomposes to milestones/epics/tasks, builds dependency DAG | Decomposing a spec into issues |
 | `/plan-to-issues <request>` | Analyze request, create epic + child GitHub issues with labels/sizes/dependencies | Materializing a plan into the issue tracker |
 | `/plan-to-issues-dry-run <request>` | Same as above, preview only — no issues created | Reviewing a plan before committing |
+| `/run-autonomous-team` | Launch the conductor to orchestrate dev agents through the backlog — picks ready issues, dispatches workers in worktrees, coordinates review, manages merge queue | Autonomous batch implementation |
 | `/oss-triage-audit [dry-run\|live]` | Run `scripts/triage_audit.py` — AI-slop scoring, ego-PR detection, duplicate detection, lifecycle enforcement | Periodic hygiene pass on open issues/PRs |
 
 ---
@@ -93,8 +95,9 @@ These agents run as sub-processes via the `Agent` tool or `claude --agent <name>
 
 | Agent | Model | Role |
 |-------|-------|------|
-| `delivery-manager` | haiku | Monitors in-progress issues, coordinates PR reviews, triggers E2E tests, extracts preview URLs, posts structured Slack notifications, enforces delivery pipeline, auto-merge gate |
-| `hyper-admin-code-reviewer` | haiku | Reviews PRs against CONSTITUTION.md, planning-playbook, code-style, E2E conventions — 8-section structured checklist with pass/fail verdict |
+| `conductor` | opus | Orchestrates autonomous team cycles — dispatches dev agents in worktrees, coordinates reviews, **owns merge queue authority** (evaluates file overlap + dependency order → `merge-granted` / `merge-deferred`) |
+| `delivery-manager` | haiku | Watches label filters: adds `merge-requested` when PR is approved + CI green; executes merge when `merge-granted` appears; posts Slack delivery notifications |
+| `hyper-admin-code-reviewer` | haiku | Reviews PRs against CONSTITUTION.md, planning-playbook, code-style, E2E conventions — 8-section checklist with machine-readable `VERDICT: APPROVED` / `VERDICT: CHANGES_REQUIRED` |
 | `oss-triage-auditor` | sonnet | Delegates to `scripts/triage_audit.py` for AI-slop/ego-PR detection, duplicate detection, lifecycle label enforcement, TTL |
 
 Each agent has a persistent memory directory under `.claude/agent-memory/<agent-name>/`.
@@ -145,6 +148,7 @@ Two headless agents have dedicated memory directories:
 
 | Agent | Directory |
 |-------|-----------|
+| `conductor` | `.claude/agent-memory/conductor/` |
 | `delivery-manager` | `.claude/agent-memory/delivery-manager/` |
 | `hyper-admin-code-reviewer` | `.claude/agent-memory/hyper-admin-code-reviewer/` |
 

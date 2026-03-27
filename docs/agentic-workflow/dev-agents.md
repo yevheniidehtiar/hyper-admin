@@ -2,7 +2,7 @@
 
 | Property | Value |
 |---|---|
-| **Tier** | Production (Primary) / Utility (Tests) |
+| **Tier** | Claude Code (all sizes) |
 | **Trigger** | Task dispatched from workload queue (GitHub Issue assigned) |
 | **Purpose** | Implement code changes according to task specification |
 | **Est. Cost** | 20k - 100k tokens per implementation task |
@@ -12,30 +12,42 @@
 ```
 Incoming task from workload queue
   │
-  ├── size:S → Gemini CLI (inline fix, < 30 min)
-  ├── size:M → Jules (async PR, 1-4h)
-  └── size:L → Jules + Claude Code (plan first, then implement)
+  ├── size:S → Claude Code via fix-issue skill (lightweight TDD loop)
+  ├── size:M → Claude Code via implement-feature skill (full self-eval loop)
+  └── size:L → Claude Code via implement-feature skill + human checkpoint gate
 ```
 
-### Gemini CLI (size:S)
+> **Note**: Gemini CLI and Jules are paused — Google AI is currently unavailable.
+> All dispatch goes to Claude Code. Jules/Gemini entries are kept below for when
+> Google AI becomes available again.
 
-- One-liner fixes, small utility functions, config changes
-- Run directly in terminal, no async overhead
+### Claude Code — fix-issue skill (size:S)
+
+- One-liner fixes, small utility functions, config tweaks
+- Lightweight loop: branch → explore → test-first → implement → lint+test → PR
+- Runs in an isolated worktree dispatched by the conductor
 - Example: "Add a `--verbose` flag to the CLI parser"
 
-### Jules (size:M)
+### Claude Code — implement-feature skill (size:M)
 
-- Core dev agent — handles most implementation work
-- Runs async on Google Cloud VM, creates PR when done
-- 15 concurrent tasks = dispatch an entire milestone at once
+- Core dev agent for most implementation work
+- Full self-evaluating loop: plan → validate against 16+ checklist items → TDD → PR
+- Blocker protocol: searches memory, saves WIP as draft PR, halts with issue comment
+- Runs in an isolated worktree dispatched by the conductor
 - Example: "Implement `RetryPolicy` class with exponential backoff and jitter"
 
-### Claude Code (size:L or fallback)
+### Claude Code — implement-feature + human checkpoint (size:L)
 
 - Complex tasks requiring deep architectural reasoning
-- Interactive — you guide the implementation in real-time
-- Fallback when Jules produces a PR that fails review
+- Conductor pauses after planning phase and presents plan to human for approval
+- Human approves or adjusts scope before implementation begins
 - Example: "Redesign the plugin system to support async hooks"
+
+### Paused: Gemini CLI (size:S) / Jules (size:M–L)
+
+- Previously used for high-volume parallel dispatch (Jules: 15 concurrent tasks)
+- Currently unavailable — Google AI blocked/broken as of 2026-03
+- Re-enable by updating `scripts/setup-github.sh` labels and conductor dispatch logic
 
 ## TDD-First Execution
 

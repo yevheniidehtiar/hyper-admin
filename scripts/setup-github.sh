@@ -27,6 +27,11 @@ gh label create "community" --repo "$REPO" --color "BFDADC" --description "From 
 gh label create "scheduled:auto" --repo "$REPO" --color "FEF2C0" --description "Created by scheduled agent (high confidence)" || true
 gh label create "scheduled:review-needed" --repo "$REPO" --color "F9D0C4" --description "Needs human review" || true
 
+# Merge Queue Labels (used by conductor / delivery-manager)
+gh label create "merge-requested" --repo "$REPO" --color "FEF2C0" --description "PR approved + CI green, queued for conductor evaluation" || true
+gh label create "merge-granted"   --repo "$REPO" --color "0E8A16" --description "Conductor approved merge — safe to merge, no conflict risk" || true
+gh label create "merge-deferred"  --repo "$REPO" --color "D93F0B" --description "Conductor deferred merge — reason in PR comment" || true
+
 echo "✓ GitHub labels configured for $REPO"
 
 # Initialize Project Memory if gh command available
