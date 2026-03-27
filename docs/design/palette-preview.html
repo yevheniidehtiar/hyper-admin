@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HyperAdmin UI Kit — Color Palette Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --primary-50:  #effefa;
+      --primary-100: #c8fef4;
+      --primary-200: #90fde9;
+      --primary-300: #52f5d8;
+      --primary-400: #1edcbe;
+      --primary-500: #05bfa4;
+      --primary-600: #009a86;
+      --primary-700: #007b6d;
+      --primary-800: #006159;
+      --primary-900: #00504a;
+
+      --accent-50:  #fff1f3;
+      --accent-100: #ffe0e6;
+      --accent-200: #ffc6d2;
+      --accent-300: #ff9db3;
+      --accent-400: #ff6488;
+      --accent-500: #f63d68;
+      --accent-600: #e31b54;
+      --accent-700: #c01048;
+      --accent-800: #a11043;
+      --accent-900: #89123e;
+
+      --neutral-0:   #ffffff;
+      --neutral-25:  #fcfcfd;
+      --neutral-50:  #f9fafb;
+      --neutral-100: #f2f4f7;
+      --neutral-200: #eaecf0;
+      --neutral-300: #d0d5dd;
+      --neutral-400: #98a2b3;
+      --neutral-500: #667085;
+      --neutral-600: #475467;
+      --neutral-700: #344054;
+      --neutral-800: #1d2939;
+      --neutral-900: #101828;
+      --neutral-950: #0c111d;
+
+      --success-500: #12b76a;
+      --success-bg:  #ecfdf3;
+      --success-text:#067647;
+      --warning-500: #f79009;
+      --warning-bg:  #fffaeb;
+      --warning-text:#b54708;
+      --error-500:   #f04438;
+      --error-bg:    #fef3f2;
+      --error-text:  #b42318;
+      --info-500:    #0ba5ec;
+      --info-bg:     #f0f9ff;
+      --info-text:   #026aa2;
+
+      --font-sans: 'Inter', system-ui, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background: #f8fafc;
+      color: #1d2939;
+      padding: 2rem;
+      line-height: 1.5;
+    }
+
+    h1 { font-size: 1.875rem; font-weight: 800; margin-bottom: 0.25rem; }
+    h2 { font-size: 1.125rem; font-weight: 700; margin: 2rem 0 0.75rem; color: #344054; text-transform: uppercase; letter-spacing: 0.06em; font-size: 0.75rem; }
+    h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem; color: #475467; }
+
+    .page-header {
+      margin-bottom: 3rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid #eaecf0;
+    }
+    .page-header p { color: #667085; margin-top: 0.5rem; font-size: 0.9375rem; }
+    .brand-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+    .pill-fastapi { background: #05bfa4; color: white; }
+    .pill-pydantic { background: #f63d68; color: white; }
+    .pill-plus { color: #98a2b3; font-size: 1rem; font-weight: 400; }
+
+    /* Palette grid */
+    .palette-group { margin-bottom: 2.5rem; }
+    .swatches {
+      display: flex;
+      gap: 0;
+      border-radius: 0.5rem;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+    }
+    .swatch {
+      flex: 1;
+      min-height: 80px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 0.5rem 0.375rem;
+      cursor: default;
+      transition: flex 0.15s ease;
+    }
+    .swatch:hover { flex: 2; }
+    .swatch-label {
+      font-size: 0.6875rem;
+      font-weight: 600;
+      font-family: var(--font-mono);
+      line-height: 1.2;
+    }
+    .swatch-step { display: block; opacity: 0.7; margin-bottom: 0.125rem; }
+    .swatch-hex { display: block; }
+
+    /* Semantic colors */
+    .semantic-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+    }
+    .semantic-card {
+      border-radius: 0.5rem;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .semantic-swatch {
+      height: 60px;
+    }
+    .semantic-info {
+      padding: 0.625rem 0.75rem;
+      background: white;
+      border-top: 1px solid #eaecf0;
+    }
+    .semantic-info .name { font-weight: 600; font-size: 0.8125rem; }
+    .semantic-info .hex { font-family: var(--font-mono); font-size: 0.75rem; color: #667085; }
+
+    /* Neutral scale */
+    .neutral-swatches {
+      display: flex;
+      gap: 0;
+      border-radius: 0.5rem;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .neutral-swatch {
+      flex: 1;
+      height: 64px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 0.375rem;
+      cursor: default;
+      transition: flex 0.15s ease;
+    }
+    .neutral-swatch:hover { flex: 2; }
+
+    /* Component mockups */
+    .mockup-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin-bottom: 2.5rem;
+    }
+    .mockup-panel {
+      border-radius: 0.75rem;
+      padding: 1.5rem;
+      box-shadow: 0 4px 8px rgba(16,24,40,0.08), 0 2px 4px rgba(16,24,40,0.04);
+    }
+    .mockup-panel.light { background: #f9fafb; }
+    .mockup-panel.dark  { background: #0c111d; }
+    .mockup-panel .panel-title {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 1.25rem;
+    }
+    .mockup-panel.light .panel-title { color: #98a2b3; }
+    .mockup-panel.dark  .panel-title { color: #475467; }
+
+    /* Buttons */
+    .btn-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+    .ha-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.5rem 1rem;
+      border-radius: 0.375rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      font-family: var(--font-sans);
+      border: 1px solid transparent;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.1s ease;
+    }
+    .ha-btn-primary { background: #05bfa4; color: white; border-color: #05bfa4; }
+    .ha-btn-primary:hover { background: #009a86; border-color: #009a86; }
+    .ha-btn-accent  { background: #f63d68; color: white; border-color: #f63d68; }
+    .ha-btn-accent:hover { background: #e31b54; border-color: #e31b54; }
+    .ha-btn-outline { background: transparent; color: #05bfa4; border-color: #05bfa4; }
+    .ha-btn-outline:hover { background: #effefa; }
+    .ha-btn-ghost  { background: transparent; color: #344054; border-color: #d0d5dd; }
+    .ha-btn-ghost:hover { background: #f2f4f7; }
+    .ha-btn-danger { background: #f04438; color: white; border-color: #f04438; }
+    .ha-btn-danger:hover { background: #d92d20; border-color: #d92d20; }
+    .ha-btn-sm { padding: 0.375rem 0.75rem; font-size: 0.8125rem; }
+    .ha-btn-lg { padding: 0.625rem 1.25rem; font-size: 1rem; }
+
+    /* Dark mode buttons */
+    .dark .ha-btn-outline { color: #2dd4b8; border-color: #2dd4b8; }
+    .dark .ha-btn-outline:hover { background: rgba(45,212,184,0.1); }
+    .dark .ha-btn-ghost  { color: #d0d5dd; border-color: #344054; }
+    .dark .ha-btn-ghost:hover { background: #1d2939; }
+
+    /* Badges */
+    .badge-row { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+    .ha-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .ha-badge-primary  { background: #c8fef4; color: #007b6d; }
+    .ha-badge-accent   { background: #ffe0e6; color: #c01048; }
+    .ha-badge-success  { background: #ecfdf3; color: #067647; }
+    .ha-badge-warning  { background: #fffaeb; color: #b54708; }
+    .ha-badge-error    { background: #fef3f2; color: #b42318; }
+    .ha-badge-neutral  { background: #f2f4f7; color: #344054; }
+    .ha-badge-info     { background: #f0f9ff; color: #026aa2; }
+    /* Dark */
+    .dark .ha-badge-primary  { background: rgba(5,191,164,0.2); color: #52f5d8; }
+    .dark .ha-badge-accent   { background: rgba(246,61,104,0.2); color: #ff9db3; }
+    .dark .ha-badge-success  { background: rgba(18,183,106,0.2); color: #6ce9a6; }
+    .dark .ha-badge-warning  { background: rgba(247,144,9,0.2);  color: #fec84b; }
+    .dark .ha-badge-error    { background: rgba(240,68,56,0.2);  color: #fda29b; }
+    .dark .ha-badge-neutral  { background: #1d2939; color: #d0d5dd; }
+    .dark .ha-badge-info     { background: rgba(11,165,236,0.2); color: #67e3f9; }
+
+    /* Alerts */
+    .ha-alert {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.625rem;
+      padding: 0.75rem 1rem;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      margin-bottom: 0.625rem;
+      border-left: 3px solid;
+    }
+    .ha-alert-success { background: #ecfdf3; color: #067647; border-left-color: #12b76a; }
+    .ha-alert-warning { background: #fffaeb; color: #b54708; border-left-color: #f79009; }
+    .ha-alert-error   { background: #fef3f2; color: #b42318; border-left-color: #f04438; }
+    .ha-alert-info    { background: #f0f9ff; color: #026aa2; border-left-color: #0ba5ec; }
+    /* Dark */
+    .dark .ha-alert-success { background: rgba(18,183,106,0.12); color: #6ce9a6; border-left-color: #12b76a; }
+    .dark .ha-alert-warning { background: rgba(247,144,9,0.12);  color: #fec84b; border-left-color: #f79009; }
+    .dark .ha-alert-error   { background: rgba(240,68,56,0.12);  color: #fda29b; border-left-color: #f04438; }
+    .dark .ha-alert-info    { background: rgba(11,165,236,0.12); color: #67e3f9; border-left-color: #0ba5ec; }
+    .ha-alert-icon { font-size: 1rem; flex-shrink: 0; line-height: 1.4; }
+    .ha-alert-body .title { font-weight: 700; }
+    .ha-alert-body .msg   { opacity: 0.9; }
+
+    /* Mini table */
+    .ha-table-mock {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+      border-radius: 0.5rem;
+      overflow: hidden;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+    .ha-table-mock thead { background: #f2f4f7; }
+    .ha-table-mock thead th {
+      padding: 0.625rem 0.75rem;
+      text-align: left;
+      font-weight: 600;
+      color: #475467;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .ha-table-mock tbody tr { border-top: 1px solid #eaecf0; background: white; }
+    .ha-table-mock tbody tr:hover { background: #effefa; }
+    .ha-table-mock tbody tr.selected { background: #c8fef4; }
+    .ha-table-mock td { padding: 0.625rem 0.75rem; color: #344054; }
+    .ha-table-mock td a { color: #05bfa4; font-weight: 600; text-decoration: none; }
+    /* Dark */
+    .dark .ha-table-mock thead { background: #101828; }
+    .dark .ha-table-mock thead th { color: #667085; }
+    .dark .ha-table-mock tbody tr { border-top-color: #1d2939; background: #0c111d; }
+    .dark .ha-table-mock tbody tr:hover { background: rgba(5,191,164,0.07); }
+    .dark .ha-table-mock tbody tr.selected { background: rgba(5,191,164,0.15); }
+    .dark .ha-table-mock td { color: #d0d5dd; }
+    .dark .ha-table-mock td a { color: #2dd4b8; }
+
+    /* Card */
+    .ha-card-mock {
+      background: white;
+      border-radius: 0.5rem;
+      box-shadow: 0 1px 3px rgba(16,24,40,0.1), 0 1px 2px rgba(16,24,40,0.06);
+      overflow: hidden;
+      margin-bottom: 0.75rem;
+    }
+    .dark .ha-card-mock { background: #1d2939; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+    .ha-card-header {
+      padding: 0.875rem 1rem;
+      border-bottom: 1px solid #eaecf0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .dark .ha-card-header { border-bottom-color: #344054; }
+    .ha-card-header .title { font-weight: 700; font-size: 0.9375rem; color: #101828; }
+    .dark .ha-card-header .title { color: #f2f4f7; }
+    .ha-card-body { padding: 1rem; }
+    .ha-kpi { display: flex; gap: 0.75rem; }
+    .ha-kpi-item { flex: 1; padding: 0.75rem; background: #f9fafb; border-radius: 0.375rem; }
+    .dark .ha-kpi-item { background: #101828; }
+    .ha-kpi-value { font-size: 1.5rem; font-weight: 800; color: #101828; }
+    .dark .ha-kpi-value { color: #f2f4f7; }
+    .ha-kpi-label { font-size: 0.75rem; color: #667085; font-weight: 500; margin-top: 0.125rem; }
+    .ha-kpi-trend-up   { color: #12b76a; font-size: 0.75rem; font-weight: 600; margin-top: 0.25rem; }
+    .ha-kpi-trend-down { color: #f04438; font-size: 0.75rem; font-weight: 600; margin-top: 0.25rem; }
+
+    /* Form input */
+    .ha-input-group { margin-bottom: 0.75rem; }
+    .ha-label { display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.375rem; color: #344054; }
+    .dark .ha-label { color: #d0d5dd; }
+    .ha-input {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid #d0d5dd;
+      border-radius: 0.375rem;
+      font-size: 0.875rem;
+      font-family: var(--font-sans);
+      background: white;
+      color: #101828;
+      outline: none;
+      transition: border-color 0.1s, box-shadow 0.1s;
+    }
+    .ha-input:focus { border-color: #05bfa4; box-shadow: 0 0 0 4px rgba(5,191,164,0.16); }
+    .ha-input.error { border-color: #f04438; }
+    .ha-input.error:focus { box-shadow: 0 0 0 4px rgba(240,68,56,0.16); }
+    .ha-field-error { color: #f04438; font-size: 0.75rem; margin-top: 0.25rem; }
+    .dark .ha-input { background: #101828; border-color: #344054; color: #f2f4f7; }
+    .dark .ha-input::placeholder { color: #475467; }
+    .dark .ha-input:focus { border-color: #2dd4b8; box-shadow: 0 0 0 4px rgba(45,212,184,0.16); }
+
+    /* Sidebar mini */
+    .ha-sidebar-mock {
+      background: white;
+      border-radius: 0.5rem;
+      padding: 0.75rem 0;
+      box-shadow: 0 1px 3px rgba(16,24,40,0.1);
+      font-size: 0.875rem;
+      min-width: 160px;
+    }
+    .dark .ha-sidebar-mock { background: #101828; }
+    .ha-nav-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0.875rem;
+      color: #475467;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    .dark .ha-nav-item { color: #667085; }
+    .ha-nav-item:hover { background: #f9fafb; color: #344054; }
+    .dark .ha-nav-item:hover { background: #1d2939; color: #d0d5dd; }
+    .ha-nav-item.active {
+      background: #effefa;
+      color: #007b6d;
+      font-weight: 600;
+    }
+    .dark .ha-nav-item.active {
+      background: rgba(5,191,164,0.12);
+      color: #2dd4b8;
+    }
+    .ha-nav-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .ha-nav-dot-active { background: #05bfa4; }
+    .ha-nav-dot-inactive { background: #d0d5dd; }
+
+    /* Toast */
+    .ha-toast {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.625rem;
+      padding: 0.875rem 1rem;
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      margin-bottom: 0.5rem;
+      box-shadow: 0 8px 16px rgba(16,24,40,0.1), 0 4px 6px rgba(16,24,40,0.05);
+    }
+    .ha-toast-success { background: white; border-left: 3px solid #12b76a; }
+    .ha-toast-error   { background: white; border-left: 3px solid #f04438; }
+    .dark .ha-toast-success { background: #1d2939; }
+    .dark .ha-toast-error   { background: #1d2939; }
+    .ha-toast-icon-success { color: #12b76a; font-size: 1.125rem; }
+    .ha-toast-icon-error   { color: #f04438; font-size: 1.125rem; }
+    .ha-toast-msg { color: #344054; }
+    .dark .ha-toast-msg { color: #d0d5dd; }
+    .ha-toast-title { font-weight: 700; color: #101828; }
+    .dark .ha-toast-title { color: #f2f4f7; }
+
+    /* Admin chrome mockup */
+    .chrome-mockup {
+      border-radius: 0.75rem;
+      overflow: hidden;
+      box-shadow: 0 20px 40px rgba(16,24,40,0.12), 0 8px 16px rgba(16,24,40,0.06);
+      border: 1px solid #eaecf0;
+      margin-bottom: 2rem;
+    }
+    .chrome-navbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 1.25rem;
+      height: 52px;
+      background: white;
+      border-bottom: 1px solid #eaecf0;
+    }
+    .chrome-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 800;
+      font-size: 1rem;
+      color: #101828;
+    }
+    .chrome-brand-dot {
+      width: 24px; height: 24px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, #05bfa4, #009a86);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 0.75rem;
+      font-weight: 800;
+    }
+    .chrome-body { display: flex; min-height: 320px; }
+    .chrome-sidebar {
+      width: 200px;
+      flex-shrink: 0;
+      background: #f9fafb;
+      border-right: 1px solid #eaecf0;
+      padding: 1rem 0;
+    }
+    .chrome-content {
+      flex: 1;
+      padding: 1.25rem;
+      background: #f9fafb;
+    }
+    .chrome-page-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #101828;
+      margin-bottom: 1rem;
+    }
+    .chrome-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+    .chrome-search {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      padding: 0.375rem 0.75rem;
+      border: 1px solid #d0d5dd;
+      border-radius: 0.375rem;
+      background: white;
+      font-size: 0.8125rem;
+      color: #667085;
+      width: 200px;
+    }
+
+    /* Dark chrome */
+    .chrome-mockup.dark { border-color: #1d2939; }
+    .dark .chrome-navbar { background: #101828; border-bottom-color: #1d2939; }
+    .dark .chrome-brand { color: #f2f4f7; }
+    .dark .chrome-sidebar { background: #0c111d; border-right-color: #1d2939; }
+    .dark .chrome-content { background: #0c111d; }
+    .dark .chrome-page-title { color: #f2f4f7; }
+    .dark .chrome-toolbar .chrome-search { background: #101828; border-color: #344054; color: #475467; }
+
+    /* Typography specimen */
+    .type-row {
+      display: flex;
+      align-items: baseline;
+      gap: 1.5rem;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #f2f4f7;
+    }
+    .type-meta { font-family: var(--font-mono); font-size: 0.6875rem; color: #98a2b3; width: 80px; flex-shrink: 0; }
+    .type-sample { color: #101828; }
+
+    /* Focus ring demo */
+    .focus-demo {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 0.5rem;
+    }
+    .focus-btn {
+      padding: 0.5rem 1rem;
+      border-radius: 0.375rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: var(--font-sans);
+      border: 1px solid transparent;
+    }
+    .focus-btn.focused-primary {
+      background: #05bfa4;
+      color: white;
+      border-color: #05bfa4;
+      box-shadow: 0 0 0 4px rgba(5,191,164,0.24);
+    }
+    .focus-btn.focused-accent {
+      background: #f63d68;
+      color: white;
+      border-color: #f63d68;
+      box-shadow: 0 0 0 4px rgba(246,61,104,0.24);
+    }
+    .focus-btn.focused-ghost {
+      background: white;
+      color: #344054;
+      border-color: #d0d5dd;
+      box-shadow: 0 0 0 4px rgba(5,191,164,0.24);
+    }
+    .focus-btn.focused-error {
+      background: white;
+      color: #b42318;
+      border-color: #f04438;
+      box-shadow: 0 0 0 4px rgba(240,68,56,0.24);
+    }
+
+    /* Section divider */
+    .section { margin-bottom: 3rem; }
+    .section-label {
+      font-size: 0.6875rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #98a2b3;
+      margin-bottom: 0.875rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .section-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #eaecf0;
+    }
+
+    /* Skip to content (visible always in preview) */
+    .toc {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: white;
+      border-bottom: 1px solid #eaecf0;
+      padding: 0.5rem 2rem;
+      margin: -2rem -2rem 2rem;
+      display: flex;
+      gap: 1.5rem;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .toc a { font-size: 0.8125rem; color: #667085; text-decoration: none; font-weight: 500; white-space: nowrap; }
+    .toc a:hover { color: #05bfa4; }
+  </style>
+</head>
+<body>
+
+  <nav class="toc">
+    <a href="#brand">Brand</a>
+    <a href="#primary">Primary (Teal)</a>
+    <a href="#accent">Accent (Coral)</a>
+    <a href="#semantic">Semantic</a>
+    <a href="#neutral">Neutral</a>
+    <a href="#components">Components</a>
+    <a href="#chrome">Admin Chrome</a>
+    <a href="#typography">Typography</a>
+    <a href="#focus">Focus Rings</a>
+  </nav>
+
+  <div class="page-header" id="brand">
+    <h1>HyperAdmin UI Kit</h1>
+    <p>Color Palette &amp; Component Preview</p>
+    <br />
+    <span class="brand-pill pill-fastapi">FastAPI</span>
+    <span class="pill-plus">×</span>
+    <span class="brand-pill pill-pydantic">Pydantic</span>
+    <span style="color:#667085; font-size:0.875rem; margin-left:0.5rem">= HyperAdmin identity</span>
+  </div>
+
+  <!-- PRIMARY -->
+  <div class="section" id="primary">
+    <div class="section-label">Primary — Teal (#05bfa4)</div>
+    <div class="palette-group">
+      <div class="swatches">
+        <div class="swatch" style="background:#effefa">
+          <span class="swatch-label" style="color:#007b6d"><span class="swatch-step">50</span><span class="swatch-hex">#effefa</span></span>
+        </div>
+        <div class="swatch" style="background:#c8fef4">
+          <span class="swatch-label" style="color:#007b6d"><span class="swatch-step">100</span><span class="swatch-hex">#c8fef4</span></span>
+        </div>
+        <div class="swatch" style="background:#90fde9">
+          <span class="swatch-label" style="color:#006159"><span class="swatch-step">200</span><span class="swatch-hex">#90fde9</span></span>
+        </div>
+        <div class="swatch" style="background:#52f5d8">
+          <span class="swatch-label" style="color:#006159"><span class="swatch-step">300</span><span class="swatch-hex">#52f5d8</span></span>
+        </div>
+        <div class="swatch" style="background:#1edcbe">
+          <span class="swatch-label" style="color:#006159"><span class="swatch-step">400</span><span class="swatch-hex">#1edcbe</span></span>
+        </div>
+        <div class="swatch" style="background:#05bfa4; outline: 3px solid #344054; outline-offset: -3px; z-index:1">
+          <span class="swatch-label" style="color:white"><span class="swatch-step">500 ★</span><span class="swatch-hex">#05bfa4</span></span>
+        </div>
+        <div class="swatch" style="background:#009a86">
+          <span class="swatch-label" style="color:white"><span class="swatch-step">600</span><span class="swatch-hex">#009a86</span></span>
+        </div>
+        <div class="swatch" style="background:#007b6d">
+          <span class="swatch-label" style="color:white"><span class="swatch-step">700</span><span class="swatch-hex">#007b6d</span></span>
+        </div>
+        <div class="swatch" style="background:#006159">
+          <span class="swatch-label" style="color:rgba(255,255,255,0.8)"><span class="swatch-step">800</span><span class="swatch-hex">#006159</span></span>
+        </div>
+        <div class="swatch" style="background:#00504a">
+          <span class="swatch-label" style="color:rgba(255,255,255,0.7)"><span class="swatch-step">900</span><span class="swatch-hex">#00504a</span></span>
+        </div>
+      </div>
+    </div>
+    <p style="font-size:0.8125rem; color:#667085; margin-top:0.5rem">★ Primary action color. WCAG AA on white. FastAPI teal <code style="font-family:var(--font-mono);background:#f2f4f7;padding:0 0.25rem;border-radius:3px">#009485</code> sits between 600–700.</p>
+  </div>
+
+  <!-- ACCENT -->
+  <div class="section" id="accent">
+    <div class="section-label">Accent — Coral/Pink (#f63d68) — Pydantic Energy</div>
+    <div class="palette-group">
+      <div class="swatches">
+        <div class="swatch" style="background:#fff1f3">
+          <span class="swatch-label" style="color:#c01048"><span class="swatch-step">50</span><span class="swatch-hex">#fff1f3</span></span>
+        </div>
+        <div class="swatch" style="background:#ffe0e6">
+          <span class="swatch-label" style="color:#c01048"><span class="swatch-step">100</span><span class="swatch-hex">#ffe0e6</span></span>
+        </div>
+        <div class="swatch" style="background:#ffc6d2">
+          <span class="swatch-label" style="color:#a11043"><span class="swatch-step">200</span><span class="swatch-hex">#ffc6d2</span></span>
+        </div>
+        <div class="swatch" style="background:#ff9db3">
+          <span class="swatch-label" style="color:#a11043"><span class="swatch-step">300</span><span class="swatch-hex">#ff9db3</span></span>
+        </div>
+        <div class="swatch" style="background:#ff6488">
+          <span class="swatch-label" style="color:white"><span class="swatch-step">400</span><span class="swatch-hex">#ff6488</span></span>
+        </div>
+        <div class="swatch" style="background:#f63d68; outline: 3px solid #344054; outline-offset: -3px; z-index:1">
+          <span class="swatch-label" style="color:white"><span class="swatch-step">500 ★</span><span class="swatch-hex">#f63d68</span></span>
+        </div>
+        <div class="swatch" style="background:#e31b54">
+          <span class="swatch-label" style="color:white"><span class="swatch-step">600</span><span class="swatch-hex">#e31b54</span></span>
+        </div>
+        <div class="swatch" style="background:#c01048">
+          <span class="swatch-label" style="color:white"><span class="swatch-step">700</span><span class="swatch-hex">#c01048</span></span>
+        </div>
+        <div class="swatch" style="background:#a11043">
+          <span class="swatch-label" style="color:rgba(255,255,255,0.8)"><span class="swatch-step">800</span><span class="swatch-hex">#a11043</span></span>
+        </div>
+        <div class="swatch" style="background:#89123e">
+          <span class="swatch-label" style="color:rgba(255,255,255,0.7)"><span class="swatch-step">900</span><span class="swatch-hex">#89123e</span></span>
+        </div>
+      </div>
+    </div>
+    <p style="font-size:0.8125rem; color:#667085; margin-top:0.5rem">★ Accent color. Used sparingly: "Create New" buttons, notification badges, highlights. Pydantic's raw pink <code style="font-family:var(--font-mono);background:#f2f4f7;padding:0 0.25rem;border-radius:3px">#e92063</code> sits at ~600. Warmed to coral for admin context.</p>
+  </div>
+
+  <!-- SEMANTIC -->
+  <div class="section" id="semantic">
+    <div class="section-label">Semantic Colors</div>
+    <div class="semantic-grid">
+      <div class="semantic-card">
+        <div class="semantic-swatch" style="background:#12b76a"></div>
+        <div class="semantic-info">
+          <div class="name">Success</div>
+          <div class="hex">#12b76a / bg #ecfdf3</div>
+        </div>
+      </div>
+      <div class="semantic-card">
+        <div class="semantic-swatch" style="background:#f79009"></div>
+        <div class="semantic-info">
+          <div class="name">Warning</div>
+          <div class="hex">#f79009 / bg #fffaeb</div>
+        </div>
+      </div>
+      <div class="semantic-card">
+        <div class="semantic-swatch" style="background:#f04438"></div>
+        <div class="semantic-info">
+          <div class="name">Error / Danger</div>
+          <div class="hex">#f04438 / bg #fef3f2</div>
+        </div>
+      </div>
+      <div class="semantic-card">
+        <div class="semantic-swatch" style="background:#0ba5ec"></div>
+        <div class="semantic-info">
+          <div class="name">Info</div>
+          <div class="hex">#0ba5ec / bg #f0f9ff</div>
+        </div>
+      </div>
+    </div>
+    <p style="font-size:0.8125rem; color:#667085; margin-top:0.75rem">Error red <code style="font-family:var(--font-mono);background:#f2f4f7;padding:0 0.25rem;border-radius:3px">#f04438</code> is deliberately distinct from accent pink <code style="font-family:var(--font-mono);background:#f2f4f7;padding:0 0.25rem;border-radius:3px">#f63d68</code> for colorblind accessibility (deuteranopia-safe).</p>
+  </div>
+
+  <!-- NEUTRAL -->
+  <div class="section" id="neutral">
+    <div class="section-label">Neutral Scale — Cool Gray (FastAPI docs aesthetic)</div>
+    <div class="neutral-swatches">
+      <div class="neutral-swatch" style="background:#ffffff; border: 1px solid #eaecf0; border-right: none;">
+        <span class="swatch-label" style="color:#667085; font-size:0.6rem"><span class="swatch-step">0</span><span class="swatch-hex">#ffffff</span></span>
+      </div>
+      <div class="neutral-swatch" style="background:#fcfcfd; border-top: 1px solid #eaecf0; border-bottom: 1px solid #eaecf0;">
+        <span class="swatch-label" style="color:#667085; font-size:0.6rem"><span class="swatch-step">25</span><span class="swatch-hex">#fcfcfd</span></span>
+      </div>
+      <div class="neutral-swatch" style="background:#f9fafb">
+        <span class="swatch-label" style="color:#475467; font-size:0.6rem"><span class="swatch-step">50</span><span class="swatch-hex">#f9fafb</span></span>
+      </div>
+      <div class="neutral-swatch" style="background:#f2f4f7">
+        <span class="swatch-label" style="color:#344054; font-size:0.6rem"><span class="swatch-step">100</span><span class="swatch-hex">#f2f4f7</span></span>
+      </div>
+      <div class="neutral-swatch" style="background:#eaecf0">
+        <span class="swatch-label" style="color:#344054; font-size:0.6rem"><span class="swatch-step">200</span><span class="swatch-hex">#eaecf0</span></span>
+      </div>
+      <div class="neutral-swatch" style="background:#d0d5dd">
+        <span class="swatch-label" style="color:#1d2939; font-size:0.6rem"><span class="swatch-step">300</span><span class="swatch-hex">#d0d5dd</span></span>
+      </div>
+      <div class="neutral-swatch" style="background:#98a2b3; outline: 2px dashed rgba(255,255,255,0.5); outline-offset:-2px">
+        <span class="swatch-label" style="color:white; font-size:0.6rem"><span class="swatch-step">400 ×</span><span class="swatch-hex">#98a2b3</span></span>
+      </div>
+      <div class="neutral-swatch" style="background:#667085">
+        <span class="swatch-label" style="color:rgba(255,255,255,0.8); font-size:0.6rem"><span class="swatch-step">500</span><span class="swatch-hex">#667085</span></span>
+      </div>
+      <div class="neutral-swatch" style="background:#475467">
+        <span class="swatch-label" style="color:rgba(255,255,255,0.8); font-size:0.6rem"><span class="swatch-step">600</span><span class="swatch-hex">#475467</span></span>
+      </div>
+      <div class="neutral-swatch" style="background:#344054">
+        <span class="swatch-label" style="color:rgba(255,255,255,0.8); font-size:0.6rem"><span class="swatch-step">700</span><span class="swatch-hex">#344054</span></span>
+      </div>
+      <div class="neutral-swatch" style="background:#1d2939">
+        <span class="swatch-label" style="color:rgba(255,255,255,0.7); font-size:0.6rem"><span class="swatch-step">800</span><span class="swatch-hex">#1d2939</span></span>
+      </div>
+      <div class="neutral-swatch" style="background:#101828">
+        <span class="swatch-label" style="color:rgba(255,255,255,0.6); font-size:0.6rem"><span class="swatch-step">900</span><span class="swatch-hex">#101828</span></span>
+      </div>
+      <div class="neutral-swatch" style="background:#0c111d">
+        <span class="swatch-label" style="color:rgba(255,255,255,0.5); font-size:0.6rem"><span class="swatch-step">950</span><span class="swatch-hex">#0c111d</span></span>
+      </div>
+    </div>
+    <p style="font-size:0.8125rem; color:#667085; margin-top:0.5rem">× marks neutral-400 — the crossover point between light and dark scales. Dark mode inverts the scale rather than shifting.</p>
+  </div>
+
+  <!-- COMPONENTS -->
+  <div class="section" id="components">
+    <div class="section-label">Component Specimens — Light &amp; Dark</div>
+    <div class="mockup-section">
+
+      <!-- LIGHT -->
+      <div class="mockup-panel light">
+        <div class="panel-title">Light Mode</div>
+
+        <h3 style="color:#344054">Buttons</h3>
+        <div class="btn-row">
+          <button class="ha-btn ha-btn-primary">Save Changes</button>
+          <a class="ha-btn ha-btn-accent" href="#">+ Create New</a>
+          <button class="ha-btn ha-btn-outline">Export</button>
+          <button class="ha-btn ha-btn-ghost">Cancel</button>
+          <button class="ha-btn ha-btn-danger ha-btn-sm">Delete</button>
+        </div>
+
+        <h3 style="color:#344054; margin-top:1rem">Badges</h3>
+        <div class="badge-row">
+          <span class="ha-badge ha-badge-primary">Active</span>
+          <span class="ha-badge ha-badge-success">Published</span>
+          <span class="ha-badge ha-badge-warning">Pending</span>
+          <span class="ha-badge ha-badge-error">Failed</span>
+          <span class="ha-badge ha-badge-accent">New</span>
+          <span class="ha-badge ha-badge-neutral">Draft</span>
+          <span class="ha-badge ha-badge-info">Beta</span>
+        </div>
+
+        <h3 style="color:#344054; margin-top:1rem">Alerts</h3>
+        <div class="ha-alert ha-alert-success">
+          <span class="ha-alert-icon">✓</span>
+          <div class="ha-alert-body"><span class="title">Record saved — </span><span class="msg">changes are now live.</span></div>
+        </div>
+        <div class="ha-alert ha-alert-error">
+          <span class="ha-alert-icon">!</span>
+          <div class="ha-alert-body"><span class="title">Validation failed — </span><span class="msg">check the highlighted fields.</span></div>
+        </div>
+
+        <h3 style="color:#344054; margin-top:1rem">Form Inputs</h3>
+        <div class="ha-input-group">
+          <label class="ha-label">Email address</label>
+          <input class="ha-input" type="text" placeholder="admin@example.com" value="user@fastapi.dev" />
+        </div>
+        <div class="ha-input-group">
+          <label class="ha-label">Username</label>
+          <input class="ha-input error" type="text" value="ab" />
+          <div class="ha-field-error">Must be at least 3 characters.</div>
+        </div>
+
+        <h3 style="color:#344054; margin-top:1rem">Toasts</h3>
+        <div class="ha-toast ha-toast-success">
+          <span class="ha-toast-icon-success">✓</span>
+          <div><div class="ha-toast-title">City created</div><div class="ha-toast-msg">Amsterdam has been added.</div></div>
+        </div>
+        <div class="ha-toast ha-toast-error">
+          <span class="ha-toast-icon-error">✕</span>
+          <div><div class="ha-toast-title">Save failed</div><div class="ha-toast-msg">Duplicate slug — try a different name.</div></div>
+        </div>
+      </div>
+
+      <!-- DARK -->
+      <div class="mockup-panel dark">
+        <div class="panel-title">Dark Mode</div>
+
+        <h3 style="color:#667085">Buttons</h3>
+        <div class="btn-row">
+          <button class="ha-btn ha-btn-primary">Save Changes</button>
+          <a class="ha-btn ha-btn-accent" href="#">+ Create New</a>
+          <button class="ha-btn ha-btn-outline dark">Export</button>
+          <button class="ha-btn ha-btn-ghost dark">Cancel</button>
+          <button class="ha-btn ha-btn-danger ha-btn-sm">Delete</button>
+        </div>
+
+        <h3 style="color:#667085; margin-top:1rem">Badges</h3>
+        <div class="badge-row dark">
+          <span class="ha-badge ha-badge-primary">Active</span>
+          <span class="ha-badge ha-badge-success">Published</span>
+          <span class="ha-badge ha-badge-warning">Pending</span>
+          <span class="ha-badge ha-badge-error">Failed</span>
+          <span class="ha-badge ha-badge-accent">New</span>
+          <span class="ha-badge ha-badge-neutral">Draft</span>
+          <span class="ha-badge ha-badge-info">Beta</span>
+        </div>
+
+        <h3 style="color:#667085; margin-top:1rem">Alerts</h3>
+        <div class="ha-alert ha-alert-success dark">
+          <span class="ha-alert-icon">✓</span>
+          <div class="ha-alert-body"><span class="title">Record saved — </span><span class="msg">changes are now live.</span></div>
+        </div>
+        <div class="ha-alert ha-alert-error dark">
+          <span class="ha-alert-icon">!</span>
+          <div class="ha-alert-body"><span class="title">Validation failed — </span><span class="msg">check the highlighted fields.</span></div>
+        </div>
+
+        <h3 style="color:#667085; margin-top:1rem">Form Inputs</h3>
+        <div class="ha-input-group">
+          <label class="ha-label dark">Email address</label>
+          <input class="ha-input dark" type="text" placeholder="admin@example.com" value="user@fastapi.dev" style="background:#101828;border-color:#344054;color:#f2f4f7;" />
+        </div>
+        <div class="ha-input-group">
+          <label class="ha-label dark">Username</label>
+          <input class="ha-input error dark" type="text" value="ab" style="background:#101828;border-color:#f04438;color:#f2f4f7;" />
+          <div class="ha-field-error">Must be at least 3 characters.</div>
+        </div>
+
+        <h3 style="color:#667085; margin-top:1rem">Toasts</h3>
+        <div class="ha-toast ha-toast-success dark">
+          <span class="ha-toast-icon-success">✓</span>
+          <div><div class="ha-toast-title dark">City created</div><div class="ha-toast-msg dark">Amsterdam has been added.</div></div>
+        </div>
+        <div class="ha-toast ha-toast-error dark">
+          <span class="ha-toast-icon-error">✕</span>
+          <div><div class="ha-toast-title dark">Save failed</div><div class="ha-toast-msg dark">Duplicate slug — try a different name.</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Table specimen -->
+    <h3 style="margin-bottom:0.625rem; color:#344054">Data Table</h3>
+    <table class="ha-table-mock">
+      <thead>
+        <tr>
+          <th>Name</th><th>Status</th><th>Country</th><th>Created</th><th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="selected">
+          <td><a href="#">Amsterdam</a></td>
+          <td><span class="ha-badge ha-badge-success">Active</span></td>
+          <td>Netherlands</td>
+          <td style="font-family:var(--font-mono);font-size:0.75rem;color:#667085">2026-03-15</td>
+          <td><a href="#" style="color:#05bfa4;margin-right:0.5rem">Edit</a><a href="#" style="color:#f04438">Delete</a></td>
+        </tr>
+        <tr>
+          <td><a href="#">Berlin</a></td>
+          <td><span class="ha-badge ha-badge-warning">Pending</span></td>
+          <td>Germany</td>
+          <td style="font-family:var(--font-mono);font-size:0.75rem;color:#667085">2026-03-20</td>
+          <td><a href="#" style="color:#05bfa4;margin-right:0.5rem">Edit</a><a href="#" style="color:#f04438">Delete</a></td>
+        </tr>
+        <tr>
+          <td><a href="#">Kyiv</a></td>
+          <td><span class="ha-badge ha-badge-primary">Active</span></td>
+          <td>Ukraine</td>
+          <td style="font-family:var(--font-mono);font-size:0.75rem;color:#667085">2026-03-22</td>
+          <td><a href="#" style="color:#05bfa4;margin-right:0.5rem">Edit</a><a href="#" style="color:#f04438">Delete</a></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ADMIN CHROME -->
+  <div class="section" id="chrome">
+    <div class="section-label">Admin Chrome — Full Layout Preview</div>
+
+    <!-- Light chrome -->
+    <div style="margin-bottom:0.5rem;font-size:0.8125rem;color:#667085;font-weight:600">Light Mode</div>
+    <div class="chrome-mockup">
+      <div class="chrome-navbar">
+        <div class="chrome-brand">
+          <div class="chrome-brand-dot">H</div>
+          HyperAdmin
+        </div>
+        <div style="display:flex;align-items:center;gap:0.75rem">
+          <span style="font-size:0.8125rem;color:#667085">admin@example.com</span>
+          <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#05bfa4,#009a86);display:flex;align-items:center;justify-content:center;color:white;font-size:0.75rem;font-weight:700">A</div>
+        </div>
+      </div>
+      <div class="chrome-body">
+        <div class="chrome-sidebar">
+          <div class="ha-nav-item active">
+            <span class="ha-nav-dot ha-nav-dot-active"></span> Cities
+          </div>
+          <div class="ha-nav-item">
+            <span class="ha-nav-dot ha-nav-dot-inactive"></span> Countries
+          </div>
+          <div class="ha-nav-item">
+            <span class="ha-nav-dot ha-nav-dot-inactive"></span> Users
+          </div>
+          <div class="ha-nav-item">
+            <span class="ha-nav-dot ha-nav-dot-inactive"></span> Settings
+          </div>
+        </div>
+        <div class="chrome-content">
+          <div class="chrome-page-title">Cities</div>
+          <div class="chrome-toolbar">
+            <div class="chrome-search">
+              <span style="color:#98a2b3">⌕</span> Search cities...
+            </div>
+            <a class="ha-btn ha-btn-accent ha-btn-sm" href="#">+ Create New</a>
+          </div>
+          <div class="ha-kpi">
+            <div class="ha-kpi-item">
+              <div class="ha-kpi-value">2,841</div>
+              <div class="ha-kpi-label">Total Cities</div>
+              <div class="ha-kpi-trend-up">↑ 12 this week</div>
+            </div>
+            <div class="ha-kpi-item">
+              <div class="ha-kpi-value">94%</div>
+              <div class="ha-kpi-label">Active</div>
+              <div class="ha-kpi-trend-up">↑ 2%</div>
+            </div>
+            <div class="ha-kpi-item">
+              <div class="ha-kpi-value">48</div>
+              <div class="ha-kpi-label">Countries</div>
+              <div class="ha-kpi-trend-down">↓ 1 archived</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dark chrome -->
+    <div style="margin-bottom:0.5rem;font-size:0.8125rem;color:#667085;font-weight:600">Dark Mode</div>
+    <div class="chrome-mockup dark">
+      <div class="chrome-navbar dark" style="background:#101828;border-bottom:1px solid #1d2939;">
+        <div class="chrome-brand dark" style="color:#f2f4f7;">
+          <div class="chrome-brand-dot">H</div>
+          HyperAdmin
+        </div>
+        <div style="display:flex;align-items:center;gap:0.75rem">
+          <span style="font-size:0.8125rem;color:#475467">admin@example.com</span>
+          <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#2dd4b8,#05bfa4);display:flex;align-items:center;justify-content:center;color:#0c111d;font-size:0.75rem;font-weight:700">A</div>
+        </div>
+      </div>
+      <div class="chrome-body dark" style="background:#0c111d;">
+        <div class="chrome-sidebar dark" style="background:#0c111d;border-right:1px solid #1d2939;">
+          <div class="ha-nav-item" style="background:rgba(5,191,164,0.12);color:#2dd4b8;font-weight:600;">
+            <span class="ha-nav-dot" style="background:#2dd4b8;width:8px;height:8px;border-radius:50%;flex-shrink:0;"></span> Cities
+          </div>
+          <div class="ha-nav-item" style="color:#667085;">
+            <span class="ha-nav-dot ha-nav-dot-inactive"></span> Countries
+          </div>
+          <div class="ha-nav-item" style="color:#667085;">
+            <span class="ha-nav-dot ha-nav-dot-inactive"></span> Users
+          </div>
+          <div class="ha-nav-item" style="color:#667085;">
+            <span class="ha-nav-dot ha-nav-dot-inactive"></span> Settings
+          </div>
+        </div>
+        <div class="chrome-content dark" style="background:#0c111d;">
+          <div style="font-size:1.25rem;font-weight:700;color:#f2f4f7;margin-bottom:1rem;">Cities</div>
+          <div class="chrome-toolbar">
+            <div style="display:flex;align-items:center;gap:0.375rem;padding:0.375rem 0.75rem;border:1px solid #344054;border-radius:0.375rem;background:#101828;font-size:0.8125rem;color:#475467;width:200px;">
+              <span>⌕</span> Search cities...
+            </div>
+            <a class="ha-btn ha-btn-accent ha-btn-sm" href="#">+ Create New</a>
+          </div>
+          <div class="ha-kpi">
+            <div class="ha-kpi-item" style="background:#101828;">
+              <div class="ha-kpi-value" style="color:#f2f4f7;">2,841</div>
+              <div class="ha-kpi-label">Total Cities</div>
+              <div class="ha-kpi-trend-up">↑ 12 this week</div>
+            </div>
+            <div class="ha-kpi-item" style="background:#101828;">
+              <div class="ha-kpi-value" style="color:#f2f4f7;">94%</div>
+              <div class="ha-kpi-label">Active</div>
+              <div class="ha-kpi-trend-up">↑ 2%</div>
+            </div>
+            <div class="ha-kpi-item" style="background:#101828;">
+              <div class="ha-kpi-value" style="color:#f2f4f7;">48</div>
+              <div class="ha-kpi-label">Countries</div>
+              <div class="ha-kpi-trend-down">↓ 1 archived</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TYPOGRAPHY -->
+  <div class="section" id="typography">
+    <div class="section-label">Typography Scale — Inter + JetBrains Mono</div>
+    <div class="type-row">
+      <span class="type-meta">4xl / 800</span>
+      <span class="type-sample" style="font-size:2.25rem;font-weight:800">HyperAdmin</span>
+    </div>
+    <div class="type-row">
+      <span class="type-meta">3xl / 700</span>
+      <span class="type-sample" style="font-size:1.875rem;font-weight:700">Dashboard Overview</span>
+    </div>
+    <div class="type-row">
+      <span class="type-meta">2xl / 700</span>
+      <span class="type-sample" style="font-size:1.5rem;font-weight:700">Cities — 2,841 records</span>
+    </div>
+    <div class="type-row">
+      <span class="type-meta">xl / 600</span>
+      <span class="type-sample" style="font-size:1.25rem;font-weight:600">Create City</span>
+    </div>
+    <div class="type-row">
+      <span class="type-meta">lg / 500</span>
+      <span class="type-sample" style="font-size:1.125rem;font-weight:500">Navigation Section</span>
+    </div>
+    <div class="type-row">
+      <span class="type-meta">base / 400</span>
+      <span class="type-sample" style="font-size:1rem;font-weight:400">The quick brown fox jumps over the lazy dog</span>
+    </div>
+    <div class="type-row">
+      <span class="type-meta">sm / 400</span>
+      <span class="type-sample" style="font-size:0.875rem;font-weight:400;color:#475467">Table cell text, form help text, secondary labels</span>
+    </div>
+    <div class="type-row">
+      <span class="type-meta">xs / 600</span>
+      <span class="type-sample" style="font-size:0.75rem;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#667085">Column Header</span>
+    </div>
+    <div class="type-row">
+      <span class="type-meta">mono / 400</span>
+      <span class="type-sample" style="font-family:var(--font-mono);font-size:0.875rem;color:#475467">id: a1b2c3d4  created_at: 2026-03-27T09:00:00Z</span>
+    </div>
+  </div>
+
+  <!-- FOCUS RINGS -->
+  <div class="section" id="focus">
+    <div class="section-label">Focus Rings — :focus-visible states</div>
+    <p style="font-size:0.8125rem;color:#667085;margin-bottom:0.75rem">Keyboard users see 4px teal ring. Mouse users see none. Error state uses red ring. Both use the same 4px/24% alpha formula.</p>
+    <div class="focus-demo">
+      <button class="focus-btn focused-primary">Primary (teal ring)</button>
+      <button class="focus-btn focused-accent">Accent (pink ring)</button>
+      <button class="focus-btn focused-ghost">Ghost (teal ring)</button>
+      <button class="focus-btn focused-error">Error input (red ring)</button>
+    </div>
+  </div>
+
+  <div style="padding:2rem 0;border-top:1px solid #eaecf0;color:#98a2b3;font-size:0.8125rem;text-align:center">
+    HyperAdmin UI Kit — Palette Preview — Open this file in any browser — no server needed
+  </div>
+
+</body>
+</html>
