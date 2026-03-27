@@ -175,7 +175,111 @@ Memory content here.
 
 ---
 
-## 10. Developer Commands
+## 10. Bootstrap from Zero (Cloud / Isolated / Sandboxed Environments)
+
+If you are starting on a **fresh machine, CI runner, or cloud VM** where none of the toolchain is pre-installed, follow this sequence before running any project commands.
+
+### Step 1 — Install `uv` (Python package + project manager)
+
+`uv` is the single dependency that manages everything else, including Python itself.
+
+```bash
+# Linux / macOS
+curl -LsSf https://astral.sh/uv/install.sh | sh
+source $HOME/.local/bin/env 2>/dev/null || export PATH="$HOME/.local/bin:$PATH"
+
+# Verify
+uv --version
+```
+
+### Step 2 — Install `just` (task runner)
+
+```bash
+# macOS (Homebrew)
+brew install just
+
+# Linux — binary install, no Rust required
+curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to /usr/local/bin
+
+# Verify
+just --version
+```
+
+### Step 3 — Ensure Python 3.10+
+
+`uv` can manage its own Python if none is found:
+
+```bash
+uv python install 3.10
+# Verify
+uv run python --version   # must be ≥ 3.10
+```
+
+### Step 4 — Sync dependencies
+
+```bash
+uv sync --all-extras
+```
+
+Installs all runtime + dev + extras into `.venv/`. Expects `pyproject.toml` in the working directory.
+
+### Step 5 — Pre-commit hooks
+
+```bash
+uv run pre-commit install
+```
+
+> **Worktree note**: If you see `Cowardly refusing to install hooks with core.hooksPath set`, hooks are already managed by the parent repo. This is expected — continue.
+
+### Step 6 — Playwright browser (E2E tests only)
+
+```bash
+uv run playwright install chromium --with-deps
+```
+
+`--with-deps` installs the system libraries Chromium needs on headless Linux servers.
+
+### Step 7 — Required environment variables
+
+| Variable | Purpose | Required for |
+|----------|---------|-------------|
+| `CLAUDE_GH_TOKEN` | GitHub bot token for PR creation | Creating PRs as Claude Code identity |
+| `GITHUB_TOKEN` | General GitHub API access | `gh` CLI, issues, labels |
+| `ANTHROPIC_API_KEY` | Claude API access | Agents that call Claude directly |
+
+```bash
+export CLAUDE_GH_TOKEN="ghp_..."
+export GITHUB_TOKEN="ghp_..."
+export ANTHROPIC_API_KEY="sk-ant-..."
+```
+
+Add to `~/.bashrc` or `~/.zshrc` for persistence.
+
+### Step 8 — Smoke test
+
+```bash
+just --list                                  # task runner works
+uv run python -c "import hyperadmin; print('OK')"  # package importable
+uv run pytest tests/unit/ -q -x             # unit tests pass
+```
+
+All three must pass before doing any development work.
+
+---
+
+### `/bootstrap` slash command
+
+Claude can run this entire sequence interactively. In any Claude Code session:
+
+```
+/bootstrap
+```
+
+Claude will detect what is missing, install prerequisites, sync deps, check env vars, and run the smoke test — reporting pass/fail at each step with guidance on any failures.
+
+---
+
+## 11. Developer Commands
 
 Quick reference for the most common tasks.
 
@@ -198,7 +302,7 @@ Quick reference for the most common tasks.
 
 ---
 
-## 11. The 8-Agent OSS Workflow
+## 12. The 8-Agent OSS Workflow
 
 HyperAdmin runs a fully specified 8-agent development pipeline, orchestrated entirely through GitHub's native event system (labels, sub-issues, milestones, Projects V2).
 
@@ -228,7 +332,7 @@ For the full specification, see [Overview](index.md) and the individual agent do
 
 ---
 
-## 12. Setting Up Your Own Agentic CLI
+## 13. Setting Up Your Own Agentic CLI
 
 Use this checklist to replicate HyperAdmin's agentic setup in your own project. Each item links to the HyperAdmin reference implementation.
 
