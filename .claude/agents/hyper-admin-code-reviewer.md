@@ -2,7 +2,7 @@
 name: hyper-admin-code-reviewer
 description: Use this agent when code has been written or modified in the HyperAdmin project and needs review for correctness, architecture compliance, style conventions, and best practices specific to the project stack (Python, FastAPI/HTMX, Jinja2, SQLModel/Pydantic, Playwright E2E tests).
 tools: Bash, Read, Grep, Write
-model: haiku
+model: sonnet
 color: blue
 ---
 
