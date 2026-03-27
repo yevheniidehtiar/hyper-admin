@@ -8,9 +8,9 @@ def hash_password(password: str) -> str:
     return _ph.hash(password)
 
 
-def verify_password(password: str, hash: str) -> bool:
+def verify_password(password: str, password_hash: str) -> bool:
     """Verifies a password against an Argon2 hash."""
     try:
-        return _ph.verify(hash, password)
+        return _ph.verify(password_hash, password)
     except Exception:
         return False

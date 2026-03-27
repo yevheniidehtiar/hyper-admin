@@ -207,6 +207,22 @@ fixable = ["ALL"]
   "T20",      # print statements in examples
 ]
 "main.py" = ["S104"]  # binding to all interfaces (local dev entry point)
+".gemini/scripts/*.py" = [
+  "PLR2004",  # magic value comparisons (threshold constants)
+  "PLW1510",  # subprocess.run without check (scripts handle errors manually)
+  "S108",     # temp file usage (expected in orchestration scripts)
+  "S603",     # subprocess calls (trusted internal commands)
+  "S607",     # partial executable paths (gh, git, etc.)
+  "T201",     # print statements (CLI output)
+]
+"scripts/*.py" = [
+  "ARG001",   # unused function arguments (callback signatures)
+  "DTZ011",   # date.today() (timezone-naive is fine for reports)
+  "PLR0912",  # too many branches (complex report logic)
+  "PLR0915",  # too many statements (complex report logic)
+  "PLR2004",  # magic value comparisons (scoring thresholds)
+  "S607",     # partial executable paths (gh CLI)
+]
 
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"

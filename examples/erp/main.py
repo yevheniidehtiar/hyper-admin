@@ -20,7 +20,7 @@ async def lifespan(app: FastAPI):
     await admin._sync_permissions()
 
     # 3. Seed data
-    from examples.erp.seed import seed_db
+    from examples.erp.seed import seed_db  # noqa: PLC0415
 
     await seed_db()
     yield
@@ -56,7 +56,7 @@ admin = Admin(
     auth_backend=auth_backend,
     permission_checker=permission_checker,
     permission_registry=permission_registry,
-    session_secret="super-secret-erp-key",
+    session_secret="super-secret-erp-key",  # noqa: S106
 )
 
 # Store admin on app state so custom views can access it (e.g. for templates)

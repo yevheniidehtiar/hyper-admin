@@ -84,8 +84,7 @@ class SwarmOrchestrator:
             # In real usage: npx @google/gemini-cli --prompt "Solve issue: ..."
             print(f"Running Gemini CLI in {worktree_path}...")
 
-            # 3. After completion, commit and push (Agent should do this)
-            # subprocess.run(["git", "add", ".", "&&", "git", "commit", "-m", f"fix(core): solve #{issue_num}", "&&", "git", "push", "origin", branch_name], cwd=worktree_path, shell=True)
+            # 3. After completion, the agent commits and pushes.
 
             # 4. Clean up labels
             subprocess.run(
@@ -111,7 +110,7 @@ class SwarmOrchestrator:
         while True:
             issues = self.get_ready_issues()
             for issue in issues:
-                labels = [l["name"] for l in issue["labels"]]
+                labels = [label["name"] for label in issue["labels"]]
                 if "size:small" in labels:
                     self.dispatch_to_jules(issue)
                 else:
@@ -122,6 +121,4 @@ class SwarmOrchestrator:
 
 if __name__ == "__main__":
     orchestrator = SwarmOrchestrator()
-    # To run once for demo:
-    # orchestrator.run_loop()
     print("Orchestrator initialized. Ready to run.")

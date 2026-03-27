@@ -130,7 +130,7 @@ class TestSessionAuthBackend:
         import ast
         from pathlib import Path
 
-        source = Path("src/hyperadmin/auth/session.py").read_text()
+        source = Path("src/hyperadmin/auth/session.py").read_text()  # noqa: ASYNC240
         tree = ast.parse(source)
         for node in ast.walk(tree):
             if isinstance(node, ast.ImportFrom) and node.module:

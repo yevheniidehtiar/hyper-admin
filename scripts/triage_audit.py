@@ -684,18 +684,18 @@ def detect_competing_prs(prs: list[Item]) -> list[DuplicatePair]:
         if len(competing) < 2:
             continue
         # report all pairs
-        for i in range(len(competing)):
-            for j in range(i + 1, len(competing)):
-                pairs.append(
-                    DuplicatePair(
-                        item_a=competing[i].number,
-                        title_a=competing[i].title,
-                        item_b=competing[j].number,
-                        title_b=competing[j].title,
-                        similarity=0.0,
-                        recommendation=f"Competing PRs for #{issue_num} — only one should merge",
-                    )
-                )
+        pairs.extend(
+            DuplicatePair(
+                item_a=competing[i].number,
+                title_a=competing[i].title,
+                item_b=competing[j].number,
+                title_b=competing[j].title,
+                similarity=0.0,
+                recommendation=f"Competing PRs for #{issue_num} — only one should merge",
+            )
+            for i in range(len(competing))
+            for j in range(i + 1, len(competing))
+        )
     return pairs
 
 
@@ -719,10 +719,7 @@ def check_lifecycle(issues: list[Item], prs: list[Item]) -> list[LifecycleViolat
         state_labels = [lb for lb in issue.labels if lb in LIFECYCLE_LABELS]
 
         if len(state_labels) == 0:
-            if issue.number in issues_with_prs:
-                inferred = "in-progress"
-            else:
-                inferred = "idea"
+            inferred = "in-progress" if issue.number in issues_with_prs else "idea"
             violations.append(
                 LifecycleViolation(
                     number=issue.number,
@@ -733,8 +730,8 @@ def check_lifecycle(issues: list[Item], prs: list[Item]) -> list[LifecycleViolat
             )
         elif len(state_labels) > 1:
             # keep most advanced
-            best = max(state_labels, key=lambda lb: LIFECYCLE_LABELS.index(lb))
-            removed = [lb for lb in state_labels if lb != best]
+            best = max(state_labels, key=LIFECYCLE_LABELS.index)
+            _removed = [lb for lb in state_labels if lb != best]
             violations.append(
                 LifecycleViolation(
                     number=issue.number,
@@ -1076,7 +1073,7 @@ def main(
     typer.echo("=" * 60)
 
     # Phase 1: Data collection
-    issues, prs, labels = fetch_data(repo)
+    issues, prs, _labels = fetch_data(repo)
     all_items = issues + prs
 
     # Build author counts for bulk submission detection

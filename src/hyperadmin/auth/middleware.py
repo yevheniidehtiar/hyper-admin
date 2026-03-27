@@ -6,11 +6,13 @@ Redirects unauthenticated requests to the login page and populates
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
-from starlette.requests import Request
 from starlette.responses import RedirectResponse, Response
+
+if TYPE_CHECKING:
+    from starlette.requests import Request
 
 
 class AuthenticationMiddleware(BaseHTTPMiddleware):

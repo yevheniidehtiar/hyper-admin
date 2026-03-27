@@ -42,9 +42,9 @@ async def seed_user(async_engine):
 
 def _build_auth_app(async_engine, register_models: bool = True):
     """Build a FastAPI app with HyperAdmin auth wired up."""
+    import sqlmodel as sm
     from fastapi import FastAPI
     from sqlmodel import Field
-    from sqlmodel import SQLModel as SM
 
     from hyperadmin.auth.permissions import ModelPermissionChecker, PermissionSyncService
     from hyperadmin.auth.session import SessionAuthBackend
@@ -64,7 +64,7 @@ def _build_auth_app(async_engine, register_models: bool = True):
 
     if register_models:
         # Register a dummy model for testing
-        class Item(SM, table=True):
+        class Item(sm.SQLModel, table=True):
             __tablename__ = "hyperadmin_test_items"  # type: ignore[reportIncompatibleVariableOverride]
             id: int | None = Field(default=None, primary_key=True)
             name: str = Field(max_length=100)
@@ -74,7 +74,7 @@ def _build_auth_app(async_engine, register_models: bool = True):
 
         async def create_table():
             async with async_engine.begin() as conn:
-                await conn.run_sync(SM.metadata.create_all)
+                await conn.run_sync(sm.SQLModel.metadata.create_all)
 
         asyncio.get_event_loop().run_until_complete(create_table())
 

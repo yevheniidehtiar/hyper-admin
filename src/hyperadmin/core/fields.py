@@ -2,26 +2,19 @@
 
 from __future__ import annotations
 
-import sys
+import types as _types
 from enum import Enum
-from typing import Any, Union, get_args, get_origin
-
-# Python 3.10+ introduces X | Y union syntax (types.UnionType).  We must
-# detect both typing.Union and types.UnionType when unwrapping Optional[X].
-if sys.version_info >= (3, 10):
-    import types as _types
-
-    def _is_optional_union(origin: Any, args: tuple) -> bool:
-        return (origin is Union or origin is _types.UnionType) and type(None) in args
-else:
-
-    def _is_optional_union(origin: Any, args: tuple) -> bool:
-        return origin is Union and type(None) in args
-
-
-from pydantic.fields import FieldInfo
+from typing import TYPE_CHECKING, Any, Union, get_args, get_origin
 
 from hyperadmin.core.choices import SelectFieldMeta
+
+
+def _is_optional_union(origin: Any, args: tuple) -> bool:
+    return (origin is Union or origin is _types.UnionType) and type(None) in args
+
+
+if TYPE_CHECKING:
+    from pydantic.fields import FieldInfo
 
 try:
     from sqlalchemy import inspect as sa_inspect
@@ -59,7 +52,7 @@ def classify_field(field_info: FieldInfo, model_cls: type) -> SelectFieldMeta | 
     is_list = origin is list
     inner = args[0] if (is_list and args) else ann
 
-    # Enum or list[Enum]
+    # Handle enum types (single or wrapped in a list)
     if isinstance(inner, type) and issubclass(inner, Enum):
         return SelectFieldMeta(
             choices_source="enum",

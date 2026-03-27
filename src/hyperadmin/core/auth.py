@@ -7,9 +7,10 @@ ORM and HTTP dependencies.
 
 from __future__ import annotations
 
-from typing import Any, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
-from starlette.requests import Request
+if TYPE_CHECKING:
+    from starlette.requests import Request
 
 
 @runtime_checkable
