@@ -22,6 +22,7 @@ PROJECT_NAME_PREFIX="HyperAdmin:"         # Prefix for GitHub ProjectV2 names
 DEFAULT_BASE_BRANCH="develop"             # Target branch for all autonomous merges
 DEV_AGENT_LIMIT=3                         # Max dev agents per conductor cycle
 CONDUCTOR_CYCLE_LIMIT=3                   # Max cycles per session (9 issues total cap)
+MERGE_QUEUE_DEPTH=2                       # Max concurrent merge-granted PRs (prevents post-rebase conflicts)
 ```
 
 ## GitHub Auth

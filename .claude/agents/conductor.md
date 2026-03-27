@@ -45,8 +45,8 @@ GH_TOKEN="$CLAUDE_GH_TOKEN" gh issue view <linked-issue> --json body \
   done
 ```
 
-**Grant** (`merge-granted`): no file overlap, all deps closed, PR rebased on develop.
-**Defer** (`merge-deferred`): overlap detected, open deps, or >2 merges queued — post reason comment.
+**Grant** (`merge-granted`): no file overlap, all deps closed, PR rebased on develop, and fewer than `$MERGE_QUEUE_DEPTH` PRs already carrying `merge-granted`.
+**Defer** (`merge-deferred`): overlap detected, open deps, or merge queue at depth — post reason comment.
 
 ## Limits
 

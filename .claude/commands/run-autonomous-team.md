@@ -201,7 +201,7 @@ done
 **Defer merge** (`merge-deferred`) if ANY of:
 - File overlap with another `merge-requested` PR (risk of conflict)
 - A dependency issue is still open
-- More than 2 merges queued simultaneously (avoid stack conflicts)
+- Already `$MERGE_QUEUE_DEPTH` PRs carrying `merge-granted` pending merge (avoid stack conflicts)
 
 ```bash
 # Grant

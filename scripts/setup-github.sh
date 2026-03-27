@@ -16,6 +16,10 @@ gh label create "qa-passed" --repo "$REPO" --color "0E8A16" --description "All t
 gh label create "released" --repo "$REPO" --color "5319E7" --description "Shipped in a release" || true
 gh label create "needs-human" --repo "$REPO" --color "D93F0B" --description "Agent escalation, human intervention needed" || true
 
+# Work Queue Labels (used by conductor / run-autonomous-team)
+gh label create "agent-task" --repo "$REPO" --color "D4C5F9" --description "Assigned to autonomous agent for implementation" || true
+gh label create "ready"      --repo "$REPO" --color "0E8A16" --description "Issue unblocked and approved — ready for autonomous pickup" || true
+
 # Sizing & Triage Labels
 gh label create "size:S" --repo "$REPO" --color "C5DEF5" --description "1-2 hours effort" || true
 gh label create "size:M" --repo "$REPO" --color "BFD4F2" --description "2-4 hours effort" || true
