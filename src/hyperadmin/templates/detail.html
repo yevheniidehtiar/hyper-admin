@@ -15,5 +15,17 @@
         </div>
         {%- endfor -%}
     </div>
+    {%- if actions -%}
+    <div class="ha-action-buttons" data-testid="action-buttons">
+        {%- for act in actions -%}
+        <button
+            data-testid="action-{{ act.name }}-btn"
+            hx-post="/{{ model_name_lower }}/{{ item.id }}/action/{{ act.name }}"
+            hx-confirm="Run action '{{ act.label }}'?"
+            class="ha-btn ha-btn-action"
+        >{{ act.label }}</button>
+        {%- endfor -%}
+    </div>
+    {%- endif -%}
     <a href="../" class="ha-text-link">Back to list</a>
 {%- endblock -%}

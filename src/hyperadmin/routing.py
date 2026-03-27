@@ -6,6 +6,7 @@ from fastapi import APIRouter, Request
 from fastapi.templating import Jinja2Templates
 from sqlmodel import SQLModel
 
+from hyperadmin.core.actions import ActionDef, collect_actions
 from hyperadmin.core.options import AdminOptions
 from hyperadmin.views.dynamic import DynamicModelView
 
@@ -49,6 +50,7 @@ def create_admin_router(  # noqa: PLR0913
     form_create_exclude: list[str] | None = None,
     column_list: list[str] | None = None,
     permission_checker: Any = None,
+    actions: list[ActionDef] | None = None,
 ) -> APIRouter:
     """Creates an APIRouter for a given model with the specified admin options."""
     router = APIRouter()
@@ -61,6 +63,8 @@ def create_admin_router(  # noqa: PLR0913
         form_create_exclude=form_create_exclude,
         column_list=column_list,
         permission_checker=permission_checker,
+        actions=actions,
+        admin_instance=admin_instance,
     )
     model_name = model.__name__.lower()
 
@@ -125,6 +129,14 @@ def create_admin_router(  # noqa: PLR0913
         name=f"{model_name}-choices",
     )
 
+    if actions:
+        router.add_api_route(
+            f"{prefix}/{{item_id:int}}/action/{{action_name}}",
+            view.run_action,
+            methods=["POST"],
+            name=f"{model_name}-action",
+        )
+
     return router
 
 
@@ -182,6 +194,8 @@ class HyperAdminRouter:
                 model,
             )
 
+            actions = collect_actions(admin_class)
+
             router = create_admin_router(
                 model=model,
                 admin_class=admin_class,
@@ -193,6 +207,7 @@ class HyperAdminRouter:
                 form_create_exclude=form_create_exclude,
                 column_list=column_list,
                 permission_checker=self.permission_checker,
+                actions=actions,
             )
             self.routers.append(router)
 

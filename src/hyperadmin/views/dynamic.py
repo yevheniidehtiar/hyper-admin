@@ -13,6 +13,7 @@ if TYPE_CHECKING:
     from jinja2 import FileSystemLoader
 
 from hyperadmin.adapters import SQLAlchemyAdapter, SQLModelAdapter
+from hyperadmin.core.actions import ActionDef
 from hyperadmin.core.choices import ChoiceItem, SelectFieldMeta
 from hyperadmin.core.discovery import build_filter_metadata
 from hyperadmin.core.display import get_display_name
@@ -82,6 +83,8 @@ class DynamicModelView:
         form_create_exclude: list[str] | None = None,
         column_list: list[str] | None = None,
         permission_checker: Any = None,
+        actions: list[ActionDef] | None = None,
+        admin_instance: Any = None,
     ):
         self.adapter = adapter
         self.model = adapter.model
@@ -93,6 +96,9 @@ class DynamicModelView:
         self.column_list = column_list or ["id", "__str__"]
         self.permission_checker = permission_checker
         self._model_name_lower = self.model.__name__.lower()
+        self.actions: list[ActionDef] = actions or []
+        self._action_map: dict[str, ActionDef] = {a.name: a for a in self.actions}
+        self._admin_instance = admin_instance
 
     async def _check_permission(self, request: Request, action: str) -> None:
         """Raise 403 if the user lacks the required permission.
@@ -270,6 +276,8 @@ class DynamicModelView:
             "request": request,
             "item_name": get_display_name(item),
             "item": item.model_dump(),
+            "actions": self.actions,
+            "model_name_lower": self._model_name_lower,
         }
         template_name = self._get_template_name("detail")
         return self.templates.TemplateResponse(request, template_name, context)
@@ -590,6 +598,30 @@ class DynamicModelView:
         if "hx-request" in request.headers:
             return Response(status_code=200, headers={"HX-Redirect": str(redirect_url)})
 
+        return RedirectResponse(url=redirect_url, status_code=303)
+
+    async def run_action(self, request: Request, item_id: int, action_name: str) -> Response:
+        """Dispatch a custom action registered via ``@action`` on the ModelAdmin.
+
+        POST /{model_name}/{item_id}/action/{action_name}
+
+        Returns an HTMX redirect to the model list on success, or delegates to the
+        handler's return value when it returns a :class:`starlette.responses.Response`.
+        """
+        action_def = self._action_map.get(action_name)
+        if action_def is None:
+            raise HTTPException(status_code=404, detail=f"Action '{action_name}' not found")
+
+        await self._check_permission(request, f"action_{action_name}")
+
+        result = await action_def.handler(self._admin_instance, request, item_id)
+
+        if isinstance(result, Response):
+            return result
+
+        redirect_url = request.url_for(f"{self._model_name_lower}-list")
+        if "hx-request" in request.headers:
+            return Response(status_code=200, headers={"HX-Redirect": str(redirect_url)})
         return RedirectResponse(url=redirect_url, status_code=303)
 
 
