@@ -93,7 +93,7 @@
     }
     .pill-fastapi { background: #05bfa4; color: white; }
     .pill-pydantic { background: #f63d68; color: white; }
-    .pill-plus { color: #98a2b3; font-size: 1rem; font-weight: 400; }
+    .pill-plus { color: #667085; font-size: 1rem; font-weight: 400; }
 
     /* Palette grid */
     .palette-group { margin-bottom: 2.5rem; }
@@ -187,7 +187,7 @@
       letter-spacing: 0.08em;
       margin-bottom: 1.25rem;
     }
-    .mockup-panel.light .panel-title { color: #98a2b3; }
+    .mockup-panel.light .panel-title { color: #667085; }
     .mockup-panel.dark  .panel-title { color: #475467; }
 
     /* Buttons */
@@ -514,7 +514,7 @@
       padding: 0.5rem 0;
       border-bottom: 1px solid #f2f4f7;
     }
-    .type-meta { font-family: var(--font-mono); font-size: 0.6875rem; color: #98a2b3; width: 80px; flex-shrink: 0; }
+    .type-meta { font-family: var(--font-mono); font-size: 0.6875rem; color: #667085; width: 80px; flex-shrink: 0; }
     .type-sample { color: #101828; }
 
     /* Focus ring demo */
@@ -559,6 +559,21 @@
       box-shadow: 0 0 0 4px rgba(240,68,56,0.24);
     }
 
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      .swatch, .neutral-swatch { transition: none; }
+    }
+
+    /* Responsive reflow */
+    @media (max-width: 640px) {
+      .semantic-grid { grid-template-columns: repeat(2, 1fr); }
+      .mockup-section { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 400px) {
+      .swatches, .neutral-swatches { flex-wrap: wrap; }
+      .swatch, .neutral-swatch { min-width: 60px; flex: 1 1 auto; }
+    }
+
     /* Section divider */
     .section { margin-bottom: 3rem; }
     .section-label {
@@ -566,7 +581,7 @@
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.1em;
-      color: #98a2b3;
+      color: #667085;
       margin-bottom: 0.875rem;
       display: flex;
       align-items: center;

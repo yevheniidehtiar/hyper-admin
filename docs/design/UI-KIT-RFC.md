@@ -60,7 +60,7 @@ FastAPI's teal (`#009485`) and Pydantic's pink (`#e92063`) are the community's t
 | 800 | `#006159` | — | Dark accents |
 | 900 | `#00504a` | — | Sidebar bg (dark mode) |
 
-> `#05bfa4` passes WCAG AA on white (`4.6:1`). On dark surfaces, `#2dd4b8` is used instead.
+> **Contrast note**: `#05bfa4` has a contrast ratio of ~3:1 on white — sufficient for large text (18pt+/14pt bold) and non-text UI elements, but **not** for body-size text. For body text and small interactive labels on white, use `--ha-color-primary-text: #007b6d` (primary-700, 5.65:1). On dark surfaces, `#2dd4b8` is used instead.
 
 ### 3.3 Accent Palette
 
@@ -71,11 +71,11 @@ Used sparingly: "Create New" CTA, notification badges, highlights that need to p
 | 50 | `#fff1f3` | Accent surface tint |
 | 100 | `#ffe0e6` | Badge backgrounds |
 | 400 | `#ff6488` | Hover |
-| **500** | **`#f63d68`** | **Accent actions** |
-| 600 | `#e31b54` | Pressed |
+| **500** | **`#f63d68`** | **Accent fills, backgrounds** |
+| **600** | **`#e31b54`** | **Accent text and button labels** (4.62:1 on white — WCAG AA) |
 | 700 | `#c01048` | Dark accent |
 
-> Pydantic's raw `#e92063` sits between 600–700. The accent-500 is warmed to coral-pink for better admin context.
+> **Contrast note**: Accent-500 (`#f63d68`) is ~3.56:1 on white — use it for fills and large decorative elements only. For accent-colored text and button labels, use accent-600 (`#e31b54`) which passes WCAG AA at 4.62:1. Pydantic's raw `#e92063` sits between 600–700.
 
 ### 3.4 Semantic Colors
 
@@ -91,6 +91,8 @@ Used sparingly: "Create New" CTA, notification badges, highlights that need to p
 ### 3.5 Neutral Scale
 
 13 steps from `#ffffff` (neutral-0) to `#0c111d` (neutral-950). Cool gray with slight blue undertones. Dark mode inverts the scale rather than shifting hue.
+
+> **Contrast note**: `neutral-400` (`#98a2b3`) is ~2.98:1 on white — use only for decorative/non-informational elements (borders, dividers, icons where text provides the meaning). For muted text, use `neutral-500` (`#667085`, 5.02:1) minimum.
 
 | Step | Light | Dark |
 |------|-------|------|
@@ -257,9 +259,11 @@ Every interaction exposes a **semantic action** independent of input method:
 <a href="#ha-main-content" class="ha-skip-nav">Skip to main content</a>
 ```
 
-Visible only on focus, positioned top-left with card shadow.
+Visible only on focus, positioned top-left with card shadow. The `#ha-main-content` ID must be placed on a `<main>` element.
 
 **Keyboard shortcuts** (Alpine.js on `<body>`):
+
+> **WCAG 2.1.4**: Single-character shortcuts (`c`, `j`, `k`, `e`) must be disableable. The Alpine.js shortcut component should expose a `shortcutsEnabled` flag (persisted in `localStorage`) that users can toggle via a settings panel or `?` overlay.
 
 | Shortcut | Context | Action |
 |----------|---------|--------|
@@ -289,6 +293,8 @@ Minimum 44×44px touch targets for all interactive elements, activated via media
   }
 }
 ```
+
+> **Hybrid device note**: Devices with both mouse and touch (e.g., Surface, touchscreen laptops) may report `pointer: fine`. The 44px minimum is applied via `pointer: coarse` for pure-touch devices. For hybrid devices, default desktop sizing applies — all interactive elements should still maintain at least 24x24px minimum as a baseline.
 
 **Swipe gestures** (Alpine.js `x-swipe` directive, no dependencies):
 - Table rows: swipe-left → reveal delete zone, swipe-right → reveal edit
@@ -386,13 +392,13 @@ All exist in `src/hyperadmin/templates/components/`. Upgraded in-place.
 | **Input** | Text only | Prefix/suffix slots, validation ring states, character counter |
 | **Select** | Native `<select>` | Searchable option (Alpine.js), multi-select chip display |
 | **Checkbox** | Basic | Toggle switch variant, indeterminate state |
-| **Table** | Basic sort | Row selection checkboxes, bulk actions bar, empty state, responsive cards |
+| **Table** | Basic sort | Row selection checkboxes, bulk actions bar, empty state, responsive cards, `aria-sort` on sortable `<th>` elements |
 | **Card** | Flat padding box | header/body/footer sections; stat, action, media variants |
 | **Alert** | 4 levels | Dismissible (×), icon slot, inline action link |
 | **Toast** | Fixed container | Stacking, auto-dismiss progress bar, slide-in/out animation |
 | **Pagination** | Prev/next + info | Page number buttons, per-page selector |
-| **Sidebar** | Static list | Sections, collapse/expand, icon support, active highlight |
-| **Navbar** | Brand + user dropdown | Breadcrumbs slot, theme toggle button, quick-action area |
+| **Sidebar** | Static list | Sections, collapse/expand, icon support, active highlight, `aria-current="page"` on active item |
+| **Navbar** | Brand + user dropdown | Breadcrumbs slot, theme toggle button (`aria-label="Toggle theme: [mode]"`), quick-action area |
 
 ### 8.2 Tier 2 — New Foundation Components (17 components)
 
@@ -403,10 +409,10 @@ New template files under `src/hyperadmin/templates/components/`.
 | Badge | `badge.html` | Status indicators, counts, removable tags |
 | Breadcrumbs | `breadcrumbs.html` | Navigation hierarchy from page context |
 | Data Card (KPI) | `data_card.html` | Metric display: value, label, trend arrow |
-| Drawer | `drawer.html` | Side panel (right/left), doesn't navigate away |
+| Drawer | `drawer.html` | Side panel (right/left), doesn't navigate away. Same focus trap requirements as Modal |
 | Dropdown Menu | `dropdown.html` | Context menus, action menus, user menu |
 | Empty State | `empty_state.html` | No-data screen with illustration + CTA |
-| Modal / Dialog | `modal.html` | Confirmation, quick form, alert dialogs |
+| Modal / Dialog | `modal.html` | Confirmation, quick form, alert dialogs. Requires `role="dialog"`, `aria-modal="true"`, `aria-labelledby`, focus trap (`inert` on siblings), return focus on close |
 | Skeleton Loader | `skeleton.html` | HTMX `hx-indicator` replacement — pulsing placeholders |
 | Tabs | `tabs.html` | Content sectioning within a view |
 | Tooltip | `tooltip.html` | CSS-only via `[data-tooltip]` attribute |
@@ -443,6 +449,8 @@ All components follow the same keyword-argument pattern:
 4. Boolean flags: `dismissible`, `loading`, `disabled`, `removable`
 5. `class` — additional CSS classes
 6. HTMX attrs as kwargs: `hx_post`, `hx_target`, `hx_confirm`, etc.
+
+> **Accessibility rule**: All icon-only buttons (no visible text) must have an `aria-label` parameter. The macro should enforce this — if `icon_only=True` and no `aria_label` is provided, render a console warning in debug mode.
 
 This pattern is analogous to Django's `{% load %}` + template tag — familiar to the target audience.
 
@@ -528,7 +536,7 @@ No `!important`, no specificity fights. Every visual property is a token.
   --ha-shadow-md: none;
 }
 
-/* System reduced motion */
+/* System reduced motion — suppresses all transitions AND keyframe animations (skeleton pulse, fade-in, etc.) */
 @media (prefers-reduced-motion: reduce) {
   * { animation-duration: 0ms !important; transition-duration: 0ms !important; }
 }
