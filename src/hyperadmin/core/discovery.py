@@ -74,7 +74,7 @@ async def build_filter_metadata(
                     target_model = target_rel.mapper.class_
 
             if target_model:
-                from hyperadmin.adapters.registry import adapter_registry
+                from hyperadmin.adapters.registry import adapter_registry  # noqa: PLC0415
 
                 try:
                     target_adapter_cls = adapter_registry.find_adapter_for_model(target_model)

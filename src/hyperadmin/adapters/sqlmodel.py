@@ -10,6 +10,8 @@ from sqlmodel import AutoString, SQLModel, select
 from hyperadmin.core.adapters import BaseAdapter
 from hyperadmin.core.choices import ChoiceItem
 
+_MAX_CHOICES_LIMIT = 200
+
 
 class SQLModelAdapter(BaseAdapter):
     """
@@ -187,8 +189,8 @@ class SQLModelAdapter(BaseAdapter):
 
         Performs a single SELECT on the related model — no N+1.
         """
-        if limit > 200:
-            raise ValueError(f"limit {limit} exceeds maximum of 200")
+        if limit > _MAX_CHOICES_LIMIT:
+            raise ValueError(f"limit {limit} exceeds maximum of {_MAX_CHOICES_LIMIT}")
 
         mapper = inspect(self.model)
         target_model = None

@@ -1,8 +1,8 @@
 """Core components for HyperAdmin."""
 
-from .actions import ActionDef, action, collect_actions
-from .choices import ChoiceItem, ChoicesProvider, SelectFieldMeta
-from .fields import classify_field
+from hyperadmin.core.actions import ActionDef, action, collect_actions
+from hyperadmin.core.choices import ChoiceItem, ChoicesProvider, SelectFieldMeta
+from hyperadmin.core.fields import classify_field
 
 __all__ = [
     "ActionDef",

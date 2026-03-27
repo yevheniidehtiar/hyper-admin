@@ -27,7 +27,7 @@ class Admin:
         ```
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         app: FastAPI,
         discover_apps: list[str] | None = None,

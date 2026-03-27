@@ -16,7 +16,7 @@ from hyperadmin.auth.models import User
 fake = Faker()
 
 
-async def seed_db():
+async def seed_db():  # noqa: PLR0915
     async with AsyncSession(engine, expire_on_commit=False) as session:
         # Check if already seeded
         result = await session.execute(select(Contact))
@@ -60,17 +60,16 @@ async def seed_db():
         ap_acc = next(a for a in accounts if a.code == "2000")
 
         # 2. Contacts
-        contacts = []
-        for _ in range(30):
-            contacts.append(
-                Contact(
-                    name=fake.company(),
-                    email=fake.company_email(),
-                    phone=fake.phone_number(),
-                    address=fake.address(),
-                    contact_type=random.choice([ContactType.CUSTOMER, ContactType.SUPPLIER]),
-                )
+        contacts = [
+            Contact(
+                name=fake.company(),
+                email=fake.company_email(),
+                phone=fake.phone_number(),
+                address=fake.address(),
+                contact_type=random.choice([ContactType.CUSTOMER, ContactType.SUPPLIER]),  # noqa: S311
             )
+            for _ in range(30)
+        ]
         session.add_all(contacts)
         await session.commit()
         for c in contacts:
@@ -85,7 +84,7 @@ async def seed_db():
 
         # 3. Invoices
         for _ in range(50):
-            customer = random.choice(customers)
+            customer = random.choice(customers)  # noqa: S311
             issue_date = fake.date_between(start_date="-1y", end_date="today")
             due_date = issue_date + timedelta(days=30)
 
@@ -93,7 +92,7 @@ async def seed_db():
                 number=fake.unique.bothify(text="INV-####-????"),
                 date_issued=issue_date,
                 date_due=due_date,
-                status=random.choice(list(InvoiceStatus)),
+                status=random.choice(list(InvoiceStatus)),  # noqa: S311
                 customer_id=customer.id,
             )
             session.add(invoice)
@@ -102,12 +101,12 @@ async def seed_db():
 
             # Items
             total_invoice_amount = 0.0
-            for _ in range(random.randint(1, 5)):
+            for _ in range(random.randint(1, 5)):  # noqa: S311
                 item = InvoiceItem(
                     invoice_id=invoice.id,
                     description=fake.catch_phrase(),
-                    quantity=random.randint(1, 10),
-                    unit_price=round(random.uniform(50.0, 500.0), 2),
+                    quantity=random.randint(1, 10),  # noqa: S311
+                    unit_price=round(random.uniform(50.0, 500.0), 2),  # noqa: S311
                 )
                 session.add(item)
                 total_invoice_amount += item.quantity * item.unit_price
@@ -133,7 +132,7 @@ async def seed_db():
 
         # 4. Bills
         for _ in range(30):
-            supplier = random.choice(suppliers)
+            supplier = random.choice(suppliers)  # noqa: S311
             recv_date = fake.date_between(start_date="-1y", end_date="today")
             due_date = recv_date + timedelta(days=15)
 
@@ -141,7 +140,7 @@ async def seed_db():
                 reference=fake.unique.bothify(text="BILL-####-????"),
                 date_received=recv_date,
                 date_due=due_date,
-                status=random.choice(list(BillStatus)),
+                status=random.choice(list(BillStatus)),  # noqa: S311
                 supplier_id=supplier.id,
             )
             session.add(bill)
@@ -150,12 +149,12 @@ async def seed_db():
 
             # Items
             total_bill_amount = 0.0
-            for _ in range(random.randint(1, 3)):
+            for _ in range(random.randint(1, 3)):  # noqa: S311
                 item = BillItem(
                     bill_id=bill.id,
                     description=fake.bs(),
-                    quantity=random.randint(1, 5),
-                    unit_price=round(random.uniform(20.0, 300.0), 2),
+                    quantity=random.randint(1, 5),  # noqa: S311
+                    unit_price=round(random.uniform(20.0, 300.0), 2),  # noqa: S311
                 )
                 session.add(item)
                 total_bill_amount += item.quantity * item.unit_price

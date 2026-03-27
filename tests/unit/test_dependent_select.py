@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
-import builtins
 from types import SimpleNamespace
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    import builtins
 from unittest.mock import AsyncMock, patch
 
 import pytest

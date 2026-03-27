@@ -231,14 +231,14 @@ class PydanticForm:
     def _enum_choices(enum_cls: type[Enum]) -> list[ChoiceItem]:
         return [
             ChoiceItem(
-                value=member.value if not isinstance(member.value, str) else member.value,
+                value=member.value,
                 label=member.name,
                 selected=False,
             )
             for member in enum_cls
         ]
 
-    def _pick_widget(self, name: str, field: FieldInfo) -> HtmxWidget:
+    def _pick_widget(self, name: str, field: FieldInfo) -> HtmxWidget:  # noqa: PLR0911, PLR0912
         if name in self.widgets:
             return self.widgets[name]
 

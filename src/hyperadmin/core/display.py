@@ -16,7 +16,8 @@ def get_display_name(instance: Any) -> str:
     """
     cls = instance.__class__
 
-    # Check if __str__ is overridden in the class or its bases (excluding SQLModel, BaseModel, object)
+    # Check if __str__ is overridden in the class or its bases
+    # (excluding SQLModel, BaseModel, object)
     overridden = False
     for base in cls.__mro__:
         if base in (SQLModel, BaseModel, object):

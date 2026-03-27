@@ -1,6 +1,11 @@
-from fastapi import Request
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, ClassVar
 
 from examples.simple.models import City, Country, Product, User
+
+if TYPE_CHECKING:
+    from fastapi import Request
 from hyperadmin.adapters.sqlmodel import SQLModelAdapter
 from hyperadmin.core.actions import action
 from hyperadmin.core.model import ModelAdmin
@@ -9,10 +14,10 @@ from hyperadmin.core.registry import site
 
 class UserAdmin(ModelAdmin):
     adapter_class = SQLModelAdapter
-    list_filter = ["is_active", "user_type"]
+    list_filter: ClassVar[list[str]] = ["is_active", "user_type"]
 
     @action(label="Deactivate")
-    async def deactivate(self, request: Request, item_id: int) -> None:
+    async def deactivate(self, request: Request, item_id: int) -> None:  # noqa: ARG002
         """Set is_active=False for the given user."""
         user = await self.adapter.get(pk=item_id)
         if user:

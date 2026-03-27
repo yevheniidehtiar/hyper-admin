@@ -32,6 +32,8 @@ from hyperadmin.views.htmx import HtmxTemplateResponse
 
 logger = logging.getLogger(__name__)
 
+_MAX_CHOICES_LIMIT = 200
+
 
 def _integrity_error_to_field_errors(exc: IntegrityError) -> dict[str, str]:
     """Parse an IntegrityError into {field_name: message} for form display."""
@@ -73,7 +75,7 @@ class DynamicModelView:
     resolved through the template-search hierarchy.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         adapter: SQLAlchemyAdapter | SQLModelAdapter,
         options: AdminOptions,
@@ -566,8 +568,10 @@ class DynamicModelView:
         to ``adapter.get_choices()`` to support cascading selects.
         """
         await self._check_permission(request, "view")
-        if limit > 200:
-            raise HTTPException(status_code=400, detail=f"limit {limit} exceeds maximum of 200")
+        if limit > _MAX_CHOICES_LIMIT:
+            raise HTTPException(
+                status_code=400, detail=f"limit {limit} exceeds maximum of {_MAX_CHOICES_LIMIT}"
+            )
 
         # Validate that field_name is a known relation on this model
         inspector = getattr(self.adapter, "inspector", None)

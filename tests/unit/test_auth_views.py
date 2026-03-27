@@ -112,7 +112,7 @@ def _build_app(async_engine, with_auth: bool = True):
     return app
 
 
-async def _login(client: AsyncClient, username: str, password: str = "password123"):
+async def _login(client: AsyncClient, username: str, password: str = "password123"):  # noqa: S107
     """Helper to login and get authenticated session."""
     await client.post("/admin/login", data={"username": username, "password": password})
 

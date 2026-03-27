@@ -103,5 +103,6 @@ class TestAdminAuthBackend:
             [sys.executable, "-c", "import hyperadmin"],
             capture_output=True,
             text=True,
+            check=False,
         )
         assert result.returncode == 0, f"Import failed: {result.stderr}"

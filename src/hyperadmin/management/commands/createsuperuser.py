@@ -8,6 +8,8 @@ from hyperadmin.auth import User, hash_password
 
 app = typer.Typer(help="Management commands for HyperAdmin.")
 
+MIN_PASSWORD_LENGTH = 8
+
 
 @app.command()
 def createsuperuser(
@@ -63,8 +65,10 @@ def createsuperuser(
         typer.echo("Error: Email cannot be empty.", err=True)
         raise typer.Exit(code=1)
 
-    if len(password) < 8:
-        typer.echo("Error: Password must be at least 8 characters long.", err=True)
+    if len(password) < MIN_PASSWORD_LENGTH:
+        typer.echo(
+            f"Error: Password must be at least {MIN_PASSWORD_LENGTH} characters long.", err=True
+        )
         raise typer.Exit(code=1)
 
     try:
