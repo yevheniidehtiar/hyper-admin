@@ -90,9 +90,14 @@ Verify `data-testid` values match the documented naming table:
 - <optional refactor or style improvement>
 
 ### Verdict
+VERDICT: APPROVED | VERDICT: CHANGES_REQUIRED
 [ APPROVED | APPROVED WITH MINOR FIXES | CHANGES REQUIRED ]
 <one-sentence rationale>
 ```
+
+> **Machine-readable line**: The `VERDICT: APPROVED` or `VERDICT: CHANGES_REQUIRED` line must
+> appear first in the Verdict section. The conductor and delivery-manager parse this line to
+> determine the next label transition without reading the full review prose.
 
 ## Behavior Rules
 

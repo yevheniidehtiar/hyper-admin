@@ -84,12 +84,58 @@ All agents read from and write to this file. It's version-controlled, so you hav
 
 | Feature | Status | Usage |
 |---|---|---|
-| Projects V2 (REST + GraphQL API) | GA | Create board, add items, set custom fields |
+| Projects V2 (GraphQL API) | **Implemented** | Created by `/plan-to-issues` — board, custom fields, 3 views |
 | Sub-issues | GA (April 2025) | Epic → Task hierarchy |
 | Issue dependencies | GA (August 2025) | `blocked_by` / `blocking` between tasks |
 | Issue types (Bug, Feature, Task) | GA (April 2025) | Classify epics vs tasks |
 | Milestones | Stable | Group tasks into releases |
-| Labels | Stable | Size, agent tier, area, state |
-| Custom fields on Projects | GA | Estimated hours, agent tier |
-| Roadmap view | GA | Timeline with dependencies |
+| Labels | Stable | Size, agent tier, area, state — **labels are the message bus** |
+| Custom fields on Projects | **Implemented** | Status, Size, Agent Tier, Start Date, End Date |
+| Roadmap view | **Implemented** | Created automatically; date fields need manual binding in UI |
 | Advanced search (`is:blocked`) | GA | Find bottleneck tasks |
+
+## Autonomous Team Orchestration
+
+The autonomous team runs as a label-driven state machine. No agent-to-agent direct calls —
+each agent filters on specific label combinations and acts.
+
+### Conductor (`/run-autonomous-team`)
+
+The conductor is the entry point and merge authority. It runs in the foreground and:
+
+1. Fetches issues with `agent-task` + `ready` labels
+2. Dispatches up to 3 dev agents per cycle (each in an isolated worktree)
+3. Coordinates review via `hyper-admin-code-reviewer` agent
+4. Evaluates `merge-requested` PRs → grants or defers based on file overlap and dependency order
+
+### Label-Based Agent Workload Filters
+
+| Agent | Watches | Action |
+|-------|---------|--------|
+| **Conductor** | Issues: `agent-task` + `ready` | Claim → dispatch dev agent in worktree |
+| **Conductor** | PRs: `merge-requested` | Evaluate queue → add `merge-granted` or `merge-deferred` |
+| **review-agent** | PRs: `review` | Auto-approve via `gh pr review --approve` |
+| **delivery-manager** | PRs: `review` + CI green + GH approval | Add `merge-requested`, remove `review` |
+| **delivery-manager** | PRs: `merge-granted` | Execute merge → add `released`, close issue |
+
+### Merge Queue Evaluation (Conductor)
+
+Before granting a merge, the conductor checks:
+- **File overlap**: `gh pr diff --name-only` compared across all open PRs
+- **Dependency order**: `Depends on: #X` in issue body → `#X` must be closed (merged)
+- **Queue depth**: max 2 concurrent merges to avoid post-rebase conflicts
+
+### Limits and Safety Rails
+
+| Rail | Value |
+|------|-------|
+| Dev agents per cycle | 3 |
+| Cycles per session | 3 (9 issues max) |
+| Review iterations per PR | 2 (then `needs-human`) |
+| Merge queue depth | 2 simultaneous |
+| Rollback | `git revert <merge-sha>` if `develop` breaks |
+
+### Project Config
+
+All commands and agents reference `@.claude/project-config.md` for shared constants.
+Owner/repo are derived at runtime via `gh repo view` — no hardcoded values in command files.

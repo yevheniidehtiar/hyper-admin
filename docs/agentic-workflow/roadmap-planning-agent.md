@@ -140,15 +140,23 @@ gh api repos/{owner}/{repo}/milestones \
 
 ### Project Board Views
 
-1. **Kanban** — Backlog → Ready → In Progress → Review → Done
-2. **Roadmap** — timeline view grouped by milestone, dependency arrows
-3. **Cost overview** — table view sorted by cost, grouped by agent tier
+Created automatically by `/plan-to-issues` (Step 5.5) via GitHub Projects V2 GraphQL API:
+
+1. **Kanban** (`BOARD_LAYOUT`) — columns map to Status field: Backlog → Ready → In Progress → Review → Done
+2. **Roadmap** (`ROADMAP_LAYOUT`) — timeline grouped by milestone; after creation, bind Start Date / End Date fields in the GitHub UI (API does not yet expose date-field binding)
+3. **Table** (`TABLE_LAYOUT`) — sortable by any field; default view for cost/effort overview
+
+Custom fields created per project: **Status**, **Size**, **Agent Tier**, **Start Date**, **End Date**.
+
+All GraphQL operations use `GH_TOKEN="$CLAUDE_GH_TOKEN"` and runtime-derived owner/repo
+(no hardcoded values). See `.claude/commands/plan-to-issues.md` Step 5.5 for full implementation.
 
 ## Output Contract
 
 ```json
 {
   "plan_id": "plan-2025-03-22-abc123",
+  "project_id": "PVT_xxxxxxxxxxxx",
   "project_url": "https://github.com/users/owner/projects/1",
   "milestones": [
     {
