@@ -16,11 +16,9 @@ services:
       - CLAUDE_GH_TOKEN
       - DISABLE_AUTOUPDATER=1
     volumes:
-      # Mount project root so Claude Code operates on live files
-      - ../..:/app
       # Persist OAuth credentials across container restarts.
       # First-time setup: docker compose run --rm claude claude login
-      - claude-credentials:/root/.claude
+      - claude-credentials:/home/claude/.claude
     working_dir: /app
     stdin_open: true
     tty: true

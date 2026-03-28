@@ -88,6 +88,10 @@ cc-login:
 cc-shell:
     {{ _compose }} run --rm claude bash
 
+# Interactive YOLO session in the container (full TUI, no task arg needed)
+cc-local:
+    {{ _compose }} run --rm claude claude --dangerously-skip-permissions
+
 # Run a headless YOLO task: just cc-run "fix the lint errors"
 cc-run task:
     {{ _compose }} run --rm claude claude --dangerously-skip-permissions -p "{{ task }}"

@@ -75,5 +75,7 @@ iptables -A OUTPUT -j DROP
 
 echo "[firewall] Rules applied — outbound locked to whitelist" >&2
 
-# Hand off to the container's CMD (or whatever was passed as arguments)
-exec "$@"
+# Drop from root to the unprivileged 'claude' user before handing off.
+# bypassPermissions (used by remote-control) requires a non-root process.
+# gosu re-execs the process so it runs as 'claude', not as a root child.
+exec gosu claude "$@"
