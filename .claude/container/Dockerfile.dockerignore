@@ -1,0 +1,33 @@
+# Python caches
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.basedpyright/
+
+# Build artifacts
+dist/
+*.egg-info/
+build/
+
+# Git worktrees (can be large)
+.worktrees/
+.claude/worktrees/
+
+# Node
+node_modules/
+
+# Docs build
+site/
+
+# Local secrets / IDE
+.env
+.env.*
+*.local
+.DS_Store
+
+# SSH deploy key (mounted at runtime, never baked into image)
+.claude/container/ssh/

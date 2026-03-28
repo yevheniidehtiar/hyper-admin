@@ -5,11 +5,12 @@
 All commits made by Claude must use the Claude Code identity — not the user's identity, not co-authored:
 
 ```bash
-git commit \
-  -c user.name="Claude Code" \
-  -c user.email="noreply+claude-code@anthropic.com" \
-  -m "type: description (#issue)"
+git -c user.name="Claude Code" \
+    -c user.email="noreply+claude-code@anthropic.com" \
+    commit -m "type: description (#issue)"
 ```
+
+The `-c` flags belong to the `git` command, not to `commit` — combining them with `commit -m` causes a fatal error.
 
 Never add `Co-Authored-By` trailers. The user must remain a clean reviewer.
 

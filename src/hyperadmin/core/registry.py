@@ -48,7 +48,7 @@ class SiteRegistry:
             admin_class = ModelAdmin
 
         if options is None:
-            options = AdminOptions()
+            options = getattr(admin_class, "options", None) or AdminOptions()
 
         with self._lock:
             if model in self._registry:

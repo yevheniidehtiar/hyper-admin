@@ -1,0 +1,34 @@
+{#- Renders a single fieldset group with collapse/expand toggle.
+    Context variables:
+      - group: FieldsetGroup instance (name, fields, collapsed, description, slug)
+-#}
+{%- if group.name -%}
+<fieldset class="ha-fieldset" data-testid="fieldset-{{ group.slug }}"
+    x-data="{ open: {{ 'false' if group.collapsed else 'true' }} }">
+    <legend class="ha-fieldset-legend">
+        <button type="button"
+                class="ha-fieldset-toggle"
+                data-testid="fieldset-toggle-{{ group.slug }}"
+                @click="open = !open"
+                :aria-expanded="open">
+            <span x-text="open ? '▾' : '▸'" class="ha-fieldset-arrow"></span>
+            {{ group.name }}
+        </button>
+    </legend>
+    {%- if group.description -%}
+    <p class="ha-fieldset-description" x-show="open">{{ group.description }}</p>
+    {%- endif -%}
+    <div x-show="open" x-collapse>
+        {%- for field in group.fields -%}
+            {%- set widget = field.widget -%}
+            {%- include field.widget.template_path -%}
+        {%- endfor -%}
+    </div>
+</fieldset>
+{%- else -%}
+{#- Ungrouped fields (no fieldset header) -#}
+{%- for field in group.fields -%}
+    {%- set widget = field.widget -%}
+    {%- include field.widget.template_path -%}
+{%- endfor -%}
+{%- endif -%}
