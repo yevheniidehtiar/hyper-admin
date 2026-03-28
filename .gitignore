@@ -80,6 +80,7 @@ site/
 
 # Claude Code
 .claude/settings.local.json
+.claude/container/ssh/
 
 # .gemini/ — track styleguide, ignore temp files
 !.gemini/

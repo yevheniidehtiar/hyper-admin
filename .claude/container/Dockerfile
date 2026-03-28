@@ -3,6 +3,7 @@
 # Safe to run with --dangerously-skip-permissions because:
 # - Network is locked to a whitelist by init-firewall.sh
 # - Container has its own copy of the repo (no host volume mount)
+# - IS_SANDBOX=1 tells Claude Code this is a sandboxed environment
 #
 # Usage:
 #   just cc-local                              # interactive YOLO TUI
@@ -12,7 +13,6 @@
 FROM node:20-bookworm
 
 # ── System packages (single apt layer) ────────────────────────────────────────
-# gosu is included here so there is no second apt-get run later.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     # Version control & CLI
     git \
@@ -23,9 +23,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ripgrep \
     # Build toolchain (needed by some Python extensions)
     build-essential \
-    # Firewall + privilege drop
+    # Firewall
     iptables \
-    gosu \
     # Python runtime
     python3 \
     python3-dev \
@@ -56,12 +55,6 @@ RUN curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg \
     && apt-get update && apt-get install -y gh \
     && rm -rf /var/lib/apt/lists/*
 
-# ── Non-root user ──────────────────────────────────────────────────────────────
-# The ENTRYPOINT must run as root to apply iptables rules.
-# gosu in init-firewall.sh drops to 'claude' before exec'ing the CMD,
-# making claude the effective user for every process (remote-control, bash…).
-RUN useradd -m -s /bin/bash claude
-
 # ── uv (fast Python package manager) ──────────────────────────────────────────
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
@@ -75,15 +68,15 @@ RUN chmod +x /usr/local/bin/init-firewall.sh
 
 # ── Git identity for Claude Code commits ───────────────────────────────────────
 RUN git config --global user.name "Claude Code" \
-    && git config --global user.email "noreply+claude-code@anthropic.com" \
-    && su claude -c "git config --global user.name 'Claude Code'" \
-    && su claude -c "git config --global user.email 'noreply+claude-code@anthropic.com'"
+    && git config --global user.email "noreply+claude-code@anthropic.com"
 
 # ── Runtime environment ────────────────────────────────────────────────────────
-# /opt/venv is outside /app so a future volume mount cannot shadow it.
+# IS_SANDBOX=1 tells Claude Code it is running inside a sandbox, allowing
+# --dangerously-skip-permissions to work as root (upstream issue #3490).
 ENV UV_PROJECT_ENVIRONMENT=/opt/venv \
     DISABLE_AUTOUPDATER=1 \
-    CLAUDE_CONFIG_DIR=/home/claude/.claude
+    CLAUDE_CONFIG_DIR=/root/.claude \
+    IS_SANDBOX=1
 
 # ── Python dependencies ────────────────────────────────────────────────────────
 # Copy only the files hatchling needs to build + resolve deps.
@@ -104,13 +97,12 @@ COPY . .
 
 # ── Post-copy setup ────────────────────────────────────────────────────────────
 RUN git config --global --add safe.directory /app \
-    && uv run pre-commit install --install-hooks || true \
-    && chown -R claude:claude /app /opt/venv
+    && uv run pre-commit install --install-hooks || true
 
 # ── Entrypoint ─────────────────────────────────────────────────────────────────
-# Runs as root to apply iptables, then gosu drops to claude.
+# Applies iptables firewall, then exec's the CMD.
 ENTRYPOINT ["/usr/local/bin/init-firewall.sh"]
 # Default: remote-control server (requires prior `just cc-login`)
 # Override: `just cc-local` → interactive YOLO TUI
 #           `just cc-shell` → bash
-CMD ["claude", "remote-control", "--permission-mode", "bypassPermissions"]
+CMD ["claude", "remote-control", "--permission-mode", "bypassPermissions", "--name", "macbook", "--spawn", "worktree", "--verbose", "--capacity", "8"]
