@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 from pydantic import BaseModel
 
 from hyperadmin.core.fieldsets import FieldsetSpec
+from hyperadmin.core.inlines import InlineModelSpec
 from hyperadmin.core.layouts import FormLayout
 
 
@@ -70,5 +73,18 @@ class AdminOptions(BaseModel):
     Example:
         ```python
         AdminOptions(form_fields=["name", "email", "is_active"])
+        ```
+    """
+    inlines: list[InlineModelSpec] = []
+    """Inline related models rendered as sub-forms within create/update views.
+
+    Each ``InlineModelSpec`` defines a related model whose rows can be added,
+    edited, and removed directly in the parent form.
+
+    Example:
+        ```python
+        AdminOptions(inlines=[
+            InlineModelSpec(model=OrderItem, fk_field="order_id", extra=3),
+        ])
         ```
     """

@@ -1,0 +1,33 @@
+{#- Renders an inline formset for editing related models.
+    Context variables:
+      - inline: InlineFormset instance
+      - model_name: parent model name (lowercase)
+-#}
+<div class="ha-inline-formset" data-testid="inline-{{ inline.prefix }}">
+    <h3 class="ha-inline-title">{{ inline.title }}</h3>
+    <table class="ha-inline-table">
+        <thead>
+            <tr>
+                {%- for label in inline.field_labels -%}
+                <th>{{ label }}</th>
+                {%- endfor -%}
+                <th class="ha-inline-actions-col">Actions</th>
+            </tr>
+        </thead>
+        <tbody id="inline-{{ inline.prefix }}-body" data-testid="inline-{{ inline.prefix }}-body">
+            {%- for row in inline.rows -%}
+            {%- include "components/inline_row.html" -%}
+            {%- endfor -%}
+        </tbody>
+    </table>
+    {%- if inline.max_num == 0 or inline.rows|length < inline.max_num -%}
+    <button type="button"
+            class="ha-btn ha-btn-secondary ha-inline-add-btn"
+            data-testid="inline-{{ inline.prefix }}-add"
+            hx-get="/{{ model_name }}/inline/{{ inline.prefix }}/add-row?index={{ inline.rows|length }}"
+            hx-target="#inline-{{ inline.prefix }}-body"
+            hx-swap="beforeend">
+        + Add {{ inline.spec.model.__name__ }}
+    </button>
+    {%- endif -%}
+</div>

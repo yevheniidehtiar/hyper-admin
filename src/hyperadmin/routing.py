@@ -129,6 +129,14 @@ def create_admin_router(  # noqa: PLR0913
         name=f"{model_name}-choices",
     )
 
+    if options.inlines:
+        router.add_api_route(
+            f"{prefix}/inline/{{inline_prefix}}/add-row",
+            view.inline_add_row_view,
+            methods=["GET"],
+            name=f"{model_name}-inline-add-row",
+        )
+
     if actions:
         router.add_api_route(
             f"{prefix}/{{item_id:int}}/action/{{action_name}}",

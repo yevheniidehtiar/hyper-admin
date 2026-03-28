@@ -23,6 +23,11 @@
         {%- endfor -%}
         </div>
     {%- endif -%}
+    {%- if inline_formsets -%}
+        {%- for inline in inline_formsets -%}
+            {%- include "components/inline_formset.html" -%}
+        {%- endfor -%}
+    {%- endif -%}
 {%- endblock -%}
 
 {%- block form_actions -%}
