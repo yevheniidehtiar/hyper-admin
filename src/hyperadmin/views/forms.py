@@ -25,6 +25,8 @@ if TYPE_CHECKING:
 
     from starlette.templating import Jinja2Templates
 
+    from hyperadmin.core.fieldsets import FieldsetSpec
+
 
 @dataclass(slots=True)
 class HtmxWidget:
@@ -207,6 +209,29 @@ class FormField:
             return "text"
 
 
+@dataclass(slots=True)
+class FieldsetGroup:
+    """A resolved group of ``FormField`` instances for template rendering.
+
+    Attributes:
+        name: Display heading for the fieldset.
+        fields: The ``FormField`` instances belonging to this group.
+        collapsed: Whether the fieldset starts collapsed.
+        description: Optional help text shown under the heading.
+        slug: URL-safe identifier derived from *name*, used in ``data-testid``.
+    """
+
+    name: str
+    fields: list[FormField]
+    collapsed: bool = False
+    description: str | None = None
+    slug: str = ""
+
+    def __post_init__(self) -> None:
+        if not self.slug:
+            self.slug = self.name.lower().replace(" ", "-")
+
+
 class PydanticForm:
     def __init__(
         self,
@@ -217,6 +242,7 @@ class PydanticForm:
         exclude: list[str] | None = None,
         initial: dict[str, Any] | None = None,
         choices_base_url: str = "",
+        fieldsets: list[FieldsetSpec] | None = None,
     ) -> None:
         self.model = model
         self.widgets = widgets or {}
@@ -226,6 +252,7 @@ class PydanticForm:
         self.choices_base_url = choices_base_url
         self.errors: dict[str, list[str]] = {}
         self._fields: list[FormField] = []
+        self._fieldset_specs: list[FieldsetSpec] = fieldsets or []
 
     @staticmethod
     def _enum_choices(enum_cls: type[Enum]) -> list[ChoiceItem]:
@@ -342,6 +369,46 @@ class PydanticForm:
             value = self.initial.get(name, default_val if default_val is not None else None)
             self._fields.append(FormField(name=name, model_field=field, widget=widget, value=value))
         return self._fields
+
+    @property
+    def fieldset_groups(self) -> list[FieldsetGroup]:
+        """Return form fields grouped according to the configured fieldsets.
+
+        If no fieldsets are configured, returns a single group containing all fields.
+        Fields referenced in a fieldset spec but not present in the form are silently
+        skipped. Fields not covered by any fieldset are collected into a trailing
+        "Other fields" group.
+        """
+        all_fields = self.fields
+        if not self._fieldset_specs:
+            return [FieldsetGroup(name="", fields=all_fields, slug="")]
+
+        field_map = {f.name: f for f in all_fields}
+        claimed: set[str] = set()
+        groups: list[FieldsetGroup] = []
+
+        for spec in self._fieldset_specs:
+            group_fields: list[FormField] = []
+            for fname in spec.fields:
+                if fname in field_map:
+                    group_fields.append(field_map[fname])
+                    claimed.add(fname)
+            if group_fields:
+                groups.append(
+                    FieldsetGroup(
+                        name=spec.name,
+                        fields=group_fields,
+                        collapsed=spec.collapsed,
+                        description=spec.description,
+                    )
+                )
+
+        # Collect unclaimed fields into a default group
+        remaining = [f for f in all_fields if f.name not in claimed]
+        if remaining:
+            groups.append(FieldsetGroup(name="Other fields", fields=remaining))
+
+        return groups
 
     def bind(self, data: dict[str, Any]) -> None:
         for f in self.fields:

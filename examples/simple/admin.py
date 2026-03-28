@@ -8,13 +8,26 @@ if TYPE_CHECKING:
     from fastapi import Request
 from hyperadmin.adapters.sqlmodel import SQLModelAdapter
 from hyperadmin.core.actions import action
+from hyperadmin.core.fieldsets import FieldsetSpec
 from hyperadmin.core.model import ModelAdmin
+from hyperadmin.core.options import AdminOptions
 from hyperadmin.core.registry import site
 
 
 class UserAdmin(ModelAdmin):
     adapter_class = SQLModelAdapter
     list_filter: ClassVar[list[str]] = ["is_active", "user_type"]
+    options: ClassVar[AdminOptions] = AdminOptions(
+        fieldsets=[
+            FieldsetSpec(name="Basic Info", fields=["name", "email"]),
+            FieldsetSpec(
+                name="Settings",
+                fields=["is_active", "rating", "user_type"],
+                collapsed=True,
+                description="Advanced user settings",
+            ),
+        ],
+    )
 
     @action(label="Deactivate")
     async def deactivate(self, request: Request, item_id: int) -> None:  # noqa: ARG002

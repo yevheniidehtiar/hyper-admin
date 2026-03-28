@@ -1,5 +1,7 @@
 from pydantic import BaseModel
 
+from hyperadmin.core.fieldsets import FieldsetSpec
+
 
 class AdminOptions(BaseModel):
     """Per-model configuration for the HyperAdmin interface.
@@ -32,4 +34,18 @@ class AdminOptions(BaseModel):
     """Cascading select configuration: maps child field name → parent field name.
 
     Example: ``{"city": "country_id"}`` makes the city select reload when country_id changes.
+    """
+    fieldsets: list[FieldsetSpec] = []
+    """Groups of fields rendered together under collapsible headings in create/update forms.
+
+    When non-empty, the form renders fields in the order defined by the fieldsets.
+    Fields not included in any fieldset are rendered in a default ungrouped section.
+
+    Example:
+        ```python
+        AdminOptions(fieldsets=[
+            FieldsetSpec(name="Basic Info", fields=["name", "email"]),
+            FieldsetSpec(name="Advanced", fields=["is_active", "rating"], collapsed=True),
+        ])
+        ```
     """
