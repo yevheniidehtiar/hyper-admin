@@ -9,6 +9,7 @@ if TYPE_CHECKING:
 from hyperadmin.adapters.sqlmodel import SQLModelAdapter
 from hyperadmin.core.actions import action
 from hyperadmin.core.fieldsets import FieldsetSpec
+from hyperadmin.core.layouts import FormLayout
 from hyperadmin.core.model import ModelAdmin
 from hyperadmin.core.options import AdminOptions
 from hyperadmin.core.registry import site
@@ -27,6 +28,7 @@ class UserAdmin(ModelAdmin):
                 description="Advanced user settings",
             ),
         ],
+        form_layout=FormLayout.TWO_COLUMN
     )
 
     @action(label="Deactivate")

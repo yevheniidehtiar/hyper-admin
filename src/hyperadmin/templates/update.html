@@ -16,10 +16,12 @@
             {%- include "components/fieldset.html" -%}
         {%- endfor -%}
     {%- else -%}
+        <div class="{{ form.layout_css_class }}" data-testid="form-fields">
         {%- for field in form.fields -%}
             {%- set widget = field.widget -%}
             {%- include field.widget.template_path -%}
         {%- endfor -%}
+        </div>
     {%- endif -%}
 {%- endblock -%}
 
