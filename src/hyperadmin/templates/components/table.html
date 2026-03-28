@@ -1,11 +1,11 @@
 <div id="model-list" class="ha-table-wrapper">
-    <table class="ha-table" data-testid="list-table">
+    <table class="ha-table" data-testid="list-table" aria-label="{{ model_name }} list">
         <thead>
             <tr class="ha-table-header">
                 {%- for field in fields -%}
                     {%- include "components/sortable_header.html" -%}
                 {%- endfor -%}
-                <th class="ha-table-th ha-table-th-center">Actions</th>
+                <th class="ha-table-th ha-table-th-center" scope="col">Actions</th>
             </tr>
         </thead>
         <tbody class="ha-table-body">
