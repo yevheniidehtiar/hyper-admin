@@ -90,7 +90,11 @@ RUN git config --global user.name "Claude Code" \
 # ── Runtime environment ────────────────────────────────────────────────────────
 ENV DISABLE_AUTOUPDATER=1
 ENV UV_PROJECT_ENVIRONMENT=/app/.venv
+# Tell Claude Code where to look for credentials (mounted volume)
+ENV CLAUDE_CONFIG_DIR=/root/.claude
 
 # Entrypoint: apply firewall rules then hand off to CMD
 ENTRYPOINT ["/usr/local/bin/init-firewall.sh"]
-CMD ["bash"]
+# Default: start remote-control server (requires prior `claude login`)
+# Override with `docker compose run claude bash` for an interactive shell
+CMD ["claude", "remote-control"]

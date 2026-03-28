@@ -8,12 +8,14 @@
 # Required capability: NET_ADMIN (set in docker-compose.yml)
 #
 # Allowlist:
-#   - api.anthropic.com  — Claude API
-#   - github.com         — code hosting + gh CLI
-#   - api.github.com     — gh CLI API
-#   - registry.npmjs.org — npm (Claude Code updates)
-#   - pypi.org           — Python packages
-#   - files.pythonhosted.org — PyPI file downloads
+#   - api.anthropic.com        — Claude API (headless / API-key sessions)
+#   - claude.ai                — OAuth login + remote-control session relay
+#   - statsig.anthropic.com    — feature flags used by Claude Code
+#   - github.com               — code hosting + gh CLI
+#   - api.github.com           — gh CLI API
+#   - registry.npmjs.org       — npm (Claude Code updates)
+#   - pypi.org                 — Python packages
+#   - files.pythonhosted.org   — PyPI file downloads
 #
 # Based on Anthropic's official devcontainer pattern:
 # https://github.com/anthropics/claude-code/tree/main/.devcontainer
@@ -21,15 +23,21 @@
 set -euo pipefail
 
 ALLOW_HOSTS=(
+    # Anthropic services
     "api.anthropic.com"
+    "claude.ai"                   # OAuth login + remote-control session relay
+    "statsig.anthropic.com"       # feature flags
+    # Code hosting
     "github.com"
     "api.github.com"
     "objects.githubusercontent.com"
+    # Package registries
     "registry.npmjs.org"
     "pypi.org"
     "files.pythonhosted.org"
     "uv.astral.sh"
     "ghcr.io"
+    # MCP servers
     "mcp.slack.com"
 )
 
