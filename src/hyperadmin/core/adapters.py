@@ -1,8 +1,31 @@
+from __future__ import annotations
+
 import builtins
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from typing import Any
 
 from hyperadmin.core.choices import ChoiceItem
+
+
+@dataclass
+class PaginationMeta:
+    """Pagination metadata for list responses."""
+
+    total: int
+    page: int
+    page_size: int
+
+
+@dataclass
+class ListEnvelope:
+    """Response envelope for paginated list results.
+
+    Structure: ``{data: [...], meta: {total, page, page_size}}``
+    """
+
+    data: builtins.list[dict[str, Any]]
+    meta: PaginationMeta
 
 
 class BaseAdapter(ABC):
@@ -45,7 +68,7 @@ class BaseAdapter(ABC):
         search: str | None = None,
         filters: dict[str, Any] | None = None,
         order_by: str | None = None,
-    ) -> tuple[list[Any], int]:
+    ) -> tuple[builtins.list[Any], int]:
         """
         Retrieves a list of objects with optional pagination, searching, and filtering.
 
@@ -147,3 +170,66 @@ class BaseAdapter(ABC):
             ValueError: When ``limit`` exceeds 200.
         """
         raise NotImplementedError
+
+
+class JsonApiAdapter(BaseAdapter, ABC):
+    """Adapter that adds JSON:API-style serialisation to BaseAdapter.
+
+    Subclasses must implement all ``BaseAdapter`` abstract methods **and**
+    ``to_dict``, which converts a single ORM/domain record into a plain
+    dictionary suitable for inclusion in a ``ListEnvelope``.
+
+    Example:
+        ```python
+        class MySqlModelJsonAdapter(JsonApiAdapter):
+            def to_dict(self, record):
+                return record.model_dump()
+        ```
+    """
+
+    @abstractmethod
+    def to_dict(self, record: Any) -> dict[str, Any]:
+        """Serialise a single record to a plain dictionary.
+
+        Args:
+            record: A domain object or ORM model instance.
+
+        Returns:
+            A JSON-serialisable dictionary representation of the record.
+        """
+        raise NotImplementedError
+
+    async def list_as_envelope(
+        self,
+        page: int = 1,
+        page_size: int = 10,
+        search: str | None = None,
+        filters: dict[str, Any] | None = None,
+        order_by: str | None = None,
+    ) -> ListEnvelope:
+        """Return a paginated list wrapped in a ``ListEnvelope``.
+
+        Delegates to ``self.list()`` for data retrieval, then serialises each
+        record via ``self.to_dict()``.
+
+        Args:
+            page: The page number for pagination.
+            page_size: The number of items per page.
+            search: A search query to filter the results.
+            filters: A dictionary of filters to apply to the query.
+            order_by: The field to order the results by.
+
+        Returns:
+            A ``ListEnvelope`` containing serialised records and pagination metadata.
+        """
+        records, total = await self.list(
+            page=page,
+            page_size=page_size,
+            search=search,
+            filters=filters,
+            order_by=order_by,
+        )
+        return ListEnvelope(
+            data=[self.to_dict(record) for record in records],
+            meta=PaginationMeta(total=total, page=page, page_size=page_size),
+        )
