@@ -60,20 +60,26 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 # ── Claude Code ────────────────────────────────────────────────────────────────
 RUN npm install -g @anthropic-ai/claude-code
 
+# ── Python venv location ───────────────────────────────────────────────────────
+# /opt/venv is OUTSIDE /app, so the host volume mount does not override it.
+# This must be set before `uv sync` so it builds to the right path.
+ENV UV_PROJECT_ENVIRONMENT=/opt/venv
+
 # ── Project dependencies ───────────────────────────────────────────────────────
 WORKDIR /app
 
-# Copy only manifests first for layer caching
-COPY pyproject.toml uv.lock* ./
+# Copy manifests + files required by hatchling to build the package
+COPY pyproject.toml uv.lock* README.md ./
+COPY src/ ./src/
 
-# Install all Python deps (including dev/test/e2e extras)
+# Install all Python deps (including dev/test/e2e extras) into /opt/venv
 RUN uv sync --all-extras --frozen
 
-# Copy the rest of the project
+# Copy the rest of the project (tests, examples, .claude/, scripts/, etc.)
 COPY . .
 
-# Install Playwright browsers (needed for E2E tests)
-RUN uv run playwright install --with-deps chromium
+# Install Playwright browsers using the venv python directly.
+RUN /opt/venv/bin/python -m playwright install chromium
 
 # Install pre-commit hooks
 RUN git config --global --add safe.directory /app \
@@ -89,7 +95,6 @@ RUN git config --global user.name "Claude Code" \
 
 # ── Runtime environment ────────────────────────────────────────────────────────
 ENV DISABLE_AUTOUPDATER=1
-ENV UV_PROJECT_ENVIRONMENT=/app/.venv
 # Tell Claude Code where to look for credentials (mounted volume)
 ENV CLAUDE_CONFIG_DIR=/root/.claude
 
