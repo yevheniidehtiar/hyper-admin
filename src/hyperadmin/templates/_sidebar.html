@@ -1,13 +1,14 @@
-<aside class="ha-sidebar" data-testid="sidebar">
+<aside class="ha-sidebar" data-testid="sidebar" aria-label="Sidebar navigation">
     <div class="ha-sidebar-inner">
         <h2 class="ha-sidebar-title">Menu</h2>
+        <nav aria-label="Sidebar">
         <ul class="ha-sidebar-nav">
             {%- for item in nav_items -%}
             {%- if not auth_enabled or not request.state.user or item.get('visible', true) -%}
             <li>
-                <a href="{{ admin_prefix }}{{ item.url }}" class="ha-sidebar-link">
+                <a href="{{ admin_prefix }}{{ item.url }}" class="ha-sidebar-link"{% if request.url.path == admin_prefix ~ item.url %} aria-current="page"{% endif %}>
                     {%- if item.icon -%}
-                    <i class="{{ item.icon }}"></i>
+                    <i class="{{ item.icon }}" aria-hidden="true"></i>
                     {%- endif -%}
                     {{ item.name }}
                 </a>
@@ -15,5 +16,6 @@
             {%- endif -%}
             {%- endfor -%}
         </ul>
+        </nav>
     </div>
 </aside>

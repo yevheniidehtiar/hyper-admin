@@ -1,15 +1,17 @@
 {%- if filter_metadata -%}
-<div class="ha-card ha-filter-bar" data-testid="filter-bar">
+<div class="ha-card ha-filter-bar" data-testid="filter-bar" x-data="{ filtersOpen: {{ 'true' if active_filters else 'false' }} }">
     <button type="button"
             class="ha-filter-toggle"
-            onclick="document.getElementById('filter-content').classList.toggle('hidden'); this.querySelector('.ha-icon').classList.toggle('rotate-180')">
-        <svg class="ha-icon ha-icon-sm {% if not active_filters %}rotate-0{% else %}rotate-180{% endif %}" viewBox="0 0 24 24">
+            @click="filtersOpen = !filtersOpen"
+            aria-controls="filter-content"
+            :aria-expanded="filtersOpen">
+        <svg class="ha-icon ha-icon-sm" :class="filtersOpen ? 'rotate-180' : 'rotate-0'" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M19 9l-7 7-7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
         Filters
     </button>
 
-    <div id="filter-content" class="ha-filter-content {% if not active_filters %}hidden{% endif %}">
+    <div id="filter-content" class="ha-filter-content" x-show="filtersOpen" x-cloak>
         <div class="ha-filter-container">
             {%- for filter in filter_metadata -%}
             <div class="ha-form-group ha-filter-group">

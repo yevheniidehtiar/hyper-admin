@@ -3,9 +3,9 @@
     {%- for key, value in active_filters.items() -%}&filter_{{ key }}={{ value }}{%- endfor -%}
 {%- endset -%}
 {%- if field == '__str__' -%}
-<th class="ha-table-th">{{ display_name }}</th>
+<th class="ha-table-th" scope="col">{{ display_name }}</th>
 {%- else -%}
-<th class="ha-table-th">
+<th class="ha-table-th" scope="col"{% if sort_by == field %} aria-sort="{{ 'ascending' if sort_direction == 'asc' else 'descending' }}"{% endif %}>
     <a href="{{- url_for(model_name|lower ~ '-list') }}?sort_by={{ field }}&sort_direction={{ 'desc' if sort_by == field and sort_direction == 'asc' else 'asc' }}&search={{ search_query }}&page={{ pagination.page }}{{ filter_params -}}"
        hx-get="{{- url_for(model_name|lower ~ '-list') }}?sort_by={{ field }}&sort_direction={{ 'desc' if sort_by == field and sort_direction == 'asc' else 'asc' }}&search={{ search_query }}&page={{ pagination.page }}{{ filter_params -}}"
        hx-target="#model-list"

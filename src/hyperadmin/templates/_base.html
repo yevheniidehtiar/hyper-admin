@@ -50,12 +50,13 @@
     </script>
 </head>
 <body class="ha-page">
+    <a href="#main-content" class="ha-skip-link">Skip to main content</a>
     <div class="ha-container">
         {% block messages %}{% include "_messages.html" %}{% endblock %}
         {% block navbar %}{% include "_navbar.html" %}{% endblock %}
         <div class="ha-layout">
             {% block sidebar %}{% include "_sidebar.html" %}{% endblock %}
-            <main class="ha-content">
+            <main id="main-content" role="main" class="ha-content">
                 {% block content %}{% endblock %}
             </main>
         </div>

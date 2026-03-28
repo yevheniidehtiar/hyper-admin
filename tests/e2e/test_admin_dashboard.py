@@ -10,5 +10,5 @@ def test_admin_dashboard_loads_correctly(page: Page, demo_base_url):
     expect(page.locator("h1")).to_have_text("Welcome to HyperAdmin Dashboard")
 
     # Verify that the navbar and sidebar are present
-    expect(page.locator("nav")).to_be_visible()
+    expect(page.get_by_role("navigation", name="Main navigation")).to_be_visible()
     expect(page.locator("aside")).to_be_visible()

@@ -1,3 +1,4 @@
+<nav aria-label="Pagination">
 <div class="ha-pagination">
     <div class="ha-pagination-info" data-testid="pagination-info">
         Showing {{- pagination.start_index }} to {{ pagination.end_index }} of {{ pagination.total_items }} results
@@ -17,7 +18,7 @@
         </a>
         {%- endif -%}
 
-        <div class="ha-pagination-page" data-testid="pagination-page">
+        <div class="ha-pagination-page" data-testid="pagination-page" aria-current="page">
             Page {{ pagination.page }} of {{ pagination.total_pages }}
         </div>
 
@@ -33,3 +34,4 @@
         {%- endif -%}
     </div>
 </div>
+</nav>
