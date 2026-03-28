@@ -85,6 +85,16 @@ RUN /opt/venv/bin/python -m playwright install chromium
 RUN git config --global --add safe.directory /app \
     && uv run pre-commit install --install-hooks || true
 
+# ── Non-root user (required: bypassPermissions is blocked for root) ────────────
+# The ENTRYPOINT (init-firewall.sh) must run as root to apply iptables rules,
+# so USER is not set here. Instead, gosu drops to 'claude' at the end of
+# init-firewall.sh before exec'ing the CMD — making claude the effective user
+# for every process (remote-control, bash, etc).
+RUN apt-get update && apt-get install -y --no-install-recommends gosu \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd -m -s /bin/bash claude \
+    && chown -R claude:claude /app /opt/venv
+
 # ── Firewall ───────────────────────────────────────────────────────────────────
 COPY .claude/container/scripts/init-firewall.sh /usr/local/bin/init-firewall.sh
 RUN chmod +x /usr/local/bin/init-firewall.sh
@@ -92,14 +102,16 @@ RUN chmod +x /usr/local/bin/init-firewall.sh
 # ── Git identity for Claude Code commits ───────────────────────────────────────
 RUN git config --global user.name "Claude Code" \
     && git config --global user.email "noreply+claude-code@anthropic.com"
+RUN su claude -c "git config --global user.name 'Claude Code'" \
+    && su claude -c "git config --global user.email 'noreply+claude-code@anthropic.com'"
 
 # ── Runtime environment ────────────────────────────────────────────────────────
 ENV DISABLE_AUTOUPDATER=1
 # Tell Claude Code where to look for credentials (mounted volume)
-ENV CLAUDE_CONFIG_DIR=/root/.claude
+ENV CLAUDE_CONFIG_DIR=/home/claude/.claude
 
-# Entrypoint: apply firewall rules then hand off to CMD
+# Entrypoint runs as root to apply iptables, then gosu drops to claude.
 ENTRYPOINT ["/usr/local/bin/init-firewall.sh"]
 # Default: start remote-control server (requires prior `claude login`)
 # Override with `docker compose run claude bash` for an interactive shell
-CMD ["claude", "remote-control"]
+CMD ["claude", "remote-control", "--permission-mode", "bypassPermissions"]
