@@ -9,12 +9,22 @@ services:
     cap_add:
       - NET_ADMIN
     environment:
+      # ANTHROPIC_API_KEY is optional when using OAuth (Max subscription).
+      # Required only for API-key-based sessions (no remote-control support).
       - ANTHROPIC_API_KEY
+      # Bot identity for PR creation (gh CLI)
       - CLAUDE_GH_TOKEN
       - DISABLE_AUTOUPDATER=1
     volumes:
       # Mount project root so Claude Code operates on live files
       - ../..:/app
+      # Persist OAuth credentials across container restarts.
+      # First-time setup: docker compose run --rm claude claude login
+      - claude-credentials:/root/.claude
     working_dir: /app
     stdin_open: true
     tty: true
+
+volumes:
+  # Named volume — survives container stop/rm, isolated from host ~/.claude
+  claude-credentials:
