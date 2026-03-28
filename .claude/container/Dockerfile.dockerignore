@@ -28,3 +28,6 @@ site/
 .env.*
 *.local
 .DS_Store
+
+# SSH deploy key (mounted at runtime, never baked into image)
+.claude/container/ssh/

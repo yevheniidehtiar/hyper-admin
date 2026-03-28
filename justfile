@@ -75,14 +75,18 @@ cc-build:
 
 # Start Claude Code remote-control server (requires prior `just cc-login`)
 cc-up:
-    {{ _compose }} up
+    {{ _compose }} up -d
 
-# Build and start in one step
-cc-start: cc-build cc-up
+# Build, rotate deploy key, and start in one step
+cc-start: cc-build cc-rotate-key cc-up
 
 # One-time OAuth login for Max subscription
 cc-login:
     {{ _compose }} run --rm claude claude login
+
+# One-time GitHub CLI login inside the container
+cc-gh-auth:
+    {{ _compose }} run --rm claude gh auth login
 
 # Open an interactive shell inside the container
 cc-shell:
@@ -95,6 +99,51 @@ cc-local:
 # Run a headless YOLO task: just cc-run "fix the lint errors"
 cc-run task:
     {{ _compose }} run --rm claude claude --dangerously-skip-permissions -p "{{ task }}"
+
+# Rotate SSH deploy key for the container (generates new key, registers with GitHub)
+cc-rotate-key repo="yevheniidehtiar/hyper-admin":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    SSH_DIR=".claude/container/ssh"
+    KEY_FILE="${SSH_DIR}/id_ed25519"
+    TITLE="claude-sandbox-$(date +%Y%m%d)"
+
+    mkdir -p "$SSH_DIR"
+
+    # Remove old deploy key from GitHub if one exists
+    if [ -f "${KEY_FILE}.pub" ]; then
+        OLD_FP=$(ssh-keygen -lf "${KEY_FILE}.pub" | awk '{print $2}')
+        OLD_ID=$(gh repo deploy-key list --repo "{{ repo }}" \
+            | grep "$OLD_FP" | awk '{print $1}' || true)
+        if [ -n "$OLD_ID" ]; then
+            gh repo deploy-key delete "$OLD_ID" --repo "{{ repo }}" --yes
+            echo "Removed old deploy key (ID: $OLD_ID)"
+        fi
+    fi
+
+    # Generate new key
+    rm -f "$KEY_FILE" "${KEY_FILE}.pub"
+    ssh-keygen -t ed25519 -N "" -C "$TITLE" -f "$KEY_FILE" -q
+    chmod 600 "$KEY_FILE"
+    chmod 644 "${KEY_FILE}.pub"
+
+    # Write ssh config so git uses this key for github.com
+    cat > "${SSH_DIR}/config" <<CFG
+    Host github.com
+        IdentityFile /root/.ssh/id_ed25519
+        UserKnownHostsFile /root/.ssh/known_hosts
+        StrictHostKeyChecking accept-new
+    CFG
+    chmod 644 "${SSH_DIR}/config"
+
+    # Pre-seed known_hosts so the read-only mount works
+    ssh-keyscan -t ed25519 github.com > "${SSH_DIR}/known_hosts" 2>/dev/null
+    chmod 644 "${SSH_DIR}/known_hosts"
+
+    # Register as read-write deploy key
+    gh repo deploy-key add "${KEY_FILE}.pub" \
+        --repo "{{ repo }}" --title "$TITLE" --allow-write
+    echo "Deploy key rotated: $TITLE"
 
 # Run container security tests
 cc-test:
