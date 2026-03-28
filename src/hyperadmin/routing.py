@@ -9,6 +9,7 @@ from sqlmodel import SQLModel
 from hyperadmin.core.actions import ActionDef, collect_actions
 from hyperadmin.core.options import AdminOptions
 from hyperadmin.views.dynamic import DynamicModelView
+from hyperadmin.views.json_api import JsonApiRouter
 
 
 def _extract_column_names(raw: list[Any] | None, model: type | None = None) -> list[str] | None:
@@ -159,6 +160,7 @@ class HyperAdminRouter:
         templates.env.lstrip_blocks = True
         self.templates = templates
         self.routers: list[APIRouter] = []
+        self._json_api_router = JsonApiRouter(engine=engine)
 
     def generate_routes(self) -> None:
         """Generates the routes for the registered models."""
@@ -222,6 +224,12 @@ class HyperAdminRouter:
             )
 
         self.templates.env.globals["nav_items"] = nav_items
+
+        # Generate JSON API routes alongside HTML routes
+        self._json_api_router.generate_routes()
+        api_router = APIRouter(prefix="/api")
+        api_router.include_router(self._json_api_router.get_router())
+        self.routers.append(api_router)
 
     def get_admin_dashboard_view(self):
         from hyperadmin.views.dynamic import admin_dashboard
