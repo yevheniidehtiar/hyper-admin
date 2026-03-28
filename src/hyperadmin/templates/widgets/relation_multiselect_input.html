@@ -18,7 +18,7 @@
             name="{{- field.name -}}" {# -#}
             multiple {# -#}
             aria-multiselectable="true" {# -#}
-            class="ha-select ha-select--multi ha-select--relation ha-select--lazy" {# -#}
+            class="ha-select ha-select--multi ha-select--relation ha-select--lazy{%- if widget.dependent_on %} ha-select--dependent{%- endif -%}" {# -#}
             data-testid="{{- field.name -}}-relation-multiselect" {# -#}
             hx-get="{{- widget.choices_url -}}?q=" {# -#}
             {%- if widget.dependent_on -%}
