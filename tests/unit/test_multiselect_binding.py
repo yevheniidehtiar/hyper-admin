@@ -30,7 +30,6 @@ class Article(BaseModel):
     is_published: bool = False
 
 
-
 # -- Helpers --
 
 
@@ -107,7 +106,6 @@ class FakeFormData:
         return [v for k, v in self._items if k == key]
 
 
-
 # -- Tests: _extract_form_data --
 
 
@@ -120,13 +118,15 @@ def test_extract_multiselect_uses_getlist() -> None:
     # Force field generation
     _ = form.fields
 
-    form_data = FakeFormData([
-        ("title", "Hello"),
-        ("tags", "python"),
-        ("tags", "fastapi"),
-        ("tags", "htmx"),
-        ("is_published", "on"),
-    ])
+    form_data = FakeFormData(
+        [
+            ("title", "Hello"),
+            ("tags", "python"),
+            ("tags", "fastapi"),
+            ("tags", "htmx"),
+            ("is_published", "on"),
+        ]
+    )
     data = DynamicModelView._extract_form_data(form_data, form)
     assert data["tags"] == ["python", "fastapi", "htmx"]
     assert data["title"] == "Hello"
@@ -140,11 +140,13 @@ def test_extract_relation_multiselect_uses_getlist() -> None:
     )
     _ = form.fields
 
-    form_data = FakeFormData([
-        ("title", "Hello"),
-        ("tags", "1"),
-        ("tags", "2"),
-    ])
+    form_data = FakeFormData(
+        [
+            ("title", "Hello"),
+            ("tags", "1"),
+            ("tags", "2"),
+        ]
+    )
     data = DynamicModelView._extract_form_data(form_data, form)
     assert data["tags"] == ["1", "2"]
 
