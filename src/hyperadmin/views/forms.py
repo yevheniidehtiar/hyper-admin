@@ -467,46 +467,6 @@ class PydanticForm:
         return tuple(assets)
 
     @property
-    def fieldset_groups(self) -> list[FieldsetGroup]:
-        """Return form fields grouped according to the configured fieldsets.
-
-        If no fieldsets are configured, returns a single group containing all fields.
-        Fields referenced in a fieldset spec but not present in the form are silently
-        skipped. Fields not covered by any fieldset are collected into a trailing
-        "Other fields" group.
-        """
-        all_fields = self.fields
-        if not self._fieldset_specs:
-            return [FieldsetGroup(name="", fields=all_fields, slug="")]
-
-        field_map = {f.name: f for f in all_fields}
-        claimed: set[str] = set()
-        groups: list[FieldsetGroup] = []
-
-        for spec in self._fieldset_specs:
-            group_fields: list[FormField] = []
-            for fname in spec.fields:
-                if fname in field_map:
-                    group_fields.append(field_map[fname])
-                    claimed.add(fname)
-            if group_fields:
-                groups.append(
-                    FieldsetGroup(
-                        name=spec.name,
-                        fields=group_fields,
-                        collapsed=spec.collapsed,
-                        description=spec.description,
-                    )
-                )
-
-        # Collect unclaimed fields into a trailing group
-        unclaimed = [f for f in all_fields if f.name not in claimed]
-        if unclaimed:
-            groups.append(FieldsetGroup(name="Other fields", fields=unclaimed))
-
-        return groups
-
-    @property
     def layout_css_class(self) -> str:
         """Return the CSS class for the form layout.
 
