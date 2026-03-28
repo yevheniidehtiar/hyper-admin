@@ -65,6 +65,37 @@ build:
 # ── Docker ────────────────────────────────────────────────────
 
 
+# ── Claude Code ───────────────────────────────────────────────
+
+_compose := "docker compose -f .claude/container/docker-compose.yml"
+
+# Build the Claude Code remote container image
+cc-build:
+    {{ _compose }} build
+
+# Start Claude Code remote-control server (requires prior `just cc-login`)
+cc-up:
+    {{ _compose }} up
+
+# Build and start in one step
+cc-start: cc-build cc-up
+
+# One-time OAuth login for Max subscription
+cc-login:
+    {{ _compose }} run --rm claude claude login
+
+# Open an interactive shell inside the container
+cc-shell:
+    {{ _compose }} run --rm claude bash
+
+# Run a headless YOLO task: just cc-run "fix the lint errors"
+cc-run task:
+    {{ _compose }} run --rm claude claude --dangerously-skip-permissions -p "{{ task }}"
+
+# Run container security tests
+cc-test:
+    UV_PROJECT_ENVIRONMENT=.venv uv run pytest .claude/container/tests/test_container_security.py -v
+
 # ── Docs ──────────────────────────────────────────────────────
 
 # Serve documentation locally
