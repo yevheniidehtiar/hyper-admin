@@ -37,6 +37,8 @@ def test_create_user_form_rendering(page: Page, demo_base_url: str):
     expect(page.get_by_test_id("model-form")).to_be_visible()
     expect(page.get_by_label("Name*")).to_be_visible()
     expect(page.get_by_label("Email*")).to_be_visible()
+    # Settings fieldset is collapsed by default; expand it to verify fields
+    page.get_by_test_id("fieldset-toggle-settings").click()
     expect(page.get_by_label("Is active*")).to_be_visible()
     expect(page.get_by_label("Rating*")).to_be_visible()
     expect(page.get_by_label("User type*")).to_be_visible()
@@ -57,6 +59,8 @@ def test_create_user_successful_submission(debug_page: Page, demo_base_url: str)
     page.goto(f"{demo_base_url}/admin/user/create")
     page.get_by_label("Name*").fill("Test User")
     page.get_by_label("Email*").fill("test@example.com")
+    # Expand collapsed Settings fieldset to access fields
+    page.get_by_test_id("fieldset-toggle-settings").click()
     page.get_by_label("Is active*").check()
     page.get_by_label("Rating*").fill("4.5")
     page.get_by_label("User type*").select_option("ADMIN")

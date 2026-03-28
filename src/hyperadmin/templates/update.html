@@ -11,10 +11,16 @@
 {%- endblock -%}
 
 {%- block form_body -%}
-    {%- for field in form.fields -%}
-        {%- set widget = field.widget -%}
-        {%- include field.widget.template_path -%}
-    {%- endfor -%}
+    {%- if form.fieldset_groups|length > 1 or (form.fieldset_groups|length == 1 and form.fieldset_groups[0].name) -%}
+        {%- for group in form.fieldset_groups -%}
+            {%- include "components/fieldset.html" -%}
+        {%- endfor -%}
+    {%- else -%}
+        {%- for field in form.fields -%}
+            {%- set widget = field.widget -%}
+            {%- include field.widget.template_path -%}
+        {%- endfor -%}
+    {%- endif -%}
 {%- endblock -%}
 
 {%- block form_actions -%}

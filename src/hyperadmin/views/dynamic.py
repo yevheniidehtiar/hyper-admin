@@ -377,6 +377,7 @@ class DynamicModelView:
             include=create_include,
             exclude=self.form_create_exclude,
             initial=values or {},
+            fieldsets=getattr(self.options, "fieldsets", None) or None,
         )
         if errors:
             form.bind(values or {})
@@ -439,6 +440,7 @@ class DynamicModelView:
             widgets=relation_widgets,
             include=create_include,
             exclude=self.form_create_exclude,
+            fieldsets=getattr(self.options, "fieldsets", None) or None,
         )
         data = self._extract_form_data(form_data, form)
         form.bind(data)
@@ -509,7 +511,11 @@ class DynamicModelView:
             field_names=self.form_include or [], selected_values=initial_values
         )
         form = PydanticForm(
-            self.model, widgets=relation_widgets, include=self.form_include, initial=initial_values
+            self.model,
+            widgets=relation_widgets,
+            include=self.form_include,
+            initial=initial_values,
+            fieldsets=getattr(self.options, "fieldsets", None) or None,
         )
 
         if errors:
@@ -546,7 +552,12 @@ class DynamicModelView:
         relation_widgets = await self._build_relation_widgets(
             field_names=self.form_include or [],
         )
-        form = PydanticForm(self.model, widgets=relation_widgets, include=self.form_include)
+        form = PydanticForm(
+            self.model,
+            widgets=relation_widgets,
+            include=self.form_include,
+            fieldsets=getattr(self.options, "fieldsets", None) or None,
+        )
         data = self._extract_form_data(form_data, form)
 
         form.bind(data)
