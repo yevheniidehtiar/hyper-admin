@@ -14,9 +14,12 @@ def test_user_create_form_has_two_column_layout(page: Page, demo_base_url: str):
     page.goto(f"{demo_base_url}/admin/user/create")
     expect(page.get_by_test_id("model-form")).to_be_visible()
 
-    # The form-fields container should have the two-column CSS class
-    grid = page.get_by_test_id("form-fields")
-    expect(grid).to_have_class(re.compile(r"ha-form-grid-2"))
+    # UserAdmin uses fieldsets + TWO_COLUMN layout, so the layout class
+    # is applied inside each fieldset's inner div, not on a top-level form-fields div.
+    fieldset = page.get_by_test_id("fieldset-basic-info")
+    expect(fieldset).to_be_visible()
+    grid = fieldset.locator(".ha-form-grid-2")
+    expect(grid).to_be_visible()
 
 
 def test_product_create_form_has_single_column_layout(page: Page, demo_base_url: str):
