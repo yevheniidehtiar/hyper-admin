@@ -28,7 +28,7 @@ class UserAdmin(ModelAdmin):
                 description="Advanced user settings",
             ),
         ],
-        form_layout=FormLayout.TWO_COLUMN
+        form_layout=FormLayout.TWO_COLUMN,
     )
 
     @action(label="Deactivate")
