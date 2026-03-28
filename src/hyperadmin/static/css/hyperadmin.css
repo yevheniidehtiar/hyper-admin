@@ -159,12 +159,26 @@
    Dark Mode Tokens — Three-way system
    ========================================================================== */
 
-/* Manual dark (user toggled via data-theme attribute) */
+/* Shared dark-mode overrides — applied by class toggle, data-theme, or OS preference */
+.ha-theme-dark,
 :root[data-theme="dark"] {
   --ha-color-primary: #2dd4b8;
   --ha-color-primary-hover: #05bfa4;
   --ha-color-primary-light: #00504a;
   --ha-color-primary-text: #2dd4b8;
+  --ha-color-danger: #f87171;
+  --ha-color-danger-hover: #fca5a5;
+  --ha-color-danger-light: #450a0a;
+  --ha-color-danger-text: #fca5a5;
+  --ha-color-success: #4ade80;
+  --ha-color-success-light: #052e16;
+  --ha-color-success-text: #86efac;
+  --ha-color-warning: #facc15;
+  --ha-color-warning-light: #422006;
+  --ha-color-warning-text: #fde68a;
+  --ha-color-info-light: #1e3a5f;
+  --ha-color-info-text: #93c5fd;
+  --ha-color-info-border: #3b82f6;
 
   --ha-color-text: var(--ha-color-neutral-200);
   --ha-color-text-muted: var(--ha-color-neutral-300);
@@ -180,15 +194,32 @@
   --ha-surface-base: var(--ha-color-neutral-950);
   --ha-surface-raised: var(--ha-color-neutral-800);
   --ha-surface-sunken: var(--ha-color-neutral-900);
+
+  --ha-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px -1px rgba(0, 0, 0, 0.3);
+  --ha-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+  --ha-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
 }
 
-/* System preference (applies when no data-theme set) */
+/* Auto mode: respect OS preference when no explicit theme is set */
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
+  :root:not(.ha-theme-light):not([data-theme="light"]) {
     --ha-color-primary: #2dd4b8;
     --ha-color-primary-hover: #05bfa4;
     --ha-color-primary-light: #00504a;
     --ha-color-primary-text: #2dd4b8;
+    --ha-color-danger: #f87171;
+    --ha-color-danger-hover: #fca5a5;
+    --ha-color-danger-light: #450a0a;
+    --ha-color-danger-text: #fca5a5;
+    --ha-color-success: #4ade80;
+    --ha-color-success-light: #052e16;
+    --ha-color-success-text: #86efac;
+    --ha-color-warning: #facc15;
+    --ha-color-warning-light: #422006;
+    --ha-color-warning-text: #fde68a;
+    --ha-color-info-light: #1e3a5f;
+    --ha-color-info-text: #93c5fd;
+    --ha-color-info-border: #3b82f6;
 
     --ha-color-text: var(--ha-color-neutral-200);
     --ha-color-text-muted: var(--ha-color-neutral-300);
@@ -204,6 +235,10 @@
     --ha-surface-base: var(--ha-color-neutral-950);
     --ha-surface-raised: var(--ha-color-neutral-800);
     --ha-surface-sunken: var(--ha-color-neutral-900);
+
+    --ha-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px -1px rgba(0, 0, 0, 0.3);
+    --ha-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+    --ha-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
   }
 }
 
@@ -1325,4 +1360,51 @@ body {
   :root {
     --ha-sidebar-width: 12rem;
   }
+}
+
+/* ==========================================================================
+   Theme Toggle
+   ========================================================================== */
+
+.ha-theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  background: none;
+  border: var(--ha-border-width) solid var(--ha-color-border);
+  border-radius: var(--ha-radius);
+  cursor: pointer;
+  color: var(--ha-color-text-muted);
+  transition: color var(--ha-transition), border-color var(--ha-transition);
+  padding: 0;
+  margin-right: var(--ha-space-2);
+}
+
+.ha-theme-toggle:hover {
+  color: var(--ha-color-text-strong);
+  border-color: var(--ha-color-text-muted);
+}
+
+.ha-theme-toggle .ha-icon-sun,
+.ha-theme-toggle .ha-icon-moon {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+/* In light mode: show moon icon (click to go dark) */
+.ha-theme-toggle .ha-icon-moon { display: block; }
+.ha-theme-toggle .ha-icon-sun  { display: none; }
+
+/* In dark mode: show sun icon (click to go light) */
+.ha-theme-dark .ha-theme-toggle .ha-icon-moon,
+html[data-theme="dark"] .ha-theme-toggle .ha-icon-moon { display: none; }
+.ha-theme-dark .ha-theme-toggle .ha-icon-sun,
+html[data-theme="dark"] .ha-theme-toggle .ha-icon-sun  { display: block; }
+
+/* Auto mode with OS dark preference */
+@media (prefers-color-scheme: dark) {
+  html:not(.ha-theme-light):not([data-theme="light"]) .ha-theme-toggle .ha-icon-moon { display: none; }
+  html:not(.ha-theme-light):not([data-theme="light"]) .ha-theme-toggle .ha-icon-sun  { display: block; }
 }
