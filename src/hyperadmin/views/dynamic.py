@@ -24,6 +24,7 @@ from hyperadmin.discover import app_label_var
 from hyperadmin.views.forms import (
     CheckboxInput,
     HtmxWidget,
+    MultiSelectWidget,
     PydanticForm,
     RelationMultiSelectWidget,
     RelationSelectWidget,
@@ -400,17 +401,46 @@ class DynamicModelView:
             status_code=status_code,
         )
 
+    @staticmethod
+    def _extract_form_data(
+        form_data: Any,
+        form: PydanticForm,
+    ) -> dict[str, Any]:
+        """Build a data dict from submitted form data, handling multi-value fields.
+
+        For ``MultiSelectWidget`` and ``RelationMultiSelectWidget`` fields, uses
+        ``getlist()`` to capture all submitted values.  Absent multiselect fields
+        are set to an empty list (mirrors the checkbox-absent pattern).
+        """
+        data: dict[str, Any] = dict(form_data)
+        for field in form.fields:
+            is_multi = isinstance(field.widget, (MultiSelectWidget, RelationMultiSelectWidget))
+            is_checkbox = isinstance(field.widget, CheckboxInput)
+            if is_multi:
+                data[field.name] = form_data.getlist(field.name)
+            elif is_checkbox and field.name not in data:
+                data[field.name] = False
+        return data
+
     async def create_view(self, request: Request):
         """Handles form submission for creating a new item."""
         await self._check_permission(request, "add")
         form_data = await request.form()
-        data = dict(form_data)
 
         # Use PydanticForm for consistent binding/validation
         create_include = self.form_include
         if create_include and self.form_create_exclude:
             create_include = [f for f in create_include if f not in self.form_create_exclude]
-        form = PydanticForm(self.model, include=create_include, exclude=self.form_create_exclude)
+        relation_widgets = await self._build_relation_widgets(
+            field_names=create_include or [],
+        )
+        form = PydanticForm(
+            self.model,
+            widgets=relation_widgets,
+            include=create_include,
+            exclude=self.form_create_exclude,
+        )
+        data = self._extract_form_data(form_data, form)
         form.bind(data)
         instance, errs = form.validate(data)
 
@@ -512,14 +542,12 @@ class DynamicModelView:
         """Handles form submission for updating an item."""
         await self._check_permission(request, "change")
         form_data = await request.form()
-        data: dict[str, Any] = dict(form_data)
 
-        form = PydanticForm(self.model, include=self.form_include)
-
-        # Unchecked checkboxes are absent from form data — inject False before validation
-        for field in form.fields:
-            if isinstance(field.widget, CheckboxInput) and field.name not in data:
-                data[field.name] = False
+        relation_widgets = await self._build_relation_widgets(
+            field_names=self.form_include or [],
+        )
+        form = PydanticForm(self.model, widgets=relation_widgets, include=self.form_include)
+        data = self._extract_form_data(form_data, form)
 
         form.bind(data)
         instance, errs = form.validate(data)
