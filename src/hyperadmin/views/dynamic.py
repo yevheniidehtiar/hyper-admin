@@ -378,6 +378,8 @@ class DynamicModelView:
             exclude=self.form_create_exclude,
             initial=values or {},
             fieldsets=getattr(self.options, "fieldsets", None) or None,
+            form_layout=getattr(self.options, "form_layout", None),
+            form_fields=getattr(self.options, "form_fields", None) or None,
         )
         if errors:
             form.bind(values or {})
@@ -441,6 +443,8 @@ class DynamicModelView:
             include=create_include,
             exclude=self.form_create_exclude,
             fieldsets=getattr(self.options, "fieldsets", None) or None,
+            form_layout=getattr(self.options, "form_layout", None),
+            form_fields=getattr(self.options, "form_fields", None) or None,
         )
         data = self._extract_form_data(form_data, form)
         form.bind(data)
@@ -516,6 +520,8 @@ class DynamicModelView:
             include=self.form_include,
             initial=initial_values,
             fieldsets=getattr(self.options, "fieldsets", None) or None,
+            form_layout=getattr(self.options, "form_layout", None),
+            form_fields=getattr(self.options, "form_fields", None) or None,
         )
 
         if errors:
@@ -557,6 +563,8 @@ class DynamicModelView:
             widgets=relation_widgets,
             include=self.form_include,
             fieldsets=getattr(self.options, "fieldsets", None) or None,
+            form_layout=getattr(self.options, "form_layout", None),
+            form_fields=getattr(self.options, "form_fields", None) or None,
         )
         data = self._extract_form_data(form_data, form)
 
