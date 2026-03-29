@@ -1,0 +1,39 @@
+/* ==========================================================================
+   Layout
+   ========================================================================== */
+
+.ha-page {
+  background-color: var(--ha-color-bg);
+  min-height: 100vh;
+}
+
+.ha-container {
+  max-width: 1280px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0;
+}
+
+.ha-layout {
+  display: flex;
+  min-height: calc(100vh - var(--ha-navbar-height));
+}
+
+.ha-content {
+  flex: 1;
+  padding: var(--ha-space-8);
+  background-color: var(--ha-surface-base);
+  min-width: 0;
+}
+
+.ha-list-toolbar {
+  margin-bottom: var(--ha-space-4);
+}
+
+.ha-detail-container {
+  max-width: 100%;
+}
+
+.ha-detail-fields {
+  margin-bottom: var(--ha-space-4);
+}

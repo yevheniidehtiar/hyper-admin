@@ -1,0 +1,143 @@
+/* ==========================================================================
+   Buttons
+   ========================================================================== */
+
+.ha-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ha-space-2);
+  padding: var(--ha-space-2) var(--ha-space-4);
+  font-size: var(--ha-font-size-sm);
+  font-weight: var(--ha-font-semibold);
+  font-family: var(--ha-font-family);
+  text-align: center;
+  text-decoration: none;
+  border: var(--ha-border-width) solid transparent;
+  border-radius: var(--ha-radius);
+  cursor: pointer;
+  transition: all var(--ha-transition);
+  line-height: var(--ha-line-height-tight);
+}
+
+.ha-btn:focus-visible {
+  outline: 2px solid var(--ha-color-primary-500);
+  outline-offset: 2px;
+}
+
+.ha-btn:active {
+  transform: scale(0.98);
+}
+
+.ha-btn-primary {
+  background-color: var(--ha-color-primary-500);
+  color: #ffffff;
+  border-color: var(--ha-color-primary-500);
+}
+
+.ha-btn-primary:hover {
+  background-color: var(--ha-color-primary-600);
+  border-color: var(--ha-color-primary-600);
+}
+
+.ha-btn-danger {
+  background-color: var(--ha-color-danger);
+  color: #ffffff;
+  border-color: var(--ha-color-danger);
+}
+
+.ha-btn-danger:hover {
+  background-color: var(--ha-color-danger-hover);
+  border-color: var(--ha-color-danger-hover);
+}
+
+/* Secondary (outline) button */
+.ha-btn-secondary {
+  background-color: var(--ha-color-surface);
+  color: var(--ha-color-text);
+  border-color: var(--ha-color-border);
+}
+
+.ha-btn-secondary:hover {
+  background-color: var(--ha-surface-sunken);
+}
+
+/* Action button (detail view actions) */
+.ha-btn-action {
+  background-color: var(--ha-color-surface);
+  color: var(--ha-color-text);
+  border-color: var(--ha-color-border);
+}
+
+.ha-btn-action:hover {
+  background-color: var(--ha-surface-sunken);
+}
+
+/* Action buttons container */
+.ha-action-buttons {
+  display: flex;
+  gap: var(--ha-space-2);
+  margin: var(--ha-space-4) 0;
+}
+
+/* Ghost button */
+.ha-btn-ghost {
+  background: none;
+  color: var(--ha-color-text);
+  border-color: transparent;
+}
+
+.ha-btn-ghost:hover {
+  background-color: var(--ha-surface-sunken);
+}
+
+/* Text-styled link button */
+.ha-btn-link {
+  background: none;
+  color: var(--ha-color-primary-700);
+  font-weight: var(--ha-font-semibold);
+  font-size: var(--ha-font-size-sm);
+  padding: 0;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color var(--ha-transition);
+}
+
+.ha-btn-link:hover {
+  color: var(--ha-color-primary-500);
+}
+
+/* Full-width button */
+.ha-btn-block {
+  display: flex;
+  width: 100%;
+}
+
+/* ==========================================================================
+   Form Actions Bar (Create / Update page footer)
+   ========================================================================== */
+
+.ha-form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: var(--ha-space-6);
+  padding-top: var(--ha-space-4);
+  border-top: var(--ha-border-width) solid var(--ha-color-border-light);
+}
+
+.ha-cancel-link {
+  font-size: var(--ha-font-size-sm);
+  font-weight: var(--ha-font-semibold);
+  color: var(--ha-color-text-muted);
+  text-decoration: none;
+  padding: var(--ha-space-2) var(--ha-space-4);
+  border-radius: var(--ha-radius);
+  transition: all var(--ha-transition);
+}
+
+.ha-cancel-link:hover {
+  color: var(--ha-color-text);
+  background-color: var(--ha-surface-sunken);
+}

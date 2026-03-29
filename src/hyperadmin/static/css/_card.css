@@ -1,0 +1,12 @@
+/* ==========================================================================
+   Cards
+   ========================================================================== */
+
+.ha-card {
+  background-color: var(--ha-surface-raised);
+  border: var(--ha-border-width) solid var(--ha-color-border-light);
+  border-radius: var(--ha-radius-lg);
+  padding: var(--ha-space-6);
+  margin-bottom: var(--ha-space-6);
+  box-shadow: var(--ha-shadow-xs);
+}

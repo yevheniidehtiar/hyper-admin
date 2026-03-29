@@ -4,7 +4,7 @@
 
 {%- block content -%}
     <h1 class="ha-section-title">{{- model_name -}} List</h1>
-    <div style="margin-bottom: var(--ha-space-4);">
+    <div class="ha-list-toolbar">
         <a href="{{- url_for(model_name|lower ~ '-create-form') -}}" class="ha-btn ha-btn-primary" data-testid="create-link">
             Create New {{ model_name }}
         </a>

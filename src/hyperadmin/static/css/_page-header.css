@@ -1,0 +1,25 @@
+/* ==========================================================================
+   Page Headers
+   ========================================================================== */
+
+.ha-page-title {
+  font-size: var(--ha-font-size-2xl);
+  font-weight: var(--ha-font-bold);
+  color: var(--ha-color-text-strong);
+  margin: 0 0 var(--ha-space-6);
+  line-height: var(--ha-line-height-tight);
+  letter-spacing: -0.025em;
+}
+
+.ha-section-title {
+  font-size: var(--ha-font-size-xl);
+  font-weight: var(--ha-font-bold);
+  color: var(--ha-color-text-strong);
+  margin: 0 0 var(--ha-space-5);
+  line-height: var(--ha-line-height-tight);
+  letter-spacing: -0.015em;
+}
+
+.ha-text-muted {
+  color: var(--ha-color-text-muted);
+}

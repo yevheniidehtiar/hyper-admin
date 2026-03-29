@@ -1,0 +1,57 @@
+/* ==========================================================================
+   Utility -- Links
+   ========================================================================== */
+
+.ha-text-link {
+  color: var(--ha-color-link);
+  text-decoration: none;
+  transition: color var(--ha-transition);
+}
+
+.ha-text-link:hover {
+  color: var(--ha-color-link-hover);
+}
+
+/* ==========================================================================
+   Utility -- SVG icons inherit color
+   ========================================================================== */
+
+.ha-icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  fill: none;
+  stroke: currentColor;
+  flex-shrink: 0;
+}
+
+.ha-icon-sm {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* ==========================================================================
+   Utility -- Rotation transforms
+   ========================================================================== */
+
+.ha-rotate--0 {
+  transform: rotate(0deg);
+  transition: transform 0.2s var(--ha-ease-default);
+}
+
+.ha-rotate--180 {
+  transform: rotate(180deg);
+  transition: transform 0.2s var(--ha-ease-default);
+}
+
+/* ==========================================================================
+   HTMX Indicator
+   ========================================================================== */
+
+.htmx-indicator {
+  display: none;
+}
+
+.htmx-request .htmx-indicator,
+.htmx-request.htmx-indicator {
+  display: inline;
+}

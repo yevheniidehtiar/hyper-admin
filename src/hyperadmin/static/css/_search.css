@@ -1,0 +1,34 @@
+/* ==========================================================================
+   Search
+   ========================================================================== */
+
+.ha-search-group {
+  margin-bottom: var(--ha-space-4);
+}
+
+.ha-search-input {
+  width: 100%;
+  padding: var(--ha-space-2) var(--ha-space-3);
+  border: var(--ha-border-width) solid var(--ha-color-border);
+  border-radius: var(--ha-radius);
+  font-size: var(--ha-font-size-sm);
+  font-family: var(--ha-font-family);
+  color: var(--ha-color-text);
+  background-color: var(--ha-color-surface);
+  transition: border-color var(--ha-transition), box-shadow var(--ha-transition);
+}
+
+.ha-search-input::placeholder {
+  color: var(--ha-color-neutral-400);
+}
+
+.ha-search-input:focus {
+  outline: none;
+  border-color: var(--ha-color-primary-500);
+  box-shadow: var(--ha-shadow-focus);
+}
+
+.ha-search-indicator {
+  font-size: var(--ha-font-size-sm);
+  color: var(--ha-color-text-muted);
+}

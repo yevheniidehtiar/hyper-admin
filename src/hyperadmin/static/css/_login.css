@@ -1,0 +1,29 @@
+/* ==========================================================================
+   Login Page
+   ========================================================================== */
+
+.ha-login-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: var(--ha-space-4);
+}
+
+.ha-login-card {
+  width: 100%;
+  max-width: 24rem;
+  padding: var(--ha-space-8);
+  background-color: var(--ha-surface-raised);
+  border: var(--ha-border-width) solid var(--ha-color-border-light);
+  border-radius: var(--ha-radius-xl);
+  box-shadow: var(--ha-shadow-lg);
+}
+
+.ha-login-title {
+  font-size: var(--ha-font-size-2xl);
+  font-weight: var(--ha-font-extrabold);
+  color: var(--ha-color-primary-700);
+  margin: 0 0 var(--ha-space-1);
+  letter-spacing: -0.025em;
+}

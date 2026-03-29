@@ -1,0 +1,23 @@
+/* ==========================================================================
+   Responsive -- Mobile
+   ========================================================================== */
+
+@media (max-width: 767px) {
+  .ha-sidebar {
+    display: none;
+  }
+
+  .ha-content {
+    padding: var(--ha-space-4);
+  }
+
+  .ha-navbar-inner {
+    padding: 0 var(--ha-space-4);
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  :root {
+    --ha-sidebar-width: 12rem;
+  }
+}
