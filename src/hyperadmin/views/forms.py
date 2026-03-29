@@ -26,6 +26,7 @@ if TYPE_CHECKING:
     from starlette.templating import Jinja2Templates
 
     from hyperadmin.core.fieldsets import FieldsetSpec
+    from hyperadmin.core.layouts import FormLayout
 
 
 @dataclass(slots=True)
@@ -243,6 +244,8 @@ class PydanticForm:
         initial: dict[str, Any] | None = None,
         choices_base_url: str = "",
         fieldsets: list[FieldsetSpec] | None = None,
+        form_layout: FormLayout | None = None,
+        form_fields: list[str] | None = None,
     ) -> None:
         self.model = model
         self.widgets = widgets or {}
@@ -253,6 +256,8 @@ class PydanticForm:
         self.errors: dict[str, list[str]] = {}
         self._fields: list[FormField] = []
         self._fieldset_specs: list[FieldsetSpec] = fieldsets or []
+        self._form_layout: FormLayout | None = form_layout
+        self._form_fields: list[str] = form_fields or []
 
     @staticmethod
     def _enum_choices(enum_cls: type[Enum]) -> list[ChoiceItem]:
@@ -347,27 +352,42 @@ class PydanticForm:
                 return True
         return False
 
-    @property
-    def fields(self) -> list[FormField]:
-        if self._fields:
-            return self._fields
+    def _build_all_fields(self) -> dict[str, FormField]:
+        """Build all eligible form fields as a name->FormField mapping."""
+        field_map: dict[str, FormField] = {}
         for name, field in self.model.model_fields.items():
             if self.include and name not in self.include:
                 continue
             if name in self.exclude:
                 continue
-            # Exclude common primary key name by default for create/update forms
             if name == "id":
                 continue
             if self._is_auto_now_field(field):
                 continue
             widget = self._pick_widget(name, field)
-            # Pydantic FieldInfo.default may be PydanticUndefined; use None in that case
             default_val = getattr(field, "default", None)
             if str(default_val) == "PydanticUndefined":
                 default_val = None
             value = self.initial.get(name, default_val if default_val is not None else None)
-            self._fields.append(FormField(name=name, model_field=field, widget=widget, value=value))
+            field_map[name] = FormField(name=name, model_field=field, widget=widget, value=value)
+        return field_map
+
+    @property
+    def fields(self) -> list[FormField]:
+        if self._fields:
+            return self._fields
+
+        field_map = self._build_all_fields()
+
+        # If form_fields is specified, use that ordering (and only those fields)
+        if self._form_fields:
+            for name in self._form_fields:
+                if name in field_map:
+                    self._fields.append(field_map[name])
+        else:
+            # Default: model-definition order
+            self._fields = list(field_map.values())
+
         return self._fields
 
     @property
@@ -445,3 +465,15 @@ class PydanticForm:
                     seen.add(path)
                     assets.append(path)
         return tuple(assets)
+
+    @property
+    def layout_css_class(self) -> str:
+        """Return the CSS class for the form layout.
+
+        Returns ``ha-form-grid-2`` for two-column layout, empty string for single.
+        """
+        from hyperadmin.core.layouts import FormLayout  # noqa: PLC0415
+
+        if self._form_layout == FormLayout.TWO_COLUMN:
+            return "ha-form-grid-2"
+        return ""

@@ -1159,7 +1159,65 @@ body {
 }
 
 /* ==========================================================================
-   Accessibility -- Skip Link
+   Form Layouts — Column Grids
+   ========================================================================== */
+
+.ha-form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 var(--ha-space-6);
+}
+
+@media (max-width: 768px) {
+  .ha-form-grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ==========================================================================
+   Fieldsets
+   ========================================================================== */
+
+.ha-fieldset {
+  border: var(--ha-border-width) solid var(--ha-color-border-light);
+  border-radius: var(--ha-radius-lg);
+  padding: var(--ha-space-4);
+  margin-bottom: var(--ha-space-4);
+}
+
+.ha-fieldset-legend {
+  padding: 0;
+}
+
+.ha-fieldset-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--ha-space-2);
+  font-weight: 600;
+  font-size: var(--ha-font-size-base);
+  color: var(--ha-color-text-strong);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.ha-fieldset-toggle:hover {
+  color: var(--ha-color-primary);
+}
+
+.ha-fieldset-arrow {
+  font-size: var(--ha-font-size-sm);
+}
+
+.ha-fieldset-description {
+  font-size: var(--ha-font-size-sm);
+  color: var(--ha-color-text-muted);
+  margin: var(--ha-space-2) 0 var(--ha-space-4);
+}
+
+/* ==========================================================================
+   Accessibility — Skip Link
    ========================================================================== */
 
 .ha-skip-link {
