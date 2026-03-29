@@ -87,6 +87,9 @@ class MockAdapter(BaseAdapter):
     async def get_choices(self, field, q="", limit=50, offset=0, **filters):
         return []
 
+    async def save_inline_rows(self, spec, rows, parent_pk):
+        pass
+
 
 @pytest.fixture
 def mock_request():

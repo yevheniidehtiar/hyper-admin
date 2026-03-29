@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+from dataclasses import field as dc_field
 from datetime import datetime
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Literal, Union, get_args, get_origin
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, Union, get_args, get_origin
 
 from markupsafe import Markup
 from pydantic import BaseModel, ValidationError
@@ -26,6 +27,7 @@ if TYPE_CHECKING:
     from starlette.templating import Jinja2Templates
 
     from hyperadmin.core.fieldsets import FieldsetSpec
+    from hyperadmin.core.inlines import InlineModelSpec
     from hyperadmin.core.layouts import FormLayout
 
 
@@ -36,11 +38,13 @@ class HtmxWidget:
     template_path: path to template included under the project templates directory.
     static_list: optional JS/CSS assets to include once per page.
     htmx_attrs: optional HTMX attributes to include on the input element.
+    input_type: HTML input type string returned to templates (e.g. ``"text"``, ``"number"``).
     """
 
     template_path: str
     static_list: tuple[str, ...] = ()
     htmx_attrs: Mapping[str, str] | None = None
+    input_type: ClassVar[str] = "text"
 
     def render(self, templates: Jinja2Templates, form_field: FormField, request) -> Markup:
         context = {
@@ -52,16 +56,22 @@ class HtmxWidget:
 
 
 class TextInput(HtmxWidget):
+    input_type: ClassVar[str] = "text"
+
     def __init__(self):
         super().__init__(template_path="widgets/text_input.html")
 
 
 class NumberInput(HtmxWidget):
+    input_type: ClassVar[str] = "number"
+
     def __init__(self):
         super().__init__(template_path="widgets/number_input.html")
 
 
 class FloatInput(HtmxWidget):
+    input_type: ClassVar[str] = "number"
+
     def __init__(self):
         super().__init__(template_path="widgets/float_input.html")
 
@@ -72,6 +82,8 @@ class Textarea(HtmxWidget):
 
 
 class CheckboxInput(HtmxWidget):
+    input_type: ClassVar[str] = "checkbox"
+
     def __init__(self):
         super().__init__(template_path="widgets/checkbox_input.html")
 
@@ -108,6 +120,8 @@ class MultiSelectWidget(HtmxWidget):
 
 
 class DateTimeInput(HtmxWidget):
+    input_type: ClassVar[str] = "datetime-local"
+
     def __init__(self):
         super().__init__(template_path="widgets/datetime_input.html")
 
@@ -477,3 +491,259 @@ class PydanticForm:
         if self._form_layout == FormLayout.TWO_COLUMN:
             return "ha-form-grid-2"
         return ""
+
+
+@dataclass(slots=True)
+class InlineFormRow:
+    """A single row within an inline formset.
+
+    Attributes:
+        index: The row index (0-based) within the formset.
+        fields: The form fields for this row.
+        pk: The primary key of an existing inline record, or ``None`` for new rows.
+        delete: Whether this row is marked for deletion.
+    """
+
+    index: int
+    fields: list[FormField]
+    pk: int | None = None
+    delete: bool = False
+
+
+@dataclass
+class InlineFormset:
+    """Manages a set of inline model rows for a parent form.
+
+    Provides methods to build empty rows, populate from existing data,
+    validate submitted data, and extract structured results.
+    """
+
+    spec: InlineModelSpec
+    rows: list[InlineFormRow] = dc_field(default_factory=list)
+    errors: dict[int, dict[str, list[str]]] = dc_field(default_factory=dict)
+    add_row_url: str = ""
+
+    @property
+    def prefix(self) -> str:
+        """Return the form field name prefix for this inline."""
+        return self.spec.model_name
+
+    @property
+    def display_fields(self) -> list[str]:
+        """Return field names shown in each row."""
+        return self.spec.get_display_fields()
+
+    @property
+    def field_labels(self) -> list[str]:
+        """Return human-readable labels for each display field."""
+        model_fields = getattr(self.spec.model, "model_fields", {})
+        labels = []
+        for name in self.display_fields:
+            fi = model_fields.get(name)
+            title = getattr(fi, "title", None) if fi else None
+            labels.append(title or name.replace("_", " ").capitalize())
+        return labels
+
+    @property
+    def title(self) -> str:
+        return self.spec.title
+
+    @property
+    def max_num(self) -> int:
+        return self.spec.max_num
+
+    def _build_row(
+        self, index: int, values: dict[str, Any] | None = None, pk: int | None = None
+    ) -> InlineFormRow:
+        """Build a single ``InlineFormRow`` for the given index."""
+        model_fields = getattr(self.spec.model, "model_fields", {})
+        vals = values or {}
+        fields: list[FormField] = []
+        for name in self.display_fields:
+            fi = model_fields.get(name)
+            if fi is None:
+                continue
+            widget = _pick_inline_widget(name, fi)
+            value = vals.get(name)
+            fields.append(FormField(name=name, model_field=fi, widget=widget, value=value))
+        return InlineFormRow(index=index, fields=fields, pk=pk)
+
+    def build_empty_rows(self, count: int | None = None) -> None:
+        """Populate ``self.rows`` with empty rows.
+
+        Args:
+            count: Number of empty rows. Defaults to ``spec.extra``.
+        """
+        n = count if count is not None else self.spec.extra
+        start = len(self.rows)
+        for i in range(n):
+            self.rows.append(self._build_row(start + i))
+
+    def populate_from_instances(self, instances: list[Any]) -> None:
+        """Populate rows from existing related model instances."""
+        self.rows = []
+        for i, inst in enumerate(instances):
+            vals = inst.model_dump() if hasattr(inst, "model_dump") else {}
+            pk = getattr(inst, "id", None)
+            self.rows.append(self._build_row(i, values=vals, pk=pk))
+        # Add extra empty rows
+        self.build_empty_rows()
+
+    def extract_submitted_data(self, form_data: Any) -> list[dict[str, Any]]:
+        """Parse submitted form data into a list of row dicts.
+
+        Form fields are named ``{prefix}-{index}-{field_name}``.
+        Returns only rows that have at least one non-empty value and are not
+        marked for deletion.
+        """
+        prefix = self.prefix
+        results: list[dict[str, Any]] = []
+        # Discover max index present in form data
+        max_index = -1
+        for key in form_data:
+            if key.startswith(f"{prefix}-") and key.count("-") >= 2:
+                parts = key.split("-", 2)
+                try:
+                    idx = int(parts[1])
+                    max_index = max(max_index, idx)
+                except (ValueError, IndexError):
+                    pass
+
+        for i in range(max_index + 1):
+            # Check deletion flag
+            delete_key = f"{prefix}-{i}-DELETE"
+            if form_data.get(delete_key):
+                # Collect pk for deletion
+                pk_key = f"{prefix}-{i}-pk"
+                pk_val = form_data.get(pk_key)
+                if pk_val:
+                    results.append({"_delete": True, "_pk": int(pk_val)})
+                continue
+
+            row_data: dict[str, Any] = {}
+            pk_key = f"{prefix}-{i}-pk"
+            pk_val = form_data.get(pk_key)
+            if pk_val:
+                row_data["_pk"] = int(pk_val)
+
+            has_data = False
+            for field_name in self.display_fields:
+                key = f"{prefix}-{i}-{field_name}"
+                val = form_data.get(key, "")
+                row_data[field_name] = val
+                if val not in ("", None):
+                    has_data = True
+
+            if has_data:
+                results.append(row_data)
+
+        return results
+
+    def validate_rows(
+        self,
+        rows_data: list[dict[str, Any]],
+        parent_pk: int | None = None,
+    ) -> tuple[list[dict[str, Any]], dict[int, dict[str, list[str]]]]:
+        """Validate each row's data against the inline model.
+
+        Returns:
+            A tuple of (valid_rows, errors_by_index).
+            Each valid row is a dict ready for adapter.create/update.
+        """
+        valid: list[dict[str, Any]] = []
+        errors: dict[int, dict[str, list[str]]] = {}
+
+        for i, row in enumerate(rows_data):
+            if row.get("_delete"):
+                valid.append(row)
+                continue
+
+            # Build full data dict including FK
+            data = {k: v for k, v in row.items() if not k.startswith("_")}
+            if parent_pk is not None:
+                data[self.spec.fk_field] = parent_pk
+
+            # Clean empty strings to None for optional fields
+            model_fields = getattr(self.spec.model, "model_fields", {})
+            for field_name, val in list(data.items()):
+                fi = model_fields.get(field_name)
+                if fi and not fi.is_required() and val == "":
+                    data[field_name] = None
+
+            try:
+                instance = self.spec.model.model_validate(data)
+                result = instance.model_dump()
+                if "_pk" in row:
+                    result["_pk"] = row["_pk"]
+                valid.append(result)
+            except ValidationError as e:
+                row_errors: dict[str, list[str]] = {}
+                for error in e.errors():
+                    loc = str(error["loc"][0])
+                    row_errors.setdefault(loc, []).append(error["msg"])
+                errors[i] = row_errors
+
+        self.errors = errors
+        return valid, errors
+
+    def rebuild_from_submitted(self, form_data: Any) -> None:
+        """Rebuild rows from submitted form data for re-rendering on validation errors."""
+        prefix = self.prefix
+        max_index = -1
+        for key in form_data:
+            if key.startswith(f"{prefix}-") and key.count("-") >= 2:
+                parts = key.split("-", 2)
+                try:
+                    idx = int(parts[1])
+                    max_index = max(max_index, idx)
+                except (ValueError, IndexError):
+                    pass
+
+        self.rows = []
+        for i in range(max_index + 1):
+            vals: dict[str, Any] = {}
+            for field_name in self.display_fields:
+                key = f"{prefix}-{i}-{field_name}"
+                vals[field_name] = form_data.get(key, "")
+
+            pk_key = f"{prefix}-{i}-pk"
+            pk_val = form_data.get(pk_key)
+            pk = int(pk_val) if pk_val else None
+
+            row = self._build_row(i, values=vals, pk=pk)
+
+            # Apply field-level errors
+            if i in self.errors:
+                for field in row.fields:
+                    field.errors = self.errors.get(i, {}).get(field.name)
+
+            delete_key = f"{prefix}-{i}-DELETE"
+            row.delete = bool(form_data.get(delete_key))
+
+            self.rows.append(row)
+
+
+def _pick_inline_widget(name: str, field_info: FieldInfo) -> HtmxWidget:
+    """Pick a simple widget for an inline field (no relation support yet)."""
+    ann = getattr(field_info, "annotation", None)
+    origin = get_origin(ann)
+    args = get_args(ann)
+
+    if origin is not None and args and origin is Union and type(None) in args:
+        ann = next(arg for arg in args if arg is not type(None))
+
+    if ann is bool:
+        return CheckboxInput()
+    if ann is int:
+        return NumberInput()
+    if ann is float:
+        return FloatInput()
+    if ann is datetime:
+        return DateTimeInput()
+    if isinstance(ann, type) and issubclass(ann, Enum):
+        return SelectInput()
+
+    lower = name.lower()
+    if lower in {"description", "text", "body", "content"}:
+        return Textarea()
+    return TextInput()

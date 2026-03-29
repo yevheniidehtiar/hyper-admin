@@ -24,6 +24,7 @@ from hyperadmin.discover import app_label_var
 from hyperadmin.views.forms import (
     CheckboxInput,
     HtmxWidget,
+    InlineFormset,
     MultiSelectWidget,
     PydanticForm,
     RelationMultiSelectWidget,
@@ -288,6 +289,38 @@ class DynamicModelView:
         template_name = self._get_template_name("detail")
         return self.templates.TemplateResponse(request, template_name, context)
 
+    def _build_inline_formsets(
+        self,
+        existing_data: dict[str, list[Any]] | None = None,
+        request: Request | None = None,
+    ) -> list[InlineFormset]:
+        """Build ``InlineFormset`` instances for each configured inline spec.
+
+        Args:
+            existing_data: Mapping of inline prefix to list of existing related
+                model instances (used in update views).
+            request: The current HTTP request, used to resolve the ``add_row_url``
+                for each inline via ``request.url_for``.
+        """
+        formsets: list[InlineFormset] = []
+        existing = existing_data or {}
+        for spec in getattr(self.options, "inlines", []):
+            add_row_url = ""
+            if request is not None:
+                route_name = f"{self._model_name_lower}-inline-add-row"
+                try:
+                    add_row_url = str(request.url_for(route_name, inline_prefix=spec.model_name))
+                except Exception:
+                    add_row_url = ""
+            formset = InlineFormset(spec=spec, add_row_url=add_row_url)
+            instances = existing.get(formset.prefix, [])
+            if instances:
+                formset.populate_from_instances(instances)
+            else:
+                formset.build_empty_rows()
+            formsets.append(formset)
+        return formsets
+
     async def _build_relation_widgets(
         self,
         field_names: list[str],
@@ -356,6 +389,7 @@ class DynamicModelView:
         values: dict | None = None,
         errors: dict | None = None,
         status_code: int = 200,
+        inline_formsets: list[InlineFormset] | None = None,
     ):
         """Renders the create form.
 
@@ -388,12 +422,18 @@ class DynamicModelView:
             for f in form.fields:
                 f.errors = norm_errors.get(f.name)
 
+        # Build inline formsets if not provided (e.g. on first render)
+        inlines_cfg = getattr(self.options, "inlines", [])
+        if inline_formsets is None and inlines_cfg:
+            inline_formsets = self._build_inline_formsets(request=request)
+
         context = {
             "request": request,
             "model_name": self.model.__name__,
             "form": form,
             "values": values or {},
             "errors": errors or {},
+            "inline_formsets": inline_formsets or [],
         }
         template_name = self._get_template_name("create")
         return HtmxTemplateResponse(self.templates).render(
@@ -450,13 +490,32 @@ class DynamicModelView:
         form.bind(data)
         instance, errs = form.validate(data)
 
-        if errs:
-            legacy_errs = {k: v[0] for k, v in errs.items() if v}
+        # Build inline formsets and extract/validate their data
+        inline_formsets: list[InlineFormset] = []
+        inline_valid_data: list[tuple[InlineFormset, list[dict]]] = []
+        has_inline_errors = False
+        for spec in getattr(self.options, "inlines", []):
+            formset = InlineFormset(spec=spec)
+            rows_data = formset.extract_submitted_data(form_data)
+            valid_rows, row_errors = formset.validate_rows(rows_data)
+            if row_errors:
+                has_inline_errors = True
+                formset.rebuild_from_submitted(form_data)
+            inline_formsets.append(formset)
+            inline_valid_data.append((formset, valid_rows))
+
+        if errs or has_inline_errors:
+            legacy_errs = {k: v[0] for k, v in errs.items() if v} if errs else {}
+            # Rebuild inline formsets from submitted data for re-rendering
+            for formset in inline_formsets:
+                if not formset.errors:
+                    formset.rebuild_from_submitted(form_data)
             return await self.create_form_view(
                 request,
                 values=data,
                 errors=legacy_errs,
                 status_code=422,
+                inline_formsets=inline_formsets,
             )
 
         if not instance:
@@ -465,6 +524,7 @@ class DynamicModelView:
                 values=data,
                 errors=errs,
                 status_code=422,
+                inline_formsets=inline_formsets,
             )
 
         try:
@@ -476,7 +536,12 @@ class DynamicModelView:
                 request, values=data, errors=field_errors, status_code=422
             )
 
-        item_id = getattr(new_item, "id", None)
+        # Save inline rows with the parent PK
+        parent_pk = getattr(new_item, "id", None)
+        if parent_pk:
+            await self._save_inline_rows(inline_valid_data, parent_pk)
+
+        item_id = parent_pk
         if item_id:
             redirect_url = request.url_for(f"{self.model.__name__.lower()}-detail", item_id=item_id)
         else:
@@ -494,6 +559,7 @@ class DynamicModelView:
         values: dict | None = None,
         errors: dict | None = None,
         status_code: int = 200,
+        inline_formsets: list[InlineFormset] | None = None,
     ):
         """Renders the update form, optionally pre-filled with submitted values and errors."""
         await self._check_permission(request, "change")
@@ -531,6 +597,17 @@ class DynamicModelView:
             for f in form.fields:
                 f.errors = norm_errors.get(f.name)
 
+        # Build inline formsets from existing related data if not provided
+        inlines_cfg = getattr(self.options, "inlines", [])
+        if inline_formsets is None and inlines_cfg:
+            existing_data: dict[str, list[Any]] = {}
+            for spec in getattr(self.options, "inlines", []):
+                prefix = spec.model_name
+                related = await self.adapter.get_related(pk=item_id, field=spec.relationship_name)
+                if related:
+                    existing_data[prefix] = list(related)
+            inline_formsets = self._build_inline_formsets(existing_data, request=request)
+
         context = {
             "request": request,
             "model_name": self.model.__name__,
@@ -538,6 +615,7 @@ class DynamicModelView:
             "form": form,
             "values": values or initial_values,
             "errors": errors or {},
+            "inline_formsets": inline_formsets or [],
             # Legacy keys for compatibility
             "fields": list(self.model.model_fields.keys()),
         }
@@ -571,10 +649,32 @@ class DynamicModelView:
         form.bind(data)
         instance, errs = form.validate(data)
 
-        if errs:
-            legacy_errs = {k: v[0] for k, v in errs.items() if v}
+        # Build inline formsets and extract/validate their data
+        inline_formsets: list[InlineFormset] = []
+        inline_valid_data: list[tuple[InlineFormset, list[dict]]] = []
+        has_inline_errors = False
+        for spec in getattr(self.options, "inlines", []):
+            formset = InlineFormset(spec=spec)
+            rows_data = formset.extract_submitted_data(form_data)
+            valid_rows, row_errors = formset.validate_rows(rows_data, parent_pk=item_id)
+            if row_errors:
+                has_inline_errors = True
+                formset.rebuild_from_submitted(form_data)
+            inline_formsets.append(formset)
+            inline_valid_data.append((formset, valid_rows))
+
+        if errs or has_inline_errors:
+            legacy_errs = {k: v[0] for k, v in errs.items() if v} if errs else {}
+            for formset in inline_formsets:
+                if not formset.errors:
+                    formset.rebuild_from_submitted(form_data)
             return await self.update_form_view(
-                request, item_id=item_id, values=data, errors=legacy_errs, status_code=422
+                request,
+                item_id=item_id,
+                values=data,
+                errors=legacy_errs,
+                status_code=422,
+                inline_formsets=inline_formsets,
             )
 
         if not instance:
@@ -592,12 +692,49 @@ class DynamicModelView:
                 request, item_id=item_id, values=data, errors=field_errors, status_code=422
             )
 
+        # Save inline rows
+        await self._save_inline_rows(inline_valid_data, item_id)
+
         redirect_url = request.url_for(f"{self.model.__name__.lower()}-list")
 
         if "hx-request" in request.headers:
             return Response(status_code=200, headers={"HX-Redirect": str(redirect_url)})
 
         return RedirectResponse(url=redirect_url, status_code=303)
+
+    async def _save_inline_rows(
+        self,
+        inline_valid_data: list[tuple[InlineFormset, list[dict]]],
+        parent_pk: int,
+    ) -> None:
+        """Persist validated inline rows — create, update, or delete as needed."""
+        for formset, rows in inline_valid_data:
+            await self.adapter.save_inline_rows(formset.spec, rows, parent_pk)
+
+    async def inline_add_row_view(
+        self,
+        request: Request,
+        inline_prefix: str,
+        index: int = 0,
+    ) -> Response:
+        """HTMX endpoint: returns a single inline row HTML fragment.
+
+        GET /{model_name}/inline/{inline_prefix}/add-row?index=N
+        """
+        spec = None
+        for s in getattr(self.options, "inlines", []):
+            if s.model_name == inline_prefix:
+                spec = s
+                break
+        if spec is None:
+            raise HTTPException(status_code=404, detail=f"Unknown inline: {inline_prefix!r}")
+
+        formset = InlineFormset(spec=spec)
+        row = formset._build_row(index)
+        context = {"request": request, "row": row, "inline": formset}
+        template = self.templates.get_template("components/inline_row.html")
+        html = template.render(context)
+        return Response(content=html, media_type="text/html")
 
     async def choices_view(
         self,

@@ -100,6 +100,9 @@ class StubAdapter(BaseAdapter):
             ChoiceItem(value="2", label="Category B", selected=False),
         ]
 
+    async def save_inline_rows(self, spec: Any, rows: builtins.list[dict], parent_pk: Any) -> None:
+        pass
+
 
 # ---------------------------------------------------------------------------
 # 1. Enum → SelectWidget with correct choices

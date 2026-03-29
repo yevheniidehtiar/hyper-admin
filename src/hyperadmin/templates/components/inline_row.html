@@ -1,0 +1,40 @@
+{#- Renders a single inline formset row.
+    Context variables:
+      - row: InlineFormRow instance
+      - inline: InlineFormset instance
+-#}
+<tr class="ha-inline-row{% if row.delete %} ha-inline-row-deleted{% endif %}"
+    data-testid="inline-{{ inline.prefix }}-row-{{ row.index }}"
+    id="inline-{{ inline.prefix }}-row-{{ row.index }}">
+    {%- if row.pk -%}
+    <input type="hidden" name="{{ inline.prefix }}-{{ row.index }}-pk" value="{{ row.pk }}" />
+    {%- endif -%}
+    {%- for field in row.fields -%}
+    <td>
+        <input id="{{ inline.prefix }}-{{ row.index }}-{{ field.name }}"
+               name="{{ inline.prefix }}-{{ row.index }}-{{ field.name }}"
+               type="{{ field.widget.input_type }}"
+               value="{{ field.value or '' }}"
+               class="ha-input ha-inline-input"
+               aria-label="{{ field.label }}"
+               aria-invalid="{{ 'true' if field.errors else 'false' }}"
+               {% if field.widget.input_type == 'number' %}step="any"{% endif %}
+               {% if field.widget.input_type == 'checkbox' and field.value %}checked{% endif %}
+        />
+        {%- if field.errors -%}
+        <ul class="ha-field-errors" aria-live="polite" data-testid="{{ inline.prefix }}-{{ row.index }}-{{ field.name }}-errors">
+            {%- for e in field.errors -%}<li>{{ e }}</li>{%- endfor -%}
+        </ul>
+        {%- endif -%}
+    </td>
+    {%- endfor -%}
+    <td class="ha-inline-actions">
+        <button type="button"
+                class="ha-btn ha-btn-danger ha-btn-sm ha-inline-remove-btn"
+                data-testid="inline-{{ inline.prefix }}-remove-{{ row.index }}"
+                onclick="this.closest('tr').querySelector('[name$=DELETE]').value='1'; this.closest('tr').classList.add('ha-inline-row-deleted'); this.closest('tr').style.display='none';">
+            Remove
+        </button>
+        <input type="hidden" name="{{ inline.prefix }}-{{ row.index }}-DELETE" value="" />
+    </td>
+</tr>

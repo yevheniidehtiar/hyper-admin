@@ -1,6 +1,9 @@
+from __future__ import annotations
+
 from pydantic import BaseModel
 
 from hyperadmin.core.fieldsets import FieldsetSpec
+from hyperadmin.core.inlines import InlineModelSpec
 from hyperadmin.core.layouts import FormLayout
 
 
@@ -36,20 +39,6 @@ class AdminOptions(BaseModel):
 
     Example: ``{"city": "country_id"}`` makes the city select reload when country_id changes.
     """
-    fieldsets: list[FieldsetSpec] = []
-    """Groups of fields rendered together under collapsible headings in create/update forms.
-
-    When non-empty, the form renders fields in the order defined by the fieldsets.
-    Fields not included in any fieldset are rendered in a default ungrouped section.
-
-    Example:
-        ```python
-        AdminOptions(fieldsets=[
-            FieldsetSpec(name="Basic Info", fields=["name", "email"]),
-            FieldsetSpec(name="Advanced", fields=["is_active", "rating"], collapsed=True),
-        ])
-        ```
-    """
     form_layout: FormLayout = FormLayout.SINGLE
     """Controls the column layout of form fields.
 
@@ -70,5 +59,32 @@ class AdminOptions(BaseModel):
     Example:
         ```python
         AdminOptions(form_fields=["name", "email", "is_active"])
+        ```
+    """
+    fieldsets: list[FieldsetSpec] = []
+    """Groups of fields rendered together under collapsible headings in create/update forms.
+
+    When non-empty, the form renders fields in the order defined by the fieldsets.
+    Fields not included in any fieldset are rendered in a default ungrouped section.
+
+    Example:
+        ```python
+        AdminOptions(fieldsets=[
+            FieldsetSpec(name="Basic Info", fields=["name", "email"]),
+            FieldsetSpec(name="Advanced", fields=["is_active", "rating"], collapsed=True),
+        ])
+        ```
+    """
+    inlines: list[InlineModelSpec] = []
+    """Inline related models rendered as sub-forms within create/update views.
+
+    Each ``InlineModelSpec`` defines a related model whose rows can be added,
+    edited, and removed directly in the parent form.
+
+    Example:
+        ```python
+        AdminOptions(inlines=[
+            InlineModelSpec(model=OrderItem, fk_field="order_id", extra=3),
+        ])
         ```
     """

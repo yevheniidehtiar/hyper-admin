@@ -78,6 +78,11 @@ class _StubJsonApiAdapter(JsonApiAdapter):
     ) -> builtins.list[ChoiceItem]:
         return []
 
+    async def save_inline_rows(
+        self, spec: Any, rows: builtins.list[dict[str, Any]], parent_pk: Any
+    ) -> None:
+        pass
+
 
 # ---------------------------------------------------------------------------
 # PaginationMeta tests

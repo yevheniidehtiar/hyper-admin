@@ -12,7 +12,7 @@
                 data-testid="fieldset-toggle-{{ group.slug }}"
                 @click="open = !open"
                 :aria-expanded="open">
-            <span x-text="open ? '&#9662;' : '&#9656;'" class="ha-fieldset-arrow"></span>
+            <span x-text="open ? '▾' : '▸'" class="ha-fieldset-arrow"></span>
             {{ group.name }}
         </button>
     </legend>
