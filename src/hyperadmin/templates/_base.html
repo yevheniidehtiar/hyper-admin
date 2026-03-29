@@ -1,9 +1,25 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-ha-default-theme="{{ theme|default('auto') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}HyperAdmin{% endblock %}</title>
+    <script>
+      // Theme initialisation — runs before CSS to prevent flash of wrong theme.
+      (function() {
+        var defaultTheme = document.documentElement.getAttribute('data-ha-default-theme') || 'auto';
+        var stored = localStorage.getItem('ha-theme');
+        var theme = stored || defaultTheme;
+        if (theme === 'dark') {
+          document.documentElement.classList.add('ha-theme-dark');
+          document.documentElement.setAttribute('data-theme', 'dark');
+        } else if (theme === 'light') {
+          document.documentElement.classList.add('ha-theme-light');
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+        // 'auto' leaves no class — media query handles it
+      })();
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -47,6 +63,34 @@
           }
         });
       });
+
+      /**
+       * Toggle the active theme between light and dark.
+       * Persists the choice in localStorage so it survives page reloads.
+       */
+      function haToggleTheme() {
+        var html = document.documentElement;
+        var isDark = html.classList.contains('ha-theme-dark') ||
+                     html.getAttribute('data-theme') === 'dark';
+
+        // If currently in auto mode, detect effective theme from OS preference
+        if (!isDark && !html.classList.contains('ha-theme-light') &&
+            html.getAttribute('data-theme') !== 'light') {
+          isDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        }
+
+        if (isDark) {
+          html.classList.remove('ha-theme-dark');
+          html.classList.add('ha-theme-light');
+          html.setAttribute('data-theme', 'light');
+          localStorage.setItem('ha-theme', 'light');
+        } else {
+          html.classList.remove('ha-theme-light');
+          html.classList.add('ha-theme-dark');
+          html.setAttribute('data-theme', 'dark');
+          localStorage.setItem('ha-theme', 'dark');
+        }
+      }
     </script>
 </head>
 <body class="ha-page">

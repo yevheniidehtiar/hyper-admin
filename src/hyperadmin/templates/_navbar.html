@@ -1,6 +1,19 @@
 <nav class="ha-navbar" aria-label="Main navigation">
     <div class="ha-navbar-inner">
         <a href="{{ admin_prefix }}/" class="ha-navbar-brand">HyperAdmin</a>
+        <div style="display:flex;align-items:center;gap:0.5rem;">
+        <button type="button"
+                class="ha-theme-toggle"
+                onclick="haToggleTheme()"
+                aria-label="Toggle dark mode"
+                data-testid="theme-toggle">
+            <svg class="ha-icon-sun" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m8.66-13.66l-.71.71M4.05 19.95l-.71.71M21 12h-1M4 12H3m16.66 7.66l-.71-.71M4.05 4.05l-.71-.71M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+            </svg>
+            <svg class="ha-icon-moon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.005 9.005 0 0012 21a9.005 9.005 0 008.354-5.646z"/>
+            </svg>
+        </button>
         <div x-data="{ open: false }" class="ha-navbar-user">
             {% if auth_enabled and request.state.user %}
             <button @click="open = !open" @keydown.escape="open = false" class="ha-navbar-user-btn" aria-haspopup="true" :aria-expanded="open">
@@ -32,6 +45,7 @@
                 <a href="#" class="ha-dropdown-item" role="menuitem">Settings</a>
             </div>
             {% endif %}
+        </div>
         </div>
     </div>
 </nav>

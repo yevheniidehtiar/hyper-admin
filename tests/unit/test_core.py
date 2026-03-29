@@ -61,3 +61,34 @@ async def test_admin_create_tables(mock_fastapi_app):
     # Assert
     mock_engine.begin.assert_called_once()
     mock_conn.run_sync.assert_called_once_with(SQLModel.metadata.create_all)
+
+
+# ---------------------------------------------------------------------------
+# Theme configuration
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("theme", ["auto", "light", "dark"])
+def test_admin_theme_valid(mock_fastapi_app, theme):
+    """Valid theme values are accepted and stored on the Admin instance."""
+    admin = Admin(app=mock_fastapi_app, theme=theme)
+    assert admin.theme == theme
+
+
+def test_admin_theme_default(mock_fastapi_app):
+    """Default theme is 'auto' when not specified."""
+    admin = Admin(app=mock_fastapi_app)
+    assert admin.theme == "auto"
+
+
+def test_admin_theme_invalid(mock_fastapi_app):
+    """Invalid theme value raises ValueError."""
+    with pytest.raises(ValueError, match="Invalid theme"):
+        Admin(app=mock_fastapi_app, theme="neon")
+
+
+def test_admin_theme_exposed_to_templates(mock_fastapi_app):
+    """The theme value is available as a Jinja2 template global."""
+    admin = Admin(app=mock_fastapi_app, theme="dark")
+    admin.mount("/admin")
+    assert admin.templates.env.globals["theme"] == "dark"

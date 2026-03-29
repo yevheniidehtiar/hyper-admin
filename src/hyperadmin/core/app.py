@@ -27,6 +27,9 @@ class Admin:
         ```
     """
 
+    #: Valid theme values that can be passed to the ``theme`` parameter.
+    VALID_THEMES = ("auto", "light", "dark")
+
     def __init__(  # noqa: PLR0913
         self,
         app: FastAPI,
@@ -38,6 +41,7 @@ class Admin:
         permission_checker: Any = None,
         permission_registry: Any = None,
         session_secret: str | None = None,
+        theme: str = "auto",
     ):
         """Initialise HyperAdmin and attach it to a FastAPI application.
 
@@ -57,7 +61,14 @@ class Admin:
             permission_registry: An optional ``PermissionRegistry`` implementation.
             session_secret: Secret key for ``SessionMiddleware``. Required when
                 ``auth_backend`` is set.
+            theme: Color theme for the admin interface. Accepted values are
+                ``"auto"`` (respects ``prefers-color-scheme``, default),
+                ``"light"`` (always light), or ``"dark"`` (always dark).
         """
+        if theme not in self.VALID_THEMES:
+            msg = f"Invalid theme {theme!r}. Must be one of {self.VALID_THEMES}"
+            raise ValueError(msg)
+        self.theme = theme
         self.app = app
         self.router = APIRouter()
         self.engine = engine or default_engine
@@ -163,6 +174,7 @@ class Admin:
         self._register_views()
         self.templates.env.globals["admin_prefix"] = path.rstrip("/")
         self.templates.env.globals["auth_enabled"] = self.auth_backend is not None
+        self.templates.env.globals["theme"] = self.theme
 
         if self.auth_backend:
             self.router.on_startup.append(self._sync_permissions)
