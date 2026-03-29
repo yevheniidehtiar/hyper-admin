@@ -108,6 +108,13 @@
   color: var(--ha-color-primary-500);
 }
 
+/* Small button */
+.ha-btn-sm {
+  padding: var(--ha-space-1) var(--ha-space-3);
+  font-size: var(--ha-font-size-xs);
+  font-weight: var(--ha-font-semibold);
+}
+
 /* Full-width button */
 .ha-btn-block {
   display: flex;

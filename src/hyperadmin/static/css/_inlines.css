@@ -1,0 +1,59 @@
+/* ==========================================================================
+   Inline Formsets
+   ========================================================================== */
+
+.ha-inline-formset {
+  margin-bottom: var(--ha-space-6);
+}
+
+.ha-inline-title {
+  font-size: var(--ha-font-size-lg);
+  font-weight: 700;
+  color: var(--ha-color-text-strong);
+  margin: 0 0 var(--ha-space-3);
+}
+
+.ha-inline-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--ha-font-size-sm);
+}
+
+.ha-inline-table th {
+  padding: var(--ha-space-2) var(--ha-space-3);
+  text-align: left;
+  font-weight: var(--ha-font-semibold);
+  color: var(--ha-color-text-muted);
+  background-color: var(--ha-color-bg);
+  border-bottom: var(--ha-border-width) solid var(--ha-color-border-light);
+}
+
+.ha-inline-table td {
+  padding: var(--ha-space-2) var(--ha-space-3);
+  vertical-align: top;
+}
+
+.ha-inline-actions-col {
+  width: 5rem;
+  text-align: center;
+}
+
+.ha-inline-row {
+  border-bottom: var(--ha-border-width) solid var(--ha-color-border-light);
+}
+
+.ha-inline-row-deleted {
+  display: none;
+}
+
+.ha-inline-input {
+  width: 100%;
+}
+
+.ha-inline-actions {
+  text-align: center;
+}
+
+.ha-inline-add-btn {
+  margin-top: var(--ha-space-3);
+}
