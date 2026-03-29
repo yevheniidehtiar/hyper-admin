@@ -9,6 +9,7 @@ if TYPE_CHECKING:
 from hyperadmin.adapters.sqlmodel import SQLModelAdapter
 from hyperadmin.core.actions import action
 from hyperadmin.core.fieldsets import FieldsetSpec
+from hyperadmin.core.inlines import InlineModelSpec
 from hyperadmin.core.layouts import FormLayout
 from hyperadmin.core.model import ModelAdmin
 from hyperadmin.core.options import AdminOptions
@@ -45,6 +46,16 @@ class ProductAdmin(ModelAdmin):
 
 class CountryAdmin(ModelAdmin):
     adapter_class = SQLModelAdapter
+    options: ClassVar[AdminOptions] = AdminOptions(
+        inlines=[
+            InlineModelSpec(
+                model=City,
+                fk_field="country_id",
+                fields=["name"],
+                title="Cities",
+            )
+        ]
+    )
 
 
 class CityAdmin(ModelAdmin):
