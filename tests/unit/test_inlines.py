@@ -254,14 +254,14 @@ class TestInlineFormset:
     def test_validate_rows_preserves_pk(self) -> None:
         fs = self._make_formset()
         rows_data = [{"_pk": 42, "description": "Updated", "quantity": "10"}]
-        valid, errors = fs.validate_rows(rows_data, parent_pk=1)
+        valid, _errors = fs.validate_rows(rows_data, parent_pk=1)
         assert len(valid) == 1
         assert valid[0]["_pk"] == 42
 
     def test_validate_rows_delete(self) -> None:
         fs = self._make_formset()
         rows_data = [{"_delete": True, "_pk": 99}]
-        valid, errors = fs.validate_rows(rows_data)
+        valid, _errors = fs.validate_rows(rows_data)
         assert len(valid) == 1
         assert valid[0]["_delete"] is True
         assert valid[0]["_pk"] == 99

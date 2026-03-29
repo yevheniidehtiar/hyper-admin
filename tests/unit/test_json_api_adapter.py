@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-import builtins
 from dataclasses import asdict
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from unittest.mock import MagicMock
 
 import pytest
@@ -14,7 +13,11 @@ from hyperadmin.core.adapters import (
     ListEnvelope,
     PaginationMeta,
 )
-from hyperadmin.core.choices import ChoiceItem
+
+if TYPE_CHECKING:
+    import builtins
+
+    from hyperadmin.core.choices import ChoiceItem
 
 # ---------------------------------------------------------------------------
 # Concrete test double
@@ -196,10 +199,10 @@ class TestJsonApiAdapter:
 
 class TestExports:
     def test_importable_from_core(self) -> None:
-        from hyperadmin.core import JsonApiAdapter as JA
-        from hyperadmin.core import ListEnvelope as LE
-        from hyperadmin.core import PaginationMeta as PM
+        from hyperadmin.core import JsonApiAdapter as JsonApiAdapterAlias
+        from hyperadmin.core import ListEnvelope as ListEnvelopeAlias
+        from hyperadmin.core import PaginationMeta as PaginationMetaAlias
 
-        assert JA is JsonApiAdapter
-        assert LE is ListEnvelope
-        assert PM is PaginationMeta
+        assert JsonApiAdapterAlias is JsonApiAdapter
+        assert ListEnvelopeAlias is ListEnvelope
+        assert PaginationMetaAlias is PaginationMeta

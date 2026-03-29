@@ -54,4 +54,4 @@ class InlineModelSpec:
         if self.fields:
             return self.fields
         model_fields = getattr(self.model, "model_fields", {})
-        return [name for name in model_fields if name != "id" and name != self.fk_field]
+        return [name for name in model_fields if name not in ("id", self.fk_field)]

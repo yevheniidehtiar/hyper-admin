@@ -124,6 +124,7 @@ filterwarnings = "ignore:The `name` is not the first parameter anymore:Deprecati
 asyncio_mode = "auto"
 
 [tool.ruff]  # https://docs.astral.sh/ruff/settings/
+exclude = [".claude"]
 fix = true
 line-length = 100
 src = ["src", "tests"]
@@ -207,6 +208,8 @@ fixable = ["ALL"]
   "T20",      # print statements in examples
 ]
 "main.py" = ["S104"]  # binding to all interfaces (local dev entry point)
+"src/hyperadmin/core/options.py" = ["TC001"]  # Pydantic needs runtime access to field types
+"src/hyperadmin/views/forms.py" = ["PLR0913", "PLR2004"]  # complex constructors, index arithmetic
 ".gemini/scripts/*.py" = [
   "PLR2004",  # magic value comparisons (threshold constants)
   "PLW1510",  # subprocess.run without check (scripts handle errors manually)

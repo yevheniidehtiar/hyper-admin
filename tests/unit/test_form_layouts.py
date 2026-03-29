@@ -258,9 +258,7 @@ def test_fieldset_groups_with_form_fields_ordering() -> None:
     assert [f.name for f in groups[0].fields] == ["age", "name"]
 
 
-# ---------------------------------------------------------------------------
-# Combined: layout + fieldsets
-# ---------------------------------------------------------------------------
+# --- Combined: layout + fieldsets ---
 
 
 def test_two_column_with_fieldsets() -> None:

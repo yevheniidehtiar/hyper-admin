@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-import builtins
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
-from hyperadmin.core.choices import ChoiceItem
-
 if TYPE_CHECKING:
+    import builtins
+
+    from hyperadmin.core.choices import ChoiceItem
     from hyperadmin.core.inlines import InlineModelSpec
 
 
