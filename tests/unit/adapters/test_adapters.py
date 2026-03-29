@@ -57,6 +57,9 @@ def test_concrete_adapter_must_implement_all_methods():
         ) -> builtins.list:
             pass
 
+        async def save_inline_rows(self, spec: Any, rows: builtins.list, parent_pk: Any) -> None:
+            pass
+
     # This should not raise an error
     ConcreteAdapter(model=None, engine=None)
 

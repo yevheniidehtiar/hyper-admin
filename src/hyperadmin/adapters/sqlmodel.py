@@ -9,6 +9,7 @@ from sqlmodel import AutoString, SQLModel, select
 
 from hyperadmin.core.adapters import BaseAdapter
 from hyperadmin.core.choices import ChoiceItem
+from hyperadmin.core.inlines import InlineModelSpec
 
 _MAX_CHOICES_LIMIT = 200
 
@@ -229,3 +230,33 @@ class SQLModelAdapter(BaseAdapter):
             )
             for item in items
         ]
+
+    async def save_inline_rows(
+        self,
+        spec: InlineModelSpec,
+        rows: builtins.list[dict[str, Any]],
+        parent_pk: Any,
+    ) -> None:
+        """Persist validated inline rows — create, update, or delete as needed.
+
+        A fresh ``SQLModelAdapter`` is constructed for the inline model using
+        this adapter's engine so all operations share the same database connection.
+
+        Args:
+            spec: The ``InlineModelSpec`` describing the related model and FK field.
+            rows: Validated row dicts, each optionally containing ``_pk`` (for
+                update/delete) and ``_delete`` (for deletion).
+            parent_pk: The primary key of the parent object to associate new rows with.
+        """
+        inline_adapter = SQLModelAdapter(spec.model, self.engine)
+        for row in rows:
+            if row.get("_delete") and row.get("_pk"):
+                await inline_adapter.delete(pk=row["_pk"])
+            elif "_pk" in row:
+                pk = row["_pk"]
+                row_data = {k: v for k, v in row.items() if k not in ("_pk", "_delete")}
+                await inline_adapter.update(pk=pk, data=row_data)
+            else:
+                row_data = {k: v for k, v in row.items() if k not in ("_pk", "_delete")}
+                row_data[spec.fk_field] = parent_pk
+                await inline_adapter.create(data=row_data)

@@ -24,7 +24,7 @@
     <button type="button"
             class="ha-btn ha-btn-secondary ha-inline-add-btn"
             data-testid="inline-{{ inline.prefix }}-add"
-            hx-get="/{{ model_name }}/inline/{{ inline.prefix }}/add-row?index={{ inline.rows|length }}"
+            hx-get="{{ inline.add_row_url }}?index={{ inline.rows|length }}"
             hx-target="#inline-{{ inline.prefix }}-body"
             hx-swap="beforeend">
         + Add {{ inline.spec.model.__name__ }}

@@ -20,6 +20,9 @@ class InlineModelSpec:
         extra: Number of empty rows to display by default.
         title: Display label for the inline section. Defaults to the
             related model's class name.
+        relationship_name: The ORM relationship attribute name on the parent
+            model used for ``get_related`` lookups. Defaults to the
+            lowercased model class name when empty.
     """
 
     model: Any
@@ -28,11 +31,14 @@ class InlineModelSpec:
     max_num: int = 0
     extra: int = 1
     title: str = ""
+    relationship_name: str = ""
 
     def __post_init__(self) -> None:
         if not self.title:
             name = getattr(self.model, "__name__", str(self.model))
             self.title = name + "s"
+        if not self.relationship_name:
+            self.relationship_name = getattr(self.model, "__name__", str(self.model)).lower()
 
     @property
     def model_name(self) -> str:

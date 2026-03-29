@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from dataclasses import field as dc_field
 from datetime import datetime
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Literal, Union, get_args, get_origin
+from typing import TYPE_CHECKING, Any, ClassVar, Literal, Union, get_args, get_origin
 
 from markupsafe import Markup
 from pydantic import BaseModel, ValidationError
@@ -28,7 +28,6 @@ if TYPE_CHECKING:
 
     from hyperadmin.core.fieldsets import FieldsetSpec
     from hyperadmin.core.inlines import InlineModelSpec
-    from hyperadmin.core.layouts import FormLayout
 
 
 @dataclass(slots=True)
@@ -38,11 +37,13 @@ class HtmxWidget:
     template_path: path to template included under the project templates directory.
     static_list: optional JS/CSS assets to include once per page.
     htmx_attrs: optional HTMX attributes to include on the input element.
+    input_type: HTML input type string returned to templates (e.g. ``"text"``, ``"number"``).
     """
 
     template_path: str
     static_list: tuple[str, ...] = ()
     htmx_attrs: Mapping[str, str] | None = None
+    input_type: ClassVar[str] = "text"
 
     def render(self, templates: Jinja2Templates, form_field: FormField, request) -> Markup:
         context = {
@@ -54,16 +55,22 @@ class HtmxWidget:
 
 
 class TextInput(HtmxWidget):
+    input_type: ClassVar[str] = "text"
+
     def __init__(self):
         super().__init__(template_path="widgets/text_input.html")
 
 
 class NumberInput(HtmxWidget):
+    input_type: ClassVar[str] = "number"
+
     def __init__(self):
         super().__init__(template_path="widgets/number_input.html")
 
 
 class FloatInput(HtmxWidget):
+    input_type: ClassVar[str] = "number"
+
     def __init__(self):
         super().__init__(template_path="widgets/float_input.html")
 
@@ -74,6 +81,8 @@ class Textarea(HtmxWidget):
 
 
 class CheckboxInput(HtmxWidget):
+    input_type: ClassVar[str] = "checkbox"
+
     def __init__(self):
         super().__init__(template_path="widgets/checkbox_input.html")
 
@@ -110,6 +119,8 @@ class MultiSelectWidget(HtmxWidget):
 
 
 class DateTimeInput(HtmxWidget):
+    input_type: ClassVar[str] = "datetime-local"
+
     def __init__(self):
         super().__init__(template_path="widgets/datetime_input.html")
 
@@ -246,8 +257,6 @@ class PydanticForm:
         initial: dict[str, Any] | None = None,
         choices_base_url: str = "",
         fieldsets: list[FieldsetSpec] | None = None,
-        form_layout: FormLayout | None = None,
-        form_fields: list[str] | None = None,
     ) -> None:
         self.model = model
         self.widgets = widgets or {}
@@ -258,8 +267,6 @@ class PydanticForm:
         self.errors: dict[str, list[str]] = {}
         self._fields: list[FormField] = []
         self._fieldset_specs: list[FieldsetSpec] = fieldsets or []
-        self._form_layout: FormLayout | None = form_layout
-        self._form_fields: list[str] = form_fields or []
 
     @staticmethod
     def _enum_choices(enum_cls: type[Enum]) -> list[ChoiceItem]:
@@ -354,42 +361,27 @@ class PydanticForm:
                 return True
         return False
 
-    def _build_all_fields(self) -> dict[str, FormField]:
-        """Build all eligible form fields as a name->FormField mapping."""
-        field_map: dict[str, FormField] = {}
+    @property
+    def fields(self) -> list[FormField]:
+        if self._fields:
+            return self._fields
         for name, field in self.model.model_fields.items():
             if self.include and name not in self.include:
                 continue
             if name in self.exclude:
                 continue
+            # Exclude common primary key name by default for create/update forms
             if name == "id":
                 continue
             if self._is_auto_now_field(field):
                 continue
             widget = self._pick_widget(name, field)
+            # Pydantic FieldInfo.default may be PydanticUndefined; use None in that case
             default_val = getattr(field, "default", None)
             if str(default_val) == "PydanticUndefined":
                 default_val = None
             value = self.initial.get(name, default_val if default_val is not None else None)
-            field_map[name] = FormField(name=name, model_field=field, widget=widget, value=value)
-        return field_map
-
-    @property
-    def fields(self) -> list[FormField]:
-        if self._fields:
-            return self._fields
-
-        field_map = self._build_all_fields()
-
-        # If form_fields is specified, use that ordering (and only those fields)
-        if self._form_fields:
-            for name in self._form_fields:
-                if name in field_map:
-                    self._fields.append(field_map[name])
-        else:
-            # Default: model-definition order
-            self._fields = list(field_map.values())
-
+            self._fields.append(FormField(name=name, model_field=field, widget=widget, value=value))
         return self._fields
 
     @property
@@ -468,18 +460,6 @@ class PydanticForm:
                     assets.append(path)
         return tuple(assets)
 
-    @property
-    def layout_css_class(self) -> str:
-        """Return the CSS class for the form layout.
-
-        Returns ``ha-form-grid-2`` for two-column layout, empty string for single.
-        """
-        from hyperadmin.core.layouts import FormLayout  # noqa: PLC0415
-
-        if self._form_layout == FormLayout.TWO_COLUMN:
-            return "ha-form-grid-2"
-        return ""
-
 
 @dataclass(slots=True)
 class InlineFormRow:
@@ -509,6 +489,7 @@ class InlineFormset:
     spec: InlineModelSpec
     rows: list[InlineFormRow] = dc_field(default_factory=list)
     errors: dict[int, dict[str, list[str]]] = dc_field(default_factory=dict)
+    add_row_url: str = ""
 
     @property
     def prefix(self) -> str:

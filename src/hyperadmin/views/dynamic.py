@@ -292,17 +292,27 @@ class DynamicModelView:
     def _build_inline_formsets(
         self,
         existing_data: dict[str, list[Any]] | None = None,
+        request: Request | None = None,
     ) -> list[InlineFormset]:
         """Build ``InlineFormset`` instances for each configured inline spec.
 
         Args:
             existing_data: Mapping of inline prefix to list of existing related
                 model instances (used in update views).
+            request: The current HTTP request, used to resolve the ``add_row_url``
+                for each inline via ``request.url_for``.
         """
         formsets: list[InlineFormset] = []
         existing = existing_data or {}
         for spec in getattr(self.options, "inlines", []):
-            formset = InlineFormset(spec=spec)
+            add_row_url = ""
+            if request is not None:
+                route_name = f"{self._model_name_lower}-inline-add-row"
+                try:
+                    add_row_url = str(request.url_for(route_name, inline_prefix=spec.model_name))
+                except Exception:
+                    add_row_url = ""
+            formset = InlineFormset(spec=spec, add_row_url=add_row_url)
             instances = existing.get(formset.prefix, [])
             if instances:
                 formset.populate_from_instances(instances)
@@ -402,8 +412,6 @@ class DynamicModelView:
             exclude=self.form_create_exclude,
             initial=values or {},
             fieldsets=getattr(self.options, "fieldsets", None) or None,
-            form_layout=getattr(self.options, "form_layout", None),
-            form_fields=getattr(self.options, "form_fields", None) or None,
         )
         if errors:
             form.bind(values or {})
@@ -415,7 +423,7 @@ class DynamicModelView:
         # Build inline formsets if not provided (e.g. on first render)
         inlines_cfg = getattr(self.options, "inlines", [])
         if inline_formsets is None and inlines_cfg:
-            inline_formsets = self._build_inline_formsets()
+            inline_formsets = self._build_inline_formsets(request=request)
 
         context = {
             "request": request,
@@ -473,8 +481,6 @@ class DynamicModelView:
             include=create_include,
             exclude=self.form_create_exclude,
             fieldsets=getattr(self.options, "fieldsets", None) or None,
-            form_layout=getattr(self.options, "form_layout", None),
-            form_fields=getattr(self.options, "form_fields", None) or None,
         )
         data = self._extract_form_data(form_data, form)
         form.bind(data)
@@ -576,8 +582,6 @@ class DynamicModelView:
             include=self.form_include,
             initial=initial_values,
             fieldsets=getattr(self.options, "fieldsets", None) or None,
-            form_layout=getattr(self.options, "form_layout", None),
-            form_fields=getattr(self.options, "form_fields", None) or None,
         )
 
         if errors:
@@ -593,10 +597,10 @@ class DynamicModelView:
             existing_data: dict[str, list[Any]] = {}
             for spec in getattr(self.options, "inlines", []):
                 prefix = spec.model_name
-                related = await self.adapter.get_related(pk=item_id, field=prefix)
+                related = await self.adapter.get_related(pk=item_id, field=spec.relationship_name)
                 if related:
                     existing_data[prefix] = list(related)
-            inline_formsets = self._build_inline_formsets(existing_data)
+            inline_formsets = self._build_inline_formsets(existing_data, request=request)
 
         context = {
             "request": request,
@@ -631,8 +635,6 @@ class DynamicModelView:
             widgets=relation_widgets,
             include=self.form_include,
             fieldsets=getattr(self.options, "fieldsets", None) or None,
-            form_layout=getattr(self.options, "form_layout", None),
-            form_fields=getattr(self.options, "form_fields", None) or None,
         )
         data = self._extract_form_data(form_data, form)
 
@@ -698,21 +700,8 @@ class DynamicModelView:
         parent_pk: int,
     ) -> None:
         """Persist validated inline rows — create, update, or delete as needed."""
-        from hyperadmin.adapters import SQLModelAdapter  # noqa: PLC0415
-
         for formset, rows in inline_valid_data:
-            inline_adapter = SQLModelAdapter(formset.spec.model, self.adapter.engine)
-            for row in rows:
-                if row.get("_delete") and row.get("_pk"):
-                    await inline_adapter.delete(pk=row["_pk"])
-                elif "_pk" in row:
-                    pk = row.pop("_pk")
-                    row.pop("_delete", None)
-                    await inline_adapter.update(pk=pk, data=row)
-                else:
-                    row.pop("_delete", None)
-                    row[formset.spec.fk_field] = parent_pk
-                    await inline_adapter.create(data=row)
+            await self.adapter.save_inline_rows(formset.spec, rows, parent_pk)
 
     async def inline_add_row_view(
         self,

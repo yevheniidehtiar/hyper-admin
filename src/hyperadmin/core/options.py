@@ -4,7 +4,6 @@ from pydantic import BaseModel
 
 from hyperadmin.core.fieldsets import FieldsetSpec
 from hyperadmin.core.inlines import InlineModelSpec
-from hyperadmin.core.layouts import FormLayout
 
 
 class AdminOptions(BaseModel):
@@ -51,28 +50,6 @@ class AdminOptions(BaseModel):
             FieldsetSpec(name="Basic Info", fields=["name", "email"]),
             FieldsetSpec(name="Advanced", fields=["is_active", "rating"], collapsed=True),
         ])
-        ```
-    """
-    form_layout: FormLayout = FormLayout.SINGLE
-    """Controls the column layout of form fields.
-
-    - ``FormLayout.SINGLE``: One field per row (default).
-    - ``FormLayout.TWO_COLUMN``: Fields arranged in a two-column grid.
-
-    Example:
-        ```python
-        AdminOptions(form_layout=FormLayout.TWO_COLUMN)
-        ```
-    """
-    form_fields: list[str] = []
-    """Explicit ordering of fields in create/update forms.
-
-    When non-empty, only these fields are shown, in the specified order.
-    When empty, all editable fields are shown in model-definition order.
-
-    Example:
-        ```python
-        AdminOptions(form_fields=["name", "email", "is_active"])
         ```
     """
     inlines: list[InlineModelSpec] = []

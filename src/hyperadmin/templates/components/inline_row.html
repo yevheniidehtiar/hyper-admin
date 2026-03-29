@@ -13,13 +13,13 @@
     <td>
         <input id="{{ inline.prefix }}-{{ row.index }}-{{ field.name }}"
                name="{{ inline.prefix }}-{{ row.index }}-{{ field.name }}"
-               type="{% if field.widget.__class__.__name__ == 'NumberInput' %}number{% elif field.widget.__class__.__name__ == 'FloatInput' %}number{% elif field.widget.__class__.__name__ == 'CheckboxInput' %}checkbox{% else %}text{% endif %}"
+               type="{{ field.widget.input_type }}"
                value="{{ field.value or '' }}"
                class="ha-input ha-inline-input"
                aria-label="{{ field.label }}"
                aria-invalid="{{ 'true' if field.errors else 'false' }}"
-               {% if field.widget.__class__.__name__ == 'FloatInput' %}step="any"{% endif %}
-               {% if field.widget.__class__.__name__ == 'CheckboxInput' and field.value %}checked{% endif %}
+               {% if field.widget.input_type == 'number' %}step="any"{% endif %}
+               {% if field.widget.input_type == 'checkbox' and field.value %}checked{% endif %}
         />
         {%- if field.errors -%}
         <ul class="ha-field-errors" aria-live="polite" data-testid="{{ inline.prefix }}-{{ row.index }}-{{ field.name }}-errors">

@@ -3,9 +3,12 @@ from __future__ import annotations
 import builtins
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from hyperadmin.core.choices import ChoiceItem
+
+if TYPE_CHECKING:
+    from hyperadmin.core.inlines import InlineModelSpec
 
 
 @dataclass
@@ -168,6 +171,23 @@ class BaseAdapter(ABC):
 
         Raises:
             ValueError: When ``limit`` exceeds 200.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    async def save_inline_rows(
+        self,
+        spec: InlineModelSpec,
+        rows: builtins.list[dict[str, Any]],
+        parent_pk: Any,
+    ) -> None:
+        """Persist validated inline rows — create, update, or delete as needed.
+
+        Args:
+            spec: The ``InlineModelSpec`` describing the related model and FK field.
+            rows: Validated row dicts, each optionally containing ``_pk`` (for
+                update/delete) and ``_delete`` (for deletion).
+            parent_pk: The primary key of the parent object to associate new rows with.
         """
         raise NotImplementedError
 

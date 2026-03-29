@@ -68,6 +68,9 @@ class StubAdapter(BaseAdapter):
     ) -> builtins.list[ChoiceItem]:
         return [ChoiceItem(value="1", label="UK", selected=False)]
 
+    async def save_inline_rows(self, spec: Any, rows: builtins.list[dict], parent_pk: Any) -> None:
+        pass
+
 
 def _make_request(query_string: str = "") -> Request:
     scope = {

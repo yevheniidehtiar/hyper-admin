@@ -69,6 +69,9 @@ class StubAdapter(BaseAdapter):
     ) -> builtins.list[ChoiceItem]:
         return []
 
+    async def save_inline_rows(self, spec: Any, rows: builtins.list[dict], parent_pk: Any) -> None:
+        pass
+
 
 class FakeFormData:
     """Mimics Starlette's ImmutableMultiDict with getlist() support."""
