@@ -2,17 +2,19 @@
 
 This document outlines the planned features and development phases for HyperAdmin. Our goal is to build a modern, powerful, and easy-to-use admin interface for FastAPI.
 
+> **For detailed epic-level planning, milestone tracking, and priority matrix, see [`docs/roadmap.md`](docs/roadmap.md).**
+
 ---
 
-## ✅ Phase 1: Foundation & The "Walking Skeleton" (Completed)
+## Phase 1: Foundation & The "Walking Skeleton" (Completed)
 
 This initial phase established the project's foundation, including the repository setup, a basic "walking skeleton" of the application, and a CI/CD pipeline. This work proved the core concept and allowed for rapid development.
 
 ---
 
-## 🟡 Phase 2: Core Functionality & Admin UI (In Progress)
+## Phase 2: Core Functionality & Admin UI (Completed)
 
-The goal of this phase is to build a complete and visually appealing admin interface with full CRUD functionality and a modern UI.
+This phase built a complete and visually appealing admin interface with full CRUD functionality and a modern UI.
 
 - **CRUD Implementation**:
     - [x] Add SQLAlchemy and SQLModel as dependencies.
@@ -22,10 +24,13 @@ The goal of this phase is to build a complete and visually appealing admin inter
     - [x] Implement **Delete Action** with HTMX for a seamless UI experience.
 
 - **Admin UI Epics**:
-    - [/] **Navigation Sidebar**: Design and implement a collapsible sidebar for easy navigation between different admin views. (Basic implementation exists)
-    - [x] **Data Table Component**: Create a reusable and feature-rich data table with sorting, pagination, and filtering capabilities.
-    - [x] **Forms & Widgets**: Develop a set of standardized form elements and dashboard widgets for a consistent and modern look and feel.
-    - [x] **Styling & Theming**: Implement a clean and modern design system, with support for custom theming.
+    - [x] **Navigation Sidebar**: Collapsible sidebar for easy navigation between different admin views.
+    - [x] **Data Table Component**: Reusable and feature-rich data table with sorting, pagination, and filtering.
+    - [x] **Forms & Widgets**: Standardized form elements including select/multiselect widgets (enum, FK, M2M, autocomplete).
+    - [x] **Styling & Theming**: Clean and modern design system with theme support.
+    - [x] **Custom Actions Framework**: Register and execute custom actions per model.
+    - [x] **Fieldsets**: Group fields in admin forms with collapsible sections.
+    - [x] **WCAG 2.1 AA Accessibility**: Keyboard navigation, ARIA, color contrast, screen reader support.
 
 - **Documentation & Community Outreach**:
     - [x] Set up a documentation site using MkDocs with the `mkdocs-material` theme.
@@ -35,14 +40,18 @@ The goal of this phase is to build a complete and visually appealing admin inter
 
 ---
 
-## ⚪️ Phase 3: Advanced Features & Polish (Future)
+## Phase 3: Advanced Features & Polish (Future)
 
 With a solid foundation and a polished UI, this phase will focus on adding advanced features and making HyperAdmin even more powerful and flexible.
 
 - **Advanced Features**:
-  - [ ] Authentication and authorization hooks.
-  - [ ] Support for model relationships (e.g., dropdowns for foreign keys).
-  - [ ] Custom actions (e.g., "approve selected items").
+  - [ ] Authentication and authorization hooks (E2E wiring).
+  - [x] Support for model relationships (select/multiselect widgets with FK, M2M, autocomplete).
+  - [x] Custom actions (action framework with bulk and single-object actions).
   - [ ] File uploads.
-  - [ ] Advanced form validation and error handling.
-  - [ ] UI/UX Polish (e.g., pagination, notifications).
+  - [ ] Zero-config admin (3 lines of code).
+  - [ ] Internationalization (i18n).
+  - [ ] Audit / activity log.
+  - [ ] Dashboard builder.
+  - [ ] Real-time updates (WebSocket).
+  - [ ] Plugin & extension system.
