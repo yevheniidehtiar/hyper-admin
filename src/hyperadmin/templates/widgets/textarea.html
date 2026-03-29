@@ -1,7 +1,4 @@
-<div class="ha-form-group">
-  <label for="{{- field.name -}}" class="ha-label">{{- field.label -}}{%- if field.required -%}<span class="ha-required">*</span>{%- endif -%}</label>
+{%- from "components/_macros.html" import field_wrapper -%}
+{%- call field_wrapper(field) -%}
   <textarea id="{{- field.name -}}" name="{{- field.name -}}" class="ha-textarea" aria-invalid="{{- 'true' if field.errors else 'false' -}}">{{- field.value or '' -}}</textarea>
-  {%- if field.errors -%}
-    <ul class="ha-field-errors" aria-live="polite" data-testid="{{ field.name }}-errors">{%- for e in field.errors -%}<li>{{- e -}}</li>{%- endfor -%}</ul>
-  {%- endif -%}
-</div>
+{%- endcall -%}

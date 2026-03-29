@@ -1,0 +1,46 @@
+/* ==========================================================================
+   Pagination
+   ========================================================================== */
+
+.ha-pagination {
+  padding: var(--ha-space-3) var(--ha-space-4);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: var(--ha-border-width) solid var(--ha-color-border-light);
+}
+
+.ha-pagination-info {
+  font-size: var(--ha-font-size-sm);
+  color: var(--ha-color-text-muted);
+}
+
+.ha-pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--ha-space-1);
+}
+
+.ha-pagination-btn {
+  padding: var(--ha-space-1-5) var(--ha-space-3);
+  border: var(--ha-border-width) solid var(--ha-color-border);
+  border-radius: var(--ha-radius);
+  color: var(--ha-color-text);
+  text-decoration: none;
+  font-size: var(--ha-font-size-sm);
+  font-weight: var(--ha-font-medium);
+  background-color: var(--ha-color-surface);
+  transition: all var(--ha-transition);
+}
+
+.ha-pagination-btn:hover {
+  background-color: var(--ha-surface-sunken);
+  border-color: var(--ha-color-border);
+}
+
+.ha-pagination-page {
+  padding: var(--ha-space-1-5) var(--ha-space-3);
+  color: var(--ha-color-text);
+  font-size: var(--ha-font-size-sm);
+  font-weight: var(--ha-font-semibold);
+}

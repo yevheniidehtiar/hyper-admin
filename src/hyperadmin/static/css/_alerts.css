@@ -1,0 +1,80 @@
+/* ==========================================================================
+   Alerts / Messages
+   ========================================================================== */
+
+.ha-alert {
+  padding: var(--ha-space-3) var(--ha-space-4);
+  border: var(--ha-border-width) solid;
+  border-radius: var(--ha-radius-lg);
+  margin-bottom: var(--ha-space-4);
+  font-size: var(--ha-font-size-sm);
+  line-height: var(--ha-line-height);
+}
+
+.ha-alert-info {
+  background-color: var(--ha-color-info-light);
+  border-color: var(--ha-color-info);
+  color: var(--ha-color-info-text);
+}
+
+.ha-alert-success {
+  background-color: var(--ha-color-success-light);
+  border-color: var(--ha-color-success);
+  color: var(--ha-color-success-text);
+}
+
+.ha-alert-warning {
+  background-color: var(--ha-color-warning-light);
+  border-color: var(--ha-color-warning);
+  color: var(--ha-color-warning-text);
+}
+
+.ha-alert-error {
+  background-color: var(--ha-color-danger-light);
+  border-color: var(--ha-color-danger);
+  color: var(--ha-color-danger-text);
+}
+
+.ha-alert-title {
+  font-weight: var(--ha-font-semibold);
+}
+
+/* Toast container (fixed top-right) */
+.ha-toast-container {
+  position: fixed;
+  top: var(--ha-space-4);
+  right: var(--ha-space-4);
+  width: 100%;
+  max-width: 22rem;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ha-space-3);
+}
+
+.ha-toast {
+  position: relative;
+  padding: var(--ha-space-3) var(--ha-space-4);
+  border-radius: var(--ha-radius-lg);
+  border: var(--ha-border-width) solid;
+  box-shadow: var(--ha-shadow-lg);
+  background-color: var(--ha-color-surface);
+}
+
+.ha-toast-close {
+  position: absolute;
+  top: var(--ha-space-2);
+  right: var(--ha-space-2);
+  padding: var(--ha-space-1);
+  background: none;
+  border: none;
+  border-radius: var(--ha-radius-sm);
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.5;
+  transition: opacity var(--ha-transition);
+}
+
+.ha-toast-close:hover {
+  opacity: 1;
+}

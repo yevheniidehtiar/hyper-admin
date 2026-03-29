@@ -1,0 +1,20 @@
+/* ==========================================================================
+   Base / Reset
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--ha-font-family);
+  font-size: var(--ha-font-size-base);
+  line-height: var(--ha-line-height);
+  color: var(--ha-color-text);
+  background-color: var(--ha-color-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}

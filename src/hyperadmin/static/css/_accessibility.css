@@ -1,0 +1,86 @@
+/* ==========================================================================
+   Accessibility — Skip Link
+   ========================================================================== */
+
+.ha-skip-link {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  z-index: 100;
+  padding: var(--ha-space-2) var(--ha-space-4);
+  background-color: var(--ha-color-primary-500);
+  color: #ffffff;
+  font-weight: var(--ha-font-bold);
+  text-decoration: none;
+  border-radius: var(--ha-radius);
+  box-shadow: var(--ha-shadow-lg);
+}
+
+.ha-skip-link:focus {
+  position: fixed;
+  top: var(--ha-space-2);
+  left: var(--ha-space-2);
+  width: auto;
+  height: auto;
+  overflow: visible;
+}
+
+/* ==========================================================================
+   Accessibility -- Focus Visible
+   ========================================================================== */
+
+:focus-visible {
+  outline: 2px solid var(--ha-color-primary-500);
+  outline-offset: 2px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ==========================================================================
+   Accessibility -- Touch Targets
+   ========================================================================== */
+
+@media (pointer: coarse) {
+  .ha-btn,
+  .ha-action-link,
+  .ha-action-delete,
+  .ha-pagination-btn,
+  .ha-filter-toggle,
+  .ha-dropdown-item,
+  .ha-sidebar-link {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+  }
+}
+
+/* ==========================================================================
+   Accessibility -- Reduced Motion
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ==========================================================================
+   Accessibility -- High Contrast
+   ========================================================================== */
+
+@media (prefers-contrast: more) {
+  :root {
+    --ha-color-border: var(--ha-color-neutral-700);
+  }
+}

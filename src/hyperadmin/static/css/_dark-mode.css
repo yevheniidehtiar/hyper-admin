@@ -1,0 +1,114 @@
+/* ==========================================================================
+   Dark Mode Tokens — Three-way system
+   Deduplication: dark values defined once as --_dark-* private tokens,
+   then mapped to semantic tokens in both selector blocks.
+   ========================================================================== */
+
+/* Source-of-truth dark palette values (defined once) */
+:root {
+  --_dark-primary: #2dd4b8;
+  --_dark-primary-hover: #05bfa4;
+  --_dark-primary-light: #00504a;
+  --_dark-primary-text: #2dd4b8;
+  --_dark-danger: #f87171;
+  --_dark-danger-hover: #fca5a5;
+  --_dark-danger-light: #450a0a;
+  --_dark-danger-text: #fca5a5;
+  --_dark-success: #4ade80;
+  --_dark-success-light: #052e16;
+  --_dark-success-text: #86efac;
+  --_dark-warning: #facc15;
+  --_dark-warning-light: #422006;
+  --_dark-warning-text: #fde68a;
+  --_dark-info-light: #1e3a5f;
+  --_dark-info-text: #93c5fd;
+  --_dark-info-border: #3b82f6;
+  --_dark-link: #2dd4b8;
+  --_dark-link-hover: #52f5d8;
+  --_dark-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px -1px rgba(0, 0, 0, 0.3);
+  --_dark-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+  --_dark-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -4px rgba(0, 0, 0, 0.3);
+}
+
+/* Explicit toggle — applied by class toggle or data-theme attribute */
+.ha-theme-dark,
+:root[data-theme="dark"] {
+  --ha-color-primary: var(--_dark-primary);
+  --ha-color-primary-hover: var(--_dark-primary-hover);
+  --ha-color-primary-light: var(--_dark-primary-light);
+  --ha-color-primary-text: var(--_dark-primary-text);
+  --ha-color-danger: var(--_dark-danger);
+  --ha-color-danger-hover: var(--_dark-danger-hover);
+  --ha-color-danger-light: var(--_dark-danger-light);
+  --ha-color-danger-text: var(--_dark-danger-text);
+  --ha-color-success: var(--_dark-success);
+  --ha-color-success-light: var(--_dark-success-light);
+  --ha-color-success-text: var(--_dark-success-text);
+  --ha-color-warning: var(--_dark-warning);
+  --ha-color-warning-light: var(--_dark-warning-light);
+  --ha-color-warning-text: var(--_dark-warning-text);
+  --ha-color-info-light: var(--_dark-info-light);
+  --ha-color-info-text: var(--_dark-info-text);
+  --ha-color-info-border: var(--_dark-info-border);
+
+  --ha-color-text: var(--ha-color-neutral-200);
+  --ha-color-text-muted: var(--ha-color-neutral-300);
+  --ha-color-text-strong: var(--ha-color-neutral-25);
+  --ha-color-bg: var(--ha-color-neutral-950);
+  --ha-color-bg-light: var(--ha-color-neutral-900);
+  --ha-color-surface: var(--ha-color-neutral-800);
+  --ha-color-border: var(--ha-color-neutral-600);
+  --ha-color-border-light: var(--ha-color-neutral-700);
+  --ha-color-link: var(--_dark-link);
+  --ha-color-link-hover: var(--_dark-link-hover);
+
+  --ha-surface-base: var(--ha-color-neutral-950);
+  --ha-surface-raised: var(--ha-color-neutral-800);
+  --ha-surface-sunken: var(--ha-color-neutral-900);
+
+  --ha-shadow: var(--_dark-shadow);
+  --ha-shadow-md: var(--_dark-shadow-md);
+  --ha-shadow-lg: var(--_dark-shadow-lg);
+}
+
+/* Auto mode: respect OS preference when no explicit theme is set */
+@media (prefers-color-scheme: dark) {
+  :root:not(.ha-theme-light):not([data-theme="light"]) {
+    --ha-color-primary: var(--_dark-primary);
+    --ha-color-primary-hover: var(--_dark-primary-hover);
+    --ha-color-primary-light: var(--_dark-primary-light);
+    --ha-color-primary-text: var(--_dark-primary-text);
+    --ha-color-danger: var(--_dark-danger);
+    --ha-color-danger-hover: var(--_dark-danger-hover);
+    --ha-color-danger-light: var(--_dark-danger-light);
+    --ha-color-danger-text: var(--_dark-danger-text);
+    --ha-color-success: var(--_dark-success);
+    --ha-color-success-light: var(--_dark-success-light);
+    --ha-color-success-text: var(--_dark-success-text);
+    --ha-color-warning: var(--_dark-warning);
+    --ha-color-warning-light: var(--_dark-warning-light);
+    --ha-color-warning-text: var(--_dark-warning-text);
+    --ha-color-info-light: var(--_dark-info-light);
+    --ha-color-info-text: var(--_dark-info-text);
+    --ha-color-info-border: var(--_dark-info-border);
+
+    --ha-color-text: var(--ha-color-neutral-200);
+    --ha-color-text-muted: var(--ha-color-neutral-300);
+    --ha-color-text-strong: var(--ha-color-neutral-25);
+    --ha-color-bg: var(--ha-color-neutral-950);
+    --ha-color-bg-light: var(--ha-color-neutral-900);
+    --ha-color-surface: var(--ha-color-neutral-800);
+    --ha-color-border: var(--ha-color-neutral-600);
+    --ha-color-border-light: var(--ha-color-neutral-700);
+    --ha-color-link: var(--_dark-link);
+    --ha-color-link-hover: var(--_dark-link-hover);
+
+    --ha-surface-base: var(--ha-color-neutral-950);
+    --ha-surface-raised: var(--ha-color-neutral-800);
+    --ha-surface-sunken: var(--ha-color-neutral-900);
+
+    --ha-shadow: var(--_dark-shadow);
+    --ha-shadow-md: var(--_dark-shadow-md);
+    --ha-shadow-lg: var(--_dark-shadow-lg);
+  }
+}

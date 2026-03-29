@@ -1,0 +1,147 @@
+/* ==========================================================================
+   Design Tokens
+   ========================================================================== */
+
+:root {
+  /* ---- Primary palette (FastAPI teal) ---- */
+  --ha-color-primary-50: #effefa;
+  --ha-color-primary-100: #c8fef4;
+  --ha-color-primary-200: #90fde9;
+  --ha-color-primary-300: #52f5d8;
+  --ha-color-primary-400: #1edcbe;
+  --ha-color-primary-500: #05bfa4;
+  --ha-color-primary-600: #009a86;
+  --ha-color-primary-700: #007b6d;
+  --ha-color-primary-800: #006159;
+  --ha-color-primary-900: #00504a;
+
+  /* Semantic primary aliases */
+  --ha-color-primary: var(--ha-color-primary-500);
+  --ha-color-primary-hover: var(--ha-color-primary-600);
+  --ha-color-primary-light: var(--ha-color-primary-50);
+  --ha-color-primary-text: var(--ha-color-primary-700);
+
+  /* ---- Accent palette (Pydantic coral-pink) ---- */
+  /* Reserved for Tier 2 components -- see UI-KIT-RFC Section 3.3 */
+  --ha-color-accent-50: #fff1f3;
+  --ha-color-accent-100: #ffe0e6;
+  --ha-color-accent-400: #ff6488;
+  --ha-color-accent-500: #f63d68;
+  --ha-color-accent-600: #e31b54;
+  --ha-color-accent-700: #c01048;
+
+  /* ---- Semantic colors ---- */
+  --ha-color-success: #12b76a;
+  --ha-color-success-light: #ecfdf3;
+  --ha-color-success-text: #067647;
+  --ha-color-warning: #f79009;
+  --ha-color-warning-light: #fffaeb;
+  --ha-color-warning-text: #b54708;
+  --ha-color-danger: #f04438;
+  --ha-color-danger-hover: #b42318;
+  --ha-color-danger-light: #fef3f2;
+  --ha-color-danger-text: #b42318;
+  --ha-color-info: #0ba5ec;
+  --ha-color-info-light: #f0f9ff;
+  --ha-color-info-text: #026aa2;
+  --ha-color-info-border: #0ba5ec;
+
+  /* ---- Neutral scale (cool gray, blue undertone) ---- */
+  --ha-color-neutral-0: #ffffff;
+  --ha-color-neutral-25: #fcfcfd;
+  --ha-color-neutral-50: #f9fafb;
+  --ha-color-neutral-100: #f2f4f7;
+  --ha-color-neutral-200: #eaecf0;
+  --ha-color-neutral-300: #d0d5dd;
+  --ha-color-neutral-400: #98a2b3;
+  --ha-color-neutral-500: #667085;
+  --ha-color-neutral-600: #475467;
+  --ha-color-neutral-700: #344054;
+  --ha-color-neutral-800: #1d2939;
+  --ha-color-neutral-900: #101828;
+  --ha-color-neutral-950: #0c111d;
+
+  /* ---- Semantic text & surface tokens ---- */
+  --ha-color-text: var(--ha-color-neutral-600);
+  --ha-color-text-muted: var(--ha-color-neutral-500);
+  --ha-color-text-strong: var(--ha-color-neutral-900);
+  --ha-color-bg: var(--ha-color-neutral-50);
+  --ha-color-bg-light: var(--ha-color-neutral-25);
+  --ha-color-surface: var(--ha-color-neutral-0);
+  --ha-color-border: var(--ha-color-neutral-300);
+  --ha-color-border-light: var(--ha-color-neutral-200);
+  --ha-color-link: var(--ha-color-primary-700);
+  --ha-color-link-hover: var(--ha-color-primary-800);
+
+  /* ---- Surface & elevation ---- */
+  --ha-surface-base: var(--ha-color-neutral-50);
+  --ha-surface-raised: var(--ha-color-neutral-0);
+  --ha-surface-sunken: var(--ha-color-neutral-100);
+
+  /* ---- Spacing (4px base) ---- */
+  --ha-space-0: 0;
+  --ha-space-0-5: 0.125rem;
+  --ha-space-1: 0.25rem;
+  --ha-space-1-5: 0.375rem;
+  --ha-space-2: 0.5rem;
+  --ha-space-3: 0.75rem;
+  --ha-space-4: 1rem;
+  --ha-space-5: 1.25rem;
+  --ha-space-6: 1.5rem;
+  --ha-space-8: 2rem;
+  --ha-space-10: 2.5rem;
+  --ha-space-12: 3rem;
+  --ha-space-16: 4rem;
+
+  /* ---- Typography ---- */
+  --ha-font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --ha-font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace;
+  --ha-font-size-xs: 0.75rem;
+  --ha-font-size-sm: 0.875rem;
+  --ha-font-size-base: 1rem;
+  --ha-font-size-lg: 1.125rem;
+  --ha-font-size-xl: 1.25rem;
+  --ha-font-size-2xl: 1.5rem;
+  --ha-font-size-3xl: 1.875rem;
+  --ha-font-size-4xl: 2.25rem;
+  --ha-line-height: 1.5;
+  --ha-line-height-tight: 1.25;
+  --ha-line-height-relaxed: 1.75;
+
+  /* Font weights */
+  --ha-font-normal: 400;
+  --ha-font-medium: 500;
+  --ha-font-semibold: 600;
+  --ha-font-bold: 700;
+  --ha-font-extrabold: 800;
+
+  /* ---- Border radius ---- */
+  --ha-radius-sm: 0.25rem;
+  --ha-radius: 0.375rem;
+  --ha-radius-md: 0.375rem;
+  --ha-radius-lg: 0.5rem;
+  --ha-radius-xl: 0.75rem;
+  --ha-radius-2xl: 1rem;
+  --ha-radius-full: 9999px;
+  --ha-border-width: 1px;
+
+  /* ---- Shadows ---- */
+  --ha-shadow-xs: 0 1px 2px rgba(16, 24, 40, 0.05);
+  --ha-shadow: 0 1px 3px rgba(16, 24, 40, 0.1), 0 1px 2px rgba(16, 24, 40, 0.06);
+  --ha-shadow-md: 0 4px 8px -2px rgba(16, 24, 40, 0.1), 0 2px 4px -2px rgba(16, 24, 40, 0.06);
+  --ha-shadow-lg: 0 12px 16px -4px rgba(16, 24, 40, 0.08), 0 4px 6px -2px rgba(16, 24, 40, 0.03);
+  --ha-shadow-xl: 0 20px 24px -4px rgba(16, 24, 40, 0.08), 0 8px 8px -4px rgba(16, 24, 40, 0.03);
+  --ha-shadow-focus: 0 0 0 4px rgba(5, 191, 164, 0.24);
+  --ha-shadow-focus-error: 0 0 0 4px rgba(240, 68, 56, 0.24);
+
+  /* ---- Transitions ---- */
+  --ha-transition: 150ms ease-in-out;
+  --ha-duration-fast: 100ms;
+  --ha-duration-normal: 150ms;
+  --ha-duration-slow: 250ms;
+  --ha-ease-default: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ---- Layout ---- */
+  --ha-sidebar-width: 16rem;
+  --ha-navbar-height: 3.5rem;
+}

@@ -1,0 +1,124 @@
+/* ==========================================================================
+   Data Table
+   ========================================================================== */
+
+.ha-table-wrapper {
+  background-color: var(--ha-surface-raised);
+  border: var(--ha-border-width) solid var(--ha-color-border-light);
+  border-radius: var(--ha-radius-lg);
+  margin: var(--ha-space-6) 0;
+  overflow-x: auto;
+  box-shadow: var(--ha-shadow-xs);
+}
+
+.ha-table {
+  width: 100%;
+  min-width: 100%;
+  table-layout: auto;
+  border-collapse: collapse;
+}
+
+.ha-table-header {
+  background-color: var(--ha-surface-sunken);
+  border-bottom: var(--ha-border-width) solid var(--ha-color-border-light);
+}
+
+.ha-table-th {
+  padding: var(--ha-space-3) var(--ha-space-4);
+  text-align: left;
+  font-size: var(--ha-font-size-xs);
+  font-weight: var(--ha-font-semibold);
+  color: var(--ha-color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  line-height: var(--ha-line-height-tight);
+  white-space: nowrap;
+}
+
+.ha-table-th-center {
+  text-align: center;
+}
+
+.ha-table-body {
+  font-size: var(--ha-font-size-sm);
+}
+
+.ha-table-row {
+  border-bottom: var(--ha-border-width) solid var(--ha-color-border-light);
+  transition: background-color var(--ha-transition);
+}
+
+.ha-table-row:last-child {
+  border-bottom: none;
+}
+
+.ha-table-row:hover {
+  background-color: var(--ha-color-primary-50);
+}
+
+.ha-table-cell {
+  padding: var(--ha-space-3) var(--ha-space-4);
+  text-align: left;
+  white-space: nowrap;
+  color: var(--ha-color-text);
+}
+
+.ha-table-cell-center {
+  text-align: center;
+}
+
+.ha-table-sort-link {
+  text-decoration: none;
+  color: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ha-space-1);
+  transition: color var(--ha-transition);
+}
+
+.ha-table-sort-link:hover {
+  color: var(--ha-color-primary-700);
+}
+
+/* ==========================================================================
+   Table Actions (View / Edit / Delete links in rows)
+   ========================================================================== */
+
+.ha-action-link {
+  color: var(--ha-color-primary-700);
+  text-decoration: none;
+  font-weight: var(--ha-font-medium);
+  font-size: var(--ha-font-size-sm);
+  padding: var(--ha-space-1) var(--ha-space-2);
+  border-radius: var(--ha-radius-sm);
+  transition: all var(--ha-transition);
+}
+
+.ha-action-link:hover {
+  color: var(--ha-color-primary-800);
+  background-color: var(--ha-color-primary-50);
+}
+
+.ha-action-link + .ha-action-link,
+.ha-action-link + .ha-action-delete,
+.ha-action-delete + .ha-action-link {
+  margin-left: var(--ha-space-1);
+}
+
+.ha-action-delete {
+  color: var(--ha-color-danger);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: inherit;
+  font-weight: var(--ha-font-medium);
+  font-size: var(--ha-font-size-sm);
+  padding: var(--ha-space-1) var(--ha-space-2);
+  border-radius: var(--ha-radius-sm);
+  transition: all var(--ha-transition);
+}
+
+.ha-action-delete:hover {
+  color: var(--ha-color-danger-hover);
+  background-color: var(--ha-color-danger-light);
+}

@@ -1,0 +1,151 @@
+/* ==========================================================================
+   Forms
+   ========================================================================== */
+
+.ha-form-group {
+  margin-bottom: var(--ha-space-5);
+}
+
+.ha-label {
+  display: block;
+  font-size: var(--ha-font-size-sm);
+  font-weight: var(--ha-font-semibold);
+  color: var(--ha-color-text-strong);
+  margin-bottom: var(--ha-space-1-5);
+}
+
+.ha-required {
+  color: var(--ha-color-danger);
+  margin-left: var(--ha-space-0-5);
+}
+
+.ha-input {
+  display: block;
+  width: 100%;
+  padding: var(--ha-space-2) var(--ha-space-3);
+  font-size: var(--ha-font-size-sm);
+  font-family: var(--ha-font-family);
+  color: var(--ha-color-text);
+  background-color: var(--ha-color-surface);
+  border: var(--ha-border-width) solid var(--ha-color-border);
+  border-radius: var(--ha-radius);
+  transition: border-color var(--ha-transition), box-shadow var(--ha-transition);
+}
+
+.ha-input::placeholder {
+  color: var(--ha-color-neutral-400);
+}
+
+.ha-input:focus {
+  outline: none;
+  border-color: var(--ha-color-primary-500);
+  box-shadow: var(--ha-shadow-focus);
+}
+
+.ha-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: var(--ha-surface-sunken);
+}
+
+.ha-select {
+  display: block;
+  width: 100%;
+  padding: var(--ha-space-2) var(--ha-space-3);
+  font-size: var(--ha-font-size-sm);
+  font-family: var(--ha-font-family);
+  color: var(--ha-color-text);
+  background-color: var(--ha-color-surface);
+  border: var(--ha-border-width) solid var(--ha-color-border);
+  border-radius: var(--ha-radius);
+  transition: border-color var(--ha-transition), box-shadow var(--ha-transition);
+}
+
+.ha-select:focus {
+  outline: none;
+  border-color: var(--ha-color-primary-500);
+  box-shadow: var(--ha-shadow-focus);
+}
+
+.ha-select:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: var(--ha-surface-sunken);
+}
+
+/* Multi-select variants */
+.ha-select--multi,
+.ha-multiselect {
+  min-height: 6rem;
+}
+
+/* Semantic hooks for relation and lazy-loading selects */
+.ha-select--relation {}
+.ha-select--lazy {}
+.ha-select--dependent {}
+
+.ha-textarea {
+  display: block;
+  width: 100%;
+  padding: var(--ha-space-2) var(--ha-space-3);
+  font-size: var(--ha-font-size-sm);
+  font-family: var(--ha-font-family);
+  color: var(--ha-color-text);
+  background-color: var(--ha-color-surface);
+  border: var(--ha-border-width) solid var(--ha-color-border);
+  border-radius: var(--ha-radius);
+  resize: vertical;
+  min-height: 5rem;
+  transition: border-color var(--ha-transition), box-shadow var(--ha-transition);
+}
+
+.ha-textarea:focus {
+  outline: none;
+  border-color: var(--ha-color-primary-500);
+  box-shadow: var(--ha-shadow-focus);
+}
+
+.ha-checkbox-label {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  gap: var(--ha-space-2);
+}
+
+.ha-checkbox {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--ha-color-primary-500);
+  border-radius: var(--ha-radius-sm);
+  cursor: pointer;
+}
+
+.ha-checkbox-text {
+  font-size: var(--ha-font-size-sm);
+  font-weight: var(--ha-font-medium);
+  color: var(--ha-color-text);
+}
+
+.ha-help-text {
+  margin-top: var(--ha-space-1-5);
+  font-size: var(--ha-font-size-xs);
+  color: var(--ha-color-text-muted);
+  line-height: var(--ha-line-height-relaxed);
+}
+
+.ha-field-errors {
+  list-style: none;
+  margin: var(--ha-space-1-5) 0 0;
+  padding: 0;
+  font-size: var(--ha-font-size-xs);
+  color: var(--ha-color-danger);
+}
+
+/* Detail view -- read-only field value */
+.ha-field-value {
+  padding: var(--ha-space-2) var(--ha-space-3);
+  border: var(--ha-border-width) solid var(--ha-color-border-light);
+  border-radius: var(--ha-radius);
+  background-color: var(--ha-surface-sunken);
+  color: var(--ha-color-text);
+}

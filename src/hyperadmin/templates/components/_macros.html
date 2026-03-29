@@ -1,0 +1,27 @@
+{#-
+    Central macro library for HyperAdmin reusable template components.
+
+    Usage:
+        {%- from "components/_macros.html" import field_wrapper -%}
+        {%- call field_wrapper(field) -%}
+            <input ... />
+        {%- endcall -%}
+
+    The `call` block renders between the label and the help/error section.
+    Checkbox widgets use a different label pattern and should NOT use this macro.
+-#}
+
+{%- macro field_wrapper(field) -%}
+<div class="ha-form-group">
+    <label for="{{- field.name -}}" class="ha-label">
+        {{- field.label -}}{%- if field.required -%}<span class="ha-required">*</span>{%- endif -%}
+    </label>
+    {{- caller() -}}
+    {%- if field.help_text -%}<p class="ha-help-text">{{- field.help_text -}}</p>{%- endif -%}
+    {%- if field.errors -%}
+        <ul class="ha-field-errors" aria-live="polite" data-testid="{{ field.name }}-errors">
+            {%- for e in field.errors -%}<li>{{- e -}}</li>{%- endfor -%}
+        </ul>
+    {%- endif -%}
+</div>
+{%- endmacro -%}

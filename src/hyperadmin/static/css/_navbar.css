@@ -1,0 +1,116 @@
+/* ==========================================================================
+   Navbar
+   ========================================================================== */
+
+.ha-navbar {
+  background-color: var(--ha-color-surface);
+  border-bottom: var(--ha-border-width) solid var(--ha-color-border-light);
+  box-shadow: var(--ha-shadow-xs);
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+
+.ha-navbar-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 var(--ha-space-6);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: var(--ha-navbar-height);
+}
+
+.ha-navbar-brand {
+  font-size: var(--ha-font-size-xl);
+  font-weight: var(--ha-font-extrabold);
+  color: var(--ha-color-primary-700);
+  text-decoration: none;
+  letter-spacing: -0.025em;
+  transition: color var(--ha-transition);
+}
+
+.ha-navbar-brand:hover {
+  color: var(--ha-color-primary-500);
+}
+
+.ha-navbar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--ha-space-2);
+}
+
+.ha-navbar-user {
+  position: relative;
+}
+
+.ha-navbar-user-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--ha-space-2);
+  color: var(--ha-color-text-muted);
+  background: none;
+  border: var(--ha-border-width) solid transparent;
+  border-radius: var(--ha-radius-full);
+  cursor: pointer;
+  font-size: var(--ha-font-size-sm);
+  font-weight: var(--ha-font-medium);
+  padding: var(--ha-space-1-5) var(--ha-space-3);
+  transition: all var(--ha-transition);
+}
+
+.ha-navbar-user-btn:hover {
+  color: var(--ha-color-text);
+  background-color: var(--ha-surface-sunken);
+  border-color: var(--ha-color-border-light);
+}
+
+/* ==========================================================================
+   Dropdown
+   ========================================================================== */
+
+[x-cloak] {
+  display: none !important;
+}
+
+.ha-dropdown {
+  position: absolute;
+  right: 0;
+  margin-top: var(--ha-space-1);
+  width: 12rem;
+  background-color: var(--ha-color-surface);
+  border: var(--ha-border-width) solid var(--ha-color-border-light);
+  border-radius: var(--ha-radius-lg);
+  box-shadow: var(--ha-shadow-lg);
+  padding: var(--ha-space-1) 0;
+  z-index: 10;
+}
+
+/* Fallback: show on hover if Alpine is slow or disabled */
+.ha-navbar-user:hover .ha-dropdown {
+  display: block;
+}
+
+.ha-dropdown-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: var(--ha-space-2) var(--ha-space-4);
+  font-size: var(--ha-font-size-sm);
+  font-weight: var(--ha-font-medium);
+  color: var(--ha-color-text);
+  text-decoration: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  border-radius: var(--ha-radius-sm);
+  margin: 0 var(--ha-space-1);
+  width: calc(100% - var(--ha-space-2));
+  transition: all var(--ha-transition);
+}
+
+.ha-dropdown-item:hover {
+  background-color: var(--ha-color-primary-50);
+  color: var(--ha-color-primary-700);
+}

@@ -1,8 +1,6 @@
+{%- from "components/_macros.html" import field_wrapper -%}
 {%- set value = field.value if field.value is not none else '' -%}
-<div class="ha-form-group">
-    <label for="{{- field.name -}}" class="ha-label">
-        {{- field.label -}}{%- if field.required -%}<span class="ha-required">*</span>{%- endif -%}
-    </label>
+{%- call field_wrapper(field) -%}
     <input id="{{- field.name -}}" {# -#}
            name="{{- field.name -}}" {# -#}
            type="number"
@@ -11,9 +9,4 @@
            class="ha-input"
            aria-invalid="{{- 'true' if field.errors else 'false' -}}"
     />
-    {%- if field.errors -%}
-        <ul class="ha-field-errors" aria-live="polite" data-testid="{{ field.name }}-errors">
-            {%- for e in field.errors -%}<li>{{- e -}}</li>{%- endfor -%}
-        </ul>
-    {%- endif -%}
-</div>
+{%- endcall -%}
