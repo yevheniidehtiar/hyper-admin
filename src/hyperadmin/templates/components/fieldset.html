@@ -1,6 +1,7 @@
 {#- Renders a single fieldset group with collapse/expand toggle.
     Context variables:
       - group: FieldsetGroup instance (name, fields, collapsed, description, slug)
+      - form: PydanticForm instance (for layout_css_class)
 -#}
 {%- if group.name -%}
 <fieldset class="ha-fieldset" data-testid="fieldset-{{ group.slug }}"
@@ -18,7 +19,7 @@
     {%- if group.description -%}
     <p class="ha-fieldset-description" x-show="open">{{ group.description }}</p>
     {%- endif -%}
-    <div x-show="open" x-collapse>
+    <div x-show="open" x-collapse class="{{ form.layout_css_class }}">
         {%- for field in group.fields -%}
             {%- set widget = field.widget -%}
             {%- include field.widget.template_path -%}
@@ -27,8 +28,10 @@
 </fieldset>
 {%- else -%}
 {#- Ungrouped fields (no fieldset header) -#}
+<div class="{{ form.layout_css_class }}">
 {%- for field in group.fields -%}
     {%- set widget = field.widget -%}
     {%- include field.widget.template_path -%}
 {%- endfor -%}
+</div>
 {%- endif -%}
