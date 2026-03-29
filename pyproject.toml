@@ -283,7 +283,8 @@ type = "simple"
   help = "Check this package's dependencies for vulnerabilities"
   # GHSA-4xh5-x5gv-qwph is a false positive for this project, as it's a vulnerability in pypy-3.11, and this project uses CPython.
   # CVE-2026-4539: pygments vulnerability; pygments is a dev-only dep (rich, mkdocs-material, pytest) — not a runtime dep of this library. No fix available yet.
-  cmd = "pip-audit --format markdown --ignore-vuln GHSA-4xh5-x5gv-qwph --ignore-vuln CVE-2026-4539"
+  # CVE-2026-25645: requests vulnerability; requests is a dev-only transitive dep (mkdocs, pip-audit, pytest-base-url). Fix: requests>=2.33.0.
+  cmd = "pip-audit --format markdown --ignore-vuln GHSA-4xh5-x5gv-qwph --ignore-vuln CVE-2026-4539 --ignore-vuln CVE-2026-25645"
 
   [tool.poe.tasks.license-check]
   help = "Check this package's dependencies for license issues"
