@@ -113,6 +113,19 @@ just docs
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
+## Acknowledgements
+
+HyperAdmin stands on the shoulders of outstanding open-source projects and their communities:
+
+- [**Django**](https://www.djangoproject.com/) — the original inspiration for what a batteries-included admin framework should feel like.
+- [**FastAPI**](https://fastapi.tiangolo.com/) — the async Python web framework that makes building APIs a joy.
+- [**Pydantic**](https://docs.pydantic.dev/) — the data validation backbone that powers HyperAdmin's model-first approach.
+- [**HTMX**](https://htmx.org/) — for proving that modern, interactive UIs don't need mountains of JavaScript.
+- [**SQLModel**](https://sqlmodel.tiangolo.com/) & [**SQLAlchemy**](https://www.sqlalchemy.org/) — the database layer that makes ORM integration seamless.
+- [**Anthropic (Claude)**](https://www.anthropic.com/) — AI-assisted development that made it possible to build this project with a fraction of the usual time and effort.
+
+Thank you to every maintainer, contributor, and community member behind these projects.
+
 ## 📄 License
 
 MIT — see [LICENSE](LICENSE) for details.
