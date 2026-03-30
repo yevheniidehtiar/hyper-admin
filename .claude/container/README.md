@@ -117,6 +117,27 @@ docker volume rm container_gh-config            # GitHub CLI
 
 ---
 
+## Memory sharing
+
+The container bridges Claude Code's project memory with the host so that
+host-accumulated learnings (feedback, project context, user preferences) are
+available to container agents, and multiple containers share the same memory.
+
+**How it works:**
+
+1. `just cc-build` stages the host memory (`~/.claude/projects/<key>/memory/`)
+   into the build context at `.claude/container/host-memory/` (gitignored).
+2. `docker build` bakes the snapshot into the image at `/image-memory/`.
+3. At startup, `init-memory.sh` copies the snapshot into the named volume at
+   `/root/.claude/projects/-app/memory/` using `cp -u` (update — newer files
+   only), so container-written entries are never overwritten by a stale build.
+4. Multiple containers from the same Compose share the `claude-credentials`
+   named volume, so memory written by one container is visible to the others.
+
+To refresh memory after host changes, rebuild: `just cc-build`.
+
+---
+
 ## SSH deploy key
 
 `just cc-rotate-key` generates an ed25519 keypair in `.claude/container/ssh/`
@@ -160,8 +181,10 @@ Everything else is dropped, making `--dangerously-skip-permissions` safe.
 ├── Dockerfile                  # node:20-bookworm + Python + uv + gh + Claude Code
 ├── Dockerfile.dockerignore     # excludes .venv, caches, secrets from build context
 ├── docker-compose.yml          # service definition, volumes, capabilities
+├── host-memory/                # gitignored — staged by `just cc-build`
 ├── scripts/
-│   └── init-firewall.sh        # iptables whitelist entrypoint
+│   ├── init-firewall.sh        # iptables whitelist entrypoint
+│   └── init-memory.sh          # syncs host memory snapshot into named volume
 ├── ssh/                        # gitignored — generated deploy key
 │   ├── id_ed25519
 │   ├── id_ed25519.pub

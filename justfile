@@ -69,8 +69,24 @@ build:
 
 _compose := "docker compose -f .claude/container/docker-compose.yml"
 
+# Stage host Claude memory into build context (snapshot for container use)
+_stage-memory:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    HOST_MEM="$HOME/.claude/projects/$(pwd | tr '/' '-')/memory"
+    STAGE=".claude/container/host-memory"
+    # Clean previous snapshot but keep .dockerkeep (ensures COPY works on fresh checkouts)
+    find "$STAGE" -mindepth 1 ! -name '.dockerkeep' -delete 2>/dev/null || true
+    mkdir -p "$STAGE"
+    if [ -d "$HOST_MEM" ] && [ "$(ls -A "$HOST_MEM" 2>/dev/null)" ]; then
+        cp "$HOST_MEM"/* "$STAGE/" 2>/dev/null || true
+        echo "[memory] Staged $(find "$STAGE" -name '*.md' | wc -l | tr -d ' ') files from host memory"
+    else
+        echo "[memory] No host memory found — staging empty directory"
+    fi
+
 # Build the Claude Code remote container image
-cc-build:
+cc-build: _stage-memory
     {{ _compose }} build
 
 # Start Claude Code remote-control server (requires prior `just cc-login`)

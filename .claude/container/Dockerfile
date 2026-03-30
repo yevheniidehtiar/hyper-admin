@@ -66,6 +66,13 @@ RUN npm install -g @anthropic-ai/claude-code
 COPY .claude/container/scripts/init-firewall.sh /usr/local/bin/init-firewall.sh
 RUN chmod +x /usr/local/bin/init-firewall.sh
 
+# ── Memory snapshot from host ──────────────────────────────────────────────────
+# Staged by `just cc-build` (_stage-memory recipe) before docker build.
+# init-memory.sh syncs these into the named volume at container start.
+COPY .claude/container/host-memory/ /image-memory/
+COPY .claude/container/scripts/init-memory.sh /usr/local/bin/init-memory.sh
+RUN chmod +x /usr/local/bin/init-memory.sh
+
 # ── Git identity for Claude Code commits ───────────────────────────────────────
 RUN git config --global user.name "Claude Code" \
     && git config --global user.email "noreply+claude-code@anthropic.com"
@@ -96,8 +103,13 @@ RUN /opt/venv/bin/python -m playwright install chromium
 COPY . .
 
 # ── Post-copy setup ────────────────────────────────────────────────────────────
+# pre-commit install: regenerates .git/hooks/ with container python path
+#   (the COPY above brings host hooks with hardcoded host paths — must overwrite)
+# pre-commit install-hooks: downloads hook environments (best-effort, needs network)
 RUN git config --global --add safe.directory /app \
-    && uv run pre-commit install --install-hooks || true
+    && uv run pre-commit install \
+    && uv run pre-commit install --hook-type commit-msg \
+    && (uv run pre-commit install-hooks || true)
 
 # ── Entrypoint ─────────────────────────────────────────────────────────────────
 # Applies iptables firewall, then exec's the CMD.

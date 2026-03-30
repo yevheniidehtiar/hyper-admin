@@ -81,6 +81,8 @@ site/
 # Claude Code
 .claude/settings.local.json
 .claude/container/ssh/
+.claude/container/host-memory/*
+!.claude/container/host-memory/.dockerkeep
 
 gha-creds-*.json
 
