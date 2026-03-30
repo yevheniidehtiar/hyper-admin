@@ -90,9 +90,9 @@ async def profit_loss_report(
     report_url = str(request.url_for("profit_loss_report"))
 
     return admin.templates.TemplateResponse(
+        request,
         "reports/profit_loss.html",
         {
-            "request": request,
             "year": year,
             "prev_year": year - 1,
             "next_year": year + 1,
