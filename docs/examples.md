@@ -37,7 +37,10 @@ Open [http://localhost:8000/admin/](http://localhost:8000/admin/)
 
 ## erp — Bookkeeping ERP (Modular)
 
-Shows a complex, domain-driven ERP system with multiple modules (Contacts, Sales, Purchases, Accounting) and built-in RBAC. Sample data is seeded automatically with thousands of records.
+Shows a complex, domain-driven ERP system with multiple modules (Contacts, Sales, Purchases,
+Accounting) and built-in RBAC. Sample data is seeded automatically with thousands of records.
+
+[Full ERP example documentation →](examples/erp.md)
 
 **Run with Docker** (recommended — zero setup):
 
