@@ -341,7 +341,7 @@ Default → Hover (tint +10%) → Active (tint +20%, scale 0.98) → Focus-visib
 
 ### 7.3 Table-to-Card Transformation
 
-Pure CSS — no JavaScript, no duplicate HTML. Requires `data-label="{{ field }}"` on each `<td>`:
+Pure CSS — no JavaScript, no duplicate HTML. Requires `data-label="{% raw %}{{ field }}{% endraw %}"` on each `<td>`:
 
 ```css
 @media (max-width: 767px) {
@@ -432,6 +432,7 @@ Kanban board, tree view, calendar/date range picker, rich text editor, file uplo
 
 All components follow the same keyword-argument pattern:
 
+{% raw %}
 ```jinja2
 {# Import once via components/_lib.html #}
 {% from "components/_lib.html" import badge, button, modal, tooltip %}
@@ -441,6 +442,7 @@ All components follow the same keyword-argument pattern:
 {{ button("+ Create New", href=create_url, variant="accent") }}
 {{ tooltip("More info", text="This field is required") }}
 ```
+{% endraw %}
 
 **Argument order:**
 1. Content / text (positional)
@@ -452,7 +454,7 @@ All components follow the same keyword-argument pattern:
 
 > **Accessibility rule**: All icon-only buttons (no visible text) must have an `aria-label` parameter. The macro should enforce this — if `icon_only=True` and no `aria_label` is provided, render a console warning in debug mode.
 
-This pattern is analogous to Django's `{% load %}` + template tag — familiar to the target audience.
+This pattern is analogous to Django's `{% raw %}{% load %}{% endraw %}` + template tag — familiar to the target audience.
 
 ---
 
