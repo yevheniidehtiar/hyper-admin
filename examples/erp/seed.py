@@ -1,3 +1,4 @@
+import logging
 import random
 from datetime import timedelta
 
@@ -14,6 +15,7 @@ from hyperadmin.auth.backend import hash_password
 from hyperadmin.auth.models import User
 
 fake = Faker()
+logger = logging.getLogger("uvicorn")
 
 
 async def seed_db():  # noqa: PLR0915
@@ -23,7 +25,7 @@ async def seed_db():  # noqa: PLR0915
         if result.first():
             return  # Already seeded
 
-        print("Seeding database with Faker data...")
+        logger.info("Seeding database with Faker data...")
 
         # 0. Create superuser
         admin_user = User(
@@ -37,6 +39,7 @@ async def seed_db():  # noqa: PLR0915
         session.add(admin_user)
         await session.commit()
         await session.refresh(admin_user)
+        logger.info("  Created 1 superuser (admin / admin)")
 
         # 1. Accounts
         accounts = [
@@ -53,6 +56,7 @@ async def seed_db():  # noqa: PLR0915
         await session.commit()
         for acc in accounts:
             await session.refresh(acc)
+        logger.info("  Created %d accounts", len(accounts))
 
         sales_rev_acc = next(a for a in accounts if a.code == "4000")
         ar_acc = next(a for a in accounts if a.code == "1200")
@@ -96,7 +100,16 @@ async def seed_db():  # noqa: PLR0915
             await session.commit()
             suppliers = [contacts[-1]]
 
+        logger.info(
+            "  Created %d contacts  (%d customers, %d suppliers, %d both)",
+            len(contacts),
+            sum(1 for c in contacts if c.contact_type == ContactType.CUSTOMER),
+            sum(1 for c in contacts if c.contact_type == ContactType.SUPPLIER),
+            sum(1 for c in contacts if c.contact_type == ContactType.BOTH),
+        )
+
         # 3. Invoices (500 total)
+        invoice_journal_entries = 0
         for _ in range(500):
             customer = random.choice(customers)  # noqa: S311
             issue_date = fake.date_between(start_date="-1y", end_date="today")
@@ -143,8 +156,12 @@ async def seed_db():  # noqa: PLR0915
                 )
                 session.add_all([jl_debit, jl_credit])
                 await session.commit()
+                invoice_journal_entries += 1
+
+        logger.info("  Created 500 invoices  (%d with journal entries)", invoice_journal_entries)
 
         # 4. Bills (800 total)
+        bill_journal_entries = 0
         for _ in range(800):
             supplier = random.choice(suppliers)  # noqa: S311
             recv_date = fake.date_between(start_date="-1y", end_date="today")
@@ -191,5 +208,7 @@ async def seed_db():  # noqa: PLR0915
                 )
                 session.add_all([jl_debit, jl_credit])
                 await session.commit()
+                bill_journal_entries += 1
 
-        print("Seeding completed.")
+        logger.info("  Created 800 bills  (%d with journal entries)", bill_journal_entries)
+        logger.info("Seeding completed.")

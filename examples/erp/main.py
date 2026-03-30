@@ -66,6 +66,7 @@ admin.mount(path="/admin")
 
 # Optional: Add custom report to the navigation menu
 # (This is a bit hacky as it reaches into internals, but shows how it could be done)
+assert "nav_items" in admin.templates.env.globals, "Call admin.mount() before adding nav items"
 admin.templates.env.globals["nav_items"].append(
     {"name": "Profit & Loss Report", "url": "/reports/profit-loss", "icon": "ha-icon-chart"}
 )

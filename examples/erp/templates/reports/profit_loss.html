@@ -1,0 +1,73 @@
+{%- extends "_base.html" -%}
+
+{%- block title -%}Annual Profit & Loss — {{ year }}{%- endblock -%}
+
+{%- block content -%}
+    <div class="ha-card ha-mb-4">
+        <div class="ha-card-header">
+            <h1 class="ha-card-title">Annual Profit / Loss Report</h1>
+        </div>
+        <div class="ha-card-body">
+
+            {# ── Year navigation ── #}
+            <div class="ha-flex ha-items-center ha-gap-2 ha-mb-4">
+                <a href="{{ report_url }}?year={{ prev_year }}"
+                   class="ha-btn ha-btn-secondary ha-btn-sm"
+                   aria-label="Previous year">&laquo; {{ prev_year }}</a>
+                <span class="ha-font-semibold">{{ year }}</span>
+                <a href="{{ report_url }}?year={{ next_year }}"
+                   class="ha-btn ha-btn-secondary ha-btn-sm"
+                   aria-label="Next year">{{ next_year }} &raquo;</a>
+            </div>
+
+            {# ── Line-by-line breakdown ── #}
+            <table class="ha-table" data-testid="pl-table">
+                <thead>
+                    <tr>
+                        <th>Account</th>
+                        <th>Type</th>
+                        <th class="ha-text-right">Amount</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {%- if lines -%}
+                    {%- for row in lines -%}
+                    <tr>
+                        <td>{{ row.account_name }}</td>
+                        <td>{{ row.account_type.value }}</td>
+                        <td class="ha-text-right">{{ "%.2f"|format(row.amount) }}</td>
+                    </tr>
+                    {%- endfor -%}
+                    {%- else -%}
+                    <tr>
+                        <td colspan="3" class="ha-text-center ha-text-muted">No journal entries found for {{ year }}.</td>
+                    </tr>
+                    {%- endif -%}
+                </tbody>
+            </table>
+
+            {# ── Summary totals ── #}
+            <table class="ha-table ha-mt-4" data-testid="pl-summary">
+                <tbody>
+                    <tr>
+                        <th>Total Revenue</th>
+                        <td class="ha-text-right" data-testid="total-revenue">{{ "%.2f"|format(total_revenue) }}</td>
+                    </tr>
+                    <tr>
+                        <th>Total Expenses</th>
+                        <td class="ha-text-right" data-testid="total-expenses">{{ "%.2f"|format(total_expenses) }}</td>
+                    </tr>
+                    <tr class="{{ 'ha-text-success' if net_profit >= 0 else 'ha-text-danger' }}">
+                        <th>Net Profit / Loss</th>
+                        <td class="ha-text-right ha-font-semibold" data-testid="net-profit">{{ "%.2f"|format(net_profit) }}</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="ha-mt-4">
+                <a href="{{ admin_prefix }}" class="ha-btn ha-btn-secondary">Back to Dashboard</a>
+            </div>
+
+        </div>
+    </div>
+{%- endblock -%}
