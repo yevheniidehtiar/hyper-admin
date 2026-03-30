@@ -8,6 +8,9 @@ services:
     # NET_ADMIN is required for init-firewall.sh to apply iptables rules
     cap_add:
       - NET_ADMIN
+    # Chromium needs >64 MB shared memory; Docker's default is too small and
+    # causes browser crashes / hangs during Playwright E2E tests.
+    shm_size: '2gb'
     env_file:
       # Load GITHUB_PAT, SLACK_BOT_TOKEN, etc. from project .env at runtime.
       # Path is relative to the compose file location.

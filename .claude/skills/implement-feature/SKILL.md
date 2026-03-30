@@ -131,11 +131,9 @@ requirement, architectural ambiguity, or any issue that prevents moving forward)
 
 **Step 1 — Search memory for prior solutions:**
 
-Read the memory index and relevant files:
-```
-/Users/yevheniidehtiar/.claude/projects/-Users-yevheniidehtiar--projects-hyper-admin/memory/MEMORY.md
-```
-Then read any memory files whose description matches the blocker topic.
+Read your project memory index (`MEMORY.md`) and any files whose description
+matches the blocker topic. The auto-memory system provides the concrete path
+at runtime.
 
 **If a relevant solution is found** → apply it and continue. Update the memory entry if you
 discovered a refinement.
@@ -181,10 +179,7 @@ Print: `STOPPED: Blocker documented on issue #$ARGUMENTS. Draft PR contains curr
 Once a blocker is resolved (either by memory lookup or by human input on the issue), write a
 memory entry before continuing:
 
-Create a new file in:
-```
-/Users/yevheniidehtiar/.claude/projects/-Users-yevheniidehtiar--projects-hyper-admin/memory/
-```
+Create a new file in your project memory directory (the directory containing `MEMORY.md`).
 
 Name it descriptively (e.g., `feedback_sqlmodel_inspector.md`). Use this format:
 

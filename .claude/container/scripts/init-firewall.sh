@@ -22,6 +22,10 @@
 
 set -euo pipefail
 
+# ── Memory bridge ──────────────────────────────────────────────────────────────
+# Sync build-time host memory snapshot into the named volume.
+/usr/local/bin/init-memory.sh
+
 ALLOW_HOSTS=(
     # Anthropic services
     "api.anthropic.com"
