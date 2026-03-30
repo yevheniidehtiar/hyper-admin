@@ -24,8 +24,8 @@ jobs:
       - uses: astral-sh/setup-uv@v5
         with:
           python-version: "3.13"
-      - run: uv pip install mkdocs-material mkdocstrings[python] --system
-      - run: mkdocs build --strict
+      - run: uv sync --all-extras
+      - run: uv run mkdocs build --strict
       - uses: actions/upload-pages-artifact@v3
         with:
           path: site/
