@@ -35,11 +35,13 @@ admin.mount("/admin")
 
 ## Where to go next
 
-- [Getting Started](getting-started.md) — Installation, prerequisites, and your first admin
-- [Tutorial](tutorial.md) — Step-by-step walkthrough building a complete app
-- [Examples](examples.md) — Two runnable example apps (simple + Bookkeeping ERP)
-- [Frontend](frontend/overview.md) — Templates, CSS tokens, widgets, and HTMX patterns
-- [API Reference](api/application.md) — Full class and method documentation
+- [Getting Started](getting-started.md) — Install and build your first admin
+- [Tutorial](tutorial.md) — Step-by-step walkthrough
+- [Examples](examples.md) — Two runnable apps (simple CRUD + Bookkeeping ERP)
+- [Frontend](frontend/overview.md) — Templates, CSS tokens, widgets, HTMX patterns
+- [API Reference](api/index.md) — Full class and method documentation
+- [Contributing](contributing.md) — Development setup and contribution workflow
+- [Roadmap](roadmap.md) — What's shipped and what's coming next
 
 ## Key features
 
