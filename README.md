@@ -29,6 +29,9 @@
       <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License">
     </a>
   </p>
+
+  > **Alpha** — HyperAdmin is under active development. APIs may change between releases.
+
 </div>
 
 ---
