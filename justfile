@@ -73,7 +73,7 @@ _compose := "docker compose -f .claude/container/docker-compose.yml"
 _stage-memory:
     #!/usr/bin/env bash
     set -euo pipefail
-    HOST_MEM="$HOME/.claude/projects/$(pwd | tr '/' '-')/memory"
+    HOST_MEM="$HOME/.claude/projects/$(pwd | tr '/.' '-')/memory"
     STAGE=".claude/container/host-memory"
     # Clean previous snapshot but keep .dockerkeep (ensures COPY works on fresh checkouts)
     find "$STAGE" -mindepth 1 ! -name '.dockerkeep' -delete 2>/dev/null || true
