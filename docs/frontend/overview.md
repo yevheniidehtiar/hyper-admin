@@ -59,8 +59,9 @@ Components are reusable snippets called from layout templates:
 
 The `_macros.html` file provides reusable Jinja2 macros that eliminate boilerplate across widget templates:
 
-- **`field_wrapper(field)`** — wraps any form field with the standard `ha-form-group` div, label, help text, and error list. Used via the Jinja2 `{% call %}` pattern:
+- **`field_wrapper(field)`** — wraps any form field with the standard `ha-form-group` div, label, help text, and error list. Used via the Jinja2 `{% raw %}{% call %}{% endraw %}` pattern:
 
+{% raw %}
 ```jinja2
 {%- from "components/_macros.html" import field_wrapper -%}
 {%- call field_wrapper(field) -%}
@@ -68,6 +69,7 @@ The `_macros.html` file provides reusable Jinja2 macros that eliminate boilerpla
            value="{{ field.value or '' }}" class="ha-input" />
 {%- endcall -%}
 ```
+{% endraw %}
 
 All widget templates (except `checkbox_input.html` which has a different label pattern) use this macro.
 

@@ -1,3 +1,4 @@
+{% raw %}
 # Widgets
 
 A **widget** controls how a single form field is rendered as HTML and what HTMX attributes, if any, it carries. Widgets are Python dataclasses that pair a Jinja2 template with optional static assets and HTMX attributes.
@@ -406,3 +407,4 @@ These constraints apply to any new widget added to HyperAdmin:
 5. **Accessible by default.** Every interactive element needs a label, appropriate ARIA role, and keyboard navigation.
 
 6. **Progressive enhancement.** Where possible, the widget must function (at minimum, submit a value) without JavaScript.
+{% endraw %}
