@@ -59,16 +59,20 @@ async def seed_db():  # noqa: PLR0915
         sw_exp_acc = next(a for a in accounts if a.code == "6100")
         ap_acc = next(a for a in accounts if a.code == "2000")
 
-        # 2. Contacts
+        # 2. Contacts (120 total: mix of CUSTOMER, SUPPLIER, BOTH)
+        contact_types = (
+            [ContactType.CUSTOMER] * 50 + [ContactType.SUPPLIER] * 50 + [ContactType.BOTH] * 20
+        )
+        random.shuffle(contact_types)
         contacts = [
             Contact(
                 name=fake.company(),
                 email=fake.company_email(),
                 phone=fake.phone_number(),
                 address=fake.address(),
-                contact_type=random.choice([ContactType.CUSTOMER, ContactType.SUPPLIER]),  # noqa: S311
+                contact_type=contact_types[i],
             )
-            for _ in range(30)
+            for i in range(120)
         ]
         session.add_all(contacts)
         await session.commit()
@@ -82,8 +86,18 @@ async def seed_db():  # noqa: PLR0915
             c for c in contacts if c.contact_type in (ContactType.SUPPLIER, ContactType.BOTH)
         ]
 
-        # 3. Invoices
-        for _ in range(50):
+        # Fallback: ensure at least some customers and suppliers exist
+        if not customers:
+            contacts[0].contact_type = ContactType.CUSTOMER
+            await session.commit()
+            customers = [contacts[0]]
+        if not suppliers:
+            contacts[-1].contact_type = ContactType.SUPPLIER
+            await session.commit()
+            suppliers = [contacts[-1]]
+
+        # 3. Invoices (500 total)
+        for _ in range(500):
             customer = random.choice(customers)  # noqa: S311
             issue_date = fake.date_between(start_date="-1y", end_date="today")
             due_date = issue_date + timedelta(days=30)
@@ -130,8 +144,8 @@ async def seed_db():  # noqa: PLR0915
                 session.add_all([jl_debit, jl_credit])
                 await session.commit()
 
-        # 4. Bills
-        for _ in range(30):
+        # 4. Bills (800 total)
+        for _ in range(800):
             supplier = random.choice(suppliers)  # noqa: S311
             recv_date = fake.date_between(start_date="-1y", end_date="today")
             due_date = recv_date + timedelta(days=15)
