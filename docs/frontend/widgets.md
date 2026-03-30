@@ -1,4 +1,3 @@
-{% raw %}
 # Widgets
 
 A **widget** controls how a single form field is rendered as HTML and what HTMX attributes, if any, it carries. Widgets are Python dataclasses that pair a Jinja2 template with optional static assets and HTMX attributes.
@@ -129,5 +128,3 @@ Renders `<select>` for `Enum` fields. Iterates over enum members to produce opti
 Renders `<input type="datetime-local">`.
 
 ---
-
-{% endraw %}
