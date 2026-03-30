@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import enum
 
 from sqlmodel import Field, Relationship, SQLModel
@@ -20,7 +18,7 @@ class Contact(SQLModel, table=True):
     phone: str | None = Field(default=None)
     contact_type: ContactType = Field(default=ContactType.CUSTOMER)
 
-    addresses: list[Address] = Relationship(
+    addresses: list["Address"] = Relationship(
         back_populates="contact",
         sa_relationship_kwargs={"lazy": "selectin", "cascade": "all, delete-orphan"},
     )
