@@ -8,6 +8,7 @@ from sqlmodel import select
 
 from examples.erp.accounting.models import Account, AccountType, JournalEntry, JournalLine
 from examples.erp.db import engine
+from hyperadmin.main import Admin
 
 router = APIRouter()
 
@@ -28,12 +29,12 @@ async def _get_pl_data(year: int) -> dict[str, Any]:
         # Fetch journal lines for the year joined with entries and accounts
         stmt = (
             select(JournalLine, JournalEntry, Account)
-            .join(JournalEntry, JournalLine.entry_id == JournalEntry.id)  # type: ignore[arg-type]
-            .join(Account, JournalLine.account_id == Account.id)  # type: ignore[arg-type]
+            .join(JournalEntry, JournalLine.entry_id == JournalEntry.id)  # type: ignore[arg-type]  # SQLModel FK column not typed as InstrumentedAttribute
+            .join(Account, JournalLine.account_id == Account.id)  # type: ignore[arg-type]  # SQLModel FK column not typed as InstrumentedAttribute
             .where(JournalEntry.date_posted >= start)
             .where(JournalEntry.date_posted <= end)
             .where(
-                Account.account_type.in_([AccountType.REVENUE, AccountType.EXPENSE])  # type: ignore[attr-defined]
+                Account.account_type.in_([AccountType.REVENUE, AccountType.EXPENSE])  # type: ignore[attr-defined]  # AccountType is a str enum; .in_() available at runtime via SQLAlchemy column proxy
             )
         )
         result = await session.execute(stmt)
@@ -84,8 +85,9 @@ async def profit_loss_report(
     if year is None:
         year = datetime.datetime.now(tz=datetime.timezone.utc).date().year
 
-    admin = request.app.state.admin
+    admin: Admin = request.app.state.admin
     pl_data = await _get_pl_data(year)
+    report_url = str(request.url_for("profit_loss_report"))
 
     return admin.templates.TemplateResponse(
         "reports/profit_loss.html",
@@ -94,6 +96,7 @@ async def profit_loss_report(
             "year": year,
             "prev_year": year - 1,
             "next_year": year + 1,
+            "report_url": report_url,
             "lines": pl_data["lines"],
             "total_revenue": pl_data["total_revenue"],
             "total_expenses": pl_data["total_expenses"],

@@ -11,11 +11,11 @@
 
             {# ── Year navigation ── #}
             <div class="ha-flex ha-items-center ha-gap-2 ha-mb-4">
-                <a href="{{ admin_prefix }}/reports/profit-loss?year={{ prev_year }}"
+                <a href="{{ report_url }}?year={{ prev_year }}"
                    class="ha-btn ha-btn-secondary ha-btn-sm"
                    aria-label="Previous year">&laquo; {{ prev_year }}</a>
                 <span class="ha-font-semibold">{{ year }}</span>
-                <a href="{{ admin_prefix }}/reports/profit-loss?year={{ next_year }}"
+                <a href="{{ report_url }}?year={{ next_year }}"
                    class="ha-btn ha-btn-secondary ha-btn-sm"
                    aria-label="Next year">{{ next_year }} &raquo;</a>
             </div>
