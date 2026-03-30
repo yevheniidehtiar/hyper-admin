@@ -54,6 +54,9 @@ jobs:
       - name: Security checks
         run: uv run poe security-check
 
+      - name: Install Playwright browsers
+        run: uv run playwright install --with-deps chromium
+
       - name: E2E Test package
         run: uv run poe test:e2e
 
