@@ -143,16 +143,13 @@ or code-related requests.
 
 ## Agentic Workflow
 
-This project follows an 8-agent OSS development workflow. See `docs/agentic-workflow/` for full specs:
+This project follows a 5-agent Claude Code workflow. See `docs/agentic-workflow/`:
 
-1. **Deep Research** → clarify ideas via structured Q&A (Opus)
-2. **Roadmap Planning** → decompose into GitHub milestones/epics/tasks
-3. **Dev Agents** → tiered implementation (Jules/Gemini CLI/Claude Code)
-4. **Code Review** → automated audit trail on PRs
-5. **QA** → compatibility matrix + test analysis
-6. **Release** → changelog, semver, publish
-7. **Scheduled** → weekly health monitoring
-8. **Community** → triage external contributions
+1. **Conductor** → orchestrates autonomous team cycles (Opus)
+2. **Delivery Manager** → PR monitoring, E2E orchestration, merge execution (Haiku)
+3. **Project Manager** → strategic planning, sprint cadence, priority triage (Sonnet)
+4. **Code Reviewer** → architectural review against CONSTITUTION.md (Sonnet)
+5. **OSS Triage Auditor** → detect AI-slop, enforce labels (Sonnet, optional)
 
 ## MCP Servers in Use
 

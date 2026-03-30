@@ -46,8 +46,7 @@ External contributors can craft payloads targeting both shell execution and LLM 
 | **Reflected content** in comments | Comment templates are static. Never echo back issue body content into posted comments |
 | **Login injection** in `--author` flag | Sanitize author logins: strip anything not `[a-zA-Z0-9_-]` before use in shell commands |
 
-These mitigations follow the same principles as the Gemini CLI command configs in
-`.github/commands/` which forbid command substitution (`$(...)`, `` `...` ``, `<(...)`) on untrusted input.
+These mitigations follow standard shell-safety principles: forbid command substitution (`$(...)`, `` `...` ``, `<(...)`) on untrusted input.
 
 ## Audit Flow
 

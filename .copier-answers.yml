@@ -1,7 +1,7 @@
 _commit: a87baf8
 _src_path: gh:yevheniidehtiar/python-scaffold
-author_email: jules@example.com
-author_name: Jules
+author_email: yevhenii.dehtiar@gmail.com
+author_name: Yevhenii Dehtiar
 project_description: A modern, Pydantic-native admin interface for FastAPI, powered
     by HTMX.
 project_name: HyperAdmin

@@ -82,9 +82,6 @@ site/
 .claude/settings.local.json
 .claude/container/ssh/
 
-# .gemini/ — track styleguide, ignore temp files
-!.gemini/
-.gemini/context/
 gha-creds-*.json
 
 # git worktrees

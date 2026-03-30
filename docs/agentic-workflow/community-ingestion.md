@@ -13,7 +13,7 @@
 New community issue/discussion
   │
   ▼
-{{ default_ai_model }} classifies:
+Claude Sonnet classifies:
   │
   ├── Bug report → Validate reproduction steps → Create task in workload queue
   ├── Feature request → Feed to Deep Research agent for analysis

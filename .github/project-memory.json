@@ -8,7 +8,6 @@
     "tech_debt_items": 0
   },
   "agent_performance": {
-    "jules_success_rate": 0.0,
     "avg_review_iterations": 0.0,
     "avg_task_completion_hours": 0.0
   },

@@ -2,8 +2,8 @@
 
 | Property | Value |
 |---|---|
-| **Tier** | Production Model (e.g. {{ default_ai_model }}) |
-| **Trigger** | PR submitted (by Jules, human, or Claude Code) |
+| **Tier** | Production (Claude Sonnet) |
+| **Trigger** | PR submitted (by human or Claude Code agent) |
 | **Purpose** | Review code quality, correctness, backward compat, produce audit trail |
 | **Est. Cost** | 15k - 40k tokens per PR review |
 
@@ -23,7 +23,7 @@ Every review produces a structured comment on the PR:
 ```markdown
 ## Code review — automated
 
-**Reviewer**: {{ default_ai_model }} (via claude-code-action)
+**Reviewer**: Claude Sonnet (via claude-code-action)
 **Verdict**: ✅ Approved / ⚠️ Changes requested / ❌ Rejected
 
 ### Checklist
@@ -62,7 +62,7 @@ jobs:
     steps:
       - uses: anthropics/claude-code-action@v1
         with:
-          model: {{ default_ai_model }}
+          model: Claude Sonnet
           prompt: |
             Review this PR against its linked issue specification.
             Check: correctness, backward compat, test coverage, style.

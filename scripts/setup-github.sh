@@ -24,7 +24,6 @@ gh label create "ready"      --repo "$REPO" --color "0E8A16" --description "Issu
 gh label create "size:S" --repo "$REPO" --color "C5DEF5" --description "1-2 hours effort" || true
 gh label create "size:M" --repo "$REPO" --color "BFD4F2" --description "2-4 hours effort" || true
 gh label create "size:L" --repo "$REPO" --color "A2C4EA" --description "4-8 hours effort" || true
-gh label create "agent:jules" --repo "$REPO" --color "D4E5AE" --description "Assigned to Jules" || true
 gh label create "agent:ai" --repo "$REPO" --color "F9D0C4" --description "Assigned to claude-sonnet-4-6" || true
 gh label create "epic" --repo "$REPO" --color "7057FF" --description "Parent issue with sub-issues" || true
 gh label create "community" --repo "$REPO" --color "BFDADC" --description "From external contributor" || true
@@ -54,7 +53,6 @@ else
     "tech_debt_items": 0
   },
   "agent_performance": {
-    "jules_success_rate": 1.0,
     "avg_review_iterations": 1.0,
     "avg_task_completion_hours": 0.0
   },

@@ -1,63 +1,83 @@
-# OSS Library Agentic Workflow
+# Agentic Workflow
+
+!!! abstract "Reusable Pattern"
+    The agent roles, label state machine, orchestration, and safety rails described
+    here are generic — they can be adopted by any OSS project using Claude Code.
+    HyperAdmin-specific configuration (CONSTITUTION.md, review checklist, project IDs)
+    is layered on top and clearly marked.
 
 !!! tip "New here?"
-    Start with the [Agentic CLI Onboarding](onboarding.md) guide for a quick orientation of all AI agent configuration in this project.
+    Start with the [Onboarding guide](onboarding.md) for a quick orientation.
 
-This project follows an 8-agent workflow for AI-assisted open-source library development. Each agent has a specific role, trigger, and output contract, orchestrated through GitHub's native event system.
+This project follows a **5-agent Claude Code workflow** for AI-assisted open-source development. Each agent has a specific role, model tier, and output contract, orchestrated through GitHub labels and the conductor agent.
 
 ## Architecture
 
+![System Diagram](system-diagram.svg)
+
+## Component Relationships
+
 ```
-Human → Deep Research → Roadmap Planning → Workload Queue → Dev Agents
-                                                              ↓
-                                         Release ← QA ← Code Review
-                                           ↓
-                                    Project Memory → Feedback Loop
+Commands (user entry)              Skills (reusable workflows)           Rules (governance)
+├─ /run-autonomous-team ──────→ conductor agent                         ├─ code-style.md
+├─ /implement-feature ────────→ implement-feature skill ◄───────────────├─ git-workflow.md
+├─ /plan-to-issues ───────────→ GitHub Issues                           ├─ planning-playbook.md
+└─ /oss-triage-audit ─────────→ triage_audit.py                         └─ testing.md
+                                                                              ▲
+Agents (autonomous)                                                           │
+├─ conductor ─────────────────→ implement-feature skill ──────── enforces ────┘
+│                          └──→ code-reviewer agent ──────────── enforces ────┘
+├─ delivery-manager ──────────→ merge execution
+├─ project-manager ───────────→ oss-triage-auditor agent
+├─ code-reviewer ─────────────→ VERDICT output (machine-readable)
+└─ oss-triage-auditor ────────→ audit report
 ```
+
+## Agents
+
+| Agent | Model | Role | Trigger |
+|-------|-------|------|---------|
+| **Conductor** | Opus | Orchestrates team cycles, owns merge queue | `/run-autonomous-team` command |
+| **Delivery Manager** | Haiku | PR monitoring, E2E tests, merge execution | Label filter (autonomous) |
+| **Project Manager** | Sonnet | Sprint cadence, priority triage, health | Cron schedule |
+| **Code Reviewer** | Sonnet | Architecture review against project rules | PR with `review` label |
+| **OSS Triage Auditor** | Sonnet | Detect AI-slop, enforce labels, close stale | Ad-hoc or delegated by PM |
 
 ## Core Principles
 
 - **Mandatory TDD**: Every functional change begins with failing tests. Implementation follows.
-- **Assembly First**: MVPs focus on pure functionality (actions, data streams) before styling.
+- **Bottom-Up Architecture**: Models → Business Logic → Views → UI (never the reverse).
+- **Label-Driven Coordination**: Agents communicate via GitHub labels — no direct agent-to-agent messaging.
+- **Human Checkpoints**: Approval gates between planning and implementation, and before release.
 
-## Agents
-
-| # | Agent | Tool Tier | Purpose |
-|---|-------|------|---------|
-| 1 | [Deep Research](deep-research-agent.md) | High-Reasoning | Clarify ideas through structured Q&A |
-| 2 | [Roadmap Planning](roadmap-planning-agent.md) | High-Reasoning | Decompose specs into milestones/epics/tasks |
-| 3 | [Dev Agents](dev-agents.md) | Production / Utility | Implement code changes |
-| 4 | [Code Review](code-review-agent.md) | Production | Automated review with audit trail |
-| 5 | [QA](qa-agent.md) | Utility / Production | Compatibility matrix + test analysis |
-| 6 | [Release](release-agent.md) | Production | Changelog, versioning, publish |
-| 7 | [Scheduled](scheduled-agent.md) | Utility / Production | Weekly health monitoring |
-| 8 | [Community Ingestion](community-ingestion.md) | Production | Triage external contributions |
-
-## Cross-Agent Orchestration
-
-See [Models & Plans](models-setup.md) for tiered configuration options (Eco, Balanced, Power).
-
-See [Orchestration](orchestration.md) for the event flow, label-based state machine, and project memory.
-
-
-## Cost Model
-
-See [Cost Model](cost-model.md) for subscription-based budgeting and throughput planning.
-
-## Label-Based State Machine
+## Label State Machine
 
 ```
-idea → researched → planned → approved → in-progress → review → qa-passed → released
-                                  ↑                        │
-                                  └── rejected (with ctx) ──┘
+idea → researched → planned → approved → in-progress → review
+                                                          ↓
+                                    merge-requested → merge-granted → released
+                                                  ↘ merge-deferred
 ```
 
-## Human Checkpoints
+Each label transition is owned by a specific agent or human:
 
-Every critical transition requires human approval:
+| Transition | Owner |
+|------------|-------|
+| idea → researched | Deep research (Claude Opus) |
+| researched → planned | Roadmap planning (Claude Opus) |
+| planned → approved | **Human** |
+| approved → in-progress | Conductor |
+| in-progress → review | Dev agent (via implement-feature skill) |
+| review → merge-requested | Delivery Manager |
+| merge-requested → merge-granted | Conductor (merge queue authority) |
+| merge-granted → released | Delivery Manager (executes merge) |
 
-1. **Plan review** — approve the GitHub Project board
-2. **Cost approval** — approve estimated spend
-3. **Milestone gate** — approve next phase
-4. **Release approval** — approve publish
-5. **Escalation** — review agent failures
+## Safety Rails
+
+| Limit | Value | Purpose |
+|-------|-------|---------|
+| Dev agents per cycle | 3 | Prevent resource exhaustion |
+| Cycles per session | 3 (9 issues cap) | Bound total work |
+| Merge queue depth | 2 | Reduce conflict risk |
+| Review iterations | 2 max | Escalate to human if stuck |
+| Auto-revert | On CI failure post-merge | Protect main branch |

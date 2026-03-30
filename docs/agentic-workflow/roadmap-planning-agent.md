@@ -2,7 +2,7 @@
 
 | Property | Value |
 |---|---|
-| **Tier** | High-Reasoning Model (e.g. Claude Opus, Gemini Pro) |
+| **Tier** | High-Reasoning (Claude Opus) |
 | **Trigger** | Deep Research agent delivers specification with score > 85% |
 | **Purpose** | Decompose specification into GitHub milestones, epics, tasks with dependencies |
 | **Est. Cost** | 30k - 80k tokens per initial plan |
@@ -73,7 +73,7 @@ Each task includes:
 
 - **Title** — imperative verb + noun (`Add retry logic to HTTP client`)
 - **Description** — what to implement, acceptance criteria, which files to touch
-- **Labels** — `area:core`, `size:S/M/L`, `agent:jules/ai`
+- **Labels** — `area:core`, `size:S/M/L`, `agent:ai`
 - **Estimated effort** — S=1-2h, M=2-4h, L=4-8h
 - **Agent tier** — which dev agent should handle this
 - **Dependencies** — `blocked_by` / `blocking` links
@@ -95,23 +95,22 @@ Rules:
 
 ### Agent Assignment Logic
 
-| Task characteristic | Assign to | Rationale |
+| Task characteristic | Skill | Rationale |
 |---|---|---|
-| New file/module implementation | Jules | Async, 15 concurrent, doesn't consume Claude quota |
-| Refactoring existing code | Jules | Good at reading context, systematic changes |
-| Bug fix with clear reproduction | Jules | Straightforward scope |
-| Complex architecture decision | {{ default_ai_model }} (Code) | Needs deep trade-off reasoning |
-| Test writing | Jules | Mechanical, high volume |
-| Documentation | {{ default_ai_model }} (chat) | Better prose quality |
-| API design review | Claude Opus | Backward compat implications |
+| New file/module implementation | implement-feature | Full self-eval loop with TDD |
+| Refactoring existing code | implement-feature | Good at reading context, systematic changes |
+| Bug fix with clear reproduction | fix-issue | Lightweight TDD loop, fast turnaround |
+| Complex architecture decision | implement-feature + human checkpoint | Needs deep trade-off reasoning |
+| Test writing | fix-issue | Mechanical, straightforward scope |
+| Documentation | implement-feature | Prose + code examples |
+| API design review | Claude Opus (manual) | Backward compat implications |
 
 ### Delivery Timeline
 
 ```
 Milestone v0.1.0 (MVP core)
-  Tasks: 12 (8 Jules, 3 Sonnet, 1 Opus review)
-  Jules capacity needed: 8 tasks → 1 day of Jules work
-  Claude capacity needed: 4 sessions → ~30 messages
+  Tasks: 12 (8 via implement-feature, 3 via fix-issue, 1 Opus review)
+  Claude capacity needed: ~30 messages per cycle
   Human review time: ~4 hours
   Calendar estimate: 1 week (evenings/weekends)
 ```
@@ -125,8 +124,7 @@ Milestone v0.1.0 (MVP core)
 gh label create "size:S" --color "C5DEF5" --description "1-2 hours"
 gh label create "size:M" --color "BFD4F2" --description "2-4 hours"
 gh label create "size:L" --color "A2C4EA" --description "4-8 hours"
-gh label create "agent:jules" --color "D4E5AE" --description "Suitable for Jules"
-gh label create "agent:ai" --color "F9D0C4" --description "Requires Sonnet/Pro"
+gh label create "agent:ai" --color "F9D0C4" --description "Assigned to Claude Code"
 gh label create "epic" --color "7057FF" --description "Parent issue with sub-issues"
 
 # Create milestones
