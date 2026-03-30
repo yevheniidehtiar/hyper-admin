@@ -61,16 +61,20 @@ nav:
   - Getting Started: getting-started.md
   - Tutorial: tutorial.md
   - Examples: examples.md
+  - Roadmap: roadmap.md
   - Frontend:
       - Overview: frontend/overview.md
       - Widgets: frontend/widgets.md
       - HTMX Patterns: frontend/htmx_patterns.md
   - API Reference:
+      - Overview: api/index.md
       - Application: api/application.md
       - Views: api/views.md
       - Core Components: api/core.md
       - Adapters: api/adapters.md
       - Routing: api/routing.md
+  - Design:
+      - UI Kit RFC: design/UI-KIT-RFC.md
   - Contributing: contributing.md
   - Changelog: changelog.md
   - Agentic Workflow:
@@ -86,3 +90,12 @@ nav:
     - Scheduled Agent: agentic-workflow/scheduled-agent.md
     - Community Ingestion: agentic-workflow/community-ingestion.md
     - Orchestration: agentic-workflow/orchestration.md
+    - OSS Triage Auditor: agentic-workflow/oss-triage-auditor.md
+    - Models Setup: agentic-workflow/models-setup.md
+    - Issue Proposals:
+      - Zero-Config Auth: agentic-workflow/issue-proposals/v0.3.0-zero-config-auth.md
+      - File Uploads: agentic-workflow/issue-proposals/v0.3.1-file-uploads.md
+      - i18n & Responsive: agentic-workflow/issue-proposals/v0.4.0-i18n-responsive.md
+      - Audit & RLS: agentic-workflow/issue-proposals/v0.5.1-audit-rls.md
+      - SSO Dashboard: agentic-workflow/issue-proposals/v0.5.2-sso-dashboard.md
+      - Plugins & AI: agentic-workflow/issue-proposals/v0.8.0-plugins-ai.md
