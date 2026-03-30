@@ -52,3 +52,14 @@ class InvoiceItem(SQLModel, table=True):
     @property
     def total_price(self) -> float:
         return self.quantity * self.unit_price
+
+
+class TaxRate(SQLModel, table=True):
+    __tablename__ = "erp_tax_rates"  # type: ignore
+
+    id: int | None = Field(default=None, primary_key=True)
+    name: str = Field(index=True)
+    rate: float
+
+    def __str__(self) -> str:
+        return self.name
