@@ -117,6 +117,8 @@ The conductor is the entry point and merge authority. It runs in the foreground 
 | **review-agent** | PRs: `review` | Auto-approve via `gh pr review --approve` |
 | **delivery-manager** | PRs: `review` + CI green + GH approval | Add `merge-requested`, remove `review` |
 | **delivery-manager** | PRs: `merge-granted` | Execute merge → add `released`, close issue |
+| **project-manager** | Monthly cron / quarterly cron | Progress snapshot, priority triage, team assignment, staleness cleanup |
+| **project-manager** | Issues: `community` | Delegate to `oss-triage-auditor` for triage |
 
 ### Merge Queue Evaluation (Conductor)
 

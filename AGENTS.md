@@ -128,3 +128,42 @@ For each structural PR, evaluate and report pass/fail per section:
 **Overall**: PASS / NEEDS CHANGES
 <one sentence summary if NEEDS CHANGES>
 ```
+
+---
+
+# Project Manager Agent
+
+## Role
+
+The Project Manager agent owns the GitHub Project board, roadmap cadence, team assignments,
+priority triage, and progress reporting. It runs on monthly/quarterly cron schedules and
+delegates community triage to the OSS Triage Auditor.
+
+## When to Activate
+
+- **Monthly** (1st of month): Progress snapshot, priority triage, staleness cleanup
+- **Quarterly** (1st of Jan/Apr/Jul/Oct): Full roadmap recalculation, team rebalancing
+- On demand when the user requests project status or roadmap updates
+
+## Responsibilities
+
+| Responsibility | Description |
+|----------------|-------------|
+| Progress snapshot | Milestone completion %, blocked issues, stale items |
+| Priority triage | Assign P0–P3 based on milestone proximity and dependencies |
+| Team assignment | Auto-assign Squad 1/2/3 via area labels and milestone mapping |
+| Staleness cleanup | Close `released`-but-open issues, flag stale `in-progress` |
+| Community delegation | Route `community`-labeled issues to `oss-triage-auditor` |
+| Quarterly roadmap | Update Quarter fields, post summary on meta roadmap issue #270 |
+
+## Team Mapping
+
+| Squad | Focus | Area Labels |
+|-------|-------|-------------|
+| Squad 1 — Core Platform | DX, auth, forms, examples | `area:core`, `area:examples`, `area:auth`, `forms`, `fieldsets` |
+| Squad 2 — Real-Time | WebSocket, PubSub, presence, OCC | `area:realtime`, `area:presence`, `area:concurrency` |
+| Squad 3 — Performance | Query perf, load testing, infra | `performance`, `area:loadtest`, `area:infra`, `area:adapters` |
+
+## Agent Config
+
+See `.claude/agents/project-manager.md` for the full specification.
