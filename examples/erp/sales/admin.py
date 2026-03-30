@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import ClassVar
 
-from examples.erp.sales.models import Invoice, InvoiceItem
+from examples.erp.sales.models import Invoice, InvoiceItem, TaxRate
 from hyperadmin.adapters.sqlmodel import SQLModelAdapter
 from hyperadmin.core.model import ModelAdmin
 from hyperadmin.core.registry import site
@@ -33,5 +33,12 @@ class InvoiceItemAdmin(ModelAdmin):
     ]
 
 
+class TaxRateAdmin(ModelAdmin):
+    adapter_class = SQLModelAdapter
+    list_display: ClassVar[list[str]] = ["id", "name", "rate"]
+    search_fields: ClassVar[list[str]] = ["name"]
+
+
 site.register(Invoice, InvoiceAdmin)
 site.register(InvoiceItem, InvoiceItemAdmin)
+site.register(TaxRate, TaxRateAdmin)
