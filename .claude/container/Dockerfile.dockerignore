@@ -16,6 +16,7 @@ build/
 # Git worktrees (can be large)
 .worktrees/
 .claude/worktrees/
+.git/hooks/
 
 # Node
 node_modules/
