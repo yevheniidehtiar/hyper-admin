@@ -179,12 +179,18 @@ Run `pytest --cov=<target-module> --cov-report=term-missing` or check the existi
 
 For uncovered code blocks that will be refactored, write characterization tests **before** changing the code. A characterization test captures current behavior (even if buggy) so refactoring does not accidentally change semantics.
 
-### 7c. Identify seams
+### 7c. Identify seams and fixtures
 
-For each function to refactor, identify where test doubles can be injected:
-- **Object seams**: method overrides via subclass or mock
-- **Link seams**: module-level imports that can be patched (`unittest.mock.patch`)
-- **Preprocessing seams**: feature flags or environment variables
+For each function to refactor, identify where test doubles can be injected using **pytest-native patterns**:
+- **Object seams**: method overrides via subclass or `pytest.MonkeyPatch` / `mocker.patch` (pytest-mock)
+- **Link seams**: module-level imports patched with `mocker.patch("module.symbol")`
+- **Preprocessing seams**: feature flags or environment variables via `monkeypatch.setenv()`
+
+**Fixture DRY rules:**
+- Fixtures must be atomic, focused, and reusable — one fixture per concern
+- If a fixture (or mock) is used in **2+ test files**, move it to `conftest.py`
+- Never duplicate the same fixture across test files; import from `conftest.py` instead
+- To create a variant, copy the shared fixture and adjust only the differing attributes — do not rebuild from scratch
 
 ### 7d. Preserve public contracts
 
