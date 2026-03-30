@@ -105,11 +105,14 @@ COPY . .
 # ── Post-copy setup ────────────────────────────────────────────────────────────
 # pre-commit install: regenerates .git/hooks/ with container python path
 #   (the COPY above brings host hooks with hardcoded host paths — must overwrite)
-# pre-commit install-hooks: downloads hook environments (best-effort, needs network)
-RUN git config --global --add safe.directory /app \
-    && uv run pre-commit install \
-    && uv run pre-commit install --hook-type commit-msg \
-    && (uv run pre-commit install-hooks || true)
+# Use /opt/venv/bin directly — `uv run` would recreate the venv with a
+# different Python (3.10 vs system 3.11), destroying all installed packages.
+RUN git config --unset-all core.hooksPath \
+    && rm -rf /app/.git/hooks/* \
+    && git config --global --add safe.directory /app \
+    && /opt/venv/bin/pre-commit install \
+    && /opt/venv/bin/pre-commit install --hook-type commit-msg \
+    && (/opt/venv/bin/pre-commit install-hooks || true)
 
 # ── Entrypoint ─────────────────────────────────────────────────────────────────
 # Applies iptables firewall, then exec's the CMD.
