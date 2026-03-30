@@ -124,7 +124,9 @@ HyperAdmin stands on the shoulders of outstanding open-source projects and their
 - [**SQLModel**](https://sqlmodel.tiangolo.com/) & [**SQLAlchemy**](https://www.sqlalchemy.org/) — the database layer that makes ORM integration seamless.
 - [**Anthropic (Claude)**](https://www.anthropic.com/) — AI-assisted development that made it possible to build this project with a fraction of the usual time and effort.
 
-Thank you to every maintainer, contributor, and community member behind these projects.
+Inspired by the conversations and ideas shared by [**Gergely Orosz**](https://www.pragmaticengineer.com/), [**ThePrimeagen**](https://www.youtube.com/@ThePrimeagen), [**Kent Beck**](https://www.kentbeck.com/), [**Steven Bartlett**](https://www.youtube.com/@TheDiaryOfACEO) and their guests.
+
+Thank you to every maintainer, contributor, community member, and creator behind these projects and conversations.
 
 ## 📄 License
 
