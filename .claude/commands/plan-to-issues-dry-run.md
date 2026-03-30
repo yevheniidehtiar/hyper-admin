@@ -26,7 +26,7 @@ $ARGUMENTS
 ### 2. Size each task
 
 Assign a size label based on complexity:
-- `size:small` — single file, < 50 lines changed, straightforward (good for Jules/Gemini)
+- `size:small` — single file, < 50 lines changed, straightforward (good for fix-issue skill)
 - `size:medium` — 2-4 files, moderate logic, may need tests
 - `size:large` — cross-cutting, architectural, or needs deep context (Claude-level)
 

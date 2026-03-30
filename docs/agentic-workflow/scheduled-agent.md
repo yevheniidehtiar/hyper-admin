@@ -19,7 +19,7 @@
     safety check --json > safety.json
 ```
 
-{{ default_ai_model }} creates issues for:
+Claude Sonnet creates issues for:
 
 - Dependencies with known CVEs (priority: **high**)
 - Dependencies > 2 major versions behind (priority: **medium**)

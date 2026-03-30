@@ -43,8 +43,7 @@ idea → researched → planned → approved → in-progress → review → qa-p
 | `size:S` | `#C5DEF5` | 1-2 hours effort |
 | `size:M` | `#BFD4F2` | 2-4 hours effort |
 | `size:L` | `#A2C4EA` | 4-8 hours effort |
-| `agent:jules` | `#D4E5AE` | Assigned to Jules |
-| `agent:ai` | `#F9D0C4` | assigned to {{ default_ai_model }} |
+| `agent:ai` | `#F9D0C4` | Assigned to Claude Code |
 | `epic` | `#7057FF` | Parent issue with sub-issues |
 | `community` | `#BFDADC` | From external contributor |
 | `scheduled:auto` | `#FEF2C0` | Created by scheduled agent (high confidence) |
@@ -66,7 +65,6 @@ Stored as `.github/project-memory.json` in the repository — version-controlled
     "tech_debt_items": 3
   },
   "agent_performance": {
-    "jules_success_rate": 0.85,
     "avg_review_iterations": 1.3,
     "avg_task_completion_hours": 2.1
   },

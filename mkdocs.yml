@@ -78,24 +78,22 @@ nav:
   - Contributing: contributing.md
   - Changelog: changelog.md
   - Agentic Workflow:
-    - CLI Onboarding: agentic-workflow/onboarding.md
-    - Overview: agentic-workflow/index.md
-    - Cost Model: agentic-workflow/cost-model.md
-    - Deep Research Agent: agentic-workflow/deep-research-agent.md
-    - Roadmap Planning Agent: agentic-workflow/roadmap-planning-agent.md
-    - Dev Agents: agentic-workflow/dev-agents.md
-    - Code Review Agent: agentic-workflow/code-review-agent.md
-    - QA Agent: agentic-workflow/qa-agent.md
-    - Release Agent: agentic-workflow/release-agent.md
-    - Scheduled Agent: agentic-workflow/scheduled-agent.md
-    - Community Ingestion: agentic-workflow/community-ingestion.md
-    - Orchestration: agentic-workflow/orchestration.md
-    - OSS Triage Auditor: agentic-workflow/oss-triage-auditor.md
-    - Models Setup: agentic-workflow/models-setup.md
-    - Issue Proposals:
-      - Zero-Config Auth: agentic-workflow/issue-proposals/v0.3.0-zero-config-auth.md
-      - File Uploads: agentic-workflow/issue-proposals/v0.3.1-file-uploads.md
-      - i18n & Responsive: agentic-workflow/issue-proposals/v0.4.0-i18n-responsive.md
-      - Audit & RLS: agentic-workflow/issue-proposals/v0.5.1-audit-rls.md
-      - SSO Dashboard: agentic-workflow/issue-proposals/v0.5.2-sso-dashboard.md
-      - Plugins & AI: agentic-workflow/issue-proposals/v0.8.0-plugins-ai.md
+      - Overview: agentic-workflow/index.md
+      - Onboarding:
+          - Overview: agentic-workflow/onboarding.md
+          - For Humans: agentic-workflow/onboarding-humans.md
+          - For Agents: agentic-workflow/onboarding-agents.md
+      - Agents:
+          - Dev Agents: agentic-workflow/dev-agents.md
+          - Code Review: agentic-workflow/code-review-agent.md
+          - Deep Research: agentic-workflow/deep-research-agent.md
+          - Roadmap Planning: agentic-workflow/roadmap-planning-agent.md
+          - QA: agentic-workflow/qa-agent.md
+          - Release: agentic-workflow/release-agent.md
+          - Scheduled: agentic-workflow/scheduled-agent.md
+          - Community Ingestion: agentic-workflow/community-ingestion.md
+          - OSS Triage Auditor: agentic-workflow/oss-triage-auditor.md
+      - Infrastructure:
+          - Orchestration: agentic-workflow/orchestration.md
+          - Cost Model: agentic-workflow/cost-model.md
+          - Models Setup: agentic-workflow/models-setup.md

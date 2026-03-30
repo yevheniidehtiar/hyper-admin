@@ -1,0 +1,162 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 720" font-family="Inter, -apple-system, system-ui, sans-serif">
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="#64748b"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="#16a34a"/>
+    </marker>
+    <marker id="arrow-blue" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="#2563eb"/>
+    </marker>
+    <filter id="shadow" x="-4%" y="-4%" width="108%" height="112%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.08"/>
+    </filter>
+  </defs>
+
+  <rect width="1100" height="720" rx="12" fill="#f8fafc"/>
+
+  <!-- Title -->
+  <text x="550" y="38" text-anchor="middle" font-size="20" font-weight="700" fill="#0f172a">Claude Code Agentic Workflow</text>
+  <text x="550" y="58" text-anchor="middle" font-size="12" fill="#64748b">5-agent system for AI-assisted open-source development</text>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- ORCHESTRATION PHASE (top)                  -->
+  <!-- ═══════════════════════════════════════════ -->
+  <rect x="30" y="80" width="1040" height="250" rx="10" fill="#f0fdf4" stroke="#bbf7d0" stroke-width="1.5"/>
+  <text x="550" y="104" text-anchor="middle" font-size="13" font-weight="700" fill="#166534">ORCHESTRATION &amp; IMPLEMENTATION</text>
+  <text x="550" y="120" text-anchor="middle" font-size="10" fill="#16a34a">Conductor dispatches dev agents, coordinates review, owns merge queue</text>
+
+  <!-- Human -->
+  <rect x="55" y="140" width="150" height="50" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="88" y="162" font-size="16">👤</text>
+  <text x="108" y="162" font-size="12" font-weight="600" fill="#0f172a">Human</text>
+  <text x="130" y="178" text-anchor="middle" font-size="9" fill="#64748b">Approvals &amp; gates</text>
+
+  <!-- Arrow Human → Conductor -->
+  <line x1="205" y1="165" x2="238" y2="165" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+
+  <!-- Conductor -->
+  <rect x="242" y="138" width="220" height="56" rx="8" fill="#ffffff" stroke="#7c3aed" stroke-width="2" filter="url(#shadow)"/>
+  <text x="262" y="162" font-size="14">🎯</text>
+  <text x="282" y="160" font-size="12" font-weight="700" fill="#0f172a">Conductor</text>
+  <text x="282" y="176" font-size="10" fill="#64748b">Opus — merge queue authority</text>
+  <text x="282" y="188" font-size="9" fill="#7c3aed">3 agents/cycle, 3 cycles/session</text>
+
+  <!-- Arrow Conductor → Dev Agents -->
+  <line x1="352" y1="194" x2="352" y2="218" stroke="#16a34a" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+
+  <!-- Dev Agents -->
+  <rect x="242" y="222" width="220" height="50" rx="8" fill="#ffffff" stroke="#16a34a" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="262" y="246" font-size="14">💻</text>
+  <text x="282" y="244" font-size="12" font-weight="600" fill="#0f172a">Dev Agents</text>
+  <text x="282" y="260" font-size="10" fill="#64748b">implement-feature / fix-issue skills</text>
+
+  <!-- Arrow Dev → Code Reviewer -->
+  <line x1="462" y1="247" x2="530" y2="247" stroke="#16a34a" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+  <text x="496" y="240" text-anchor="middle" font-size="9" fill="#16a34a">PR</text>
+
+  <!-- Code Reviewer -->
+  <rect x="534" y="222" width="220" height="50" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="554" y="246" font-size="14">🔍</text>
+  <text x="574" y="244" font-size="12" font-weight="600" fill="#0f172a">Code Reviewer</text>
+  <text x="574" y="260" font-size="10" fill="#64748b">Sonnet — VERDICT output</text>
+
+  <!-- Arrow Code Reviewer → Delivery Manager -->
+  <line x1="754" y1="247" x2="822" y2="247" stroke="#16a34a" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+  <text x="788" y="240" text-anchor="middle" font-size="9" fill="#16a34a">approved</text>
+
+  <!-- Delivery Manager -->
+  <rect x="826" y="222" width="220" height="50" rx="8" fill="#ffffff" stroke="#0ea5e9" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="846" y="246" font-size="14">📋</text>
+  <text x="866" y="244" font-size="12" font-weight="600" fill="#0f172a">Delivery Manager</text>
+  <text x="866" y="260" font-size="10" fill="#64748b">Haiku — merge execution</text>
+
+  <!-- Arrow Delivery → Merged -->
+  <rect x="900" y="286" width="90" height="28" rx="14" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+  <text x="945" y="305" text-anchor="middle" font-size="11" font-weight="700" fill="#166534">Merged</text>
+  <line x1="936" y1="272" x2="936" y2="284" stroke="#16a34a" stroke-width="1.5" marker-end="url(#arrow-green)"/>
+
+  <!-- Merge queue labels -->
+  <rect x="534" y="140" width="220" height="56" rx="8" fill="#fefce8" stroke="#fde68a" stroke-width="1"/>
+  <text x="644" y="162" text-anchor="middle" font-size="11" font-weight="600" fill="#854d0e">Label State Machine</text>
+  <text x="644" y="178" text-anchor="middle" font-size="9" fill="#a16207">in-progress → review → merge-requested</text>
+  <text x="644" y="190" text-anchor="middle" font-size="9" fill="#a16207">→ merge-granted → released</text>
+
+  <!-- Arrow Conductor → Labels -->
+  <line x1="462" y1="166" x2="530" y2="166" stroke="#64748b" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+  <!-- Arrow Labels → Delivery -->
+  <line x1="754" y1="168" x2="936" y2="220" stroke="#64748b" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow)"/>
+
+  <!-- Human approval gate -->
+  <rect x="826" y="140" width="150" height="36" rx="18" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+  <text x="901" y="163" text-anchor="middle" font-size="11" font-weight="600" fill="#92400e">✋ Human Gate</text>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- BACKGROUND AGENTS (middle)                 -->
+  <!-- ═══════════════════════════════════════════ -->
+  <rect x="30" y="360" width="1040" height="140" rx="10" fill="#eff6ff" stroke="#bfdbfe" stroke-width="1.5"/>
+  <text x="550" y="384" text-anchor="middle" font-size="13" font-weight="700" fill="#1e40af">BACKGROUND AGENTS</text>
+  <text x="550" y="398" text-anchor="middle" font-size="10" fill="#3b82f6">Continuous health, planning, and community management</text>
+
+  <!-- Project Manager -->
+  <rect x="55" y="416" width="310" height="66" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="78" y="444" font-size="14">📊</text>
+  <text x="98" y="440" font-size="12" font-weight="600" fill="#0f172a">Project Manager</text>
+  <text x="98" y="456" font-size="10" fill="#64748b">Sonnet — sprint cadence, priority triage</text>
+  <text x="98" y="470" font-size="9" fill="#2563eb">Daily standup, weekly sprint review, milestone demos</text>
+
+  <!-- OSS Triage Auditor -->
+  <rect x="395" y="416" width="310" height="66" rx="8" fill="#ffffff" stroke="#2563eb" stroke-width="1.5" filter="url(#shadow)"/>
+  <text x="418" y="444" font-size="14">🛡️</text>
+  <text x="438" y="440" font-size="12" font-weight="600" fill="#0f172a">OSS Triage Auditor</text>
+  <text x="438" y="456" font-size="10" fill="#64748b">Sonnet — community quality gate</text>
+  <text x="438" y="470" font-size="9" fill="#2563eb">AI-slop detection, duplicate detection, label enforcement</text>
+
+  <!-- Arrow PM → Auditor -->
+  <line x1="365" y1="449" x2="391" y2="449" stroke="#2563eb" stroke-width="1.5" marker-end="url(#arrow-blue)"/>
+  <text x="378" y="443" text-anchor="middle" font-size="8" fill="#2563eb">delegates</text>
+
+  <!-- Skills/Commands box -->
+  <rect x="735" y="416" width="310" height="66" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1" filter="url(#shadow)"/>
+  <text x="890" y="436" text-anchor="middle" font-size="11" font-weight="600" fill="#0f172a">User Entry Points</text>
+  <text x="890" y="454" text-anchor="middle" font-size="9" fill="#64748b">/run-autonomous-team  /implement-feature</text>
+  <text x="890" y="468" text-anchor="middle" font-size="9" fill="#64748b">/plan-to-issues  /lint  /test  /release</text>
+
+  <!-- ═══════════════════════════════════════════ -->
+  <!-- RULES & INFRASTRUCTURE (bottom)            -->
+  <!-- ═══════════════════════════════════════════ -->
+  <rect x="30" y="530" width="1040" height="170" rx="10" fill="#f1f5f9" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="550" y="554" text-anchor="middle" font-size="13" font-weight="700" fill="#334155">RULES &amp; INFRASTRUCTURE</text>
+  <text x="550" y="568" text-anchor="middle" font-size="10" fill="#64748b">Governance enforced by agents and CI</text>
+
+  <!-- Rules -->
+  <rect x="55" y="586" width="240" height="96" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1" filter="url(#shadow)"/>
+  <text x="175" y="608" text-anchor="middle" font-size="12" font-weight="600" fill="#0f172a">Rules (.claude/rules/)</text>
+  <text x="175" y="626" text-anchor="middle" font-size="10" fill="#64748b">code-style.md</text>
+  <text x="175" y="642" text-anchor="middle" font-size="10" fill="#64748b">git-workflow.md</text>
+  <text x="175" y="658" text-anchor="middle" font-size="10" fill="#64748b">planning-playbook.md</text>
+  <text x="175" y="674" text-anchor="middle" font-size="10" fill="#64748b">testing.md</text>
+
+  <!-- Skills -->
+  <rect x="325" y="586" width="240" height="96" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1" filter="url(#shadow)"/>
+  <text x="445" y="608" text-anchor="middle" font-size="12" font-weight="600" fill="#0f172a">Skills (.claude/skills/)</text>
+  <text x="445" y="630" text-anchor="middle" font-size="10" fill="#64748b">implement-feature (full TDD loop)</text>
+  <text x="445" y="650" text-anchor="middle" font-size="10" fill="#64748b">fix-issue (lightweight TDD)</text>
+  <text x="445" y="670" text-anchor="middle" font-size="9" fill="#7c3aed">Planning gate + blocker protocol</text>
+
+  <!-- Memory -->
+  <rect x="595" y="586" width="240" height="96" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1" filter="url(#shadow)"/>
+  <text x="715" y="608" text-anchor="middle" font-size="12" font-weight="600" fill="#0f172a">Agent Memory</text>
+  <text x="715" y="630" text-anchor="middle" font-size="10" fill="#64748b">conductor/MEMORY.md</text>
+  <text x="715" y="650" text-anchor="middle" font-size="10" fill="#64748b">code-reviewer/MEMORY.md</text>
+  <text x="715" y="670" text-anchor="middle" font-size="10" fill="#64748b">delivery-manager/MEMORY.md</text>
+
+  <!-- Safety Rails -->
+  <rect x="865" y="586" width="180" height="96" rx="8" fill="#ffffff" stroke="#94a3b8" stroke-width="1" filter="url(#shadow)"/>
+  <text x="955" y="608" text-anchor="middle" font-size="12" font-weight="600" fill="#0f172a">Safety Rails</text>
+  <text x="955" y="630" text-anchor="middle" font-size="10" fill="#64748b">3 agents/cycle</text>
+  <text x="955" y="650" text-anchor="middle" font-size="10" fill="#64748b">2 merge queue depth</text>
+  <text x="955" y="670" text-anchor="middle" font-size="10" fill="#64748b">2 review iterations</text>
+</svg>

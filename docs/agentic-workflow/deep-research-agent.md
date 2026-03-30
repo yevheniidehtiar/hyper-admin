@@ -2,7 +2,7 @@
 
 | Property | Value |
 |---|---|
-| **Tier** | High-Reasoning Model (e.g. Claude Opus, OpenAI o1) |
+| **Tier** | High-Reasoning (Claude Opus) |
 | **Trigger** | Human submits a raw idea or feature request |
 | **Purpose** | Clarify ambiguous ideas through structured Q&A until understanding > 85% |
 | **Est. Cost** | 50k - 150k tokens per research session |

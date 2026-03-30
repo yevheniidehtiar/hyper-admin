@@ -14,7 +14,7 @@ All milestone tasks QA-green
   │
   ▼
 1. PREPARE RELEASE CANDIDATE
-   └── {{ default_ai_model }} reviews:
+   └── Claude Sonnet reviews:
        - All issues in milestone closed?
        - Any "blocked" issues remaining?
        - Backward compat report clean?

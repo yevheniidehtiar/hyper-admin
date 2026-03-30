@@ -210,14 +210,6 @@ fixable = ["ALL"]
 "main.py" = ["S104"]  # binding to all interfaces (local dev entry point)
 "src/hyperadmin/core/options.py" = ["TC001"]  # Pydantic needs runtime access to field types
 "src/hyperadmin/views/forms.py" = ["PLR0913", "PLR2004"]  # complex constructors, index arithmetic
-".gemini/scripts/*.py" = [
-  "PLR2004",  # magic value comparisons (threshold constants)
-  "PLW1510",  # subprocess.run without check (scripts handle errors manually)
-  "S108",     # temp file usage (expected in orchestration scripts)
-  "S603",     # subprocess calls (trusted internal commands)
-  "S607",     # partial executable paths (gh, git, etc.)
-  "T201",     # print statements (CLI output)
-]
 "scripts/*.py" = [
   "ARG001",   # unused function arguments (callback signatures)
   "DTZ011",   # date.today() (timezone-naive is fine for reports)

@@ -12,10 +12,10 @@
 | Test type | Tool | What it checks |
 |---|---|---|
 | Unit tests | CI (pytest) | Function-level correctness |
-| Integration tests | Jules (in VM) | Module interaction, real I/O |
+| Integration tests | CI (GitHub Actions) | Module interaction, real I/O |
 | Type checking | CI (mypy/pyright) | Type safety across public API |
 | Compatibility matrix | GitHub Actions matrix | Python 3.10, 3.11, 3.12, 3.13 |
-| Backward compat | Jules | Import old version, run against new — no breaks |
+| Backward compat | CI (GitHub Actions) | Import old version, run against new — no breaks |
 | Dependency audit | `pip-audit` | Known vulnerabilities in deps |
 | Documentation build | CI | Docs compile without errors, examples run |
 
@@ -30,7 +30,7 @@ strategy:
 
 ## QA Report
 
-After test execution, {{ default_ai_model }} analyses results:
+After test execution, Claude Sonnet analyses results:
 
 ```markdown
 ## QA report — #17 RetryPolicy implementation
@@ -54,7 +54,7 @@ After test execution, {{ default_ai_model }} analyses results:
 ```
 Tests fail
   → CI provides failure output
-  → {{ default_ai_model }} analyses: code bug or test environment issue?
+  → Claude Sonnet analyses: code bug or test environment issue?
     → Code bug: Create sub-issue, route back to dev agent
     → Environment issue: Fix CI config, re-run
     → Flaky test: Label "flaky", investigate pattern across last 5 runs

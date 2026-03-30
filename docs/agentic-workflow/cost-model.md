@@ -1,6 +1,6 @@
 # Cost Model: Token-Based Estimates
 
-While this workflow is optimized for subscription-based usage (e.g., Claude Pro, Google AI Pro), it is useful to understand the underlying token consumption for each agentic activity.
+While this workflow is optimized for subscription-based usage (e.g., Claude Pro/Max), it is useful to understand the underlying token consumption for each agentic activity.
 
 ## Resource Consumption Tiers
 
@@ -31,7 +31,7 @@ If you are using API-based pricing instead of subscriptions, monitor your usage 
 Weekly capacity report:
   High-Reasoning limit:  [####..............] 25% (Pro window)
   Production limit:      [##########........] 50% (Pro window)
-  Utility limit:         [##................] 10% (Gemini Flash)
+  Utility limit:         [##................] 10% (Haiku)
 ```
 
 ## Optimization Tips
