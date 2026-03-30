@@ -61,7 +61,9 @@ nav:
   - Guide:
       - Getting Started: getting-started.md
       - Tutorial: tutorial.md
-      - Examples: examples.md
+      - Examples:
+          - Overview: examples.md
+          - ERP (Bookkeeping): examples/erp.md
   - Frontend:
       - Overview: frontend/overview.md
       - Widgets: frontend/widgets.md
