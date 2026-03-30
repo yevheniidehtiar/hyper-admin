@@ -1,3 +1,4 @@
+import logging
 import random
 from datetime import timedelta
 
@@ -14,6 +15,7 @@ from hyperadmin.auth.backend import hash_password
 from hyperadmin.auth.models import User
 
 fake = Faker()
+logger = logging.getLogger("uvicorn")
 
 
 async def seed_db():  # noqa: PLR0915
@@ -23,7 +25,7 @@ async def seed_db():  # noqa: PLR0915
         if result.first():
             return  # Already seeded
 
-        print("Seeding database with Faker data...")
+        logger.info("Seeding database with Faker data...")
 
         # 0. Create superuser
         admin_user = User(
@@ -192,4 +194,4 @@ async def seed_db():  # noqa: PLR0915
                 session.add_all([jl_debit, jl_credit])
                 await session.commit()
 
-        print("Seeding completed.")
+        logger.info("Seeding completed.")
