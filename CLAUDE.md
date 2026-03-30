@@ -7,6 +7,27 @@ The Software Architect agent role and its review checklist are defined in [`AGEN
 
 ---
 
+## Development Methodologies
+
+All planning, issue creation, and implementation in this project follows three joint methodologies:
+
+### BDD — Behavior-Driven Development (`.claude/rules/bdd-conventions.md`)
+- Every `feat` or `test(e2e)` issue **must** contain a `## Scenarios` section with Given/When/Then scenarios before any tasks are created.
+- E2E tests (Playwright) map 1:1 to scenarios. Each test function is named after its scenario.
+- Inline `# Given / # When / # Then` comments are mandatory in E2E tests.
+- Size estimate derived from scenario count: 1–2 → S, 3–5 → M, 6+ → L.
+
+### SDD — Specification-Driven Development (`.claude/rules/sdd-conventions.md`)
+- Any `size:L` issue or epic touching ≥ 2 top-level modules **must** have a Design Doc at `docs/specs/{slug}.md` before implementation starts.
+- SDD template: `docs/specs/TEMPLATE.md`.
+- First sub-task of any SDD-required epic is `review(spec): approve SDD` — a **human gate**.
+- All implementation sub-tasks are `blocked_by` the spec review task.
+
+### Bottom-Up Architecture (`.claude/rules/planning-playbook.md`)
+- Domain models → Business logic → API/Views → UI (never reversed).
+
+---
+
 # Hook-First Planning Instructions
 
 ```bash
