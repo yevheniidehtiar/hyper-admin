@@ -7,8 +7,30 @@ import time
 from collections.abc import Iterator
 from contextlib import closing
 from http import HTTPStatus
+from typing import Any
 
 import pytest
+
+_IN_CONTAINER = os.environ.get("IS_SANDBOX") == "1"
+
+# Server start is slower inside Docker; give it more time.
+_SERVER_TIMEOUT = 15 if _IN_CONTAINER else 5
+
+
+@pytest.fixture(scope="session")
+def browser_type_launch_args(browser_type_launch_args: dict[str, Any]) -> dict[str, Any]:
+    """Add Docker-safe Chromium flags when running inside a container."""
+    if not _IN_CONTAINER:
+        return browser_type_launch_args
+    return {
+        **browser_type_launch_args,
+        "args": [
+            *browser_type_launch_args.get("args", []),
+            "--disable-dev-shm-usage",  # use /tmp instead of /dev/shm (Docker default is 64 MB)
+            "--disable-gpu",
+            "--disable-background-networking",  # avoid firewall-blocked Google service requests
+        ],
+    }
 
 
 def _find_free_port() -> int:
@@ -70,7 +92,7 @@ def demo_base_url(e2e_port: int) -> Iterator[str]:
 
     try:
         # Wait for server readiness
-        deadline = time.time() + 5
+        deadline = time.time() + _SERVER_TIMEOUT
         last_err: Exception | None = None
         while time.time() < deadline:
             try:
