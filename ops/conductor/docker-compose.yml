@@ -1,0 +1,65 @@
+services:
+  conductor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hyper-admin-conductor
+    restart: unless-stopped
+    environment:
+      # Required — pass from host env or .env file
+      - ANTHROPIC_API_KEY
+      - CLAUDE_GH_TOKEN
+      # Optional tuning
+      - CONDUCTOR_MAX_CYCLES=9
+      - CONDUCTOR_COOLDOWN=300
+      - CONDUCTOR_HUMAN_POLL=600
+      - CONDUCTOR_MAX_BUDGET=20.00
+      - CONDUCTOR_MAX_TURNS=50
+      - HEALTHCHECK_STALE_SECONDS=600
+      # Notifications (optional)
+      - CONDUCTOR_WEBHOOK_URL
+    volumes:
+      - ${REPO_PATH:-../../}:/workspace
+      - claude-sessions:/root/.claude
+      - conductor-status:/run/conductor
+    working_dir: /workspace
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: "2.0"
+
+  # Lightweight sidecar — exposes /run/conductor/status.json over HTTP
+  status-api:
+    image: python:3.12-slim
+    container_name: conductor-status
+    restart: unless-stopped
+    command: >
+      python3 -c "
+      import http.server, json
+      class H(http.server.BaseHTTPRequestHandler):
+          def do_GET(self):
+              try:
+                  with open('/run/conductor/status.json') as f:
+                      data = f.read()
+                  self.send_response(200)
+                  self.send_header('Content-Type', 'application/json')
+                  self.end_headers()
+                  self.wfile.write(data.encode())
+              except FileNotFoundError:
+                  self.send_response(503)
+                  self.end_headers()
+                  self.wfile.write(b'{\"state\":\"unavailable\"}')
+          def log_message(self, *a): pass
+      http.server.HTTPServer(('0.0.0.0', 8080), H).serve_forever()
+      "
+    ports:
+      - "${STATUS_PORT:-9090}:8080"
+    volumes:
+      - conductor-status:/run/conductor:ro
+    depends_on:
+      - conductor
+
+volumes:
+  claude-sessions:
+  conductor-status:

@@ -16,10 +16,10 @@ gh issue view $ARGUMENTS
 ```
 Check `ROADMAP.md` to confirm priority and scope. Do not expand scope.
 
-### 2. Create branch (if not already on one)
-```bash
-git checkout -b issue-$ARGUMENTS
-```
+### 2. Start worktree
+
+Run `/start fix/issue-$ARGUMENTS` to create an isolated worktree branched from `develop`,
+rebase onto latest, and bootstrap the environment.
 
 ### 3. Explore before changing
 - Read relevant source files in `src/hyperadmin/`
