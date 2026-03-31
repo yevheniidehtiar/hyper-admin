@@ -1,3 +1,4 @@
+import logging
 import os
 from typing import Any
 
@@ -6,8 +7,11 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlmodel import SQLModel
 
+from hyperadmin.core.settings import HyperAdminSettings
 from hyperadmin.db import engine as default_engine
 from hyperadmin.discover import discover_admin_modules
+
+logger = logging.getLogger("hyperadmin")
 
 
 class Admin:
@@ -16,85 +20,99 @@ class Admin:
     Mounts static files, wires the database engine, optionally discovers admin
     modules, and registers all model routes on the FastAPI application.
 
-    Example:
-        ```python
+    All scalar configuration lives in ``HyperAdminSettings`` — pass a settings
+    object or let HyperAdmin auto-instantiate one (which reads from environment
+    variables and a ``.env`` file).
+
+    Example::
+
         from fastapi import FastAPI
-        from hyperadmin import Admin
+        from hyperadmin import Admin, HyperAdminSettings
 
         app = FastAPI()
-        admin = Admin(app, engine=engine, discover_apps=["myapp"])
+        settings = HyperAdminSettings(secret_key="my-secret", theme="dark")
+        admin = Admin(app, engine=engine, settings=settings)
         admin.mount("/admin")
-        ```
     """
 
-    #: Valid theme values that can be passed to the ``theme`` parameter.
-    VALID_THEMES = ("auto", "light", "dark")
-
-    def __init__(  # noqa: PLR0913
+    def __init__(
         self,
         app: FastAPI,
-        discover_apps: list[str] | None = None,
-        create_tables: bool = True,
         engine: Any = None,
-        template_dirs: list[str] | None = None,
+        settings: HyperAdminSettings | None = None,
         auth_backend: Any = None,
         permission_checker: Any = None,
         permission_registry: Any = None,
-        session_secret: str | None = None,
-        theme: str = "auto",
-    ):
+    ) -> None:
         """Initialise HyperAdmin and attach it to a FastAPI application.
 
         Args:
             app: The FastAPI application instance to attach the admin to.
-            discover_apps: List of Python module paths to auto-discover
-                ``admin.py`` files in (e.g. ``["myapp", "otherapp"]``).
-            create_tables: When ``True``, registers an ``on_event("startup")``
-                handler that calls ``SQLModel.metadata.create_all``.
             engine: An async SQLAlchemy engine. Defaults to the built-in
                 ``hyperadmin.db.engine`` if not provided.
-            template_dirs: Additional Jinja2 template directories searched
-                before the built-in HyperAdmin templates.
+            settings: A ``HyperAdminSettings`` instance. When ``None``, one is
+                auto-instantiated (reads ``HYPERADMIN_*`` env vars and ``.env``).
             auth_backend: An optional authentication backend implementing the
                 ``AuthBackend`` protocol. When ``None``, auth is disabled.
             permission_checker: An optional ``PermissionChecker`` implementation.
             permission_registry: An optional ``PermissionRegistry`` implementation.
-            session_secret: Secret key for ``SessionMiddleware``. Required when
-                ``auth_backend`` is set.
-            theme: Color theme for the admin interface. Accepted values are
-                ``"auto"`` (respects ``prefers-color-scheme``, default),
-                ``"light"`` (always light), or ``"dark"`` (always dark).
         """
-        if theme not in self.VALID_THEMES:
-            msg = f"Invalid theme {theme!r}. Must be one of {self.VALID_THEMES}"
-            raise ValueError(msg)
-        self.theme = theme
+        self.settings = settings or HyperAdminSettings()
         self.app = app
         self.router = APIRouter()
         self.engine = engine or default_engine
         self.auth_backend = auth_backend
         self.permission_checker = permission_checker
         self.permission_registry = permission_registry
-        self.session_secret = session_secret
-        self.template_dirs = template_dirs or []
-        template_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "templates")
-        self.templates = Jinja2Templates(directory=[*self.template_dirs, template_dir])
 
-        # Mount static files for the admin interface
+        self._validate_session_secret()
+
+        template_dirs = self.settings.template_dirs
+        template_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "templates")
+        self.templates = Jinja2Templates(directory=[*template_dirs, template_dir])
+
         static_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")
         if os.path.exists(static_dir):
             app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
-        if create_tables:
+        if self.settings.create_tables:
 
             @app.on_event("startup")
-            async def startup_event():
+            async def startup_event() -> None:
                 await self._create_db_and_tables()
 
-        if discover_apps:
-            discover_admin_modules(discover_apps)
+        if self.settings.discover_apps:
+            discover_admin_modules(self.settings.discover_apps)
 
-    async def _create_db_and_tables(self):
+    # ── Convenience properties ─────────────────────────────────────────────
+
+    @property
+    def theme(self) -> str:
+        """Active theme from settings."""
+        return self.settings.theme
+
+    # ── Validation helpers ─────────────────────────────────────────────────
+
+    def _validate_session_secret(self) -> None:
+        """Enforce session secret security policy when auth is enabled."""
+        if not self.auth_backend:
+            return
+        if not self.settings.is_default_secret_key:
+            return
+        if self.settings.debug:
+            logger.warning(
+                "Using default session secret. Set HYPERADMIN_SECRET_KEY for production."
+            )
+        else:
+            msg = (
+                "Auth is enabled but no secret_key is configured. "
+                "Set HYPERADMIN_SECRET_KEY (or pass HyperAdminSettings(secret_key=...))."
+            )
+            raise ValueError(msg)
+
+    # ── Internal helpers ───────────────────────────────────────────────────
+
+    async def _create_db_and_tables(self) -> None:
         """Creates the database and all tables using the configured engine."""
         async with self.engine.begin() as conn:
             await conn.run_sync(SQLModel.metadata.create_all)
@@ -150,7 +168,7 @@ class Admin:
         )
         self.app.add_middleware(
             SessionMiddleware,
-            secret_key=self.session_secret or "hyperadmin-default-secret",
+            secret_key=self.settings.secret_key,
         )
 
     async def _sync_permissions(self) -> None:
@@ -174,7 +192,9 @@ class Admin:
         self._register_views()
         self.templates.env.globals["admin_prefix"] = path.rstrip("/")
         self.templates.env.globals["auth_enabled"] = self.auth_backend is not None
-        self.templates.env.globals["theme"] = self.theme
+        self.templates.env.globals["theme"] = self.settings.theme
+        self.templates.env.globals["site_title"] = self.settings.site_title
+        self.templates.env.globals["site_header"] = self.settings.site_header
 
         if self.auth_backend:
             self.router.on_startup.append(self._sync_permissions)

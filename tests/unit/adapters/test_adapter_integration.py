@@ -5,6 +5,7 @@ from sqlmodel import Field, SQLModel
 
 from hyperadmin.core.model import ModelAdmin
 from hyperadmin.core.registry import site
+from hyperadmin.core.settings import HyperAdminSettings
 from hyperadmin.db import create_db_and_tables
 from hyperadmin.main import Admin
 
@@ -36,7 +37,7 @@ async def test_list_view_integration():
     # Setup the app inside the test function
     app = FastAPI()
     # Disable the automatic table creation in the Admin class
-    admin = Admin(app, create_tables=False)
+    admin = Admin(app, settings=HyperAdminSettings(create_tables=False))
     admin.mount("/admin")
 
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:

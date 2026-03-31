@@ -49,17 +49,17 @@ def _build_auth_app(async_engine, register_models: bool = True):
     from hyperadmin.auth.permissions import ModelPermissionChecker, PermissionSyncService
     from hyperadmin.auth.session import SessionAuthBackend
     from hyperadmin.core.app import Admin
+    from hyperadmin.core.settings import HyperAdminSettings
 
     app = FastAPI()
     backend = SessionAuthBackend(engine=async_engine)
     admin = Admin(
         app,
         engine=async_engine,
-        create_tables=False,
+        settings=HyperAdminSettings(create_tables=False, secret_key="test-secret-key"),
         auth_backend=backend,
         permission_checker=ModelPermissionChecker(engine=async_engine),
         permission_registry=PermissionSyncService(engine=async_engine),
-        session_secret="test-secret-key",
     )
 
     if register_models:
@@ -87,9 +87,10 @@ def _build_no_auth_app(async_engine):
     from fastapi import FastAPI
 
     from hyperadmin.core.app import Admin
+    from hyperadmin.core.settings import HyperAdminSettings
 
     app = FastAPI()
-    admin = Admin(app, engine=async_engine, create_tables=False)
+    admin = Admin(app, engine=async_engine, settings=HyperAdminSettings(create_tables=False))
     admin.mount("/admin")
     return app
 

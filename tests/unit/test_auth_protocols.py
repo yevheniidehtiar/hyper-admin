@@ -80,18 +80,24 @@ class TestAdminAuthBackend:
     def test_admin_without_auth_backend(self):
         """Admin(app) still works without auth (backward compatible)."""
         from hyperadmin.core.app import Admin
+        from hyperadmin.core.settings import HyperAdminSettings
 
         app = FastAPI()
-        admin = Admin(app, create_tables=False)
+        admin = Admin(app, settings=HyperAdminSettings(create_tables=False))
         assert admin.auth_backend is None
 
     def test_admin_with_auth_backend(self):
         """Admin(app, auth_backend=backend) stores the backend."""
         from hyperadmin.core.app import Admin
+        from hyperadmin.core.settings import HyperAdminSettings
 
         app = FastAPI()
         mock_backend = AsyncMock()
-        admin = Admin(app, create_tables=False, auth_backend=mock_backend)
+        admin = Admin(
+            app,
+            settings=HyperAdminSettings(create_tables=False, secret_key="test-secret"),
+            auth_backend=mock_backend,
+        )
         assert admin.auth_backend is mock_backend
 
     def test_no_circular_imports(self):
