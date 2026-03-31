@@ -7,7 +7,7 @@
         {%- for key, value in item.items() -%}
         <div class="ha-form-group">
             <label class="ha-label">
-                {{- key -}}
+                {{- field_labels[key] if field_labels is defined and key in field_labels else key.replace('_', ' ').title() -}}
             </label>
             <div class="ha-field-value">
                 {{- value -}}

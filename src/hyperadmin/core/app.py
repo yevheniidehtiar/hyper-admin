@@ -7,6 +7,12 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlmodel import SQLModel
 
+from hyperadmin.core.introspection import (
+    discover_sqlmodel_models,
+    infer_list_display,
+    infer_list_filter,
+    infer_search_fields,
+)
 from hyperadmin.core.settings import HyperAdminSettings
 from hyperadmin.db import engine as default_engine
 from hyperadmin.discover import discover_admin_modules
@@ -184,6 +190,33 @@ class Admin:
             models.append((model_name, admin_class))
         await self.permission_registry.sync_permissions(models)
 
+    def _auto_register_models(self) -> None:
+        """Auto-register discovered SQLModel models with smart defaults.
+
+        For each model not already in ``site._registry``, generates
+        ``AdminOptions`` with inferred list_display, search_fields,
+        and list_filter. Called from ``mount()`` when
+        ``settings.auto_discover`` is ``True``.
+        """
+        from hyperadmin.core.model import ModelAdmin
+        from hyperadmin.core.options import AdminOptions
+        from hyperadmin.core.registry import site
+
+        discovered = discover_sqlmodel_models()
+        for model in discovered:
+            if model in site._registry:
+                continue
+            try:
+                options = AdminOptions(
+                    list_display=infer_list_display(model),
+                    search_fields=infer_search_fields(model),
+                    list_filter=infer_list_filter(model),
+                )
+                admin_cls = type(f"{model.__name__}Admin", (ModelAdmin,), {})
+                site.register(model, admin_class=admin_cls, options=options)
+            except Exception:
+                logger.warning("Failed to auto-register model %s", model.__name__)
+
     def _register_auth_models(self) -> None:
         """Auto-register User, Group, Permission in the admin site.
 
@@ -223,6 +256,9 @@ class Admin:
         if self.auth_backend:
             self._register_auth_routes(path)
             self._register_auth_models()
+
+        if self.settings.auto_discover:
+            self._auto_register_models()
 
         self._register_views()
         self.templates.env.globals["admin_prefix"] = path.rstrip("/")

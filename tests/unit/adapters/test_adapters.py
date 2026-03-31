@@ -29,6 +29,7 @@ def test_concrete_adapter_must_implement_all_methods():
             search: str | None = None,
             filters: dict[str, Any] | None = None,
             order_by: str | None = None,
+            search_fields: list[str] | None = None,
         ) -> tuple[list[Any], int]:
             pass
 

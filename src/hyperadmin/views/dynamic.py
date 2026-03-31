@@ -89,6 +89,8 @@ class DynamicModelView:
         permission_checker: Any = None,
         actions: list[ActionDef] | None = None,
         admin_instance: Any = None,
+        search_fields: list[str] | None = None,
+        field_labels: dict[str, str] | None = None,
     ):
         self.adapter = adapter
         self.model = adapter.model
@@ -103,6 +105,8 @@ class DynamicModelView:
         self.actions: list[ActionDef] = actions or []
         self._action_map: dict[str, ActionDef] = {a.name: a for a in self.actions}
         self._admin_instance = admin_instance
+        self.search_fields = search_fields
+        self.field_labels = field_labels or {}
         # Expose the live adapter on the admin instance so action handlers can use self.adapter
         if admin_instance is not None:
             admin_instance.adapter = self.adapter
@@ -154,7 +158,7 @@ class DynamicModelView:
 
     async def _get_filter_metadata(self) -> list[dict[str, Any]]:
         """Introspects list_filter fields to build metadata for filter UI."""
-        return await build_filter_metadata(self.model, self.options.list_filter, self.adapter)
+        return await build_filter_metadata(self.model, self.options.list_filter or [], self.adapter)
 
     async def list_view(
         self,
@@ -201,6 +205,7 @@ class DynamicModelView:
                 search=search or None,
                 filters=filters_to_apply,
                 order_by=order_by,
+                search_fields=self.search_fields,
             )
 
             # Calculate pagination info
@@ -251,6 +256,7 @@ class DynamicModelView:
             "request": request,
             "model_name": self.model.__name__,
             "fields": display_fields,
+            "field_labels": self.field_labels,
             "items": rows,
             "pagination": pagination,
             "search_query": search,
@@ -287,6 +293,7 @@ class DynamicModelView:
             "request": request,
             "item_name": get_display_name(item),
             "item": item.model_dump(),
+            "field_labels": self.field_labels,
             "actions": self.actions,
             "model_name_lower": self._model_name_lower,
         }

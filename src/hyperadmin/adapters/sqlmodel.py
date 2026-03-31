@@ -47,6 +47,7 @@ class SQLModelAdapter(BaseAdapter):
         search: str | None = None,
         filters: dict[str, Any] | None = None,
         order_by: str | None = None,
+        search_fields: list[str] | None = None,
     ) -> tuple[list[Any], int]:
         """
         Retrieves a list of objects with optional pagination, searching, and filtering.
@@ -64,16 +65,17 @@ class SQLModelAdapter(BaseAdapter):
                 for key, value in filters.items():
                     query = query.where(getattr(self.model, key) == value)
 
-            # Apply searching
+            # Apply searching using configured search_fields
             if search:
-                # For now, we'll search on name and email.
-                # This should be made more generic in a real application.
-                query = query.where(
-                    or_(
-                        self.model.name.ilike(f"%{search}%"),
-                        self.model.email.ilike(f"%{search}%"),
-                    )
-                )
+                fields_to_search = search_fields or self._detect_search_fields()
+                if fields_to_search:
+                    conditions = []
+                    for field_name in fields_to_search:
+                        col = getattr(self.model, field_name, None)
+                        if col is not None:
+                            conditions.append(col.ilike(f"%{search}%"))
+                    if conditions:
+                        query = query.where(or_(*conditions))
 
             # Apply ordering
             if order_by:
@@ -94,6 +96,15 @@ class SQLModelAdapter(BaseAdapter):
             # Get the rows
             results = await session.execute(query)
             return list(results.scalars().all()), total_count
+
+    def _detect_search_fields(self) -> builtins.list[str]:
+        """Detect string columns on the model for search fallback."""
+        mapper: Any = self.inspector
+        return [
+            col.key
+            for col in mapper.columns
+            if isinstance(col.type, (String, AutoString)) and not col.primary_key
+        ]
 
     async def create(self, data: dict[str, Any]) -> Any:
         """
