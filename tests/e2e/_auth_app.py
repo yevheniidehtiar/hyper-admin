@@ -19,6 +19,7 @@ from hyperadmin.auth.permissions import (
 )
 from hyperadmin.auth.session import SessionAuthBackend
 from hyperadmin.core.app import Admin
+from hyperadmin.core.settings import HyperAdminSettings
 
 engine = create_async_engine(
     "sqlite+aiosqlite:///:memory:",
@@ -53,13 +54,16 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
 app = FastAPI(lifespan=lifespan)
 
 backend = SessionAuthBackend(engine=engine)
+settings = HyperAdminSettings(
+    create_tables=False,
+    secret_key="e2e-test-secret",
+)
 admin = Admin(
     app,
     engine=engine,
-    create_tables=False,
+    settings=settings,
     auth_backend=backend,
     permission_checker=ModelPermissionChecker(engine=engine),
     permission_registry=PermissionSyncService(engine=engine),
-    session_secret="e2e-test-secret",
 )
 admin.mount(path="/admin")
