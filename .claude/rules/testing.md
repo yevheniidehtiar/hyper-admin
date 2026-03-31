@@ -20,16 +20,9 @@ paths:
 uv run playwright install chromium
 ```
 
-### CSS Class Convention in E2E Tests
+### E2E Selectors
 
-Templates use custom `ha-*` CSS classes (not raw Tailwind utilities). Use these in Playwright selectors:
+For the selector priority and `data-testid` reference, see `CLAUDE.md` → E2E Selector Convention.
 
-| Element | Class |
-|---------|-------|
-| `body` | `ha-page` |
-| `nav` | `ha-navbar` |
-| `aside` | `ha-sidebar` |
-| `main` | `ha-content` |
-| Validation error list | `ha-field-errors` |
-
-When templates change class names, update the corresponding E2E selectors to match.
+`ha-*` CSS classes are for **styling only** — do not use them in Playwright selectors.
+Use accessibility-first locators (`get_by_role`, `get_by_label`, `get_by_text`, `get_by_test_id`).
