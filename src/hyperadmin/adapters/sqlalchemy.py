@@ -33,6 +33,7 @@ class SQLAlchemyAdapter(BaseAdapter):
         search: str | None = None,
         filters: dict[str, Any] | None = None,
         order_by: str | None = None,
+        search_fields: list[str] | None = None,
     ) -> tuple[list[Any], int]:
         where_conditions = []
         if filters:

@@ -50,6 +50,7 @@ class _StubJsonApiAdapter(JsonApiAdapter):
         search: str | None = None,
         filters: dict[str, Any] | None = None,
         order_by: str | None = None,
+        search_fields: builtins.list[str] | None = None,
     ) -> tuple[builtins.list[Any], int]:
         start = (page - 1) * page_size
         end = start + page_size

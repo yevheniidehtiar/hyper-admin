@@ -1,4 +1,4 @@
-{%- set display_name = model_name if field == '__str__' else field.replace('_', ' ').title() -%}
+{%- set display_name = model_name if field == '__str__' else (field_labels[field] if field_labels is defined and field in field_labels else field.replace('_', ' ').title()) -%}
 {%- set filter_params -%}
     {%- for key, value in active_filters.items() -%}&filter_{{ key }}={{ value }}{%- endfor -%}
 {%- endset -%}

@@ -1,6 +1,7 @@
+import pytest
 from sqlmodel import Field, SQLModel
 
-from hyperadmin.core.display import get_display_name
+from hyperadmin.core.display import get_display_name, get_field_label
 
 
 def test_get_display_name_overridden_str():
@@ -61,3 +62,24 @@ def test_get_display_name_empty_attribute_fallback():
 
     user = UserWithEmptyName(id=1, name="")
     assert get_display_name(user) == "UserWithEmptyName (1)"
+
+
+# ── get_field_label ────────────────────────────────────────────────────
+
+
+class TestGetFieldLabel:
+    @pytest.mark.parametrize(
+        ("field_name", "expected"),
+        [
+            ("user_id", "User"),
+            ("category_pk", "Category"),
+            ("parent_fk", "Parent"),
+            ("created_at", "Created At"),
+            ("email", "Email"),
+            ("is_active", "Is Active"),
+            ("first_name", "First Name"),
+            ("id", "Id"),
+        ],
+    )
+    def test_label_generation(self, field_name: str, expected: str) -> None:
+        assert get_field_label(field_name) == expected

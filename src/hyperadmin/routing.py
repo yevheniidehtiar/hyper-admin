@@ -7,6 +7,8 @@ from fastapi.templating import Jinja2Templates
 from sqlmodel import SQLModel
 
 from hyperadmin.core.actions import ActionDef, collect_actions
+from hyperadmin.core.display import get_field_label
+from hyperadmin.core.introspection import infer_list_display, infer_list_filter, infer_search_fields
 from hyperadmin.core.options import AdminOptions
 from hyperadmin.views.dynamic import DynamicModelView
 
@@ -51,6 +53,8 @@ def create_admin_router(  # noqa: PLR0913
     column_list: list[str] | None = None,
     permission_checker: Any = None,
     actions: list[ActionDef] | None = None,
+    search_fields: list[str] | None = None,
+    field_labels: dict[str, str] | None = None,
 ) -> APIRouter:
     """Creates an APIRouter for a given model with the specified admin options."""
     router = APIRouter()
@@ -65,6 +69,8 @@ def create_admin_router(  # noqa: PLR0913
         permission_checker=permission_checker,
         actions=actions,
         admin_instance=admin_instance,
+        search_fields=search_fields,
+        field_labels=field_labels,
     )
     model_name = model.__name__.lower()
 
@@ -148,6 +154,47 @@ def create_admin_router(  # noqa: PLR0913
     return router
 
 
+def _resolve_smart_defaults(
+    model: type[SQLModel],
+    options: AdminOptions,
+    column_list: list[str] | None,
+) -> tuple[list[str] | None, list[str] | None, AdminOptions, dict[str, str]]:
+    """Resolve smart defaults for display, search, filter, and labels.
+
+    Returns (column_list, search_fields, options, field_labels).
+    """
+    resolved_columns = column_list
+    if not resolved_columns:
+        if options.list_display is not None:
+            resolved_columns = options.list_display or None
+        else:
+            try:
+                resolved_columns = infer_list_display(model)
+            except Exception:
+                resolved_columns = None
+
+    resolved_search: list[str] | None = None
+    if options.search_fields is not None:
+        resolved_search = options.search_fields
+    else:
+        try:
+            resolved_search = infer_search_fields(model)
+        except Exception:
+            resolved_search = None
+
+    if options.list_filter is None:
+        try:
+            options = options.model_copy(update={"list_filter": infer_list_filter(model)})
+        except Exception:
+            options = options.model_copy(update={"list_filter": []})
+
+    field_labels: dict[str, str] = {}
+    if resolved_columns:
+        field_labels = {f: get_field_label(f) for f in resolved_columns if f != "__str__"}
+
+    return resolved_columns, resolved_search, options, field_labels
+
+
 class HyperAdminRouter:
     """Generates and owns all FastAPI routers for HyperAdmin.
 
@@ -190,8 +237,10 @@ class HyperAdminRouter:
             # Prioritize options set on admin_class, then fall back to defaults
             options = getattr(admin_class, "options", None) or AdminOptions()
             # If admin_class has list_filter set directly (legacy or class-style)
-            if hasattr(admin_class, "list_filter") and not options.list_filter:
-                options.list_filter = admin_class.list_filter
+            if hasattr(admin_class, "list_filter") and options.list_filter is None:
+                class_filter = getattr(admin_class, "list_filter", None)
+                if class_filter:
+                    options.list_filter = class_filter
 
             form_include = _extract_column_names(getattr(admin_class, "form_columns", None), model)
             form_create_exclude = _extract_column_names(
@@ -200,6 +249,10 @@ class HyperAdminRouter:
             column_list = _extract_column_names(
                 getattr(admin_class, "column_list", None) or getattr(admin_class, "list", None),
                 model,
+            )
+
+            resolved_column_list, resolved_search_fields, options, field_labels = (
+                _resolve_smart_defaults(model, options, column_list)
             )
 
             actions = collect_actions(admin_class)
@@ -213,9 +266,11 @@ class HyperAdminRouter:
                 templates=self.templates,
                 form_include=form_include,
                 form_create_exclude=form_create_exclude,
-                column_list=column_list,
+                column_list=resolved_column_list,
                 permission_checker=self.permission_checker,
                 actions=actions,
+                search_fields=resolved_search_fields,
+                field_labels=field_labels,
             )
             self.routers.append(router)
 

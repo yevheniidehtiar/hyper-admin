@@ -66,7 +66,7 @@ async def build_filter_metadata(
             target_model = None
             if rel:
                 target_model = rel.mapper.class_
-            elif fk_col and fk_col.foreign_keys:
+            elif fk_col is not None and fk_col.foreign_keys:
                 target_rel = next(
                     (r for r in mapper.relationships if fk_col in r.local_columns), None
                 )

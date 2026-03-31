@@ -3,6 +3,30 @@ from typing import Any
 from pydantic import BaseModel
 from sqlmodel import SQLModel
 
+_FK_SUFFIXES = ("_id", "_pk", "_fk")
+
+
+def get_field_label(field_name: str) -> str:
+    """Convert a field name to a human-readable label.
+
+    - Strips ``_id`` / ``_pk`` / ``_fk`` suffix for FK fields, then title-cases.
+    - Replaces ``_`` with space and title-cases for all other fields.
+
+    Examples:
+        >>> get_field_label("user_id")
+        'User'
+        >>> get_field_label("created_at")
+        'Created At'
+        >>> get_field_label("email")
+        'Email'
+    """
+    label = field_name
+    for suffix in _FK_SUFFIXES:
+        if label.endswith(suffix):
+            label = label[: -len(suffix)]
+            break
+    return label.replace("_", " ").title()
+
 
 def get_display_name(instance: Any) -> str:
     """

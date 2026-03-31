@@ -68,9 +68,9 @@ def test_detail_view_renders_correctly(client: TestClient):
     assert "Detail Product" in response.text
     assert "Detail description" in response.text
     assert "30.0" in response.text
-    assert "name" in response.text
-    assert "description" in response.text
-    assert "price" in response.text
+    assert "Name" in response.text
+    assert "Description" in response.text
+    assert "Price" in response.text
 
 
 def test_detail_view_not_found(client: TestClient):

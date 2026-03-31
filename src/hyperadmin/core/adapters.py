@@ -71,6 +71,7 @@ class BaseAdapter(ABC):
         search: str | None = None,
         filters: dict[str, Any] | None = None,
         order_by: str | None = None,
+        search_fields: builtins.list[str] | None = None,
     ) -> tuple[builtins.list[Any], int]:
         """
         Retrieves a list of objects with optional pagination, searching, and filtering.

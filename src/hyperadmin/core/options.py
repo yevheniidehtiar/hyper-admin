@@ -32,8 +32,27 @@ class AdminOptions(BaseModel):
     """Whether the List view and GET (collection) endpoint are generated."""
     can_detail: bool = True
     """Whether the Detail view and GET (single item) endpoint are generated."""
-    list_filter: list[str] = []
-    """List of field names to show in the filter bar."""
+    list_display: list[str] | None = None
+    """Field names to show in the list view table.
+
+    - ``None`` (default): smart defaults via ``infer_list_display()``.
+    - ``[]``: empty — no columns shown (disables feature).
+    - ``["id", "name"]``: explicit list used as-is.
+    """
+    search_fields: list[str] | None = None
+    """Field names to include in full-text search.
+
+    - ``None`` (default): smart defaults via ``infer_search_fields()``.
+    - ``[]``: search disabled.
+    - ``["name", "email"]``: explicit list used as-is.
+    """
+    list_filter: list[str] | None = None
+    """List of field names to show in the filter bar.
+
+    - ``None`` (default): smart defaults via ``infer_list_filter()``.
+    - ``[]``: filtering disabled.
+    - ``["is_active", "status"]``: explicit list used as-is.
+    """
     dependent_fields: dict[str, str] = {}
     """Cascading select configuration: maps child field name → parent field name.
 

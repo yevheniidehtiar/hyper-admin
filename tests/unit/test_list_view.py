@@ -43,6 +43,7 @@ class MockAdapter(BaseAdapter):
         search: str | None = None,
         filters: dict | None = None,
         order_by: str | None = None,
+        search_fields: list[str] | None = None,
     ):
         # Mock data for testing
         mock_items = [
@@ -338,6 +339,7 @@ async def test_list_view_parameter_validation(
         search="test",
         filters={},
         order_by="-name",  # Should be prefixed with - for desc
+        search_fields=None,
     )
 
 
@@ -361,6 +363,7 @@ async def test_list_view_with_filters(view_instance, mock_request, mock_template
         search=None,
         filters={"is_active": True, "color": "red"},
         order_by="id",
+        search_fields=None,
     )
 
 
