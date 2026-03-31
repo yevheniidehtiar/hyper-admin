@@ -12,6 +12,7 @@ from hyperadmin.adapters.sqlmodel import SQLModelAdapter
 from hyperadmin.core.model import ModelAdmin
 from hyperadmin.core.options import AdminOptions
 from hyperadmin.core.registry import site
+from hyperadmin.core.settings import HyperAdminSettings
 from hyperadmin.main import Admin
 from hyperadmin.routing import HyperAdminRouter, create_admin_router
 
@@ -63,7 +64,7 @@ def client_factory():
 
         anyio.run(setup_database)
 
-        admin = Admin(app=app, create_tables=False, engine=engine)
+        admin = Admin(app=app, engine=engine, settings=HyperAdminSettings(create_tables=False))
         site.register(Product, ProductAdmin, options=options or AdminOptions())
         admin.mount(path="/admin")
 

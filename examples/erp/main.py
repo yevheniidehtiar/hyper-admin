@@ -8,6 +8,7 @@ from examples.erp.db import engine
 from examples.erp.reports.views import router as reports_router
 from hyperadmin.auth.permissions import ModelPermissionChecker, PermissionSyncService
 from hyperadmin.auth.session import SessionAuthBackend
+from hyperadmin.core.settings import HyperAdminSettings
 from hyperadmin.main import Admin
 
 
@@ -41,9 +42,10 @@ permission_checker = ModelPermissionChecker(engine=engine)
 base_dir = os.path.dirname(__file__)
 template_dir = os.path.join(base_dir, "templates")
 
-admin = Admin(
-    app,
-    engine=engine,
+# All scalar config lives in HyperAdminSettings.
+# Set HYPERADMIN_SECRET_KEY in your environment or .env file.
+settings = HyperAdminSettings(
+    secret_key=os.environ.get("HYPERADMIN_SECRET_KEY", "super-secret-erp-key"),
     create_tables=False,
     discover_apps=[
         "examples.erp.contacts",
@@ -53,10 +55,16 @@ admin = Admin(
         "hyperadmin.auth",
     ],
     template_dirs=[template_dir],
+    debug=bool(os.environ.get("HYPERADMIN_DEBUG", "")),
+)
+
+admin = Admin(
+    app,
+    engine=engine,
+    settings=settings,
     auth_backend=auth_backend,
     permission_checker=permission_checker,
     permission_registry=permission_registry,
-    session_secret="super-secret-erp-key",  # noqa: S106
 )
 
 # Store admin on app state so custom views can access it (e.g. for templates)
@@ -65,7 +73,6 @@ app.state.admin = admin
 admin.mount(path="/admin")
 
 # Optional: Add custom report to the navigation menu
-# (This is a bit hacky as it reaches into internals, but shows how it could be done)
 assert "nav_items" in admin.templates.env.globals, "Call admin.mount() before adding nav items"
 admin.templates.env.globals["nav_items"].append(
     {"name": "Profit & Loss Report", "url": "/reports/profit-loss", "icon": "ha-icon-chart"}

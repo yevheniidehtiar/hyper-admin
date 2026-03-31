@@ -41,11 +41,12 @@ def override_app_dir() -> Iterator[Path]:
         (app_dir / "main.py").write_text("""
 from pathlib import Path
 from fastapi import FastAPI
-from hyperadmin import Admin
+from hyperadmin import Admin, HyperAdminSettings
 
 app = FastAPI()
 templates_dir = Path(__file__).parent / "templates"
-admin = Admin(app, discover_apps=['my_app'], template_dirs=[str(templates_dir)])
+settings = HyperAdminSettings(discover_apps=['my_app'], template_dirs=[str(templates_dir)])
+admin = Admin(app, settings=settings)
 admin.mount(path="/admin")
 """)
 

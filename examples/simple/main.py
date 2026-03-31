@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlmodel import SQLModel, select
 
 from examples.simple.models import City, Country, User
+from hyperadmin.core.settings import HyperAdminSettings
 from hyperadmin.main import Admin
 
 # 1. Create a database engine
@@ -51,18 +52,22 @@ async def create_db_and_tables():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Load the ML model
     await create_db_and_tables()
     yield
 
 
-# 2. Create a FastAPI app and an Admin instance with auto-discovery
+# 2. Configure HyperAdmin via settings (reads HYPERADMIN_* env vars and .env)
+settings = HyperAdminSettings(
+    discover_apps=["examples.simple"],
+)
+
+# 3. Create a FastAPI app and an Admin instance
 app = FastAPI(lifespan=lifespan)
 
 app.mount("/static", StaticFiles(directory="src/hyperadmin/static"), name="static")
-admin = Admin(app, engine=engine, discover_apps=["examples.simple"])
+admin = Admin(app, engine=engine, settings=settings)
 
-# 3. Mount the admin interface
+# 4. Mount the admin interface
 admin.mount(path="/admin")
 
 

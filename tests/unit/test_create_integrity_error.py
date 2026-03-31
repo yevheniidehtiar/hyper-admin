@@ -10,6 +10,7 @@ from sqlmodel import Field, SQLModel
 from hyperadmin.adapters.sqlmodel import SQLModelAdapter
 from hyperadmin.core.model import ModelAdmin
 from hyperadmin.core.registry import site
+from hyperadmin.core.settings import HyperAdminSettings
 from hyperadmin.main import Admin
 
 
@@ -42,7 +43,7 @@ def client():
 
     anyio.run(setup_database)
 
-    admin = Admin(app=app, create_tables=False, engine=engine)
+    admin = Admin(app=app, engine=engine, settings=HyperAdminSettings(create_tables=False))
     site.register(UniqueUser, UniqueUserAdmin)
     admin.mount(path="/admin")
 
