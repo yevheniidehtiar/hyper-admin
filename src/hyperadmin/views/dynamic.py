@@ -258,6 +258,10 @@ class DynamicModelView:
             "sort_direction": sort_direction,
             "filter_metadata": filter_metadata,
             "active_filters": active_filters,
+            "can_create": self.options.can_create,
+            "can_edit": self.options.can_edit,
+            "can_delete": self.options.can_delete,
+            "can_detail": self.options.can_detail,
         }
 
         # Use table template for HTMX requests, full layout for regular requests
