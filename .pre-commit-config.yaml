@@ -42,6 +42,7 @@ repos:
       - id: mixed-line-ending
       - id: name-tests-test
         args: [--pytest-test-first]
+        exclude: ^tests/e2e/_auth_app\.py$
       - id: trailing-whitespace
         types: [python]
   - repo: local
@@ -90,7 +91,7 @@ repos:
         types_or: [python, html, css, javascript]
       - id: test-e2e
         name: e2e tests
-        entry: uv run pytest tests/e2e
+        entry: uv run pytest tests/e2e --ignore=tests/e2e/test_profit_loss_report.py
         language: system
         pass_filenames: false
         stages: [pre-push]

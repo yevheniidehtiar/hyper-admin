@@ -119,3 +119,69 @@ def demo_base_url(e2e_port: int) -> Iterator[str]:
                 proc.wait(timeout=5)
             except Exception:
                 proc.kill()
+
+
+@pytest.fixture
+def auth_base_url(e2e_port: int) -> Iterator[str]:
+    """Start an auth-enabled HyperAdmin app and yield the base URL.
+
+    The app seeds superuser ``alice / secret123`` on startup.
+    Auth middleware redirects unauthenticated requests to ``/admin/login``.
+    """
+    pytest.importorskip("uvicorn")
+    requests = pytest.importorskip("requests")  # type: ignore[assignment]
+
+    cmd = [
+        sys.executable,
+        "-m",
+        "uvicorn",
+        "tests.e2e._auth_app:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        str(e2e_port),
+        "--log-level",
+        "warning",
+    ]
+
+    env = os.environ.copy()
+    env["E2E_TESTING"] = "1"
+
+    proc = subprocess.Popen(
+        cmd,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=env,
+        text=True,
+    )
+
+    base = f"http://localhost:{e2e_port}"
+
+    try:
+        deadline = time.time() + _SERVER_TIMEOUT
+        last_err: Exception | None = None
+        while time.time() < deadline:
+            try:
+                r = requests.get(base + "/admin/login", timeout=0.5)
+                if r.status_code == HTTPStatus.OK:
+                    break
+            except Exception as e:
+                last_err = e
+            time.sleep(0.3)
+        else:
+            raise RuntimeError(f"Auth server did not start: {last_err}")
+
+        yield base
+    finally:
+        if proc.poll() is None:
+            try:
+                if os.name == "nt":
+                    proc.terminate()
+                else:
+                    proc.send_signal(signal.SIGTERM)
+            except Exception:
+                pass
+            try:
+                proc.wait(timeout=5)
+            except Exception:
+                proc.kill()

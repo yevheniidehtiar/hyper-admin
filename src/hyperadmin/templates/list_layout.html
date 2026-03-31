@@ -4,11 +4,13 @@
 
 {%- block content -%}
     <h1 class="ha-section-title">{{- model_name -}} List</h1>
+    {%- if can_create is not defined or can_create -%}
     <div class="ha-list-toolbar">
         <a href="{{- url_for(model_name|lower ~ '-create-form') -}}" class="ha-btn ha-btn-primary" data-testid="create-link">
             Create New {{ model_name }}
         </a>
     </div>
+    {%- endif -%}
 
     {%- include "components/search_input.html" -%}
 

@@ -166,10 +166,45 @@ class Admin:
             models.append((model_name, admin_class))
         await self.permission_registry.sync_permissions(models)
 
+    def _register_auth_models(self) -> None:
+        """Auto-register User, Group, Permission in the admin site.
+
+        Called from ``mount()`` when ``auth_backend`` is configured.
+        Skips silently if a model is already registered.
+        Each auth model gets its own admin class to avoid shared
+        class-level state on the default ``ModelAdmin``.
+        """
+        from hyperadmin.auth.models import Group, Permission, User
+        from hyperadmin.core.model import ModelAdmin
+        from hyperadmin.core.options import AdminOptions
+        from hyperadmin.core.registry import site
+
+        if User not in site._registry:
+            user_admin = type("UserAdmin", (ModelAdmin,), {})
+            site.register(
+                User,
+                admin_class=user_admin,
+                options=AdminOptions(
+                    can_delete=False,
+                    list_filter=["is_active", "is_superuser"],
+                ),
+            )
+        if Group not in site._registry:
+            group_admin = type("GroupAdmin", (ModelAdmin,), {})
+            site.register(Group, admin_class=group_admin)
+        if Permission not in site._registry:
+            perm_admin = type("PermissionAdmin", (ModelAdmin,), {})
+            site.register(
+                Permission,
+                admin_class=perm_admin,
+                options=AdminOptions(can_create=False, can_delete=False),
+            )
+
     def mount(self, path: str):
         """Mounts the admin interface on the FastAPI application."""
         if self.auth_backend:
             self._register_auth_routes(path)
+            self._register_auth_models()
 
         self._register_views()
         self.templates.env.globals["admin_prefix"] = path.rstrip("/")
