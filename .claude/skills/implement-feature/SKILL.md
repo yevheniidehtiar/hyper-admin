@@ -97,34 +97,13 @@ Evaluate every item below. Label each **PASS** or **FAIL**:
 
 ## Phase B — Implementation with Blocker Handling
 
-### B1. Create worktree and branch
+### B1. Start worktree
 
-Always work in an isolated worktree branched from the latest `develop`. Never commit or branch off whatever the current working tree happens to be on.
+Run `/start feat/issue-$ARGUMENTS` to create an isolated worktree branched from `develop`,
+rebase onto latest, and bootstrap the environment.
 
-```bash
-# Fetch latest develop first
-git fetch origin develop
-
-# Derive paths
-REPO_ROOT="$(git rev-parse --show-toplevel)"
-WORKTREE_PATH="${REPO_ROOT}/../hyper-admin-issue-$ARGUMENTS"
-BRANCH_NAME="feat/issue-$ARGUMENTS"
-
-# Create worktree+branch, or resume and rebase if it already exists.
-# This project uses rebase-merge: every merged PR rewrites commit hashes on develop,
-# so any existing branch MUST be rebased from origin/develop before new work is added.
-if git worktree list | grep -qF "[$BRANCH_NAME]"; then
-  echo "Resuming existing worktree at $WORKTREE_PATH — rebasing onto origin/develop"
-  cd "$WORKTREE_PATH"
-  git rebase origin/develop
-else
-  git worktree add -b "$BRANCH_NAME" "$WORKTREE_PATH" origin/develop
-  echo "Created new worktree at $WORKTREE_PATH"
-  cd "$WORKTREE_PATH"
-fi
-```
-
-All subsequent commands (file edits, `poe lint`, `poe test`, `uv run`, etc.) run from inside the worktree path `$WORKTREE_PATH`.
+All subsequent commands (file edits, `poe lint`, `poe test`, `uv run`, etc.) run from inside
+the worktree.
 
 If a draft PR already exists for this branch, resume from the rebased worktree state — do not restart.
 

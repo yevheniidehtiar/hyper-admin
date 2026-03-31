@@ -1,109 +1,257 @@
-# Dev Agents
+# Dev Agent
 
 | Property | Value |
 |---|---|
-| **Runtime** | Claude Code (all sizes) |
-| **Trigger** | Task dispatched from workload queue (GitHub Issue assigned) |
-| **Purpose** | Implement code changes according to task specification |
+| **Runtime** | Claude Code (Opus for size:M/L, Sonnet for size:S) |
+| **Trigger** | User runs `/implement-feature <issue>`, `/fix-issue <issue>`, or launches without arguments |
+| **Purpose** | Pick up GitHub issues, implement code changes, manage issue lifecycle end-to-end |
 | **Est. Cost** | 20k–100k tokens per implementation task |
 
-## Dispatch Strategy
+---
 
-All development tasks are dispatched by the **conductor agent** and executed by Claude Code in isolated git worktrees.
+## Core Behavior
+
+The dev agent is **proactive and self-directed**. It does not wait to be told what to do —
+it finds work, claims it, implements it, and drives the PR through to merge.
+
+### Invocation modes
+
+| Mode | What happens |
+|---|---|
+| `/implement-feature 375` | Implements issue #375 directly |
+| `/fix-issue 401` | Lightweight TDD fix for issue #401 |
+| No issue given | Runs the **work discovery** protocol (see below) |
+
+---
+
+## Work Discovery Protocol (no issue provided)
+
+When the dev agent starts without a specific issue number:
+
+### 1. Find the active milestone
+
+```bash
+gh api repos/{owner}/{repo}/milestones --jq '
+  sort_by(.due_on // .created_at)
+  | map(select(.state == "open"))
+  | .[0]
+  | {number, title, open_issues, due_on}'
+```
+
+If no open milestone exists, report that and stop.
+
+### 2. List ready tickets in that milestone
+
+```bash
+gh issue list \
+  --milestone "<milestone-title>" \
+  --label "agent-task" \
+  --state open \
+  --json number,title,labels,assignees \
+  --jq '[.[] | select(.assignees | length == 0)]'
+```
+
+Prioritize by:
+1. Issues with `blocked_by` dependencies already closed (unblocked)
+2. Issues labeled `size:S` before `size:M` before `size:L`
+3. Issues with higher priority labels (`P0` > `P1` > `P2` > `P3`)
+
+If no `agent-task` issues are unassigned, fall back to any unassigned issue in the milestone.
+
+### 3. Present the pick to the user
 
 ```
-Incoming task from workload queue
-  │
-  ├── size:S → fix-issue skill (lightweight TDD loop)
-  ├── size:M → implement-feature skill (full self-eval loop)
-  └── size:L → implement-feature skill + human checkpoint gate
+Found 4 ready tickets in v0.3.0 — Zero-Config & Auth:
+
+  #363  feat(core): model introspection utility          size:M  P1
+  #364  feat(core): infer list_display                   size:S  P1
+  #365  feat(core): infer search_fields                  size:S  P1
+  #368  feat(core): extend AdminOptions None defaults    size:S  P2
+
+Start with #364? (Y / pick another / skip)
 ```
 
-### fix-issue skill (size:S)
+On confirmation, proceed to implementation.
 
-- One-liner fixes, small utility functions, config tweaks
-- Lightweight loop: branch → explore → test-first → implement → lint+test → PR
-- Runs in an isolated worktree dispatched by the conductor
-- Example: "Add a `--verbose` flag to the CLI parser"
+---
 
-### implement-feature skill (size:M)
+## Issue Lifecycle Management
 
-- Core dev agent for most implementation work
-- Full self-evaluating loop: plan → validate against 16+ checklist items → TDD → PR
-- Blocker protocol: searches agent memory, saves WIP as draft PR, halts with issue comment
-- Runs in an isolated worktree dispatched by the conductor
-- Example: "Implement `RetryPolicy` class with exponential backoff and jitter"
+The dev agent owns the full lifecycle of every issue it works on.
+All label and project board mutations happen **automatically** — never deferred.
 
-### implement-feature + human checkpoint (size:L)
+### Label transitions
 
-- Complex tasks requiring deep architectural reasoning
-- Conductor pauses after planning phase and presents plan to human for approval
-- Human approves or adjusts scope before implementation begins
-- Example: "Redesign the plugin system to support async hooks"
+| Event | Action |
+|---|---|
+| Agent claims issue | Add `in-progress`, remove `ready` if present, assign self |
+| Planning gate fails (questionnaire posted) | Add `needs-clarification`, keep `in-progress` |
+| Blocker hit (draft PR + comment) | Add `blocked`, keep `in-progress` |
+| PR created | Add `review` label to the PR |
+| PR merged | Remove `in-progress`, add `done` |
+| Issue closed | Ensure `done` is present |
 
-## TDD-First Execution
+```bash
+# Claim
+GH_TOKEN="$CLAUDE_GH_TOKEN" gh issue edit <number> \
+  --remove-label "ready" --add-label "in-progress"
 
-Dev agents must strictly follow the TDD order:
+# Blocker
+GH_TOKEN="$CLAUDE_GH_TOKEN" gh issue edit <number> \
+  --add-label "blocked"
 
-1. **Test Task**: Write tests in the appropriate directory (`tests/`). Verify they fail.
-2. **Implementation Task**: Write minimal code in `src/` to pass the tests. Verify with `just test`.
+# PR ready for review
+GH_TOKEN="$CLAUDE_GH_TOKEN" gh pr edit <pr-number> \
+  --add-label "review"
 
-## Task Dispatch Protocol
-
-Each task (GitHub Issue) includes a structured body:
-
-```markdown
-## Task specification
-
-**Scope**: `src/core/retry.py` (new file)
-**Size**: M
-
-## Acceptance criteria
-- [ ] `RetryPolicy` dataclass with: max_retries, backoff_factor, jitter
-- [ ] `retry_with_backoff()` async decorator
-- [ ] Type hints on all public API
-- [ ] Docstrings with examples
-
-## Context for agent
-The HTTP client in `src/core/http.py` needs retry capability.
-See the base client class `HttpClient` for the interface.
-
-## Pre-commit requirements
-- ruff format + ruff check must pass
-- mypy --strict must pass
-- pytest must pass with >80% coverage on new code
+# After merge
+GH_TOKEN="$CLAUDE_GH_TOKEN" gh issue edit <number> \
+  --remove-label "in-progress" --add-label "done"
 ```
+
+### Project board status updates
+
+The dev agent updates the GitHub ProjectV2 board status at each transition:
+
+| Event | Board status |
+|---|---|
+| Agent claims issue | `In progress` |
+| PR merged / issue closed | `Done` |
+
+```bash
+# Move to "In progress"
+gh api graphql -f query='mutation {
+  updateProjectV2ItemFieldValue(input: {
+    projectId: "<PROJECT_ID>"
+    itemId: "<ITEM_ID>"
+    fieldId: "<STATUS_FIELD_ID>"
+    value: { singleSelectOptionId: "<IN_PROGRESS_OPTION_ID>" }
+  }) { projectV2Item { id } }
+}'
+```
+
+Use the cached IDs from agent memory (`reference_github_ids.md`) to avoid redundant API lookups.
+
+### Issue comments
+
+The agent posts structured comments at every significant state change:
+
+- **Claimed**: "Starting work on this issue. Branch: `feat/issue-<N>`"
+- **Plan ready**: Summary of implementation plan (sub-tasks, files to touch)
+- **Blocker**: Detailed blocker description with specific unblock request
+- **PR opened**: Link to PR with brief description of changes
+- **PR merged**: "Completed. Merged via PR #<N>."
+
+---
+
+## Execution Flow
+
+```
+1. /start feat/issue-<N>         ← isolated worktree + env bootstrap
+2. Claim issue (labels + board)
+3. Phase A: Planning loop         ← read issue, plan, self-evaluate
+4. Phase B: TDD implementation    ← test-first, blocker protocol
+5. Phase C: Submission            ← lint, test, commit, PR
+6. Phase D: PR monitor cron       ← CI fix, review changes, auto-merge
+7. Issue closed on merge          ← labels + board updated
+```
+
+### Step 1 — Start worktree
+
+Every implementation begins with `/start`:
+
+```
+/start feat/issue-<N>
+```
+
+This creates an isolated worktree from `develop`, rebases, bootstraps `uv sync --all-extras`,
+and confirms the environment is ready.
+
+### Step 2 — Claim the issue
+
+Immediately after entering the worktree:
+
+```bash
+GH_TOKEN="$CLAUDE_GH_TOKEN" gh issue edit <N> \
+  --remove-label "ready" --add-label "in-progress"
+gh issue comment <N> --body "Starting work. Branch: \`feat/issue-<N>\`"
+```
+
+Update the project board status to "In progress".
+
+### Steps 3–6 — Planning, implementation, submission, monitoring
+
+These phases are defined in the skill files:
+
+| Size | Skill | Behavior |
+|---|---|---|
+| `size:S` | `fix-issue` | Lightweight TDD loop, no self-eval gate |
+| `size:M` | `implement-feature` | Full self-evaluating plan, TDD, blocker protocol, PR monitor |
+| `size:L` | `implement-feature` + human checkpoint | Plan presented to user for approval before implementation |
+
+See:
+- `.claude/skills/implement-feature/SKILL.md` — full agentic workflow
+- `.claude/skills/fix-issue/SKILL.md` — lightweight workflow
+
+### Step 7 — Post-merge cleanup
+
+The PR monitor cron (Phase D of `implement-feature`) handles:
+1. Closing the issue with a comment linking the merged PR
+2. Removing `in-progress`, adding `done`
+3. Updating project board to "Done"
+4. Deleting the monitor cron
+
+---
+
+## Dispatch by Conductor
+
+When dispatched by the conductor agent (see `conductor.md`), dev agents run in parallel:
+
+- Up to **3 concurrent agents** in isolated worktrees per cycle
+- Conductor assigns issues, dev agents handle everything from claim to merge
+- Independent tasks dispatched in parallel; dependent tasks queued
+- Max 3 cycles per conductor session (9 issues total cap)
+
+---
 
 ## Failure Handling
 
 ```
-Task dispatched to Claude Code
-  → Agent creates PR
-    → CI passes?
-      Yes → Move to Code Review (add `review` label)
-      No  → Agent retries (max 2 auto-retries)
-        → Still failing?
-          Yes → Label: "needs-human", escalate to human
+Task dispatched
+  -> Agent creates PR
+    -> CI passes?
+      Yes -> Move to Code Review (add `review` label)
+      No  -> Agent auto-fixes (max 2 retries via PR monitor)
+        -> Still failing?
+          Yes -> Label: "blocked", escalate with issue comment
 ```
 
-## Parallel Execution
+### Blocker protocol
 
-The conductor dispatches up to **3 concurrent agents** in isolated worktrees per cycle:
+1. Search agent memory for prior solutions
+2. If found: apply and continue, update memory if refined
+3. If not found: commit WIP, push draft PR, post blocker comment on issue, label `blocked`, HALT
 
-1. Dispatch independent tasks in parallel (up to 3 worktrees)
-2. Queue dependent tasks to auto-dispatch when blockers close
-3. Run up to 3 cycles per session (9 issues total cap)
+### Unrecoverable failures
 
-This turns serial multi-week effort into parallel 1–2 day bursts.
+If the agent cannot proceed after 2 CI fix attempts or encounters an architectural ambiguity:
+- Post a detailed comment on the issue explaining what was tried
+- Label the issue `blocked`
+- Keep the draft PR with WIP code for context
+- HALT and wait for human input
+
+---
 
 ## Rules Enforced
 
-Dev agents (via the implement-feature skill) enforce all project rules during the planning gate:
+Dev agents enforce all project rules during the planning gate:
 
-| Rule | Check |
-|------|-------|
-| `CONSTITUTION.md` | Module boundaries, dependency direction |
-| `planning-playbook.md` | Bottom-up task ordering |
-| `code-style.md` | Type hints, selectinload(), line length |
-| `testing.md` | E2E locator priority, no `ha-*` selectors |
-| `git-workflow.md` | Claude Code identity, Conventional Commits |
+| Rule | Source | Check |
+|---|---|---|
+| Module boundaries, dependency direction | `CONSTITUTION.md` | No cross-layer imports |
+| Bottom-up task ordering | `planning-playbook.md` | Models before logic before views before UI |
+| Type hints, `selectinload()`, line length | `code-style.md` | All new code |
+| Accessibility-first locators, no `ha-*` selectors | `testing.md` | All E2E tests |
+| Claude Code identity, Conventional Commits | `git-workflow.md` | All commits and PRs |
+| BDD scenarios | `bdd-conventions.md` | Every feat/test issue |
+| SDD for large features | `sdd-conventions.md` | size:L or multi-module |
