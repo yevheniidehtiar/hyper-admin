@@ -910,12 +910,18 @@ class DynamicModelView:
             )
         return Response(status_code=204)
 
-    def _cleanup_item_files(self, item: Any) -> None:
-        """Delete stored files for all file fields on *item*."""
+    def _collect_file_paths(self, item: Any) -> list[str]:
+        """Return disk paths of all files attached to *item*.
+
+        The paths are collected **before** the DB row is deleted so that
+        ``ImageType.process_result_value`` (which opens the file) is not
+        called after the file has already been removed.
+        """
         if not self.storage:
-            return
+            return []
         from hyperadmin.core.uploads import FileFieldMeta  # noqa: PLC0415
 
+        paths: list[str] = []
         for name, fi in self.model.model_fields.items():
             meta = classify_field(fi, self.model)
             if not isinstance(meta, FileFieldMeta):
@@ -924,7 +930,13 @@ class DynamicModelView:
             if not val:
                 continue
             fname = val.name if hasattr(val, "name") else str(val)
-            path = self.storage.get_path(fname)
+            paths.append(self.storage.get_path(fname))
+        return paths
+
+    @staticmethod
+    def _remove_files(paths: list[str]) -> None:
+        """Remove files from disk, ignoring missing ones."""
+        for path in paths:
             if os.path.exists(path):
                 os.remove(path)
 
@@ -935,8 +947,9 @@ class DynamicModelView:
         if not item:
             raise HTTPException(status_code=404, detail="Item not found")
 
-        self._cleanup_item_files(item)
+        file_paths = self._collect_file_paths(item)
         await self.adapter.delete(pk=item_id)
+        self._remove_files(file_paths)
 
         redirect_url = request.url_for(f"{self.model.__name__.lower()}-list")
 
