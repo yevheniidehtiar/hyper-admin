@@ -20,10 +20,13 @@ Use `EnterWorktree` with the branch name provided by the user: `$ARGUMENTS`
 
 If `$ARGUMENTS` is empty, generate a random name (e.g., `work/agent-<4-random-hex-chars>`).
 
-3. **Rebase onto develop**
+3. **Reset to latest develop**
+
+Since this is a fresh worktree with no prior work, reset to the tip of develop
+instead of rebasing (avoids replaying the entire history and hitting conflicts):
 
 ```bash
-git rebase origin/develop
+git reset --hard origin/develop
 ```
 
 4. **Bootstrap the environment**
