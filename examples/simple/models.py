@@ -1,8 +1,13 @@
 from datetime import datetime
 from enum import Enum
 
+from fastapi_storages import FileSystemStorage
+from fastapi_storages.integrations.sqlalchemy import FileType, ImageType
+from sqlalchemy import Column
 from sqlalchemy.orm import Mapped
 from sqlmodel import Field, Relationship, SQLModel
+
+upload_storage = FileSystemStorage("uploads/")
 
 
 class UserType(str, Enum):
@@ -34,6 +39,14 @@ class Product(SQLModel, table=True):
     is_available: bool = True
     category: ProductCategory = Field(default=ProductCategory.ELECTRONICS, nullable=False)
     release_date: datetime | None = Field(default_factory=datetime.now)
+    manual: str | None = Field(
+        default=None,
+        sa_column=Column(FileType(storage=upload_storage)),
+    )
+    photo: str | None = Field(
+        default=None,
+        sa_column=Column(ImageType(storage=upload_storage)),
+    )
 
 
 class Country(SQLModel, table=True):
