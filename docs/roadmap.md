@@ -64,23 +64,33 @@ admin.mount("/admin")  # auto-discovers all SQLModel models
 
 ---
 
-### v0.4.0 — Accessible & Beautiful
+### v0.4.0 — Responsive Design
 
-**Theme: Modern design system and full i18n**
+**Theme: Best-in-class mobile admin experience**
 
-#### Responsive Design Overhaul
+- Mobile-first CSS architecture with standardized breakpoints (sm/md/lg/xl)
+- Collapsible sidebar with hamburger menu toggle (Alpine.js)
+- Responsive data tables (stacked card layout on mobile)
+- Touch-friendly forms, pagination, and filter controls
+- Responsive navbar optimizations
+- Comprehensive E2E viewport tests
 
-- Mobile-first responsive grid system
-- Collapsible sidebar with swipe gestures
-- Responsive data tables (card layout on small screens)
-- Touch-friendly action buttons and form controls
+**Spec:** [`docs/specs/responsive-design.md`](specs/responsive-design.md)
 
-#### Internationalization (i18n)
+---
 
-- Translation system using Python `gettext`
-- Ship with English, Spanish, French, German, Chinese, Japanese, Ukrainian
-- RTL layout support (Arabic, Hebrew)
-- `Admin(locale="uk")` configuration
+### v0.4.1 — i18n
+
+**Theme: Full internationalization support**
+
+- Translation system using Python `gettext` + Babel + Jinja2 i18n extension
+- Pluggable `TranslationProvider` protocol with gettext default
+- Ship with 7 locales: English, Spanish, French, German, Chinese, Japanese, Ukrainian
+- Locale middleware (cookie → settings → Accept-Language → fallback)
+- CSS logical properties for RTL readiness
+- Locale switcher UI
+
+**Proposal:** [`docs/agentic-workflow/issue-proposals/v0.4.1-i18n.md`](agentic-workflow/issue-proposals/v0.4.1-i18n.md)
 
 ---
 
