@@ -109,7 +109,7 @@ def test_admin_theme_default(mock_fastapi_app: MagicMock) -> None:
 
 
 def test_admin_theme_invalid(mock_fastapi_app: MagicMock) -> None:
-    with pytest.raises(Exception, match="[Ii]nvalid theme|neon"):
+    with pytest.raises(Exception, match=r"[Ii]nvalid theme|neon"):
         HyperAdminSettings(theme="neon")  # type: ignore[arg-type]
 
 
@@ -162,7 +162,7 @@ def test_admin_raises_on_default_secret_in_production_with_auth(
     mock_auth = MagicMock()
     settings = HyperAdminSettings(debug=False)  # default secret_key
 
-    with pytest.raises(ValueError, match="[Ss]ecret|HYPERADMIN_SECRET_KEY"):
+    with pytest.raises(ValueError, match=r"[Ss]ecret|HYPERADMIN_SECRET_KEY"):
         Admin(app=mock_fastapi_app, settings=settings, auth_backend=mock_auth)
 
 

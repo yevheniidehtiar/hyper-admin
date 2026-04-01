@@ -15,7 +15,9 @@ import pytest
 from playwright.sync_api import Page, expect
 
 _IN_CONTAINER = os.environ.get("IS_SANDBOX") == "1"
-_SERVER_TIMEOUT = 15 if _IN_CONTAINER else 5
+# ERP app performs DB creation + permission sync + data seeding on startup,
+# which takes longer than the simple demo app.
+_SERVER_TIMEOUT = 30 if _IN_CONTAINER else 15
 
 
 def _find_free_port() -> int:
@@ -63,6 +65,12 @@ def erp_base_url() -> Iterator[str]:
         deadline = time.time() + _SERVER_TIMEOUT
         last_err: Exception | None = None
         while time.time() < deadline:
+            # If the subprocess already exited, report its stderr immediately
+            if proc.poll() is not None:
+                _stdout, _stderr = proc.communicate()
+                raise RuntimeError(
+                    f"ERP server process exited with code {proc.returncode}:\n{_stderr}"
+                )
             try:
                 r = requests.get(base + "/", timeout=0.5)
                 if r.status_code == HTTPStatus.OK:
@@ -71,7 +79,7 @@ def erp_base_url() -> Iterator[str]:
                 last_err = e
             time.sleep(0.3)
         else:
-            raise RuntimeError(f"ERP server did not start: {last_err}")
+            raise RuntimeError(f"ERP server did not start within {_SERVER_TIMEOUT}s: {last_err}")
 
         yield base
     finally:

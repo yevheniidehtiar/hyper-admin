@@ -9,7 +9,7 @@ Uses accessibility-first selectors per CLAUDE.md E2E Selector Convention.
 from playwright.sync_api import Page, expect
 
 
-def _login(page: Page, base_url: str, password: str = "secret123") -> None:
+def _login(page: Page, base_url: str, password: str = "secret123") -> None:  # noqa: S107
     """Log in as alice with the given password."""
     page.goto(f"{base_url}/admin/login")
     page.get_by_label("Username").fill("alice")
