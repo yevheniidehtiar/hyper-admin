@@ -3,7 +3,7 @@
 {%- block content -%}
     <div class="ha-container">
         <h2 class="ha-section-title">{%- block form_title -%}{%- endblock -%}</h2>
-        <form id="{{- model_name|lower -}}-form" data-testid="model-form" {%- block form_attributes -%}{%- endblock -%}>
+        <form id="{{- model_name|lower -}}-form" data-testid="model-form" enctype="multipart/form-data" {%- block form_attributes -%}{%- endblock -%}>
             <div id="{{- model_name|lower -}}-form-body" class="ha-card">
                 {%- block form_body -%}{%- endblock -%}
             </div>

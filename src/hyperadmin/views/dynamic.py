@@ -12,6 +12,8 @@ from starlette.responses import RedirectResponse, Response
 if TYPE_CHECKING:
     from jinja2 import FileSystemLoader
 
+from starlette.datastructures import UploadFile as StarletteUpload
+
 from hyperadmin.adapters import SQLAlchemyAdapter, SQLModelAdapter
 from hyperadmin.core.actions import ActionDef
 from hyperadmin.core.choices import ChoiceItem, SelectFieldMeta
@@ -23,6 +25,7 @@ from hyperadmin.core.registry import site
 from hyperadmin.discover import app_label_var
 from hyperadmin.views.forms import (
     CheckboxInput,
+    FileInputWidget,
     HtmxWidget,
     InlineFormset,
     MultiSelectWidget,
@@ -470,16 +473,48 @@ class DynamicModelView:
         For ``MultiSelectWidget`` and ``RelationMultiSelectWidget`` fields, uses
         ``getlist()`` to capture all submitted values.  Absent multiselect fields
         are set to an empty list (mirrors the checkbox-absent pattern).
+
+        ``FileInputWidget`` fields are handled specially: ``UploadFile`` objects
+        are kept as-is so that SQLAlchemy's ``FileType``/``ImageType``
+        ``process_bind_param`` can write them to storage.  Empty file inputs
+        (no file selected) are removed from the dict to avoid overwriting
+        existing values.
         """
         data: dict[str, Any] = dict(form_data)
         for field in form.fields:
             is_multi = isinstance(field.widget, (MultiSelectWidget, RelationMultiSelectWidget))
             is_checkbox = isinstance(field.widget, CheckboxInput)
-            if is_multi:
+            is_file = isinstance(field.widget, FileInputWidget)
+            if is_file:
+                upload = form_data.get(field.name)
+                if isinstance(upload, StarletteUpload) and upload.filename:
+                    data[field.name] = upload
+                else:
+                    data.pop(field.name, None)
+            elif is_multi:
                 data[field.name] = form_data.getlist(field.name)
             elif is_checkbox and field.name not in data:
                 data[field.name] = False
         return data
+
+    @staticmethod
+    def _pop_file_uploads(
+        data: dict[str, Any],
+        form: PydanticForm,
+    ) -> dict[str, Any]:
+        """Remove ``UploadFile`` values from *data* so Pydantic validation
+        does not choke on non-string file objects.
+
+        Returns a dict of ``{field_name: UploadFile}`` that must be merged
+        back into the adapter data after validation succeeds.
+        """
+        uploads: dict[str, Any] = {}
+        for field in form.fields:
+            if isinstance(field.widget, FileInputWidget) and field.name in data:
+                val = data.pop(field.name)
+                if isinstance(val, StarletteUpload):
+                    uploads[field.name] = val
+        return uploads
 
     async def create_view(self, request: Request):
         """Handles form submission for creating a new item."""
@@ -503,6 +538,7 @@ class DynamicModelView:
             form_fields=getattr(self.options, "form_fields", None) or None,
         )
         data = self._extract_form_data(form_data, form)
+        file_uploads = self._pop_file_uploads(data, form)
         form.bind(data)
         instance, errs = form.validate(data)
 
@@ -544,7 +580,9 @@ class DynamicModelView:
             )
 
         try:
-            new_item = await self.adapter.create(data=instance.model_dump())
+            create_data = instance.model_dump()
+            create_data.update(file_uploads)
+            new_item = await self.adapter.create(data=create_data)
         except IntegrityError as exc:
             logger.exception("IntegrityError during create")
             field_errors = _integrity_error_to_field_errors(exc)
@@ -661,6 +699,7 @@ class DynamicModelView:
             form_fields=getattr(self.options, "form_fields", None) or None,
         )
         data = self._extract_form_data(form_data, form)
+        file_uploads = self._pop_file_uploads(data, form)
 
         form.bind(data)
         instance, errs = form.validate(data)
@@ -700,7 +739,9 @@ class DynamicModelView:
 
         # exclude_none: id is not submitted by the form and must not overwrite the PK
         try:
-            await self.adapter.update(pk=item_id, data=instance.model_dump(exclude_none=True))
+            update_data = instance.model_dump(exclude_none=True)
+            update_data.update(file_uploads)
+            await self.adapter.update(pk=item_id, data=update_data)
         except IntegrityError as exc:
             logger.exception("IntegrityError during update")
             field_errors = _integrity_error_to_field_errors(exc)
