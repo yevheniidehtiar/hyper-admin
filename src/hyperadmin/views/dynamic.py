@@ -832,6 +832,60 @@ class DynamicModelView:
         html = template.render(context)
         return Response(content=html, media_type="text/html")
 
+    async def upload_file_view(
+        self,
+        request: Request,
+        field_name: str,
+    ) -> Response:
+        """Accept a file upload and store it via the configured storage.
+
+        ``POST /{model}/upload/{field_name}``
+
+        Returns a JSON response with the stored filename.
+        """
+        await self._check_permission(request, "add")
+        if not self.storage:
+            raise HTTPException(
+                status_code=400,
+                detail="File uploads not configured",
+            )
+        form_data = await request.form()
+        upload = form_data.get("file")
+        if not isinstance(upload, StarletteUpload) or not upload.filename:
+            raise HTTPException(status_code=400, detail="No file provided")
+        filename = self.storage.write(upload.file, upload.filename)
+        from starlette.responses import JSONResponse  # noqa: PLC0415
+
+        return JSONResponse({"filename": filename})
+
+    async def delete_file_view(
+        self,
+        request: Request,
+        item_id: int,
+        field_name: str,
+    ) -> Response:
+        """Delete a file from storage and clear the field on the record.
+
+        ``DELETE /{model}/{item_id}/file/{field_name}``
+        """
+        await self._check_permission(request, "change")
+        item = await self.adapter.get(pk=item_id)
+        if not item:
+            raise HTTPException(status_code=404, detail="Item not found")
+        val = getattr(item, field_name, None)
+        if val and self.storage:
+            fname = val.name if hasattr(val, "name") else str(val)
+            path = self.storage.get_path(fname)
+            if os.path.exists(path):
+                os.remove(path)
+        await self.adapter.update(pk=item_id, data={field_name: None})
+        if "hx-request" in request.headers:
+            return Response(
+                status_code=200,
+                headers={"HX-Trigger": "fileDeleted"},
+            )
+        return Response(status_code=204)
+
     async def delete_action(self, request: Request, item_id: int):
         """Deletes an item."""
         await self._check_permission(request, "delete")

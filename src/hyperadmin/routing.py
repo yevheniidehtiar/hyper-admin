@@ -153,6 +153,20 @@ def create_admin_router(  # noqa: PLR0913
             name=f"{model_name}-action",
         )
 
+    if storage:
+        router.add_api_route(
+            f"{prefix}/upload/{{field_name}}",
+            view.upload_file_view,
+            methods=["POST"],
+            name=f"{model_name}-upload",
+        )
+        router.add_api_route(
+            f"{prefix}/{{item_id:int}}/file/{{field_name}}",
+            view.delete_file_view,
+            methods=["DELETE"],
+            name=f"{model_name}-delete-file",
+        )
+
     return router
 
 
