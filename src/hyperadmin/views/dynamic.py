@@ -886,6 +886,24 @@ class DynamicModelView:
             )
         return Response(status_code=204)
 
+    def _cleanup_item_files(self, item: Any) -> None:
+        """Delete stored files for all file fields on *item*."""
+        if not self.storage:
+            return
+        from hyperadmin.core.uploads import FileFieldMeta  # noqa: PLC0415
+
+        for name, fi in self.model.model_fields.items():
+            meta = classify_field(fi, self.model)
+            if not isinstance(meta, FileFieldMeta):
+                continue
+            val = getattr(item, name, None)
+            if not val:
+                continue
+            fname = val.name if hasattr(val, "name") else str(val)
+            path = self.storage.get_path(fname)
+            if os.path.exists(path):
+                os.remove(path)
+
     async def delete_action(self, request: Request, item_id: int):
         """Deletes an item."""
         await self._check_permission(request, "delete")
@@ -893,6 +911,7 @@ class DynamicModelView:
         if not item:
             raise HTTPException(status_code=404, detail="Item not found")
 
+        self._cleanup_item_files(item)
         await self.adapter.delete(pk=item_id)
 
         redirect_url = request.url_for(f"{self.model.__name__.lower()}-list")
