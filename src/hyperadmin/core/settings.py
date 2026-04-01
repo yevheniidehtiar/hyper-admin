@@ -5,7 +5,7 @@ from typing import Literal
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-_DEFAULT_SECRET_KEY = "hyperadmin-default-secret"
+_DEFAULT_SECRET_KEY = "hyperadmin-default-secret"  # noqa: S105
 _DEFAULT_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
 ThemeLiteral = Literal["auto", "light", "dark"]
