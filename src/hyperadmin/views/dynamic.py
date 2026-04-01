@@ -165,6 +165,17 @@ class DynamicModelView:
         """Introspects list_filter fields to build metadata for filter UI."""
         return await build_filter_metadata(self.model, self.options.list_filter or [], self.adapter)
 
+    def _get_file_fields(self) -> set[str]:
+        """Return the set of field names backed by FileType/ImageType columns."""
+        from hyperadmin.core.uploads import FileFieldMeta  # noqa: PLC0415
+
+        result: set[str] = set()
+        for name, fi in self.model.model_fields.items():
+            meta = classify_field(fi, self.model)
+            if isinstance(meta, FileFieldMeta):
+                result.add(name)
+        return result
+
     async def list_view(
         self,
         request: Request,
@@ -243,6 +254,7 @@ class DynamicModelView:
 
         # Convert items to row dicts using column_list
         display_fields = self.column_list
+        file_fields = self._get_file_fields()
         rows = []
         for item in items:
             row: dict[str, Any] = {}
@@ -250,7 +262,10 @@ class DynamicModelView:
                 if field == "__str__":
                     row[field] = get_display_name(item)
                 else:
-                    row[field] = getattr(item, field, None)
+                    val = getattr(item, field, None)
+                    if field in file_fields and val is not None:
+                        val = val.name if hasattr(val, "name") else str(val)
+                    row[field] = val
             row["id"] = getattr(item, "id", None)
             rows.append(row)
 
@@ -273,6 +288,7 @@ class DynamicModelView:
             "can_edit": self.options.can_edit,
             "can_delete": self.options.can_delete,
             "can_detail": self.options.can_detail,
+            "file_fields": file_fields,
         }
 
         # Use table template for HTMX requests, full layout for regular requests
@@ -294,13 +310,21 @@ class DynamicModelView:
         if not item:
             raise HTTPException(status_code=404, detail="Item not found")
 
+        file_fields = self._get_file_fields()
+        item_data = item.model_dump()
+        for fname in file_fields:
+            val = getattr(item, fname, None)
+            if val is not None:
+                item_data[fname] = val.name if hasattr(val, "name") else str(val)
+
         context = {
             "request": request,
             "item_name": get_display_name(item),
-            "item": item.model_dump(),
+            "item": item_data,
             "field_labels": self.field_labels,
             "actions": self.actions,
             "model_name_lower": self._model_name_lower,
+            "file_fields": file_fields,
         }
         template_name = self._get_template_name("detail")
         return self.templates.TemplateResponse(request, template_name, context)

@@ -10,7 +10,13 @@
                 {{- field_labels[key] if field_labels is defined and key in field_labels else key.replace('_', ' ').title() -}}
             </label>
             <div class="ha-field-value">
-                {{- value -}}
+                {%- if file_fields is defined and key in file_fields and value -%}
+                    <a href="/uploads/{{ value }}" target="_blank" class="ha-file-link" data-testid="{{ key }}-download">{{ value }}</a>
+                {%- elif value is not none -%}
+                    {{- value -}}
+                {%- else -%}
+                    &mdash;
+                {%- endif -%}
             </div>
         </div>
         {%- endfor -%}
