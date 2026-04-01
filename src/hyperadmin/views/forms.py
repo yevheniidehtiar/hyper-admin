@@ -292,8 +292,9 @@ class PydanticForm:
         if _HAS_CLASSIFY and _classify_field is not None:
             from hyperadmin.core.choices import SelectFieldMeta  # noqa: PLC0415
 
-            meta: SelectFieldMeta | None = _classify_field(field, self.model)
-            if meta is not None:
+            raw_meta = _classify_field(field, self.model)
+            if isinstance(raw_meta, SelectFieldMeta):
+                meta = raw_meta
                 choices_url = f"{self.choices_base_url}/{name}" if self.choices_base_url else ""
                 if meta.choices_source == "enum":
                     # Extract enum type for choices

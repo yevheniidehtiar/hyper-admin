@@ -363,9 +363,12 @@ class DynamicModelView:
         for name, field_info in self.model.model_fields.items():
             if field_names and name not in field_names:
                 continue
-            meta: SelectFieldMeta | None = classify_field(field_info, self.model)
-            if meta is None or meta.choices_source != "relation":
+            raw_meta = classify_field(field_info, self.model)
+            if not isinstance(raw_meta, SelectFieldMeta):
                 continue
+            if raw_meta.choices_source != "relation":
+                continue
+            meta = raw_meta
             # Resolve FK column name to relationship name (e.g. country_id → country)
             rel_name: str = fk_to_rel.get(name) or name
             choices_url = f"/{self._model_name_lower}/choices/{rel_name}"

@@ -7,6 +7,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, Any, Union, get_args, get_origin
 
 from hyperadmin.core.choices import SelectFieldMeta
+from hyperadmin.core.uploads import FileFieldMeta
 
 
 def _is_optional_union(origin: Any, args: tuple) -> bool:
@@ -26,15 +27,35 @@ except ImportError:  # pragma: no cover
     sa_inspect = None  # type: ignore[assignment]
     NoInspectionAvailable = Exception  # type: ignore[assignment,misc]
 
+try:
+    from fastapi_storages.integrations.sqlalchemy import (
+        FileType as _FileType,
+    )
+    from fastapi_storages.integrations.sqlalchemy import (
+        ImageType as _ImageType,
+    )
 
-def classify_field(field_info: FieldInfo, model_cls: type) -> SelectFieldMeta | None:
-    """Classify a Pydantic FieldInfo for select widget auto-detection.
+    _HAS_FILE_TYPES = True
+except ImportError:  # pragma: no cover
+    _HAS_FILE_TYPES = False
+    _FileType = None  # type: ignore[assignment]
+    _ImageType = None  # type: ignore[assignment]
 
-    Returns a ``SelectFieldMeta`` when the field should render as a select or
-    multiselect widget. Returns ``None`` to fall through to existing widget logic.
 
-    SQLAlchemy mapper inspection is isolated in a try/except so the function
-    degrades gracefully when *model_cls* is a plain Pydantic model (no ORM).
+def classify_field(
+    field_info: FieldInfo,
+    model_cls: type,
+) -> SelectFieldMeta | FileFieldMeta | None:
+    """Classify a Pydantic FieldInfo for widget auto-detection.
+
+    Returns a ``SelectFieldMeta`` when the field should render as a
+    select or multiselect widget, a ``FileFieldMeta`` when the
+    underlying column is a ``FileType`` or ``ImageType``, or ``None``
+    to fall through to existing widget logic.
+
+    SQLAlchemy mapper inspection is isolated in a try/except so the
+    function degrades gracefully when *model_cls* is a plain Pydantic
+    model (no ORM).
     """
     ann = getattr(field_info, "annotation", None)
     if ann is None:
@@ -87,8 +108,12 @@ def _find_field_name(field_info: FieldInfo, model_cls: type) -> str | None:
     return None
 
 
-def _inspect_orm_field(model_cls: type, field_name: str) -> SelectFieldMeta | None:
-    """Inspect the SQLAlchemy mapper for FK / M2M relations.
+def _inspect_orm_field(
+    model_cls: type,
+    field_name: str,
+) -> SelectFieldMeta | FileFieldMeta | None:
+    """Inspect the SQLAlchemy mapper for file/image columns and
+    FK / M2M relations.
 
     Returns ``None`` when *model_cls* has no SQLAlchemy mapper.
     """
@@ -101,6 +126,16 @@ def _inspect_orm_field(model_cls: type, field_name: str) -> SelectFieldMeta | No
         return None
     except Exception:
         return None
+
+    if _HAS_FILE_TYPES:
+        columns = getattr(mapper, "columns", [])
+        for col in columns:
+            if getattr(col, "key", None) == field_name:
+                col_type = getattr(col, "type", None)
+                if _ImageType is not None and isinstance(col_type, _ImageType):
+                    return FileFieldMeta(is_image=True)
+                if _FileType is not None and isinstance(col_type, _FileType):
+                    return FileFieldMeta(is_image=False)
 
     relationships = getattr(mapper, "relationships", [])
     for rel in relationships:
