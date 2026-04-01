@@ -49,6 +49,7 @@ class Admin:
         auth_backend: Any = None,
         permission_checker: Any = None,
         permission_registry: Any = None,
+        storage: Any = None,
     ) -> None:
         """Initialise HyperAdmin and attach it to a FastAPI application.
 
@@ -62,6 +63,8 @@ class Admin:
                 ``AuthBackend`` protocol. When ``None``, auth is disabled.
             permission_checker: An optional ``PermissionChecker`` implementation.
             permission_registry: An optional ``PermissionRegistry`` implementation.
+            storage: An optional ``FileSystemStorage`` (or compatible) instance
+                for file uploads. When ``None``, file upload support is disabled.
         """
         self.settings = settings or HyperAdminSettings()
         self.app = app
@@ -70,6 +73,7 @@ class Admin:
         self.auth_backend = auth_backend
         self.permission_checker = permission_checker
         self.permission_registry = permission_registry
+        self.storage = storage
 
         self._validate_session_secret()
 
@@ -123,7 +127,7 @@ class Admin:
         async with self.engine.begin() as conn:
             await conn.run_sync(SQLModel.metadata.create_all)
 
-    def _register_views(self):
+    def _register_views(self) -> None:
         """Registers the views from the site registry."""
         from hyperadmin.routing import HyperAdminRouter
 
@@ -131,6 +135,7 @@ class Admin:
             engine=self.engine,
             templates=self.templates,
             permission_checker=self.permission_checker if self.auth_backend else None,
+            storage=self.storage,
         )
         admin_router.generate_routes()
         routers = admin_router.get_routers()
@@ -176,6 +181,19 @@ class Admin:
             SessionMiddleware,
             secret_key=self.settings.secret_key,
         )
+
+    def _mount_upload_storage(self) -> None:
+        """Mount the upload storage directory as a static-files endpoint."""
+        storage_path = getattr(self.storage, "_path", None)
+        if storage_path is None:
+            return
+        storage_path_str = str(storage_path)
+        if os.path.isdir(storage_path_str):
+            self.app.mount(
+                "/uploads",
+                StaticFiles(directory=storage_path_str),
+                name="uploads",
+            )
 
     async def _sync_permissions(self) -> None:
         """Sync permissions for all registered models to the database."""
@@ -251,8 +269,11 @@ class Admin:
                 options=AdminOptions(can_create=False, can_delete=False),
             )
 
-    def mount(self, path: str):
+    def mount(self, path: str) -> None:
         """Mounts the admin interface on the FastAPI application."""
+        if self.storage:
+            self._mount_upload_storage()
+
         if self.auth_backend:
             self._register_auth_routes(path)
             self._register_auth_models()

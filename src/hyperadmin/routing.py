@@ -55,6 +55,7 @@ def create_admin_router(  # noqa: PLR0913
     actions: list[ActionDef] | None = None,
     search_fields: list[str] | None = None,
     field_labels: dict[str, str] | None = None,
+    storage: Any = None,
 ) -> APIRouter:
     """Creates an APIRouter for a given model with the specified admin options."""
     router = APIRouter()
@@ -71,6 +72,7 @@ def create_admin_router(  # noqa: PLR0913
         admin_instance=admin_instance,
         search_fields=search_fields,
         field_labels=field_labels,
+        storage=storage,
     )
     model_name = model.__name__.lower()
 
@@ -151,6 +153,20 @@ def create_admin_router(  # noqa: PLR0913
             name=f"{model_name}-action",
         )
 
+    if storage:
+        router.add_api_route(
+            f"{prefix}/upload/{{field_name}}",
+            view.upload_file_view,
+            methods=["POST"],
+            name=f"{model_name}-upload",
+        )
+        router.add_api_route(
+            f"{prefix}/{{item_id:int}}/file/{{field_name}}",
+            view.delete_file_view,
+            methods=["DELETE"],
+            name=f"{model_name}-delete-file",
+        )
+
     return router
 
 
@@ -206,9 +222,16 @@ class HyperAdminRouter:
         templates: The shared ``Jinja2Templates`` instance used across all views.
     """
 
-    def __init__(self, engine: Any, templates: Jinja2Templates, permission_checker: Any = None):
+    def __init__(
+        self,
+        engine: Any,
+        templates: Jinja2Templates,
+        permission_checker: Any = None,
+        storage: Any = None,
+    ):
         self.engine = engine
         self.permission_checker = permission_checker
+        self.storage = storage
         # Enable global whitespace trimming
         templates.env.trim_blocks = True
         templates.env.lstrip_blocks = True
@@ -271,6 +294,7 @@ class HyperAdminRouter:
                 actions=actions,
                 search_fields=resolved_search_fields,
                 field_labels=field_labels,
+                storage=self.storage,
             )
             self.routers.append(router)
 

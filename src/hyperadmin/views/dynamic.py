@@ -12,6 +12,8 @@ from starlette.responses import RedirectResponse, Response
 if TYPE_CHECKING:
     from jinja2 import FileSystemLoader
 
+from starlette.datastructures import UploadFile as StarletteUpload
+
 from hyperadmin.adapters import SQLAlchemyAdapter, SQLModelAdapter
 from hyperadmin.core.actions import ActionDef
 from hyperadmin.core.choices import ChoiceItem, SelectFieldMeta
@@ -23,6 +25,7 @@ from hyperadmin.core.registry import site
 from hyperadmin.discover import app_label_var
 from hyperadmin.views.forms import (
     CheckboxInput,
+    FileInputWidget,
     HtmxWidget,
     InlineFormset,
     MultiSelectWidget,
@@ -91,6 +94,7 @@ class DynamicModelView:
         admin_instance: Any = None,
         search_fields: list[str] | None = None,
         field_labels: dict[str, str] | None = None,
+        storage: Any = None,
     ):
         self.adapter = adapter
         self.model = adapter.model
@@ -107,6 +111,7 @@ class DynamicModelView:
         self._admin_instance = admin_instance
         self.search_fields = search_fields
         self.field_labels = field_labels or {}
+        self.storage = storage
         # Expose the live adapter on the admin instance so action handlers can use self.adapter
         if admin_instance is not None:
             admin_instance.adapter = self.adapter
@@ -159,6 +164,17 @@ class DynamicModelView:
     async def _get_filter_metadata(self) -> list[dict[str, Any]]:
         """Introspects list_filter fields to build metadata for filter UI."""
         return await build_filter_metadata(self.model, self.options.list_filter or [], self.adapter)
+
+    def _get_file_fields(self) -> set[str]:
+        """Return the set of field names backed by FileType/ImageType columns."""
+        from hyperadmin.core.uploads import FileFieldMeta  # noqa: PLC0415
+
+        result: set[str] = set()
+        for name, fi in self.model.model_fields.items():
+            meta = classify_field(fi, self.model)
+            if isinstance(meta, FileFieldMeta):
+                result.add(name)
+        return result
 
     async def list_view(
         self,
@@ -238,6 +254,7 @@ class DynamicModelView:
 
         # Convert items to row dicts using column_list
         display_fields = self.column_list
+        file_fields = self._get_file_fields()
         rows = []
         for item in items:
             row: dict[str, Any] = {}
@@ -245,7 +262,10 @@ class DynamicModelView:
                 if field == "__str__":
                     row[field] = get_display_name(item)
                 else:
-                    row[field] = getattr(item, field, None)
+                    val = getattr(item, field, None)
+                    if field in file_fields and val is not None:
+                        val = val.name if hasattr(val, "name") else str(val)
+                    row[field] = val
             row["id"] = getattr(item, "id", None)
             rows.append(row)
 
@@ -268,6 +288,7 @@ class DynamicModelView:
             "can_edit": self.options.can_edit,
             "can_delete": self.options.can_delete,
             "can_detail": self.options.can_detail,
+            "file_fields": file_fields,
         }
 
         # Use table template for HTMX requests, full layout for regular requests
@@ -289,13 +310,21 @@ class DynamicModelView:
         if not item:
             raise HTTPException(status_code=404, detail="Item not found")
 
+        file_fields = self._get_file_fields()
+        item_data = item.model_dump()
+        for fname in file_fields:
+            val = getattr(item, fname, None)
+            if val is not None:
+                item_data[fname] = val.name if hasattr(val, "name") else str(val)
+
         context = {
             "request": request,
             "item_name": get_display_name(item),
-            "item": item.model_dump(),
+            "item": item_data,
             "field_labels": self.field_labels,
             "actions": self.actions,
             "model_name_lower": self._model_name_lower,
+            "file_fields": file_fields,
         }
         template_name = self._get_template_name("detail")
         return self.templates.TemplateResponse(request, template_name, context)
@@ -361,9 +390,12 @@ class DynamicModelView:
         for name, field_info in self.model.model_fields.items():
             if field_names and name not in field_names:
                 continue
-            meta: SelectFieldMeta | None = classify_field(field_info, self.model)
-            if meta is None or meta.choices_source != "relation":
+            raw_meta = classify_field(field_info, self.model)
+            if not isinstance(raw_meta, SelectFieldMeta):
                 continue
+            if raw_meta.choices_source != "relation":
+                continue
+            meta = raw_meta
             # Resolve FK column name to relationship name (e.g. country_id → country)
             rel_name: str = fk_to_rel.get(name) or name
             choices_url = f"/{self._model_name_lower}/choices/{rel_name}"
@@ -465,16 +497,48 @@ class DynamicModelView:
         For ``MultiSelectWidget`` and ``RelationMultiSelectWidget`` fields, uses
         ``getlist()`` to capture all submitted values.  Absent multiselect fields
         are set to an empty list (mirrors the checkbox-absent pattern).
+
+        ``FileInputWidget`` fields are handled specially: ``UploadFile`` objects
+        are kept as-is so that SQLAlchemy's ``FileType``/``ImageType``
+        ``process_bind_param`` can write them to storage.  Empty file inputs
+        (no file selected) are removed from the dict to avoid overwriting
+        existing values.
         """
         data: dict[str, Any] = dict(form_data)
         for field in form.fields:
             is_multi = isinstance(field.widget, (MultiSelectWidget, RelationMultiSelectWidget))
             is_checkbox = isinstance(field.widget, CheckboxInput)
-            if is_multi:
+            is_file = isinstance(field.widget, FileInputWidget)
+            if is_file:
+                upload = form_data.get(field.name)
+                if isinstance(upload, StarletteUpload) and upload.filename:
+                    data[field.name] = upload
+                else:
+                    data.pop(field.name, None)
+            elif is_multi:
                 data[field.name] = form_data.getlist(field.name)
             elif is_checkbox and field.name not in data:
                 data[field.name] = False
         return data
+
+    @staticmethod
+    def _pop_file_uploads(
+        data: dict[str, Any],
+        form: PydanticForm,
+    ) -> dict[str, Any]:
+        """Remove ``UploadFile`` values from *data* so Pydantic validation
+        does not choke on non-string file objects.
+
+        Returns a dict of ``{field_name: UploadFile}`` that must be merged
+        back into the adapter data after validation succeeds.
+        """
+        uploads: dict[str, Any] = {}
+        for field in form.fields:
+            if isinstance(field.widget, FileInputWidget) and field.name in data:
+                val = data.pop(field.name)
+                if isinstance(val, StarletteUpload):
+                    uploads[field.name] = val
+        return uploads
 
     async def create_view(self, request: Request):
         """Handles form submission for creating a new item."""
@@ -498,6 +562,7 @@ class DynamicModelView:
             form_fields=getattr(self.options, "form_fields", None) or None,
         )
         data = self._extract_form_data(form_data, form)
+        file_uploads = self._pop_file_uploads(data, form)
         form.bind(data)
         instance, errs = form.validate(data)
 
@@ -539,7 +604,9 @@ class DynamicModelView:
             )
 
         try:
-            new_item = await self.adapter.create(data=instance.model_dump())
+            create_data = instance.model_dump()
+            create_data.update(file_uploads)
+            new_item = await self.adapter.create(data=create_data)
         except IntegrityError as exc:
             logger.exception("IntegrityError during create")
             field_errors = _integrity_error_to_field_errors(exc)
@@ -656,6 +723,7 @@ class DynamicModelView:
             form_fields=getattr(self.options, "form_fields", None) or None,
         )
         data = self._extract_form_data(form_data, form)
+        file_uploads = self._pop_file_uploads(data, form)
 
         form.bind(data)
         instance, errs = form.validate(data)
@@ -695,7 +763,9 @@ class DynamicModelView:
 
         # exclude_none: id is not submitted by the form and must not overwrite the PK
         try:
-            await self.adapter.update(pk=item_id, data=instance.model_dump(exclude_none=True))
+            update_data = instance.model_dump(exclude_none=True)
+            update_data.update(file_uploads)
+            await self.adapter.update(pk=item_id, data=update_data)
         except IntegrityError as exc:
             logger.exception("IntegrityError during update")
             field_errors = _integrity_error_to_field_errors(exc)
@@ -786,6 +856,90 @@ class DynamicModelView:
         html = template.render(context)
         return Response(content=html, media_type="text/html")
 
+    async def upload_file_view(
+        self,
+        request: Request,
+        field_name: str,
+    ) -> Response:
+        """Accept a file upload and store it via the configured storage.
+
+        ``POST /{model}/upload/{field_name}``
+
+        Returns a JSON response with the stored filename.
+        """
+        await self._check_permission(request, "add")
+        if not self.storage:
+            raise HTTPException(
+                status_code=400,
+                detail="File uploads not configured",
+            )
+        form_data = await request.form()
+        upload = form_data.get("file")
+        if not isinstance(upload, StarletteUpload) or not upload.filename:
+            raise HTTPException(status_code=400, detail="No file provided")
+        filename = self.storage.write(upload.file, upload.filename)
+        from starlette.responses import JSONResponse  # noqa: PLC0415
+
+        return JSONResponse({"filename": filename})
+
+    async def delete_file_view(
+        self,
+        request: Request,
+        item_id: int,
+        field_name: str,
+    ) -> Response:
+        """Delete a file from storage and clear the field on the record.
+
+        ``DELETE /{model}/{item_id}/file/{field_name}``
+        """
+        await self._check_permission(request, "change")
+        item = await self.adapter.get(pk=item_id)
+        if not item:
+            raise HTTPException(status_code=404, detail="Item not found")
+        val = getattr(item, field_name, None)
+        if val and self.storage:
+            fname = val.name if hasattr(val, "name") else str(val)
+            path = self.storage.get_path(fname)
+            if os.path.exists(path):
+                os.remove(path)
+        await self.adapter.update(pk=item_id, data={field_name: None})
+        if "hx-request" in request.headers:
+            return Response(
+                status_code=200,
+                headers={"HX-Trigger": "fileDeleted"},
+            )
+        return Response(status_code=204)
+
+    def _collect_file_paths(self, item: Any) -> list[str]:
+        """Return disk paths of all files attached to *item*.
+
+        The paths are collected **before** the DB row is deleted so that
+        ``ImageType.process_result_value`` (which opens the file) is not
+        called after the file has already been removed.
+        """
+        if not self.storage:
+            return []
+        from hyperadmin.core.uploads import FileFieldMeta  # noqa: PLC0415
+
+        paths: list[str] = []
+        for name, fi in self.model.model_fields.items():
+            meta = classify_field(fi, self.model)
+            if not isinstance(meta, FileFieldMeta):
+                continue
+            val = getattr(item, name, None)
+            if not val:
+                continue
+            fname = val.name if hasattr(val, "name") else str(val)
+            paths.append(self.storage.get_path(fname))
+        return paths
+
+    @staticmethod
+    def _remove_files(paths: list[str]) -> None:
+        """Remove files from disk, ignoring missing ones."""
+        for path in paths:
+            if os.path.exists(path):
+                os.remove(path)
+
     async def delete_action(self, request: Request, item_id: int):
         """Deletes an item."""
         await self._check_permission(request, "delete")
@@ -793,7 +947,9 @@ class DynamicModelView:
         if not item:
             raise HTTPException(status_code=404, detail="Item not found")
 
+        file_paths = self._collect_file_paths(item)
         await self.adapter.delete(pk=item_id)
+        self._remove_files(file_paths)
 
         redirect_url = request.url_for(f"{self.model.__name__.lower()}-list")
 

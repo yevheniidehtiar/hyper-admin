@@ -60,6 +60,9 @@ class HyperAdminSettings(BaseSettings):
     theme: ThemeLiteral = "auto"
     items_per_page: int = Field(default=20, gt=0)
 
+    # ── Uploads ───────────────────────────────────────────────────────────────
+    upload_dir: str = "uploads"
+
     # ── Formatting ────────────────────────────────────────────────────────────
     date_format: str = "%Y-%m-%d"
     datetime_format: str = "%Y-%m-%d %H:%M:%S"

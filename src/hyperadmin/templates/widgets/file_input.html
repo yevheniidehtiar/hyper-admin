@@ -1,0 +1,15 @@
+{%- from "components/_macros.html" import field_wrapper -%}
+{%- call field_wrapper(field) -%}
+    {%- if widget.current_file -%}
+    <div class="ha-file-current" data-testid="{{ field.name }}-current-file">
+        <span>Current: {{ widget.current_file }}</span>
+    </div>
+    {%- endif -%}
+    <input id="{{- field.name -}}"
+           name="{{- field.name -}}"
+           type="file"
+           class="ha-input"
+           data-testid="{{- field.name -}}-file-input"
+           aria-invalid="{{- 'true' if field.errors else 'false' -}}"
+    />
+{%- endcall -%}

@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlmodel import SQLModel, select
 
-from examples.simple.models import City, Country, User
+from examples.simple.models import City, Country, User, upload_storage
 from hyperadmin.core.settings import HyperAdminSettings
 from hyperadmin.main import Admin
 
@@ -65,7 +65,7 @@ settings = HyperAdminSettings(
 app = FastAPI(lifespan=lifespan)
 
 app.mount("/static", StaticFiles(directory="src/hyperadmin/static"), name="static")
-admin = Admin(app, engine=engine, settings=settings)
+admin = Admin(app, engine=engine, settings=settings, storage=upload_storage)
 
 # 4. Mount the admin interface
 admin.mount(path="/admin")
