@@ -126,6 +126,25 @@ class DateTimeInput(HtmxWidget):
         super().__init__(template_path="widgets/datetime_input.html")
 
 
+class FileInputWidget(HtmxWidget):
+    """Widget for file upload fields (``FileType`` / ``ImageType`` columns)."""
+
+    input_type: ClassVar[str] = "file"
+    is_image: bool
+    current_file: str | None
+
+    def __init__(
+        self,
+        is_image: bool = False,
+        current_file: str | None = None,
+    ) -> None:
+        object.__setattr__(self, "template_path", "widgets/file_input.html")
+        object.__setattr__(self, "static_list", ())
+        object.__setattr__(self, "htmx_attrs", None)
+        self.is_image = is_image
+        self.current_file = current_file
+
+
 class RelationSelectWidget(HtmxWidget):
     """Widget for a single FK relation field — supports preload and lazy (HTMX) strategies."""
 
@@ -291,8 +310,11 @@ class PydanticForm:
         # --- classify_field auto-detection (requires SQLAlchemy) ---
         if _HAS_CLASSIFY and _classify_field is not None:
             from hyperadmin.core.choices import SelectFieldMeta  # noqa: PLC0415
+            from hyperadmin.core.uploads import FileFieldMeta  # noqa: PLC0415
 
             raw_meta = _classify_field(field, self.model)
+            if isinstance(raw_meta, FileFieldMeta):
+                return FileInputWidget(is_image=raw_meta.is_image)
             if isinstance(raw_meta, SelectFieldMeta):
                 meta = raw_meta
                 choices_url = f"{self.choices_base_url}/{name}" if self.choices_base_url else ""
