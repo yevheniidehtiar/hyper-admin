@@ -91,6 +91,7 @@ class DynamicModelView:
         admin_instance: Any = None,
         search_fields: list[str] | None = None,
         field_labels: dict[str, str] | None = None,
+        storage: Any = None,
     ):
         self.adapter = adapter
         self.model = adapter.model
@@ -107,6 +108,7 @@ class DynamicModelView:
         self._admin_instance = admin_instance
         self.search_fields = search_fields
         self.field_labels = field_labels or {}
+        self.storage = storage
         # Expose the live adapter on the admin instance so action handlers can use self.adapter
         if admin_instance is not None:
             admin_instance.adapter = self.adapter
