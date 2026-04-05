@@ -1,3 +1,6 @@
+# GitPM sync state (not versioned)
+.meta/sync/github-state.json
+
 # Coverage.py
 htmlcov/
 reports/

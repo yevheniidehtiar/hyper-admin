@@ -1,0 +1,11 @@
+repo: yevheniidehtiar/hyper-admin
+status_mapping:
+  Todo: todo
+  In Progress: in_progress
+  In Review: in_review
+  Done: done
+  Backlog: backlog
+label_mapping:
+  epic_labels:
+    - epic
+auto_sync: false
