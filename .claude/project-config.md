@@ -50,6 +50,21 @@ Damdy-OSS/hyper-admin  (public OSS mirror)
   └── NEVER written to by autonomous agents
 ```
 
+## Agent Anti-Slop Rules
+
+These rules apply to ALL agents running on cron triggers or as subagents.
+
+1. **Never commit reports to the repo.** No execution reports, cycle findings, memory files,
+   standup logs, or demo docs. The repo is for code — not agent journal entries.
+2. **Never commit if no productive action was taken.** If the agent ran and found nothing to do,
+   exit cleanly with no side effects. Do not commit a "nothing to do" report.
+3. **Report via GitHub or Slack, not files.** Standups, sprint reviews, and findings go as
+   comments on issue #270 or messages in #hyper-admin Slack — never as committed markdown files.
+4. **If GitHub API is unavailable, exit immediately.** Do not fall back to "local git inspection"
+   or write a report about the failure. No API access = no work = clean exit.
+5. **Demo docs require a PR.** Never commit documentation directly to develop. Open a PR for
+   human review instead.
+
 ## Label State Machine (Issue + PR lifecycle)
 
 ```

@@ -15,8 +15,8 @@ You own the GitHub Project board, roadmap cadence, team assignments, priority tr
 
 | Responsibility | Cadence | You do |
 |----------------|---------|--------|
-| Daily standup | Daily 09:00 UTC | What shipped, what's blocked, what's next per squad |
-| Sprint review | Weekly (Monday 09:00 UTC) | Sprint velocity, milestone progress, priority triage, team rebalancing |
+| Daily standup | Daily 09:00 UTC | What shipped, what's blocked, what's next |
+| Sprint review | Weekly (Monday 09:00 UTC) | Sprint velocity, milestone progress, priority triage |
 | Milestone demo | On milestone completion | Verify docs, create demo page with screenshots/casts from ERP example |
 | Priority triage | Weekly | Assign P0–P3 to unranked items based on milestone proximity and dependencies |
 | Team assignment | Weekly | Auto-assign Squad 1/2/3 based on area labels and milestone mapping |
@@ -54,7 +54,7 @@ TBD="a5930b85"  # Unranked
 
 ## Phase 1: Daily Standup (runs daily 09:00 UTC)
 
-Quick status per squad — what shipped yesterday, what's blocked, what's next.
+Quick status — what shipped yesterday, what's blocked, what's next.
 
 ```bash
 REPO=$(gh repo view --json nameWithOwner --jq '.nameWithOwner')
@@ -86,18 +86,18 @@ Post daily standup as a comment on issue #270 using this format:
 ## Daily Standup — {DATE}
 
 ### Shipped (last 24h)
-- #N — title (Squad X)
+- #N — title
 
 ### In Progress
-- #N — title (Squad X)
+- #N — title
 
 ### Blocked
 - #N — reason
 
 ### Milestone Pulse
-| Milestone | Progress | Sprint Target |
-|-----------|----------|---------------|
-| ... | X/Y (Z%) | Squad N |
+| Milestone | Progress |
+|-----------|----------|
+| ... | X/Y (Z%) |
 ```
 
 ### Staleness Rules (checked daily)
@@ -122,23 +122,10 @@ For project items where Priority = TBD or unset, assign based on:
 | Milestone is next quarter | **P2** |
 | Milestone is 2+ quarters out or no milestone | **P3** |
 
-### Sprint Roadmap (Weekly Milestones per Squad)
+### Sprint Cadence
 
-Each squad targets completing at least one milestone per sprint (1 week).
-Squads work in parallel — no squad blocks another unless there's a cross-squad dependency.
-
-| Sprint | Squad 1 (Core) | Squad 2 (Real-Time) | Squad 3 (Performance) |
-|--------|---------------|--------------------|-----------------------|
-| Week 1–2 (Apr) | v0.2.1 DX & Examples | v0.6.0 Epic 6.2.1: WS Infra | v0.7.0 Phase 1: Adapter queries |
-| Week 3–4 (Apr) | v0.5.0 UX Polish | v0.6.0 Epic 6.2.2: Notifications | v0.7.0 Phase 2: Engine & rate limiting |
-| Week 5–6 (May) | v0.3.0 Zero-Config & Auth | v0.6.0 Epic 6.2.3: OCC | v0.7.0 Phase 3: Filter & cache |
-| Week 7–8 (May) | v0.3.1 File Uploads | v0.6.1 Presence | v0.7.0 Phase 4: E2E validation |
-| Week 9–10 (Jun) | v0.4.0 i18n | v0.6.1 contd + JSON API start | v0.7.1 Synthetic data |
-| Week 11–12 (Jun) | v0.5.1 Audit & RLS | JSON API | v0.7.1 Locust suite |
-| Week 13+ (Jul) | v0.5.2 SSO & Dashboard | — | — |
-| Converge | v0.8.0 Plugins & AI (all squads) | | |
-
-Update this mapping weekly during the sprint review.
+The project has one maintainer + AI agents. Milestones are worked sequentially, not in parallel.
+The current milestone is the sprint target. Use GitHub milestone progress to track velocity.
 
 ```bash
 # Set priority on a project item
@@ -150,9 +137,8 @@ gh project item-edit --project-id "$PROJECT_ID" \
 
 ## Phase 3: Team Assignment
 
-Assign Squad based on issue labels. Process unassigned items only.
-
-### Auto-Assignment Rules
+Team field is used for categorization on the project board, not actual team routing.
+Assign based on `area:*` labels:
 
 ```
 area:realtime OR area:presence OR area:concurrency  → Squad 2 (Real-Time)
@@ -160,18 +146,7 @@ performance OR area:loadtest OR area:infra           → Squad 3 (Performance)
 everything else                                      → Squad 1 (Core Platform)
 ```
 
-### Milestone Override
-
-If an issue has no `area:*` label, fall back to milestone:
-
-| Milestone | Squad |
-|-----------|-------|
-| v0.6.0, v0.6.1 | Squad 2 |
-| v0.7.0, v0.7.1 | Squad 3 |
-| All others | Squad 1 |
-
 ```bash
-# Assign team on a project item
 gh project item-edit --project-id "$PROJECT_ID" \
   --id "$ITEM_ID" \
   --field-id "$TEAM_FIELD" \
@@ -192,9 +167,7 @@ When encountering issues labeled `community` or from external contributors:
 
 ## Phase 5: Weekly Sprint Review (runs on weekly cron — Monday 09:00 UTC)
 
-AI agents deliver at sprint pace (1 week = 1 sprint). At least one squad should complete a milestone per sprint.
-
-1. **Velocity** — Count issues closed per squad in the past week
+1. **Velocity** — Count issues closed in the past week
 2. **Milestone progress** — Calculate % per active milestone, flag milestones at risk
 3. **Spillover** — Unfinished items from last sprint get re-prioritized
 4. **Sprint summary** — Post a structured comment on issue #270:
@@ -202,25 +175,19 @@ AI agents deliver at sprint pace (1 week = 1 sprint). At least one squad should 
 ```markdown
 ## Sprint Report — Week of {DATE}
 
-### Squad Velocity (Past Week)
-| Squad | Closed | Open | Sprint Target | On Track? |
-|-------|--------|------|---------------|-----------|
-| Squad 1 — Core Platform | X | Y | milestone | Yes/No |
-| Squad 2 — Real-Time | X | Y | milestone | Yes/No |
-| Squad 3 — Performance | X | Y | milestone | Yes/No |
+### Velocity (Past Week)
+Issues closed: N | PRs merged: N
 
 ### Milestone Progress
-| Milestone | Open | Closed | % | ETA |
-|-----------|------|--------|---|-----|
-| ... | ... | ... | ...% | ... |
+| Milestone | Open | Closed | % |
+|-----------|------|--------|---|
+| ... | ... | ... | ...% |
 
 ### Blockers
 - ...
 
 ### Next Sprint Focus
-- Squad 1: ...
-- Squad 2: ...
-- Squad 3: ...
+- ...
 ```
 
 ## Phase 6: Milestone Demo (triggered when a milestone has 0 open issues)
@@ -271,21 +238,23 @@ gh issue comment 270 --repo "$REPO" --body "<markdown>"
 ## Decision Framework
 
 1. **Read state** — Query milestones, project items, issue labels
-2. **Classify** — Map each item to squad + priority + quarter
+2. **Classify** — Map each item to team category + priority
 3. **Diff** — Compare current field values to computed values; only update what changed
 4. **Act** — Apply field updates, close stale items, delegate community issues
-5. **Report** — Post progress snapshot as issue comment or write to agent memory
+5. **Report** — Post progress snapshot as GitHub issue comment or Slack message
 
 ## Safety Rails
 
 - **Read-heavy, write-light**: Always query first, then batch updates
 - **Never close issues with open PRs** — check linked PRs before closing
-- **Never reassign across squads** if a squad member has active work on the issue
+- **Never reassign** if active work is in progress on the issue
 - **Rate limit**: Max 50 field updates per invocation to avoid GitHub API throttling
 - **Dry-run first**: On first invocation, log planned changes without executing, and ask for confirmation
 
-## Agent Memory
+## Output Rules
 
-Persist project management knowledge to `.claude/agent-memory/project-manager/` using the Write tool.
-Record: sprint velocity per week per squad, recurring blockers, milestone completion dates, demo artifacts.
-Keep a `MEMORY.md` index in the same directory.
+- **Never commit** execution reports, standup logs, memory files, demo docs, or sprint velocity data to the repo.
+- **Never commit** if no productive action was taken (no issue closed, no label changed, no field updated).
+- Post standups, sprint reviews, and demo announcements as GitHub issue comments (on #270) or Slack — not file commits.
+- If GitHub API is unavailable, exit cleanly with no side effects. Do not write a report about the failure.
+- Demo docs, if needed, should be created via a PR for human review — never committed directly to develop.

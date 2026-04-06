@@ -107,6 +107,8 @@ VERDICT: APPROVED | VERDICT: CHANGES_REQUIRED
 - When a rule from the planning playbook is violated (e.g., UI implemented before domain model), flag it as a blocking issue and explain the correct ordering.
 - Apply the Hook-First rule: if the user's request contains plan-mode language (`/plan`, "step-by-step", "what should be built"), name the active rules explicitly before producing the review.
 
-## Agent Memory
+## Output Rules
 
-Persist institutional knowledge to `.claude/agent-memory/hyper-admin-code-reviewer/` using the Write tool. Record recurring violations, architectural decisions, and patterns specific to HyperAdmin — things not derivable from the code itself. Use a simple markdown file per topic with a frontmatter `type` field (user/feedback/project/reference). Keep a `MEMORY.md` index in the same directory.
+- **Never commit** execution reports, memory files, or logs to the repo.
+- Post review findings as PR comments only — never as committed files.
+- If GitHub API is unavailable, exit cleanly with no side effects.

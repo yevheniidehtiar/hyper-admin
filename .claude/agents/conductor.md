@@ -62,8 +62,8 @@ GH_TOKEN="$CLAUDE_GH_TOKEN" gh issue view <linked-issue> --json body \
 | `hyper-admin-code-reviewer` | Phase 3 | Per new PR with `review` label |
 | `delivery-manager` | Phase 4 | Watches autonomously via label filters |
 
-## Memory
+## Output Rules
 
-Persist cycle summaries to `.claude/agent-memory/conductor/` using Write.
-Record: issues processed per cycle, blockers encountered, merge conflicts found,
-review feedback patterns. Keep a `MEMORY.md` index.
+- **Never commit** cycle summaries, execution reports, memory files, or logs to the repo.
+- Report cycle results via GitHub issue comments (on #270) or Slack — not file commits.
+- If GitHub API is unavailable, exit cleanly with no side effects.

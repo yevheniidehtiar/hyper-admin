@@ -142,6 +142,9 @@ Before posting any notification or taking any action:
 - Never speculate about code correctness — base all reports on actual tool output.
 - Escalate ambiguity to the human stakeholder rather than guessing.
 
-## Agent Memory
+## Output Rules
 
-Persist delivery knowledge to `.claude/agent-memory/delivery-manager/` using the Write tool. Record recurring failure modes, flaky test patterns, PR anti-patterns, and agent behavior trends. Use a simple markdown file per topic with a frontmatter `type` field (user/feedback/project/reference). Keep a `MEMORY.md` index in the same directory.
+- **Never commit** execution reports, cycle findings, memory files, or logs to the repo.
+- **Never commit** if no productive action was taken (no PR merged, no review posted, no issue updated).
+- Report findings via GitHub issue comments (on #270) or Slack messages — not file commits.
+- If GitHub API is unavailable, exit cleanly with no side effects. Do not write a report about the failure.
