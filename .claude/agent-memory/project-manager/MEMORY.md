@@ -19,12 +19,12 @@
 | v0.5.0 — Advanced UX | Before 2026-04-01 (legacy Phase 2 tasks) | 2026-04-01 |
 | v0.3.1 — File Uploads | 2026-04-01 (epic commit 953ff23) | 2026-04-04 |
 
-## Active Milestones (as of 2026-04-05)
+## Active Milestones (as of 2026-04-06)
 
 | Milestone | Open | Closed | Progress | Squad |
 |-----------|------|--------|----------|-------|
-| v0.4.0 — Responsive Design | 9 | 1 | 10% | Squad 1 |
 | v0.3.2 — Advanced File Uploads | 9 | 0 | 0% | Squad 1 |
+| v0.4.0 — Responsive Design | 9 | 1 | 10% | Squad 1 |
 | v0.5.1 — Object Permissions & MFA | 15 | 0 | 0% | Squad 1 |
 | v0.5.2 — OAuth SSO | 0 | 0 | 0% | Squad 1 |
 | v0.6.0 — Real-Time Layer | 23 | 0 | 0% | Squad 2 |
@@ -36,18 +36,30 @@
 ## Recurring Blockers
 
 - #475: `review(spec): approve SDD for object permissions & MFA` — human gate for v0.5.1. Blocks all implementation.
-- #423: `review(spec): approve SDD for object permissions & MFA` — duplicate human gate issue (v0.5.1). Investigate for closure.
+- #423: `review(spec): approve SDD for object permissions & MFA` — duplicate of #475 (v0.5.1). Recommend closing #423.
 - #438: `review(spec): approve SDD for OAuth SSO` — human gate for v0.5.2 SSO epic.
 - #455: `review(spec): approve SDD for dashboard builder` — human gate for v0.5.4 dashboard epic.
+
+## Priority Triage Log
+
+| Date | Items Updated | Action |
+|------|--------------|--------|
+| 2026-04-06 | #402–#410 (v0.3.2 items) | Set Priority=P1, Team=Squad 1 |
+| 2026-04-06 | #76 (JSON RESTful API epic) | Set Priority=P3 (team already Squad 1) |
 
 ## Notes
 
 - Agent memory initialized: 2026-04-01
-- No `released`-labeled open issues found on 2026-04-05
-- No `in-progress`-labeled open issues found on 2026-04-05
+- No `released`-labeled open issues found on 2026-04-05 or 2026-04-06
+- No `in-progress`-labeled open issues found on 2026-04-05 or 2026-04-06
 - 2026-04-04: v0.3.1 File Uploads demoed (Phase 6 complete). All 15 issues closed.
 - 2026-04-05: No new activity in last 24h. All squads between sprint cycles.
 - 2026-04-05: No new milestone completions detected. All 6 completed milestones already demoed or pre-v0.2.1.
 - 2026-04-05: Daily standup posted to issue #270 (comment #4188586987).
-- Observation: v0.5.1 issue count grew from 12 to 15 open since 2026-04-04 — likely new sub-tasks added.
-- Observation: #475 and #423 are duplicates for same SDD — recommend closing one.
+- 2026-04-06 (Monday): Daily standup posted to issue #270 (comment #4191314991).
+- 2026-04-06 (Monday): Sprint review posted to issue #270 (comment #4191316464).
+- 2026-04-06: Priority triage applied — 10 items updated (9 v0.3.2 + #76).
+- 2026-04-06: Phase 6 — no new completed milestones. All 4 eligible milestones already demoed.
+- 2026-04-06: Squad 2 and Squad 3 kickoff week — first sprint on v0.6.0 and v0.7.0 respectively.
+- Observation: #475 and #423 are duplicates for same SDD — recommend closing #423.
+- Squad 1 current sprint target: v0.3.2 Advanced File Uploads (9 issues, all P1).
