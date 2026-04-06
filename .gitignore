@@ -80,6 +80,7 @@ site/
 
 # Claude Code
 .claude/settings.local.json
+.claude/agent-memory/
 .claude/container/ssh/
 .claude/container/host-memory/*
 !.claude/container/host-memory/.dockerkeep
