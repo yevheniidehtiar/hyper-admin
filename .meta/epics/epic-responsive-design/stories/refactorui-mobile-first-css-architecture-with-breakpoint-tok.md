@@ -3,7 +3,7 @@ type: story
 id: evYLLYeqOdOC
 title: "refactor(ui): mobile-first CSS architecture with breakpoint tokens"
 status: todo
-priority: medium
+priority: high
 assignee: null
 labels:
   - frontend
@@ -12,7 +12,7 @@ labels:
   - responsive
   - css
 estimate: null
-epic_ref: null
+epic_ref: Rsp4_Gamma_01
 github:
   issue_number: 452
   repo: yevheniidehtiar/hyper-admin
@@ -55,6 +55,12 @@ Restructure the CSS from desktop-first to mobile-first. Add breakpoint custom pr
   When  the page loads
   Then  container max-width 1280px, content centered
 
+**Scenario: mobile typography is scaled for small screens**
+  Given viewport width is 375px
+  When  a list view page loads
+  Then  page headings use --ha-font-size-xl instead of --ha-font-size-2xl
+  And   word-break: break-word prevents horizontal overflow from long strings
+
 **Scenario: no desktop visual regression**
   Given the page loads at 1280x720
   When  comparing to current layout
@@ -67,6 +73,7 @@ Restructure the CSS from desktop-first to mobile-first. Add breakpoint custom pr
 - [ ] Tablet breakpoint restores two-column layout
 - [ ] Desktop breakpoint restores full sidebar
 - [ ] XL breakpoint caps container width
+- [ ] Mobile typography scaled for small screens (headings, word-break)
 - [ ] No visual regression at 1280x720
 
 ## Files to modify

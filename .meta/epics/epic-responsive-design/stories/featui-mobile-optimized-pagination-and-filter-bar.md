@@ -3,7 +3,7 @@ type: story
 id: miwk_JpwDtKy
 title: "feat(ui): mobile-optimized pagination and filter bar"
 status: todo
-priority: medium
+priority: high
 assignee: null
 labels:
   - frontend
@@ -12,7 +12,7 @@ labels:
   - planned
   - responsive
 estimate: null
-epic_ref: null
+epic_ref: Rsp4_Gamma_01
 github:
   issue_number: 464
   repo: yevheniidehtiar/hyper-admin
@@ -52,12 +52,19 @@ Optimize pagination and filter bar components for mobile viewports. Pagination s
   When  the list view loads
   Then  the search input spans the full content width
 
+**Scenario: pagination controls are keyboard-navigable on mobile**
+  Given viewport width is 375px and the list view is loaded with pagination
+  When  a keyboard user tabs through the pagination controls
+  Then  Previous, page numbers, and Next buttons receive visible focus
+  And   Enter activates the focused control
+
 ## Acceptance criteria
 
 - [ ] Pagination stacks vertically on mobile with centered controls
 - [ ] Pagination info wraps gracefully
 - [ ] Filter controls stack full-width on mobile
 - [ ] Search input spans full width on mobile
+- [ ] Pagination controls are keyboard-navigable with visible focus
 
 ## Files to modify
 

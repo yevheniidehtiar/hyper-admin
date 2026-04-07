@@ -12,7 +12,7 @@ labels:
   - planned
   - responsive
 estimate: null
-epic_ref: null
+epic_ref: Rsp4_Gamma_01
 github:
   issue_number: 470
   repo: yevheniidehtiar/hyper-admin
@@ -42,10 +42,18 @@ Ensure remaining views (login, detail, dashboard) are fully responsive. Login ca
   And   action buttons wrap to avoid horizontal overflow
   And   the "Back to list" link has adequate touch target
 
+**Scenario: login form is accessible to screen readers on mobile**
+  Given viewport width is 375px and a screen reader is active
+  When  the login page loads
+  Then  the login form has an accessible name (aria-label or heading)
+  And   username and password fields have associated labels
+  And   the submit button is focusable and clearly labeled
+
 ## Acceptance criteria
 
 - [ ] Login page centered and usable at 375px
 - [ ] Detail view readable at 375px with stacked fields and wrapping actions
+- [ ] Login form accessible to screen readers with proper labels
 
 ## Files to modify
 

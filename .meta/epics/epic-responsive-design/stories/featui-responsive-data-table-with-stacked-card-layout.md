@@ -3,7 +3,7 @@ type: story
 id: KKpriYWS0U9B
 title: "feat(ui): responsive data table with stacked card layout"
 status: todo
-priority: medium
+priority: high
 assignee: null
 labels:
   - frontend
@@ -12,7 +12,7 @@ labels:
   - planned
   - responsive
 estimate: null
-epic_ref: null
+epic_ref: Rsp4_Gamma_01
 github:
   issue_number: 461
   repo: yevheniidehtiar/hyper-admin
@@ -50,12 +50,20 @@ Below 768px viewport, transform the data table from horizontal rows into stacked
   When  CSS displays cards on mobile
   Then  the data-label content appears as bold text before each value
 
+**Scenario: card layout is accessible to screen readers**
+  Given viewport width is 375px and a screen reader is active
+  When  the list view loads with data
+  Then  each card has role="article" or is wrapped in a semantic element
+  And   the visually hidden table headers remain accessible to screen readers
+  And   each card's data-label is associated with its value via aria-label or visible text
+
 ## Acceptance criteria
 
 - [ ] Table displays as stacked cards on mobile
 - [ ] Table displays as normal horizontal table on desktop
 - [ ] Action buttons in card footer on mobile with 44px touch targets
 - [ ] data-label attributes provide inline column labels
+- [ ] Card layout is accessible to screen readers (semantic roles, hidden headers)
 
 ## Files to modify
 

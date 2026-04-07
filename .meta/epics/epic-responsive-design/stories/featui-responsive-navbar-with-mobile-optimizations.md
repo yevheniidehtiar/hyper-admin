@@ -3,7 +3,7 @@ type: story
 id: TAhnnvjjZxyA
 title: "feat(ui): responsive navbar with mobile optimizations"
 status: todo
-priority: medium
+priority: high
 assignee: null
 labels:
   - frontend
@@ -12,7 +12,7 @@ labels:
   - planned
   - responsive
 estimate: null
-epic_ref: null
+epic_ref: Rsp4_Gamma_01
 github:
   issue_number: 465
   repo: yevheniidehtiar/hyper-admin
@@ -41,10 +41,18 @@ Optimize the navbar for mobile viewports. Reduced padding, brand and actions rem
   And   the user dropdown button is visible and tappable
   And   both have minimum 44px touch targets
 
+**Scenario: navbar buttons have accessible names for screen readers**
+  Given viewport width is 375px and a screen reader is active
+  When  the page loads
+  Then  the hamburger button has aria-label="Open navigation"
+  And   the theme toggle button has aria-label="Toggle dark mode"
+  And   the user dropdown button has an accessible name
+
 ## Acceptance criteria
 
 - [ ] Navbar uses reduced padding on mobile
 - [ ] Brand, theme toggle, and user dropdown remain visible and accessible on 320px
+- [ ] All navbar buttons have accessible names for screen readers
 
 ## Files to modify
 

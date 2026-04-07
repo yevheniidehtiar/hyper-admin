@@ -3,7 +3,7 @@ type: story
 id: I0BwE7nn-Qpf
 title: "feat(ui): touch-friendly forms and inline formsets on mobile"
 status: todo
-priority: medium
+priority: high
 assignee: null
 labels:
   - frontend
@@ -12,7 +12,7 @@ labels:
   - planned
   - responsive
 estimate: null
-epic_ref: null
+epic_ref: Rsp4_Gamma_01
 github:
   issue_number: 467
   repo: yevheniidehtiar/hyper-admin
@@ -50,12 +50,19 @@ Ensure forms, fieldsets, and inline formsets are fully usable on mobile. Inputs 
   Then  each inline row displays as a stacked card instead of a table row
   And   the Remove button has adequate touch target size
 
+**Scenario: form labels remain associated with inputs on mobile layout**
+  Given viewport width is 375px and a screen reader is active
+  When  a create/edit form loads in single-column layout
+  Then  every input has a programmatically associated label (via for/id or aria-labelledby)
+  And   screen reader users can navigate fields by label
+
 ## Acceptance criteria
 
 - [ ] Form inputs have at least 44px height on coarse pointer devices
 - [ ] Form grid collapses to single column on mobile
 - [ ] Fieldset toggles are touch-friendly
 - [ ] Inline formsets stack as cards on mobile
+- [ ] Form labels remain programmatically associated with inputs in mobile layout
 
 ## Files to modify
 

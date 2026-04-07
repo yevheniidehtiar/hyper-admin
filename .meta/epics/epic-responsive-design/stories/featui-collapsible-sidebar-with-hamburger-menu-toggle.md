@@ -3,16 +3,16 @@ type: story
 id: 8P_VPRTVAWHF
 title: "feat(ui): collapsible sidebar with hamburger menu toggle"
 status: todo
-priority: medium
+priority: high
 assignee: null
 labels:
   - frontend
   - ui
-  - size:M
+  - size:L
   - planned
   - responsive
 estimate: null
-epic_ref: null
+epic_ref: Rsp4_Gamma_01
 github:
   issue_number: 458
   repo: yevheniidehtiar/hyper-admin
@@ -56,6 +56,18 @@ Replace the "hidden on mobile" sidebar with a slide-in overlay triggered by a ha
   Then  the hamburger button is not visible
   And   the sidebar is displayed inline as normal
 
+**Scenario: focus is trapped inside open sidebar overlay**
+  Given viewport width is 375px and the sidebar overlay is open
+  When  the user presses Tab repeatedly
+  Then  focus cycles through sidebar links and the close button
+  And   focus never escapes to the page behind the overlay
+
+**Scenario: sidebar overlay announces itself to screen readers**
+  Given viewport width is 375px and screen reader is active
+  When  the user opens the sidebar overlay
+  Then  the overlay has role="dialog" and aria-label="Navigation"
+  And   focus moves to the first sidebar link
+
 ## Acceptance criteria
 
 - [ ] Hamburger button visible on mobile, hidden on desktop
@@ -63,6 +75,8 @@ Replace the "hidden on mobile" sidebar with a slide-in overlay triggered by a ha
 - [ ] Tapping backdrop closes sidebar
 - [ ] Escape key closes sidebar
 - [ ] Hamburger hidden on desktop, sidebar inline
+- [ ] Focus trapped inside open sidebar overlay
+- [ ] Sidebar overlay has role="dialog" and aria-label for screen readers
 
 ## Files to modify
 
