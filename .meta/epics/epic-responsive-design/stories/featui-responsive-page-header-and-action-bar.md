@@ -8,7 +8,7 @@ assignee: null
 labels:
   - frontend
   - ui
-  - size:S
+  - size:M
   - planned
   - responsive
 estimate: null
@@ -67,6 +67,6 @@ The page header (model name + "Create New" button, or detail heading + Edit/Dele
 
 ## Agent
 
-- **Size:** S
+- **Size:** M
 - **Tier:** Sonnet
 - **blocked_by:** #452

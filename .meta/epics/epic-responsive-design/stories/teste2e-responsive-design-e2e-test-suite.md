@@ -73,11 +73,28 @@ Create a comprehensive Playwright E2E test suite that validates all responsive d
   Then  the sidebar is at full width
   And   the hamburger button is not visible
 
+**Scenario: page header stacks on mobile**
+  Given the Playwright browser viewport is 375px wide
+  When  the list view loads
+  Then  the page heading and Create New button are stacked vertically
+
+**Scenario: touch feedback is visible on mobile button tap**
+  Given the Playwright browser viewport is 375px wide
+  When  a button receives a pointer-down event
+  Then  the button shows a visible active state
+
+**Scenario: inputs do not trigger zoom on iOS mobile**
+  Given the Playwright browser viewport is 375px wide
+  When  a create form loads
+  Then  all input elements have computed font-size >= 16px
+
 ## Acceptance criteria
 
 - [ ] Mobile viewport tests: sidebar hidden, hamburger visible, card layout, stacked pagination
-- [ ] Mobile form tests: single column, 16px font-size inputs
+- [ ] Mobile form tests: single column, 16px font-size inputs, no iOS zoom
 - [ ] Mobile login test: centered card, full-width inputs
+- [ ] Mobile page header test: heading and actions stacked
+- [ ] Mobile touch feedback test: buttons show active state
 - [ ] Tablet test: two-column layout with narrow sidebar
 - [ ] Desktop test: full sidebar, no hamburger, standard table
 

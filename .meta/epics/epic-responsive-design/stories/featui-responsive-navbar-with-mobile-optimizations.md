@@ -8,7 +8,7 @@ assignee: null
 labels:
   - frontend
   - ui
-  - size:S
+  - size:M
   - planned
   - responsive
 estimate: null
