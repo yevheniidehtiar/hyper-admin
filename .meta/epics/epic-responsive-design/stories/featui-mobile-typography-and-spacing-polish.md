@@ -2,8 +2,8 @@
 type: story
 id: Rsp4_typo_08
 title: "feat(ui): mobile typography and spacing polish"
-status: cancelled
-priority: low
+status: todo
+priority: medium
 assignee: null
 labels:
   - frontend

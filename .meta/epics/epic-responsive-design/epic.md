@@ -45,25 +45,32 @@ experience. Every story must produce a visible, demoable improvement in the exam
 
 ```
 #452 Mobile-first CSS architecture (FOUNDATION) [HIGH, L]
-  ├── #458 Collapsible sidebar + focus trap + SR dialog [HIGH, L]
-  │     ├── #465 Responsive navbar + a11y button names [HIGH, S]
-  │     ├── Orientation handling [LOW, S] — stretch
-  │     └── CSS transitions (reduced-motion) [LOW, S] — stretch
+  ├── #458 Collapsible sidebar + focus trap + SR dialog + transitions [HIGH, L]
+  │     ├── #465 Responsive navbar + a11y button names [HIGH, M]
+  │     └── Orientation handling [LOW, S] — stretch
   ├── #461 Responsive data table card layout + SR support [HIGH, M]
   │     ├── #464 Mobile pagination & filter bar [HIGH, M]
   │     ├── HTMX skeleton loading states [MEDIUM, M]
-  │     └── Mobile empty state designs [LOW, S] — stretch
+  │     └── Mobile empty state designs [LOW, M] — stretch
   ├── #467 Touch-friendly forms + label a11y [HIGH, M]
   ├── iOS input zoom prevention [HIGH, S]
   ├── Skip-to-content landmarks [HIGH, S]
   ├── CSS-only touch feedback [HIGH, S]
-  ├── Responsive page header / action bar [HIGH, S]
+  ├── Responsive page header / action bar [HIGH, M]
   ├── Mobile scroll-to-top after HTMX nav [MEDIUM, S]
-  └── #470 Responsive login, detail, dashboard (final polish) [MEDIUM, S]
+  └── #470 Responsive login, detail, dashboard (final polish) [MEDIUM, M]
       └── E2E responsive test suite [MEDIUM, L]
 ```
 
-### Sub-issues (18 active, ordered by UX impact + dependency)
+### Scope rationale
+
+- **CSS transitions story removed**: sidebar story (#458) already specifies slide/fade transitions,
+  and `_accessibility.css` globally handles `prefers-reduced-motion`. Separate story was gold-plating.
+- **Orientation handling + empty states**: marked as stretch (cut first if timeline tight).
+- **Total: 17 stories** (10 HIGH, 5 MEDIUM, 2 LOW/stretch).
+- **Estimated effort**: ~12 S/M stories + 3 L stories + 2 stretch = deliverable in milestone window.
+
+### Sub-issues (17 active, ordered by UX impact + dependency)
 
 **HIGH priority — must ship for v0.4.0 (core mobile admin experience):**
 1. [ ] #452 refactor(ui): mobile-first CSS architecture with breakpoint tokens (FOUNDATION)
@@ -75,16 +82,15 @@ experience. Every story must produce a visible, demoable improvement in the exam
 7. [ ] feat(ui): skip-to-content and landmark enhancements for mobile
 8. [ ] #465 feat(ui): responsive navbar with mobile optimizations
 9. [ ] feat(ui): CSS-only touch feedback active states
-10. [ ] feat(ui): responsive page header and action bar (NEW)
+10. [ ] feat(ui): responsive page header and action bar
 
 **MEDIUM priority — should ship for v0.4.0 (perceived quality):**
 11. [ ] feat(ui): mobile typography and spacing polish
 12. [ ] feat(ui): HTMX loading skeleton states for mobile
-13. [ ] feat(ui): mobile scroll-to-top after HTMX navigation (NEW)
+13. [ ] feat(ui): mobile scroll-to-top after HTMX navigation
 14. [ ] #470 feat(ui): responsive login, detail, and dashboard views
 15. [ ] test(e2e): responsive design E2E test suite
 
 **LOW priority — stretch goals, cut if timeline tight:**
 16. [ ] feat(ui): orientation handling and viewport stability
-17. [ ] feat(ui): CSS transitions with reduced-motion respect
-18. [ ] feat(ui): mobile-friendly empty state designs
+17. [ ] feat(ui): mobile-friendly empty state designs

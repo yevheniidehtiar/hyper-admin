@@ -9,7 +9,7 @@ labels:
   - frontend
   - ui
   - size:M
-  - planned
+  - stretch
   - responsive
 estimate: null
 epic_ref: Rsp4_Gamma_01
