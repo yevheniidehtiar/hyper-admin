@@ -10,7 +10,7 @@ labels:
   - examples
   - size:S
   - responsive
-  - wave:4
+  - cycle:3
 estimate: null
 epic_ref:
   id: cvr4sYoEN9CV
@@ -59,4 +59,4 @@ Run `python examples/erp/app.py`, open in mobile-sized browser, verify card layo
 
 - **Size:** S
 - **Tier:** Sonnet
-- **blocked_by:** all Wave 2 + Wave 3 stories
+- **blocked_by:** all Cycle 2 stories (C2-A, C2-B, C2-C, C2-D)

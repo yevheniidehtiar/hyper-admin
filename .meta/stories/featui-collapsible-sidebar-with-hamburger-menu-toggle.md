@@ -11,7 +11,7 @@ labels:
   - size:M
   - planned
   - responsive
-  - wave:2
+  - cycle:2
 estimate: null
 epic_ref:
   id: cvr4sYoEN9CV

@@ -10,7 +10,7 @@ labels:
   - testing
   - size:S
   - responsive
-  - wave:4
+  - cycle:3-stagger
 estimate: null
 epic_ref:
   id: cvr4sYoEN9CV
@@ -58,4 +58,4 @@ Run `poe test:e2e -- tests/e2e/test_visual_regression.py --update-snapshots` to 
 
 - **Size:** S
 - **Tier:** Sonnet
-- **blocked_by:** W4-A (B57RGgp05uU0)
+- **blocked_by:** C3-B (B57RGgp05uU0) — needs E2E test suite for screenshot baseline

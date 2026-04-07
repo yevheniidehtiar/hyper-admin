@@ -10,7 +10,7 @@ labels:
   - css
   - size:S
   - responsive
-  - wave:1
+  - cycle:1
 estimate: null
 epic_ref:
   id: cvr4sYoEN9CV

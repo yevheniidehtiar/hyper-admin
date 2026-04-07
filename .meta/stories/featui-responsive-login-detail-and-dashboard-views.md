@@ -11,7 +11,7 @@ labels:
   - size:S
   - planned
   - responsive
-  - wave:3
+  - cycle:2-stagger
 estimate: null
 epic_ref:
   id: cvr4sYoEN9CV
@@ -72,4 +72,4 @@ At 375px viewport:
 
 - **Size:** S
 - **Tier:** Sonnet
-- **blocked_by:** W2-A (8P_VPRTVAWHF), W2-B (KKpriYWS0U9B) — needs sidebar + table responsive to exist
+- **blocked_by:** W1-B (v8xvLKJfP_46) — only needs mobile-first base layout; login has no sidebar, detail/dashboard work with base layout alone

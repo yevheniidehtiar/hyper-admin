@@ -31,88 +31,111 @@ Transform HyperAdmin from desktop-only to mobile-first responsive. Every admin v
 must be fully usable on phones (375px) and tablets (768px) with touch-friendly controls.
 All changes must be CSS/template-only -- no new Python dependencies.
 
-### Wave Plan (3 agents per wave, optimized for max parallelism)
+### Optimized Wave Plan (3 agents per cycle)
 
-#### Wave 1 -- Foundation (3 agents, zero file conflicts, no dependencies)
-- **W1-A** `dyx7PkkdpBto`: Breakpoint tokens in `_tokens.css` (size:S)
-- **W1-B** `v8xvLKJfP_46`: Mobile-first base layout + fieldset migration (size:M) -- `_responsive.css`, `_layout.css`, `_sidebar.css`, `_fieldsets.css`
-- **W1-C** `KKpriYWS0U9B`: Responsive data table with card layout (size:M, promoted from old W2) -- `_table.css`, `table.html` (self-contained media queries)
+#### Cycle 1 -- Foundation (3 agents, zero file conflicts, no dependencies)
 
-File conflict check: W1-A=`_tokens.css`, W1-B=`_responsive/_layout/_sidebar/_fieldsets`, W1-C=`_table/table.html` -- **ZERO overlap**.
+| Slot | Story | ID | Size | Files |
+|------|-------|----|------|-------|
+| A | Breakpoint tokens | `dyx7PkkdpBto` | S | `_tokens.css` |
+| B | Mobile-first base layout + fieldset migration | `v8xvLKJfP_46` | M | `_responsive.css`, `_layout.css`, `_sidebar.css`, `_fieldsets.css` |
+| C | Responsive data table with card layout | `KKpriYWS0U9B` | M | `_table.css`, `table.html` |
 
-#### Wave 2 -- Parallel Components (3 agents, depends on W1-B only)
-- **W2-A** `8P_VPRTVAWHF`: Collapsible sidebar with hamburger (#458) -- `_sidebar.css`, `_navbar.html`, `_sidebar.html`, `_base.html`
-- **W2-B** `I0BwE7nn-Qpf`: Touch-friendly forms (#467) -- `_forms.css`, `_inlines.css`, `_accessibility.css`, `inline_formset.html`
-- **W2-C** `miwk_JpwDtKy`: Mobile pagination & filter bar (#464) -- `_pagination.css`, `_filter.css`, `_search.css`
+Conflict check: **ZERO overlap**. All 3 run truly in parallel.
 
-File conflict check: W2-A=sidebar+navbar templates, W2-B=forms+inlines+a11y, W2-C=pagination+filter+search -- **ZERO overlap**.
+#### Cycle 2 -- Components + Login/Detail (3 agents with stagger)
 
-#### Wave 3 -- Secondary Components (2 agents, depends on W2-A)
-- **W3-A** `TAhnnvjjZxyA`: Responsive navbar (#465) -- `_navbar.css` (depends on W2-A hamburger)
-- **W3-B** `xtGoFKkfxC7P`: Login, detail & dashboard views (#470) -- `_login.css`, `_buttons.css`
+| Slot | Story | ID | Size | Files | Depends on |
+|------|-------|----|------|-------|-----------|
+| A | Collapsible sidebar + hamburger | `8P_VPRTVAWHF` | M | `_sidebar.css`, `_navbar.html`, `_sidebar.html`, `_base.html` | W1-B |
+| B | Touch-friendly forms | `I0BwE7nn-Qpf` | M | `_forms.css`, `_inlines.css`, `_accessibility.css`, `inline_formset.html` | W1-B |
+| C | Mobile pagination & filter bar | `miwk_JpwDtKy` | M | `_pagination.css`, `_filter.css`, `_search.css` | W1-B |
 
-File conflict check: W3-A=`_navbar.css`, W3-B=`_login/_buttons` -- **ZERO overlap**.
+Conflict check: **ZERO overlap**.
 
-#### Wave 4 -- Integration & E2E Testing (3 agents, depends on all prior waves)
-- **W4-A** `B57RGgp05uU0`: E2E responsive test suite -- `tests/e2e/test_responsive.py`
-- **W4-B** `Fm1NkN9kfAW1`: Visual regression baseline -- `tests/e2e/test_visual_regression.py`
-- **W4-C** `15CEiBOvAi6d`: Demo app responsive showcase -- `examples/erp/`
+**Stagger pickup**: When Slot C finishes (pagination is smaller scope), pick up:
+- Login, detail & dashboard views (`xtGoFKkfxC7P`, size:S) -- `_login.css`, `_buttons.css` -- zero conflict with slots A/B
 
-File conflict check: all unique files -- **ZERO overlap**.
+#### Cycle 3 -- Navbar + Testing (3 agents)
 
-### Sub-issues
+| Slot | Story | ID | Size | Files | Depends on |
+|------|-------|----|------|-------|-----------|
+| A | Responsive navbar | `TAhnnvjjZxyA` | S | `_navbar.css` | W2-A (hamburger) |
+| B | E2E responsive test suite | `B57RGgp05uU0` | M | `tests/e2e/test_responsive.py` | all Cycle 2 |
+| C | Demo app responsive showcase | `15CEiBOvAi6d` | S | `examples/erp/` | all Cycle 2 |
 
-- [ ] W1-A: Breakpoint tokens (size:S) `dyx7PkkdpBto`
-- [ ] W1-B: Mobile-first base layout + fieldset migration (size:M) `v8xvLKJfP_46`
-- [ ] W1-C: Responsive data table with card layout (size:M) `KKpriYWS0U9B`
-- [ ] W2-A: Collapsible sidebar with hamburger (size:M) `8P_VPRTVAWHF`
-- [ ] W2-B: Touch-friendly forms on mobile (size:M) `I0BwE7nn-Qpf`
-- [ ] W2-C: Mobile pagination & filter bar (size:M) `miwk_JpwDtKy`
-- [ ] W3-A: Responsive navbar (size:S) `TAhnnvjjZxyA`
-- [ ] W3-B: Login, detail & dashboard views (size:S) `xtGoFKkfxC7P`
-- [ ] W4-A: E2E responsive test suite (size:M) `B57RGgp05uU0`
-- [ ] W4-B: Visual regression baseline (size:S) `Fm1NkN9kfAW1`
-- [ ] W4-C: Demo app responsive showcase (size:S) `15CEiBOvAi6d`
+Conflict check: **ZERO overlap**.
 
-### Dependency Graph
+**Stagger pickup**: When Slot A finishes (navbar is size:S), pick up:
+- Visual regression baseline (`Fm1NkN9kfAW1`, size:S) -- `tests/e2e/test_visual_regression.py`
+
+### Sub-issues (11 stories)
+
+| Wave | ID | Title | Size | Depends on |
+|------|----|-------|------|-----------|
+| C1-A | `dyx7PkkdpBto` | Breakpoint tokens | S | none |
+| C1-B | `v8xvLKJfP_46` | Mobile-first base layout | M | none |
+| C1-C | `KKpriYWS0U9B` | Responsive data table | M | none |
+| C2-A | `8P_VPRTVAWHF` | Collapsible sidebar | M | C1-B |
+| C2-B | `I0BwE7nn-Qpf` | Touch-friendly forms | M | C1-B |
+| C2-C | `miwk_JpwDtKy` | Mobile pagination/filter | M | C1-B |
+| C2-D | `xtGoFKkfxC7P` | Login/detail/dashboard | S | C1-B (stagger pickup) |
+| C3-A | `TAhnnvjjZxyA` | Responsive navbar | S | C2-A |
+| C3-B | `B57RGgp05uU0` | E2E responsive tests | M | all C2 |
+| C3-C | `15CEiBOvAi6d` | Demo app showcase | S | all C2 |
+| C3-D | `Fm1NkN9kfAW1` | Visual regression baseline | S | C3-B (stagger pickup) |
+
+### Dependency Graph (Optimized)
 
 ```
-Wave 1 (parallel, no deps):
-  W1-A ─────────────────────┐
-  W1-B ─────────────────────┤── Wave 2 starts when W1-B done
-  W1-C (independent) ───────┘
+Cycle 1 (3 agents, true parallel):
+  C1-A (tokens, S) ----+
+  C1-B (layout, M) ----+---> Cycle 2 starts
+  C1-C (table, M) -----+
 
-Wave 2 (parallel, W1-B done):
-  W2-A ─────────┐
-  W2-B ─────────┤── Wave 3 starts when W2-A done
-  W2-C ─────────┘
+Cycle 2 (3 agents + stagger):
+  C2-A (sidebar, M) --------+
+  C2-B (forms, M) ----------+---> Cycle 3 starts
+  C2-C (pagination, M) --+  |
+                          |  |
+  C2-D (login/detail, S) +--+    (stagger: agent freed from C2-C picks up C2-D)
 
-Wave 3 (parallel, W2-A done):
-  W3-A ─────────┐
-  W3-B ─────────┤── Wave 4 starts when all Wave 3 done
-
-Wave 4 (parallel, all done):
-  W4-A ─────────┐
-  W4-B ─────────┤── Milestone complete
-  W4-C ─────────┘
+Cycle 3 (3 agents + stagger):
+  C3-A (navbar, S) ------+
+  C3-B (e2e tests, M) ---+---> Milestone complete
+  C3-C (demo, S) --------+
+                          |
+  C3-D (visual reg, S) --+       (stagger: agent freed from C3-A picks up C3-D)
 ```
+
+**Total: 3 cycles to complete 11 stories** (down from 4, a 25% reduction)
 
 ### Shared File Strategy: `_responsive.css`
 
-Multiple stories may need responsive rules. Strategy:
-- W1-B does the full mobile-first rewrite with section placeholders
-- Component stories (W2/W3) add their rules WITHIN their own CSS files using
-  self-contained `@media` queries, NOT in `_responsive.css`
+- C1-B does the full mobile-first rewrite with section placeholders
+- All component stories add responsive rules WITHIN their own CSS files
+  using self-contained `@media` queries
 - This eliminates the shared-file bottleneck entirely
 
+### Critical Path
+
+```
+C1-B (layout, M) --> C2-A (sidebar, M) --> C3-A (navbar, S)
+                                       \-> C3-B (e2e tests, M)
+```
+
+The critical path is: base layout -> sidebar hamburger -> E2E tests.
+Total critical path size: M + M + M = 3 medium stories.
+
 ### Original Stories (superseded)
-- #452 split into W1-A + W1-B (W1-C was the old fieldset migration, folded into W1-B)
-- #458, #461, #464, #465, #467, #470 reworked with narrower scopes and wave labels
+- #452 split into C1-A + C1-B
+- #458, #461, #464, #465, #467, #470 reworked with narrower scopes and cycle labels
 
-### Total Wall-Clock Estimate
+### Size Summary
 
-- Wave 1: 1 cycle (3 agents)
-- Wave 2: 1 cycle (3 agents)
-- Wave 3: 1 cycle (2 agents)
-- Wave 4: 1 cycle (3 agents)
-- **Total: 4 cycles to complete 11 stories**
+| Size | Count |
+|------|-------|
+| S | 6 |
+| M | 5 |
+| L | 0 |
+| **Total** | **11** |

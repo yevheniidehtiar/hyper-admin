@@ -10,7 +10,7 @@ labels:
   - testing
   - size:M
   - responsive
-  - wave:4
+  - cycle:3
 estimate: null
 epic_ref:
   id: cvr4sYoEN9CV
@@ -77,4 +77,4 @@ Run `poe test:e2e -- tests/e2e/test_responsive.py` — all tests pass.
 
 - **Size:** M
 - **Tier:** Sonnet
-- **blocked_by:** all Wave 2 + Wave 3 stories
+- **blocked_by:** all Cycle 2 stories (C2-A, C2-B, C2-C, C2-D)
