@@ -40,7 +40,7 @@ After all stories are complete, a user can open the HyperAdmin example app on a 
 
 ### Track 1: CSS Foundation (Critical Path)
 - `chore(pm): rename milestone #15 and create responsive SDD` (#447) — DONE
-- `refactor(ui): mobile-first CSS architecture with breakpoint tokens` (#452)
+- `refactor(ui): mobile-first CSS architecture with breakpoint tokens` (#452) — READY (blocker #447 done)
 
 ### Track 2: Component Responsive Behavior
 - `feat(ui): collapsible sidebar with hamburger menu toggle` (#458) — blocked_by #452
