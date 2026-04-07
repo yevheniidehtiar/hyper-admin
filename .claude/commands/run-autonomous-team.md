@@ -50,92 +50,150 @@ If `CLAUDE_GH_TOKEN` is unset, **STOP immediately** and tell the user.
 
 ---
 
-## Phase 1: Work Queue Discovery
+## Phase 1: Epic Discovery
 
-### 1.1 Fetch ready, unblocked issues
+### 1.1 Find unlocked epics from .meta/
 
 ```bash
-GH_TOKEN="$CLAUDE_GH_TOKEN" gh issue list \
-  --repo "$REPO" \
-  --label "agent-task" --label "ready" \
-  --state open \
-  --json number,title,labels,milestone,body \
-  --limit 20
+# Find epics with status=todo and agent-task label
+EPIC_CANDIDATES=$(grep -rl 'status: todo' .meta/epics/*/epic.md 2>/dev/null \
+  | xargs grep -l 'agent-task' 2>/dev/null)
+
+# For each candidate, read its frontmatter to get title, priority, milestone_ref
 ```
 
-### 1.2 Filter out blocked issues
+### 1.2 Filter out blocked epics
 
-For each issue, scan its body for `Depends on: #N`. If any referenced issue is still open,
-skip this issue — it is blocked.
+For each epic, check if it has dependencies. Also verify it has stories with `status: todo`.
 
 ```bash
-# For each candidate issue, check its dependency
-GH_TOKEN="$CLAUDE_GH_TOKEN" gh issue view <dep-number> --json state --jq '.state'
-# If "OPEN" → skip; if "CLOSED" → dependency satisfied
+EPIC_DIR=$(dirname "$EPIC_FILE")
+STORY_COUNT=$(grep -rl 'status: todo' "$EPIC_DIR/stories/" 2>/dev/null | wc -l)
+# If 0 stories ready → skip this epic
 ```
 
 ### 1.3 Prioritize
 
-Sort unblocked issues by:
-1. Milestone due date (earliest first)
-2. Size label (S before M before L — quick wins first)
-3. Issues whose closure unblocks other issues (critical path first)
+Sort unblocked epics by:
+1. Priority field (`critical` > `high` > `medium` > `low`)
+2. Milestone proximity (earliest target_date first)
+3. Story count (smaller epics = faster completion)
 
-Select up to `$DEV_AGENT_LIMIT` (3) issues for this cycle.
+Select one epic per cycle for lock acquisition.
 
 ---
 
-## Phase 2: Dev Agent Dispatch
+## Phase 2: Epic Lock Acquisition
 
-For each selected issue (up to `$DEV_AGENT_LIMIT` per cycle):
+**The epic is the unit of work ownership.** Before working on any story, acquire the epic lock
+via a `.meta/` status-change PR. This prevents race conditions between parallel agents.
 
-### 2.1 Claim the issue
+Follow the **Epic Locking Protocol** in `.claude/project-config.md`:
+
+### 2.1 Lock the epic
 
 ```bash
-GH_TOKEN="$CLAUDE_GH_TOKEN" gh issue edit <number> \
-  --repo "$REPO" \
-  --remove-label "ready" \
-  --add-label "in-progress"
+EPIC_SLUG="<epic-directory-name>"
+EPIC_FILE=".meta/epics/$EPIC_SLUG/epic.md"
+ISSUE_NUMBER=$(grep 'issue_number:' "$EPIC_FILE" | awk '{print $2}')
+LOCK_BRANCH="meta/lock-$EPIC_SLUG"
+
+# Branch from latest develop
+git fetch origin develop
+git checkout -b "$LOCK_BRANCH" origin/develop
+
+# Edit epic.md frontmatter:
+#   status: todo → in_progress
+#   assignee: null → "claude-code"
+#   locked_at: <ISO-8601>
+#   locked_by: "conductor"
+
+git add "$EPIC_FILE"
+git -c user.name="Claude Code" \
+    -c user.email="noreply+claude-code@anthropic.com" \
+    commit -m "lock(meta): claim epic #$ISSUE_NUMBER for implementation"
+
+git push origin "$LOCK_BRANCH"
+GH_TOKEN="$CLAUDE_GH_TOKEN" gh pr create \
+  --title "lock(meta): claim epic #$ISSUE_NUMBER — $EPIC_SLUG" \
+  --body "Acquiring epic lock. Auto-merge on green." \
+  --base develop
+
+LOCK_PR=$(GH_TOKEN="$CLAUDE_GH_TOKEN" gh pr view --json number -q .number)
+GH_TOKEN="$CLAUDE_GH_TOKEN" gh pr merge "$LOCK_PR" --auto --squash
 ```
 
-### 2.2 Dispatch dev agent in an isolated worktree
+### 2.2 Wait for lock merge
+
+```bash
+while true; do
+  STATE=$(GH_TOKEN="$CLAUDE_GH_TOKEN" gh pr view "$LOCK_PR" --json state -q .state)
+  [ "$STATE" = "MERGED" ] && break
+  [ "$STATE" = "CLOSED" ] && { echo "LOCK FAILED: conflict or rejected"; break; }
+  sleep 10
+done
+```
+
+- **MERGED** → lock acquired, proceed to Phase 3
+- **CLOSED/CONFLICT** → epic taken by another agent → go back to Phase 1, pick next epic
+
+### 2.3 Post-lock sync
+
+```bash
+git checkout develop && git pull origin develop
+bun "$GITPM_CLI" push --meta-dir .meta --token "$GITHUB_TOKEN"
+```
+
+---
+
+## Phase 3: Story Dispatch
+
+For each story in the locked epic (up to `$DEV_AGENT_LIMIT` per cycle):
+
+### 3.1 Claim the story
+
+Stories within a locked epic do NOT need individual lock PRs. Update frontmatter directly:
+- Set `status: in_progress` (was `todo`)
+- Set `assignee: "claude-code"`
+
+### 3.2 Dispatch dev agent in an isolated worktree
 
 Use `EnterWorktree` for code isolation, then dispatch `implement-feature`:
 
 ```
-EnterWorktree: creates isolated worktree for this issue
+EnterWorktree: creates isolated worktree for this story
 Agent: implement-feature skill
 Prompt: /implement-feature <issue-number>
 ExitWorktree: after agent completes
 ```
 
 The dev agent will:
-- Read the issue, plan with self-evaluation gate
+- Read the story from `.meta/`, plan with self-evaluation gate
 - Implement via TDD
 - Create PR with `CLAUDE_GH_TOKEN` and add the `review` label
 - Or post a blocker comment on the issue and halt
 
-### 2.3 Assess outcome
+### 3.3 Assess outcome
 
 ```bash
-# Check if a PR exists referencing this issue
+# Check if a PR exists referencing this story's issue
 GH_TOKEN="$CLAUDE_GH_TOKEN" gh pr list \
   --repo "$REPO" --search "closes:#<number>" \
   --json number,state,headRefName
 ```
 
-- **PR created + `review` label**: proceed to Phase 3
-- **Blocker comment posted, no PR**: leave `in-progress`, note in cycle report, move to next issue
-- **Unexpected failure**: add `needs-human` label, post issue comment with error details
+- **PR created + `review` label**: update story `status: in_review` in `.meta/`, proceed to Phase 4
+- **Blocker comment posted, no PR**: leave `status: in_progress`, note in cycle report, move to next story
+- **Unexpected failure**: add `needs-human` to story labels in `.meta/`, post issue comment with error details
 
 ---
 
-## Phase 3: Review Agent
+## Phase 4: Review Agent
 
 For each PR carrying the `review` label, dispatch the code reviewer.
 Track review iterations per PR — max 2 cycles before escalating.
 
-### 3.1 Dispatch reviewer
+### 4.1 Dispatch reviewer
 
 ```
 Agent: hyper-admin-code-reviewer
@@ -147,7 +205,7 @@ If CHANGES REQUIRED: request changes via:
   GH_TOKEN="$CLAUDE_GH_TOKEN" gh pr review <number> --repo $REPO --request-changes --body "<summary>"
 ```
 
-### 3.2 After reviewer completes
+### 4.2 After reviewer completes
 
 - **APPROVED**: reviewer has approved the PR on GitHub. Delivery manager's filter
   (`review` + CI green + GH approval) will fire automatically — proceed to monitor.
@@ -162,12 +220,12 @@ If CHANGES REQUIRED: request changes via:
 
 ---
 
-## Phase 4: Merge Queue Evaluation
+## Phase 5: Merge Queue Evaluation
 
 The delivery manager watches its label filter autonomously. Your job as conductor
 is to evaluate `merge-requested` PRs and grant or defer merges.
 
-### 4.1 Check merge queue
+### 5.1 Check merge queue
 
 ```bash
 # Find all PRs awaiting merge permission
@@ -176,7 +234,7 @@ GH_TOKEN="$CLAUDE_GH_TOKEN" gh pr list \
   --json number,headRefName,body
 ```
 
-### 4.2 Evaluate each merge-requested PR
+### 5.2 Evaluate each merge-requested PR
 
 For each PR:
 
@@ -191,16 +249,20 @@ GH_TOKEN="$CLAUDE_GH_TOKEN" gh pr list --repo "$REPO" --state open \
   [ "$OTHER" = "<pr-number>" ] && continue
   gh pr diff "$OTHER" --repo "$REPO" --name-only 2>/dev/null
 done
+
+# Dependency check — read linked story from .meta/
+STORY_FILE=$(grep -rl "issue_number: <linked-issue>" .meta/stories/ .meta/epics/*/stories/ 2>/dev/null | head -1)
+# Parse "Depends on: #N" from body, find each dep in .meta/, verify status is "done"
 ```
 
 **Grant merge** (`merge-granted`) if ALL of:
 - No file overlap with other open PRs
-- All `Depends on: #X` issues in the linked issue body are closed
+- All `Depends on: #X` stories have `status: done` in `.meta/`
 - PR is rebased on current `develop` (no merge conflicts detectable via diff)
 
 **Defer merge** (`merge-deferred`) if ANY of:
 - File overlap with another `merge-requested` PR (risk of conflict)
-- A dependency issue is still open
+- A dependency story is not yet `done` in `.meta/`
 - Already `$MERGE_QUEUE_DEPTH` PRs carrying `merge-granted` pending merge (avoid stack conflicts)
 
 ```bash
@@ -219,9 +281,33 @@ The delivery manager will execute the merge once it sees `merge-granted`.
 
 ---
 
-## Phase 5: Cycle Report & Loop Decision
+## Phase 6: Epic Release & Cycle Report
 
-### 5.1 Print cycle report
+### 6.0 Release epic lock (if all stories done)
+
+If all stories in the locked epic have `status: done`, release the epic lock:
+
+```bash
+RELEASE_BRANCH="meta/release-$EPIC_SLUG"
+git checkout -b "$RELEASE_BRANCH" origin/develop
+# Edit epic.md: status → done, remove locked_at / locked_by
+git add "$EPIC_FILE"
+git -c user.name="Claude Code" \
+    -c user.email="noreply+claude-code@anthropic.com" \
+    commit -m "release(meta): complete epic #$ISSUE_NUMBER"
+git push origin "$RELEASE_BRANCH"
+GH_TOKEN="$CLAUDE_GH_TOKEN" gh pr create \
+  --title "release(meta): complete epic #$ISSUE_NUMBER" \
+  --body "All stories done. Releasing epic lock." \
+  --base develop
+GH_TOKEN="$CLAUDE_GH_TOKEN" gh pr merge --auto --squash
+
+# After merge, sync to GitHub
+git checkout develop && git pull origin develop
+bun "$GITPM_CLI" push --meta-dir .meta --token "$GITHUB_TOKEN"
+```
+
+### 6.1 Print cycle report
 
 ```
 ## Autonomous Team — Cycle N Report
@@ -235,7 +321,7 @@ Issues blocked / escalated: Y
 Remaining ready issues: Z
 ```
 
-### 5.2 Continue or stop
+### 6.2 Continue or stop
 
 - **More ready issues + under `$CONDUCTOR_CYCLE_LIMIT` cycles**: start next cycle
 - **Approaching message limit** (your judgment): STOP, print report, tell user

@@ -87,6 +87,9 @@ site/
 
 gha-creds-*.json
 
+# GitPM sync state (regenerated on pull/sync)
+.meta/sync/github-state.json
+
 # git worktrees
 /.worktrees/
 

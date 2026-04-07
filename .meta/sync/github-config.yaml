@@ -1,0 +1,22 @@
+repo: yevheniidehtiar/hyper-admin
+status_mapping:
+  Todo: todo
+  In Progress: in_progress
+  In Review: in_review
+  Done: done
+  Backlog: backlog
+label_mapping:
+  epic_labels:
+    - epic
+priority_mapping:
+  priority:critical: critical
+  priority:high: high
+  priority:medium: medium
+  priority:low: low
+  P0: critical
+  P1: high
+  P2: medium
+  P3: low
+  critical: critical
+  urgent: critical
+auto_sync: false

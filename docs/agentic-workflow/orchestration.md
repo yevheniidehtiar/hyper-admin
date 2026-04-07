@@ -50,47 +50,37 @@ idea → researched → planned → approved → in-progress → review → qa-p
 | `scheduled:review-needed` | `#F9D0C4` | Needs human review |
 | `suspicious` | `#D93F0B` | Flagged by [OSS Triage Auditor](oss-triage-auditor.md) — needs human review |
 
-## Project Memory
+## Project Management: GitPM (.meta/)
 
-Stored as `.github/project-memory.json` in the repository — version-controlled with full history:
+Project state is stored as plain-text YAML/Markdown files in `.meta/` — git-native, version-controlled:
 
-```json
-{
-  "current_version": "0.1.0",
-  "supported_versions": ["0.1.x"],
-  "pending_deprecations": [],
-  "roadmap": {
-    "next_milestone": "v0.2.0",
-    "planned_features": ["Plugin system", "Async support"],
-    "tech_debt_items": 3
-  },
-  "agent_performance": {
-    "avg_review_iterations": 1.3,
-    "avg_task_completion_hours": 2.1
-  },
-  "community": {
-    "contributors": 0,
-    "open_issues": 12,
-    "weekly_downloads": 0
-  }
-}
+```
+.meta/
+├── roadmap/
+│   ├── roadmap.yaml           # Ordered list of milestone IDs
+│   └── milestones/            # One YAML file per milestone
+├── epics/
+│   └── <epic-slug>/
+│       ├── epic.md            # Epic frontmatter + body
+│       └── stories/           # Stories nested under this epic
+├── stories/                   # Standalone stories
+└── sync/                      # GitHub sync config + state
 ```
 
-All agents read from and write to this file. It's version-controlled, so you have full history of project state evolution.
+All agents read from and write to `.meta/` files directly. Changes are synced to GitHub
+via `gitpm push`. See `.claude/project-config.md` for full reference.
 
 ## GitHub Features Utilised
 
 | Feature | Status | Usage |
 |---|---|---|
-| Projects V2 (GraphQL API) | **Implemented** | Created by `/plan-to-issues` — board, custom fields, 3 views |
-| Sub-issues | GA (April 2025) | Epic → Task hierarchy |
-| Issue dependencies | GA (August 2025) | `blocked_by` / `blocking` between tasks |
-| Issue types (Bug, Feature, Task) | GA (April 2025) | Classify epics vs tasks |
-| Milestones | Stable | Group tasks into releases |
-| Labels | Stable | Size, agent tier, area, state — **labels are the message bus** |
-| Custom fields on Projects | **Implemented** | Status, Size, Agent Tier, Start Date, End Date |
-| Roadmap view | **Implemented** | Created automatically; date fields need manual binding in UI |
-| Advanced search (`is:blocked`) | GA | Find bottleneck tasks |
+| GitPM (.meta/) | **Primary** | All issue/epic/milestone management — agents read/write directly |
+| Sub-issues | GA (April 2025) | Epic → Story hierarchy (mirrored in `.meta/epics/*/stories/`) |
+| Issue dependencies | GA (August 2025) | `blocked_by` / `blocking` between stories |
+| Milestones | Stable | Group stories into releases (stored in `.meta/roadmap/milestones/`) |
+| Labels | Stable | Size, agent tier, area — synced via `gitpm push` |
+| PRs | Stable | Still managed via `gh pr` (gitpm does not handle PRs) |
+| `gitpm push/pull/sync` | **Implemented** | Bidirectional sync between `.meta/` and GitHub Issues |
 
 ## Autonomous Team Orchestration
 
@@ -115,7 +105,7 @@ The conductor is the entry point and merge authority. It runs in the foreground 
 | **review-agent** | PRs: `review` | Auto-approve via `gh pr review --approve` |
 | **delivery-manager** | PRs: `review` + CI green + GH approval | Add `merge-requested`, remove `review` |
 | **delivery-manager** | PRs: `merge-granted` | Execute merge → add `released`, close issue |
-| **project-manager** | Monthly cron / quarterly cron | Progress snapshot, priority triage, team assignment, staleness cleanup |
+| **project-manager** | Daily/weekly cron | Progress snapshot via `.meta/`, priority triage, team assignment, staleness cleanup |
 | **project-manager** | Issues: `community` | Delegate to `oss-triage-auditor` for triage |
 
 ### Merge Queue Evaluation (Conductor)

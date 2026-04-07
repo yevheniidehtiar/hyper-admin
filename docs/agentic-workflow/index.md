@@ -9,7 +9,7 @@
 !!! tip "New here?"
     Start with the [Onboarding guide](onboarding.md) for a quick orientation.
 
-This project follows a **5-agent Claude Code workflow** for AI-assisted open-source development. Each agent has a specific role, model tier, and output contract, orchestrated through GitHub labels and the conductor agent.
+This project follows a **5-agent Claude Code workflow** for AI-assisted open-source development. Each agent has a specific role, model tier, and output contract, orchestrated through `.meta/` files (GitPM) and GitHub PR labels.
 
 ## Architecture
 
@@ -47,7 +47,8 @@ Agents (autonomous)                                                           �
 
 - **Mandatory TDD**: Every functional change begins with failing tests. Implementation follows.
 - **Bottom-Up Architecture**: Models → Business Logic → Views → UI (never the reverse).
-- **Label-Driven Coordination**: Agents communicate via GitHub labels — no direct agent-to-agent messaging.
+- **Git-Native PM**: All issue/epic/milestone state lives in `.meta/` files, synced to GitHub via GitPM.
+- **Label-Driven Coordination**: PR lifecycle managed via GitHub labels — no direct agent-to-agent messaging.
 - **Human Checkpoints**: Approval gates between planning and implementation, and before release.
 
 ## Label State Machine

@@ -6,13 +6,14 @@ disable-model-invocation: true
 allowed-tools: Read, Grep, Glob, Bash(git *), Bash(gh *), Bash(poe *), Bash(uv run *)
 ---
 
-Fix GitHub issue $ARGUMENTS for HyperAdmin.
+Fix story for GitHub issue #$ARGUMENTS in HyperAdmin.
 
 ## Steps
 
-### 1. Read the issue
+### 1. Read the story from .meta/
 ```bash
-gh issue view $ARGUMENTS
+STORY_FILE=$(grep -rl "issue_number: $ARGUMENTS" .meta/stories/ .meta/epics/*/stories/ 2>/dev/null | head -1)
+cat "$STORY_FILE"
 ```
 Check `ROADMAP.md` to confirm priority and scope. Do not expand scope.
 

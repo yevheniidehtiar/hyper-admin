@@ -31,24 +31,29 @@ When the dev agent starts without a specific issue number:
 ### 1. Find the active milestone
 
 ```bash
-gh api repos/{owner}/{repo}/milestones --jq '
-  sort_by(.due_on // .created_at)
-  | map(select(.state == "open"))
-  | .[0]
-  | {number, title, open_issues, due_on}'
+# Read milestones from .meta/
+for f in .meta/roadmap/milestones/*.md; do
+  STATUS=$(grep '^status:' "$f" | awk '{print $2}')
+  [ "$STATUS" = "open" ] && head -10 "$f" && break
+done
 ```
 
 If no open milestone exists, report that and stop.
 
-### 2. List ready tickets in that milestone
+### 2. List ready stories in that milestone
 
 ```bash
-gh issue list \
-  --milestone "<milestone-title>" \
-  --label "agent-task" \
-  --state open \
-  --json number,title,labels,assignees \
-  --jq '[.[] | select(.assignees | length == 0)]'
+# Find the milestone ID
+MILESTONE_ID=$(grep '^id:' "$MILESTONE_FILE" | awk '{print $2}')
+
+# Find epics linked to this milestone
+EPIC_DIRS=$(grep -rl "$MILESTONE_ID" .meta/epics/*/epic.md 2>/dev/null | xargs -I{} dirname {})
+
+# Find stories with status=todo and agent-task label in those epics
+for DIR in $EPIC_DIRS; do
+  grep -rl 'status: todo' "$DIR/stories/" 2>/dev/null \
+    | xargs grep -l 'agent-task' 2>/dev/null
+done
 ```
 
 Prioritize by:
@@ -80,57 +85,25 @@ On confirmation, proceed to implementation.
 The dev agent owns the full lifecycle of every issue it works on.
 All label and project board mutations happen **automatically** — never deferred.
 
-### Label transitions
+### Status transitions (in .meta/)
 
-| Event | Action |
-|---|---|
-| Agent claims issue | Add `in-progress`, remove `ready` if present, assign self |
-| Planning gate fails (questionnaire posted) | Add `needs-clarification`, keep `in-progress` |
-| Blocker hit (draft PR + comment) | Add `blocked`, keep `in-progress` |
-| PR created | Add `review` label to the PR |
-| PR merged | Remove `in-progress`, add `done` |
-| Issue closed | Ensure `done` is present |
+| Event | .meta/ status | GitHub label sync |
+|---|---|---|
+| Agent claims story | `in_progress` | Add `in-progress`, remove `ready` |
+| Planning gate fails | `in_progress` + `needs-clarification` label | Sync via `gitpm push` |
+| Blocker hit (draft PR) | `in_progress` + `blocked` label | Sync via `gitpm push` |
+| PR created | `in_review` | Add `review` label to PR |
+| PR merged | `done` | Sync via `gitpm push` |
 
-```bash
-# Claim
-GH_TOKEN="$CLAUDE_GH_TOKEN" gh issue edit <number> \
-  --remove-label "ready" --add-label "in-progress"
-
-# Blocker
-GH_TOKEN="$CLAUDE_GH_TOKEN" gh issue edit <number> \
-  --add-label "blocked"
-
-# PR ready for review
-GH_TOKEN="$CLAUDE_GH_TOKEN" gh pr edit <pr-number> \
-  --add-label "review"
-
-# After merge
-GH_TOKEN="$CLAUDE_GH_TOKEN" gh issue edit <number> \
-  --remove-label "in-progress" --add-label "done"
-```
-
-### Project board status updates
-
-The dev agent updates the GitHub ProjectV2 board status at each transition:
-
-| Event | Board status |
-|---|---|
-| Agent claims issue | `In progress` |
-| PR merged / issue closed | `Done` |
+Update the `.meta/` story file frontmatter directly, then sync labels to GitHub:
 
 ```bash
-# Move to "In progress"
-gh api graphql -f query='mutation {
-  updateProjectV2ItemFieldValue(input: {
-    projectId: "<PROJECT_ID>"
-    itemId: "<ITEM_ID>"
-    fieldId: "<STATUS_FIELD_ID>"
-    value: { singleSelectOptionId: "<IN_PROGRESS_OPTION_ID>" }
-  }) { projectV2Item { id } }
-}'
-```
+# After editing .meta/ story status, sync to GitHub:
+bun "$GITPM_CLI" push --meta-dir .meta --token "$GITHUB_TOKEN"
 
-Use the cached IDs from agent memory (`reference_github_ids.md`) to avoid redundant API lookups.
+# PR labels still managed via gh pr (gitpm doesn't handle PRs):
+GH_TOKEN="$CLAUDE_GH_TOKEN" gh pr edit <pr-number> --add-label "review"
+```
 
 ### Issue comments
 

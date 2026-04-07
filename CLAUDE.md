@@ -176,10 +176,24 @@ This project follows a 5-agent Claude Code workflow. See `docs/agentic-workflow/
 
 See `.mcp.json` for active MCP servers. Default model: `claude-sonnet-4-6`.
 
+## Project Management: GitPM
+
+All issue, epic, and milestone state is managed via **GitPM** (`.meta/` files).
+Agents read/write `.meta/` directly instead of using `gh issue` or GitHub Projects API.
+PRs are still managed via `gh pr`. See `.claude/project-config.md` for full reference.
+
+```bash
+./scripts/gitpm.sh validate                        # Validate .meta/ tree
+./scripts/gitpm.sh pull --token "$GITHUB_TOKEN"    # Pull from GitHub
+./scripts/gitpm.sh push --token "$GITHUB_TOKEN"    # Push to GitHub
+```
+
 ## Key Files
 
 | Path | Purpose |
 |------|---------|
+| `.meta/` | Git-native project state (stories, epics, milestones) |
+| `scripts/gitpm.sh` | GitPM CLI wrapper |
 | `justfile` | All dev targets |
 | `scripts/` | Automation helpers |
 | `.claude/commands/` | Claude slash commands |

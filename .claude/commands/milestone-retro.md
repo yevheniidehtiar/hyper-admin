@@ -33,22 +33,29 @@ $ARGUMENTS
 
 ## Phase 1 — Resolve Milestone
 
-1. Parse `$ARGUMENTS` as a milestone URL (extract number from path) or a milestone number.
-2. Fetch milestone metadata:
+1. Parse `$ARGUMENTS` as a milestone title, URL (extract number from path), or a milestone number.
+2. Find milestone in `.meta/`:
    ```bash
-   gh api repos/$REPO/milestones/$MILESTONE_NUMBER --jq '{title, description, state, closed_issues, html_url}'
+   # Search by title or number
+   grep -rl "$MILESTONE_TITLE" .meta/roadmap/milestones/ 2>/dev/null
+   # Or read all milestones and match
+   for f in .meta/roadmap/milestones/*.md; do head -10 "$f"; echo "---"; done
    ```
-3. Fetch all **merged** PRs linked to this milestone:
+   Read the milestone file for metadata (title, target_date, status, github.milestone_number).
+3. Find all epics linked to this milestone (via `milestone_ref.id`):
+   ```bash
+   MILESTONE_ID=$(grep '^id:' "$MILESTONE_FILE" | awk '{print $2}')
+   grep -rl "$MILESTONE_ID" .meta/epics/*/epic.md 2>/dev/null
+   ```
+4. For each epic, find its stories and collect those with `status: done`.
+   Extract `github.issue_number` from each done story.
+5. Fetch all **merged** PRs linked to these stories:
    ```bash
    gh pr list --repo $REPO --state merged --search "milestone:\"$MILESTONE_TITLE\"" --json number,title,mergedAt,files --limit 50
    ```
-   If the search returns nothing, fall back to listing closed issues in the milestone and finding PRs that reference them:
-   ```bash
-   gh issue list --repo $REPO --milestone "$MILESTONE_TITLE" --state closed --json number --jq '.[].number'
-   ```
-   Then for each issue, find linked PRs via the timeline API.
-4. Collect the **deduplicated list of all Python source files** (under `src/`) changed across all merged PRs. Exclude test files — they are reviewed only for coverage gaps, not for refactoring.
-5. Store the PR list and file list for use in later phases.
+   If the search returns nothing, fall back to finding PRs that reference the story issue numbers.
+6. Collect the **deduplicated list of all Python source files** (under `src/`) changed across all merged PRs. Exclude test files — they are reviewed only for coverage gaps, not for refactoring.
+7. Store the PR list and file list for use in later phases.
 
 ---
 

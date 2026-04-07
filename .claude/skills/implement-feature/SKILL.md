@@ -6,21 +6,41 @@ disable-model-invocation: true
 allowed-tools: Read, Grep, Glob, Write, Edit, Bash(git *), Bash(gh *), Bash(poe *), Bash(uv run *), CronCreate, CronDelete, CronList, ToolSearch
 ---
 
-Implement GitHub issue $ARGUMENTS for HyperAdmin using the self-evaluating agentic loop.
+Implement story for GitHub issue #$ARGUMENTS using the self-evaluating agentic loop.
 
 ---
 
 ## Phase A — Planning Loop (no code written yet)
 
-### A1. Read and understand the issue
+### A1. Read and understand the story
+
+Read the story from `.meta/`:
 
 ```bash
-gh issue view $ARGUMENTS
+# Find story file by issue number
+STORY_FILE=$(grep -rl "issue_number: $ARGUMENTS" .meta/stories/ .meta/epics/*/stories/ 2>/dev/null | head -1)
+cat "$STORY_FILE"
+```
+
+**Verify epic lock** — if this story belongs to an epic, the epic MUST have `status: in_progress`
+(meaning the lock PR was already merged). If the epic is not locked, **HALT** and report:
+
+```bash
+# Check parent epic lock status
+EPIC_DIR=$(dirname "$(dirname "$STORY_FILE")")
+EPIC_FILE="$EPIC_DIR/epic.md"
+if [ -f "$EPIC_FILE" ]; then
+  EPIC_STATUS=$(grep '^status:' "$EPIC_FILE" | awk '{print $2}')
+  [ "$EPIC_STATUS" != "in_progress" ] && {
+    echo "HALT: Parent epic is not locked (status: $EPIC_STATUS). Run epic lock first."
+    exit 1
+  }
+fi
 ```
 
 Then:
-- Read `ROADMAP.md` to confirm scope and priority — do NOT expand scope beyond the issue
-- Read every source file and test file referenced in the issue body
+- Read `ROADMAP.md` to confirm scope and priority — do NOT expand scope beyond the story
+- Read every source file and test file referenced in the story body
 - Explore relevant modules in `src/hyperadmin/` to understand existing patterns
 
 ### A2. Create an implementation plan

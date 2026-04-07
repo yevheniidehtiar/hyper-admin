@@ -11,7 +11,8 @@ Structured reference for LLM agents operating in this repository. Read top-to-bo
 | **Must** | `CLAUDE.md` | Project-wide instructions, hook-first rule, dev commands |
 | **Must** | `CONSTITUTION.md` | Architecture boundaries, module structure, violation definitions |
 | **Must** | `AGENTS.md` | Software Architect review checklist, hook-first planning rules |
-| **Must** | `.claude/project-config.md` | Runtime constants: repo, branch, cycle limits, label state machine |
+| **Must** | `.claude/project-config.md` | Runtime constants, GitPM (.meta/) reference, status state machine |
+| **Must** | `.meta/` | Git-native project state: stories, epics, milestones, roadmap |
 | **Reference** | `ROADMAP.md` | Current phase, reserved Phase 3 domains |
 | **Reference** | `docs/agentic-workflow/` | Full workflow spec |
 
@@ -21,9 +22,9 @@ Structured reference for LLM agents operating in this repository. Read top-to-bo
 
 | Agent | Model | Tools | Role |
 |-------|-------|-------|------|
-| `conductor` | Opus | Bash, Read, Grep, Glob, Agent, EnterWorktree, ExitWorktree, Tasks, Write | Orchestrates team cycles, owns merge queue |
-| `delivery-manager` | Haiku | Cron, Bash, Skill, Tasks, Worktree, Read, Edit, Write | PR monitoring, E2E tests, merge execution |
-| `project-manager` | Sonnet | Bash, Read, Grep, Glob, Write, Agent | Sprint cadence, priority triage, health |
+| `conductor` | Opus | Bash, Read, Grep, Glob, Agent, EnterWorktree, ExitWorktree, Tasks, Write | Reads `.meta/` work queue, dispatches agents, owns merge queue |
+| `delivery-manager` | Haiku | Cron, Bash, Skill, Tasks, Worktree, Read, Edit, Write | PR monitoring, E2E tests, merge execution, updates `.meta/` on merge |
+| `project-manager` | Sonnet | Bash, Read, Grep, Glob, Write, Agent | Sprint cadence via `.meta/`, priority triage, health |
 | `hyper-admin-code-reviewer` | Sonnet | Bash, Read, Grep, Write | Architecture review, VERDICT output |
 | `oss-triage-auditor` | Sonnet | Bash, Read, Grep, Glob, Write | AI-slop detection, label enforcement |
 
@@ -146,11 +147,11 @@ Do not save: code patterns, git history, anything in CLAUDE.md.
 ## 10. The 5-Agent Workflow
 
 ```
-Human → Plan (/plan-to-issues) → Workload Queue → Conductor
+Human → Plan (/plan-to-issues) → .meta/ stories → Conductor
                                                       ↓
                      Delivery Manager ← Code Reviewer ← Dev Agents (implement-feature)
                           ↓
-                   Merge → Released
+                   Merge → .meta/ status: done
 ```
 
 | Agent | Model | Role |
@@ -161,4 +162,5 @@ Human → Plan (/plan-to-issues) → Workload Queue → Conductor
 | Code Reviewer | Sonnet | 8-section checklist, machine-readable VERDICT output |
 | OSS Triage Auditor | Sonnet | AI-slop detection, duplicate detection, label lifecycle enforcement |
 
-Label state machine: `idea → researched → planned → approved → in-progress → review → merge-requested → merge-granted → released`
+Story status machine (`.meta/`): `backlog → todo → in_progress → in_review → done`
+PR label machine (GitHub): `review → merge-requested → merge-granted → squash-merged`

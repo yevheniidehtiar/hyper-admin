@@ -115,39 +115,41 @@ Milestone v0.1.0 (MVP core)
   Calendar estimate: 1 week (evenings/weekends)
 ```
 
-## GitHub Materialisation
+## Materialisation via GitPM (.meta/)
+
+Plans are materialised as `.meta/` files — epics, stories, and milestones — then synced to GitHub.
 
 ### Setup Sequence
 
 ```bash
-# Create labels
+# Create labels (one-time, still via gh)
 gh label create "size:S" --color "C5DEF5" --description "1-2 hours"
 gh label create "size:M" --color "BFD4F2" --description "2-4 hours"
 gh label create "size:L" --color "A2C4EA" --description "4-8 hours"
 gh label create "agent:ai" --color "F9D0C4" --description "Assigned to Claude Code"
 gh label create "epic" --color "7057FF" --description "Parent issue with sub-issues"
 
-# Create milestones
-gh api repos/{owner}/{repo}/milestones \
-  -f title="v0.1.0 — MVP Core" \
-  -f due_on="2025-04-07T00:00:00Z"
+# Create milestones in .meta/
+# Write .meta/roadmap/milestones/<slug>.md with milestone frontmatter
 
-# Create epic + sub-issues + dependency links
-# (see orchestration docs for full gh CLI examples)
+# Create epics + stories in .meta/
+# Write .meta/epics/<slug>/epic.md and .meta/epics/<slug>/stories/<slug>.md
+
+# Sync to GitHub
+bun "$GITPM_CLI" push --meta-dir .meta --token "$GITHUB_TOKEN"
 ```
 
-### Project Board Views
+### .meta/ as the Project Board
 
-Created automatically by `/plan-to-issues` (Step 5.5) via GitHub Projects V2 GraphQL API:
+The `.meta/` directory replaces GitHub Projects V2:
 
-1. **Kanban** (`BOARD_LAYOUT`) — columns map to Status field: Backlog → Ready → In Progress → Review → Done
-2. **Roadmap** (`ROADMAP_LAYOUT`) — timeline grouped by milestone; after creation, bind Start Date / End Date fields in the GitHub UI (API does not yet expose date-field binding)
-3. **Table** (`TABLE_LAYOUT`) — sortable by any field; default view for cost/effort overview
+- **Status tracking**: `status` field in story frontmatter (backlog/todo/in_progress/in_review/done)
+- **Priority**: `priority` field (low/medium/high/critical)
+- **Size**: `size:S/M/L` in labels array
+- **Roadmap**: `.meta/roadmap/roadmap.yaml` lists milestones in order
+- **Epic hierarchy**: `.meta/epics/<slug>/stories/` nests stories under epics
 
-Custom fields created per project: **Status**, **Size**, **Agent Tier**, **Start Date**, **End Date**.
-
-All GraphQL operations use `GH_TOKEN="$CLAUDE_GH_TOKEN"` and runtime-derived owner/repo
-(no hardcoded values). See `.claude/commands/plan-to-issues.md` Step 5.5 for full implementation.
+See `.claude/commands/plan-to-issues.md` for the full creation workflow.
 
 ## Output Contract
 
