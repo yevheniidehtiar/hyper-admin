@@ -61,25 +61,26 @@ experience. Every story must produce a visible, demoable improvement in the exam
       └── E2E responsive test suite [MEDIUM, L]
 ```
 
-### Sub-issues (15 active, ordered by priority + dependency)
+### Sub-issues (16 active, ordered by UX impact + dependency)
 
-**HIGH priority — must ship for v0.4.0:**
-- [ ] #452 refactor(ui): mobile-first CSS architecture with breakpoint tokens + mobile typography
-- [ ] #458 feat(ui): collapsible sidebar with hamburger menu toggle (includes focus trap + SR dialog)
-- [ ] #461 feat(ui): responsive data table with stacked card layout (includes SR card announcements)
-- [ ] #464 feat(ui): mobile-optimized pagination and filter bar
-- [ ] #465 feat(ui): responsive navbar with mobile optimizations
-- [ ] #467 feat(ui): touch-friendly forms and inline formsets on mobile
-- [ ] feat(ui): iOS input zoom prevention with minimum font sizes
-- [ ] feat(ui): skip-to-content and landmark enhancements for mobile
+**HIGH priority — must ship for v0.4.0 (core mobile admin experience):**
+1. [ ] #452 refactor(ui): mobile-first CSS architecture with breakpoint tokens (FOUNDATION)
+2. [ ] #458 feat(ui): collapsible sidebar with hamburger toggle, focus trap, SR dialog
+3. [ ] #461 feat(ui): responsive data table with stacked card layout + SR support
+4. [ ] #467 feat(ui): touch-friendly forms and inline formsets on mobile
+5. [ ] feat(ui): iOS input zoom prevention with minimum font sizes
+6. [ ] #464 feat(ui): mobile-optimized pagination and filter bar
+7. [ ] feat(ui): skip-to-content and landmark enhancements for mobile
+8. [ ] #465 feat(ui): responsive navbar with mobile optimizations
+9. [ ] feat(ui): CSS-only touch feedback active states
 
-**MEDIUM priority — should ship for v0.4.0:**
-- [ ] feat(ui): CSS-only touch feedback active states
-- [ ] feat(ui): orientation handling and viewport stability
-- [ ] feat(ui): HTMX loading skeleton states for mobile
-- [ ] #470 feat(ui): responsive login, detail, and dashboard views
-- [ ] test(e2e): responsive design E2E test suite
+**MEDIUM priority — should ship for v0.4.0 (perceived quality):**
+10. [ ] feat(ui): mobile typography and spacing polish
+11. [ ] feat(ui): HTMX loading skeleton states for mobile
+12. [ ] #470 feat(ui): responsive login, detail, and dashboard views
+13. [ ] test(e2e): responsive design E2E test suite
 
 **LOW priority — stretch goals, cut if timeline tight:**
-- [ ] feat(ui): CSS transitions with reduced-motion respect
-- [ ] feat(ui): mobile-friendly empty state designs
+14. [ ] feat(ui): orientation handling and viewport stability
+15. [ ] feat(ui): CSS transitions with reduced-motion respect
+16. [ ] feat(ui): mobile-friendly empty state designs

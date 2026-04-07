@@ -3,7 +3,7 @@ type: story
 id: Rsp4_tch_f_02
 title: "feat(ui): CSS-only touch feedback active states"
 status: todo
-priority: medium
+priority: high
 assignee: null
 labels:
   - frontend

@@ -3,7 +3,7 @@ type: story
 id: Rsp4_orient03
 title: "feat(ui): orientation handling and viewport stability"
 status: todo
-priority: medium
+priority: low
 assignee: null
 labels:
   - frontend
