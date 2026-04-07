@@ -11,7 +11,7 @@ labels:
   - size:M
   - planned
   - responsive
-  - wave:2
+  - wave:1
 estimate: null
 epic_ref:
   id: cvr4sYoEN9CV
@@ -62,8 +62,7 @@ Below 768px viewport, transform the data table from horizontal rows into stacked
 ## Files to modify
 
 - `src/hyperadmin/templates/components/table.html` — add `data-label` attribute to `<td>` elements
-- `src/hyperadmin/static/css/_table.css` — card layout base styles
-- `src/hyperadmin/static/css/_responsive.css` — table card transformation at mobile breakpoint
+- `src/hyperadmin/static/css/_table.css` — card layout styles with self-contained `@media (max-width: 767px)` query (no `_responsive.css` changes — keeps story independent for Wave 1 parallelism)
 
 ## Implementation notes
 
@@ -78,4 +77,4 @@ Below 768px viewport, transform the data table from horizontal rows into stacked
 
 - **Size:** M
 - **Tier:** Sonnet
-- **blocked_by:** W1-B (v8xvLKJfP_46)
+- **blocked_by:** none — self-contained card CSS in _table.css with own media queries

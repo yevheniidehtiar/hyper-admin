@@ -71,6 +71,7 @@ Split from #452 (W1-B). Depends on W1-A for breakpoint tokens.
 - `src/hyperadmin/static/css/_responsive.css` — complete rewrite: mobile-first with min-width queries
 - `src/hyperadmin/static/css/_layout.css` — default single-column, flex at md
 - `src/hyperadmin/static/css/_sidebar.css` — default display:none, show at md
+- `src/hyperadmin/static/css/_fieldsets.css` — remove existing `@media (max-width: 768px)` block (migrated into `_responsive.css`)
 
 ## Implementation notes
 
