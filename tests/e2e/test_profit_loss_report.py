@@ -14,6 +14,19 @@ from typing import Any
 import pytest
 from playwright.sync_api import Page, expect
 
+_ERP_USER = "admin"
+_ERP_PASS = "admin"
+
+
+def _erp_login(page: Page, base_url: str) -> None:
+    """Log in to the ERP app as the seeded superuser."""
+    page.goto(base_url + "/admin/login")
+    page.get_by_label("Username").fill(_ERP_USER)
+    page.get_by_label("Password").fill(_ERP_PASS)
+    page.get_by_role("button", name="Sign in").click()
+    expect(page).to_have_url(base_url + "/admin/")
+
+
 _IN_CONTAINER = os.environ.get("IS_SANDBOX") == "1"
 # ERP app performs DB creation + permission sync + data seeding on startup,
 # which takes longer than the simple demo app.
@@ -99,14 +112,20 @@ def erp_base_url() -> Iterator[str]:
 
 def test_profit_loss_report_loads(page: Page, erp_base_url: str) -> None:
     """Smoke test: P&L report page loads and summary elements are visible."""
+    # Given the admin is logged in
+    _erp_login(page, erp_base_url)
+
+    # When navigating to the P&L report
     page.goto(erp_base_url + "/admin/reports/profit-loss")
 
+    # Then the report page loads (no redirect to login)
     expect(page).to_have_url(erp_base_url + "/admin/reports/profit-loss")
     expect(page.get_by_role("heading", name="Annual Profit / Loss Report")).to_be_visible()
 
 
 def test_profit_loss_summary_elements_visible(page: Page, erp_base_url: str) -> None:
     """Summary totals section renders with non-empty values for seeded data."""
+    _erp_login(page, erp_base_url)
     page.goto(erp_base_url + "/admin/reports/profit-loss")
 
     total_revenue = page.get_by_test_id("total-revenue")
@@ -125,6 +144,7 @@ def test_profit_loss_summary_elements_visible(page: Page, erp_base_url: str) -> 
 
 def test_profit_loss_year_navigation(page: Page, erp_base_url: str) -> None:
     """Year navigation links are present and functional."""
+    _erp_login(page, erp_base_url)
     page.goto(erp_base_url + "/admin/reports/profit-loss")
 
     prev_link = page.get_by_role("link", name="Previous year")
@@ -140,6 +160,7 @@ def test_profit_loss_pl_table_renders(
     browser_type_launch_args: dict[str, Any],
 ) -> None:
     """Line-by-line breakdown table is present on the report page."""
+    _erp_login(page, erp_base_url)
     page.goto(erp_base_url + "/admin/reports/profit-loss")
 
     pl_table = page.get_by_test_id("pl-table")
