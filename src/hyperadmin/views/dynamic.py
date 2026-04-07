@@ -859,7 +859,7 @@ class DynamicModelView:
     async def upload_file_view(
         self,
         request: Request,
-        field_name: str,
+        field_name: str,  # noqa: ARG002 — path param required by route
     ) -> Response:
         """Accept a file upload and store it via the configured storage.
 
@@ -900,7 +900,7 @@ class DynamicModelView:
         if val and self.storage:
             fname = val.name if hasattr(val, "name") else str(val)
             path = self.storage.get_path(fname)
-            if os.path.exists(path):
+            if os.path.exists(path):  # noqa: ASYNC240 — sync I/O acceptable for local file cleanup
                 os.remove(path)
         await self.adapter.update(pk=item_id, data={field_name: None})
         if "hx-request" in request.headers:
