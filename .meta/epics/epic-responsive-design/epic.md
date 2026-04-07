@@ -2,7 +2,7 @@
 type: epic
 id: STHgdkjlft50
 title: "epic(ui): Responsive Design — Mobile-First CSS Overhaul"
-status: todo
+status: in_progress
 priority: high
 owner: null
 labels:
@@ -16,7 +16,7 @@ github:
   issue_number: null
   repo: yevheniidehtiar/hyper-admin
 created_at: 2026-04-07T00:00:00Z
-updated_at: 2026-04-07T00:00:00Z
+updated_at: 2026-04-07T23:30:00Z
 ---
 
 ## Overview
