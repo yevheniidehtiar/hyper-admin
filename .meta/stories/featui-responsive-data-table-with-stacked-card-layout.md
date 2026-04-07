@@ -73,6 +73,16 @@ Below 768px viewport, transform the data table from horizontal rows into stacked
 - Actions column `<td>` gets `data-label="Actions"` with horizontal layout in card mode
 - Inline formset tables should also use this pattern
 
+## Demo checkpoint
+
+Open any list view (e.g. /admin/contact/) at 375px viewport:
+1. Verify each row renders as a card with label:value pairs stacked vertically
+2. Verify column headers are visually hidden but accessible
+3. Verify View/Edit/Delete buttons appear at card bottom with 44px touch targets
+4. Widen to 1024px -- verify standard horizontal table layout restored
+
+**This is the FIRST demoable mobile feature** -- available at end of Cycle 1.
+
 ## Agent
 
 - **Size:** M

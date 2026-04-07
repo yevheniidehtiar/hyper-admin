@@ -131,6 +131,46 @@ Total critical path size: M + M + M = 3 medium stories.
 - #452 split into C1-A + C1-B
 - #458, #461, #464, #465, #467, #470 reworked with narrower scopes and cycle labels
 
+### Time to First Demoable Mobile Experience
+
+**Answer: End of Cycle 1** -- specifically when C1-C (data table cards) completes.
+
+C1-C is independent (no dependencies) and produces a visible mobile feature:
+open any list view at 375px viewport and see stacked cards instead of a table.
+This is demoable even before the base layout rewrite (C1-B) completes, because
+the card CSS uses self-contained media queries within `_table.css`.
+
+**First full mobile demo**: End of Cycle 2, when sidebar toggle, forms, and
+pagination are all responsive. A user can navigate the entire admin on a phone.
+
+### Agent Tier Assignment
+
+All stories in this epic are **CSS/template only** (no Python logic), so Sonnet
+tier is sufficient. Reserve Opus for the E2E test suite (C3-B) which requires
+understanding the full responsive behavior across all views.
+
+| Story | Tier |
+|-------|------|
+| C1-A Breakpoint tokens | Sonnet |
+| C1-B Base layout rewrite | Sonnet |
+| C1-C Data table cards | Sonnet |
+| C2-A Sidebar hamburger | Sonnet |
+| C2-B Touch-friendly forms | Sonnet |
+| C2-C Pagination/filter | Sonnet |
+| C2-D Login/detail/dashboard | Sonnet |
+| C3-A Navbar responsive | Sonnet |
+| C3-B E2E responsive tests | Opus |
+| C3-C Demo app showcase | Sonnet |
+| C3-D Visual regression | Sonnet |
+
+### Risk Mitigation
+
+1. **_responsive.css contention**: Eliminated by self-contained media query strategy
+2. **Desktop regression**: C1-B scenario explicitly requires visual parity at 1280x720
+3. **Touch target compliance**: W2-B and W2-C scenarios mandate 44px minimum heights
+4. **Alpine.js scope conflicts**: C2-A sidebar toggle uses scoped `x-data` on body wrapper
+5. **CSS specificity wars**: All responsive rules use `@layer responsive` (highest specificity)
+
 ### Size Summary
 
 | Size | Count |
@@ -138,4 +178,4 @@ Total critical path size: M + M + M = 3 medium stories.
 | S | 6 |
 | M | 5 |
 | L | 0 |
-| **Total** | **11** |
+| **Total** | **11 stories across 3 cycles** |
