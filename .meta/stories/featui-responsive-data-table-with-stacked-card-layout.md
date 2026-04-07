@@ -11,8 +11,10 @@ labels:
   - size:M
   - planned
   - responsive
+  - wave:2
 estimate: null
-epic_ref: null
+epic_ref:
+  id: cvr4sYoEN9CV
 github:
   issue_number: 461
   repo: yevheniidehtiar/hyper-admin
@@ -76,4 +78,4 @@ Below 768px viewport, transform the data table from horizontal rows into stacked
 
 - **Size:** M
 - **Tier:** Sonnet
-- **blocked_by:** #452
+- **blocked_by:** W1-B (v8xvLKJfP_46)

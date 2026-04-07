@@ -2,7 +2,7 @@
 type: story
 id: evYLLYeqOdOC
 title: "refactor(ui): mobile-first CSS architecture with breakpoint tokens"
-status: todo
+status: superseded
 priority: medium
 assignee: null
 labels:
@@ -89,3 +89,4 @@ Restructure the CSS from desktop-first to mobile-first. Add breakpoint custom pr
 - **Size:** L
 - **Tier:** Opus
 - **blocked_by:** #447
+- **Status:** SUPERSEDED — split into W1-A (dyx7PkkdpBto), W1-B (v8xvLKJfP_46), W1-C (sRu4NeCGtawc) in epic cvr4sYoEN9CV

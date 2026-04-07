@@ -11,8 +11,10 @@ labels:
   - size:S
   - planned
   - responsive
+  - wave:3
 estimate: null
-epic_ref: null
+epic_ref:
+  id: cvr4sYoEN9CV
 github:
   issue_number: 470
   repo: yevheniidehtiar/hyper-admin
@@ -63,4 +65,4 @@ Ensure remaining views (login, detail, dashboard) are fully responsive. Login ca
 
 - **Size:** S
 - **Tier:** Sonnet
-- **blocked_by:** #458, #461, #464, #465, #467
+- **blocked_by:** W2-A (8P_VPRTVAWHF), W2-B (KKpriYWS0U9B) — needs sidebar + table responsive to exist

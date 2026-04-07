@@ -11,8 +11,10 @@ labels:
   - size:M
   - planned
   - responsive
+  - wave:3
 estimate: null
-epic_ref: null
+epic_ref:
+  id: cvr4sYoEN9CV
 github:
   issue_number: 464
   repo: yevheniidehtiar/hyper-admin
@@ -76,4 +78,4 @@ Optimize pagination and filter bar components for mobile viewports. Pagination s
 
 - **Size:** M
 - **Tier:** Sonnet
-- **blocked_by:** #461
+- **blocked_by:** W1-B (v8xvLKJfP_46)

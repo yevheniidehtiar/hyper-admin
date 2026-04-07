@@ -11,8 +11,10 @@ labels:
   - size:S
   - planned
   - responsive
+  - wave:3
 estimate: null
-epic_ref: null
+epic_ref:
+  id: cvr4sYoEN9CV
 github:
   issue_number: 465
   repo: yevheniidehtiar/hyper-admin
@@ -56,4 +58,4 @@ Optimize the navbar for mobile viewports. Reduced padding, brand and actions rem
 
 - **Size:** S
 - **Tier:** Sonnet
-- **blocked_by:** #458
+- **blocked_by:** W2-A (8P_VPRTVAWHF) — sidebar hamburger must land first
