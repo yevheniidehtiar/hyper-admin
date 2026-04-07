@@ -74,6 +74,14 @@ Optimize pagination and filter bar components for mobile viewports. Pagination s
 - Filter bar: `.ha-filter-container { flex-direction: column; }` and `.ha-filter-group { width: 100%; }` at mobile
 - Pagination buttons should comply with 44px min-height from `_accessibility.css`
 
+## Demo checkpoint
+
+Open a list view with multiple pages at 375px viewport:
+1. Verify pagination stacks vertically with centered controls
+2. Verify Prev/Next buttons have 44px+ touch targets
+3. Expand filter bar -- verify filters stack full-width
+4. Verify search input spans full content width
+
 ## Agent
 
 - **Size:** M

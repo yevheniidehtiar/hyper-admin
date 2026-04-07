@@ -74,6 +74,14 @@ Ensure forms, fieldsets, and inline formsets are fully usable on mobile. Inputs 
 - `ha-form-grid-2` defaults to `grid-template-columns: 1fr`, expands to `1fr 1fr` at md breakpoint
 - Inline formsets use same `data-label` + CSS card technique as table (Issue #461)
 
+## Demo checkpoint
+
+Open a create form at 375px viewport:
+1. Verify form grid is single-column
+2. Verify all inputs have at least 44px height (use DevTools to measure)
+3. If inline formsets exist, verify they display as stacked cards
+4. Widen to 768px -- form grid becomes two-column
+
 ## Agent
 
 - **Size:** M

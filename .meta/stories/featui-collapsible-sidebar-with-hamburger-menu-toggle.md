@@ -84,6 +84,14 @@ Replace the "hidden on mobile" sidebar with a slide-in overlay triggered by a ha
 - Sidebar z-index: 40 (above backdrop at 39, above navbar at 30)
 - At `min-width: 1024px`, hamburger hides and sidebar reverts to inline flow
 
+## Demo checkpoint
+
+Open any admin page at 375px viewport width:
+1. Verify sidebar is hidden and hamburger icon visible in navbar
+2. Tap hamburger -- sidebar slides in from left with dark backdrop
+3. Tap backdrop or press Escape -- sidebar slides out
+4. Widen to 1024px -- hamburger disappears, sidebar shows inline
+
 ## Agent
 
 - **Size:** M

@@ -54,6 +54,13 @@ Optimize the navbar for mobile viewports. Reduced padding, brand and actions rem
 - `src/hyperadmin/static/css/_responsive.css`
 - `src/hyperadmin/static/css/_accessibility.css` — add `.ha-theme-toggle` to coarse pointer touch target rule
 
+## Demo checkpoint
+
+Open any admin page at 320px viewport:
+1. Verify brand text, theme toggle, and user dropdown all visible without overflow
+2. Verify touch targets are at least 44px on theme toggle and user dropdown
+3. Widen to 1024px -- verify spacing returns to normal
+
 ## Agent
 
 - **Size:** S

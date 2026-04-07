@@ -61,6 +61,13 @@ Ensure remaining views (login, detail, dashboard) are fully responsive. Login ca
 - Detail view `.ha-form-group` labels and values already stack; main concern is action buttons overflowing
 - Use `flex-wrap: wrap` on `.ha-action-buttons`
 
+## Demo checkpoint
+
+At 375px viewport:
+1. Login page: card centered, inputs full-width, Sign In button full-width
+2. Detail view: field labels and values stacked vertically, action buttons wrap
+3. Widen to 1024px -- standard desktop layout restored
+
 ## Agent
 
 - **Size:** S
