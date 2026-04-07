@@ -3,7 +3,7 @@ type: story
 id: anMwCNCA1dkQ
 title: "docs: responsive design guide and breakpoint reference"
 status: todo
-priority: medium
+priority: low
 assignee: null
 labels:
   - documentation
@@ -12,7 +12,7 @@ labels:
   - responsive
 estimate: null
 epic_ref:
-  id: mmZ2u_cMD2xN
+  id: STHgdkjlft50
 github:
   issue_number: 472
   repo: yevheniidehtiar/hyper-admin
@@ -45,4 +45,4 @@ Document the responsive design system: breakpoint tokens, mobile-first approach,
 
 - **Size:** S
 - **Tier:** Sonnet
-- **blocked_by:** #469
+- **blocked_by:** #452, #470

@@ -12,7 +12,7 @@ labels:
   - e2e
 estimate: null
 epic_ref:
-  id: mmZ2u_cMD2xN
+  id: STHgdkjlft50
 github:
   issue_number: 471
   repo: yevheniidehtiar/hyper-admin

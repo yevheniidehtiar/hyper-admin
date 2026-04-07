@@ -10,7 +10,7 @@ labels:
   - planned
 estimate: null
 epic_ref:
-  id: mmZ2u_cMD2xN
+  id: STHgdkjlft50
 github:
   issue_number: 447
   repo: yevheniidehtiar/hyper-admin

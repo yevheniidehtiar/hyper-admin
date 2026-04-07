@@ -12,7 +12,8 @@ labels:
   - planned
   - responsive
 estimate: null
-epic_ref: null
+epic_ref:
+  id: STHgdkjlft50
 github:
   issue_number: 464
   repo: yevheniidehtiar/hyper-admin

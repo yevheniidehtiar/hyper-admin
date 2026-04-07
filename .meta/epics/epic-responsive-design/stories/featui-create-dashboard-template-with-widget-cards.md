@@ -3,7 +3,7 @@ type: story
 id: XL2rTBZVsXbR
 title: "feat(ui): create dashboard template with widget cards"
 status: todo
-priority: medium
+priority: low
 assignee: null
 labels:
   - enhancement
@@ -11,8 +11,10 @@ labels:
   - area:templates
   - size:M
   - area:frontend
+  - responsive
 estimate: null
-epic_ref: null
+epic_ref:
+  id: STHgdkjlft50
 github:
   issue_number: 463
   repo: yevheniidehtiar/hyper-admin
@@ -43,6 +45,12 @@ The dashboard template needs to render widget cards in a responsive grid. Each c
   When  the dashboard page loads
   Then  the widget card shows "Widget unavailable" with a retry button
 
+**Scenario: widget grid stacks to single column on mobile**
+  Given a dashboard with 4 widgets and viewport width is 375px
+  When  the dashboard page loads
+  Then  widget cards are displayed in a single-column layout
+  And   each card spans the full content width
+
 ## Acceptance Criteria
 
 - [ ] `dashboard.html` template updated with widget card grid
@@ -51,6 +59,7 @@ The dashboard template needs to render widget cards in a responsive grid. Each c
 - [ ] Widget card: title bar, content area, loading spinner, error state
 - [ ] Type-specific content rendering (count number, item list, action links)
 - [ ] `data-testid="widget-card"`, `data-testid="widget-title"` for E2E
+- [ ] Widget grid stacks to single column on mobile (375px)
 - [ ] Empty state message when no widgets configured
 
 ## Files Likely Affected
@@ -65,3 +74,9 @@ Depends on: #462 (dashboard view handler — provides template context)
 - Widget card CSS: `ha-widget-card`, `ha-widget-title`, `ha-widget-content`
 - Error card: red border, "Widget unavailable" text, retry icon button
 - Follow existing template patterns (e.g., `components/filter_bar.html`)
+
+## Agent
+
+- **Size:** M
+- **Tier:** Sonnet
+- **blocked_by:** #462

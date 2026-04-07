@@ -3,7 +3,7 @@ type: story
 id: evYLLYeqOdOC
 title: "refactor(ui): mobile-first CSS architecture with breakpoint tokens"
 status: todo
-priority: medium
+priority: high
 assignee: null
 labels:
   - frontend
@@ -12,7 +12,8 @@ labels:
   - responsive
   - css
 estimate: null
-epic_ref: null
+epic_ref:
+  id: STHgdkjlft50
 github:
   issue_number: 452
   repo: yevheniidehtiar/hyper-admin
