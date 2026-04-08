@@ -3,7 +3,7 @@ type: story
 id: TAhnnvjjZxyA
 title: "feat(ui): responsive navbar with mobile optimizations"
 status: todo
-priority: medium
+priority: high
 assignee: null
 labels:
   - frontend
@@ -11,8 +11,10 @@ labels:
   - size:S
   - planned
   - responsive
+  - cycle:3
 estimate: null
-epic_ref: null
+epic_ref:
+  id: RspSynth_01
 github:
   issue_number: 465
   repo: yevheniidehtiar/hyper-admin
@@ -41,19 +43,34 @@ Optimize the navbar for mobile viewports. Reduced padding, brand and actions rem
   And   the user dropdown button is visible and tappable
   And   both have minimum 44px touch targets
 
+**Scenario: navbar buttons have accessible names for screen readers**
+  Given viewport width is 375px and a screen reader is active
+  When  the page loads
+  Then  the hamburger button has aria-label="Open navigation"
+  And   the theme toggle button has aria-label="Toggle dark mode"
+  And   the user dropdown button has an accessible name
+
 ## Acceptance criteria
 
 - [ ] Navbar uses reduced padding on mobile
 - [ ] Brand, theme toggle, and user dropdown remain visible and accessible on 320px
+- [ ] All navbar buttons have accessible aria-label names
 
 ## Files to modify
 
 - `src/hyperadmin/static/css/_navbar.css`
 - `src/hyperadmin/static/css/_responsive.css`
-- `src/hyperadmin/static/css/_accessibility.css` — add `.ha-theme-toggle` to coarse pointer touch target rule
+- `src/hyperadmin/static/css/_accessibility.css` -- add `.ha-theme-toggle` to coarse pointer touch target rule
+
+## Demo checkpoint
+
+Open any admin page at 320px viewport:
+1. Verify brand text, theme toggle, and user dropdown all visible without overflow
+2. Verify touch targets are at least 44px on theme toggle and user dropdown
+3. Widen to 1024px -- verify spacing returns to normal
 
 ## Agent
 
 - **Size:** S
 - **Tier:** Sonnet
-- **blocked_by:** #458
+- **blocked_by:** C2-A (sidebar -- hamburger must land first)

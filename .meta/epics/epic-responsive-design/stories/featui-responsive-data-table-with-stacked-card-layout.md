@@ -3,7 +3,7 @@ type: story
 id: KKpriYWS0U9B
 title: "feat(ui): responsive data table with stacked card layout"
 status: todo
-priority: medium
+priority: high
 assignee: null
 labels:
   - frontend
@@ -11,8 +11,10 @@ labels:
   - size:M
   - planned
   - responsive
+  - cycle:1
 estimate: null
-epic_ref: null
+epic_ref:
+  id: RspSynth_01
 github:
   issue_number: 461
   repo: yevheniidehtiar/hyper-admin
@@ -25,6 +27,8 @@ updated_at: 2026-04-01T21:44:49Z
 ## Summary
 
 Below 768px viewport, transform the data table from horizontal rows into stacked cards. Each card shows field labels inline with values. Action buttons displayed as a footer row in each card. Table header row visually hidden on mobile but remains in DOM for accessibility.
+
+Uses self-contained `@media` queries within `_table.css` -- no dependency on `_responsive.css` changes. This allows it to run in parallel with C1-B (base layout rewrite) in Cycle 1.
 
 ## Scenarios
 
@@ -50,18 +54,23 @@ Below 768px viewport, transform the data table from horizontal rows into stacked
   When  CSS displays cards on mobile
   Then  the data-label content appears as bold text before each value
 
+**Scenario: table header remains accessible to screen readers on mobile**
+  Given viewport width is 375px and a screen reader is active
+  When  the list view loads with data
+  Then  the table header row is visually hidden but present in the accessibility tree
+
 ## Acceptance criteria
 
 - [ ] Table displays as stacked cards on mobile
 - [ ] Table displays as normal horizontal table on desktop
 - [ ] Action buttons in card footer on mobile with 44px touch targets
 - [ ] data-label attributes provide inline column labels
+- [ ] Table header accessible to screen readers when visually hidden
 
 ## Files to modify
 
-- `src/hyperadmin/templates/components/table.html` — add `data-label` attribute to `<td>` elements
-- `src/hyperadmin/static/css/_table.css` — card layout base styles
-- `src/hyperadmin/static/css/_responsive.css` — table card transformation at mobile breakpoint
+- `src/hyperadmin/templates/components/table.html` -- add `data-label` attribute to `<td>` elements
+- `src/hyperadmin/static/css/_table.css` -- card layout styles with self-contained `@media (max-width: 767px)` query (no `_responsive.css` changes -- keeps story independent for Cycle 1 parallelism)
 
 ## Implementation notes
 
@@ -72,8 +81,18 @@ Below 768px viewport, transform the data table from horizontal rows into stacked
 - Actions column `<td>` gets `data-label="Actions"` with horizontal layout in card mode
 - Inline formset tables should also use this pattern
 
+## Demo checkpoint
+
+Open any list view (e.g. /admin/contact/) at 375px viewport:
+1. Verify each row renders as a card with label:value pairs stacked vertically
+2. Verify column headers are visually hidden but accessible
+3. Verify View/Edit/Delete buttons appear at card bottom with 44px touch targets
+4. Widen to 1024px -- verify standard horizontal table layout restored
+
+**This is the FIRST demoable mobile feature** -- available at end of Cycle 1.
+
 ## Agent
 
 - **Size:** M
 - **Tier:** Sonnet
-- **blocked_by:** #452
+- **blocked_by:** none -- self-contained card CSS in _table.css with own media queries

@@ -6,13 +6,14 @@ status: todo
 priority: medium
 assignee: null
 labels:
-  - size:L
+  - size:M
   - planned
   - responsive
   - e2e
+  - cycle:3
 estimate: null
 epic_ref:
-  id: mmZ2u_cMD2xN
+  id: RspSynth_01
 github:
   issue_number: 471
   repo: yevheniidehtiar/hyper-admin
@@ -24,7 +25,9 @@ updated_at: 2026-04-01T21:46:19Z
 
 ## Summary
 
-Comprehensive E2E tests for all responsive behaviors using Playwright viewport emulation. Tests verify sidebar toggle, table card layout, pagination stacking, form touch targets, and navbar behavior across mobile (375x667), tablet (768x1024), and desktop (1280x720) viewports.
+Comprehensive E2E tests for all responsive behaviors using Playwright viewport emulation. Tests verify sidebar toggle, table card layout, pagination stacking, form touch targets, page header stacking, and navbar behavior across mobile (375x667), tablet (768x1024), and desktop (1280x720) viewports.
+
+Downsized from L to M by focusing on core viewport tests. Visual regression screenshots are in a separate story (C3-D).
 
 ## Scenarios
 
@@ -55,15 +58,25 @@ Comprehensive E2E tests for all responsive behaviors using Playwright viewport e
   When  inspecting the pagination
   Then  info text and controls are stacked vertically
 
-**Scenario: filter controls are full-width on mobile**
-  Given viewport is 375x667 and filters are expanded
-  When  inspecting the filter bar
-  Then  each filter select occupies full width
-
 **Scenario: form grid is single column on mobile**
   Given viewport is 375x667 and a create form loads
   When  inspecting the form layout
   Then  form fields are in a single column
+
+**Scenario: page header stacks on mobile**
+  Given viewport is 375x667 and the list view loads
+  When  inspecting the page header
+  Then  the heading and "Create New" button are stacked vertically
+
+**Scenario: login page is usable on mobile**
+  Given viewport is 375x667
+  When  the login page loads
+  Then  the login card is centered and inputs are full-width
+
+**Scenario: inputs do not trigger zoom on iOS mobile**
+  Given viewport is 375x667 and a create form loads
+  When  inspecting input element styles
+  Then  all input elements have computed font-size >= 16px
 
 **Scenario: Escape key closes mobile sidebar**
   Given viewport is 375x667 and the sidebar is open
@@ -76,8 +89,10 @@ Comprehensive E2E tests for all responsive behaviors using Playwright viewport e
 - [ ] Sidebar inline on desktop
 - [ ] Table stacked cards on mobile, horizontal on desktop
 - [ ] Pagination stacked on mobile
-- [ ] Filter controls full-width on mobile
 - [ ] Form grid single column on mobile
+- [ ] Page header stacks on mobile
+- [ ] Login page usable on mobile
+- [ ] Inputs have 16px+ font-size on mobile (no iOS zoom)
 - [ ] Escape closes sidebar
 
 ## Files to create
@@ -94,6 +109,6 @@ Comprehensive E2E tests for all responsive behaviors using Playwright viewport e
 
 ## Agent
 
-- **Size:** L
+- **Size:** M
 - **Tier:** Opus
-- **blocked_by:** #458, #461, #464, #465, #467, #470
+- **blocked_by:** all Cycle 2 stories

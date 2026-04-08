@@ -3,7 +3,7 @@ type: story
 id: I0BwE7nn-Qpf
 title: "feat(ui): touch-friendly forms and inline formsets on mobile"
 status: todo
-priority: medium
+priority: high
 assignee: null
 labels:
   - frontend
@@ -11,8 +11,10 @@ labels:
   - size:M
   - planned
   - responsive
+  - cycle:2
 estimate: null
-epic_ref: null
+epic_ref:
+  id: RspSynth_01
 github:
   issue_number: 467
   repo: yevheniidehtiar/hyper-admin
@@ -53,6 +55,7 @@ Ensure forms, fieldsets, and inline formsets are fully usable on mobile. Inputs 
 ## Acceptance criteria
 
 - [ ] Form inputs have at least 44px height on coarse pointer devices
+- [ ] Form inputs have font-size >= 16px on mobile (prevents iOS auto-zoom)
 - [ ] Form grid collapses to single column on mobile
 - [ ] Fieldset toggles are touch-friendly
 - [ ] Inline formsets stack as cards on mobile
@@ -76,4 +79,12 @@ Ensure forms, fieldsets, and inline formsets are fully usable on mobile. Inputs 
 
 - **Size:** M
 - **Tier:** Sonnet
-- **blocked_by:** #452
+- **blocked_by:** C1-B (mobile-first base layout)
+
+## Demo checkpoint
+
+Open a create form at 375px viewport:
+1. Verify form grid is single-column
+2. Verify all inputs have at least 44px height (use DevTools to measure)
+3. If inline formsets exist, verify they display as stacked cards
+4. Widen to 768px -- form grid becomes two-column
