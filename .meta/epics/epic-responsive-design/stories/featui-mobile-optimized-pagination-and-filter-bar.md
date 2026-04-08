@@ -3,7 +3,7 @@ type: story
 id: miwk_JpwDtKy
 title: "feat(ui): mobile-optimized pagination and filter bar"
 status: todo
-priority: medium
+priority: high
 assignee: null
 labels:
   - frontend
@@ -11,8 +11,10 @@ labels:
   - size:M
   - planned
   - responsive
+  - cycle:2
 estimate: null
-epic_ref: null
+epic_ref:
+  id: RspSynth_01
 github:
   issue_number: 464
   repo: yevheniidehtiar/hyper-admin
@@ -76,4 +78,12 @@ Optimize pagination and filter bar components for mobile viewports. Pagination s
 
 - **Size:** M
 - **Tier:** Sonnet
-- **blocked_by:** #461
+- **blocked_by:** C1-B (mobile-first base layout)
+
+## Demo checkpoint
+
+Open a list view with multiple pages at 375px viewport:
+1. Verify pagination stacks vertically with centered controls
+2. Verify Prev/Next buttons have 44px+ touch targets
+3. Expand filter bar -- verify filters stack full-width
+4. Verify search input spans full content width

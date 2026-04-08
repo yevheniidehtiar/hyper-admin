@@ -11,8 +11,10 @@ labels:
   - size:S
   - planned
   - responsive
+  - cycle:3
 estimate: null
-epic_ref: null
+epic_ref:
+  id: RspSynth_01
 github:
   issue_number: 470
   repo: yevheniidehtiar/hyper-admin
@@ -42,25 +44,40 @@ Ensure remaining views (login, detail, dashboard) are fully responsive. Login ca
   And   action buttons wrap to avoid horizontal overflow
   And   the "Back to list" link has adequate touch target
 
+**Scenario: login form is accessible to screen readers on mobile**
+  Given viewport width is 375px and a screen reader is active
+  When  the login page loads
+  Then  the login form has an accessible name (aria-label or heading)
+  And   username and password fields have associated labels
+  And   the submit button is focusable and clearly labeled
+
 ## Acceptance criteria
 
 - [ ] Login page centered and usable at 375px
 - [ ] Detail view readable at 375px with stacked fields and wrapping actions
+- [ ] Login form accessible to screen readers with proper labels
 
 ## Files to modify
 
-- `src/hyperadmin/static/css/_login.css` — verify/adjust mobile padding
-- `src/hyperadmin/static/css/_buttons.css` — ensure `.ha-action-buttons` wraps on mobile
-- `src/hyperadmin/static/css/_responsive.css` — detail view and dashboard mobile rules
+- `src/hyperadmin/static/css/_login.css` -- verify/adjust mobile padding
+- `src/hyperadmin/static/css/_buttons.css` -- ensure `.ha-action-buttons` wraps on mobile
+- `src/hyperadmin/static/css/_responsive.css` -- detail view and dashboard mobile rules
 
 ## Implementation notes
 
-- Login card already has `max-width: 24rem` — may need reduced padding at very small screens
+- Login card already has `max-width: 24rem` -- may need reduced padding at very small screens
 - Detail view `.ha-form-group` labels and values already stack; main concern is action buttons overflowing
 - Use `flex-wrap: wrap` on `.ha-action-buttons`
+
+## Demo checkpoint
+
+At 375px viewport:
+1. Login page: card centered, inputs full-width, Sign In button full-width
+2. Detail view: field labels and values stacked vertically, action buttons wrap
+3. Widen to 1024px -- standard desktop layout restored
 
 ## Agent
 
 - **Size:** S
 - **Tier:** Sonnet
-- **blocked_by:** #458, #461, #464, #465, #467
+- **blocked_by:** C2-A (sidebar), C2-B (forms), C2-C (page header), C2-D (pagination)
