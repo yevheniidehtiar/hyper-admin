@@ -122,3 +122,109 @@
   color: var(--ha-color-danger-hover);
   background-color: var(--ha-color-danger-light);
 }
+
+/* ==========================================================================
+   Responsive — Stacked card layout on mobile (< 768px)
+
+   Self-contained: this block uses its own @media query and does not depend
+   on _responsive.css, so this story can ship independently of C1-B.
+
+   Below 768px each row renders as a card with field labels inline:
+     - <thead> is visually hidden but kept in the accessibility tree (clip
+       technique, not display:none)
+     - Each <tr> becomes a bordered card with stacked cells
+     - Each <td> shows its data-label as bold text before the value
+     - Action buttons get min-height 44px to meet touch-target guidance
+   ========================================================================== */
+
+@media (max-width: 767px) {
+  .ha-table-wrapper {
+    border: none;
+    box-shadow: none;
+    background-color: transparent;
+    overflow-x: visible;
+    margin: var(--ha-space-4) 0;
+  }
+
+  /* Visually hide the header but keep it accessible to screen readers. */
+  .ha-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  /* Card layout for each row. */
+  .ha-table,
+  .ha-table-body,
+  .ha-table-row,
+  .ha-table-cell {
+    display: block;
+    width: 100%;
+  }
+
+  .ha-table-row {
+    background-color: var(--ha-surface-raised);
+    border: var(--ha-border-width) solid var(--ha-color-border-light);
+    border-radius: var(--ha-radius-lg);
+    box-shadow: var(--ha-shadow-xs);
+    margin-bottom: var(--ha-space-4);
+    padding: var(--ha-space-3) var(--ha-space-4);
+  }
+
+  .ha-table-row:hover {
+    background-color: var(--ha-surface-raised);
+  }
+
+  .ha-table-row:last-child {
+    margin-bottom: 0;
+  }
+
+  .ha-table-cell {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--ha-space-4);
+    padding: var(--ha-space-2) 0;
+    border-bottom: var(--ha-border-width) solid var(--ha-color-border-light);
+    white-space: normal;
+    text-align: right;
+  }
+
+  .ha-table-cell:last-child {
+    border-bottom: none;
+  }
+
+  .ha-table-cell::before {
+    content: attr(data-label);
+    font-weight: var(--ha-font-semibold);
+    color: var(--ha-color-text-muted);
+    font-size: var(--ha-font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-align: left;
+    flex-shrink: 0;
+  }
+
+  /* Actions cell stacks horizontally with wrap, ensuring 44px touch targets. */
+  .ha-table-cell-center[data-label="Actions"] {
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: var(--ha-space-2);
+    text-align: right;
+  }
+
+  .ha-action-link,
+  .ha-action-delete {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    padding: var(--ha-space-2) var(--ha-space-3);
+  }
+}
+

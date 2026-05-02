@@ -12,9 +12,10 @@
             {%- for item in items -%}
             <tr class="ha-table-row" data-testid="list-row">
                 {%- for field in fields -%}
-                    <td class="ha-table-cell">{{- item[field] -}}</td>
+                    {%- set cell_label = model_name if field == '__str__' else (field_labels[field] if field_labels is defined and field in field_labels else field.replace('_', ' ').title()) -%}
+                    <td class="ha-table-cell" data-label="{{ cell_label }}">{{- item[field] -}}</td>
                 {%- endfor -%}
-                <td class="ha-table-cell ha-table-cell-center">
+                <td class="ha-table-cell ha-table-cell-center" data-label="Actions">
                     {%- if can_detail is not defined or can_detail -%}
                     <a href="{{- url_for(model_name|lower ~ '-detail', item_id=item.id) -}}" class="ha-action-link" data-testid="row-view-link">View</a>
                     {%- endif -%}
