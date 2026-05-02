@@ -106,7 +106,7 @@ uv run pre-commit install
 uv run playwright install chromium --with-deps
 ```
 
-This downloads the Chromium binary used by `poe test:e2e`. On a headless server,
+This downloads the Chromium binary used by `just test-e2e`. On a headless server,
 `--with-deps` installs the system-level libraries Chromium needs.
 
 Verify: `uv run playwright --version` prints a version string.

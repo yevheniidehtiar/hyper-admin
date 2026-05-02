@@ -94,6 +94,9 @@ gha-creds-*.json
 /.worktrees/
 .claude/worktrees/
 
+# pre-commit local cache
 .cache/
+
+# Claude Code runtime locks
 *.lock
 

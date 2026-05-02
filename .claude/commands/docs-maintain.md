@@ -28,7 +28,7 @@ For each page listed in the nav, check:
 
 ## Step 4 — Build Verification
 
-Run `poe docs:build` and report any warnings or errors.
+Run `just docs-build` and report any warnings or errors.
 
 ## Step 5 — Report
 

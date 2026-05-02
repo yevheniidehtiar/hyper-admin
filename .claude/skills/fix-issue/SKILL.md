@@ -3,7 +3,7 @@ name: fix-issue
 description: Implement a GitHub issue end-to-end following TDD — branch, code, tests, PR
 argument-hint: "<issue-number>"
 disable-model-invocation: true
-allowed-tools: Read, Grep, Glob, Bash(git *), Bash(gh *), Bash(poe *), Bash(uv run *)
+allowed-tools: Read, Grep, Glob, Bash(git *), Bash(gh *), Bash(just *), Bash(uv run *)
 ---
 
 Fix story for GitHub issue #$ARGUMENTS in HyperAdmin.
@@ -19,8 +19,12 @@ Check `ROADMAP.md` to confirm priority and scope. Do not expand scope.
 
 ### 2. Start worktree
 
-Run `/start fix/issue-$ARGUMENTS` to create an isolated worktree branched from `develop`,
-rebase onto latest, and bootstrap the environment.
+Run `/wt fix/issue-$ARGUMENTS` to create an isolated worktree branched from `develop`.
+
+Then sync the environment:
+```bash
+uv sync --all-extras
+```
 
 ### 3. Explore before changing
 - Read relevant source files in `src/hyperadmin/`
@@ -34,12 +38,12 @@ rebase onto latest, and bootstrap the environment.
 ### 5. E2E test (if UI is involved)
 - Write/update Playwright test in `tests/e2e/`
 - Use `ha-*` CSS selectors (see `.claude/rules/testing.md`)
-- `poe test:e2e` to verify
+- `just test-e2e` to verify
 
 ### 6. Pre-submission checks
 ```bash
-poe lint
-poe test
+just lint
+just test
 ```
 All must pass. Fix any failures before continuing.
 
