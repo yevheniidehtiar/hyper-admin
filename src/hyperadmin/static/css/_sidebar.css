@@ -3,6 +3,7 @@
    ========================================================================== */
 
 .ha-sidebar {
+  display: none;
   width: var(--ha-sidebar-width);
   background-color: var(--ha-color-surface);
   border-right: var(--ha-border-width) solid var(--ha-color-border-light);

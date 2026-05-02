@@ -4,15 +4,10 @@
 
 .ha-form-grid-2 {
   display: grid;
-  grid-template-columns: 1fr 1fr;
   gap: 0 var(--ha-space-6);
 }
-
-@media (max-width: 768px) {
-  .ha-form-grid-2 {
-    grid-template-columns: 1fr;
-  }
-}
+/* Column rules are mobile-first in _responsive.css:
+   base = 1 column, >= 768px = 2 columns. */
 
 /* ==========================================================================
    Fieldsets

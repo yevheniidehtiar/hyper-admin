@@ -15,13 +15,19 @@
 }
 
 .ha-layout {
-  display: flex;
+  display: block;
   min-height: calc(100vh - var(--ha-navbar-height));
+}
+
+@media (min-width: 768px) {
+  .ha-layout {
+    display: flex;
+  }
 }
 
 .ha-content {
   flex: 1;
-  padding: var(--ha-space-8);
+  padding: var(--ha-space-4);
   background-color: var(--ha-surface-base);
   min-width: 0;
 }

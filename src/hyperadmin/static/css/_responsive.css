@@ -1,23 +1,71 @@
 /* ==========================================================================
-   Responsive -- Mobile
+   Responsive — Mobile-first base rules
+
+   Approach: base styles target mobile (no media query). Larger breakpoints
+   layer on with `min-width` queries. Desktop layout (>= 1024px) is preserved
+   visually identical to pre-refactor.
+
+   Breakpoints come from _tokens.css:
+     --ha-bp-sm: 640px   (large mobile / phablet)
+     --ha-bp-md: 768px   (tablet — sidebar reappears at 12rem)
+     --ha-bp-lg: 1024px  (desktop — sidebar at full 16rem)
+     --ha-bp-xl: 1280px  (max container width)
    ========================================================================== */
 
-@media (max-width: 767px) {
+/* ---- Mobile base (no media query) ----
+   Sidebar hidden by default; content uses tighter padding;
+   navbar gets reduced horizontal padding. The sidebar overlay
+   for mobile (hamburger toggle) is layered on by the sidebar
+   story (C2-A) — this file only owns base layout flow. */
+.ha-content {
+  padding: var(--ha-space-4);
+}
+
+.ha-navbar-inner {
+  padding: 0 var(--ha-space-4);
+}
+
+/* Form grids collapse to single column on mobile (migrated from _fieldsets.css). */
+.ha-form-grid-2 {
+  grid-template-columns: 1fr;
+}
+
+/* ---- Tablet (>= 768px) ----
+   Sidebar reappears at the tablet width token; content padding
+   relaxes to the medium spacing scale. */
+@media (min-width: 768px) {
   .ha-sidebar {
-    display: none;
+    display: flex;
+    width: var(--ha-sidebar-width-tablet);
   }
 
   .ha-content {
-    padding: var(--ha-space-4);
+    padding: var(--ha-space-6);
   }
 
   .ha-navbar-inner {
-    padding: 0 var(--ha-space-4);
+    padding: 0 var(--ha-space-6);
+  }
+
+  .ha-form-grid-2 {
+    grid-template-columns: 1fr 1fr;
   }
 }
 
-@media (min-width: 768px) and (max-width: 1023px) {
-  :root {
-    --ha-sidebar-width: 12rem;
+/* ---- Desktop (>= 1024px) ----
+   Full-width sidebar restored to match the original desktop layout
+   exactly. Content padding restored to the larger spacing scale. */
+@media (min-width: 1024px) {
+  .ha-sidebar {
+    width: var(--ha-sidebar-width);
+  }
+
+  .ha-content {
+    padding: var(--ha-space-8);
   }
 }
+
+/* ---- XL (>= 1280px) ----
+   Container caps at 1280px and centers — already handled by the
+   .ha-container max-width in _layout.css; nothing additional needed
+   here, but the breakpoint exists for future polish stories. */
