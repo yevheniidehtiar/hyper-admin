@@ -92,4 +92,5 @@ gha-creds-*.json
 
 # git worktrees
 /.worktrees/
+.claude/worktrees/
 
