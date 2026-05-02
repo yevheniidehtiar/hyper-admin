@@ -40,7 +40,7 @@ grep -rl 'issue_number: <N>' .meta/stories/ .meta/epics/*/stories/ 2>/dev/null
 ### 3. E2E Test Orchestration
 - When a PR is opened or updated by an agent, trigger comprehensive E2E tests using:
   ```bash
-  poe test:e2e
+  just test-e2e
   ```
 - Monitor test results. Classify outcomes:
   - **PASS**: All Playwright E2E tests green → notify reviewer with summary + preview URL → mark PR ready for review.
@@ -118,10 +118,10 @@ grep -rl 'status: in_progress' .meta/stories/ .meta/epics/*/stories/ 2>/dev/null
 gh pr list --author 'app/claude-code' --state open --json number,title,headRefName,body
 
 # Run E2E tests
-poe test:e2e
+just test-e2e
 
 # Run all linters
-poe lint
+just lint
 
 # Check PR CI status
 gh pr checks <number>

@@ -63,7 +63,7 @@ Verify `data-testid` values match the documented naming table:
 - Any dep bump must be verified across the compatibility matrix: Python 3.10 + lowest-direct, Python 3.13 + lowest-direct, Python 3.13 + highest.
 
 ### 8. General Code Quality
-- Run `poe lint` mentally: check for ruff violations (unused imports, f-string issues, line length), mypy type errors.
+- Run `just lint` mentally: check for ruff violations (unused imports, f-string issues, line length), mypy type errors.
 - No magic strings — use constants or enums.
 - No silent `except Exception` without logging.
 - Functions must have type annotations on all parameters and return types.

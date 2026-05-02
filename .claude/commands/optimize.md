@@ -117,8 +117,8 @@ For each finding:
 After applying all fixes, run:
 
 ```bash
-poe lint
-poe test
+just lint
+just test
 ```
 
 Fix any regressions before proceeding.

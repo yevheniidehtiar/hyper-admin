@@ -216,11 +216,11 @@ For each finding from Steps 2-7:
 After applying all fixes, run:
 
 ```bash
-poe lint
-poe test
+just lint
+just test
 ```
 
-Fix any regressions before proceeding. If `poe lint` introduces formatting changes, accept them. If `poe test` reveals a broken test, revert the specific refactoring that caused it and note it in the report.
+Fix any regressions before proceeding. If `just lint` introduces formatting changes, accept them. If `just test` reveals a broken test, revert the specific refactoring that caused it and note it in the report.
 
 ---
 

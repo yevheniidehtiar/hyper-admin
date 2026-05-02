@@ -3,7 +3,7 @@ name: implement-feature
 description: "Self-evaluating agentic workflow: plan → validate → implement with blocker handling → learn"
 argument-hint: "<issue-number>"
 disable-model-invocation: true
-allowed-tools: Read, Grep, Glob, Write, Edit, Bash(git *), Bash(gh *), Bash(poe *), Bash(uv run *), CronCreate, CronDelete, CronList, ToolSearch
+allowed-tools: Read, Grep, Glob, Write, Edit, Bash(git *), Bash(gh *), Bash(just *), Bash(uv run *), CronCreate, CronDelete, CronList, ToolSearch
 ---
 
 Implement story for GitHub issue #$ARGUMENTS using the self-evaluating agentic loop.
@@ -119,10 +119,14 @@ Evaluate every item below. Label each **PASS** or **FAIL**:
 
 ### B1. Start worktree
 
-Run `/start feat/issue-$ARGUMENTS` to create an isolated worktree branched from `develop`,
-rebase onto latest, and bootstrap the environment.
+Run `/wt feat/issue-$ARGUMENTS` to create an isolated worktree branched from `develop`.
 
-All subsequent commands (file edits, `poe lint`, `poe test`, `uv run`, etc.) run from inside
+Then sync the environment:
+```bash
+uv sync --all-extras
+```
+
+All subsequent commands (file edits, `just lint`, `just test`, `uv run`, etc.) run from inside
 the worktree.
 
 If a draft PR already exists for this branch, resume from the rebased worktree state — do not restart.
@@ -134,11 +138,11 @@ For each sub-task in the plan, in strict order:
 1. **Write the failing test first** — unit test in `tests/unit/` or E2E in `tests/e2e/`
 2. **Implement the minimal code** to make the test pass
 3. **Refactor** — add strict type hints, remove any placeholders, ensure line length ≤ 100
-4. **Verify**: `uv run poe test`
+4. **Verify**: `just test`
 
 After completing all backend sub-tasks (before moving to UI), run an early lint check:
 ```bash
-uv run poe lint
+just lint
 ```
 Fix any issues before continuing to UI sub-tasks.
 
@@ -227,8 +231,8 @@ Then update `MEMORY.md` to add a pointer:
 ### C1. Full quality gates
 
 ```bash
-uv run poe lint   # must pass with zero errors
-uv run poe test   # all unit + E2E tests must pass
+just lint   # must pass with zero errors
+just test   # all unit + E2E tests must pass
 ```
 
 Do not proceed until both pass. Fix every failure before continuing.
@@ -360,8 +364,8 @@ If `failingChecks` is non-empty:
   3. Read the error output carefully. Diagnose root cause (lint error, type error,
      failing test, import error, etc.) and apply the minimal fix using Edit/Write.
   4. Run the same check locally to confirm the fix:
-       uv run poe lint   (if lint check failed)
-       uv run poe test   (if test check failed)
+       just lint   (if lint check failed)
+       just test   (if test check failed)
      Do not proceed until the local check passes.
   5. Commit and push (force-with-lease because rebase rewrites history):
        git -c user.name="Claude Code" -c user.email="noreply+claude-code@anthropic.com" \
@@ -388,8 +392,8 @@ If `reviewDecision == "CHANGES_REQUESTED"` (and no failing checks from Step 3):
      on develop, and a stale branch produces a misleading diff.
   3. Read each review comment and apply the requested change using Edit/Write.
   4. Run quality gates locally:
-       uv run poe lint
-       uv run poe test
+       just lint
+       just test
      Fix any failures before committing.
   5. Commit and push (force-with-lease because rebase rewrites history):
        git -c user.name="Claude Code" -c user.email="noreply+claude-code@anthropic.com" \
