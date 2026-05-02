@@ -2,7 +2,7 @@
 type: story
 id: evYLLYeqOdOC
 title: "refactor(ui): mobile-first CSS architecture with breakpoint tokens"
-status: superseded
+status: cancelled
 priority: medium
 assignee: null
 labels:

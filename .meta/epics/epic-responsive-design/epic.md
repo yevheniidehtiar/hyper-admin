@@ -12,11 +12,7 @@ labels:
   - ui
 milestone_ref:
   id: lQHUqC1sVwjC
-github:
-  issue_number: null
-  repo: yevheniidehtiar/hyper-admin
-  last_sync_hash: null
-  synced_at: null
+github: null
 created_at: 2026-04-07T00:00:00Z
 updated_at: 2026-04-08T00:00:00Z
 ---
