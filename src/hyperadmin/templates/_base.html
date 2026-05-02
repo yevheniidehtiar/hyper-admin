@@ -46,6 +46,7 @@
         }
       });
     </script>
+    <script src="https://unpkg.com/@alpinejs/focus@3.x.x/dist/cdn.min.js" defer></script>
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <link rel="stylesheet" href="{{ url_for('static', path='/css/hyperadmin.css') }}">
     <script>
@@ -93,7 +94,7 @@
       }
     </script>
 </head>
-<body class="ha-page">
+<body class="ha-page" x-data="{ sidebarOpen: false }" :class="{ 'ha-has-sidebar-open': sidebarOpen }">
     <a href="#main-content" class="ha-skip-link">Skip to main content</a>
     <div class="ha-container">
         {% block messages %}{% include "_messages.html" %}{% endblock %}
@@ -104,6 +105,13 @@
                 {% block content %}{% endblock %}
             </main>
         </div>
+        {# Backdrop for mobile sidebar overlay — only rendered/shown via CSS at < 768px #}
+        <div x-show="sidebarOpen"
+             x-transition.opacity
+             @click="sidebarOpen = false"
+             class="ha-sidebar-backdrop"
+             aria-hidden="true"
+             x-cloak></div>
     </div>
 </body>
 </html>

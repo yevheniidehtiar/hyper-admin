@@ -59,3 +59,111 @@
   color: var(--ha-color-primary-700);
   font-weight: var(--ha-font-semibold);
 }
+
+/* ==========================================================================
+   Sidebar header (mobile-only — close button visible only on mobile)
+   ========================================================================== */
+
+.ha-sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--ha-space-3);
+}
+
+.ha-sidebar-close {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  color: var(--ha-color-text);
+  background: none;
+  border: var(--ha-border-width) solid transparent;
+  border-radius: var(--ha-radius);
+  cursor: pointer;
+  transition: all var(--ha-transition);
+}
+
+.ha-sidebar-close:hover {
+  background-color: var(--ha-surface-sunken);
+  color: var(--ha-color-text-strong);
+}
+
+.ha-sidebar-close:focus-visible {
+  outline: none;
+  box-shadow: var(--ha-shadow-focus);
+}
+
+/* ==========================================================================
+   Mobile overlay mode (< 768px)
+
+   Sidebar lives in DOM as an off-screen fixed panel; toggling
+   .ha-sidebar-mobile-open via Alpine slides it in.
+   ========================================================================== */
+
+@media (max-width: 767px) {
+  .ha-sidebar {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 85%;
+    max-width: 20rem;
+    height: 100vh;
+    background-color: var(--ha-color-surface);
+    border-right: var(--ha-border-width) solid var(--ha-color-border-light);
+    box-shadow: var(--ha-shadow-xl);
+    z-index: 40;
+    transform: translateX(-100%);
+    transition: transform var(--ha-duration-slow) var(--ha-ease-default);
+    overflow-y: auto;
+  }
+
+  .ha-sidebar.ha-sidebar-mobile-open {
+    transform: translateX(0);
+  }
+
+  .ha-sidebar-close {
+    display: inline-flex;
+  }
+
+  /* Sidebar inner content does not need sticky positioning when full-height. */
+  .ha-sidebar-inner {
+    position: static;
+    padding: var(--ha-space-4);
+  }
+
+  /* Larger touch targets for nav links in overlay mode. */
+  .ha-sidebar-link {
+    min-height: 44px;
+    padding: var(--ha-space-3);
+    font-size: var(--ha-font-size-base);
+  }
+
+  /* Honor user's motion preference: skip the slide animation. */
+  @media (prefers-reduced-motion: reduce) {
+    .ha-sidebar {
+      transition: none;
+    }
+  }
+}
+
+/* ==========================================================================
+   Backdrop — visible only on mobile when sidebar is open
+   ========================================================================== */
+
+.ha-sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(16, 24, 40, 0.5);
+  z-index: 39;
+}
+
+@media (min-width: 768px) {
+  .ha-sidebar-backdrop {
+    display: none !important;
+  }
+}

@@ -1,5 +1,16 @@
 <nav class="ha-navbar" aria-label="Main navigation">
     <div class="ha-navbar-inner">
+        <button type="button"
+                class="ha-sidebar-toggle"
+                @click="sidebarOpen = !sidebarOpen"
+                :aria-expanded="sidebarOpen ? 'true' : 'false'"
+                aria-controls="sidebar"
+                aria-label="Toggle navigation menu"
+                data-testid="sidebar-toggle">
+            <svg class="ha-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+        </button>
         <a href="{{ admin_prefix }}/" class="ha-navbar-brand">HyperAdmin</a>
         <div class="ha-navbar-actions">
         <button type="button"

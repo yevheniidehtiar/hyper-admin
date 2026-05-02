@@ -28,6 +28,43 @@
   text-decoration: none;
   letter-spacing: -0.025em;
   transition: color var(--ha-transition);
+  margin-right: auto;
+}
+
+/* ==========================================================================
+   Sidebar toggle (hamburger) — visible on mobile only
+   ========================================================================== */
+
+.ha-sidebar-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  margin-right: var(--ha-space-2);
+  padding: 0;
+  color: var(--ha-color-text);
+  background: none;
+  border: var(--ha-border-width) solid transparent;
+  border-radius: var(--ha-radius);
+  cursor: pointer;
+  transition: all var(--ha-transition);
+}
+
+.ha-sidebar-toggle:hover {
+  background-color: var(--ha-surface-sunken);
+  color: var(--ha-color-text-strong);
+}
+
+.ha-sidebar-toggle:focus-visible {
+  outline: none;
+  box-shadow: var(--ha-shadow-focus);
+}
+
+@media (min-width: 768px) {
+  .ha-sidebar-toggle {
+    display: none;
+  }
 }
 
 .ha-navbar-brand:hover {
