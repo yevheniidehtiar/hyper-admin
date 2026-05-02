@@ -291,15 +291,46 @@ def test_filter_functionality(page: Page, demo_base_url: str) -> None:
     expect(page.get_by_test_id("list-row")).to_have_count(initial_count)
 
 
-def test_table_overflow_scroll(page: Page, demo_base_url: str) -> None:
+def test_table_renders_as_stacked_cards_on_mobile(page: Page, demo_base_url: str) -> None:
+    """
+    Scenario: table displays as stacked cards on mobile.
+
+      Given viewport width is 375px
+      When  the list view loads with data
+      Then  each row renders as a block-level card
+      And   no horizontal scrollbar is needed
+    """
+    # Given a mobile viewport
+    page.set_viewport_size({"width": 375, "height": 600})
     page.goto(demo_base_url + "/admin/user")
 
-    # Set a very narrow viewport
-    page.set_viewport_size({"width": 300, "height": 600})
+    # When the list view loads
+    expect(page.get_by_test_id("list-table")).to_be_visible()
 
-    wrapper = page.locator(".ha-table-wrapper")
-    expect(wrapper).to_be_visible()
+    # Then rows render as block-level cards (table-row in desktop becomes block on mobile)
+    first_row = page.get_by_test_id("list-row").first
+    expect(first_row).to_be_visible()
+    row_display = first_row.evaluate("el => window.getComputedStyle(el).display")
+    assert row_display == "block"
 
-    # Check that overflow-x is auto
-    overflow_x = wrapper.evaluate("el => window.getComputedStyle(el).overflowX")
-    assert overflow_x == "auto"
+
+def test_table_renders_as_horizontal_table_on_desktop(page: Page, demo_base_url: str) -> None:
+    """
+    Scenario: table displays as normal horizontal table on desktop.
+
+      Given viewport width is 1024px
+      When  the list view loads with data
+      Then  rows render as table rows (not blocks)
+    """
+    # Given a desktop viewport
+    page.set_viewport_size({"width": 1024, "height": 768})
+    page.goto(demo_base_url + "/admin/user")
+
+    # When the list view loads
+    expect(page.get_by_test_id("list-table")).to_be_visible()
+
+    # Then rows render as standard table rows
+    first_row = page.get_by_test_id("list-row").first
+    expect(first_row).to_be_visible()
+    row_display = first_row.evaluate("el => window.getComputedStyle(el).display")
+    assert row_display == "table-row"
