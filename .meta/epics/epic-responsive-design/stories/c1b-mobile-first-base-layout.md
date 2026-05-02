@@ -2,7 +2,7 @@
 type: story
 id: RspSyn_C1B_01
 title: "refactor(ui): mobile-first base layout rewrite"
-status: todo
+status: done
 priority: high
 assignee: null
 labels:

@@ -2,7 +2,7 @@
 type: story
 id: RspSyn_C1A_01
 title: "refactor(ui): add breakpoint design tokens to _tokens.css"
-status: todo
+status: done
 priority: high
 assignee: null
 labels:

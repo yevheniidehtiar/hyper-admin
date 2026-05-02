@@ -2,7 +2,7 @@
 type: story
 id: RspSyn_C2E_01
 title: "feat(ui): iOS input zoom prevention with minimum font sizes"
-status: todo
+status: done
 priority: high
 assignee: null
 labels:

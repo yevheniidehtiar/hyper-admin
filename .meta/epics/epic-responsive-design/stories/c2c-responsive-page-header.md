@@ -2,7 +2,7 @@
 type: story
 id: RspSyn_C2C_01
 title: "feat(ui): responsive page header and action bar"
-status: todo
+status: done
 priority: high
 assignee: null
 labels:

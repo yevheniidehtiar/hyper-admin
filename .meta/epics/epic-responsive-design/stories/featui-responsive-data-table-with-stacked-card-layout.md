@@ -2,7 +2,7 @@
 type: story
 id: KKpriYWS0U9B
 title: "feat(ui): responsive data table with stacked card layout"
-status: todo
+status: done
 priority: high
 assignee: null
 labels:

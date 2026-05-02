@@ -2,7 +2,7 @@
 type: story
 id: I0BwE7nn-Qpf
 title: "feat(ui): touch-friendly forms and inline formsets on mobile"
-status: todo
+status: done
 priority: high
 assignee: null
 labels:

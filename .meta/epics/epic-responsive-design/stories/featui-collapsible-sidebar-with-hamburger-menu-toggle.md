@@ -2,7 +2,7 @@
 type: story
 id: 8P_VPRTVAWHF
 title: "feat(ui): collapsible sidebar with hamburger menu toggle"
-status: todo
+status: done
 priority: high
 assignee: null
 labels:
