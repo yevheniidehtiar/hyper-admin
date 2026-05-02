@@ -149,3 +149,34 @@
   background-color: var(--ha-surface-sunken);
   color: var(--ha-color-text);
 }
+
+/* ==========================================================================
+   Mobile (< 768px) — touch-friendly inputs
+
+   - Larger padding so input height meets 44px (WCAG 2.1 AA touch target)
+   - font-size: 1rem (16px) prevents iOS Safari auto-zoom on focus
+   ========================================================================== */
+
+@media (max-width: 767px) {
+  .ha-input,
+  .ha-select,
+  .ha-textarea {
+    padding: var(--ha-space-3);
+    font-size: 1rem;
+    min-height: 44px;
+  }
+
+  .ha-textarea {
+    min-height: 6rem;
+  }
+
+  .ha-checkbox {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  .ha-checkbox-label {
+    min-height: 44px;
+    padding: var(--ha-space-1) 0;
+  }
+}

@@ -57,3 +57,69 @@
 .ha-inline-add-btn {
   margin-top: var(--ha-space-3);
 }
+
+/* ==========================================================================
+   Mobile (< 768px) — stacked card layout for inline rows
+
+   Same data-label + ::before technique as the main data table (C1-C):
+   header is hidden but kept in the accessibility tree, each row becomes
+   a bordered card, each cell shows its column label inline.
+   ========================================================================== */
+
+@media (max-width: 767px) {
+  .ha-inline-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  .ha-inline-table,
+  .ha-inline-table tbody,
+  .ha-inline-row {
+    display: block;
+    width: 100%;
+  }
+
+  .ha-inline-row {
+    border: var(--ha-border-width) solid var(--ha-color-border-light);
+    border-radius: var(--ha-radius-lg);
+    background-color: var(--ha-surface-raised);
+    margin-bottom: var(--ha-space-3);
+    padding: var(--ha-space-3) var(--ha-space-4);
+  }
+
+  .ha-inline-table td {
+    display: block;
+    padding: var(--ha-space-2) 0;
+    border-bottom: var(--ha-border-width) solid var(--ha-color-border-light);
+  }
+
+  .ha-inline-table td:last-child {
+    border-bottom: none;
+  }
+
+  .ha-inline-table td::before {
+    content: attr(data-label);
+    display: block;
+    font-weight: var(--ha-font-semibold);
+    color: var(--ha-color-text-muted);
+    font-size: var(--ha-font-size-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: var(--ha-space-1);
+  }
+
+  .ha-inline-actions {
+    text-align: right;
+  }
+
+  .ha-inline-remove-btn {
+    min-height: 44px;
+  }
+}
