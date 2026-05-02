@@ -94,3 +94,6 @@ gha-creds-*.json
 /.worktrees/
 .claude/worktrees/
 
+.cache/
+*.lock
+
