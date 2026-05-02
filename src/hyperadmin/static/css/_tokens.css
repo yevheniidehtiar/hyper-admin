@@ -143,5 +143,12 @@
 
   /* ---- Layout ---- */
   --ha-sidebar-width: 16rem;
+  --ha-sidebar-width-tablet: 12rem;
   --ha-navbar-height: 3.5rem;
+
+  /* ---- Breakpoints ---- */
+  --ha-bp-sm: 640px;
+  --ha-bp-md: 768px;
+  --ha-bp-lg: 1024px;
+  --ha-bp-xl: 1280px;
 }
