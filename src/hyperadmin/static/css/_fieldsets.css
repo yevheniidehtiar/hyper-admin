@@ -28,13 +28,16 @@
   display: flex;
   align-items: center;
   gap: var(--ha-space-2);
+  min-height: 44px;
   font-weight: 600;
   font-size: var(--ha-font-size-base);
   color: var(--ha-color-text-strong);
   background: none;
   border: none;
   cursor: pointer;
-  padding: 0;
+  padding: var(--ha-space-1) 0;
+  width: 100%;
+  text-align: left;
 }
 
 .ha-fieldset-toggle:hover {

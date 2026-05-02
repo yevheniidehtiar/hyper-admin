@@ -52,7 +52,13 @@
   .ha-pagination-btn,
   .ha-filter-toggle,
   .ha-dropdown-item,
-  .ha-sidebar-link {
+  .ha-sidebar-link,
+  .ha-fieldset-toggle,
+  .ha-input,
+  .ha-select,
+  .ha-textarea,
+  .ha-inline-add-btn,
+  .ha-inline-remove-btn {
     min-height: 44px;
     min-width: 44px;
     display: inline-flex;

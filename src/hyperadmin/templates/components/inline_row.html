@@ -10,7 +10,7 @@
     <input type="hidden" name="{{ inline.prefix }}-{{ row.index }}-pk" value="{{ row.pk }}" />
     {%- endif -%}
     {%- for field in row.fields -%}
-    <td>
+    <td data-label="{{ field.label }}">
         <input id="{{ inline.prefix }}-{{ row.index }}-{{ field.name }}"
                name="{{ inline.prefix }}-{{ row.index }}-{{ field.name }}"
                type="{{ field.widget.input_type }}"
@@ -28,7 +28,7 @@
         {%- endif -%}
     </td>
     {%- endfor -%}
-    <td class="ha-inline-actions">
+    <td class="ha-inline-actions" data-label="Actions">
         <button type="button"
                 class="ha-btn ha-btn-danger ha-btn-sm ha-inline-remove-btn"
                 data-testid="inline-{{ inline.prefix }}-remove-{{ row.index }}"
