@@ -76,8 +76,15 @@
 /* Action buttons container */
 .ha-action-buttons {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--ha-space-2);
   margin: var(--ha-space-4) 0;
+}
+
+@media (max-width: 767px) {
+  .ha-action-buttons .ha-btn {
+    min-height: 44px;
+  }
 }
 
 /* Ghost button */

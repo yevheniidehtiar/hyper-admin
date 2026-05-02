@@ -23,3 +23,52 @@
 .ha-text-muted {
   color: var(--ha-color-text-muted);
 }
+
+/* ==========================================================================
+   Responsive page header (heading + action bar)
+
+   Mobile (< 768px): heading and action bar stack vertically; the primary
+   action button spans full width for an easy tap target.
+   Desktop (>= 768px): heading and action bar sit side-by-side.
+   ========================================================================== */
+
+.ha-page-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--ha-space-3);
+  margin-bottom: var(--ha-space-5);
+}
+
+.ha-page-header > .ha-section-title,
+.ha-page-header > .ha-page-title {
+  margin: 0;
+  flex: 1 1 auto;
+}
+
+.ha-page-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ha-space-2);
+  width: 100%;
+}
+
+@media (max-width: 767px) {
+  .ha-page-header-action-primary {
+    width: 100%;
+    min-height: 44px;
+    justify-content: center;
+  }
+}
+
+@media (min-width: 768px) {
+  .ha-page-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .ha-page-header-actions {
+    width: auto;
+  }
+}
