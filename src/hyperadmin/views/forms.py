@@ -12,6 +12,7 @@ from pydantic import BaseModel, ValidationError
 from pydantic.fields import FieldInfo
 
 from hyperadmin.core.choices import ChoiceItem
+from hyperadmin.i18n import gettext_lazy
 
 try:
     from hyperadmin.core.fields import classify_field as _classify_field
@@ -29,6 +30,10 @@ if TYPE_CHECKING:
     from hyperadmin.core.fieldsets import FieldsetSpec
     from hyperadmin.core.inlines import InlineModelSpec
     from hyperadmin.core.layouts import FormLayout
+
+# Type alias: errors can be lazy-translated proxies or plain strings.
+# ``babel.support.LazyProxy`` satisfies the string protocol via ``__str__``.
+ErrorList = list[Any]
 
 
 @dataclass(slots=True)
@@ -219,7 +224,7 @@ class FormField:
     model_field: FieldInfo
     widget: HtmxWidget
     value: Any | None = None
-    errors: list[str] | None = None
+    errors: ErrorList | None = None
 
     @property
     def label(self) -> str:
@@ -286,7 +291,7 @@ class PydanticForm:
         self.exclude = set(exclude or [])
         self.initial = initial or {}
         self.choices_base_url = choices_base_url
-        self.errors: dict[str, list[str]] = {}
+        self.errors: dict[str, ErrorList] = {}
         self._fields: list[FormField] = []
         self._fieldset_specs: list[FieldsetSpec] = fieldsets or []
         self._form_layout: FormLayout | None = form_layout
@@ -471,7 +476,7 @@ class PydanticForm:
         for f in self.fields:
             f.value = data.get(f.name)
 
-    def validate(self, data: dict[str, Any]) -> tuple[BaseModel | None, dict[str, list[str]]]:
+    def validate(self, data: dict[str, Any]) -> tuple[BaseModel | None, dict[str, ErrorList]]:
         cleaned_data = data.copy()
         for f in self.fields:
             if not f.required and cleaned_data.get(f.name) == "":
@@ -482,11 +487,11 @@ class PydanticForm:
             self.errors = {}
             return instance, {}
         except ValidationError as e:
-            errs: dict[str, list[str]] = {}
+            errs: dict[str, ErrorList] = {}
             for error in e.errors():
                 loc = error["loc"][0]
                 key = str(loc)
-                errs.setdefault(key, []).append(error["msg"])
+                errs.setdefault(key, []).append(gettext_lazy(error["msg"]))
             self.errors = errs
             for f in self.fields:
                 f.errors = errs.get(f.name)
@@ -543,7 +548,7 @@ class InlineFormset:
 
     spec: InlineModelSpec
     rows: list[InlineFormRow] = dc_field(default_factory=list)
-    errors: dict[int, dict[str, list[str]]] = dc_field(default_factory=dict)
+    errors: dict[int, dict[str, ErrorList]] = dc_field(default_factory=dict)
     add_row_url: str = ""
 
     @property
@@ -666,7 +671,7 @@ class InlineFormset:
         self,
         rows_data: list[dict[str, Any]],
         parent_pk: int | None = None,
-    ) -> tuple[list[dict[str, Any]], dict[int, dict[str, list[str]]]]:
+    ) -> tuple[list[dict[str, Any]], dict[int, dict[str, ErrorList]]]:
         """Validate each row's data against the inline model.
 
         Returns:
@@ -674,7 +679,7 @@ class InlineFormset:
             Each valid row is a dict ready for adapter.create/update.
         """
         valid: list[dict[str, Any]] = []
-        errors: dict[int, dict[str, list[str]]] = {}
+        errors: dict[int, dict[str, ErrorList]] = {}
 
         for i, row in enumerate(rows_data):
             if row.get("_delete"):
@@ -700,10 +705,10 @@ class InlineFormset:
                     result["_pk"] = row["_pk"]
                 valid.append(result)
             except ValidationError as e:
-                row_errors: dict[str, list[str]] = {}
+                row_errors: dict[str, ErrorList] = {}
                 for error in e.errors():
                     loc = str(error["loc"][0])
-                    row_errors.setdefault(loc, []).append(error["msg"])
+                    row_errors.setdefault(loc, []).append(gettext_lazy(error["msg"]))
                 errors[i] = row_errors
 
         self.errors = errors
