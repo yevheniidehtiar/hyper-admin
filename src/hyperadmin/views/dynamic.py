@@ -2,6 +2,7 @@ import logging
 import math
 import os
 import re
+from collections.abc import Generator
 from contextlib import contextmanager
 from typing import TYPE_CHECKING, Any, Union, cast, get_args, get_origin
 
@@ -132,7 +133,7 @@ class DynamicModelView:
             raise HTTPException(status_code=403, detail="Permission denied")
 
     @contextmanager
-    def _request_queryset_filter(self, request: Request):
+    def _request_queryset_filter(self, request: Request) -> Generator[None, None, None]:
         """Register the per-request queryset filter on the adapter for the duration of a view.
 
         Composes :meth:`hyperadmin.core.model.ModelAdmin.get_queryset` (when an admin

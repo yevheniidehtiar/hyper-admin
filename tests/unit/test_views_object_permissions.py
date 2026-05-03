@@ -205,3 +205,33 @@ def test_superuser_bypass_when_checker_allows_superusers() -> None:
     # Then
     assert response.status_code == 200
     assert "bob-order-1" in response.text
+
+
+def test_detail_view_returns_403_when_user_not_authenticated() -> None:
+    """
+    Scenario: missing request.state.user under an active checker yields 403
+      Given an ObjectPermissionChecker is configured but request.state.user is None
+      When  GET /admin/orderobjectperm/1
+      Then  the response is 403 (the helper refuses to authorize an anonymous request)
+    """
+    # Given a client whose middleware pins request.state.user to None
+    app = FastAPI()
+
+    @app.middleware("http")
+    async def _attach_no_user(request: Request, call_next: Any) -> Any:
+        request.state.user = None
+        return await call_next(request)
+
+    engine = create_async_engine("sqlite+aiosqlite:///:memory:")
+    _seed_orders(engine)
+    admin = Admin(app=app, engine=engine, settings=HyperAdminSettings(create_tables=False))
+    options = AdminOptions(object_permission_checker=_ViewOnlyChecker())
+    site.register(OrderObjectPerm, _DefaultAdmin, options=options)
+    admin.mount(path="/admin")
+    client = TestClient(app)
+
+    # When
+    response = client.get("/admin/orderobjectperm/1")
+
+    # Then
+    assert response.status_code == 403
