@@ -6,8 +6,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2rem;
-  height: 2rem;
+  width: 44px;
+  height: 44px;
   background: none;
   border: var(--ha-border-width) solid var(--ha-color-border);
   border-radius: var(--ha-radius);
@@ -16,6 +16,14 @@
   transition: color var(--ha-transition), border-color var(--ha-transition);
   padding: 0;
   margin-right: var(--ha-space-2);
+  flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+  .ha-theme-toggle {
+    width: 2rem;
+    height: 2rem;
+  }
 }
 
 .ha-theme-toggle:hover {

@@ -64,7 +64,11 @@
   .ha-select,
   .ha-textarea,
   .ha-inline-add-btn,
-  .ha-inline-remove-btn {
+  .ha-inline-remove-btn,
+  .ha-theme-toggle,
+  .ha-navbar-user-btn,
+  .ha-sidebar-toggle,
+  .ha-sidebar-close {
     min-height: 44px;
     min-width: 44px;
     display: inline-flex;
