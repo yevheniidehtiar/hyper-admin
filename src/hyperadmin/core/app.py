@@ -80,6 +80,12 @@ class Admin:
         template_dirs = self.settings.template_dirs
         template_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "templates")
         self.templates = Jinja2Templates(directory=[*template_dirs, template_dir])
+        # Wire jinja2.ext.i18n + per-request gettext callables (C1-C). The
+        # callables read translations from a context var populated by
+        # LocaleMiddleware; outside a request they pass msgids through.
+        from hyperadmin.i18n import install_jinja_i18n
+
+        install_jinja_i18n(self.templates.env)
 
         static_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")
         if os.path.exists(static_dir):
@@ -181,6 +187,12 @@ class Admin:
             SessionMiddleware,
             secret_key=self.settings.secret_key,
         )
+
+    def _add_locale_middleware(self) -> None:
+        """Add the locale-resolution middleware to the FastAPI app."""
+        from hyperadmin.i18n import LocaleMiddleware
+
+        self.app.add_middleware(LocaleMiddleware, settings=self.settings)
 
     def _mount_upload_storage(self) -> None:
         """Mount the upload storage directory as a static-files endpoint."""
@@ -292,6 +304,11 @@ class Admin:
             self.router.on_startup.append(self._sync_permissions)
 
         self.app.include_router(self.router, prefix=path, tags=["HyperAdmin"])
+
+        # LocaleMiddleware runs whether or not auth is configured. It must be
+        # added before the auth middleware so the chain is
+        # SessionMiddleware -> AuthenticationMiddleware -> LocaleMiddleware -> routes.
+        self._add_locale_middleware()
 
         if self.auth_backend:
             self._add_auth_middleware(path)

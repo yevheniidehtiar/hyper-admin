@@ -71,6 +71,7 @@ class HyperAdminSettings(BaseSettings):
     # ── Internationalization ──────────────────────────────────────────────────
     default_locale: str = "en"
     supported_locales: list[str] = Field(default_factory=lambda: list(_DEFAULT_SUPPORTED_LOCALES))
+    locale_response_header: bool = True
 
     # ── Derived helpers ───────────────────────────────────────────────────────
     @property
