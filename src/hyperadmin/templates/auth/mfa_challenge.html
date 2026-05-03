@@ -1,0 +1,74 @@
+{%- extends "_base.html" -%}
+
+{%- block title -%}{{ _("MFA Challenge") }} — HyperAdmin{%- endblock -%}
+
+{%- block messages -%}{%- endblock -%}
+{%- block navbar -%}{%- endblock -%}
+{%- block sidebar -%}{%- endblock -%}
+
+{%- block content -%}
+<div class="ha-login-container">
+    <div class="ha-login-card">
+        <h1 id="mfa-title" class="ha-login-title">{{ _("Two-factor verification") }}</h1>
+        <p class="ha-text-muted">
+            {{ _("Enter the 6-digit code we sent to your email.") }}
+        </p>
+
+        <div id="mfa-flash-region" aria-live="polite">
+            {%- if error -%}
+            <div class="ha-alert ha-alert-error" data-testid="mfa-error" role="alert">
+                {{ error }}
+            </div>
+            {%- endif -%}
+            {%- if flash -%}
+            <div class="ha-alert ha-alert-info" data-testid="mfa-flash" role="status">
+                {{ flash }}
+            </div>
+            {%- endif -%}
+        </div>
+
+        <form method="post"
+              action="{{ admin_prefix }}/mfa/verify"
+              data-testid="mfa-verify-form"
+              aria-labelledby="mfa-title">
+            <div class="ha-form-group">
+                <label for="mfa-code" class="ha-label">{{ _("Verification code") }}</label>
+                <input
+                    type="text"
+                    id="mfa-code"
+                    name="code"
+                    class="ha-input"
+                    data-testid="mfa-code-input"
+                    inputmode="numeric"
+                    pattern="[0-9]{6}"
+                    maxlength="6"
+                    autocomplete="one-time-code"
+                    required
+                    autofocus
+                >
+            </div>
+            <button type="submit"
+                    class="ha-btn ha-btn-primary ha-btn-block"
+                    data-testid="mfa-verify-btn">
+                {{ _("Verify") }}
+            </button>
+        </form>
+
+        <p class="ha-text-muted ha-mt-2">
+            {%- if expired -%}
+            {{ _("Your code has expired.") }}
+            {%- endif -%}
+            <button
+                type="button"
+                class="ha-btn-link"
+                data-testid="mfa-resend-link"
+                hx-post="{{ admin_prefix }}/mfa/resend"
+                hx-target="#mfa-flash-region"
+                hx-select="#mfa-flash-region"
+                hx-swap="outerHTML">
+                {{ _("Resend code") }}
+            </button>
+        </p>
+    </div>
+</div>
+{%- endblock -%}
