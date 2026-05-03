@@ -76,7 +76,7 @@ def _make_client(register_readonly: bool = False) -> TestClient:
 
     anyio.run(setup_database)
 
-    admin = Admin(app=app, create_tables=False, engine=engine)
+    admin = Admin(app=app, engine=engine)
     site.register(WidgetThing, WidgetThingAdmin)
     if register_readonly:
         site.register(ReadOnlyThing, ReadOnlyThingAdmin)

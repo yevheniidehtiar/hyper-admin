@@ -49,6 +49,7 @@ class SiteRegistry:
 
         if options is None:
             options = getattr(admin_class, "options", None) or AdminOptions()
+        assert options is not None  # noqa: S101 — narrow the type for downstream
 
         # Allow ModelAdmin subclasses to declare class-level overrides that
         # we merge into options. Today only ``list_editable`` uses this path;
