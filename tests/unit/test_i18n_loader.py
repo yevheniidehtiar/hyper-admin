@@ -87,15 +87,17 @@ def reset_state() -> Iterator[None]:
 
 class TestLoadTranslations:
     def test_missing_catalog_returns_null_translations(self) -> None:
-        result = load_translations("ja")
+        # "xx" is a deliberately non-existent locale (no .mo seeded).
+        result = load_translations("xx")
         assert isinstance(result, babel.support.NullTranslations)
         assert not isinstance(result, babel.support.Translations)
 
     def test_missing_catalog_logs_warning_once(self, caplog: pytest.LogCaptureFixture) -> None:
+        # "xx" is a deliberately non-existent locale (no .mo seeded).
         with caplog.at_level(logging.WARNING, logger="hyperadmin.i18n"):
-            load_translations("ja")
-            load_translations("ja")  # second call must not log again
-        warnings = [r for r in caplog.records if "ja" in r.getMessage()]
+            load_translations("xx")
+            load_translations("xx")  # second call must not log again
+        warnings = [r for r in caplog.records if "xx" in r.getMessage()]
         assert len(warnings) == 1
 
     def test_load_real_catalog(
