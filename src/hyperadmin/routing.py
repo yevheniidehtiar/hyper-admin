@@ -299,10 +299,20 @@ class HyperAdminRouter:
             self.routers.append(router)
 
             model_name = model.__name__
+            # Resolve nav label: prefer verbose_name_plural / verbose_name
+            # (which may be LazyProxy instances) over the legacy name_plural /
+            # name attributes.  Do NOT call str() here — lazy strings must
+            # remain lazy so they render in the request locale at template time.
+            legacy_name_plural = getattr(admin_class, "name_plural", None)
+            if legacy_name_plural:
+                nav_name = legacy_name_plural
+            elif hasattr(admin_class, "get_verbose_name_plural"):
+                nav_name = admin_class.get_verbose_name_plural(model)
+            else:
+                nav_name = getattr(admin_class, "name", model_name) + "s"
             nav_items.append(
                 {
-                    "name": getattr(admin_class, "name_plural", None)
-                    or getattr(admin_class, "name", model_name) + "s",
+                    "name": nav_name,
                     "url": f"/{model_name.lower()}",
                     "icon": getattr(admin_class, "icon", ""),
                 }
