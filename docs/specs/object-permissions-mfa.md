@@ -3,11 +3,12 @@
 | Field | Value |
 |---|---|
 | Author | Claude Code |
-| Status | Draft |
+| Status | Approved |
 | Issue | #473 |
 | Milestone | v0.5.1 — Object Permissions & MFA |
 | Created | 2026-05-03 |
 | Last updated | 2026-05-03 |
+| Approved | 2026-05-03 (PR #532 merged; review story #475 done) |
 
 ---
 
