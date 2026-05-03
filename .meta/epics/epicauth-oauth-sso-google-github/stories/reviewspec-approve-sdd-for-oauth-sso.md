@@ -12,7 +12,7 @@ labels:
   - needs-human
 estimate: null
 epic_ref:
-  id: mmZ2u_cMD2xN
+  id: hHg_npkJyrk7
 github:
   issue_number: 438
   repo: yevheniidehtiar/hyper-admin

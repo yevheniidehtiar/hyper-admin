@@ -2,7 +2,7 @@
 type: story
 id: U0p7OQRHpiSp
 title: "review(spec): approve SDD for object permissions & MFA"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -28,15 +28,24 @@ updated_at: 2026-04-02T13:52:45Z
 
 ## Checklist
 
-- [ ] Problem statement is clear and scoped
-- [ ] Goals are measurable
-- [ ] Non-goals prevent over-engineering
-- [ ] BDD scenarios cover happy path + ≥1 failure path
-- [ ] ObjectPermission protocol design is backward compatible
-- [ ] `get_queryset()` hook doesn't break existing adapter contract
-- [ ] MFA flow handles edge cases (expired codes, email failures)
-- [ ] Data model changes are backward compatible
-- [ ] Open Questions are resolved
+- [x] Problem statement is clear and scoped
+- [x] Goals are measurable
+- [x] Non-goals prevent over-engineering
+- [x] BDD scenarios cover happy path + ≥1 failure path
+- [x] ObjectPermission protocol design is backward compatible
+- [x] `get_queryset()` hook doesn't break existing adapter contract
+- [x] MFA flow handles edge cases (expired codes, email failures)
+- [x] Data model changes are backward compatible
+- [x] Open Questions are resolved (4 Open Questions resolved with proposals in SDD; deferred to dispatch)
+
+## Resolution
+
+SDD merged in PR #532. Approved by Yevhenii Dehtiar 2026-05-03. Cycle dispatch plan recorded
+at `~/.claude/plans/i-merged-plan-v0-5-1-reflective-waffle.md`. Open Questions resolved:
+1. OTP transport — defer (single Callable for MVP)
+2. Partial-auth session — structured dict
+3. Rate limit storage — session for MVP, document multi-worker caveat
+4. `get_queryset()` signature — dict for v0.5.1, optional `Select` mutator in v0.5.3
 
 ## Blocked by
 
