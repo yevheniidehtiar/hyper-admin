@@ -50,6 +50,7 @@ class Admin:
         permission_checker: Any = None,
         permission_registry: Any = None,
         storage: Any = None,
+        otp_service: Any = None,
     ) -> None:
         """Initialise HyperAdmin and attach it to a FastAPI application.
 
@@ -65,6 +66,10 @@ class Admin:
             permission_registry: An optional ``PermissionRegistry`` implementation.
             storage: An optional ``FileSystemStorage`` (or compatible) instance
                 for file uploads. When ``None``, file upload support is disabled.
+            otp_service: An optional MFA OTP service (e.g. ``EmailOTPService``).
+                When ``None``, the MFA endpoints (``/mfa/challenge`` etc) are
+                NOT registered and ``login_view`` skips the MFA branch — apps
+                without MFA are entirely unaffected (C3-A, #487).
         """
         self.settings = settings or HyperAdminSettings()
         self.app = app
@@ -74,6 +79,7 @@ class Admin:
         self.permission_checker = permission_checker
         self.permission_registry = permission_registry
         self.storage = storage
+        self.otp_service = otp_service
 
         self._validate_session_secret()
 
@@ -149,7 +155,7 @@ class Admin:
             self.router.include_router(router)
 
     def _register_auth_routes(self, path: str) -> None:
-        """Register login/logout routes when auth is enabled."""
+        """Register login/logout (and MFA) routes when auth is enabled."""
         from starlette.requests import Request
 
         from hyperadmin.auth.views import login_view, logout_view
@@ -157,12 +163,13 @@ class Admin:
         admin_prefix = path.rstrip("/")
         templates = self.templates
         auth_backend = self.auth_backend
+        otp_service = self.otp_service
 
         async def login_get(request: Request):
-            return await login_view(request, templates, auth_backend, admin_prefix)
+            return await login_view(request, templates, auth_backend, admin_prefix, otp_service)
 
         async def login_post(request: Request):
-            return await login_view(request, templates, auth_backend, admin_prefix)
+            return await login_view(request, templates, auth_backend, admin_prefix, otp_service)
 
         async def logout_post(request: Request):
             return await logout_view(request, auth_backend, admin_prefix)
@@ -170,6 +177,77 @@ class Admin:
         self.router.add_api_route("/login", login_get, methods=["GET"], name="admin-login")
         self.router.add_api_route("/login", login_post, methods=["POST"], name="admin-login-post")
         self.router.add_api_route("/logout", logout_post, methods=["POST"], name="admin-logout")
+
+        if otp_service is not None:
+            self._register_mfa_routes(admin_prefix)
+
+    def _register_mfa_routes(self, admin_prefix: str) -> None:
+        """Register the MFA challenge / verify / resend / settings endpoints.
+
+        Only called when ``otp_service`` is configured. Apps without MFA see
+        no new routes — ``mfa_enabled=True`` users in such apps will hit the
+        normal single-factor path because ``login_view`` skips the MFA branch
+        unless an ``otp_service`` is provided.
+        """
+        from starlette.requests import Request
+
+        from hyperadmin.auth.views import (
+            mfa_challenge_view,
+            mfa_disable_view,
+            mfa_enable_view,
+            mfa_resend_view,
+            mfa_settings_view,
+            mfa_verify_view,
+        )
+
+        templates = self.templates
+        auth_backend = self.auth_backend
+        otp_service = self.otp_service
+
+        async def challenge_get(request: Request):
+            return await mfa_challenge_view(request, templates, admin_prefix)
+
+        async def verify_post(request: Request):
+            return await mfa_verify_view(
+                request, templates, auth_backend, otp_service, admin_prefix
+            )
+
+        async def resend_post(request: Request):
+            return await mfa_resend_view(
+                request, templates, auth_backend, otp_service, admin_prefix
+            )
+
+        async def settings_get(request: Request):
+            return await mfa_settings_view(request, templates, admin_prefix)
+
+        async def enable_post(request: Request):
+            return await mfa_enable_view(
+                request, templates, auth_backend, otp_service, admin_prefix
+            )
+
+        async def disable_post(request: Request):
+            return await mfa_disable_view(
+                request, templates, auth_backend, otp_service, admin_prefix
+            )
+
+        self.router.add_api_route(
+            "/mfa/challenge", challenge_get, methods=["GET"], name="admin-mfa-challenge"
+        )
+        self.router.add_api_route(
+            "/mfa/verify", verify_post, methods=["POST"], name="admin-mfa-verify"
+        )
+        self.router.add_api_route(
+            "/mfa/resend", resend_post, methods=["POST"], name="admin-mfa-resend"
+        )
+        self.router.add_api_route(
+            "/mfa/settings", settings_get, methods=["GET"], name="admin-mfa-settings"
+        )
+        self.router.add_api_route(
+            "/mfa/enable", enable_post, methods=["POST"], name="admin-mfa-enable"
+        )
+        self.router.add_api_route(
+            "/mfa/disable", disable_post, methods=["POST"], name="admin-mfa-disable"
+        )
 
     def _register_locale_route(self, path: str) -> None:
         """Register the POST /locale route for the locale switcher."""
