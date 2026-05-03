@@ -182,6 +182,12 @@ class Admin:
             secret_key=self.settings.secret_key,
         )
 
+    def _add_locale_middleware(self) -> None:
+        """Add the locale-resolution middleware to the FastAPI app."""
+        from hyperadmin.i18n import LocaleMiddleware
+
+        self.app.add_middleware(LocaleMiddleware, settings=self.settings)
+
     def _mount_upload_storage(self) -> None:
         """Mount the upload storage directory as a static-files endpoint."""
         storage_path = getattr(self.storage, "_path", None)
@@ -292,6 +298,11 @@ class Admin:
             self.router.on_startup.append(self._sync_permissions)
 
         self.app.include_router(self.router, prefix=path, tags=["HyperAdmin"])
+
+        # LocaleMiddleware runs whether or not auth is configured. It must be
+        # added before the auth middleware so the chain is
+        # SessionMiddleware -> AuthenticationMiddleware -> LocaleMiddleware -> routes.
+        self._add_locale_middleware()
 
         if self.auth_backend:
             self._add_auth_middleware(path)
