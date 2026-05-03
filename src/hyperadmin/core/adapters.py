@@ -1,14 +1,19 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     import builtins
 
+    from starlette.requests import Request
+
     from hyperadmin.core.choices import ChoiceItem
     from hyperadmin.core.inlines import InlineModelSpec
+
+    QuerysetFilter = Callable[["Request | None"], dict[str, Any]]
 
 
 @dataclass
@@ -49,6 +54,63 @@ class BaseAdapter(ABC):
     def __init__(self, model: Any, engine: Any) -> None:
         self.model = model
         self.engine = engine
+        self._queryset_filter: QuerysetFilter | None = None
+
+    def get_queryset(self, request: Request | None = None) -> dict[str, Any]:
+        """Return additional equality filters merged into ``list()`` and ``get()`` queries.
+
+        The returned mapping has the shape ``{column_name: value}`` and is applied as
+        equality predicates **before** any view-layer filters. Use this hook to implement
+        features like row-level security or tenant scoping without leaking those concerns
+        into the view layer.
+
+        Subclasses may override this method directly, or callers may register a
+        per-request callable via :meth:`set_queryset_filter`. The callable is
+        re-evaluated on every ``list()`` / ``get()`` — no caching — so it must be pure
+        or request-scoped.
+
+        Default behaviour returns an empty dict, which is a no-op (backward compatible).
+
+        Args:
+            request: The active Starlette/FastAPI request, when available. ``None`` is
+                permitted so the hook is callable from contexts without an HTTP request
+                (e.g. management scripts, tests).
+
+        Returns:
+            A dict of column-name to value pairs to be ANDed into the query's WHERE
+            clause. Returns ``{}`` by default.
+        """
+        if self._queryset_filter is None:
+            return {}
+        return self._queryset_filter(request)
+
+    def set_queryset_filter(self, filter_fn: QuerysetFilter) -> None:
+        """Register a per-request callable that returns additional queryset filters.
+
+        The callable receives the current :class:`starlette.requests.Request` (or
+        ``None``) and must return a dict of ``{column_name: value}`` equality filters.
+        It is re-invoked on every ``list()`` / ``get()`` so it may consult
+        request-scoped state (e.g. ``request.state.user``).
+
+        Args:
+            filter_fn: A callable taking an optional :class:`Request` and returning a
+                dict of equality filters.
+        """
+        self._queryset_filter = filter_fn
+
+    def _resolve_queryset_filters(self, request: Request | None = None) -> dict[str, Any]:
+        """Invoke :meth:`get_queryset` and validate the return type.
+
+        Raises:
+            TypeError: If ``get_queryset`` returns a value that is not a ``dict``.
+        """
+        result = self.get_queryset(request)
+        if not isinstance(result, dict):
+            raise TypeError(
+                f"{type(self).__name__}.get_queryset() must return a dict, "
+                f"got {type(result).__name__}"
+            )
+        return result
 
     @abstractmethod
     async def get(self, pk: Any) -> Any:

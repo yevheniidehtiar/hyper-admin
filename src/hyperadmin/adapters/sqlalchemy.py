@@ -23,8 +23,23 @@ class SQLAlchemyAdapter(BaseAdapter):
             raise ValueError("Could not inspect model. Is it a valid SQLAlchemy model?")
 
     async def get(self, pk: Any) -> Any:
+        """Retrieve an object by primary key, applying any ``get_queryset`` filters.
+
+        Filters returned by :meth:`get_queryset` are ANDed with the primary-key
+        predicate so excluded rows resolve to ``None`` (not raised).
+        """
+        queryset_filters = self._resolve_queryset_filters()
         async with AsyncSession(self.engine) as session:
-            return await session.get(self.model, pk)
+            if not queryset_filters:
+                return await session.get(self.model, pk)
+            assert self.inspector is not None  # noqa: S101 — validated in __init__
+            pk_col = self.inspector.primary_key[0]
+            conditions = [pk_col == pk]
+            for key, value in queryset_filters.items():
+                conditions.append(getattr(self.model, key) == value)
+            query = select(self.model).where(and_(*conditions))
+            result = await session.execute(query)
+            return result.scalar_one_or_none()
 
     async def list(
         self,
@@ -35,7 +50,10 @@ class SQLAlchemyAdapter(BaseAdapter):
         order_by: str | None = None,
         search_fields: list[str] | None = None,  # noqa: ARG002
     ) -> tuple[list[Any], int]:
-        where_conditions = []
+        queryset_filters = self._resolve_queryset_filters()
+        where_conditions = [
+            getattr(self.model, key) == value for key, value in queryset_filters.items()
+        ]
         if filters:
             for key, value in filters.items():
                 where_conditions.append(getattr(self.model, key) == value)
