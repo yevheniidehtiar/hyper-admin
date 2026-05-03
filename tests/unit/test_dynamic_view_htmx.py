@@ -116,7 +116,10 @@ def view(tmp_path):
     # _get_template_name resolves create/update.html present in the repo.
     from fastapi.templating import Jinja2Templates
 
+    from hyperadmin.i18n.loader import install_jinja_i18n
+
     templates = Jinja2Templates(directory="src/hyperadmin/templates")
+    install_jinja_i18n(templates.env)
 
     view = dynamic_module.DynamicModelView(
         adapter=DummyAdapter(User),
@@ -249,7 +252,10 @@ async def test_delete_action_not_found(request_factory, view):
 async def test_admin_dashboard(request_factory, view):
     from fastapi.templating import Jinja2Templates
 
+    from hyperadmin.i18n.loader import install_jinja_i18n
+
     templates = Jinja2Templates(directory="src/hyperadmin/templates")
+    install_jinja_i18n(templates.env)
     req = request_factory()
     resp = await dynamic_module.admin_dashboard(req, templates)
     assert resp.template.name == "dashboard.html"
