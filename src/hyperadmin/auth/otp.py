@@ -30,13 +30,16 @@ and plans a pluggable counter for v0.6+.
 
 from __future__ import annotations
 
-from collections.abc import Awaitable, Callable
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from secrets import choice
-from typing import Any, Final
+from typing import TYPE_CHECKING, Any, Final
 
 from hyperadmin.auth.backend import hash_password, verify_password
-from hyperadmin.auth.models import User
+
+if TYPE_CHECKING:
+    from collections.abc import Awaitable, Callable
+
+    from hyperadmin.auth.models import User
 
 OTP_SESSION_KEY: Final[str] = "mfa_otp"
 PARTIAL_AUTH_SESSION_KEY: Final[str] = "auth_state"
@@ -83,7 +86,9 @@ class EmailOTPService:
         if user.id is None:
             raise ValueError("Cannot issue OTP for an unsaved user (user.id is None)")
 
-        now = datetime.now()
+        # All timestamps are timezone-aware UTC so TTL/window arithmetic is
+        # invariant under server timezone settings (containers, kubelets, etc).
+        now = datetime.now(tz=timezone.utc)
         self._enforce_rate_limit(user, session, now)
 
         code = "".join(choice(_DIGITS) for _ in range(_OTP_LENGTH))
@@ -94,19 +99,23 @@ class EmailOTPService:
             "attempts": 0,
             "user_id": user.id,
         }
-        self._record_issuance(user, session, now)
 
         try:
             await self._email_sender(user.email, code)
         except BaseException:
-            # Rollback: a code that was never delivered must not linger in
-            # the session, otherwise a future `verify` call could succeed
-            # against a code the user does not actually possess.
+            # Rollback BOTH the OTP entry AND the rate-limit history. A code
+            # that was never delivered must not linger in the session, and a
+            # failed send must not consume the user's rate-limit budget.
             if previous_entry is None:
                 session.pop(OTP_SESSION_KEY, None)
             else:
                 session[OTP_SESSION_KEY] = previous_entry
             raise
+
+        # Only count this as a real issuance once delivery has succeeded.
+        # Placing this AFTER ``await`` rather than before is what protects
+        # users from flaky SMTP servers eating their rate-limit budget.
+        self._record_issuance(user, session, now)
 
     async def verify(self, user: User, code: str, session: dict[str, Any]) -> bool:
         """Verify ``code`` against the pending OTP for ``user``.
@@ -132,7 +141,12 @@ class EmailOTPService:
             issued_at = datetime.fromisoformat(entry["issued_at"])
         except (KeyError, ValueError):
             return False
-        if datetime.now() - issued_at > timedelta(seconds=self._ttl_seconds):
+        # Compare in UTC so TTL evaluation is consistent across servers
+        # regardless of local TZ. Naive `issued_at` values (from older
+        # entries written before this fix) are treated as UTC.
+        if issued_at.tzinfo is None:
+            issued_at = issued_at.replace(tzinfo=timezone.utc)
+        if datetime.now(tz=timezone.utc) - issued_at > timedelta(seconds=self._ttl_seconds):
             return False
 
         if not verify_password(code, entry["code_hash"]):
@@ -155,7 +169,14 @@ class EmailOTPService:
     def _enforce_rate_limit(self, user: User, session: dict[str, Any], now: datetime) -> None:
         history = self._user_history(user, session)
         cutoff = now - timedelta(seconds=self._window_seconds)
-        fresh = [ts for ts in history if datetime.fromisoformat(ts) >= cutoff]
+        # Naive timestamps from pre-UTC entries are treated as UTC.
+        fresh: list[str] = []
+        for ts in history:
+            parsed = datetime.fromisoformat(ts)
+            if parsed.tzinfo is None:
+                parsed = parsed.replace(tzinfo=timezone.utc)
+            if parsed >= cutoff:
+                fresh.append(ts)
         # Persist the trimmed list so the session does not grow unbounded.
         session[self._history_key()][str(user.id)] = fresh
         if len(fresh) >= self._max_codes:
