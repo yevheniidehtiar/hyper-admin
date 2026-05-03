@@ -161,6 +161,29 @@ class DynamicModelView:
         finally:
             self.adapter._queryset_filter = previous_filter
 
+    async def _check_object_permission(self, request: Request, obj: Any, action: str) -> None:
+        """Raise 403 if ``obj`` fails the configured object-level permission check.
+
+        Does nothing when ``options.object_permission_checker`` is ``None``
+        (backward compatible — model-level :class:`PermissionChecker` enforcement
+        remains the only authz layer in that case).
+
+        Args:
+            request: The active request — its ``state.user`` is forwarded to the
+                checker.
+            obj: The object the user is attempting to act on.
+            action: One of ``"view"``, ``"add"``, ``"change"``, ``"delete"`` (or a
+                custom codename understood by the checker).
+        """
+        checker = getattr(self.options, "object_permission_checker", None)
+        if checker is None:
+            return
+        user = getattr(request.state, "user", None)
+        if user is None:
+            raise HTTPException(status_code=403, detail="Authentication required")
+        if not await checker.has_object_permission(user, obj, action):
+            raise HTTPException(status_code=403, detail="Permission denied")
+
     def _get_template_name(self, view_name: str) -> str:
         model_name = self.model.__name__.lower()
 
@@ -345,6 +368,8 @@ class DynamicModelView:
 
         if not item:
             raise HTTPException(status_code=404, detail="Item not found")
+
+        await self._check_object_permission(request, item, "view")
 
         file_fields = self._get_file_fields()
         item_data = item.model_dump()
@@ -750,6 +775,7 @@ class DynamicModelView:
             existing = await self.adapter.get(pk=item_id)
         if not existing:
             raise HTTPException(status_code=404, detail="Item not found")
+        await self._check_object_permission(request, existing, "change")
         form_data = await request.form()
 
         relation_widgets = await self._build_relation_widgets(
@@ -1136,6 +1162,8 @@ class DynamicModelView:
             item = await self.adapter.get(pk=item_id)
         if not item:
             raise HTTPException(status_code=404, detail="Item not found")
+
+        await self._check_object_permission(request, item, "delete")
 
         file_paths = self._collect_file_paths(item)
         await self.adapter.delete(pk=item_id)
