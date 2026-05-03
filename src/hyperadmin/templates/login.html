@@ -9,16 +9,16 @@
 {%- block content -%}
 <div class="ha-login-container">
     <div class="ha-login-card">
-        <h1 class="ha-login-title">HyperAdmin</h1>
+        <h1 id="login-title" class="ha-login-title">HyperAdmin</h1>
         <p class="ha-text-muted">Sign in to your account</p>
 
         {%- if error -%}
-        <div class="ha-alert ha-alert-error" data-testid="login-error">
+        <div class="ha-alert ha-alert-error" data-testid="login-error" role="alert">
             {{ error }}
         </div>
         {%- endif -%}
 
-        <form method="post" action="{{ admin_prefix }}/login" data-testid="login-form">
+        <form method="post" action="{{ admin_prefix }}/login" data-testid="login-form" aria-labelledby="login-title">
             <div class="ha-form-group">
                 <label for="username" class="ha-label">Username</label>
                 <input

@@ -7,17 +7,27 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  padding: var(--ha-space-4);
+  padding: var(--ha-space-3);
 }
 
 .ha-login-card {
   width: 100%;
   max-width: 24rem;
-  padding: var(--ha-space-8);
+  padding: var(--ha-space-5);
   background-color: var(--ha-surface-raised);
   border: var(--ha-border-width) solid var(--ha-color-border-light);
   border-radius: var(--ha-radius-xl);
   box-shadow: var(--ha-shadow-lg);
+}
+
+@media (min-width: 768px) {
+  .ha-login-container {
+    padding: var(--ha-space-4);
+  }
+
+  .ha-login-card {
+    padding: var(--ha-space-8);
+  }
 }
 
 .ha-login-title {
