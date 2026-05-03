@@ -37,7 +37,7 @@
   cursor: pointer;
   padding: var(--ha-space-1) 0;
   width: 100%;
-  text-align: left;
+  text-align: start;
 }
 
 .ha-fieldset-toggle:hover {

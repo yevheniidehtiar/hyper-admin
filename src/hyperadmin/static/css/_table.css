@@ -25,7 +25,7 @@
 
 .ha-table-th {
   padding: var(--ha-space-3) var(--ha-space-4);
-  text-align: left;
+  text-align: start;
   font-size: var(--ha-font-size-xs);
   font-weight: var(--ha-font-semibold);
   color: var(--ha-color-text-muted);
@@ -58,7 +58,7 @@
 
 .ha-table-cell {
   padding: var(--ha-space-3) var(--ha-space-4);
-  text-align: left;
+  text-align: start;
   white-space: nowrap;
   color: var(--ha-color-text);
 }
@@ -102,7 +102,7 @@
 .ha-action-link + .ha-action-link,
 .ha-action-link + .ha-action-delete,
 .ha-action-delete + .ha-action-link {
-  margin-left: var(--ha-space-1);
+  margin-inline-start: var(--ha-space-1);
 }
 
 .ha-action-delete {
@@ -193,7 +193,7 @@
     padding: var(--ha-space-2) 0;
     border-bottom: var(--ha-border-width) solid var(--ha-color-border-light);
     white-space: normal;
-    text-align: right;
+    text-align: end;
   }
 
   .ha-table-cell:last-child {
@@ -207,7 +207,7 @@
     font-size: var(--ha-font-size-xs);
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    text-align: left;
+    text-align: start;
     flex-shrink: 0;
   }
 
@@ -216,7 +216,7 @@
     justify-content: flex-end;
     flex-wrap: wrap;
     gap: var(--ha-space-2);
-    text-align: right;
+    text-align: end;
   }
 
   .ha-action-link,

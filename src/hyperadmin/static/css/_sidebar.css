@@ -6,7 +6,7 @@
   display: none;
   width: var(--ha-sidebar-width);
   background-color: var(--ha-color-surface);
-  border-right: var(--ha-border-width) solid var(--ha-color-border-light);
+  border-inline-end: var(--ha-border-width) solid var(--ha-color-border-light);
   min-height: calc(100vh - var(--ha-navbar-height));
   flex-shrink: 0;
 }
@@ -109,12 +109,12 @@
     flex-direction: column;
     position: fixed;
     top: 0;
-    left: 0;
+    inset-inline-start: 0;
     width: 85%;
     max-width: 20rem;
     height: 100vh;
     background-color: var(--ha-color-surface);
-    border-right: var(--ha-border-width) solid var(--ha-color-border-light);
+    border-inline-end: var(--ha-border-width) solid var(--ha-color-border-light);
     box-shadow: var(--ha-shadow-xl);
     z-index: 40;
     transform: translateX(-100%);

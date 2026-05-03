@@ -36,7 +36,7 @@
   text-decoration: none;
   letter-spacing: -0.025em;
   transition: color var(--ha-transition);
-  margin-right: auto;
+  margin-inline-end: auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -59,7 +59,7 @@
   justify-content: center;
   min-width: 44px;
   min-height: 44px;
-  margin-right: var(--ha-space-2);
+  margin-inline-end: var(--ha-space-2);
   padding: 0;
   color: var(--ha-color-text);
   background: none;
@@ -141,7 +141,7 @@
 
 .ha-dropdown {
   position: absolute;
-  right: 0;
+  inset-inline-end: 0;
   margin-top: var(--ha-space-1);
   width: 12rem;
   background-color: var(--ha-color-surface);
@@ -160,7 +160,7 @@
 .ha-dropdown-item {
   display: block;
   width: 100%;
-  text-align: left;
+  text-align: start;
   padding: var(--ha-space-2) var(--ha-space-4);
   font-size: var(--ha-font-size-sm);
   font-weight: var(--ha-font-medium);

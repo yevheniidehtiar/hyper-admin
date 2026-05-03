@@ -16,7 +16,7 @@
 
 .ha-required {
   color: var(--ha-color-danger);
-  margin-left: var(--ha-space-0-5);
+  margin-inline-start: var(--ha-space-0-5);
 }
 
 .ha-input {

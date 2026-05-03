@@ -4,7 +4,7 @@
 
 .ha-skip-link {
   position: absolute;
-  left: -9999px;
+  inset-inline-start: -9999px;
   top: auto;
   width: 1px;
   height: 1px;
@@ -23,7 +23,7 @@
 .ha-skip-link:focus-visible {
   position: fixed;
   top: var(--ha-space-2);
-  left: var(--ha-space-2);
+  inset-inline-start: var(--ha-space-2);
   width: auto;
   height: auto;
   min-height: 44px;

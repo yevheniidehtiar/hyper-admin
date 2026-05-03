@@ -15,7 +15,7 @@
   color: var(--ha-color-text-muted);
   transition: color var(--ha-transition), border-color var(--ha-transition);
   padding: 0;
-  margin-right: var(--ha-space-2);
+  margin-inline-end: var(--ha-space-2);
   flex-shrink: 0;
 }
 
