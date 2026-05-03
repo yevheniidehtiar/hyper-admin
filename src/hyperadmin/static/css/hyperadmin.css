@@ -30,6 +30,7 @@
 @import "_filter.css"        layer(components);
 @import "_fieldsets.css"     layer(components);
 @import "_inlines.css"       layer(components);
+@import "_inline-cell.css"   layer(components);
 @import "_theme-toggle.css"  layer(components);
 @import "_utilities.css"     layer(utilities);
 @import "_accessibility.css" layer(accessibility);

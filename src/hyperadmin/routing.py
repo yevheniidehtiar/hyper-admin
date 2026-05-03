@@ -122,6 +122,20 @@ def create_admin_router(  # noqa: PLR0913
             name=f"{model_name}-update-form",
         )
 
+        if options.list_editable:
+            router.add_api_route(
+                f"{prefix}/{{item_id:int}}/inline/{{field:str}}",
+                view.inline_edit_form_view,
+                methods=["GET"],
+                name=f"{model_name}-inline-edit-form",
+            )
+            router.add_api_route(
+                f"{prefix}/{{item_id:int}}/inline/{{field:str}}",
+                view.inline_save_view,
+                methods=["POST"],
+                name=f"{model_name}-inline-save",
+            )
+
     if options.can_delete:
         router.add_api_route(
             f"{prefix}/{{item_id:int}}",

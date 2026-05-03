@@ -1,0 +1,71 @@
+{# Inline editor fragment. Submits to inline-save endpoint, swaps the cell
+   back to inline_cell.html on success. #}
+<td class="ha-table-cell ha-inline-editor"
+    id="cell-{{ model_name|lower }}-{{ item.id }}-{{ field }}">
+    <form class="ha-inline-form"
+          data-testid="cell-editor-{{ field }}-{{ item.id }}"
+          hx-post="{{- url_for(model_name|lower ~ '-inline-save', item_id=item.id, field=field) -}}"
+          hx-target="closest td"
+          hx-swap="outerHTML"
+          x-data
+          @keydown.escape.prevent="$el.querySelector('[data-testid=\'cell-cancel-{{ field }}-{{ item.id }}\']').click()">
+        <label for="inline-{{ field }}-{{ item.id }}" class="ha-visually-hidden">
+            {{- form_field.label if form_field else field -}}
+        </label>
+        {%- if form_field and form_field.widget.template_path == 'widgets/checkbox_input.html' -%}
+            <input id="inline-{{ field }}-{{ item.id }}"
+                   name="{{ field }}"
+                   type="checkbox"
+                   class="ha-input ha-input-inline"
+                   aria-label="{{ form_field.label }}"
+                   {%- if form_field.value %} checked{% endif -%}>
+        {%- elif form_field and form_field.widget.template_path == 'widgets/select_input.html' -%}
+            {# Reuse select with pre-filled value via a minimal inline rendering #}
+            <select id="inline-{{ field }}-{{ item.id }}"
+                    name="{{ field }}"
+                    class="ha-input ha-input-inline"
+                    aria-label="{{ form_field.label }}">
+            </select>
+        {%- elif form_field and form_field.widget.template_path == 'widgets/number_input.html' -%}
+            <input id="inline-{{ field }}-{{ item.id }}"
+                   name="{{ field }}"
+                   type="number"
+                   value="{{ form_field.value if form_field.value is not none else '' }}"
+                   class="ha-input ha-input-inline"
+                   aria-label="{{ form_field.label }}"
+                   autofocus>
+        {%- elif form_field and form_field.widget.template_path == 'widgets/float_input.html' -%}
+            <input id="inline-{{ field }}-{{ item.id }}"
+                   name="{{ field }}"
+                   type="number"
+                   step="any"
+                   value="{{ form_field.value if form_field.value is not none else '' }}"
+                   class="ha-input ha-input-inline"
+                   aria-label="{{ form_field.label }}"
+                   autofocus>
+        {%- else -%}
+            <input id="inline-{{ field }}-{{ item.id }}"
+                   name="{{ field }}"
+                   type="text"
+                   value="{{ form_field.value if form_field and form_field.value is not none else item[field] }}"
+                   class="ha-input ha-input-inline"
+                   aria-label="{{ form_field.label if form_field else field }}"
+                   autofocus>
+        {%- endif -%}
+        <div class="ha-inline-actions">
+            <button type="submit"
+                    class="ha-btn ha-btn-primary ha-btn-inline"
+                    data-testid="cell-save-{{ field }}-{{ item.id }}">
+                Save
+            </button>
+            <button type="button"
+                    class="ha-btn ha-btn-link ha-btn-inline"
+                    data-testid="cell-cancel-{{ field }}-{{ item.id }}"
+                    hx-get="{{- url_for(model_name|lower ~ '-inline-edit-form', item_id=item.id, field=field) -}}?cancel=1"
+                    hx-target="closest td"
+                    hx-swap="outerHTML">
+                Cancel
+            </button>
+        </div>
+    </form>
+</td>

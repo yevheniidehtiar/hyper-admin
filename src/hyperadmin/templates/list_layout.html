@@ -18,6 +18,21 @@
 
     {%- include "components/filter_bar.html" -%}
 
+    <div id="inline-edit-status"
+         class="ha-visually-hidden"
+         aria-live="polite"
+         role="status"
+         data-testid="inline-edit-status-region"></div>
+    <script>
+      document.body.addEventListener("hyperadmin:cell-saved", function (evt) {
+        var region = document.getElementById("inline-edit-status");
+        if (!region) return;
+        var field = (evt.detail && evt.detail.field) || "field";
+        region.innerHTML =
+          '<span data-testid="inline-edit-status">Saved ' + field + '</span>';
+      });
+    </script>
+
     <div id="list-container"
          hx-target="this"
          hx-swap="outerHTML">
