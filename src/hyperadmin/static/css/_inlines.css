@@ -21,7 +21,7 @@
 
 .ha-inline-table th {
   padding: var(--ha-space-2) var(--ha-space-3);
-  text-align: left;
+  text-align: start;
   font-weight: var(--ha-font-semibold);
   color: var(--ha-color-text-muted);
   background-color: var(--ha-color-bg);
@@ -116,7 +116,7 @@
   }
 
   .ha-inline-actions {
-    text-align: right;
+    text-align: end;
   }
 
   .ha-inline-remove-btn {

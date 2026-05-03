@@ -43,7 +43,7 @@
 .ha-toast-container {
   position: fixed;
   top: var(--ha-space-4);
-  right: var(--ha-space-4);
+  inset-inline-end: var(--ha-space-4);
   width: 100%;
   max-width: 22rem;
   z-index: 60;
@@ -64,7 +64,7 @@
 .ha-toast-close {
   position: absolute;
   top: var(--ha-space-2);
-  right: var(--ha-space-2);
+  inset-inline-end: var(--ha-space-2);
   padding: var(--ha-space-1);
   background: none;
   border: none;
