@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
+from hyperadmin.core.auth import ObjectPermissionChecker
 from hyperadmin.core.fieldsets import FieldsetSpec
 from hyperadmin.core.inlines import InlineModelSpec
 from hyperadmin.core.layouts import FormLayout
@@ -21,6 +22,8 @@ class AdminOptions(BaseModel):
         site.register(Product, options=AdminOptions(can_delete=False))
         ```
     """
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     can_create: bool = True
     """Whether the Create form and POST endpoint are generated."""
@@ -113,4 +116,17 @@ class AdminOptions(BaseModel):
             InlineModelSpec(model=OrderItem, fk_field="order_id", extra=3),
         ])
         ```
+    """
+    object_permission_checker: ObjectPermissionChecker | None = None
+    """Per-object permission checker used by the view layer for fine-grained authz.
+
+    When ``None`` (default), no object-level checks are performed and behavior
+    matches model-level :class:`PermissionChecker` enforcement only. Provide a
+    custom :class:`ObjectPermissionChecker` (or
+    :class:`DefaultObjectPermissionChecker` as a permissive baseline) to opt
+    into per-object authorization.
+
+    The view layer that consumes this field is wired in a later slot (C2-C);
+    declaring it here lets model registrations adopt object-level checks ahead
+    of the wiring.
     """
