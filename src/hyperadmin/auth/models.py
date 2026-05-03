@@ -16,6 +16,13 @@ class User(SQLModel, table=True):
     last_name: str = Field(default="", max_length=50)
     is_active: bool = Field(default=True)
     is_superuser: bool = Field(default=False)
+    # MFA fields (additive, backward compatible — existing rows default to disabled, no
+    # migration required). ``mfa_method`` is a free-form string rather than an Enum so
+    # future methods (totp/sms/webauthn) can be added without a breaking schema change;
+    # validation of allowed values lives in the service layer. For the MVP only "email"
+    # is wired end-to-end — see docs/specs/object-permissions-mfa.md (Track B).
+    mfa_enabled: bool = Field(default=False)
+    mfa_method: str | None = Field(default=None, max_length=32)
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime | None = Field(default=None)
 
