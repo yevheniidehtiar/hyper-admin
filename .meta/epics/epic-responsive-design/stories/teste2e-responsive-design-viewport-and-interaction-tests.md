@@ -2,7 +2,7 @@
 type: story
 id: J8f2apydnSaO
 title: "test(e2e): responsive design viewport and interaction tests"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
