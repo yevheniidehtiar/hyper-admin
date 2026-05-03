@@ -25,6 +25,8 @@ class TestDefaults:
         assert settings.items_per_page == 20
         assert settings.date_format == "%Y-%m-%d"
         assert settings.datetime_format == "%Y-%m-%d %H:%M:%S"
+        assert settings.default_locale == "en"
+        assert settings.supported_locales == ["en", "es", "fr", "de", "zh_CN", "ja", "uk"]
 
     def test_is_default_secret_key_true_when_using_default(self) -> None:
         settings = HyperAdminSettings()
@@ -81,6 +83,23 @@ class TestEnvVarLoading:
         monkeypatch.setenv("HYPERADMIN_SECRET_KEY", "env-value")
         settings = HyperAdminSettings(secret_key="explicit")
         assert settings.secret_key == "explicit"
+
+    def test_default_locale_from_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("HYPERADMIN_DEFAULT_LOCALE", "es")
+        settings = HyperAdminSettings()
+        assert settings.default_locale == "es"
+
+    def test_supported_locales_from_env_json(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("HYPERADMIN_SUPPORTED_LOCALES", '["en", "es", "uk"]')
+        settings = HyperAdminSettings()
+        assert settings.supported_locales == ["en", "es", "uk"]
+
+
+class TestBabelImportable:
+    def test_babel_importable(self) -> None:
+        import babel
+
+        assert babel.__version__ >= "2.13"
 
 
 class TestValidation:
