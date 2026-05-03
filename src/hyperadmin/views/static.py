@@ -4,6 +4,14 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.templating import Jinja2Templates
 
 from hyperadmin.core.adapters import BaseAdapter
+from hyperadmin.i18n import gettext_lazy as _
+
+# Translatable status / flash messages constructed at module load time.
+# ``gettext_lazy`` defers translation to render time so the correct locale
+# is active when ``str(msg)`` is first evaluated in a template.
+_MSG_ITEM_NOT_FOUND = _("Item not found")
+_MSG_ITEM_CREATED = _("Item created successfully")
+_MSG_ITEM_UPDATED = _("Item updated successfully")
 
 # The templates are now in src/hyperadmin/templates
 template_dir = os.path.join(os.path.dirname(__file__), "templates")
@@ -59,7 +67,7 @@ class ModelView:
         """Deletes an item."""
         item = await self.adapter.get(pk=item_id)
         if not item:
-            raise HTTPException(status_code=404, detail="Item not found")
+            raise HTTPException(status_code=404, detail=str(_MSG_ITEM_NOT_FOUND))
 
         await self.adapter.delete(pk=item_id)
 
@@ -70,13 +78,13 @@ class ModelView:
         """Renders the update view and handles form submission for updating an item."""
         item = await self.adapter.get(pk=item_id)
         if not item:
-            raise HTTPException(status_code=404, detail="Item not found")
+            raise HTTPException(status_code=404, detail=str(_MSG_ITEM_NOT_FOUND))
 
         if request.method == "POST":
             form_data = await request.form()
             await self.adapter.update(pk=item_id, data=dict(form_data))
             # For now, let's redirect to the list view. HTMX will be added later.
-            return {"message": "Item updated successfully"}
+            return {"message": str(_MSG_ITEM_UPDATED)}
 
         context = {
             "request": request,
@@ -92,7 +100,7 @@ class ModelView:
             form_data = await request.form()
             await self.adapter.create(data=dict(form_data))
             # For now, let's redirect to the list view. HTMX will be added later.
-            return {"message": "Item created successfully"}  # This will be improved later
+            return {"message": str(_MSG_ITEM_CREATED)}
 
         context = {
             "request": request,
@@ -120,7 +128,7 @@ class ModelView:
         item = await self.adapter.get(pk=item_id)
 
         if not item:
-            raise HTTPException(status_code=404, detail="Item not found")
+            raise HTTPException(status_code=404, detail=str(_MSG_ITEM_NOT_FOUND))
 
         context = {
             "request": request,
