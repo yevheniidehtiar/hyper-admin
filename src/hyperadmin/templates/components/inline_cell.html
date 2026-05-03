@@ -1,0 +1,19 @@
+{# Inline-editable read-only cell. Replaced by inline_editor.html on edit. #}
+<td class="ha-table-cell ha-cell-editable{%- if saved %} ha-cell-saved{%- endif -%}"
+    id="cell-{{ model_name|lower }}-{{ item.id }}-{{ field }}"
+    data-testid="cell-{{ field }}-{{ item.id }}">
+    <span class="ha-cell-value" data-testid="cell-value-{{ field }}-{{ item.id }}">{{- item[field] -}}</span>
+    <button type="button"
+            class="ha-cell-edit"
+            data-testid="cell-edit-{{ field }}-{{ item.id }}"
+            aria-label="Edit {{ field }} for row {{ item.id }}"
+            hx-get="{{- url_for(model_name|lower ~ '-inline-edit-form', item_id=item.id, field=field) -}}"
+            hx-target="closest td"
+            hx-swap="outerHTML">
+        <span aria-hidden="true">✎</span>
+        <span class="ha-visually-hidden">Edit</span>
+    </button>
+    {%- if saved -%}
+        <span class="ha-visually-hidden" data-testid="cell-saved-flag-{{ field }}-{{ item.id }}">saved</span>
+    {%- endif -%}
+</td>

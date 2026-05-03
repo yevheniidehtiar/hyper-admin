@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from hyperadmin.core.fieldsets import FieldsetSpec
 from hyperadmin.core.inlines import InlineModelSpec
@@ -52,6 +52,13 @@ class AdminOptions(BaseModel):
     - ``None`` (default): smart defaults via ``infer_list_filter()``.
     - ``[]``: filtering disabled.
     - ``["is_active", "status"]``: explicit list used as-is.
+    """
+    list_editable: list[str] = Field(default_factory=list)
+    """Allow-list of field names that can be inline-edited in the list view.
+
+    Empty by default — feature is opt-in. Fields named here MUST exist on the
+    model schema. The primary key (``id``) is never inline-editable, even if
+    listed here, and is filtered out at the view layer.
     """
     dependent_fields: dict[str, str] = {}
     """Cascading select configuration: maps child field name → parent field name.

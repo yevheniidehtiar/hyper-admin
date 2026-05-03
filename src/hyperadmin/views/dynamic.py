@@ -289,6 +289,8 @@ class DynamicModelView:
             "can_delete": self.options.can_delete,
             "can_detail": self.options.can_detail,
             "file_fields": file_fields,
+            "options": self.options,
+            "list_editable": list(self.options.list_editable or []),
         }
 
         # Use table template for HTMX requests, full layout for regular requests
@@ -939,6 +941,154 @@ class DynamicModelView:
         for path in paths:
             if os.path.exists(path):
                 os.remove(path)
+
+    def _is_inline_editable(self, field: str) -> bool:
+        """Return True if ``field`` is in the list_editable allow-list and on the schema.
+
+        The primary key (``id``) is never editable inline.
+        """
+        if field == "id":
+            return False
+        if field not in self.model.model_fields:
+            return False
+        return field in (self.options.list_editable or [])
+
+    async def inline_edit_form_view(
+        self,
+        request: Request,
+        item_id: int,
+        field: str,
+        cancel: int = Query(0),
+    ):
+        """Renders the inline editor fragment for a single editable cell.
+
+        ``?cancel=1`` returns the static cell instead — used by the Cancel
+        button in the editor to restore the read-only view without hitting
+        a separate endpoint.
+        """
+        if not self._is_inline_editable(field):
+            raise HTTPException(status_code=403, detail="Field not editable")
+
+        item = await self.adapter.get(pk=item_id)
+        if not item:
+            raise HTTPException(status_code=404, detail="Item not found")
+
+        if cancel:
+            context = {
+                "request": request,
+                "model_name": self.model.__name__,
+                "item": item,
+                "field": field,
+                "saved": False,
+            }
+            return self.templates.TemplateResponse(request, "components/inline_cell.html", context)
+
+        # Build a single-field form so we reuse widget selection + validation
+        form = PydanticForm(self.model, include=[field], initial={field: getattr(item, field)})
+        form_field = next((f for f in form.fields if f.name == field), None)
+        if form_field is None:
+            # Field is not exposed by PydanticForm (e.g. auto-now / id) — treat as not editable
+            raise HTTPException(status_code=403, detail="Field not editable")
+
+        context = {
+            "request": request,
+            "model_name": self.model.__name__,
+            "item": item,
+            "field": field,
+            "form_field": form_field,
+            "form": form,
+        }
+        return self.templates.TemplateResponse(request, "components/inline_editor.html", context)
+
+    async def inline_save_view(self, request: Request, item_id: int, field: str):
+        """Validates and persists a single field for ``item_id``."""
+        if not self._is_inline_editable(field):
+            raise HTTPException(status_code=403, detail="Field not editable")
+
+        item = await self.adapter.get(pk=item_id)
+        if not item:
+            raise HTTPException(status_code=404, detail="Item not found")
+
+        form_data = await request.form()
+        raw_value: Any = form_data.get(field)
+
+        # Reuse the full-model PydanticForm to keep validation rules consistent
+        # with the per-row update form. We seed it with the current row dump
+        # and only override the edited field — ensures min_length/required etc.
+        # apply identically.
+        current = item.model_dump() if hasattr(item, "model_dump") else dict(item.__dict__)
+        merged = dict(current)
+        merged[field] = raw_value
+
+        form = PydanticForm(self.model)
+        form_field = next((f for f in form.fields if f.name == field), None)
+        if form_field is None:
+            raise HTTPException(status_code=403, detail="Field not editable")
+
+        # Unchecked checkbox semantics: bool fields with no value submitted → False
+        if isinstance(form_field.widget, CheckboxInput) and field not in form_data:
+            merged[field] = False
+
+        instance, errs = form.validate(merged)
+        field_errors = errs.get(field) if errs else None
+        if field_errors:
+            error_form_field = next((f for f in form.fields if f.name == field), None)
+            if error_form_field is not None:
+                error_form_field.value = raw_value
+                error_form_field.errors = field_errors
+            context = {
+                "request": request,
+                "model_name": self.model.__name__,
+                "item": item,
+                "field": field,
+                "form_field": error_form_field,
+                "errors": field_errors,
+                "current_value": getattr(item, field),
+            }
+            return self.templates.TemplateResponse(
+                request, "components/inline_cell_error.html", context, status_code=422
+            )
+
+        if not instance:
+            # Validation failed for a *different* field; we still reject the save.
+            return self.templates.TemplateResponse(
+                request,
+                "components/inline_cell_error.html",
+                {
+                    "request": request,
+                    "model_name": self.model.__name__,
+                    "item": item,
+                    "field": field,
+                    "form_field": form_field,
+                    "errors": ["Invalid value"],
+                    "current_value": getattr(item, field),
+                },
+                status_code=422,
+            )
+
+        # Persist only the edited field — exclude_unset would also work, but
+        # we know precisely what changed.
+        new_value = getattr(instance, field)
+        await self.adapter.update(pk=item_id, data={field: new_value})
+
+        # Re-fetch to get the canonical stored value (e.g. type coercion)
+        refreshed = await self.adapter.get(pk=item_id)
+        context = {
+            "request": request,
+            "model_name": self.model.__name__,
+            "item": refreshed,
+            "field": field,
+            "options": self.options,
+            "saved": True,
+        }
+        # Announce save via aria-live region using an HX-Trigger event.
+        # OOB swaps are avoided here because they don't compose cleanly when
+        # the primary swap target is a single <td> element.
+        response = self.templates.TemplateResponse(request, "components/inline_cell.html", context)
+        response.headers["HX-Trigger-After-Swap"] = (
+            '{"hyperadmin:cell-saved": {"field": "' + field + '"}}'
+        )
+        return response
 
     async def delete_action(self, request: Request, item_id: int):
         """Deletes an item."""

@@ -1,0 +1,49 @@
+{# Error fragment for a failed inline save. Renders the editor with the
+   submitted (invalid) value and an error list, so the user can correct
+   without losing their input. #}
+<td class="ha-table-cell ha-inline-editor ha-inline-editor-error"
+    id="cell-{{ model_name|lower }}-{{ item.id }}-{{ field }}">
+    <form class="ha-inline-form"
+          data-testid="cell-editor-{{ field }}-{{ item.id }}"
+          hx-post="{{- url_for(model_name|lower ~ '-inline-save', item_id=item.id, field=field) -}}"
+          hx-target="closest td"
+          hx-swap="outerHTML"
+          x-data
+          @keydown.escape.prevent="$el.querySelector('[data-testid=\'cell-cancel-{{ field }}-{{ item.id }}\']').click()">
+        <label for="inline-{{ field }}-{{ item.id }}" class="ha-visually-hidden">
+            {{- form_field.label if form_field else field -}}
+        </label>
+        <input id="inline-{{ field }}-{{ item.id }}"
+               name="{{ field }}"
+               type="text"
+               value="{{ form_field.value if form_field and form_field.value is not none else '' }}"
+               class="ha-input ha-input-inline"
+               aria-label="{{ form_field.label if form_field else field }}"
+               aria-invalid="true"
+               aria-describedby="{{ field }}-errors-{{ item.id }}"
+               autofocus>
+        <ul class="ha-field-errors"
+            id="{{ field }}-errors-{{ item.id }}"
+            aria-live="polite"
+            data-testid="{{ field }}-errors">
+            {%- for error in errors -%}
+                <li>{{- error -}}</li>
+            {%- endfor -%}
+        </ul>
+        <div class="ha-inline-actions">
+            <button type="submit"
+                    class="ha-btn ha-btn-primary ha-btn-inline"
+                    data-testid="cell-save-{{ field }}-{{ item.id }}">
+                Save
+            </button>
+            <button type="button"
+                    class="ha-btn ha-btn-link ha-btn-inline"
+                    data-testid="cell-cancel-{{ field }}-{{ item.id }}"
+                    hx-get="{{- url_for(model_name|lower ~ '-inline-edit-form', item_id=item.id, field=field) -}}?cancel=1"
+                    hx-target="closest td"
+                    hx-swap="outerHTML">
+                Cancel
+            </button>
+        </div>
+    </form>
+</td>

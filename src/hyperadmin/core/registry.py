@@ -50,6 +50,14 @@ class SiteRegistry:
         if options is None:
             options = getattr(admin_class, "options", None) or AdminOptions()
 
+        # Allow ModelAdmin subclasses to declare class-level overrides that
+        # we merge into options. Today only ``list_editable`` uses this path;
+        # other options remain explicit constructor args. Explicit ``options``
+        # always wins over class-level defaults.
+        class_list_editable = getattr(admin_class, "list_editable", None)
+        if class_list_editable and not options.list_editable:
+            options = options.model_copy(update={"list_editable": list(class_list_editable)})
+
         with self._lock:
             if model in self._registry:
                 raise ValueError(f"Model {model} is already registered.")

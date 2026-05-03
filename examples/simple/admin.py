@@ -18,6 +18,7 @@ from hyperadmin.core.registry import site
 class UserAdmin(ModelAdmin):
     adapter_class = SQLModelAdapter
     list_filter: ClassVar[list[str]] = ["is_active", "user_type"]
+    list_editable: ClassVar[list[str]] = ["name", "is_active"]
     options: ClassVar[AdminOptions] = AdminOptions(
         fieldsets=[
             FieldsetSpec(name="Basic Info", fields=["name", "email"]),
