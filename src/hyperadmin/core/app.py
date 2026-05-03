@@ -80,6 +80,12 @@ class Admin:
         template_dirs = self.settings.template_dirs
         template_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "templates")
         self.templates = Jinja2Templates(directory=[*template_dirs, template_dir])
+        # Wire jinja2.ext.i18n + per-request gettext callables (C1-C). The
+        # callables read translations from a context var populated by
+        # LocaleMiddleware; outside a request they pass msgids through.
+        from hyperadmin.i18n import install_jinja_i18n
+
+        install_jinja_i18n(self.templates.env)
 
         static_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")
         if os.path.exists(static_dir):

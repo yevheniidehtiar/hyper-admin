@@ -20,6 +20,12 @@ from typing import TYPE_CHECKING, Any
 import babel
 from starlette.middleware.base import BaseHTTPMiddleware
 
+from hyperadmin.i18n.loader import (
+    load_translations,
+    reset_current_translations,
+    set_current_translations,
+)
+
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
@@ -121,8 +127,14 @@ class LocaleMiddleware(BaseHTTPMiddleware):
             supported=self.settings.supported_locales,
             default=self.settings.default_locale,
         )
+        translations = load_translations(locale)
         request.state.locale = locale
-        response = await call_next(request)
+        request.state.translations = translations
+        token = set_current_translations(translations)
+        try:
+            response = await call_next(request)
+        finally:
+            reset_current_translations(token)
         if self.settings.locale_response_header:
             response.headers["Content-Language"] = locale
         return response
