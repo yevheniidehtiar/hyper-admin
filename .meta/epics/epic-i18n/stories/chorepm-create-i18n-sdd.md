@@ -2,7 +2,7 @@
 type: story
 id: I18nMain_C0PM
 title: "chore(pm): create i18n SDD and epic backlog for v0.4.1"
-status: in_progress
+status: done
 priority: high
 assignee: null
 labels:
@@ -51,16 +51,16 @@ not modify production code -- only `docs/specs/i18n.md` and `.meta/`.
 - [x] Create `.meta/epics/epic-i18n/epic.md` linking milestone v0.4.1
 - [x] Create `.meta/epics/epic-i18n/stories/chorepm-create-i18n-sdd.md` (this file)
 - [x] Write `docs/specs/i18n.md` from `docs/specs/TEMPLATE.md` (status: Draft)
-- [ ] Open PR and request human review of the SDD
-- [ ] On approval, flip SDD `Status` -> `Approved` and dispatch C1-A + C1-B
+- [x] Open PR and request human review of the SDD (PR #516, merged)
+- [x] On approval, flip SDD `Status` -> `Approved` and dispatch C1-A + C1-B
 
 ## Acceptance criteria
 
-- [ ] `docs/specs/i18n.md` exists, status: Draft
-- [ ] Epic at `.meta/epics/epic-i18n/epic.md` exists and links the SDD
-- [ ] `./scripts/gitpm.sh validate` exits 0
-- [ ] PR opened with the SDD + epic + this story
-- [ ] Human-approval comment on the PR flips SDD status to Approved before C1 dispatch
+- [x] `docs/specs/i18n.md` exists, status: Approved
+- [x] Epic at `.meta/epics/epic-i18n/epic.md` exists and links the SDD
+- [x] `./scripts/gitpm.sh validate` exits 0
+- [x] PR opened with the SDD + epic + this story (PR #516)
+- [x] PR merged -> SDD status flipped to Approved before C1 dispatch
 
 ## Files to modify
 
