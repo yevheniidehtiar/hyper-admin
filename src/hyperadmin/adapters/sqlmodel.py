@@ -27,16 +27,22 @@ class SQLModelAdapter(BaseAdapter):
         """
         Retrieves a single object by its primary key.
 
+        Any filters returned by :meth:`get_queryset` are merged into the WHERE clause
+        before the primary-key predicate so excluded rows resolve to ``None``.
+
         Args:
             pk: The primary key of the object to retrieve.
 
         Returns:
             The retrieved object, or None if not found.
         """
+        queryset_filters = self._resolve_queryset_filters()
         async with AsyncSession(self.engine) as session:
             mapper = inspect(self.model)
             options = [selectinload(getattr(self.model, rel.key)) for rel in mapper.relationships]
             query = select(self.model).where(self.model.id == pk).options(*options)
+            for key, value in queryset_filters.items():
+                query = query.where(getattr(self.model, key) == value)
             result = await session.execute(query)
             return result.scalar_one_or_none()
 
@@ -51,7 +57,12 @@ class SQLModelAdapter(BaseAdapter):
     ) -> tuple[list[Any], int]:
         """
         Retrieves a list of objects with optional pagination, searching, and filtering.
+
+        Filters returned by :meth:`get_queryset` are applied **before** any
+        view-layer ``filters`` so they cannot be bypassed. The same predicates are
+        included in the count query, keeping pagination math consistent.
         """
+        queryset_filters = self._resolve_queryset_filters()
         async with AsyncSession(self.engine) as session:
             query = select(self.model)
 
@@ -59,6 +70,10 @@ class SQLModelAdapter(BaseAdapter):
             mapper = inspect(self.model)
             for rel in mapper.relationships:
                 query = query.options(selectinload(getattr(self.model, rel.key)))
+
+            # Apply queryset hook filters first (RLS / tenant scoping)
+            for key, value in queryset_filters.items():
+                query = query.where(getattr(self.model, key) == value)
 
             # Apply filtering
             if filters:
