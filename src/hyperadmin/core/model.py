@@ -15,6 +15,7 @@ from pydantic import BaseModel
 
 if TYPE_CHECKING:
     import babel.support
+    from starlette.requests import Request
 
 
 class HyperAdminModel(BaseModel, abc.ABC):
@@ -115,6 +116,30 @@ class ModelAdmin:
 
     def __init__(self, model: Any) -> None:
         self.model = model
+
+    def get_queryset(self, request: "Request | None" = None) -> dict[str, Any]:
+        """Return additional equality filters merged into list/detail queries.
+
+        Override in a subclass to implement row-level scoping at the
+        ``ModelAdmin`` level (e.g. ``return {"owner_id": request.state.user.id}``).
+        The returned mapping has the shape ``{column_name: value}`` and is merged
+        into the same ``WHERE`` clause as
+        :meth:`hyperadmin.core.adapters.BaseAdapter.get_queryset` by the view layer
+        (see C2-C: ``views/dynamic.py``).
+
+        Default behaviour returns an empty dict, which is a no-op (backward
+        compatible).
+
+        Args:
+            request: The active Starlette/FastAPI request, when available.
+                ``None`` is permitted so the hook is callable from contexts
+                without an HTTP request (e.g. management scripts, tests).
+
+        Returns:
+            A dict of column-name to value pairs to be ANDed into the query's
+            ``WHERE`` clause. Returns ``{}`` by default.
+        """
+        return {}
 
     @classmethod
     def get_verbose_name(cls, model: Any) -> VerboseNameType:
