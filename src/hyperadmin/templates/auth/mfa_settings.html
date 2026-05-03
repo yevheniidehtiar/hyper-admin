@@ -4,7 +4,7 @@
 
 {%- block content -%}
 <div class="ha-login-container">
-    <div class="ha-login-card">
+    <div id="mfa-settings-card" class="ha-login-card">
         <h1 id="mfa-settings-title" class="ha-login-title">
             {{ _("Two-factor authentication") }}
         </h1>
@@ -42,7 +42,7 @@
               data-testid="mfa-settings-confirm-form"
               aria-labelledby="mfa-settings-title"
               hx-post="{{ admin_prefix }}/mfa/{{ flow }}"
-              hx-target="closest .ha-login-card"
+              hx-target="#mfa-settings-card"
               hx-swap="outerHTML">
             <p class="ha-text-muted">
                 {{ _("Enter the 6-digit code we sent to your email to confirm.") }}
@@ -80,7 +80,7 @@
               action="{{ admin_prefix }}/mfa/disable"
               data-testid="mfa-disable-form"
               hx-post="{{ admin_prefix }}/mfa/disable"
-              hx-target="closest .ha-login-card"
+              hx-target="#mfa-settings-card"
               hx-swap="outerHTML">
             <button type="submit"
                     class="ha-btn ha-btn-danger ha-btn-block"
@@ -93,7 +93,7 @@
               action="{{ admin_prefix }}/mfa/enable"
               data-testid="mfa-enable-form"
               hx-post="{{ admin_prefix }}/mfa/enable"
-              hx-target="closest .ha-login-card"
+              hx-target="#mfa-settings-card"
               hx-swap="outerHTML">
             <button type="submit"
                     class="ha-btn ha-btn-primary ha-btn-block"

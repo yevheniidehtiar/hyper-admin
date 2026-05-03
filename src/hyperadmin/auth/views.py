@@ -11,7 +11,7 @@ gate that lives in :mod:`hyperadmin.auth.middleware`.
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Final
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
@@ -330,7 +330,7 @@ async def mfa_resend_view(
 # while the user is FULLY authenticated; mixing the two keys would either
 # spuriously trip the middleware gate or risk a race where a settings OTP
 # could be used to skip the login challenge.
-MFA_SETTINGS_FLOW_KEY = "mfa_settings_flow"
+MFA_SETTINGS_FLOW_KEY: Final[str] = "mfa_settings_flow"
 
 
 def _settings_response(
@@ -455,6 +455,11 @@ async def mfa_enable_view(
             error=_("No active MFA enable flow. Please try again."),
         )
 
+    # EmailOTPService.verify enforces the TTL window and bumps an
+    # attempts counter on each miss. The MFA_SETTINGS_FLOW_KEY remains
+    # set on a wrong-code error so the user can retry against the SAME
+    # session OTP entry until natural TTL expiry — brute-force surface
+    # is bounded by EmailOTPService's window, not by this view.
     ok = await otp_service.verify(user, submitted, request.session)
     if not ok:
         return _settings_response(
