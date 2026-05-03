@@ -253,13 +253,37 @@ class TestEmailFailure:
 
         assert session[OTP_SESSION_KEY] == original_entry
 
+    async def test_email_failure_does_not_consume_rate_limit_budget(self) -> None:
+        # Edge: a flaky SMTP backend must not eat the user's rate-limit
+        # budget. Three failed sends followed by a successful send must
+        # all be allowed under rate_limit=(3, 600); only delivered codes
+        # count toward the window.
+        sender = _Sender()
+        sender.raise_on_send = RuntimeError("smtp down")
+        service = EmailOTPService(email_sender=sender, rate_limit=(3, 600))
+        alice = _make_user()
+        session: dict[str, Any] = {}
+
+        for _ in range(5):
+            with pytest.raises(RuntimeError):
+                await service.generate_and_send(alice, session)
+
+        # Rate-limit history must remain empty: zero successful issuances.
+        history = session.get(OTP_SESSION_KEY + "_history", {}).get(str(alice.id), [])
+        assert history == []
+
+        # And a subsequent successful send must go through cleanly.
+        sender.raise_on_send = None
+        await service.generate_and_send(alice, session)
+        assert OTP_SESSION_KEY in session
+
 
 class TestGuardrails:
     async def test_unsaved_user_raises_value_error(self) -> None:
         # Edge: user.id is None — service has no key to scope state under.
         service = EmailOTPService(email_sender=_Sender())
         unsaved = User(id=None, username="x", email="x@example.com", password_hash="x")
-        with pytest.raises(ValueError, match="user.id is None"):
+        with pytest.raises(ValueError, match=r"user\.id is None"):
             await service.generate_and_send(unsaved, {})
 
     async def test_verify_rejects_entry_for_other_user(self) -> None:
