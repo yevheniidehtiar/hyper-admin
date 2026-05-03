@@ -180,3 +180,37 @@
   background-color: var(--ha-color-primary-50);
   color: var(--ha-color-primary-700);
 }
+
+/* ==========================================================================
+   Locale switcher
+   ========================================================================== */
+
+.ha-locale-switcher {
+  display: inline-flex;
+  align-items: center;
+}
+
+.ha-locale-select {
+  font-size: var(--ha-font-size-sm);
+  color: var(--ha-color-text-muted);
+  background-color: transparent;
+  border: var(--ha-border-width) solid var(--ha-color-border-light);
+  border-radius: var(--ha-radius);
+  padding: var(--ha-space-1) var(--ha-space-2);
+  cursor: pointer;
+  transition: all var(--ha-transition);
+  /* ensure a minimum tap target on touch devices */
+  min-height: 36px;
+}
+
+.ha-locale-select:hover {
+  border-color: var(--ha-color-border);
+  color: var(--ha-color-text);
+}
+
+.ha-locale-select:focus-visible {
+  outline: none;
+  box-shadow: var(--ha-shadow-focus);
+}
+
+/* Hide label text from flow but keep it for screen readers (uses ha-sr-only) */

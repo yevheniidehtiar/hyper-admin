@@ -171,6 +171,26 @@ class Admin:
         self.router.add_api_route("/login", login_post, methods=["POST"], name="admin-login-post")
         self.router.add_api_route("/logout", logout_post, methods=["POST"], name="admin-logout")
 
+    def _register_locale_route(self, path: str) -> None:
+        """Register the POST /locale route for the locale switcher."""
+        from starlette.requests import Request
+        from starlette.responses import Response
+
+        from hyperadmin.views.locale import set_locale_view
+
+        admin_prefix = path.rstrip("/")
+        settings = self.settings
+
+        async def locale_post(request: Request) -> Response:
+            return await set_locale_view(request, settings, admin_prefix)
+
+        self.router.add_api_route(
+            "/locale",
+            locale_post,
+            methods=["POST"],
+            name="admin-locale",
+        )
+
     def _add_auth_middleware(self, path: str) -> None:
         """Add session and authentication middleware."""
         from starlette.middleware.sessions import SessionMiddleware
@@ -293,12 +313,14 @@ class Admin:
         if self.settings.auto_discover:
             self._auto_register_models()
 
+        self._register_locale_route(path)
         self._register_views()
         self.templates.env.globals["admin_prefix"] = path.rstrip("/")
         self.templates.env.globals["auth_enabled"] = self.auth_backend is not None
         self.templates.env.globals["theme"] = self.settings.theme
         self.templates.env.globals["site_title"] = self.settings.site_title
         self.templates.env.globals["site_header"] = self.settings.site_header
+        self.templates.env.globals["supported_locales"] = self.settings.supported_locales
 
         if self.auth_backend:
             self.router.on_startup.append(self._sync_permissions)
