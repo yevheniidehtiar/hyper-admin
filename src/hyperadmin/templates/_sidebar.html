@@ -2,25 +2,25 @@
        class="ha-sidebar"
        :class="{ 'ha-sidebar-mobile-open': sidebarOpen }"
        data-testid="sidebar"
-       aria-label="Model navigation"
+       aria-label="{{ _('Model navigation') }}"
        :role="sidebarOpen ? 'dialog' : 'complementary'"
        :aria-modal="sidebarOpen ? 'true' : null"
        x-trap.inert.noscroll="sidebarOpen"
        @keydown.escape.window="sidebarOpen = false">
     <div class="ha-sidebar-inner">
         <div class="ha-sidebar-header">
-            <h2 class="ha-sidebar-title">Menu</h2>
+            <h2 class="ha-sidebar-title">{{ _("Menu") }}</h2>
             <button type="button"
                     class="ha-sidebar-close"
                     @click="sidebarOpen = false"
-                    aria-label="Close navigation menu"
+                    aria-label="{{ _('Close navigation menu') }}"
                     data-testid="sidebar-close">
                 <svg class="ha-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                 </svg>
             </button>
         </div>
-        <nav aria-label="Sidebar">
+        <nav aria-label="{{ _('Sidebar') }}">
         <ul class="ha-sidebar-nav">
             {%- for item in nav_items -%}
             {%- if not auth_enabled or not request.state.user or item.get('visible', true) -%}

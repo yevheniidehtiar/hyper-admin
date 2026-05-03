@@ -1,11 +1,11 @@
-<nav class="ha-navbar" aria-label="Main navigation">
+<nav class="ha-navbar" aria-label="{{ _('Main navigation') }}">
     <div class="ha-navbar-inner">
         <button type="button"
                 class="ha-sidebar-toggle"
                 @click="sidebarOpen = !sidebarOpen"
                 :aria-expanded="sidebarOpen ? 'true' : 'false'"
                 aria-controls="sidebar"
-                aria-label="Toggle navigation menu"
+                aria-label="{{ _('Toggle navigation menu') }}"
                 data-testid="sidebar-toggle">
             <svg class="ha-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
@@ -16,7 +16,7 @@
         <button type="button"
                 class="ha-theme-toggle"
                 onclick="haToggleTheme()"
-                aria-label="Toggle dark mode"
+                aria-label="{{ _('Toggle dark mode') }}"
                 data-testid="theme-toggle">
             <svg class="ha-icon-sun" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m8.66-13.66l-.71.71M4.05 19.95l-.71.71M21 12h-1M4 12H3m16.66 7.66l-.71-.71M4.05 4.05l-.71-.71M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
@@ -38,7 +38,7 @@
             </button>
             <div x-show="open" @click.away="open = false" @keydown.escape="open = false" x-cloak class="ha-dropdown" role="menu">
                 <form method="post" action="{{ admin_prefix }}/logout">
-                    <button type="submit" class="ha-dropdown-item" data-testid="logout-btn" role="menuitem">Logout</button>
+                    <button type="submit" class="ha-dropdown-item" data-testid="logout-btn" role="menuitem">{{ _("Logout") }}</button>
                 </form>
             </div>
             {% else %}
@@ -46,14 +46,14 @@
                 <svg class="ha-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z"></path>
                 </svg>
-                <span>Admin</span>
+                <span>{{ _("Admin") }}</span>
                 <svg class="ha-icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                 </svg>
             </button>
             <div x-show="open" @click.away="open = false" @keydown.escape="open = false" x-cloak class="ha-dropdown" role="menu">
-                <a href="#" class="ha-dropdown-item" role="menuitem">Profile</a>
-                <a href="#" class="ha-dropdown-item" role="menuitem">Settings</a>
+                <a href="#" class="ha-dropdown-item" role="menuitem">{{ _("Profile") }}</a>
+                <a href="#" class="ha-dropdown-item" role="menuitem">{{ _("Settings") }}</a>
             </div>
             {% endif %}
         </div>

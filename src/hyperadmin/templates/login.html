@@ -1,6 +1,6 @@
 {%- extends "_base.html" -%}
 
-{%- block title -%}Login — HyperAdmin{%- endblock -%}
+{%- block title -%}{{ _("Login") }} — HyperAdmin{%- endblock -%}
 
 {%- block messages -%}{%- endblock -%}
 {%- block navbar -%}{%- endblock -%}
@@ -10,7 +10,7 @@
 <div class="ha-login-container">
     <div class="ha-login-card">
         <h1 id="login-title" class="ha-login-title">HyperAdmin</h1>
-        <p class="ha-text-muted">Sign in to your account</p>
+        <p class="ha-text-muted">{{ _("Sign in to your account") }}</p>
 
         {%- if error -%}
         <div class="ha-alert ha-alert-error" data-testid="login-error" role="alert">
@@ -20,7 +20,7 @@
 
         <form method="post" action="{{ admin_prefix }}/login" data-testid="login-form" aria-labelledby="login-title">
             <div class="ha-form-group">
-                <label for="username" class="ha-label">Username</label>
+                <label for="username" class="ha-label">{{ _("Username") }}</label>
                 <input
                     type="text"
                     id="username"
@@ -32,7 +32,7 @@
                 >
             </div>
             <div class="ha-form-group">
-                <label for="password" class="ha-label">Password</label>
+                <label for="password" class="ha-label">{{ _("Password") }}</label>
                 <input
                     type="password"
                     id="password"
@@ -43,7 +43,7 @@
                 >
             </div>
             <button type="submit" class="ha-btn ha-btn-primary ha-btn-block" data-testid="login-submit">
-                Sign in
+                {{ _("Sign in") }}
             </button>
         </form>
     </div>
