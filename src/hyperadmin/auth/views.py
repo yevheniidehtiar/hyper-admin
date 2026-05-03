@@ -27,6 +27,7 @@ from hyperadmin.i18n import gettext as _
 
 if TYPE_CHECKING:
     from fastapi.templating import Jinja2Templates
+    from sqlalchemy.ext.asyncio import AsyncEngine
     from starlette.requests import Request
 
 
@@ -84,7 +85,7 @@ def _read_partial_auth(request: Request) -> dict[str, Any] | None:
     return raw
 
 
-async def _load_partial_user(engine: Any, user_id: int) -> User | None:
+async def _load_partial_user(engine: AsyncEngine, user_id: int) -> User | None:
     async with AsyncSession(engine) as session:
         stmt = select(User).where(User.id == user_id)
         return (await session.execute(stmt)).scalar_one_or_none()
