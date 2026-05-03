@@ -8,7 +8,7 @@
         <svg class="ha-icon ha-icon-sm" :class="filtersOpen ? 'ha-rotate--180' : 'ha-rotate--0'" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M19 9l-7 7-7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        Filters
+        {{ _("Filters") }}
     </button>
 
     <div id="filter-content" class="ha-filter-content" x-show="filtersOpen" x-cloak>
@@ -24,7 +24,7 @@
                         hx-target="#model-list"
                         hx-push-url="true"
                         hx-include="[name^='filter_'], [name='search'], [name='sort_by'], [name='sort_direction']">
-                    <option value="">Any</option>
+                    <option value="">{{ _("Any") }}</option>
                     {%- for choice in filter.choices -%}
                     <option value="{{ choice.value }}" {% if active_filters.get(filter.name) == choice.value|string %}selected{% endif %}>
                         {{- choice.label -}}
@@ -40,7 +40,7 @@
                    hx-get="{{- url_for(model_name|lower ~ '-list') }}?search={{ search_query }}&sort_by={{ sort_by }}&sort_direction={{ sort_direction -}}"
                    hx-target="#model-list"
                    hx-push-url="true">
-                    Clear all filters
+                    {{ _("Clear all filters") }}
                 </a>
             </div>
         </div>

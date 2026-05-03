@@ -27,11 +27,11 @@
         <button
             data-testid="action-{{ act.name }}-btn"
             hx-post="{{- url_for(model_name_lower ~ '-action', item_id=item.id, action_name=act.name) -}}"
-            hx-confirm="Run action '{{ act.label }}'?"
+            hx-confirm="{% trans label=act.label %}Run action '{{ label }}'?{% endtrans %}"
             class="ha-btn ha-btn-action"
         >{{ act.label }}</button>
         {%- endfor -%}
     </div>
     {%- endif -%}
-    <a href="../" class="ha-text-link">Back to list</a>
+    <a href="../" class="ha-text-link">{{ _("Back to list") }}</a>
 {%- endblock -%}

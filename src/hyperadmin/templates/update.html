@@ -1,7 +1,7 @@
 {%- extends "form_layout.html" -%}
 
 {%- block form_title -%}
-    Update {{ item_name }}
+    {% trans item_name=item_name %}Update {{ item_name }}{% endtrans %}
 {%- endblock -%}
 
 {%- block form_attributes -%}
@@ -33,10 +33,10 @@
 {%- block form_actions -%}
     <div class="ha-form-actions">
         <button type="submit" class="ha-btn ha-btn-primary">
-            Update
+            {{ _("Update") }}
         </button>
         <a href="{{- url_for(model_name|lower ~ '-list') -}}" class="ha-cancel-link">
-            Cancel
+            {{ _("Cancel") }}
         </a>
     </div>
 {%- endblock -%}

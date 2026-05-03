@@ -28,12 +28,12 @@
         {%- endif -%}
     </td>
     {%- endfor -%}
-    <td class="ha-inline-actions" data-label="Actions">
+    <td class="ha-inline-actions" data-label="{{ _('Actions') }}">
         <button type="button"
                 class="ha-btn ha-btn-danger ha-btn-sm ha-inline-remove-btn"
                 data-testid="inline-{{ inline.prefix }}-remove-{{ row.index }}"
                 onclick="this.closest('tr').querySelector('[name$=DELETE]').value='1'; this.closest('tr').classList.add('ha-inline-row-deleted'); this.closest('tr').style.display='none';">
-            Remove
+            {{ _("Remove") }}
         </button>
         <input type="hidden" name="{{ inline.prefix }}-{{ row.index }}-DELETE" value="" />
     </td>

@@ -1,14 +1,14 @@
 {%- extends "base.html" -%}
 
-{%- block title -%}{{ model_name }} List | HyperAdmin{%- endblock -%}
+{%- block title -%}{% trans model_name=model_name %}{{ model_name }} List | HyperAdmin{% endtrans %}{%- endblock -%}
 
 {%- block content -%}
     <div class="ha-page-header" data-testid="page-header">
-        <h1 class="ha-section-title">{{- model_name -}} List</h1>
+        <h1 class="ha-section-title">{{- model_name -}}{{ _("List") }}</h1>
         {%- if can_create is not defined or can_create -%}
         <div class="ha-page-header-actions ha-list-toolbar">
             <a href="{{- url_for(model_name|lower ~ '-create-form') -}}" class="ha-btn ha-btn-primary ha-page-header-action-primary" data-testid="create-link">
-                Create New {{ model_name }}
+                {% trans model_name=model_name %}Create New {{ model_name }}{% endtrans %}
             </a>
         </div>
         {%- endif -%}
