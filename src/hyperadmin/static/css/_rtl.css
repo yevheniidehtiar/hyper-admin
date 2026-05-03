@@ -1,0 +1,59 @@
+/* ==========================================================================
+   RTL (Right-to-Left) Overrides
+   ========================================================================== */
+
+/*
+ * All rules here are scoped under [dir="rtl"] so they are completely inert
+ * for LTR layouts.  Most layout mirroring is handled automatically by the
+ * logical CSS properties introduced in C3-A (_layout.css, _sidebar.css, …).
+ * Only the few physical properties that cannot be expressed as logical ones
+ * are listed here.
+ *
+ * C3-B — <html dir> from locale + RTL overrides.
+ */
+
+/* --------------------------------------------------------------------------
+   Mobile sidebar: flip the slide-in direction.
+
+   LTR default:  starts off-screen to the LEFT  (translateX(-100%))
+                 slides to   translateX(0) when open.
+   RTL override: starts off-screen to the RIGHT (translateX(100%))
+                 slides to   translateX(0) when open.
+   ----------------------------------------------------------------------- */
+
+@media (max-width: 767px) {
+  [dir="rtl"] .ha-sidebar {
+    transform: translateX(100%);
+  }
+
+  [dir="rtl"] .ha-sidebar.ha-sidebar-mobile-open {
+    transform: translateX(0);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Directional icon rotations.
+
+   SVG arrows and chevrons that point left / right carry physical meaning.
+   In RTL the "forward" direction is to the left, so we mirror them.
+   Only icons that are already rotated or used as prev/next indicators need
+   explicit treatment — stroke-based icons that are symmetric (X, ✓, ⓘ)
+   do NOT need mirroring.
+   ----------------------------------------------------------------------- */
+
+/* Pagination "previous" arrow — points left in LTR, right in RTL */
+[dir="rtl"] [data-testid="pagination-prev"] svg,
+[dir="rtl"] .ha-pagination-prev svg {
+  transform: scaleX(-1);
+}
+
+/* Pagination "next" arrow — points right in LTR, left in RTL */
+[dir="rtl"] [data-testid="pagination-next"] svg,
+[dir="rtl"] .ha-pagination-next svg {
+  transform: scaleX(-1);
+}
+
+/* Navbar user-menu chevron (dropdown indicator) */
+[dir="rtl"] .ha-navbar-user-btn-chevron {
+  transform: scaleX(-1);
+}

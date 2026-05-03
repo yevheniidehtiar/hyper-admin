@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<html lang="en" data-ha-default-theme="{{ theme|default('auto') }}">
+<html lang="{{ request.state.locale | default('en') }}"
+      dir="{{ 'rtl' if (request.state.locale | default('en')) in rtl_locales else 'ltr' }}"
+      data-ha-default-theme="{{ theme|default('auto') }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
