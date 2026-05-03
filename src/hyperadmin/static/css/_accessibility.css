@@ -19,13 +19,19 @@
   box-shadow: var(--ha-shadow-lg);
 }
 
-.ha-skip-link:focus {
+.ha-skip-link:focus,
+.ha-skip-link:focus-visible {
   position: fixed;
   top: var(--ha-space-2);
   left: var(--ha-space-2);
   width: auto;
   height: auto;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
   overflow: visible;
+  outline: 2px solid var(--ha-color-primary-200);
+  outline-offset: 2px;
 }
 
 /* ==========================================================================
