@@ -28,7 +28,8 @@ Add an optional `get_queryset(request)` method to the ModelAdmin base class so u
 
 ## Files to Change
 
-- `src/hyperadmin/core/options.py` — add `get_queryset` as optional callable on AdminOptions or ModelAdmin
+- `src/hyperadmin/core/model.py` — add `ModelAdmin.get_queryset(request)` hook (sync, mirrors `BaseAdapter.get_queryset` per SDD §"API / Protocol Changes → New adapter hook")
+- `tests/unit/test_modeladmin_get_queryset.py` — new
 
 ## Design
 
