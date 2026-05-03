@@ -95,13 +95,18 @@
     </script>
 </head>
 <body class="ha-page" x-data="{ sidebarOpen: false }" :class="{ 'ha-has-sidebar-open': sidebarOpen }">
-    <a href="#main-content" class="ha-skip-link">Skip to main content</a>
+    <a href="#main-content"
+       class="ha-skip-link"
+       @click="sidebarOpen = false"
+       data-testid="skip-link">Skip to main content</a>
     <div class="ha-container">
         {% block messages %}{% include "_messages.html" %}{% endblock %}
-        {% block navbar %}{% include "_navbar.html" %}{% endblock %}
+        <header role="banner">
+            {% block navbar %}{% include "_navbar.html" %}{% endblock %}
+        </header>
         <div class="ha-layout">
             {% block sidebar %}{% include "_sidebar.html" %}{% endblock %}
-            <main id="main-content" role="main" class="ha-content">
+            <main id="main-content" role="main" tabindex="-1" class="ha-content">
                 {% block content %}{% endblock %}
             </main>
         </div>
