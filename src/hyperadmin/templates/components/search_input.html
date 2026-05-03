@@ -2,14 +2,14 @@
     <input type="search"
            name="search"
            value="{{- search_query -}}"
-           placeholder="Search..."
+           placeholder="{{ _('Search...') }}"
            class="ha-search-input"
            data-testid="search-input"
-           aria-label="Search"
+           aria-label="{{ _('Search') }}"
            hx-get="{{- url_for(model_name|lower ~ '-list') -}}"
            hx-trigger="keyup changed delay:500ms, search"
            hx-target="#model-list"
            hx-swap="outerHTML"
            hx-indicator="#search-indicator">
-    <span id="search-indicator" class="htmx-indicator ha-search-indicator">Searching...</span>
+    <span id="search-indicator" class="htmx-indicator ha-search-indicator">{{ _("Searching...") }}</span>
 </div>

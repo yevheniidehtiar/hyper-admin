@@ -1,7 +1,7 @@
-<nav aria-label="Pagination">
+<nav aria-label="{{ _('Pagination') }}">
 <div class="ha-pagination">
     <div class="ha-pagination-info" data-testid="pagination-info">
-        Showing {{- pagination.start_index }} to {{ pagination.end_index }} of {{ pagination.total_items }} results
+        {% trans start=pagination.start_index, end=pagination.end_index, total=pagination.total_items %}Showing {{ start }} to {{ end }} of {{ total }} results{% endtrans %}
     </div>
     <div class="ha-pagination-controls">
         {%- set filter_params -%}
@@ -14,12 +14,12 @@
            hx-swap="outerHTML"
            class="ha-pagination-btn"
            data-testid="pagination-prev">
-            Previous
+            {{ _("Previous") }}
         </a>
         {%- endif -%}
 
         <div class="ha-pagination-page" data-testid="pagination-page" aria-current="page">
-            Page {{ pagination.page }} of {{ pagination.total_pages }}
+            {% trans page=pagination.page, total_pages=pagination.total_pages %}Page {{ page }} of {{ total_pages }}{% endtrans %}
         </div>
 
         {%- if pagination.page < pagination.total_pages -%}
@@ -29,7 +29,7 @@
            hx-swap="outerHTML"
            class="ha-pagination-btn"
            data-testid="pagination-next">
-            Next
+            {{ _("Next") }}
         </a>
         {%- endif -%}
     </div>
