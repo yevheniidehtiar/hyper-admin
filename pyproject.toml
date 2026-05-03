@@ -315,6 +315,21 @@ type = "simple"
   help = "Run OSS triage audit (dry-run by default). Pass 'live' for mutations."
   cmd = "python scripts/triage_audit.py"
 
+  [tool.poe.tasks."i18n:extract"]
+  help = "Extract translatable strings from src/hyperadmin to messages.pot"
+  cmd = "pybabel extract -F babel.cfg -o messages.pot ."
+
+  [tool.poe.tasks."i18n:compile"]
+  help = "Compile .po files to .mo for runtime use"
+  cmd = "pybabel compile -d src/hyperadmin/locale"
+
+  [tool.poe.tasks."i18n:update"]
+  help = "Update existing .po files from a fresh .pot extraction"
+  sequence = [
+    { cmd = "poe i18n:extract" },
+    { cmd = "pybabel update -i messages.pot -d src/hyperadmin/locale" },
+  ]
+
   [tool.poe.tasks."deps:bump"]
   help = "Bump dev deps to latest and verify across the compatibility matrix"
   shell = """

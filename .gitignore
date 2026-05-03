@@ -94,6 +94,9 @@ gha-creds-*.json
 /.worktrees/
 .claude/worktrees/
 
+# Babel extraction artifact (regenerated from source; do not commit)
+messages.pot
+
 # pre-commit local cache
 .cache/
 
