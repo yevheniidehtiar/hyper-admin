@@ -45,3 +45,31 @@ class PermissionRegistry(Protocol):
     """Syncs auto-generated and custom permissions to the database."""
 
     async def sync_permissions(self, registered_models: list[Any]) -> None: ...
+
+
+@runtime_checkable
+class ObjectPermissionChecker(Protocol):
+    """Checks whether a user may perform ``action`` on a specific object.
+
+    Complements :class:`PermissionChecker` (model-level) with per-object
+    authorization. ``action`` shares the model-level codenames:
+    ``"view"``, ``"add"``, ``"change"``, ``"delete"``. Implementations may
+    accept additional custom action codenames.
+
+    Superuser bypass and other policy decisions are the responsibility of
+    the concrete implementation, not the protocol.
+    """
+
+    async def has_object_permission(self, user: Any, obj: Any, action: str) -> bool: ...
+
+
+class DefaultObjectPermissionChecker:
+    """Permissive default: allow every action on every object.
+
+    Acts as the no-op fallback when an application has not configured a
+    custom :class:`ObjectPermissionChecker`. Existing model-level
+    :class:`PermissionChecker` enforcement is unaffected.
+    """
+
+    async def has_object_permission(self, user: Any, obj: Any, action: str) -> bool:
+        return True
