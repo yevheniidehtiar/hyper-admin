@@ -219,10 +219,13 @@ class TestChallengePage:
         """Edge case: GET /admin/mfa/challenge with NO partial-auth session
         must redirect to /admin/login — there is no user to challenge.
         """
+        # Given a fresh client with no session cookie at all
         app = _build_app(async_engine)
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
+            # When GET /admin/mfa/challenge
             resp = await client.get("/admin/mfa/challenge", follow_redirects=False)
+            # Then the response is a 302 to /admin/login
             assert resp.status_code == 302
             assert resp.headers["location"].endswith("/admin/login")
 
@@ -289,6 +292,7 @@ class TestVerifyWrongCode:
         app = _build_app(async_engine)
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
+            # Given alice has a partial-auth session and a fresh OTP "123456" pending
             await _seed_partial(client, alice.id)
             await _seed_otp(
                 client,
@@ -297,17 +301,19 @@ class TestVerifyWrongCode:
                 datetime.now(tz=timezone.utc).isoformat(),
             )
 
+            # When POST /admin/mfa/verify with the wrong code 999999
             resp = await client.post(
                 "/admin/mfa/verify",
                 data={"code": "999999"},
                 follow_redirects=False,
             )
 
+            # Then the page re-renders 200 with the "Invalid code" error
             assert resp.status_code == 200
             assert "Invalid code" in resp.text
             assert 'data-testid="mfa-code-input"' in resp.text
 
-            # Partial session still active
+            # And the partial-auth session is preserved
             challenge = await client.get("/admin/mfa/challenge", follow_redirects=False)
             assert challenge.status_code == 200
 
@@ -330,21 +336,25 @@ class TestVerifyExpiredCode:
         app = _build_app(async_engine)
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
+            # Given alice has a partial-auth session and an OTP issued 1 hour ago (TTL=300s)
             await _seed_partial(client, alice.id)
             stale = (datetime.now(tz=timezone.utc) - timedelta(seconds=3600)).isoformat()
             await _seed_otp(client, alice.id, "123456", stale)
 
+            # When POST /admin/mfa/verify with the (now-expired) code
             resp = await client.post(
                 "/admin/mfa/verify",
                 data={"code": "123456"},
                 follow_redirects=False,
             )
 
+            # Then 200 with an "expired" message
             assert resp.status_code == 200
             # Either "Code expired" or "Invalid or expired code" — the
             # template surfaces an explicit expired message when the
             # service returned False AND no fresh entry remains.
             assert "expired" in resp.text.lower()
+            # And a resend-code affordance is visible so the user can recover
             assert 'data-testid="mfa-resend-link"' in resp.text
 
 
@@ -355,6 +365,7 @@ class TestResend:
     @pytest.mark.anyio
     async def test_resend_calls_generate_and_send(self, async_engine, alice) -> None:
         """Edge: POST /admin/mfa/resend triggers EmailOTPService.generate_and_send."""
+        # Given a partial-auth session and a capturing email sender wired into the service
         sender = _CapturingSender()
         service = EmailOTPService(email_sender=sender)
         app = _build_app(async_engine, otp_service=service)
@@ -362,10 +373,11 @@ class TestResend:
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             await _seed_partial(client, alice.id)
 
+            # When POST /admin/mfa/resend
             resp = await client.post("/admin/mfa/resend")
 
-            # The view re-renders the challenge page (200) with a flash
-            # confirming the new code was sent.
+            # Then the view re-renders the challenge page (200) and the
+            # email sender was invoked exactly once for alice's address
             assert resp.status_code == 200
             assert len(sender.calls) == 1
             assert sender.calls[0][0] == "alice@example.com"
@@ -383,20 +395,26 @@ class TestResend:
             ) -> bool:  # pragma: no cover - not used in this test
                 return False
 
+        # Given an OTP service that always raises RateLimitError on send
         app = _build_app(async_engine, otp_service=_AlwaysRateLimited())
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             await _seed_partial(client, alice.id)
+            # When POST /admin/mfa/resend
             resp = await client.post("/admin/mfa/resend")
+            # Then 200 with a "too many attempts" flash (no 500)
             assert resp.status_code == 200
             assert "too many attempts" in resp.text.lower()
 
     @pytest.mark.anyio
     async def test_resend_without_partial_auth_redirects_to_login(self, async_engine) -> None:
         """Edge: anonymous resend → redirect to login (no session to refresh)."""
+        # Given a fresh anonymous client
         app = _build_app(async_engine)
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
+            # When POST /admin/mfa/resend with no partial-auth cookie
             resp = await client.post("/admin/mfa/resend", follow_redirects=False)
+            # Then 302 to /admin/login
             assert resp.status_code == 302
             assert resp.headers["location"].endswith("/admin/login")
