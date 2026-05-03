@@ -44,3 +44,42 @@
   font-size: var(--ha-font-size-sm);
   font-weight: var(--ha-font-semibold);
 }
+
+/* ==========================================================================
+   Mobile (< 768px) — stack pagination vertically with centered controls
+   ========================================================================== */
+
+@media (max-width: 767px) {
+  .ha-pagination {
+    flex-direction: column;
+    align-items: center;
+    gap: var(--ha-space-3);
+    padding: var(--ha-space-4);
+  }
+
+  .ha-pagination-info {
+    text-align: center;
+    word-wrap: break-word;
+  }
+
+  .ha-pagination-controls {
+    gap: var(--ha-space-2);
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .ha-pagination-btn {
+    min-height: 44px;
+    padding: var(--ha-space-2) var(--ha-space-4);
+    font-size: var(--ha-font-size-base);
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .ha-pagination-page {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    font-size: var(--ha-font-size-base);
+  }
+}

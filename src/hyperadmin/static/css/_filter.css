@@ -55,3 +55,28 @@
 .ha-filter-toggle .ha-icon {
   transition: transform 0.2s var(--ha-ease-default);
 }
+
+/* ==========================================================================
+   Mobile (< 768px) — stack filter controls full-width
+   ========================================================================== */
+
+@media (max-width: 767px) {
+  .ha-filter-container {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--ha-space-3);
+  }
+
+  .ha-filter-group {
+    width: 100%;
+  }
+
+  .ha-filter-clear {
+    width: 100%;
+    text-align: center;
+  }
+
+  .ha-filter-toggle {
+    min-height: 44px;
+  }
+}

@@ -32,3 +32,20 @@
   font-size: var(--ha-font-size-sm);
   color: var(--ha-color-text-muted);
 }
+
+/* ==========================================================================
+   Mobile (< 768px) — full-width search with touch-friendly height
+
+   The base .ha-search-input already has width: 100% so it takes the
+   container width on mobile; here we just bump font-size to 1rem
+   (matching the form input rule in C2-B — prevents iOS Safari auto-zoom)
+   and increase padding to meet the 44px touch target.
+   ========================================================================== */
+
+@media (max-width: 767px) {
+  .ha-search-input {
+    padding: var(--ha-space-3);
+    font-size: 1rem;
+    min-height: 44px;
+  }
+}
