@@ -7,6 +7,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 _DEFAULT_SECRET_KEY = "hyperadmin-default-secret"  # noqa: S105
 _DEFAULT_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+_DEFAULT_SUPPORTED_LOCALES = ["en", "es", "fr", "de", "zh_CN", "ja", "uk"]
 
 ThemeLiteral = Literal["auto", "light", "dark"]
 
@@ -66,6 +67,10 @@ class HyperAdminSettings(BaseSettings):
     # ── Formatting ────────────────────────────────────────────────────────────
     date_format: str = "%Y-%m-%d"
     datetime_format: str = "%Y-%m-%d %H:%M:%S"
+
+    # ── Internationalization ──────────────────────────────────────────────────
+    default_locale: str = "en"
+    supported_locales: list[str] = Field(default_factory=lambda: list(_DEFAULT_SUPPORTED_LOCALES))
 
     # ── Derived helpers ───────────────────────────────────────────────────────
     @property
