@@ -23,10 +23,13 @@ from __future__ import annotations
 import io
 import os
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import pytest
 from PIL import Image, ImageChops
-from playwright.sync_api import Page
+
+if TYPE_CHECKING:
+    from playwright.sync_api import Page
 
 SNAPSHOT_DIR = Path(__file__).parent / "snapshots" / "responsive"
 SNAPSHOT_DIR.mkdir(parents=True, exist_ok=True)
