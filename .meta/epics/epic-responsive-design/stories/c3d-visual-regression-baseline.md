@@ -2,7 +2,7 @@
 type: story
 id: RspSyn_C3D_01
 title: "test(e2e): visual regression screenshot baseline for responsive"
-status: todo
+status: done
 priority: low
 assignee: null
 labels:
