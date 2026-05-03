@@ -10,7 +10,7 @@
  * Browser support: CSS @layer requires Chrome 99+, Firefox 97+, Safari 15.4+
  */
 
-@layer tokens, reset, layout, components, utilities, accessibility, responsive;
+@layer tokens, reset, layout, components, utilities, accessibility, responsive, rtl;
 
 @import "_tokens.css"        layer(tokens);
 @import "_dark-mode.css"     layer(tokens);
@@ -34,3 +34,4 @@
 @import "_utilities.css"     layer(utilities);
 @import "_accessibility.css" layer(accessibility);
 @import "_responsive.css"    layer(responsive);
+@import "_rtl.css"           layer(rtl);

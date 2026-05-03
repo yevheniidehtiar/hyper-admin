@@ -37,6 +37,14 @@ if TYPE_CHECKING:
 
 COOKIE_NAME = "hyperadmin_locale"
 
+#: Locale codes whose natural reading direction is right-to-left.
+#:
+#: Used by :func:`hyperadmin.core.app.Admin.mount` to expose ``rtl_locales``
+#: as a Jinja2 global so ``_base.html`` can render ``<html dir="rtl">``.
+#: None of the seeded locales (en, es, fr, de, zh_CN, ja, uk) are RTL by
+#: default; RTL locales remain opt-in via ``HYPERADMIN_SUPPORTED_LOCALES``.
+RTL_LOCALES: frozenset[str] = frozenset({"ar", "he", "fa", "ur"})
+
 
 def _parse_accept_language(header: str) -> list[str]:
     """Return preferred locale codes ordered by quality, normalised to BCP47-with-underscore.

@@ -27,9 +27,10 @@ from hyperadmin.i18n.loader import (
     reset_current_translations,
     set_current_translations,
 )
-from hyperadmin.i18n.middleware import LocaleMiddleware, negotiate_locale
+from hyperadmin.i18n.middleware import RTL_LOCALES, LocaleMiddleware, negotiate_locale
 
 __all__ = [
+    "RTL_LOCALES",
     "LocaleMiddleware",
     "get_current_translations",
     "gettext",

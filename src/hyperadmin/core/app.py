@@ -321,6 +321,9 @@ class Admin:
         self.templates.env.globals["site_title"] = self.settings.site_title
         self.templates.env.globals["site_header"] = self.settings.site_header
         self.templates.env.globals["supported_locales"] = self.settings.supported_locales
+        from hyperadmin.i18n import RTL_LOCALES
+
+        self.templates.env.globals["rtl_locales"] = RTL_LOCALES
 
         if self.auth_backend:
             self.router.on_startup.append(self._sync_permissions)
