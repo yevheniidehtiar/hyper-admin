@@ -2,6 +2,7 @@
 
 from hyperadmin.core.actions import ActionDef, action, collect_actions
 from hyperadmin.core.adapters import JsonApiAdapter, ListEnvelope, PaginationMeta
+from hyperadmin.core.auth import DefaultObjectPermissionChecker, ObjectPermissionChecker
 from hyperadmin.core.choices import ChoiceItem, ChoicesProvider, SelectFieldMeta
 from hyperadmin.core.display import get_field_label
 from hyperadmin.core.fields import classify_field
@@ -21,12 +22,14 @@ __all__ = [
     "ActionDef",
     "ChoiceItem",
     "ChoicesProvider",
+    "DefaultObjectPermissionChecker",
     "FieldMeta",
     "FieldsetSpec",
     "FormLayout",
     "InlineModelSpec",
     "JsonApiAdapter",
     "ListEnvelope",
+    "ObjectPermissionChecker",
     "PaginationMeta",
     "SelectFieldMeta",
     "action",
