@@ -2,6 +2,8 @@ import logging
 import math
 import os
 import re
+from collections.abc import Generator
+from contextlib import contextmanager
 from typing import TYPE_CHECKING, Any, Union, cast, get_args, get_origin
 
 from fastapi import HTTPException, Query, Request
@@ -130,6 +132,59 @@ class DynamicModelView:
         if not await self.permission_checker.has_permission(user, codename):
             raise HTTPException(status_code=403, detail="Permission denied")
 
+    @contextmanager
+    def _request_queryset_filter(self, request: Request) -> Generator[None, None, None]:
+        """Register the per-request queryset filter on the adapter for the duration of a view.
+
+        Composes :meth:`hyperadmin.core.model.ModelAdmin.get_queryset` (when an admin
+        instance is wired) into the adapter's ``set_queryset_filter`` seam so that
+        ``adapter.list()`` and ``adapter.get()`` apply ModelAdmin-defined row-level
+        filters before any view-layer filters.
+
+        The previous filter (if any) is restored on exit so that a long-lived adapter
+        cannot leak filters across requests.
+        """
+        admin_instance = self._admin_instance
+        previous_filter = getattr(self.adapter, "_queryset_filter", None)
+
+        def _filter_for_request(req: Request | None) -> dict[str, Any]:
+            if admin_instance is None:
+                return {}
+            get_queryset = getattr(admin_instance, "get_queryset", None)
+            if get_queryset is None:
+                return {}
+            result = get_queryset(req if req is not None else request)
+            return result if isinstance(result, dict) else {}
+
+        self.adapter.set_queryset_filter(_filter_for_request)
+        try:
+            yield
+        finally:
+            self.adapter._queryset_filter = previous_filter
+
+    async def _check_object_permission(self, request: Request, obj: Any, action: str) -> None:
+        """Raise 403 if ``obj`` fails the configured object-level permission check.
+
+        Does nothing when ``options.object_permission_checker`` is ``None``
+        (backward compatible — model-level :class:`PermissionChecker` enforcement
+        remains the only authz layer in that case).
+
+        Args:
+            request: The active request — its ``state.user`` is forwarded to the
+                checker.
+            obj: The object the user is attempting to act on.
+            action: One of ``"view"``, ``"add"``, ``"change"``, ``"delete"`` (or a
+                custom codename understood by the checker).
+        """
+        checker = getattr(self.options, "object_permission_checker", None)
+        if checker is None:
+            return
+        user = getattr(request.state, "user", None)
+        if user is None:
+            raise HTTPException(status_code=403, detail="Authentication required")
+        if not await checker.has_object_permission(user, obj, action):
+            raise HTTPException(status_code=403, detail="Permission denied")
+
     def _get_template_name(self, view_name: str) -> str:
         model_name = self.model.__name__.lower()
 
@@ -214,15 +269,17 @@ class DynamicModelView:
         order_by = f"-{sort_by}" if sort_direction == "desc" else sort_by
 
         try:
-            # Use adapter's list method
-            items, total_items = await self.adapter.list(
-                page=page,
-                page_size=page_size,
-                search=search or None,
-                filters=filters_to_apply,
-                order_by=order_by,
-                search_fields=self.search_fields,
-            )
+            # Use adapter's list method, scoped to the per-request queryset filter
+            # so that ModelAdmin.get_queryset(request) is merged into the WHERE clause.
+            with self._request_queryset_filter(request):
+                items, total_items = await self.adapter.list(
+                    page=page,
+                    page_size=page_size,
+                    search=search or None,
+                    filters=filters_to_apply,
+                    order_by=order_by,
+                    search_fields=self.search_fields,
+                )
 
             # Calculate pagination info
             total_pages = math.ceil(total_items / page_size) if page_size > 0 else 0
@@ -307,10 +364,13 @@ class DynamicModelView:
         Assumes the model has an 'id' field.
         """
         await self._check_permission(request, "view")
-        item = await self.adapter.get(pk=item_id)
+        with self._request_queryset_filter(request):
+            item = await self.adapter.get(pk=item_id)
 
         if not item:
             raise HTTPException(status_code=404, detail="Item not found")
+
+        await self._check_object_permission(request, item, "view")
 
         file_fields = self._get_file_fields()
         item_data = item.model_dump()
@@ -643,7 +703,8 @@ class DynamicModelView:
     ):
         """Renders the update form, optionally pre-filled with submitted values and errors."""
         await self._check_permission(request, "change")
-        item = await self.adapter.get(pk=item_id)
+        with self._request_queryset_filter(request):
+            item = await self.adapter.get(pk=item_id)
         if not item:
             raise HTTPException(status_code=404, detail="Item not found")
 
@@ -711,6 +772,11 @@ class DynamicModelView:
     async def update_view(self, request: Request, item_id: int):
         """Handles form submission for updating an item."""
         await self._check_permission(request, "change")
+        with self._request_queryset_filter(request):
+            existing = await self.adapter.get(pk=item_id)
+        if not existing:
+            raise HTTPException(status_code=404, detail="Item not found")
+        await self._check_object_permission(request, existing, "change")
         form_data = await request.form()
 
         relation_widgets = await self._build_relation_widgets(
@@ -1093,9 +1159,12 @@ class DynamicModelView:
     async def delete_action(self, request: Request, item_id: int):
         """Deletes an item."""
         await self._check_permission(request, "delete")
-        item = await self.adapter.get(pk=item_id)
+        with self._request_queryset_filter(request):
+            item = await self.adapter.get(pk=item_id)
         if not item:
             raise HTTPException(status_code=404, detail="Item not found")
+
+        await self._check_object_permission(request, item, "delete")
 
         file_paths = self._collect_file_paths(item)
         await self.adapter.delete(pk=item_id)
