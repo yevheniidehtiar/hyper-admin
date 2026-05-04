@@ -2,7 +2,7 @@
 type: story
 id: 2Nnn8kmJGbD8
 title: "feat(views): add object-level permission checks to detail/update/delete"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

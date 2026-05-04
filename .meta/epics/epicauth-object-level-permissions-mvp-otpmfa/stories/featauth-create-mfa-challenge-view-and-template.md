@@ -2,7 +2,7 @@
 type: story
 id: CBsaCBKihlPO
 title: "feat(auth): create MFA challenge view and template"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

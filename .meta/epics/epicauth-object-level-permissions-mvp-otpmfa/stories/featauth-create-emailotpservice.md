@@ -2,7 +2,7 @@
 type: story
 id: kdjNeiFT6qZq
 title: "feat(auth): create EmailOTPService"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

@@ -2,7 +2,7 @@
 type: story
 id: 92AFIIrAK4P3
 title: "feat(auth): wire MFA into login flow + enable/disable settings"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

@@ -2,7 +2,7 @@
 type: story
 id: D5j6fmfAwPOj
 title: "feat(auth): add MFA fields to User model"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
