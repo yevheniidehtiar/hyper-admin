@@ -3,7 +3,7 @@ type: milestone
 id: 3cfSqnqrvtDG
 title: v0.5.1 — Object Permissions & MFA
 target_date: 2026-06-29T00:00:00Z
-status: in_progress
+status: done
 github:
   milestone_id: 16
   repo: yevheniidehtiar/hyper-admin

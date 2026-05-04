@@ -2,7 +2,7 @@
 type: story
 id: ypfwd4OQb8J3
 title: "feat(views): wire get_queryset into list_view + detail_view"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
