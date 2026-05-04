@@ -42,7 +42,7 @@ repos:
       - id: mixed-line-ending
       - id: name-tests-test
         args: [--pytest-test-first]
-        exclude: ^tests/e2e/(_auth_app|_upload_app)\.py$
+        exclude: ^tests/e2e/(_auth_app|_upload_app|_mfa_app)\.py$
       - id: trailing-whitespace
         types: [python]
   - repo: local
