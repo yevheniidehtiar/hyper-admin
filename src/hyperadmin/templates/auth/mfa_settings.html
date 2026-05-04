@@ -1,0 +1,107 @@
+{%- extends "_base.html" -%}
+
+{%- block title -%}{{ _("Two-factor authentication") }} — HyperAdmin{%- endblock -%}
+
+{%- block content -%}
+<div class="ha-login-container">
+    <div id="mfa-settings-card" class="ha-login-card">
+        <h1 id="mfa-settings-title" class="ha-login-title">
+            {{ _("Two-factor authentication") }}
+        </h1>
+
+        <p class="ha-text-muted">
+            {{ _("Status:") }}
+            {%- if user.mfa_enabled %}
+            <strong data-testid="mfa-status-indicator" data-mfa-enabled="true">
+                {{ _("Enabled") }}
+            </strong>
+            {%- else %}
+            <strong data-testid="mfa-status-indicator" data-mfa-enabled="false">
+                {{ _("Disabled") }}
+            </strong>
+            {%- endif %}
+        </p>
+
+        <div id="mfa-settings-flash" aria-live="polite">
+            {%- if error -%}
+            <div class="ha-alert ha-alert-error" data-testid="mfa-settings-error" role="alert">
+                {{ error }}
+            </div>
+            {%- endif -%}
+            {%- if flash -%}
+            <div class="ha-alert ha-alert-info" data-testid="mfa-settings-flash" role="status">
+                {{ flash }}
+            </div>
+            {%- endif -%}
+        </div>
+
+        {%- if flow in ("enable", "disable") %}
+        {#- Inline OTP confirm form, used in both enable and disable flows. #}
+        <form method="post"
+              action="{{ admin_prefix }}/mfa/{{ flow }}"
+              data-testid="mfa-settings-confirm-form"
+              aria-labelledby="mfa-settings-title"
+              hx-post="{{ admin_prefix }}/mfa/{{ flow }}"
+              hx-target="#mfa-settings-card"
+              hx-swap="outerHTML">
+            <p class="ha-text-muted">
+                {{ _("Enter the 6-digit code we sent to your email to confirm.") }}
+            </p>
+            <div class="ha-form-group">
+                <label for="mfa-confirm-code" class="ha-label">
+                    {{ _("Verification code") }}
+                </label>
+                <input
+                    type="text"
+                    id="mfa-confirm-code"
+                    name="code"
+                    class="ha-input"
+                    data-testid="mfa-confirm-input"
+                    inputmode="numeric"
+                    pattern="[0-9]{6}"
+                    maxlength="6"
+                    autocomplete="one-time-code"
+                    required
+                    autofocus
+                >
+            </div>
+            <button type="submit"
+                    class="ha-btn ha-btn-primary ha-btn-block"
+                    data-testid="mfa-confirm-btn">
+                {%- if flow == "enable" -%}
+                {{ _("Confirm and enable") }}
+                {%- else -%}
+                {{ _("Confirm and disable") }}
+                {%- endif -%}
+            </button>
+        </form>
+        {%- elif user.mfa_enabled %}
+        <form method="post"
+              action="{{ admin_prefix }}/mfa/disable"
+              data-testid="mfa-disable-form"
+              hx-post="{{ admin_prefix }}/mfa/disable"
+              hx-target="#mfa-settings-card"
+              hx-swap="outerHTML">
+            <button type="submit"
+                    class="ha-btn ha-btn-danger ha-btn-block"
+                    data-testid="mfa-disable-btn">
+                {{ _("Disable two-factor authentication") }}
+            </button>
+        </form>
+        {%- else %}
+        <form method="post"
+              action="{{ admin_prefix }}/mfa/enable"
+              data-testid="mfa-enable-form"
+              hx-post="{{ admin_prefix }}/mfa/enable"
+              hx-target="#mfa-settings-card"
+              hx-swap="outerHTML">
+            <button type="submit"
+                    class="ha-btn ha-btn-primary ha-btn-block"
+                    data-testid="mfa-enable-btn">
+                {{ _("Enable two-factor authentication") }}
+            </button>
+        </form>
+        {%- endif %}
+    </div>
+</div>
+{%- endblock -%}

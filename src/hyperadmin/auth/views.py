@@ -2,16 +2,16 @@
 
 The MFA endpoints (``/mfa/challenge``, ``/mfa/verify``, ``/mfa/resend``)
 were added in v0.5.1 (C2-D, #486). They consume the partial-auth marker
-written under ``PARTIAL_AUTH_SESSION_KEY`` by ``login_view``. The actual
-wiring of ``login_view`` to populate that marker, plus the middleware
-gate that redirects partial-auth users to the challenge, lands in C3-A
-— this module only owns the consumer side.
+written under ``PARTIAL_AUTH_SESSION_KEY`` by ``login_view`` (C3-A). The
+settings / enable / disable trio (C3-A, #487) is the in-app surface for
+managing MFA per-user; it is guarded by full auth via the middleware
+gate that lives in :mod:`hyperadmin.auth.middleware`.
 """
 
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Final
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
@@ -36,9 +36,28 @@ async def login_view(
     templates: Jinja2Templates,
     auth_backend: Any,
     admin_prefix: str,
+    otp_service: Any | None = None,
 ) -> Any:
-    """Handle GET (render form) and POST (authenticate) for login."""
-    error = None
+    """Handle GET (render form) and POST (authenticate) for login.
+
+    On a successful POST:
+
+    * If ``user.mfa_enabled`` and an ``otp_service`` is configured, write the
+      structured partial-auth marker (per the SDD's resolved Open Question
+      #2 — ``{"stage": "mfa_pending", "user_id": <int>}``), trigger an OTP
+      delivery, and redirect to ``/admin/mfa/challenge``. The full session
+      is NOT created yet — the partial marker is the *only* state.
+    * Otherwise, fall through to the existing single-factor path:
+      ``auth_backend.login(request, user)`` and redirect to ``/admin/``.
+
+    On rate-limit (``RateLimitError``) we still write the partial marker so
+    the user can resume after the cooldown — per the SDD's "Rate limit
+    exceeded" edge case ("Login view does **not** rotate the partial-auth
+    session — user can resume after the cooldown"). On email-send failure
+    the OTP service rolls back the entry; we surface a generic error and
+    do NOT promote the user to full auth.
+    """
+    error: str | None = None
 
     if request.method == "POST":
         form = await request.form()
@@ -47,11 +66,45 @@ async def login_view(
 
         user = await auth_backend.authenticate(str(username), str(password))
         if user is not None:
+            if user.mfa_enabled and otp_service is not None and user.id is not None:
+                # Write the partial marker BEFORE attempting delivery so the
+                # session reflects the in-flight state even when the email
+                # send is slow. RateLimitError is non-fatal: the marker is
+                # kept so the user can hit /mfa/resend after the cooldown.
+                # Other exceptions from the sender are caught and surfaced
+                # as a generic login error; the OTP service has already
+                # rolled back its session entry.
+                request.session[PARTIAL_AUTH_SESSION_KEY] = {
+                    "stage": "mfa_pending",
+                    "user_id": user.id,
+                }
+                try:
+                    await otp_service.generate_and_send(user, request.session)
+                except RateLimitError:
+                    # Surface a recoverable state — the challenge page itself
+                    # will show the rate-limit copy on next /resend.
+                    pass
+                except Exception:
+                    # Email send failed; clear the partial marker so the
+                    # user is not stranded mid-flow and re-prompt for login.
+                    request.session.pop(PARTIAL_AUTH_SESSION_KEY, None)
+                    error = _("Could not send verification code. Please try again.")
+                    fail_context: dict[str, Any] = {
+                        "request": request,
+                        "error": error,
+                        "admin_prefix": admin_prefix,
+                    }
+                    return templates.TemplateResponse(request, "login.html", fail_context)
+                return RedirectResponse(url=f"{admin_prefix}/mfa/challenge", status_code=302)
             await auth_backend.login(request, user)
             return RedirectResponse(url=f"{admin_prefix}/", status_code=302)
         error = "Invalid username or password."
 
-    context = {"request": request, "error": error, "admin_prefix": admin_prefix}
+    context: dict[str, Any] = {
+        "request": request,
+        "error": error,
+        "admin_prefix": admin_prefix,
+    }
     return templates.TemplateResponse(request, "login.html", context)
 
 
@@ -256,4 +309,242 @@ async def mfa_resend_view(
         templates,
         admin_prefix,
         flash=_("A new code has been sent to your email."),
+    )
+
+
+# ── MFA settings / enable / disable (C3-A, #487) ───────────────────────────
+#
+# These three endpoints are the in-app surface for managing per-user MFA.
+# They require FULL auth — the partial-auth gate in middleware.py rewrites
+# any partial-auth visit to ``/admin/mfa/challenge`` first, so by the time a
+# request lands here ``request.state.user`` is guaranteed populated.
+#
+# The "disable" flow requires a fresh OTP confirmation per the SDD's
+# defense-in-depth requirement ("Disable flow requires a fresh OTP
+# confirmation"). The "enable" flow uses the same confirm-with-OTP pattern
+# so a single shared template element can drive both states.
+
+
+# Session key holding the in-flight settings flow ("enable" or "disable").
+# Distinct from PARTIAL_AUTH_SESSION_KEY because settings flows happen
+# while the user is FULLY authenticated; mixing the two keys would either
+# spuriously trip the middleware gate or risk a race where a settings OTP
+# could be used to skip the login challenge.
+MFA_SETTINGS_FLOW_KEY: Final[str] = "mfa_settings_flow"
+
+
+def _settings_response(
+    request: Request,
+    templates: Jinja2Templates,
+    admin_prefix: str,
+    user: User,
+    *,
+    flow: str | None = None,
+    error: str | None = None,
+    flash: str | None = None,
+    status_code: int = 200,
+) -> Any:
+    """Render ``auth/mfa_settings.html`` with the current user state.
+
+    ``flow`` is one of ``None`` / ``"enable"`` / ``"disable"`` and drives
+    whether the inline OTP confirm input is rendered.
+    """
+    context = {
+        "request": request,
+        "admin_prefix": admin_prefix,
+        "user": user,
+        "flow": flow,
+        "error": error,
+        "flash": flash,
+    }
+    return templates.TemplateResponse(
+        request,
+        "auth/mfa_settings.html",
+        context,
+        status_code=status_code,
+    )
+
+
+def _current_user(request: Request) -> User | None:
+    """Return the fully-authenticated user from request state, or None."""
+    user = getattr(request.state, "user", None)
+    if isinstance(user, User):
+        return user
+    return None
+
+
+async def _persist_mfa_state(
+    engine: AsyncEngine, user_id: int, *, enabled: bool, method: str | None
+) -> User | None:
+    """Update ``mfa_enabled`` / ``mfa_method`` for ``user_id`` and return the row."""
+    async with AsyncSession(engine) as session:
+        stmt = select(User).where(User.id == user_id)
+        user = (await session.execute(stmt)).scalar_one_or_none()
+        if user is None:
+            return None
+        user.mfa_enabled = enabled
+        user.mfa_method = method
+        session.add(user)
+        await session.commit()
+        await session.refresh(user)
+        return user
+
+
+async def mfa_settings_view(
+    request: Request,
+    templates: Jinja2Templates,
+    admin_prefix: str,
+) -> Any:
+    """GET /admin/mfa/settings — show current MFA state for the logged-in user.
+
+    Auth is enforced upstream by the middleware gate; if we reach this view,
+    the user is fully authenticated.
+    """
+    user = _current_user(request)
+    if user is None:
+        return RedirectResponse(url=f"{admin_prefix}/login", status_code=302)
+    return _settings_response(request, templates, admin_prefix, user)
+
+
+async def mfa_enable_view(
+    request: Request,
+    templates: Jinja2Templates,
+    auth_backend: Any,
+    otp_service: Any,
+    admin_prefix: str,
+) -> Any:
+    """POST /admin/mfa/enable — two-step enable flow.
+
+    Step 1 (no ``code`` in form): send an OTP to the user's email and render
+    the settings page with the inline confirm input.
+
+    Step 2 (``code`` present in form): verify the OTP. On success flip
+    ``mfa_enabled=True`` / ``mfa_method="email"`` and clear the flow marker.
+    """
+    user = _current_user(request)
+    if user is None or user.id is None:
+        return RedirectResponse(url=f"{admin_prefix}/login", status_code=302)
+
+    form = await request.form()
+    submitted = str(form.get("code", "")).strip()
+
+    if not submitted:
+        # Step 1: kick off the flow.
+        request.session[MFA_SETTINGS_FLOW_KEY] = "enable"
+        try:
+            await otp_service.generate_and_send(user, request.session)
+        except RateLimitError:
+            return _settings_response(
+                request,
+                templates,
+                admin_prefix,
+                user,
+                flow="enable",
+                error=_("Too many attempts, try again later."),
+            )
+        return _settings_response(request, templates, admin_prefix, user, flow="enable")
+
+    # Step 2: verify the submitted OTP. Confirm we're still in an enable
+    # flow — defense in depth against form replay across flows.
+    if request.session.get(MFA_SETTINGS_FLOW_KEY) != "enable":
+        return _settings_response(
+            request,
+            templates,
+            admin_prefix,
+            user,
+            error=_("No active MFA enable flow. Please try again."),
+        )
+
+    # EmailOTPService.verify enforces the TTL window and bumps an
+    # attempts counter on each miss. The MFA_SETTINGS_FLOW_KEY remains
+    # set on a wrong-code error so the user can retry against the SAME
+    # session OTP entry until natural TTL expiry — brute-force surface
+    # is bounded by EmailOTPService's window, not by this view.
+    ok = await otp_service.verify(user, submitted, request.session)
+    if not ok:
+        return _settings_response(
+            request,
+            templates,
+            admin_prefix,
+            user,
+            flow="enable",
+            error=_("Invalid code."),
+        )
+
+    # Successful verify — flip the flag in the DB, clear the flow marker,
+    # then render the settings page reflecting the new state.
+    updated = await _persist_mfa_state(auth_backend.engine, user.id, enabled=True, method="email")
+    request.session.pop(MFA_SETTINGS_FLOW_KEY, None)
+    return _settings_response(
+        request,
+        templates,
+        admin_prefix,
+        updated or user,
+        flash=_("Two-factor authentication enabled."),
+    )
+
+
+async def mfa_disable_view(
+    request: Request,
+    templates: Jinja2Templates,
+    auth_backend: Any,
+    otp_service: Any,
+    admin_prefix: str,
+) -> Any:
+    """POST /admin/mfa/disable — two-step disable flow with confirmation.
+
+    Per the SDD's defense-in-depth requirement, disable always requires a
+    fresh OTP — clicking "Disable" sends a new code; submitting it flips
+    ``mfa_enabled=False``.
+    """
+    user = _current_user(request)
+    if user is None or user.id is None:
+        return RedirectResponse(url=f"{admin_prefix}/login", status_code=302)
+
+    form = await request.form()
+    submitted = str(form.get("code", "")).strip()
+
+    if not submitted:
+        request.session[MFA_SETTINGS_FLOW_KEY] = "disable"
+        try:
+            await otp_service.generate_and_send(user, request.session)
+        except RateLimitError:
+            return _settings_response(
+                request,
+                templates,
+                admin_prefix,
+                user,
+                flow="disable",
+                error=_("Too many attempts, try again later."),
+            )
+        return _settings_response(request, templates, admin_prefix, user, flow="disable")
+
+    if request.session.get(MFA_SETTINGS_FLOW_KEY) != "disable":
+        return _settings_response(
+            request,
+            templates,
+            admin_prefix,
+            user,
+            error=_("No active MFA disable flow. Please try again."),
+        )
+
+    ok = await otp_service.verify(user, submitted, request.session)
+    if not ok:
+        return _settings_response(
+            request,
+            templates,
+            admin_prefix,
+            user,
+            flow="disable",
+            error=_("Invalid code."),
+        )
+
+    updated = await _persist_mfa_state(auth_backend.engine, user.id, enabled=False, method=None)
+    request.session.pop(MFA_SETTINGS_FLOW_KEY, None)
+    return _settings_response(
+        request,
+        templates,
+        admin_prefix,
+        updated or user,
+        flash=_("Two-factor authentication disabled."),
     )
