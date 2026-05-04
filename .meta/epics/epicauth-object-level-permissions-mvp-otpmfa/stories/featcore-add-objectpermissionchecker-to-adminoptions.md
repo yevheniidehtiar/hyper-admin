@@ -2,7 +2,7 @@
 type: story
 id: kZh6EAS_Ij9W
 title: "feat(core): add object_permission_checker to AdminOptions"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

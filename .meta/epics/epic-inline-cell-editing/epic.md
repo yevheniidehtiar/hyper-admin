@@ -2,7 +2,7 @@
 type: epic
 id: epic-inline-cell-editing
 title: "Epic: Inline Cell Editing in List View (v0.5.0 close-out)"
-status: in-progress
+status: done
 priority: medium
 owner: claude-code
 labels:
@@ -12,9 +12,7 @@ labels:
   - htmx
 milestone_ref:
   id: YONrzO1hQ2f8
-github:
-  issue_number: null
-  repo: yevheniidehtiar/hyper-admin
+github: null
 created_at: 2026-05-03
 updated_at: 2026-05-03
 ---

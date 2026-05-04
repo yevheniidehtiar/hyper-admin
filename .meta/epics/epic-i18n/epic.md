@@ -2,7 +2,7 @@
 type: epic
 id: I18nMain_01
 title: "epic(i18n): Internationalization -- gettext + Babel + RTL + 7 locales"
-status: in_progress
+status: done
 priority: high
 owner: null
 labels:

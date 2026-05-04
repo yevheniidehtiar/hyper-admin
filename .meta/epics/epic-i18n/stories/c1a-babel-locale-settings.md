@@ -2,7 +2,7 @@
 type: story
 id: I18nMain_C1A
 title: "feat(core): add Babel + locale settings to HyperAdminSettings"
-status: todo
+status: done
 priority: high
 assignee: null
 labels:

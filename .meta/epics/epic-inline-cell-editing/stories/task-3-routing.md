@@ -2,12 +2,12 @@
 type: story
 id: ice-task-3
 title: "Task 3: Routing — register inline edit + save routes"
-status: in-progress
+status: done
 priority: medium
 labels:
   - task
   - routing
-estimate: S
+estimate: 2
 epic_ref:
   id: epic-inline-cell-editing
 created_at: 2026-05-03

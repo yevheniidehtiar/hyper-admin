@@ -2,12 +2,12 @@
 type: story
 id: ice-task-2
 title: "Task 2: Inline edit form + save views"
-status: in-progress
+status: done
 priority: medium
 labels:
   - task
   - views
-estimate: M
+estimate: 5
 epic_ref:
   id: epic-inline-cell-editing
 created_at: 2026-05-03

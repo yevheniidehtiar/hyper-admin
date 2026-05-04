@@ -2,7 +2,7 @@
 type: story
 id: i-dtpjuGTmqG
 title: "feat(core): add get_queryset hook to ModelAdmin base"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

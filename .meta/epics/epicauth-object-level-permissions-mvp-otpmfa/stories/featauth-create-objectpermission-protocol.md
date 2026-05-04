@@ -2,7 +2,7 @@
 type: story
 id: 8MZnZcE0N-5N
 title: "feat(auth): create ObjectPermission protocol"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

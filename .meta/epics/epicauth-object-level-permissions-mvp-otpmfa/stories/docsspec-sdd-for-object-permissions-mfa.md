@@ -2,7 +2,7 @@
 type: story
 id: kYChpBCvqQS2
 title: "docs(spec): SDD for object permissions & MFA"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

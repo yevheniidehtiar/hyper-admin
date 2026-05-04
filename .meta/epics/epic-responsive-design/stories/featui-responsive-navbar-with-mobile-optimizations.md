@@ -2,7 +2,7 @@
 type: story
 id: TAhnnvjjZxyA
 title: "feat(ui): responsive navbar with mobile optimizations"
-status: todo
+status: done
 priority: high
 assignee: null
 labels:

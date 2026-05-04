@@ -2,7 +2,7 @@
 type: story
 id: RspSyn_C2F_01
 title: "feat(ui): skip-to-content and landmark enhancements for mobile"
-status: todo
+status: done
 priority: high
 assignee: null
 labels:

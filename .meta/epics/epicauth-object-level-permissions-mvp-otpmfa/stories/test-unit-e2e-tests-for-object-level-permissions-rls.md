@@ -2,7 +2,7 @@
 type: story
 id: tRQuz_eZrFXy
 title: "test: unit + e2e tests for object-level permissions & RLS"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

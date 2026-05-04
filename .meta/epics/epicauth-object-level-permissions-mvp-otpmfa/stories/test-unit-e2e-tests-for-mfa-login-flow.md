@@ -2,7 +2,7 @@
 type: story
 id: anaYKOBTKNLJ
 title: "test: unit + e2e tests for MFA login flow"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

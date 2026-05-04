@@ -2,7 +2,7 @@
 type: story
 id: WSzsCVC1pZgM
 title: "feat(adapters): add get_queryset hook to BaseAdapter + SQLModelAdapter"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

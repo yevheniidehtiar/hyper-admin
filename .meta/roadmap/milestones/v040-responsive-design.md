@@ -3,7 +3,7 @@ type: milestone
 id: lQHUqC1sVwjC
 title: v0.4.0 — Responsive Design
 target_date: 2026-05-30T00:00:00Z
-status: in_progress
+status: done
 github:
   milestone_id: 15
   repo: yevheniidehtiar/hyper-admin

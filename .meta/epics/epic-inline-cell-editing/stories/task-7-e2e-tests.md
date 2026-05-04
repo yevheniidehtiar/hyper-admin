@@ -2,12 +2,12 @@
 type: story
 id: ice-task-7
 title: "Task 7: E2E tests — one Playwright test per BDD scenario"
-status: in-progress
+status: done
 priority: medium
 labels:
   - test
   - e2e
-estimate: M
+estimate: 5
 epic_ref:
   id: epic-inline-cell-editing
 created_at: 2026-05-03
