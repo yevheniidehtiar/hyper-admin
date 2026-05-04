@@ -18,13 +18,20 @@ implementation internals.
 from __future__ import annotations
 
 from datetime import datetime, timedelta, timezone
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlmodel import SQLModel
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncIterator
+    from pathlib import Path
+
+    from sqlalchemy.ext.asyncio import AsyncEngine
+    from starlette.requests import Request
 
 from hyperadmin.auth.backend import hash_password
 from hyperadmin.auth.models import User
@@ -36,7 +43,7 @@ from hyperadmin.auth.otp import (
 
 
 @pytest.fixture
-async def async_engine(tmp_path):
+async def async_engine(tmp_path: Path) -> AsyncIterator[AsyncEngine]:
     db_file = tmp_path / "test_mfa_login_flow.db"
     engine = create_async_engine(f"sqlite+aiosqlite:///{db_file}")
     async with engine.begin() as conn:
@@ -60,17 +67,20 @@ class _CapturingSender:
 
 
 def _make_alice_data() -> dict[str, Any]:
+    # is_superuser=True mirrors the e2e test app fixture in tests/e2e/_mfa_app.py
+    # so admin-route assertions stay consistent across unit and e2e suites.
     return {
         "username": "alice",
         "email": "alice@example.com",
         "password_hash": hash_password("secret"),
+        "is_superuser": True,
         "mfa_enabled": True,
         "mfa_method": "email",
     }
 
 
 @pytest.fixture
-async def alice(async_engine) -> User:
+async def alice(async_engine: AsyncEngine) -> User:
     async with AsyncSession(async_engine) as session:
         user = User(**_make_alice_data())
         session.add(user)
@@ -79,7 +89,7 @@ async def alice(async_engine) -> User:
         return user
 
 
-def _build_app(async_engine, sender: _CapturingSender) -> FastAPI:
+def _build_app(async_engine: AsyncEngine, sender: _CapturingSender) -> FastAPI:
     """Build a fully-wired Admin app with auth + MFA endpoints.
 
     Uses ``Admin.mount`` so login_view, mfa_challenge_view, mfa_verify_view,
@@ -91,6 +101,8 @@ def _build_app(async_engine, sender: _CapturingSender) -> FastAPI:
     from hyperadmin.core.registry import site
     from hyperadmin.core.settings import HyperAdminSettings
 
+    # Direct access to the private registry — no public reset() exists on
+    # the site singleton today. If site grows one, swap this for it.
     site._registry.clear()
 
     app = FastAPI()
@@ -300,14 +312,15 @@ class TestExpiredCodeIsRejectedDistinctly:
         # by clearing the code from session and re-injecting via the verify
         # path: easier — we use the existing OTP entry directly via the
         # session-poking approach used by C2-D's view tests.
-        from starlette.requests import Request
-        from starlette.responses import Response
+        from starlette.responses import Response  # runtime — Response() is constructed here
 
         from hyperadmin.auth.session import SessionAuthBackend
         from hyperadmin.core.app import Admin
         from hyperadmin.core.registry import site
         from hyperadmin.core.settings import HyperAdminSettings
 
+        # Direct access to the private registry — no public reset() exists on
+        # the site singleton today. If site grows one, swap this for it.
         site._registry.clear()
 
         app = FastAPI()

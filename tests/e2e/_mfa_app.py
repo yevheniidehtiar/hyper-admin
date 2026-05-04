@@ -12,10 +12,10 @@ This is the only practical way for the Playwright client to read a code
 that lives in the server process — there is no real email backend.
 
 For the rate-limit scenario the service is configured with a tight
-``rate_limit=(1, 3600)``: a single OTP per hour is enough budget for the
-happy-path flows while making the boundary deterministic — every test
-that needs a fresh code starts by resetting the captured history via
-``/_test/reset_otp_state``.
+``rate_limit=(2, 3600)``: two OTP issuances per hour is enough budget
+for the happy-path flows (one at login, one resend) while making the
+boundary deterministic — every test that needs a fresh code starts by
+resetting the captured history via ``/_test/reset_otp_state``.
 """
 
 from __future__ import annotations
