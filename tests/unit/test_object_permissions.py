@@ -66,10 +66,6 @@ class _OwnerScopedAdmin(ModelAdmin):
         return {"owner_id": user.id}
 
 
-class _DenyOrderForty(_User):
-    """Marker user that triggers the checker to deny order id=40."""
-
-
 class _BlockSpecificObjectChecker:
     """ObjectPermissionChecker that denies access to a specific object id.
 

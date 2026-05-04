@@ -65,7 +65,9 @@ def test_object_permission_check_is_enforced_on_update(
     # Given bob is logged in (he holds change_order at the model level)
     _login(page, object_perm_base_url, "bob")
 
-    # When bob attempts to update order #40
+    # When bob attempts to update order #40 — note the wired route is PUT
+    # per src/hyperadmin/routing.py (methods=["PUT"] for update_view), not
+    # POST. Don't "fix" this to POST without rewiring the router.
     response = page.request.put(
         f"{object_perm_base_url}/admin/order/40",
         form={"title": "hacked", "owner_id": "99"},

@@ -198,8 +198,11 @@ def object_perm_base_url(e2e_port: int) -> Iterator[str]:
       * three ``Order`` rows (#10, #20 owned by bob; #40 owned by user 99).
 
     The configured object-permission checker denies non-superusers any
-    interaction with order #40, while ``OrderAdmin.get_queryset`` filters
-    list/detail to ``request.state.user.id`` for non-superusers.
+    interaction with order #40 (Order is the object-permission model). RLS
+    is exercised via a separate ``Document`` model whose ``DocumentAdmin``
+    overrides ``get_queryset`` to filter list/detail to
+    ``request.state.user.id`` for non-superusers — keeping each enforcement
+    layer isolated to its own model so a single scenario tests one rule.
     """
     pytest.importorskip("uvicorn")
     requests = pytest.importorskip("requests")  # type: ignore[assignment]
