@@ -2,12 +2,12 @@
 type: story
 id: ice-task-5
 title: "Task 5: Minimal CSS for inline editor states"
-status: in-progress
+status: done
 priority: low
 labels:
   - task
   - css
-estimate: S
+estimate: 2
 epic_ref:
   id: epic-inline-cell-editing
 created_at: 2026-05-03

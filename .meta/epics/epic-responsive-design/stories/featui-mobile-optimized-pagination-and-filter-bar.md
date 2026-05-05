@@ -2,7 +2,7 @@
 type: story
 id: miwk_JpwDtKy
 title: "feat(ui): mobile-optimized pagination and filter bar"
-status: todo
+status: done
 priority: high
 assignee: null
 labels:

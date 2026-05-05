@@ -2,12 +2,12 @@
 type: story
 id: ice-task-4
 title: "Task 4: Templates — inline cell, editor, error fragment"
-status: in-progress
+status: done
 priority: medium
 labels:
   - task
   - templates
-estimate: M
+estimate: 5
 epic_ref:
   id: epic-inline-cell-editing
 created_at: 2026-05-03

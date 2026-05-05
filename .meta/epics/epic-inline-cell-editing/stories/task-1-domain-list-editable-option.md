@@ -2,12 +2,12 @@
 type: story
 id: ice-task-1
 title: "Task 1: Add list_editable option to AdminOptions"
-status: in-progress
+status: done
 priority: medium
 labels:
   - task
   - core
-estimate: S
+estimate: 2
 epic_ref:
   id: epic-inline-cell-editing
 created_at: 2026-05-03

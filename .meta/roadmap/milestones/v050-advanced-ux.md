@@ -3,7 +3,7 @@ type: milestone
 id: YONrzO1hQ2f8
 title: v0.5.0 — Advanced UX
 target_date: 2026-05-01T00:00:00Z
-status: in_progress
+status: done
 github:
   milestone_id: 7
   repo: yevheniidehtiar/hyper-admin

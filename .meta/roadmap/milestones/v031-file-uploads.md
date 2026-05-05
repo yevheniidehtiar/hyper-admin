@@ -3,7 +3,7 @@ type: milestone
 id: HrvtiLjECY7Q
 title: v0.3.1 — File Uploads
 target_date: 2026-05-14T00:00:00Z
-status: in_progress
+status: done
 github:
   milestone_id: 14
   repo: yevheniidehtiar/hyper-admin

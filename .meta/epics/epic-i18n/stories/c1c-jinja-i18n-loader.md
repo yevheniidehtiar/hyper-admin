@@ -2,7 +2,7 @@
 type: story
 id: I18nMain_C1C
 title: "feat(core): wire jinja2.ext.i18n + per-request Translations loader"
-status: todo
+status: done
 priority: high
 assignee: null
 labels:

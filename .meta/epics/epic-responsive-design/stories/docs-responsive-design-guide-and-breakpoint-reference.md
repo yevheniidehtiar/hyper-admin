@@ -2,7 +2,7 @@
 type: story
 id: anMwCNCA1dkQ
 title: "docs: responsive design guide and breakpoint reference"
-status: todo
+status: done
 priority: low
 assignee: null
 labels:

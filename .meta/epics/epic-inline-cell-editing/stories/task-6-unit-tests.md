@@ -2,12 +2,12 @@
 type: story
 id: ice-task-6
 title: "Task 6: Unit tests — inline edit + save views"
-status: in-progress
+status: done
 priority: medium
 labels:
   - test
   - unit
-estimate: M
+estimate: 5
 epic_ref:
   id: epic-inline-cell-editing
 created_at: 2026-05-03

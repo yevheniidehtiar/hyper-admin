@@ -2,7 +2,7 @@
 type: story
 id: I18nMain_C1B
 title: "feat(core): LocaleMiddleware (cookie > Accept-Language > default)"
-status: todo
+status: done
 priority: high
 assignee: null
 labels:

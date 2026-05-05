@@ -2,7 +2,7 @@
 type: epic
 id: RspSynth_01
 title: "epic(ui): Responsive Design -- Mobile-First CSS Overhaul"
-status: in_progress
+status: done
 priority: high
 owner: null
 labels:

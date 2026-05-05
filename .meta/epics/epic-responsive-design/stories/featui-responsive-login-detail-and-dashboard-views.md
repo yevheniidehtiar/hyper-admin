@@ -2,7 +2,7 @@
 type: story
 id: xtGoFKkfxC7P
 title: "feat(ui): responsive login, detail, and dashboard views"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
