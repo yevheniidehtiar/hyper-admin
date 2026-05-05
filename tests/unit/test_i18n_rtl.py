@@ -106,8 +106,28 @@ class TestRTLLocalesConstant:
             assert code in RTL_LOCALES, f"Expected {code!r} in RTL_LOCALES"
 
     def test_ltr_locales_are_not_in_rtl_locales(self) -> None:
-        # And "en", "es", "fr", "de", "zh_CN", "ja", "uk" are NOT in RTL_LOCALES
-        for code in ("en", "es", "fr", "de", "zh_CN", "ja", "uk"):
+        # And every LTR code in the v0.5.2 top-20 default is NOT in RTL_LOCALES.
+        ltr_codes = (
+            "en",
+            "es",
+            "fr",
+            "de",
+            "zh_CN",
+            "ja",
+            "uk",
+            "hi",
+            "pt_BR",
+            "ru",
+            "ko",
+            "it",
+            "tr",
+            "pl",
+            "nl",
+            "vi",
+            "id",
+            "th",
+        )
+        for code in ltr_codes:
             assert code not in RTL_LOCALES, f"Expected {code!r} NOT in RTL_LOCALES"
 
 

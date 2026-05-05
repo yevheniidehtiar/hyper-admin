@@ -118,6 +118,76 @@ class TestNegotiateLocale:
             == expected
         )
 
+    @pytest.mark.parametrize(
+        ("header", "expected"),
+        [
+            ("nl-NL,nl;q=0.9", "nl"),
+            ("pt-BR", "pt_BR"),
+            ("ru-RU", "ru"),
+            ("ar-SA", "ar"),
+            ("he-IL", "he"),
+            ("hi-IN", "hi"),
+            ("ko-KR", "ko"),
+            ("it-IT", "it"),
+            ("tr-TR", "tr"),
+            ("pl-PL", "pl"),
+            ("vi-VN", "vi"),
+            ("id-ID", "id"),
+            ("th-TH", "th"),
+        ],
+    )
+    def test_accept_language_negotiates_top20_new_locales(self, header: str, expected: str) -> None:
+        """Scenario: Accept-Language resolves correctly for the 13 new top-20 codes.
+
+        Given the default supported_locales (top-20)
+        When  a request arrives with the locale's primary Accept-Language header
+        Then  negotiate_locale returns the new code.
+        """
+        from hyperadmin.core.settings import _DEFAULT_SUPPORTED_LOCALES
+
+        assert (
+            negotiate_locale(
+                cookie_value=None,
+                accept_language=header,
+                supported=_DEFAULT_SUPPORTED_LOCALES,
+                default="en",
+            )
+            == expected
+        )
+
+    def test_accept_language_pt_does_not_broaden_to_pt_br(self) -> None:
+        """Scenario: bare `pt` does NOT auto-broaden to `pt_BR`.
+
+        Babel's negotiate_locale matches strictly — `pt` and `pt_BR` are
+        distinct codes. If a follow-up adds `pt_PT`, this behaviour stays
+        deterministic. Documented in the SDD as an Edge Case.
+        """
+        from hyperadmin.core.settings import _DEFAULT_SUPPORTED_LOCALES
+
+        assert (
+            negotiate_locale(
+                cookie_value=None,
+                accept_language="pt",
+                supported=_DEFAULT_SUPPORTED_LOCALES,
+                default="en",
+            )
+            == "en"
+        )
+
+    def test_accept_language_pt_br_with_fallback_chain(self) -> None:
+        """Scenario: Accept-Language: pt-BR,pt;q=0.9,en;q=0.8 resolves to pt_BR."""
+        from hyperadmin.core.settings import _DEFAULT_SUPPORTED_LOCALES
+
+        assert (
+            negotiate_locale(
+                cookie_value=None,
+                accept_language="pt-BR,pt;q=0.9,en;q=0.8",
+                supported=_DEFAULT_SUPPORTED_LOCALES,
+                default="en",
+            )
+            == "pt_BR"
+        )
+
 
 # ---------------------------------------------------------------------------
 # HTTP-level middleware tests
@@ -140,7 +210,28 @@ def _make_client(settings: HyperAdminSettings) -> TestClient:
 def en_settings() -> Iterator[HyperAdminSettings]:
     return HyperAdminSettings(
         default_locale="en",
-        supported_locales=["en", "es", "fr", "de", "zh_CN", "ja", "uk"],
+        supported_locales=[
+            "en",
+            "es",
+            "fr",
+            "de",
+            "zh_CN",
+            "ja",
+            "uk",
+            "ar",
+            "he",
+            "hi",
+            "pt_BR",
+            "ru",
+            "ko",
+            "it",
+            "tr",
+            "pl",
+            "nl",
+            "vi",
+            "id",
+            "th",
+        ],
     )
 
 
