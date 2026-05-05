@@ -32,6 +32,7 @@
 @import "_inlines.css"       layer(components);
 @import "_inline-cell.css"   layer(components);
 @import "_theme-toggle.css"  layer(components);
+@import "_realtime.css"      layer(components);
 @import "_utilities.css"     layer(utilities);
 @import "_accessibility.css" layer(accessibility);
 @import "_responsive.css"    layer(responsive);

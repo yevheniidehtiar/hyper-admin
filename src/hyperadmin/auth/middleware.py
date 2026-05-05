@@ -28,6 +28,10 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
     # resolve their partial-auth state. Without this, the gate below
     # would loop the user infinitely on /admin/mfa/challenge.
     MFA_PREFIX = "/mfa/"
+    # API-style endpoints that must reject anonymous callers with HTTP 401
+    # rather than the HTML-redirect-to-login dance — long-lived clients
+    # like EventSource cannot follow a redirect into a login form.
+    API_PREFIXES = ("/realtime/",)
 
     def __init__(self, app: Any, auth_backend: Any, admin_prefix: str = "/admin") -> None:
         super().__init__(app)
@@ -62,6 +66,10 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
         # Check authentication
         user = await self.auth_backend.get_current_user(request)
         if user is None:
+            # API endpoints reject with 401 — long-lived clients (EventSource,
+            # XHR) can't follow a redirect into the login form.
+            if any(relative.startswith(prefix) for prefix in self.API_PREFIXES):
+                return Response(status_code=401)
             # Anonymous + partial-auth marker present → redirect to challenge
             # so the user can complete the OTP step. Anonymous + no marker →
             # redirect to login as before. Either way, MFA routes themselves

@@ -259,6 +259,100 @@ def auth_base_url(e2e_port: int) -> Iterator[str]:
                 proc.kill()
 
 
+def _spawn_uvicorn(module_path: str, port: int, ready_path: str = "/admin/login"):
+    """Spawn ``uvicorn module_path:app`` and block until ``ready_path`` returns 200."""
+    pytest.importorskip("uvicorn")
+    requests = pytest.importorskip("requests")  # type: ignore[assignment]
+
+    cmd = [
+        sys.executable,
+        "-m",
+        "uvicorn",
+        f"{module_path}:app",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        str(port),
+        "--log-level",
+        "warning",
+    ]
+    env = os.environ.copy()
+    env["E2E_TESTING"] = "1"
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, text=True)
+
+    base = f"http://localhost:{port}"
+    deadline = time.time() + _SERVER_TIMEOUT
+    last_err: Exception | None = None
+    while time.time() < deadline:
+        try:
+            r = requests.get(base + ready_path, timeout=0.5)
+            if r.status_code == HTTPStatus.OK:
+                return proc, base
+        except Exception as e:
+            last_err = e
+        time.sleep(0.3)
+    proc.kill()
+    raise RuntimeError(f"Server did not start: {last_err}")
+
+
+def _terminate(proc: subprocess.Popen) -> None:
+    if proc.poll() is None:
+        try:
+            if os.name == "nt":
+                proc.terminate()
+            else:
+                proc.send_signal(signal.SIGTERM)
+        except Exception:
+            pass
+        try:
+            proc.wait(timeout=5)
+        except Exception:
+            proc.kill()
+
+
+@pytest.fixture
+def realtime_base_url(e2e_port: int) -> Iterator[str]:
+    """Start an auth + realtime HyperAdmin app and yield the base URL.
+
+    Seeds ``alice / secret123`` and enables ``RealtimeSettings`` with a 1 s
+    heartbeat so lifecycle assertions don't have to wait for the production
+    default of 15 s.
+    """
+    proc, base = _spawn_uvicorn("tests.e2e._realtime_app", e2e_port)
+    try:
+        yield base
+    finally:
+        _terminate(proc)
+
+
+@pytest.fixture
+def restartable_realtime_url(e2e_port: int) -> Iterator[dict]:
+    """Yield a controller for a realtime app that can be killed and restarted.
+
+    Returned mapping: ``{"base": str, "kill": Callable[[], None],
+    "start": Callable[[], None]}``. Tests use this fixture only for the
+    "server restart triggers reconnect" scenario; the standard fixture above
+    handles every other case.
+    """
+    state: dict = {"proc": None, "base": f"http://localhost:{e2e_port}"}
+
+    def start() -> None:
+        proc, base = _spawn_uvicorn("tests.e2e._realtime_app", e2e_port)
+        state["proc"] = proc
+        state["base"] = base
+
+    def kill() -> None:
+        if state["proc"] is not None:
+            _terminate(state["proc"])
+            state["proc"] = None
+
+    start()
+    try:
+        yield {"base": state["base"], "kill": kill, "start": start, "state": state}
+    finally:
+        kill()
+
+
 @pytest.fixture
 def object_perm_base_url(e2e_port: int) -> Iterator[str]:
     """Start an object-permission-enabled HyperAdmin app for E2E tests.

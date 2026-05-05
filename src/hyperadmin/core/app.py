@@ -16,6 +16,9 @@ from hyperadmin.core.introspection import (
 from hyperadmin.core.settings import HyperAdminSettings
 from hyperadmin.db import engine as default_engine
 from hyperadmin.discover import discover_admin_modules
+from hyperadmin.realtime import ConnectionRegistry, RealtimeSettings
+from hyperadmin.realtime.sse import make_sse_handler
+from hyperadmin.realtime.ws import make_ws_handler
 
 logger = logging.getLogger("hyperadmin")
 
@@ -51,6 +54,7 @@ class Admin:
         permission_registry: Any = None,
         storage: Any = None,
         otp_service: Any = None,
+        realtime: RealtimeSettings | None = None,
     ) -> None:
         """Initialise HyperAdmin and attach it to a FastAPI application.
 
@@ -70,6 +74,10 @@ class Admin:
                 When ``None``, the MFA endpoints (``/mfa/challenge`` etc) are
                 NOT registered and ``login_view`` skips the MFA branch — apps
                 without MFA are entirely unaffected (C3-A, #487).
+            realtime: Opt-in ``RealtimeSettings``. When ``None`` (default),
+                no SSE / WebSocket endpoints are registered and the status
+                widget is not injected — fully backward compatible. See
+                ``docs/specs/realtime-connection-foundation.md``.
         """
         self.settings = settings or HyperAdminSettings()
         self.app = app
@@ -80,6 +88,10 @@ class Admin:
         self.permission_registry = permission_registry
         self.storage = storage
         self.otp_service = otp_service
+        self.realtime = realtime
+        self._realtime_registry: ConnectionRegistry | None = (
+            ConnectionRegistry() if realtime is not None else None
+        )
 
         self._validate_session_secret()
 
@@ -249,6 +261,36 @@ class Admin:
             "/mfa/disable", disable_post, methods=["POST"], name="admin-mfa-disable"
         )
 
+    def _register_realtime_routes(self, path: str) -> None:
+        """Register the SSE GET route and WebSocket route under the admin prefix.
+
+        Both endpoints share a single ``ConnectionRegistry`` so the lifespan
+        shutdown hook can drain every open connection in one pass.
+        """
+        if self.realtime is None or self._realtime_registry is None:
+            return
+        admin_prefix = path.rstrip("/")
+        registry = self._realtime_registry
+        settings = self.realtime
+
+        sse_handler = make_sse_handler(registry, settings)
+        self.router.add_api_route(
+            "/realtime/sse",
+            sse_handler,
+            methods=["GET"],
+            name="admin-realtime-sse",
+        )
+        ws_handler = make_ws_handler(registry, settings, self.auth_backend)
+        self.app.router.add_websocket_route(
+            f"{admin_prefix}/realtime/ws",
+            ws_handler,
+            name="admin-realtime-ws",
+        )
+
+        @self.app.on_event("shutdown")
+        async def _drain_realtime() -> None:
+            await registry.drain()
+
     def _register_locale_route(self, path: str) -> None:
         """Register the POST /locale route for the locale switcher."""
         from starlette.requests import Request
@@ -392,9 +434,11 @@ class Admin:
             self._auto_register_models()
 
         self._register_locale_route(path)
+        self._register_realtime_routes(path)
         self._register_views()
         self.templates.env.globals["admin_prefix"] = path.rstrip("/")
         self.templates.env.globals["auth_enabled"] = self.auth_backend is not None
+        self.templates.env.globals["realtime_enabled"] = self.realtime is not None
         self.templates.env.globals["theme"] = self.settings.theme
         self.templates.env.globals["site_title"] = self.settings.site_title
         self.templates.env.globals["site_header"] = self.settings.site_header
