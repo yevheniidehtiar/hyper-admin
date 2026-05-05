@@ -51,6 +51,9 @@
     <script src="https://unpkg.com/@alpinejs/focus@3.x.x/dist/cdn.min.js" defer></script>
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <link rel="stylesheet" href="{{ url_for('static', path='/css/hyperadmin.css') }}">
+    {% if realtime_enabled %}
+    <script src="{{ url_for('static', path='/js/realtime-status.js') }}" defer></script>
+    {% endif %}
     <script>
       document.addEventListener('DOMContentLoaded', function () {
         document.addEventListener('keydown', function (event) {

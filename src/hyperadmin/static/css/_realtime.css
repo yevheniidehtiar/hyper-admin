@@ -1,0 +1,31 @@
+/* Real-time connection status dot rendered in the navbar. */
+
+.ha-rt-dot {
+  display: inline-block;
+  width: 0.625rem;
+  height: 0.625rem;
+  margin-inline-end: 0.5rem;
+  border-radius: 50%;
+  background: var(--ha-color-muted, #9ca3af);
+  vertical-align: middle;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.ha-rt-dot.is-connected {
+  background: var(--ha-color-success, #22c55e);
+  box-shadow: 0 0 0 0.25rem rgba(34, 197, 94, 0.15);
+}
+
+.ha-rt-dot.is-reconnecting {
+  background: var(--ha-color-warning, #eab308);
+  animation: ha-rt-pulse 1.2s ease-in-out infinite;
+}
+
+.ha-rt-dot.is-disconnected {
+  background: var(--ha-color-danger, #ef4444);
+}
+
+@keyframes ha-rt-pulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.4; }
+}

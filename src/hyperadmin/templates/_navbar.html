@@ -13,6 +13,13 @@
         </button>
         <a href="{{ admin_prefix }}/" class="ha-navbar-brand">HyperAdmin</a>
         <div class="ha-navbar-actions">
+        {% if realtime_enabled %}
+        <span class="ha-rt-dot is-disconnected"
+              data-testid="realtime-status"
+              role="status"
+              aria-live="polite"
+              title="{{ _('Real-time connection status') }}"></span>
+        {% endif %}
         {% if supported_locales and supported_locales|length > 1 %}
         <form class="ha-locale-switcher" method="post" action="{{ admin_prefix }}/locale">
             <label class="ha-sr-only" for="locale-switcher">{{ _("Language") }}</label>
