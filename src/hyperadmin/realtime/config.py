@@ -31,3 +31,11 @@ class RealtimeSettings(BaseModel):
             "deployments that want to fail-fast under unexpected load."
         ),
     )
+    enable_test_endpoints: bool = Field(
+        default=False,
+        description=(
+            "When ``True``, mounts ``/_test/realtime/*`` endpoints used by the "
+            "Playwright suite to introspect the registry and simulate server-"
+            "initiated drops. Must remain ``False`` in production."
+        ),
+    )
