@@ -67,6 +67,6 @@ admin = Admin(
     auth_backend=backend,
     permission_checker=ModelPermissionChecker(engine=engine),
     permission_registry=PermissionSyncService(engine=engine),
-    realtime=RealtimeSettings(heartbeat_interval=1.0),
+    realtime=RealtimeSettings(heartbeat_interval=1.0, enable_test_endpoints=True),
 )
 admin.mount(path="/admin")
