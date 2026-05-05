@@ -171,3 +171,72 @@ async def test_unregister_unknown_is_noop() -> None:
     # Then it does not raise and count() stays 0
     await reg.unregister(_conn())
     assert reg.count() == 0
+
+
+async def test_snapshot_returns_independent_tuple() -> None:
+    # Given a registry with two connections
+    reg = ConnectionRegistry()
+    a = _conn(user_id=1, transport="sse")
+    b = _conn(user_id=2, transport="ws")
+    await reg.register(a)
+    await reg.register(b)
+
+    # When snapshot() is captured and the registry mutates afterwards
+    snap = reg.snapshot()
+    await reg.unregister(a)
+
+    # Then the snapshot still holds both entries (independent of live state)
+    assert len(snap) == 2
+    assert reg.count() == 1
+
+
+async def test_close_where_filters_by_predicate() -> None:
+    # Given a registry with two SSE and one WS connection
+    reg = ConnectionRegistry()
+    closed: list[str] = []
+
+    def _make(tag: str, transport):
+        async def fn() -> None:
+            closed.append(tag)
+
+        return RealtimeConnection(user_id=1, transport=transport, close=fn)
+
+    await reg.register(_make("sse-1", "sse"))
+    await reg.register(_make("sse-2", "sse"))
+    await reg.register(_make("ws-1", "ws"))
+
+    # When close_where() targets only SSE
+    closed_count = await reg.close_where(lambda c: c.transport == "sse")
+
+    # Then only the SSE entries closed and the WS entry survived
+    assert closed_count == 2
+    assert sorted(closed) == ["sse-1", "sse-2"]
+    assert reg.count() == 1
+    assert reg.snapshot()[0].transport == "ws"
+
+
+async def test_close_where_does_not_drain_registry() -> None:
+    # Given a registry that has had close_where() called against everything
+    reg = ConnectionRegistry()
+    await reg.register(_conn())
+    await reg.close_where(lambda _c: True)
+
+    # When a new connection is registered afterwards
+    # Then it succeeds (close_where != drain — registry stays open)
+    await reg.register(_conn())
+    assert reg.count() == 1
+
+
+async def test_close_where_swallows_callback_exceptions() -> None:
+    # Given a registry whose connection raises on close
+    reg = ConnectionRegistry()
+    fake = _FakeConn(user_id=1, raise_on_close=True)
+    conn = RealtimeConnection(user_id=1, transport="sse", close=fake.close)
+    await reg.register(conn)
+
+    # When close_where() targets it
+    # Then the exception is swallowed and the entry is still removed
+    closed_count = await reg.close_where(lambda _c: True)
+    assert closed_count == 1
+    assert reg.count() == 0
+    assert fake.closed == 1

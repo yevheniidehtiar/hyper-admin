@@ -61,6 +61,26 @@ class ConnectionRegistry:
     def users(self) -> set[int]:
         return {c.user_id for c in self._conns}
 
+    def snapshot(self) -> tuple[RealtimeConnection, ...]:
+        """Return a stable snapshot of the live connections."""
+        return tuple(self._conns)
+
+    async def close_where(self, predicate: Callable[[RealtimeConnection], bool]) -> int:
+        """Close every connection matching ``predicate``.
+
+        Used by the test-only debug router to simulate server-initiated
+        drops (one transport, all of one user) without shutting the
+        registry down. Returns the number of connections closed. Exceptions
+        from individual ``close()`` callbacks are swallowed.
+        """
+        async with self._lock:
+            to_close = [c for c in self._conns if predicate(c)]
+            for c in to_close:
+                self._conns.discard(c)
+        if to_close:
+            await asyncio.gather(*(c.close() for c in to_close), return_exceptions=True)
+        return len(to_close)
+
     async def drain(self) -> None:
         """Close every open connection and reject future registrations.
 
