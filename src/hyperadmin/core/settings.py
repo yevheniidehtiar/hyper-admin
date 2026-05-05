@@ -7,7 +7,30 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 _DEFAULT_SECRET_KEY = "hyperadmin-default-secret"  # noqa: S105
 _DEFAULT_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
-_DEFAULT_SUPPORTED_LOCALES = ["en", "es", "fr", "de", "zh_CN", "ja", "uk"]
+_DEFAULT_SUPPORTED_LOCALES = [
+    # Original v0.4.1 set (LTR, ordered by speaker count + admin-UI relevance).
+    "en",
+    "es",
+    "fr",
+    "de",
+    "zh_CN",
+    "ja",
+    "uk",
+    # v0.5.2 top-20 expansion: 2 RTL + 1 Devanagari + European + SE-Asian.
+    "ar",
+    "he",
+    "hi",
+    "pt_BR",
+    "ru",
+    "ko",
+    "it",
+    "tr",
+    "pl",
+    "nl",
+    "vi",
+    "id",
+    "th",
+]
 
 ThemeLiteral = Literal["auto", "light", "dark"]
 
