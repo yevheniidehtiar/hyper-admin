@@ -128,12 +128,13 @@ def _find_free_port() -> int:
 
 @pytest.fixture
 def rtl_base_url() -> Iterator[str]:
-    """Start the simple app with ``ar`` included in ``supported_locales``.
+    """Start the simple app with both RTL must-haves (``ar`` and ``he``) supported.
 
     ``HYPERADMIN_SUPPORTED_LOCALES`` is set in the subprocess environment so
     that ``HyperAdminSettings`` (read at module import time) picks it up.
-    The Arabic locale is not in the default seed list — this fixture activates
-    it specifically to exercise RTL rendering.
+    Both Arabic and Hebrew now ship in the default seed list (v0.5.2 top-20),
+    but the override lets the test stay self-contained even when the default
+    list changes.
     """
     pytest.importorskip("uvicorn")
     requests = pytest.importorskip("requests")  # type: ignore[assignment]
@@ -154,8 +155,8 @@ def rtl_base_url() -> Iterator[str]:
 
     env = os.environ.copy()
     env["E2E_TESTING"] = "1"
-    # Override supported locales to include Arabic (RTL)
-    env["HYPERADMIN_SUPPORTED_LOCALES"] = json.dumps(["en", "ar"])
+    # Override supported locales to include both RTL must-haves.
+    env["HYPERADMIN_SUPPORTED_LOCALES"] = json.dumps(["en", "ar", "he"])
 
     proc = subprocess.Popen(
         cmd,
@@ -303,32 +304,39 @@ def test_locale_switcher_restores_english(page: Page, demo_base_url: str) -> Non
 # ---------------------------------------------------------------------------
 
 
-def test_rtl_locale_sets_html_dir(page: Page, rtl_base_url: str) -> None:
+@pytest.mark.parametrize("rtl_code", ["ar", "he"])
+def test_rtl_locale_sets_html_dir(page: Page, rtl_base_url: str, rtl_code: str) -> None:
     """
     Scenario: RTL locale sets dir="rtl" on <html>
 
-      Given supported_locales includes "ar" (via HYPERADMIN_SUPPORTED_LOCALES env override)
-      And   cookie hyperadmin_locale=ar is set via BrowserContext
+      Given supported_locales includes the RTL code (via HYPERADMIN_SUPPORTED_LOCALES env override)
+      And   the locale switcher selects the RTL code
       When  any admin page loads
       Then  <html dir="rtl"> is present
-      And   <html lang="ar"> is present
+      And   <html lang="<rtl_code>"> is present
+
+    Parametrized over Arabic and Hebrew — the two RTL must-haves in the v0.5.2
+    top-20 default. ``RTL_LOCALES`` also covers ``fa``/``ur`` but those remain
+    opt-in via env override and are exercised by unit tests.
     """
-    # Given cookie hyperadmin_locale=ar is set via the locale switcher.
-    # The RTL server supports "ar"; using the switcher ensures the cookie is
-    # set with the exact same attributes as the production flow.
+    # Given cookie hyperadmin_locale=<rtl_code> set via the locale switcher.
     page.goto(rtl_base_url + "/admin/user")
     page.wait_for_load_state("networkidle")
-    _switch_locale(page, "ar")
+    _switch_locale(page, rtl_code)
 
-    # When the admin page reloads (the redirect lands back on /admin/user with ar cookie)
+    # When the admin page reloads (the redirect lands back on /admin/user with the cookie set).
 
     # Then <html dir="rtl"> is present
     html_dir = page.locator("html").get_attribute("dir")
-    assert html_dir == "rtl", f"Expected <html dir='rtl'> for Arabic locale, got dir={html_dir!r}"
+    assert html_dir == "rtl", (
+        f"Expected <html dir='rtl'> for {rtl_code!r} locale, got dir={html_dir!r}"
+    )
 
-    # And <html lang="ar"> is present
+    # And <html lang="<rtl_code>"> is present
     html_lang = page.locator("html").get_attribute("lang")
-    assert html_lang == "ar", f"Expected <html lang='ar'> for Arabic locale, got lang={html_lang!r}"
+    assert html_lang == rtl_code, (
+        f"Expected <html lang={rtl_code!r}> for {rtl_code!r} locale, got lang={html_lang!r}"
+    )
 
 
 # ---------------------------------------------------------------------------

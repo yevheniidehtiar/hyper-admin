@@ -1,0 +1,289 @@
+# Thai translations for PROJECT.
+# Copyright (C) 2026 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2026-05-03 15:06+0200\n"
+"PO-Revision-Date: 2026-05-05 12:00+0200\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: th\n"
+"Language-Team: th <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+
+#: src/hyperadmin/templates/_messages.html:3
+#, fuzzy
+msgid "Success!"
+msgstr "สำเร็จ!"
+
+#: src/hyperadmin/templates/_messages.html:4
+#, fuzzy
+msgid "Your action was successful."
+msgstr "การดำเนินการของคุณสำเร็จแล้ว"
+
+#: src/hyperadmin/templates/_messages.html:5
+#: src/hyperadmin/templates/_messages.html:6
+#, fuzzy
+msgid "Close"
+msgstr "ปิด"
+
+#: src/hyperadmin/templates/_navbar.html:1
+#, fuzzy
+msgid "Main navigation"
+msgstr "การนำทางหลัก"
+
+#: src/hyperadmin/templates/_navbar.html:8
+#, fuzzy
+msgid "Toggle navigation menu"
+msgstr "สลับเมนูนำทาง"
+
+#: src/hyperadmin/templates/_navbar.html:18
+#, fuzzy
+msgid "Language"
+msgstr "ภาษา"
+
+#: src/hyperadmin/templates/_navbar.html:22
+#, fuzzy
+msgid "Select language"
+msgstr "เลือกภาษา"
+
+#: src/hyperadmin/templates/_navbar.html:34
+#, fuzzy
+msgid "Toggle dark mode"
+msgstr "สลับโหมดมืด"
+
+#: src/hyperadmin/templates/_navbar.html:56
+#, fuzzy
+msgid "Logout"
+msgstr "ออกจากระบบ"
+
+#: src/hyperadmin/templates/_navbar.html:64
+#, fuzzy
+msgid "Admin"
+msgstr "ผู้ดูแล"
+
+#: src/hyperadmin/templates/_navbar.html:70
+#, fuzzy
+msgid "Profile"
+msgstr "โปรไฟล์"
+
+#: src/hyperadmin/templates/_navbar.html:71
+#, fuzzy
+msgid "Settings"
+msgstr "ตั้งค่า"
+
+#: src/hyperadmin/templates/_sidebar.html:5
+#, fuzzy
+msgid "Model navigation"
+msgstr "การนำทางโมเดล"
+
+#: src/hyperadmin/templates/_sidebar.html:12
+#, fuzzy
+msgid "Menu"
+msgstr "เมนู"
+
+#: src/hyperadmin/templates/_sidebar.html:16
+#, fuzzy
+msgid "Close navigation menu"
+msgstr "ปิดเมนูนำทาง"
+
+#: src/hyperadmin/templates/_sidebar.html:23
+#, fuzzy
+msgid "Sidebar"
+msgstr "แถบข้าง"
+
+#: src/hyperadmin/templates/create.html:4
+#, python-format, fuzzy
+msgid "Create %(model_name)s"
+msgstr "สร้าง %(model_name)s"
+
+#: src/hyperadmin/templates/create.html:36
+#, fuzzy
+msgid "Create"
+msgstr "สร้าง"
+
+#: src/hyperadmin/templates/create.html:39
+#: src/hyperadmin/templates/update.html:39
+#, fuzzy
+msgid "Cancel"
+msgstr "ยกเลิก"
+
+#: src/hyperadmin/templates/detail.html:30
+#, python-format, fuzzy
+msgid "Run action '%(label)s'?"
+msgstr "เรียกใช้การกระทำ '%(label)s' หรือไม่?"
+
+#: src/hyperadmin/templates/detail.html:36
+#, fuzzy
+msgid "Back to list"
+msgstr "กลับไปยังรายการ"
+
+#: src/hyperadmin/templates/form_layout.html:12
+#, fuzzy
+msgid "Save"
+msgstr "บันทึก"
+
+#: src/hyperadmin/templates/list_layout.html:3
+#, python-format, fuzzy
+msgid "%(model_name)s List | HyperAdmin"
+msgstr "รายการ %(model_name)s | HyperAdmin"
+
+#: src/hyperadmin/templates/list_layout.html:7
+#, fuzzy
+msgid "List"
+msgstr "รายการ"
+
+#: src/hyperadmin/templates/list_layout.html:11
+#, python-format, fuzzy
+msgid "Create New %(model_name)s"
+msgstr "สร้าง %(model_name)s ใหม่"
+
+#: src/hyperadmin/templates/login.html:3
+#, fuzzy
+msgid "Login"
+msgstr "เข้าสู่ระบบ"
+
+#: src/hyperadmin/templates/login.html:13
+#, fuzzy
+msgid "Sign in to your account"
+msgstr "เข้าสู่ระบบบัญชีของคุณ"
+
+#: src/hyperadmin/templates/login.html:23
+#, fuzzy
+msgid "Username"
+msgstr "ชื่อผู้ใช้"
+
+#: src/hyperadmin/templates/login.html:35
+#, fuzzy
+msgid "Password"
+msgstr "รหัสผ่าน"
+
+#: src/hyperadmin/templates/login.html:46
+#, fuzzy
+msgid "Sign in"
+msgstr "เข้าสู่ระบบ"
+
+#: src/hyperadmin/templates/update.html:4
+#, python-format, fuzzy
+msgid "Update %(item_name)s"
+msgstr "อัปเดต %(item_name)s"
+
+#: src/hyperadmin/templates/update.html:36
+#, fuzzy
+msgid "Update"
+msgstr "อัปเดต"
+
+#: src/hyperadmin/templates/components/filter_bar.html:11
+#, fuzzy
+msgid "Filters"
+msgstr "ตัวกรอง"
+
+#: src/hyperadmin/templates/components/filter_bar.html:27
+#, fuzzy
+msgid "Any"
+msgstr "ใดก็ได้"
+
+#: src/hyperadmin/templates/components/filter_bar.html:43
+#, fuzzy
+msgid "Clear all filters"
+msgstr "ล้างตัวกรองทั้งหมด"
+
+#: src/hyperadmin/templates/components/inline_row.html:31
+#: src/hyperadmin/templates/components/table.html:8
+#: src/hyperadmin/templates/components/table.html:18
+#, fuzzy
+msgid "Actions"
+msgstr "การกระทำ"
+
+#: src/hyperadmin/templates/components/inline_row.html:36
+#, fuzzy
+msgid "Remove"
+msgstr "ลบ"
+
+#: src/hyperadmin/templates/components/pagination.html:1
+#, fuzzy
+msgid "Pagination"
+msgstr "การแบ่งหน้า"
+
+#: src/hyperadmin/templates/components/pagination.html:4
+#, python-format, fuzzy
+msgid "Showing %(start)s to %(end)s of %(total)s results"
+msgstr "กำลังแสดง %(start)s ถึง %(end)s จากทั้งหมด %(total)s รายการ"
+
+#: src/hyperadmin/templates/components/pagination.html:17
+#, fuzzy
+msgid "Previous"
+msgstr "ก่อนหน้า"
+
+#: src/hyperadmin/templates/components/pagination.html:22
+#, python-format, fuzzy
+msgid "Page %(page)s of %(total_pages)s"
+msgstr "หน้า %(page)s จาก %(total_pages)s"
+
+#: src/hyperadmin/templates/components/pagination.html:32
+#, fuzzy
+msgid "Next"
+msgstr "ถัดไป"
+
+#: src/hyperadmin/templates/components/search_input.html:5
+#, fuzzy
+msgid "Search..."
+msgstr "ค้นหา..."
+
+#: src/hyperadmin/templates/components/search_input.html:8
+#, fuzzy
+msgid "Search"
+msgstr "ค้นหา"
+
+#: src/hyperadmin/templates/components/search_input.html:14
+#, fuzzy
+msgid "Searching..."
+msgstr "กำลังค้นหา..."
+
+#: src/hyperadmin/templates/components/table.html:2
+#, python-format, fuzzy
+msgid "%(model_name)s list"
+msgstr "รายการ %(model_name)s"
+
+#: src/hyperadmin/templates/components/table.html:20
+#, fuzzy
+msgid "View"
+msgstr "ดู"
+
+#: src/hyperadmin/templates/components/table.html:23
+#, fuzzy
+msgid "Edit"
+msgstr "แก้ไข"
+
+#: src/hyperadmin/templates/components/table.html:27
+#, fuzzy
+msgid "Are you sure you want to delete this item?"
+msgstr "คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?"
+
+#: src/hyperadmin/templates/components/table.html:32
+#, fuzzy
+msgid "Delete"
+msgstr "ลบ"
+
+#: src/hyperadmin/views/static.py:12
+#, fuzzy
+msgid "Item not found"
+msgstr "ไม่พบรายการ"
+
+#: src/hyperadmin/views/static.py:13
+#, fuzzy
+msgid "Item created successfully"
+msgstr "สร้างรายการสำเร็จ"
+
+#: src/hyperadmin/views/static.py:14
+#, fuzzy
+msgid "Item updated successfully"
+msgstr "อัปเดตรายการสำเร็จ"

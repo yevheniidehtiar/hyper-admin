@@ -1,0 +1,289 @@
+# Indonesian translations for PROJECT.
+# Copyright (C) 2026 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2026-05-03 15:06+0200\n"
+"PO-Revision-Date: 2026-05-05 12:00+0200\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: id\n"
+"Language-Team: id <LL@li.org>\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+
+#: src/hyperadmin/templates/_messages.html:3
+#, fuzzy
+msgid "Success!"
+msgstr "Berhasil!"
+
+#: src/hyperadmin/templates/_messages.html:4
+#, fuzzy
+msgid "Your action was successful."
+msgstr "Tindakan Anda berhasil."
+
+#: src/hyperadmin/templates/_messages.html:5
+#: src/hyperadmin/templates/_messages.html:6
+#, fuzzy
+msgid "Close"
+msgstr "Tutup"
+
+#: src/hyperadmin/templates/_navbar.html:1
+#, fuzzy
+msgid "Main navigation"
+msgstr "Navigasi utama"
+
+#: src/hyperadmin/templates/_navbar.html:8
+#, fuzzy
+msgid "Toggle navigation menu"
+msgstr "Alihkan menu navigasi"
+
+#: src/hyperadmin/templates/_navbar.html:18
+#, fuzzy
+msgid "Language"
+msgstr "Bahasa"
+
+#: src/hyperadmin/templates/_navbar.html:22
+#, fuzzy
+msgid "Select language"
+msgstr "Pilih bahasa"
+
+#: src/hyperadmin/templates/_navbar.html:34
+#, fuzzy
+msgid "Toggle dark mode"
+msgstr "Alihkan mode gelap"
+
+#: src/hyperadmin/templates/_navbar.html:56
+#, fuzzy
+msgid "Logout"
+msgstr "Keluar"
+
+#: src/hyperadmin/templates/_navbar.html:64
+#, fuzzy
+msgid "Admin"
+msgstr "Admin"
+
+#: src/hyperadmin/templates/_navbar.html:70
+#, fuzzy
+msgid "Profile"
+msgstr "Profil"
+
+#: src/hyperadmin/templates/_navbar.html:71
+#, fuzzy
+msgid "Settings"
+msgstr "Pengaturan"
+
+#: src/hyperadmin/templates/_sidebar.html:5
+#, fuzzy
+msgid "Model navigation"
+msgstr "Navigasi model"
+
+#: src/hyperadmin/templates/_sidebar.html:12
+#, fuzzy
+msgid "Menu"
+msgstr "Menu"
+
+#: src/hyperadmin/templates/_sidebar.html:16
+#, fuzzy
+msgid "Close navigation menu"
+msgstr "Tutup menu navigasi"
+
+#: src/hyperadmin/templates/_sidebar.html:23
+#, fuzzy
+msgid "Sidebar"
+msgstr "Bilah sisi"
+
+#: src/hyperadmin/templates/create.html:4
+#, python-format, fuzzy
+msgid "Create %(model_name)s"
+msgstr "Buat %(model_name)s"
+
+#: src/hyperadmin/templates/create.html:36
+#, fuzzy
+msgid "Create"
+msgstr "Buat"
+
+#: src/hyperadmin/templates/create.html:39
+#: src/hyperadmin/templates/update.html:39
+#, fuzzy
+msgid "Cancel"
+msgstr "Batal"
+
+#: src/hyperadmin/templates/detail.html:30
+#, python-format, fuzzy
+msgid "Run action '%(label)s'?"
+msgstr "Jalankan tindakan '%(label)s'?"
+
+#: src/hyperadmin/templates/detail.html:36
+#, fuzzy
+msgid "Back to list"
+msgstr "Kembali ke daftar"
+
+#: src/hyperadmin/templates/form_layout.html:12
+#, fuzzy
+msgid "Save"
+msgstr "Simpan"
+
+#: src/hyperadmin/templates/list_layout.html:3
+#, python-format, fuzzy
+msgid "%(model_name)s List | HyperAdmin"
+msgstr "Daftar %(model_name)s | HyperAdmin"
+
+#: src/hyperadmin/templates/list_layout.html:7
+#, fuzzy
+msgid "List"
+msgstr "Daftar"
+
+#: src/hyperadmin/templates/list_layout.html:11
+#, python-format, fuzzy
+msgid "Create New %(model_name)s"
+msgstr "Buat %(model_name)s baru"
+
+#: src/hyperadmin/templates/login.html:3
+#, fuzzy
+msgid "Login"
+msgstr "Masuk"
+
+#: src/hyperadmin/templates/login.html:13
+#, fuzzy
+msgid "Sign in to your account"
+msgstr "Masuk ke akun Anda"
+
+#: src/hyperadmin/templates/login.html:23
+#, fuzzy
+msgid "Username"
+msgstr "Nama pengguna"
+
+#: src/hyperadmin/templates/login.html:35
+#, fuzzy
+msgid "Password"
+msgstr "Kata sandi"
+
+#: src/hyperadmin/templates/login.html:46
+#, fuzzy
+msgid "Sign in"
+msgstr "Masuk"
+
+#: src/hyperadmin/templates/update.html:4
+#, python-format, fuzzy
+msgid "Update %(item_name)s"
+msgstr "Perbarui %(item_name)s"
+
+#: src/hyperadmin/templates/update.html:36
+#, fuzzy
+msgid "Update"
+msgstr "Perbarui"
+
+#: src/hyperadmin/templates/components/filter_bar.html:11
+#, fuzzy
+msgid "Filters"
+msgstr "Filter"
+
+#: src/hyperadmin/templates/components/filter_bar.html:27
+#, fuzzy
+msgid "Any"
+msgstr "Apa saja"
+
+#: src/hyperadmin/templates/components/filter_bar.html:43
+#, fuzzy
+msgid "Clear all filters"
+msgstr "Hapus semua filter"
+
+#: src/hyperadmin/templates/components/inline_row.html:31
+#: src/hyperadmin/templates/components/table.html:8
+#: src/hyperadmin/templates/components/table.html:18
+#, fuzzy
+msgid "Actions"
+msgstr "Tindakan"
+
+#: src/hyperadmin/templates/components/inline_row.html:36
+#, fuzzy
+msgid "Remove"
+msgstr "Hapus"
+
+#: src/hyperadmin/templates/components/pagination.html:1
+#, fuzzy
+msgid "Pagination"
+msgstr "Penomoran halaman"
+
+#: src/hyperadmin/templates/components/pagination.html:4
+#, python-format, fuzzy
+msgid "Showing %(start)s to %(end)s of %(total)s results"
+msgstr "Menampilkan %(start)s hingga %(end)s dari %(total)s hasil"
+
+#: src/hyperadmin/templates/components/pagination.html:17
+#, fuzzy
+msgid "Previous"
+msgstr "Sebelumnya"
+
+#: src/hyperadmin/templates/components/pagination.html:22
+#, python-format, fuzzy
+msgid "Page %(page)s of %(total_pages)s"
+msgstr "Halaman %(page)s dari %(total_pages)s"
+
+#: src/hyperadmin/templates/components/pagination.html:32
+#, fuzzy
+msgid "Next"
+msgstr "Selanjutnya"
+
+#: src/hyperadmin/templates/components/search_input.html:5
+#, fuzzy
+msgid "Search..."
+msgstr "Cari..."
+
+#: src/hyperadmin/templates/components/search_input.html:8
+#, fuzzy
+msgid "Search"
+msgstr "Cari"
+
+#: src/hyperadmin/templates/components/search_input.html:14
+#, fuzzy
+msgid "Searching..."
+msgstr "Mencari..."
+
+#: src/hyperadmin/templates/components/table.html:2
+#, python-format, fuzzy
+msgid "%(model_name)s list"
+msgstr "Daftar %(model_name)s"
+
+#: src/hyperadmin/templates/components/table.html:20
+#, fuzzy
+msgid "View"
+msgstr "Lihat"
+
+#: src/hyperadmin/templates/components/table.html:23
+#, fuzzy
+msgid "Edit"
+msgstr "Edit"
+
+#: src/hyperadmin/templates/components/table.html:27
+#, fuzzy
+msgid "Are you sure you want to delete this item?"
+msgstr "Anda yakin ingin menghapus item ini?"
+
+#: src/hyperadmin/templates/components/table.html:32
+#, fuzzy
+msgid "Delete"
+msgstr "Hapus"
+
+#: src/hyperadmin/views/static.py:12
+#, fuzzy
+msgid "Item not found"
+msgstr "Item tidak ditemukan"
+
+#: src/hyperadmin/views/static.py:13
+#, fuzzy
+msgid "Item created successfully"
+msgstr "Item berhasil dibuat"
+
+#: src/hyperadmin/views/static.py:14
+#, fuzzy
+msgid "Item updated successfully"
+msgstr "Item berhasil diperbarui"

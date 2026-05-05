@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
 "POT-Creation-Date: 2026-05-03 15:06+0200\n"
-"PO-Revision-Date: 2026-05-03 15:07+0200\n"
+"PO-Revision-Date: 2026-05-05 12:00+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
 "Language-Team: ja <LL@li.org>\n"
@@ -18,227 +18,272 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
+
 #: src/hyperadmin/templates/_messages.html:3
+#, fuzzy
 msgid "Success!"
-msgstr ""
+msgstr "成功しました！"
 
 #: src/hyperadmin/templates/_messages.html:4
+#, fuzzy
 msgid "Your action was successful."
-msgstr ""
+msgstr "操作は成功しました。"
 
 #: src/hyperadmin/templates/_messages.html:5
 #: src/hyperadmin/templates/_messages.html:6
+#, fuzzy
 msgid "Close"
-msgstr ""
+msgstr "閉じる"
 
 #: src/hyperadmin/templates/_navbar.html:1
+#, fuzzy
 msgid "Main navigation"
-msgstr ""
+msgstr "メインナビゲーション"
 
 #: src/hyperadmin/templates/_navbar.html:8
+#, fuzzy
 msgid "Toggle navigation menu"
-msgstr ""
+msgstr "ナビゲーションメニューを切り替え"
 
 #: src/hyperadmin/templates/_navbar.html:18
+#, fuzzy
 msgid "Language"
-msgstr ""
+msgstr "言語"
 
 #: src/hyperadmin/templates/_navbar.html:22
+#, fuzzy
 msgid "Select language"
-msgstr ""
+msgstr "言語を選択"
 
 #: src/hyperadmin/templates/_navbar.html:34
+#, fuzzy
 msgid "Toggle dark mode"
-msgstr ""
+msgstr "ダークモードを切り替え"
 
 #: src/hyperadmin/templates/_navbar.html:56
+#, fuzzy
 msgid "Logout"
-msgstr ""
+msgstr "ログアウト"
 
 #: src/hyperadmin/templates/_navbar.html:64
+#, fuzzy
 msgid "Admin"
-msgstr ""
+msgstr "管理"
 
 #: src/hyperadmin/templates/_navbar.html:70
+#, fuzzy
 msgid "Profile"
-msgstr ""
+msgstr "プロフィール"
 
 #: src/hyperadmin/templates/_navbar.html:71
+#, fuzzy
 msgid "Settings"
-msgstr ""
+msgstr "設定"
 
 #: src/hyperadmin/templates/_sidebar.html:5
+#, fuzzy
 msgid "Model navigation"
-msgstr ""
+msgstr "モデルナビゲーション"
 
 #: src/hyperadmin/templates/_sidebar.html:12
+#, fuzzy
 msgid "Menu"
-msgstr ""
+msgstr "メニュー"
 
 #: src/hyperadmin/templates/_sidebar.html:16
+#, fuzzy
 msgid "Close navigation menu"
-msgstr ""
+msgstr "ナビゲーションメニューを閉じる"
 
 #: src/hyperadmin/templates/_sidebar.html:23
+#, fuzzy
 msgid "Sidebar"
-msgstr ""
+msgstr "サイドバー"
 
 #: src/hyperadmin/templates/create.html:4
-#, python-format
+#, python-format, fuzzy
 msgid "Create %(model_name)s"
-msgstr ""
+msgstr "%(model_name)s を作成"
 
 #: src/hyperadmin/templates/create.html:36
+#, fuzzy
 msgid "Create"
-msgstr ""
+msgstr "作成"
 
 #: src/hyperadmin/templates/create.html:39
 #: src/hyperadmin/templates/update.html:39
+#, fuzzy
 msgid "Cancel"
-msgstr ""
+msgstr "キャンセル"
 
 #: src/hyperadmin/templates/detail.html:30
-#, python-format
+#, python-format, fuzzy
 msgid "Run action '%(label)s'?"
-msgstr ""
+msgstr "アクション「%(label)s」を実行しますか？"
 
 #: src/hyperadmin/templates/detail.html:36
+#, fuzzy
 msgid "Back to list"
-msgstr ""
+msgstr "リストに戻る"
 
 #: src/hyperadmin/templates/form_layout.html:12
+#, fuzzy
 msgid "Save"
-msgstr ""
+msgstr "保存"
 
 #: src/hyperadmin/templates/list_layout.html:3
-#, python-format
+#, python-format, fuzzy
 msgid "%(model_name)s List | HyperAdmin"
-msgstr ""
+msgstr "%(model_name)s 一覧 | HyperAdmin"
 
 #: src/hyperadmin/templates/list_layout.html:7
+#, fuzzy
 msgid "List"
-msgstr ""
+msgstr "一覧"
 
 #: src/hyperadmin/templates/list_layout.html:11
-#, python-format
+#, python-format, fuzzy
 msgid "Create New %(model_name)s"
-msgstr ""
+msgstr "新しい %(model_name)s を作成"
 
 #: src/hyperadmin/templates/login.html:3
+#, fuzzy
 msgid "Login"
-msgstr ""
+msgstr "ログイン"
 
 #: src/hyperadmin/templates/login.html:13
+#, fuzzy
 msgid "Sign in to your account"
-msgstr ""
+msgstr "アカウントにサインイン"
 
 #: src/hyperadmin/templates/login.html:23
+#, fuzzy
 msgid "Username"
-msgstr ""
+msgstr "ユーザー名"
 
 #: src/hyperadmin/templates/login.html:35
+#, fuzzy
 msgid "Password"
-msgstr ""
+msgstr "パスワード"
 
 #: src/hyperadmin/templates/login.html:46
+#, fuzzy
 msgid "Sign in"
-msgstr ""
+msgstr "サインイン"
 
 #: src/hyperadmin/templates/update.html:4
-#, python-format
+#, python-format, fuzzy
 msgid "Update %(item_name)s"
-msgstr ""
+msgstr "%(item_name)s を更新"
 
 #: src/hyperadmin/templates/update.html:36
+#, fuzzy
 msgid "Update"
-msgstr ""
+msgstr "更新"
 
 #: src/hyperadmin/templates/components/filter_bar.html:11
+#, fuzzy
 msgid "Filters"
-msgstr ""
+msgstr "フィルター"
 
 #: src/hyperadmin/templates/components/filter_bar.html:27
+#, fuzzy
 msgid "Any"
-msgstr ""
+msgstr "すべて"
 
 #: src/hyperadmin/templates/components/filter_bar.html:43
+#, fuzzy
 msgid "Clear all filters"
-msgstr ""
+msgstr "すべてのフィルターをクリア"
 
 #: src/hyperadmin/templates/components/inline_row.html:31
 #: src/hyperadmin/templates/components/table.html:8
 #: src/hyperadmin/templates/components/table.html:18
+#, fuzzy
 msgid "Actions"
-msgstr ""
+msgstr "アクション"
 
 #: src/hyperadmin/templates/components/inline_row.html:36
+#, fuzzy
 msgid "Remove"
-msgstr ""
+msgstr "削除"
 
 #: src/hyperadmin/templates/components/pagination.html:1
+#, fuzzy
 msgid "Pagination"
-msgstr ""
+msgstr "ページ送り"
 
 #: src/hyperadmin/templates/components/pagination.html:4
-#, python-format
+#, python-format, fuzzy
 msgid "Showing %(start)s to %(end)s of %(total)s results"
-msgstr ""
+msgstr "%(total)s 件中 %(start)s 〜 %(end)s 件を表示"
 
 #: src/hyperadmin/templates/components/pagination.html:17
+#, fuzzy
 msgid "Previous"
-msgstr ""
+msgstr "前へ"
 
 #: src/hyperadmin/templates/components/pagination.html:22
-#, python-format
+#, python-format, fuzzy
 msgid "Page %(page)s of %(total_pages)s"
-msgstr ""
+msgstr "%(total_pages)s ページ中 %(page)s ページ"
 
 #: src/hyperadmin/templates/components/pagination.html:32
+#, fuzzy
 msgid "Next"
-msgstr ""
+msgstr "次へ"
 
 #: src/hyperadmin/templates/components/search_input.html:5
+#, fuzzy
 msgid "Search..."
-msgstr ""
+msgstr "検索..."
 
 #: src/hyperadmin/templates/components/search_input.html:8
+#, fuzzy
 msgid "Search"
-msgstr ""
+msgstr "検索"
 
 #: src/hyperadmin/templates/components/search_input.html:14
+#, fuzzy
 msgid "Searching..."
-msgstr ""
+msgstr "検索中..."
 
 #: src/hyperadmin/templates/components/table.html:2
-#, python-format
+#, python-format, fuzzy
 msgid "%(model_name)s list"
-msgstr ""
+msgstr "%(model_name)s 一覧"
 
 #: src/hyperadmin/templates/components/table.html:20
+#, fuzzy
 msgid "View"
-msgstr ""
+msgstr "表示"
 
 #: src/hyperadmin/templates/components/table.html:23
+#, fuzzy
 msgid "Edit"
-msgstr ""
+msgstr "編集"
 
 #: src/hyperadmin/templates/components/table.html:27
+#, fuzzy
 msgid "Are you sure you want to delete this item?"
-msgstr ""
+msgstr "この項目を削除してもよろしいですか？"
 
 #: src/hyperadmin/templates/components/table.html:32
+#, fuzzy
 msgid "Delete"
-msgstr ""
+msgstr "削除"
 
 #: src/hyperadmin/views/static.py:12
+#, fuzzy
 msgid "Item not found"
-msgstr ""
+msgstr "項目が見つかりません"
 
 #: src/hyperadmin/views/static.py:13
+#, fuzzy
 msgid "Item created successfully"
-msgstr ""
+msgstr "項目を作成しました"
 
 #: src/hyperadmin/views/static.py:14
+#, fuzzy
 msgid "Item updated successfully"
-msgstr ""
-
+msgstr "項目を更新しました"

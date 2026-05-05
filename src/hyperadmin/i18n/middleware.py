@@ -41,8 +41,8 @@ COOKIE_NAME = "hyperadmin_locale"
 #:
 #: Used by :func:`hyperadmin.core.app.Admin.mount` to expose ``rtl_locales``
 #: as a Jinja2 global so ``_base.html`` can render ``<html dir="rtl">``.
-#: None of the seeded locales (en, es, fr, de, zh_CN, ja, uk) are RTL by
-#: default; RTL locales remain opt-in via ``HYPERADMIN_SUPPORTED_LOCALES``.
+#: Two of the 20 default seeded locales (``ar``, ``he``) are RTL; the other
+#: two entries (``fa``, ``ur``) remain opt-in via ``HYPERADMIN_SUPPORTED_LOCALES``.
 RTL_LOCALES: frozenset[str] = frozenset({"ar", "he", "fa", "ur"})
 
 

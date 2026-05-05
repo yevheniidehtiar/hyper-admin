@@ -1,0 +1,289 @@
+# Polish translations for PROJECT.
+# Copyright (C) 2026 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2026-05-03 15:06+0200\n"
+"PO-Revision-Date: 2026-05-05 12:00+0200\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: pl\n"
+"Language-Team: pl <LL@li.org>\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+
+#: src/hyperadmin/templates/_messages.html:3
+#, fuzzy
+msgid "Success!"
+msgstr "Sukces!"
+
+#: src/hyperadmin/templates/_messages.html:4
+#, fuzzy
+msgid "Your action was successful."
+msgstr "Twoja akcja zakończyła się sukcesem."
+
+#: src/hyperadmin/templates/_messages.html:5
+#: src/hyperadmin/templates/_messages.html:6
+#, fuzzy
+msgid "Close"
+msgstr "Zamknij"
+
+#: src/hyperadmin/templates/_navbar.html:1
+#, fuzzy
+msgid "Main navigation"
+msgstr "Nawigacja główna"
+
+#: src/hyperadmin/templates/_navbar.html:8
+#, fuzzy
+msgid "Toggle navigation menu"
+msgstr "Przełącz menu nawigacji"
+
+#: src/hyperadmin/templates/_navbar.html:18
+#, fuzzy
+msgid "Language"
+msgstr "Język"
+
+#: src/hyperadmin/templates/_navbar.html:22
+#, fuzzy
+msgid "Select language"
+msgstr "Wybierz język"
+
+#: src/hyperadmin/templates/_navbar.html:34
+#, fuzzy
+msgid "Toggle dark mode"
+msgstr "Przełącz tryb ciemny"
+
+#: src/hyperadmin/templates/_navbar.html:56
+#, fuzzy
+msgid "Logout"
+msgstr "Wyloguj"
+
+#: src/hyperadmin/templates/_navbar.html:64
+#, fuzzy
+msgid "Admin"
+msgstr "Administracja"
+
+#: src/hyperadmin/templates/_navbar.html:70
+#, fuzzy
+msgid "Profile"
+msgstr "Profil"
+
+#: src/hyperadmin/templates/_navbar.html:71
+#, fuzzy
+msgid "Settings"
+msgstr "Ustawienia"
+
+#: src/hyperadmin/templates/_sidebar.html:5
+#, fuzzy
+msgid "Model navigation"
+msgstr "Nawigacja modeli"
+
+#: src/hyperadmin/templates/_sidebar.html:12
+#, fuzzy
+msgid "Menu"
+msgstr "Menu"
+
+#: src/hyperadmin/templates/_sidebar.html:16
+#, fuzzy
+msgid "Close navigation menu"
+msgstr "Zamknij menu nawigacji"
+
+#: src/hyperadmin/templates/_sidebar.html:23
+#, fuzzy
+msgid "Sidebar"
+msgstr "Pasek boczny"
+
+#: src/hyperadmin/templates/create.html:4
+#, python-format, fuzzy
+msgid "Create %(model_name)s"
+msgstr "Utwórz %(model_name)s"
+
+#: src/hyperadmin/templates/create.html:36
+#, fuzzy
+msgid "Create"
+msgstr "Utwórz"
+
+#: src/hyperadmin/templates/create.html:39
+#: src/hyperadmin/templates/update.html:39
+#, fuzzy
+msgid "Cancel"
+msgstr "Anuluj"
+
+#: src/hyperadmin/templates/detail.html:30
+#, python-format, fuzzy
+msgid "Run action '%(label)s'?"
+msgstr "Uruchomić akcję „%(label)s”?"
+
+#: src/hyperadmin/templates/detail.html:36
+#, fuzzy
+msgid "Back to list"
+msgstr "Powrót do listy"
+
+#: src/hyperadmin/templates/form_layout.html:12
+#, fuzzy
+msgid "Save"
+msgstr "Zapisz"
+
+#: src/hyperadmin/templates/list_layout.html:3
+#, python-format, fuzzy
+msgid "%(model_name)s List | HyperAdmin"
+msgstr "Lista %(model_name)s | HyperAdmin"
+
+#: src/hyperadmin/templates/list_layout.html:7
+#, fuzzy
+msgid "List"
+msgstr "Lista"
+
+#: src/hyperadmin/templates/list_layout.html:11
+#, python-format, fuzzy
+msgid "Create New %(model_name)s"
+msgstr "Utwórz nowy %(model_name)s"
+
+#: src/hyperadmin/templates/login.html:3
+#, fuzzy
+msgid "Login"
+msgstr "Logowanie"
+
+#: src/hyperadmin/templates/login.html:13
+#, fuzzy
+msgid "Sign in to your account"
+msgstr "Zaloguj się do swojego konta"
+
+#: src/hyperadmin/templates/login.html:23
+#, fuzzy
+msgid "Username"
+msgstr "Nazwa użytkownika"
+
+#: src/hyperadmin/templates/login.html:35
+#, fuzzy
+msgid "Password"
+msgstr "Hasło"
+
+#: src/hyperadmin/templates/login.html:46
+#, fuzzy
+msgid "Sign in"
+msgstr "Zaloguj się"
+
+#: src/hyperadmin/templates/update.html:4
+#, python-format, fuzzy
+msgid "Update %(item_name)s"
+msgstr "Zaktualizuj %(item_name)s"
+
+#: src/hyperadmin/templates/update.html:36
+#, fuzzy
+msgid "Update"
+msgstr "Zaktualizuj"
+
+#: src/hyperadmin/templates/components/filter_bar.html:11
+#, fuzzy
+msgid "Filters"
+msgstr "Filtry"
+
+#: src/hyperadmin/templates/components/filter_bar.html:27
+#, fuzzy
+msgid "Any"
+msgstr "Dowolny"
+
+#: src/hyperadmin/templates/components/filter_bar.html:43
+#, fuzzy
+msgid "Clear all filters"
+msgstr "Wyczyść wszystkie filtry"
+
+#: src/hyperadmin/templates/components/inline_row.html:31
+#: src/hyperadmin/templates/components/table.html:8
+#: src/hyperadmin/templates/components/table.html:18
+#, fuzzy
+msgid "Actions"
+msgstr "Akcje"
+
+#: src/hyperadmin/templates/components/inline_row.html:36
+#, fuzzy
+msgid "Remove"
+msgstr "Usuń"
+
+#: src/hyperadmin/templates/components/pagination.html:1
+#, fuzzy
+msgid "Pagination"
+msgstr "Paginacja"
+
+#: src/hyperadmin/templates/components/pagination.html:4
+#, python-format, fuzzy
+msgid "Showing %(start)s to %(end)s of %(total)s results"
+msgstr "Pokazuję %(start)s do %(end)s z %(total)s wyników"
+
+#: src/hyperadmin/templates/components/pagination.html:17
+#, fuzzy
+msgid "Previous"
+msgstr "Poprzedni"
+
+#: src/hyperadmin/templates/components/pagination.html:22
+#, python-format, fuzzy
+msgid "Page %(page)s of %(total_pages)s"
+msgstr "Strona %(page)s z %(total_pages)s"
+
+#: src/hyperadmin/templates/components/pagination.html:32
+#, fuzzy
+msgid "Next"
+msgstr "Następny"
+
+#: src/hyperadmin/templates/components/search_input.html:5
+#, fuzzy
+msgid "Search..."
+msgstr "Szukaj..."
+
+#: src/hyperadmin/templates/components/search_input.html:8
+#, fuzzy
+msgid "Search"
+msgstr "Szukaj"
+
+#: src/hyperadmin/templates/components/search_input.html:14
+#, fuzzy
+msgid "Searching..."
+msgstr "Wyszukiwanie..."
+
+#: src/hyperadmin/templates/components/table.html:2
+#, python-format, fuzzy
+msgid "%(model_name)s list"
+msgstr "Lista %(model_name)s"
+
+#: src/hyperadmin/templates/components/table.html:20
+#, fuzzy
+msgid "View"
+msgstr "Wyświetl"
+
+#: src/hyperadmin/templates/components/table.html:23
+#, fuzzy
+msgid "Edit"
+msgstr "Edytuj"
+
+#: src/hyperadmin/templates/components/table.html:27
+#, fuzzy
+msgid "Are you sure you want to delete this item?"
+msgstr "Czy na pewno chcesz usunąć ten element?"
+
+#: src/hyperadmin/templates/components/table.html:32
+#, fuzzy
+msgid "Delete"
+msgstr "Usuń"
+
+#: src/hyperadmin/views/static.py:12
+#, fuzzy
+msgid "Item not found"
+msgstr "Nie znaleziono elementu"
+
+#: src/hyperadmin/views/static.py:13
+#, fuzzy
+msgid "Item created successfully"
+msgstr "Element został utworzony"
+
+#: src/hyperadmin/views/static.py:14
+#, fuzzy
+msgid "Item updated successfully"
+msgstr "Element został zaktualizowany"

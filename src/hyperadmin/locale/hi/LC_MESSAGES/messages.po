@@ -1,0 +1,289 @@
+# Hindi translations for PROJECT.
+# Copyright (C) 2026 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2026-05-03 15:06+0200\n"
+"PO-Revision-Date: 2026-05-05 12:00+0200\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language: hi\n"
+"Language-Team: hi <LL@li.org>\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+
+#: src/hyperadmin/templates/_messages.html:3
+#, fuzzy
+msgid "Success!"
+msgstr "सफलता!"
+
+#: src/hyperadmin/templates/_messages.html:4
+#, fuzzy
+msgid "Your action was successful."
+msgstr "आपकी कार्रवाई सफल रही।"
+
+#: src/hyperadmin/templates/_messages.html:5
+#: src/hyperadmin/templates/_messages.html:6
+#, fuzzy
+msgid "Close"
+msgstr "बंद करें"
+
+#: src/hyperadmin/templates/_navbar.html:1
+#, fuzzy
+msgid "Main navigation"
+msgstr "मुख्य नेविगेशन"
+
+#: src/hyperadmin/templates/_navbar.html:8
+#, fuzzy
+msgid "Toggle navigation menu"
+msgstr "नेविगेशन मेनू टॉगल करें"
+
+#: src/hyperadmin/templates/_navbar.html:18
+#, fuzzy
+msgid "Language"
+msgstr "भाषा"
+
+#: src/hyperadmin/templates/_navbar.html:22
+#, fuzzy
+msgid "Select language"
+msgstr "भाषा चुनें"
+
+#: src/hyperadmin/templates/_navbar.html:34
+#, fuzzy
+msgid "Toggle dark mode"
+msgstr "डार्क मोड टॉगल करें"
+
+#: src/hyperadmin/templates/_navbar.html:56
+#, fuzzy
+msgid "Logout"
+msgstr "लॉग आउट"
+
+#: src/hyperadmin/templates/_navbar.html:64
+#, fuzzy
+msgid "Admin"
+msgstr "व्यवस्थापन"
+
+#: src/hyperadmin/templates/_navbar.html:70
+#, fuzzy
+msgid "Profile"
+msgstr "प्रोफ़ाइल"
+
+#: src/hyperadmin/templates/_navbar.html:71
+#, fuzzy
+msgid "Settings"
+msgstr "सेटिंग्स"
+
+#: src/hyperadmin/templates/_sidebar.html:5
+#, fuzzy
+msgid "Model navigation"
+msgstr "मॉडल नेविगेशन"
+
+#: src/hyperadmin/templates/_sidebar.html:12
+#, fuzzy
+msgid "Menu"
+msgstr "मेनू"
+
+#: src/hyperadmin/templates/_sidebar.html:16
+#, fuzzy
+msgid "Close navigation menu"
+msgstr "नेविगेशन मेनू बंद करें"
+
+#: src/hyperadmin/templates/_sidebar.html:23
+#, fuzzy
+msgid "Sidebar"
+msgstr "साइडबार"
+
+#: src/hyperadmin/templates/create.html:4
+#, python-format, fuzzy
+msgid "Create %(model_name)s"
+msgstr "%(model_name)s बनाएँ"
+
+#: src/hyperadmin/templates/create.html:36
+#, fuzzy
+msgid "Create"
+msgstr "बनाएँ"
+
+#: src/hyperadmin/templates/create.html:39
+#: src/hyperadmin/templates/update.html:39
+#, fuzzy
+msgid "Cancel"
+msgstr "रद्द करें"
+
+#: src/hyperadmin/templates/detail.html:30
+#, python-format, fuzzy
+msgid "Run action '%(label)s'?"
+msgstr "क्या '%(label)s' क्रिया चलाएँ?"
+
+#: src/hyperadmin/templates/detail.html:36
+#, fuzzy
+msgid "Back to list"
+msgstr "सूची पर वापस जाएँ"
+
+#: src/hyperadmin/templates/form_layout.html:12
+#, fuzzy
+msgid "Save"
+msgstr "सहेजें"
+
+#: src/hyperadmin/templates/list_layout.html:3
+#, python-format, fuzzy
+msgid "%(model_name)s List | HyperAdmin"
+msgstr "%(model_name)s सूची | HyperAdmin"
+
+#: src/hyperadmin/templates/list_layout.html:7
+#, fuzzy
+msgid "List"
+msgstr "सूची"
+
+#: src/hyperadmin/templates/list_layout.html:11
+#, python-format, fuzzy
+msgid "Create New %(model_name)s"
+msgstr "नया %(model_name)s बनाएँ"
+
+#: src/hyperadmin/templates/login.html:3
+#, fuzzy
+msgid "Login"
+msgstr "लॉगिन"
+
+#: src/hyperadmin/templates/login.html:13
+#, fuzzy
+msgid "Sign in to your account"
+msgstr "अपने खाते में साइन इन करें"
+
+#: src/hyperadmin/templates/login.html:23
+#, fuzzy
+msgid "Username"
+msgstr "उपयोगकर्ता नाम"
+
+#: src/hyperadmin/templates/login.html:35
+#, fuzzy
+msgid "Password"
+msgstr "पासवर्ड"
+
+#: src/hyperadmin/templates/login.html:46
+#, fuzzy
+msgid "Sign in"
+msgstr "साइन इन"
+
+#: src/hyperadmin/templates/update.html:4
+#, python-format, fuzzy
+msgid "Update %(item_name)s"
+msgstr "%(item_name)s अपडेट करें"
+
+#: src/hyperadmin/templates/update.html:36
+#, fuzzy
+msgid "Update"
+msgstr "अपडेट"
+
+#: src/hyperadmin/templates/components/filter_bar.html:11
+#, fuzzy
+msgid "Filters"
+msgstr "फ़िल्टर"
+
+#: src/hyperadmin/templates/components/filter_bar.html:27
+#, fuzzy
+msgid "Any"
+msgstr "कोई भी"
+
+#: src/hyperadmin/templates/components/filter_bar.html:43
+#, fuzzy
+msgid "Clear all filters"
+msgstr "सभी फ़िल्टर साफ़ करें"
+
+#: src/hyperadmin/templates/components/inline_row.html:31
+#: src/hyperadmin/templates/components/table.html:8
+#: src/hyperadmin/templates/components/table.html:18
+#, fuzzy
+msgid "Actions"
+msgstr "क्रियाएँ"
+
+#: src/hyperadmin/templates/components/inline_row.html:36
+#, fuzzy
+msgid "Remove"
+msgstr "हटाएँ"
+
+#: src/hyperadmin/templates/components/pagination.html:1
+#, fuzzy
+msgid "Pagination"
+msgstr "पृष्ठ संख्या"
+
+#: src/hyperadmin/templates/components/pagination.html:4
+#, python-format, fuzzy
+msgid "Showing %(start)s to %(end)s of %(total)s results"
+msgstr "%(total)s परिणामों में से %(start)s से %(end)s दिखाए जा रहे हैं"
+
+#: src/hyperadmin/templates/components/pagination.html:17
+#, fuzzy
+msgid "Previous"
+msgstr "पिछला"
+
+#: src/hyperadmin/templates/components/pagination.html:22
+#, python-format, fuzzy
+msgid "Page %(page)s of %(total_pages)s"
+msgstr "%(total_pages)s में से पृष्ठ %(page)s"
+
+#: src/hyperadmin/templates/components/pagination.html:32
+#, fuzzy
+msgid "Next"
+msgstr "अगला"
+
+#: src/hyperadmin/templates/components/search_input.html:5
+#, fuzzy
+msgid "Search..."
+msgstr "खोजें..."
+
+#: src/hyperadmin/templates/components/search_input.html:8
+#, fuzzy
+msgid "Search"
+msgstr "खोजें"
+
+#: src/hyperadmin/templates/components/search_input.html:14
+#, fuzzy
+msgid "Searching..."
+msgstr "खोज रहा है..."
+
+#: src/hyperadmin/templates/components/table.html:2
+#, python-format, fuzzy
+msgid "%(model_name)s list"
+msgstr "%(model_name)s सूची"
+
+#: src/hyperadmin/templates/components/table.html:20
+#, fuzzy
+msgid "View"
+msgstr "देखें"
+
+#: src/hyperadmin/templates/components/table.html:23
+#, fuzzy
+msgid "Edit"
+msgstr "संपादित करें"
+
+#: src/hyperadmin/templates/components/table.html:27
+#, fuzzy
+msgid "Are you sure you want to delete this item?"
+msgstr "क्या आप वाकई इस आइटम को हटाना चाहते हैं?"
+
+#: src/hyperadmin/templates/components/table.html:32
+#, fuzzy
+msgid "Delete"
+msgstr "हटाएँ"
+
+#: src/hyperadmin/views/static.py:12
+#, fuzzy
+msgid "Item not found"
+msgstr "आइटम नहीं मिला"
+
+#: src/hyperadmin/views/static.py:13
+#, fuzzy
+msgid "Item created successfully"
+msgstr "आइटम सफलतापूर्वक बनाया गया"
+
+#: src/hyperadmin/views/static.py:14
+#, fuzzy
+msgid "Item updated successfully"
+msgstr "आइटम सफलतापूर्वक अपडेट किया गया"

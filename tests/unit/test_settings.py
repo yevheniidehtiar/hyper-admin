@@ -26,7 +26,28 @@ class TestDefaults:
         assert settings.date_format == "%Y-%m-%d"
         assert settings.datetime_format == "%Y-%m-%d %H:%M:%S"
         assert settings.default_locale == "en"
-        assert settings.supported_locales == ["en", "es", "fr", "de", "zh_CN", "ja", "uk"]
+        assert settings.supported_locales == [
+            "en",
+            "es",
+            "fr",
+            "de",
+            "zh_CN",
+            "ja",
+            "uk",
+            "ar",
+            "he",
+            "hi",
+            "pt_BR",
+            "ru",
+            "ko",
+            "it",
+            "tr",
+            "pl",
+            "nl",
+            "vi",
+            "id",
+            "th",
+        ]
 
     def test_is_default_secret_key_true_when_using_default(self) -> None:
         settings = HyperAdminSettings()

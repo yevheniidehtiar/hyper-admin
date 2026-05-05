@@ -41,7 +41,28 @@ from hyperadmin.views.locale import set_locale_view
 # Helpers
 # ---------------------------------------------------------------------------
 
-_SUPPORTED = ["en", "es", "fr"]
+_SUPPORTED = [
+    "en",
+    "es",
+    "fr",
+    "de",
+    "zh_CN",
+    "ja",
+    "uk",
+    "ar",
+    "he",
+    "hi",
+    "pt_BR",
+    "ru",
+    "ko",
+    "it",
+    "tr",
+    "pl",
+    "nl",
+    "vi",
+    "id",
+    "th",
+]
 
 
 def _make_app(supported_locales: list[str] | None = None) -> tuple[FastAPI, HyperAdminSettings]:
@@ -213,7 +234,31 @@ class TestCookieAttributes:
         set_cookie = response.headers.get("set-cookie", "")
         assert "Path=/admin" in set_cookie
 
-    @pytest.mark.parametrize("locale", ["en", "es", "fr"])
+    @pytest.mark.parametrize(
+        "locale",
+        [
+            "en",
+            "es",
+            "fr",
+            "de",
+            "zh_CN",
+            "ja",
+            "uk",
+            "ar",
+            "he",
+            "hi",
+            "pt_BR",
+            "ru",
+            "ko",
+            "it",
+            "tr",
+            "pl",
+            "nl",
+            "vi",
+            "id",
+            "th",
+        ],
+    )
     def test_all_supported_locales_set_cookie(self, locale: str) -> None:
         app, _ = _make_app()
         client = TestClient(app, follow_redirects=False)
