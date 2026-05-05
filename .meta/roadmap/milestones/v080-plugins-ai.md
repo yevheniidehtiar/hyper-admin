@@ -13,4 +13,11 @@ created_at: 2026-03-29T09:35:06Z
 updated_at: 2026-03-29T09:35:06Z
 ---
 
-P3: Plugin registry with entry points + AI-powered search/suggestions + additional ORM adapters. Epics 6.1, 6.3, 6.5, 6.6.
+Re-themed for v0.8.0: ship the **Plugin Registry + lifecycle hooks** (`hyperadmin.plugins`
+entry points) and the first official plugin **hyperadmin-logfire** as proof-of-concept.
+AI-assisted features (RFC #277), additional ORM adapters (Tortoise / Piccolo / MongoDB),
+and custom non-CRUD page registration deferred to v0.8.1+.
+
+Epics:
+- `epic-plugins-registry-and-lifecycle-hooks` (size:L, SDD: `docs/specs/plugin-registry.md`)
+- `epic-plugin-logfire-first-plugin` (size:L, SDD: `docs/specs/plugin-logfire.md`, blocked by Epic 1)
