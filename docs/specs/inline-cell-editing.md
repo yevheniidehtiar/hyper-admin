@@ -3,11 +3,11 @@
 | Field | Value |
 |---|---|
 | Author | Claude Code |
-| Status | Draft (dispatch-authorized for implementation) |
+| Status | Approved |
 | Issue | #45 (epic 2.4 — UI/UX Polish, v0.5.0 scope: inline model editing) |
 | Milestone | v0.5.0 — Advanced UX |
 | Created | 2026-05-03 |
-| Last updated | 2026-05-03 |
+| Last updated | 2026-05-10 (Approved retroactively — milestone shipped) |
 
 ---
 

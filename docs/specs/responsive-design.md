@@ -3,11 +3,11 @@
 | Field | Value |
 |---|---|
 | Author | Claude Code |
-| Status | Draft |
+| Status | Approved |
 | Issue | TBD (epic issue to be created via gitpm push) |
 | Milestone | v0.4.0 — Responsive Design |
 | Created | 2026-05-03 |
-| Last updated | 2026-05-03 |
+| Last updated | 2026-05-10 (Approved retroactively — milestone shipped) |
 
 ---
 
