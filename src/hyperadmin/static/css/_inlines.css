@@ -46,6 +46,11 @@
   display: none;
 }
 
+.ha-inline-row-error {
+  background-color: var(--ha-color-danger-subtle, rgba(220, 38, 38, 0.06));
+  box-shadow: inset 4px 0 0 var(--ha-color-danger, #dc2626);
+}
+
 .ha-inline-input {
   width: 100%;
 }
