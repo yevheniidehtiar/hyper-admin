@@ -3,11 +3,13 @@
 | Field | Value |
 |---|---|
 | Author | Claude Code |
-| Status | Draft |
+| Status | Approved |
 | Issue | TBD |
 | Milestone | v0.5.5 — Bulk Actions & Autocomplete |
 | Created | 2026-05-10 |
-| Last updated | 2026-05-10 |
+| Last updated | 2026-05-11 |
+| Approved by | Yevhenii Dehtiar |
+| Approved on | 2026-05-11 |
 
 ---
 
@@ -216,9 +218,17 @@ are false / `None`. No database migration required.
 
 ## Open Questions
 
-- [ ] Should `bulk=True` actions automatically gain `requires_selection=True`? Default proposal: yes, with explicit `requires_selection=False` opt-out for actions that operate on all matching rows (e.g. "Archive all overdue").
-- [ ] Should the bulk endpoint accept `select_all_matching_filter=true` as an alternative to explicit ids, so a million-row archive doesn't ship a million ids in the request? Deferred to a follow-up unless the v0.5.5 demo needs it.
-- [ ] Should the result page expose a "rollback" affordance when all rows failed? Default: no — the admin's audit log is the rollback surface.
+All open questions resolved at approval (2026-05-11):
+
+- [x] `bulk=True` implies `requires_selection=True` by default. Explicit
+  `requires_selection=False` opt-out is supported for "operate on all matching
+  rows" actions (e.g. "Archive all overdue").
+- [x] `select_all_matching_filter=true` deferred to a v0.5.5+ follow-up. v0.5.5
+  ships explicit-ids only; if the qualification demo grows past the practical
+  payload limit it gets reopened as a discrete story.
+- [x] No "rollback" affordance on the result page. The audit log (from v0.5.1)
+  is the rollback surface; the result page links to the audit entries for the
+  failed rows.
 
 ## Decision Log
 
@@ -228,3 +238,6 @@ are false / `None`. No database migration required.
 | Sequential per-row execution | Simplest; preserves request-scoped transaction semantics in adapters | asyncio.gather with semaphore; bg-job dispatch |
 | Per-row outcome page (not abort-on-first-failure) | Operator can retry just the failures; matches H3 acceptance check | All-or-nothing transaction; first-failure abort |
 | Bulk endpoint at `/actions/{name}/bulk` (not `/{id}/action/{name}` extended) | Keeps single-record route unchanged; clearer in logs | Overload `run_action` with `ids` query param |
+| `bulk=True` implies `requires_selection=True` by default (approved) | Matches operator expectations; the "all matching" case is rare and explicit opt-out remains available | Require explicit `requires_selection=True` every time (boilerplate); flip default per action (inconsistent) |
+| Defer `select_all_matching_filter` (approved) | Keeps v0.5.5 surface tight; not needed for the qualification check | Build it in v0.5.5 (broader change with its own edge cases) |
+| No "rollback" affordance on result page (approved) | Audit log already covers it; rollback UI invites destructive misuse | Add per-row rollback button (duplicates audit-log function) |

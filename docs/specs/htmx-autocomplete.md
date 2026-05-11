@@ -3,11 +3,13 @@
 | Field | Value |
 |---|---|
 | Author | Claude Code |
-| Status | Draft |
+| Status | Approved |
 | Issue | TBD |
 | Milestone | v0.5.5 — Bulk Actions & Autocomplete |
 | Created | 2026-05-10 |
-| Last updated | 2026-05-10 |
+| Last updated | 2026-05-11 |
+| Approved by | Yevhenii Dehtiar |
+| Approved on | 2026-05-11 |
 
 ---
 
@@ -213,9 +215,18 @@ want the legacy select can set `use_autocomplete_widget=False`.
 
 ## Open Questions
 
-- [ ] Should `relation_display` accept a callable in addition to a format string? Proposal: yes — `str | Callable[[Any], str]`. Format strings cover 80% of cases; callables let consumers reach into computed properties.
-- [ ] Where does the popup modal live in the DOM? Proposal: a single `<div id="ha-popup-root">` added once to `base.html`. HTMX swaps the modal contents in/out; close via `hx-on::after-request="this.innerHTML=''"`.
-- [ ] Should dependent filtering support more than one parent (`depends_on: ["a", "b"]`)? Proposal: defer; if needed, a follow-up extends `depends_on` to accept a list without breaking the single-string form.
+All open questions resolved at approval (2026-05-11):
+
+- [x] `relation_display` accepts `str | Callable[[Any], str]`. Format strings
+  remain the recommended path; callables are an escape hatch for computed
+  properties.
+- [x] Single `<div id="ha-popup-root">` slot added once to `base.html`. HTMX
+  swaps the modal contents in/out; close via
+  `hx-on::after-request="this.innerHTML=''"`. Per-widget popup containers
+  rejected — one slot keeps DOM predictable.
+- [x] Multi-parent `depends_on: list[str]` deferred. v0.5.5 ships
+  `depends_on: str` only. If needed later, the field widens to accept a list
+  without breaking the single-string form.
 
 ## Decision Log
 
@@ -226,3 +237,6 @@ want the legacy select can set `use_autocomplete_widget=False`.
 | Format-string `relation_display` (not full Jinja) | Format strings are safe by default and trivially serialisable; full Jinja would invite XSS via untrusted attribute access | `Template(...)` per relation; callable-only |
 | Default `use_autocomplete_widget=True` | New widget is a strict superset; consumers benefit immediately | Default off — would mean v0.5.5 ships dormant |
 | Popup uses `HX-Trigger` event, not `HX-Location` | Event carries the structured payload (id + label); page must not navigate away from the parent form | `HX-Location` (loses parent form state); inline `Set-Cookie` (fragile) |
+| `relation_display` accepts `str | Callable[[Any], str]` (approved) | Format strings cover the common case; callables let consumers reach computed properties without subclassing | Format strings only (limiting); callables only (no quick path) |
+| Single `<div id="ha-popup-root">` in `base.html` (approved) | One slot, predictable target | Per-widget containers (more DOM, no win); Alpine modal store (adds dep) |
+| Defer multi-parent `depends_on` (approved) | Single string covers the qualification check; field can widen later without breaking change | Build multi-parent in v0.5.5 (larger surface for limited gain) |
