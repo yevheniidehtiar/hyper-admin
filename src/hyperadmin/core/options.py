@@ -1,11 +1,34 @@
 from __future__ import annotations
 
+from collections.abc import Callable
+from typing import Any
+
 from pydantic import BaseModel, ConfigDict, Field
 
 from hyperadmin.core.auth import ObjectPermissionChecker
 from hyperadmin.core.fieldsets import FieldsetSpec
 from hyperadmin.core.inlines import InlineModelSpec
 from hyperadmin.core.layouts import FormLayout
+
+
+class RelationDependency(BaseModel):
+    """Declarative cascading-select wiring for a FK/M2M autocomplete widget.
+
+    See ``docs/specs/htmx-autocomplete.md``. When set on
+    :class:`AdminOptions.relation_filters`, the widget for the keyed child
+    field forwards ``depends_on``'s current value via ``hx-include`` so that
+    its options narrow against the parent's selection.
+
+    Args:
+        depends_on: Name of the parent field on the same form. Validated
+            against the bound model via :meth:`AdminOptions.validate_against_model`.
+        placeholder: Hint shown when the parent has no value yet.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    depends_on: str
+    placeholder: str | None = None
 
 
 class AdminOptions(BaseModel):
@@ -130,3 +153,66 @@ class AdminOptions(BaseModel):
     declaring it here lets model registrations adopt object-level checks ahead
     of the wiring.
     """
+    relation_filters: dict[str, RelationDependency] | None = None
+    """Declarative dependent-filtering for FK/M2M autocomplete widgets.
+
+    Keys are child field names; values describe which parent field on the
+    same form the child depends on. The widget for each keyed child
+    forwards the parent's value via ``hx-include`` so the dropdown narrows
+    automatically. See ``docs/specs/htmx-autocomplete.md``.
+
+    Example:
+        ```python
+        AdminOptions(
+            relation_filters={
+                "variant_id": RelationDependency(depends_on="supplier_id"),
+            }
+        )
+        ```
+    """
+    relation_display: dict[str, str | Callable[[Any], str]] | None = None
+    """Per-relation option-label rendering.
+
+    Maps a FK/M2M field name to either a Python format string or a callable
+    that receives the related instance and returns its display label. Format
+    strings are the recommended path; callables are an escape hatch for
+    computed properties unreachable via ``getattr``.
+
+    Example:
+        ```python
+        AdminOptions(relation_display={"supplier_id": "{name} — {city}"})
+        ```
+    """
+    use_autocomplete_widget: bool = True
+    """Whether FK/M2M fields render via :class:`AutocompleteWidget`.
+
+    Defaults to ``True``: the new widget is a strict superset of the legacy
+    ``<select>`` rendering. Set to ``False`` to opt back into the legacy
+    widget on a per-model basis.
+    """
+
+    def validate_against_model(self, model: type) -> None:
+        """Validate options that reference field names against a concrete model.
+
+        Called by the registry when the options are bound to ``model``. Raises
+        :class:`ValueError` if any ``relation_filters[child].depends_on``
+        references a field that does not exist on the model.
+
+        Args:
+            model: The SQLModel / Pydantic class these options are bound to.
+
+        Raises:
+            ValueError: If a referenced field name does not exist on the model.
+        """
+        if not self.relation_filters:
+            return
+
+        field_names = set(getattr(model, "model_fields", {}).keys()) | {
+            attr for attr in dir(model) if not attr.startswith("_")
+        }
+        for child, dep in self.relation_filters.items():
+            if dep.depends_on not in field_names:
+                raise ValueError(
+                    f"relation_filters[{child!r}].depends_on={dep.depends_on!r} "
+                    f"not in form fields of {model.__name__}"
+                )
