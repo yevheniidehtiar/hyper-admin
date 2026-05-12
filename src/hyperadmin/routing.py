@@ -151,6 +151,14 @@ def create_admin_router(  # noqa: PLR0913
         name=f"{model_name}-choices",
     )
 
+    if options.can_create:
+        router.add_api_route(
+            f"{prefix}/create-popup",
+            view.create_popup_view,
+            methods=["GET", "POST"],
+            name=f"{model_name}-create-popup",
+        )
+
     if options.inlines:
         router.add_api_route(
             f"{prefix}/inline/{{inline_prefix}}/add-row",
