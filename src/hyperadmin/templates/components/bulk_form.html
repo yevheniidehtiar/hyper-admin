@@ -1,0 +1,43 @@
+{#- Parameter-collection form for a bulk action (H3, v0.5.5).
+
+    Context:
+      - action: ActionDef (has .name, .label, .form)
+      - ids: list[int] — preserved as hidden inputs
+      - fields: list[dict(name,label,required,input_type,errors)] — built from action.form
+      - confirm_url: URL of the /bulk/confirm endpoint
+-#}
+<form method="post" action="{{ confirm_url }}" data-testid="bulk-form"
+      class="ha-bulk-form">
+  <h2 class="ha-bulk-form__title">{{ action.label }}</h2>
+  <p class="ha-bulk-form__lede">
+    {{ _("This action will run on") }} <strong>{{ ids|length }}</strong>
+    {{ _("selected row(s)") }}.
+  </p>
+
+  {% for pk in ids -%}
+  <input type="hidden" name="ids" value="{{ pk }}" />
+  {%- endfor %}
+
+  {% for field in fields %}
+  <div class="ha-form-field" data-testid="bulk-form-field-{{ field.name }}">
+    <label for="bulk-{{ field.name }}">{{ field.label }}{% if field.required %} *{% endif %}</label>
+    <input id="bulk-{{ field.name }}"
+           name="{{ field.name }}"
+           type="{{ field.input_type }}"
+           {% if field.input_type == 'number' %}step="any"{% endif %}
+           class="ha-input"
+           aria-invalid="{{ 'true' if field.errors else 'false' }}" />
+    {% if field.errors %}
+    <ul class="ha-field-errors" aria-live="polite"
+        data-testid="bulk-form-{{ field.name }}-errors">
+      {% for e in field.errors %}<li>{{ e }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+  </div>
+  {% endfor %}
+
+  <div class="ha-bulk-form__actions">
+    <button type="submit" class="ha-btn ha-btn-primary"
+            data-testid="bulk-confirm-btn">{{ _("Run") }}</button>
+  </div>
+</form>

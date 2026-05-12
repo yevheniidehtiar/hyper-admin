@@ -166,6 +166,19 @@ def create_admin_router(  # noqa: PLR0913
             methods=["POST"],
             name=f"{model_name}-action",
         )
+        if any(a.bulk for a in actions):
+            router.add_api_route(
+                f"{prefix}/actions/{{action_name}}/bulk",
+                view.run_bulk_action,
+                methods=["POST"],
+                name=f"{model_name}-bulk-action",
+            )
+            router.add_api_route(
+                f"{prefix}/actions/{{action_name}}/bulk/confirm",
+                view.confirm_bulk_action,
+                methods=["POST"],
+                name=f"{model_name}-bulk-action-confirm",
+            )
 
     if storage:
         router.add_api_route(
