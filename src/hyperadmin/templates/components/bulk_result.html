@@ -1,0 +1,38 @@
+{#- Per-row result page for a completed bulk action (H3, v0.5.5).
+
+    Context:
+      - action: ActionDef
+      - outcomes: list[BulkRowResult]
+      - bulk_endpoint_url: URL of the /bulk endpoint (for "Retry failures")
+      - failed_ids: list[int] — non-"ok" outcome ids
+-#}
+<section class="ha-bulk-result" data-testid="bulk-result">
+  <h2 class="ha-bulk-result__title">{{ action.label }} — {{ _("Results") }}</h2>
+
+  <table class="ha-bulk-result__table">
+    <thead>
+      <tr><th>{{ _("ID") }}</th><th>{{ _("Status") }}</th><th>{{ _("Detail") }}</th></tr>
+    </thead>
+    <tbody>
+      {% for outcome in outcomes %}
+      <tr data-testid="bulk-result-row">
+        <td>{{ outcome.id }}</td>
+        <td>
+          <span class="ha-bulk-status ha-bulk-status--{{ outcome.status }}"
+                data-testid="bulk-result-status-{{ outcome.id }}">{{ outcome.status }}</span>
+        </td>
+        <td>{{ outcome.detail or "" }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  {% if failed_ids %}
+  <form method="post" action="{{ bulk_endpoint_url }}"
+        data-testid="bulk-retry-form" class="ha-bulk-retry">
+    {% for pk in failed_ids %}<input type="hidden" name="ids" value="{{ pk }}" />{% endfor %}
+    <button type="submit" class="ha-btn ha-btn-secondary"
+            data-testid="bulk-retry-link">{{ _("Retry failures") }}</button>
+  </form>
+  {% endif %}
+</section>
