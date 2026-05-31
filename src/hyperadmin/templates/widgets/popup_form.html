@@ -1,0 +1,43 @@
+{#- Inline-create popup form for FK/M2M autocomplete (H6, v0.5.5).
+
+    Loaded into <div id="ha-popup-root"> via HTMX. On submit, the same URL is
+    POSTed and either returns this fragment again (validation errors) or an
+    empty 200 carrying an `HX-Trigger: hyperadminPopupCreated` header that the
+    widget JS listens for.
+
+    Context:
+      - form: PydanticForm — bound, with .errors populated on re-render
+      - target: str — the parent form field that triggered the popup
+      - post_url: URL of the popup endpoint
+      - model_name: str — used for the dialog heading
+-#}
+<form method="post" action="{{ post_url }}" data-testid="popup-form"
+      class="ha-popup-form" hx-post="{{ post_url }}" hx-target="this" hx-swap="outerHTML">
+  <h2 class="ha-popup-form__title">{{ _("Create") }} {{ model_name }}</h2>
+  <input type="hidden" name="target" value="{{ target }}" />
+
+  {% for field in form.fields %}
+  <div class="ha-form-field" data-testid="popup-form-field-{{ field.name }}">
+    <label for="popup-{{ field.name }}">
+      {{ field.label }}{% if field.required %} *{% endif %}
+    </label>
+    <input id="popup-{{ field.name }}"
+           name="{{ field.name }}"
+           type="{{ field.widget.input_type }}"
+           value="{{ field.value or '' }}"
+           class="ha-input"
+           aria-invalid="{{ 'true' if field.errors else 'false' }}" />
+    {% if field.errors %}
+    <ul class="ha-field-errors" aria-live="polite"
+        data-testid="popup-form-{{ field.name }}-errors">
+      {% for e in field.errors %}<li>{{ e }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+  </div>
+  {% endfor %}
+
+  <div class="ha-popup-form__actions">
+    <button type="submit" class="ha-btn ha-btn-primary"
+            data-testid="popup-form-submit">{{ _("Save") }}</button>
+  </div>
+</form>

@@ -924,6 +924,165 @@ class DynamicModelView:
         html = template.render(context)
         return Response(content=html, media_type="text/html")
 
+    def _resolve_relation_label(self, instance: Any, target_field: str) -> str:
+        """Render the option label for ``instance`` per ``AdminOptions.relation_display``.
+
+        Falls back to ``str(instance)`` when no template / callable is configured
+        or when rendering raises. The view never crashes a popup response over a
+        cosmetic label.
+        """
+        relation_display = getattr(self.options, "relation_display", None) or {}
+        template = relation_display.get(target_field)
+        if template is None:
+            return str(instance)
+        if callable(template):
+            try:
+                return str(template(instance))
+            except Exception:
+                logger.warning(
+                    "relation_display callable for %r raised; falling back to str()",
+                    target_field,
+                )
+                return str(instance)
+        try:
+            return template.format(
+                **{name: getattr(instance, name, "") for name in instance.model_fields}
+            )
+        except Exception:
+            logger.warning(
+                "relation_display template %r raised; falling back to str()", target_field
+            )
+            return str(instance)
+
+    async def create_popup_view(self, request: Request) -> Response:
+        """Inline-create endpoint for FK/M2M autocomplete widgets.
+
+        GET  /{model}/create-popup?target=<field>
+            Renders the popup form fragment for the modal.
+        POST /{model}/create-popup
+            Creates the row. On success returns 200 with an empty body and an
+            ``HX-Trigger`` header carrying
+            ``{"hyperadminPopupCreated": {"target": <field>, "id": <pk>, "label": <display>}}``
+            so the parent widget can insert the new option and close the modal.
+
+        Validation failures keep the modal open by re-rendering the form
+        fragment with field-level errors. Permission failures propagate through
+        :meth:`_check_permission`.
+        """
+        await self._check_permission(request, "add")
+
+        if request.method == "GET":
+            target = request.query_params.get("target")
+            if not target:
+                raise HTTPException(status_code=400, detail="target query param required")
+            return self._render_popup_form(request, target=target)
+
+        form_data = await request.form()
+        target_value = form_data.get("target")
+        if not target_value or not isinstance(target_value, str):
+            raise HTTPException(status_code=400, detail="target form field required")
+        target = target_value
+
+        create_include = self.form_include
+        if create_include and self.form_create_exclude:
+            create_include = [f for f in create_include if f not in self.form_create_exclude]
+        relation_widgets = await self._build_relation_widgets(field_names=create_include or [])
+        form = PydanticForm(
+            self.model,
+            widgets=relation_widgets,
+            include=create_include,
+            exclude=self.form_create_exclude,
+            fieldsets=getattr(self.options, "fieldsets", None) or None,
+            form_layout=getattr(self.options, "form_layout", None),
+            form_fields=getattr(self.options, "form_fields", None) or None,
+        )
+        data = self._extract_form_data(form_data, form)
+        data.pop("target", None)
+        file_uploads = self._pop_file_uploads(data, form)
+        form.bind(data)
+        instance, errs = form.validate(data)
+
+        if errs or not instance:
+            legacy_errs = {k: v[0] for k, v in (errs or {}).items() if v}
+            return self._render_popup_form(
+                request, target=str(target), values=data, errors=legacy_errs, status_code=200
+            )
+
+        try:
+            create_data = instance.model_dump()
+            create_data.update(file_uploads)
+            new_item = await self.adapter.create(data=create_data)
+        except IntegrityError as exc:
+            logger.exception("IntegrityError during popup create")
+            field_errors = _integrity_error_to_field_errors(exc)
+            return self._render_popup_form(
+                request,
+                target=str(target),
+                values=data,
+                errors=field_errors,
+                status_code=200,
+            )
+
+        new_pk = getattr(new_item, "id", None)
+        label = self._resolve_relation_label(new_item, str(target))
+        payload = {
+            "hyperadminPopupCreated": {
+                "target": str(target),
+                "id": new_pk,
+                "label": label,
+            }
+        }
+        import json as _json  # noqa: PLC0415
+
+        return Response(
+            content="",
+            status_code=200,
+            headers={"HX-Trigger": _json.dumps(payload)},
+        )
+
+    def _render_popup_form(
+        self,
+        request: Request,
+        target: str,
+        values: dict[str, Any] | None = None,
+        errors: dict[str, str] | None = None,
+        status_code: int = 200,
+    ) -> Response:
+        """Render the popup-form fragment used both for initial GET and error re-renders."""
+        create_include = self.form_include
+        if create_include and self.form_create_exclude:
+            create_include = [f for f in create_include if f not in self.form_create_exclude]
+        form = PydanticForm(
+            self.model,
+            include=create_include,
+            exclude=self.form_create_exclude,
+            initial=values or {},
+            fieldsets=getattr(self.options, "fieldsets", None) or None,
+            form_layout=getattr(self.options, "form_layout", None),
+            form_fields=getattr(self.options, "form_fields", None) or None,
+        )
+        if errors:
+            form.bind(values or {})
+            norm = {k: [v] for k, v in errors.items()}
+            form.errors = norm
+            for fld in form.fields:
+                fld.errors = norm.get(fld.name)
+        context = {
+            "request": request,
+            "model_name": self.model.__name__,
+            "form": form,
+            "target": target,
+            "values": values or {},
+            "errors": errors or {},
+            "post_url": request.url_for(f"{self._model_name_lower}-create-popup"),
+        }
+        return self.templates.TemplateResponse(
+            request,
+            "widgets/popup_form.html",
+            context,
+            status_code=status_code,
+        )
+
     async def upload_file_view(
         self,
         request: Request,
