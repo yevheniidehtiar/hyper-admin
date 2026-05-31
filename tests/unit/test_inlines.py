@@ -332,6 +332,30 @@ class TestInlineFormRow:
         row = InlineFormRow(index=1, fields=[], pk=42)
         assert row.pk == 42
 
+    def test_has_errors_false_when_all_fields_clean(self) -> None:
+        spec = InlineModelSpec(model=ChildModel, fk_field="parent_id")
+        fs = InlineFormset(spec=spec)
+        row = fs._build_row(0)
+        for field in row.fields:
+            field.errors = None
+        assert row.has_errors is False
+
+    def test_has_errors_true_when_any_field_has_errors(self) -> None:
+        spec = InlineModelSpec(model=ChildModel, fk_field="parent_id")
+        fs = InlineFormset(spec=spec)
+        row = fs._build_row(0)
+        # Mark exactly one field as carrying a validation error.
+        row.fields[0].errors = ["Required"]
+        assert row.has_errors is True
+
+    def test_has_errors_false_when_errors_list_is_empty(self) -> None:
+        spec = InlineModelSpec(model=ChildModel, fk_field="parent_id")
+        fs = InlineFormset(spec=spec)
+        row = fs._build_row(0)
+        for field in row.fields:
+            field.errors = []  # falsy — explicit empty list
+        assert row.has_errors is False
+
 
 # ---------------------------------------------------------------------------
 # InlineFormset with ItemModel (optional fields)

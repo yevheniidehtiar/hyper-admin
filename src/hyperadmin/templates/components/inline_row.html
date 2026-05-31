@@ -3,8 +3,9 @@
       - row: InlineFormRow instance
       - inline: InlineFormset instance
 -#}
-<tr class="ha-inline-row{% if row.delete %} ha-inline-row-deleted{% endif %}"
+<tr class="ha-inline-row{% if row.delete %} ha-inline-row-deleted{% endif %}{% if row.has_errors %} ha-inline-row-error{% endif %}"
     data-testid="inline-{{ inline.prefix }}-row-{{ row.index }}"
+    {% if row.has_errors %}aria-invalid="true"{% endif %}
     id="inline-{{ inline.prefix }}-row-{{ row.index }}">
     {%- if row.pk -%}
     <input type="hidden" name="{{ inline.prefix }}-{{ row.index }}-pk" value="{{ row.pk }}" />
@@ -29,6 +30,9 @@
     </td>
     {%- endfor -%}
     <td class="ha-inline-actions" data-label="{{ _('Actions') }}">
+        {%- if row.has_errors -%}
+        <span hidden aria-hidden="true" data-testid="inline-{{ inline.prefix }}-row-{{ row.index }}-error"></span>
+        {%- endif -%}
         <button type="button"
                 class="ha-btn ha-btn-danger ha-btn-sm ha-inline-remove-btn"
                 data-testid="inline-{{ inline.prefix }}-remove-{{ row.index }}"

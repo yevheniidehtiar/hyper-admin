@@ -537,6 +537,11 @@ class InlineFormRow:
     pk: int | None = None
     delete: bool = False
 
+    @property
+    def has_errors(self) -> bool:
+        """Whether any field on this row carries a validation error."""
+        return any(field.errors for field in self.fields)
+
 
 @dataclass
 class InlineFormset:
