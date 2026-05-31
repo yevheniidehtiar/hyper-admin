@@ -2,11 +2,17 @@
 
 from __future__ import annotations
 
+import inspect
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from collections.abc import Callable
+
+    from pydantic import BaseModel
+
+
+_UNSET: Any = object()
 
 
 @dataclass(frozen=True, slots=True)
@@ -20,51 +26,88 @@ class ActionDef:
         name: Unique slug for the action, derived from the decorated function's name.
         label: Human-readable label shown on the action button.
         handler: The unbound function (method) that implements the action.
-        requires_selection: Reserved for future bulk-action support. When ``True``
-            the action requires one or more items to be selected before running.
+        requires_selection: When ``True`` the action requires one or more items
+            to be selected before running. Auto-set to ``True`` for ``bulk=True``
+            actions unless explicitly overridden.
+        bulk: When ``True``, the action operates over multiple selected rows
+            via the bulk endpoint at ``POST /{model}/actions/{name}/bulk``.
+            The handler signature must accept a ``params`` keyword-only argument.
+        form: Optional Pydantic model collected from the operator before the
+            bulk handler runs. Only valid when ``bulk=True``.
     """
 
     name: str
     label: str
     handler: Callable[..., Any]
     requires_selection: bool = False
+    bulk: bool = False
+    form: type[BaseModel] | None = None
 
 
 def action(
     label: str,
     *,
-    requires_selection: bool = False,
+    requires_selection: bool = _UNSET,
+    bulk: bool = False,
+    form: type[BaseModel] | None = None,
 ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
     """Decorator that marks a :class:`~hyperadmin.core.model.ModelAdmin` method as a custom action.
 
-    The decorated method must be ``async`` and accept ``(self, request, item_id)`` as
-    its signature.  It may return a :class:`starlette.responses.Response` to override
-    the default post-action redirect, or return ``None`` to accept the default
-    behaviour (HTMX redirect to the model list view).
+    For single-record actions (``bulk=False``, default) the decorated method must
+    be ``async`` and accept ``(self, request, item_id)``.
+
+    For bulk actions (``bulk=True``) the handler must additionally accept a
+    keyword-only ``params`` argument, which is the validated Pydantic instance
+    when ``form`` is set, or ``None`` otherwise. ``bulk=True`` implies
+    ``requires_selection=True`` unless the caller passes
+    ``requires_selection=False`` explicitly (e.g. for "operate on all matching
+    rows" actions).
 
     Example::
 
         from hyperadmin.core.actions import action
 
 
-        class UserAdmin(ModelAdmin):
-            @action(label="Deactivate")
-            async def deactivate(self, request, item_id):
-                user = await self.adapter.get(pk=item_id)
-                if user:
-                    await self.adapter.update(user, {"is_active": False})
+        class OrderAdmin(ModelAdmin):
+            @action(label="Archive", bulk=True)
+            async def archive(self, request, item_id, *, params=None): ...
 
     Args:
         label: Human-readable label shown on the action button.
-        requires_selection: Reserved for future bulk-action support.
+        requires_selection: Override the auto-derived selection requirement.
+        bulk: Whether this is a multi-row action invoked from the list view.
+        form: Pydantic model used to collect parameters before the handler runs.
+
+    Raises:
+        TypeError: If ``form`` is set without ``bulk=True``, or if a
+            ``bulk=True`` handler signature does not accept a ``params``
+            keyword-only argument.
     """
 
+    if form is not None and not bulk:
+        raise TypeError("form= requires bulk=True")
+
+    resolved_requires_selection: bool = (
+        bool(bulk) if requires_selection is _UNSET else bool(requires_selection)
+    )
+
     def decorator(fn: Callable[..., Any]) -> Callable[..., Any]:
+        if bulk:
+            sig = inspect.signature(fn)
+            params_kw = sig.parameters.get("params")
+            if params_kw is None or params_kw.kind is not inspect.Parameter.KEYWORD_ONLY:
+                raise TypeError(
+                    f"bulk=True handler {fn.__name__!r} must accept a 'params' "
+                    "keyword-only argument"
+                )
+
         fn._action_def = ActionDef(  # type: ignore[attr-defined]
             name=fn.__name__,
             label=label,
             handler=fn,
-            requires_selection=requires_selection,
+            requires_selection=resolved_requires_selection,
+            bulk=bulk,
+            form=form,
         )
         return fn
 

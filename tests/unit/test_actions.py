@@ -3,6 +3,7 @@
 import dataclasses
 
 import pytest
+from pydantic import BaseModel
 
 from hyperadmin.core.actions import ActionDef, action, collect_actions
 
@@ -150,3 +151,93 @@ def test_collect_actions_returns_action_def_instances():
 
     result = collect_actions(Admin)
     assert all(isinstance(a, ActionDef) for a in result)
+
+
+# ---------------------------------------------------------------------------
+# Bulk action support (v0.5.5)
+# ---------------------------------------------------------------------------
+
+
+class _ReassignParams(BaseModel):
+    operator: int
+
+
+def test_action_decorator_defaults_bulk_and_form():
+    @action(label="X")
+    async def fn(self, request, item_id):
+        pass
+
+    assert fn._action_def.bulk is False
+    assert fn._action_def.form is None
+
+
+def test_bulk_action_requires_params_kwarg():
+    @action(label="Archive", bulk=True)
+    async def archive(self, request, item_id, *, params=None):
+        pass
+
+    assert archive._action_def.bulk is True
+    assert archive._action_def.form is None
+
+
+def test_bulk_action_implies_requires_selection_true():
+    @action(label="Archive", bulk=True)
+    async def archive(self, request, item_id, *, params=None):
+        pass
+
+    assert archive._action_def.requires_selection is True
+
+
+def test_bulk_action_explicit_requires_selection_false_opt_out():
+    """`bulk=True` actions can opt out of the auto-selection requirement."""
+
+    @action(label="Archive overdue", bulk=True, requires_selection=False)
+    async def archive_overdue(self, request, item_id, *, params=None):
+        pass
+
+    assert archive_overdue._action_def.bulk is True
+    assert archive_overdue._action_def.requires_selection is False
+
+
+def test_bulk_action_with_form_attaches_pydantic_model():
+    @action(label="Reassign", bulk=True, form=_ReassignParams)
+    async def reassign(self, request, item_id, *, params=None):
+        pass
+
+    assert reassign._action_def.form is _ReassignParams
+
+
+def test_form_without_bulk_raises_typeerror():
+    with pytest.raises(TypeError, match="form= requires bulk=True"):
+
+        @action(label="Reassign", form=_ReassignParams)
+        async def reassign(self, request, item_id):
+            pass
+
+
+def test_bulk_action_handler_without_params_raises_typeerror():
+    with pytest.raises(TypeError, match="must accept a 'params' keyword-only argument"):
+
+        @action(label="Archive", bulk=True)
+        async def archive(self, request, item_id):  # missing *, params=None
+            pass
+
+
+def test_bulk_action_with_positional_params_raises_typeerror():
+    """`params` must be keyword-only; positional `params` is rejected."""
+    with pytest.raises(TypeError, match="must accept a 'params' keyword-only argument"):
+
+        @action(label="Archive", bulk=True)
+        async def archive(self, request, item_id, params=None):  # positional, not kw-only
+            pass
+
+
+def test_actiondef_bulk_and_form_defaults():
+    """`ActionDef` direct construction preserves backward-compatible defaults."""
+
+    async def handler(self, request, item_id):
+        pass
+
+    ad = ActionDef(name="x", label="X", handler=handler)
+    assert ad.bulk is False
+    assert ad.form is None
