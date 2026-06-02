@@ -28,6 +28,9 @@
     <a href="LICENSE">
       <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License">
     </a>
+    <a href="https://codespaces.new/yevheniidehtiar/hyper-admin?devcontainer_path=.devcontainer%2Fdevcontainer.json">
+      <img src="https://github.com/codespaces/badge.svg" alt="Open in GitHub Codespaces" height="20">
+    </a>
   </p>
 
   > **Alpha** — HyperAdmin is under active development. APIs may change between releases.
