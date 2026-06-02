@@ -2,7 +2,7 @@
 type: story
 id: 9KevfLdaLuOv
 title: "test: unit tests for progress reporting and resumable seeding"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -20,7 +20,7 @@ github:
   last_sync_hash: sha256:7cab3e084fb4aadcbbc6131afbab9144adf59ded90e350d0a969ec26cf38c673
   synced_at: 2026-04-07T17:23:23.790Z
 created_at: 2026-03-27T01:06:36Z
-updated_at: 2026-03-29T18:26:08Z
+updated_at: 2026-06-03T00:00:00Z
 ---
 
 ## Context

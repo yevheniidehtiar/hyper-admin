@@ -2,7 +2,7 @@
 type: epic
 id: SnjolGjNN_F7
 title: "epic: Synthetic Data Generator (Faker + bulk inserts for 10M+ records)"
-status: todo
+status: done
 priority: medium
 owner: null
 labels:
@@ -17,7 +17,7 @@ github:
   last_sync_hash: sha256:932a5b926b77921edf3beb4aadd909db1e5d06ff09a7d6a77c876c8768367f60
   synced_at: 2026-04-07T17:23:23.790Z
 created_at: 2026-03-27T01:05:09Z
-updated_at: 2026-03-27T01:09:59Z
+updated_at: 2026-06-03T00:00:00Z
 ---
 
 ## Overview

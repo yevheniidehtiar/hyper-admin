@@ -2,7 +2,7 @@
 type: story
 id: _xUWyXD1XaQr
 title: "feat(loadtest): Rich progress bar and resumable seeding via high-water mark"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -20,7 +20,7 @@ github:
   last_sync_hash: sha256:cf58b7c7bff78ad5b56f194050590b9d91af857b903446d6e79921812271a132
   synced_at: 2026-04-07T17:23:23.790Z
 created_at: 2026-03-27T01:06:42Z
-updated_at: 2026-03-29T18:26:07Z
+updated_at: 2026-06-03T00:00:00Z
 ---
 
 ## Context

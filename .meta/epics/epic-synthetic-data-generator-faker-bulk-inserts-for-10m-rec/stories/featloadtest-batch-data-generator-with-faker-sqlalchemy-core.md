@@ -2,7 +2,7 @@
 type: story
 id: jRREDrVrVQqp
 title: "feat(loadtest): batch data generator with Faker + SQLAlchemy Core bulk inserts"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -20,7 +20,7 @@ github:
   last_sync_hash: sha256:e6db30603e65fa33fccd772104dfc0eda2501b8e69643cc197ccb576c0afc45e
   synced_at: 2026-04-07T17:23:23.790Z
 created_at: 2026-03-27T01:05:38Z
-updated_at: 2026-03-29T18:26:11Z
+updated_at: 2026-06-03T00:00:00Z
 ---
 
 ## Context

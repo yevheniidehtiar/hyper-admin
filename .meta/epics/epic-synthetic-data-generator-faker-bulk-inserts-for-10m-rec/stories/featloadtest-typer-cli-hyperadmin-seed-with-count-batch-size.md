@@ -2,7 +2,7 @@
 type: story
 id: kanghFUxVhWJ
 title: "feat(loadtest): Typer CLI hyperadmin seed with --count, --batch-size, --database-url"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -20,7 +20,7 @@ github:
   last_sync_hash: sha256:32723b9be196185fc0a95005b9e8aad8cdbe9b3c17dafcd820013e3c2bbd4e7c
   synced_at: 2026-04-07T17:23:23.790Z
 created_at: 2026-03-27T01:06:56Z
-updated_at: 2026-03-29T18:26:06Z
+updated_at: 2026-06-03T00:00:00Z
 ---
 
 ## Context
