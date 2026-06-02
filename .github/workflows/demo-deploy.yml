@@ -1,0 +1,62 @@
+name: Deploy Demo
+
+# Builds the examples/erp ERP demo image and deploys it to Fly.io.
+#
+# Triggers:
+#   - workflow_dispatch: manual deploy from the Actions tab
+#   - push tags matching 'demo-*': e.g. `git tag demo-2026-06-02 && git push --tags`
+#
+# Required secrets (a maintainer must set these for deployment to actually run):
+#   - FLY_API_TOKEN          Fly.io deploy token (flyctl auth token / fly tokens create deploy)
+#   - HYPERADMIN_SECRET_KEY  Session signing key for the demo app
+#
+# Deployment is inert until FLY_API_TOKEN is configured: the deploy step
+# detects the missing secret and no-ops cleanly instead of failing.
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "demo-*"
+
+jobs:
+  deploy:
+    name: Build & deploy ERP demo
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Build the image locally first so a broken Dockerfile fails the run
+      # regardless of whether deploy secrets are configured.
+      - name: Build demo image
+        run: |
+          docker build \
+            -f examples/erp/Dockerfile \
+            -t hyperadmin-demo:${{ github.sha }} \
+            .
+
+      - name: Set up flyctl
+        uses: superfly/flyctl-actions/setup-flyctl@master
+
+      - name: Deploy to Fly.io
+        env:
+          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+          HYPERADMIN_SECRET_KEY: ${{ secrets.HYPERADMIN_SECRET_KEY }}
+        run: |
+          if [ -z "${FLY_API_TOKEN}" ]; then
+            echo "::warning::FLY_API_TOKEN is not set — skipping deploy (no-op)."
+            echo "Set the FLY_API_TOKEN repository secret to enable the live demo deployment."
+            exit 0
+          fi
+
+          # Push the session secret as a Fly secret if provided (best effort).
+          if [ -n "${HYPERADMIN_SECRET_KEY}" ]; then
+            flyctl secrets set "HYPERADMIN_SECRET_KEY=${HYPERADMIN_SECRET_KEY}" \
+              --app hyperadmin-demo --stage || true
+          fi
+
+          # Run from the repo root so the Docker build context includes
+          # src/, pyproject.toml, and examples/erp/ (see examples/erp/Dockerfile).
+          flyctl deploy --remote-only --config examples/erp/fly.toml --dockerfile examples/erp/Dockerfile .

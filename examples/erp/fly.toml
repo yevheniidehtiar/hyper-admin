@@ -1,0 +1,29 @@
+# Fly.io configuration for the HyperAdmin ERP demo.
+#
+# This deploys the runnable example in examples/erp/ as a live, hosted demo.
+# The image is built from examples/erp/Dockerfile (build context = repo root,
+# so it can copy src/, pyproject.toml, and examples/erp/).
+#
+# Deployment is driven by .github/workflows/demo-deploy.yml and only runs
+# when the FLY_API_TOKEN secret is configured. See docs/demo.md.
+
+app = "hyperadmin-demo"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  ENVIRONMENT = "production"
+
+[http_service]
+  # main.py runs the app on port 8000 (EXPOSE 8000, --host 0.0.0.0).
+  internal_port = 8000
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

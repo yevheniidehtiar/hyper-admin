@@ -62,6 +62,7 @@ nav:
       - Getting Started: getting-started.md
       - Tutorial: tutorial.md
       - File Uploads: guides/file-uploads.md
+      - Live Demo: demo.md
       - Examples:
           - Overview: examples.md
           - ERP (Bookkeeping): examples/erp.md
