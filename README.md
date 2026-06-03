@@ -6,6 +6,9 @@
   <p><strong>The Django-admin experience for FastAPI — generated straight from your Pydantic models.</strong></p>
 
   <p>
+    <a href="https://github.com/yevheniidehtiar/hyper-admin/actions/workflows/ci.yml">
+      <img src="https://github.com/yevheniidehtiar/hyper-admin/actions/workflows/ci.yml/badge.svg?branch=develop" alt="CI">
+    </a>
     <a href="https://yevheniidehtiar.github.io/hyper-admin/">
       <img src="https://github.com/yevheniidehtiar/hyper-admin/actions/workflows/pages.yml/badge.svg?branch=develop" alt="Docs">
     </a>

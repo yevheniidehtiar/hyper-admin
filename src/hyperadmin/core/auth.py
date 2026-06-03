@@ -71,5 +71,5 @@ class DefaultObjectPermissionChecker:
     :class:`PermissionChecker` enforcement is unaffected.
     """
 
-    async def has_object_permission(self, user: Any, obj: Any, action: str) -> bool:
+    async def has_object_permission(self, user: Any, obj: Any, action: str) -> bool:  # noqa: ARG002
         return True

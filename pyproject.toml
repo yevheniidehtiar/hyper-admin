@@ -187,9 +187,14 @@ fixable = ["ALL"]
   "ARG002",   # unused method arguments (fixtures)
   "ARG005",   # unused lambda arguments (mock factories)
   "E402",     # module-level import not at top (test setup)
+  "N811",     # constant imported under a non-constant alias (avoids name clash)
   "PLC0415",  # import outside top-level (lazy imports in fixtures)
   "PLR0913",  # too many arguments (parametrized tests)
   "PLR2004",  # magic value comparisons (assert against literals)
+  "PT018",    # composite assertions (readable multi-condition asserts)
+  "PT019",    # underscore-prefixed fixture params (intentional naming)
+  "RUF002",   # ambiguous unicode in docstrings (× in i18n test data)
+  "RUF003",   # ambiguous unicode in comments (× in i18n test data)
   "RUF012",   # mutable class default (test helper classes)
   "S101",     # assert usage (tests must use assert)
   "S104",     # binding to all interfaces (test server fixtures)
@@ -197,9 +202,15 @@ fixable = ["ALL"]
   "S106",     # hardcoded credentials (test fixtures)
   "S110",     # try-except-pass (process cleanup in fixtures)
   "S603",     # subprocess without shell (test server fixtures)
+  "S701",     # jinja2 autoescape=False (test-only template rendering)
   "T20",      # print statements (test debugging output)
+  "TC001",    # test apps resolve FastAPI/Pydantic hints at runtime — keep runtime imports
+  "TC002",    # ditto (third-party, e.g. starlette Request in route signatures)
+  "TC003",    # ditto (stdlib, e.g. collections.abc / pathlib in annotated fixtures)
+  "W505",     # doc line too long (test docstrings)
 ]
-"src/hyperadmin/core/app.py" = ["PLC0415"]      # lazy imports to break circular deps
+"src/hyperadmin/core/app.py" = ["PLC0415", "PLR0913"]  # lazy imports; Admin() exposes many config knobs
+"src/hyperadmin/auth/views.py" = ["PLR0913"]     # auth view constructor wires many collaborators
 "src/hyperadmin/core/model.py" = ["E402"]        # late import to break circular deps
 "src/hyperadmin/core/registry.py" = ["PLC0415"]  # lazy imports to break circular deps
 "src/hyperadmin/routing.py" = ["PLC0415"]        # lazy imports to break circular deps
@@ -210,7 +221,9 @@ fixable = ["ALL"]
   "T20",      # print statements in examples
 ]
 "main.py" = ["S104"]  # binding to all interfaces (local dev entry point)
-"src/hyperadmin/core/options.py" = ["TC001"]  # Pydantic needs runtime access to field types
+"src/hyperadmin/core/options.py" = ["TC001", "TC003"]  # Pydantic needs runtime access to field types
+"src/hyperadmin/core/adapters.py" = ["TC003"]  # Callable used in runtime-evaluated type alias
+"src/hyperadmin/realtime/*.py" = ["TC001", "TC002", "TC003"]  # SSE/WS routes resolve Request/Settings hints at runtime
 "src/hyperadmin/views/forms.py" = ["PLR0913", "PLR2004"]  # complex constructors, index arithmetic
 "scripts/*.py" = [
   "ARG001",   # unused function arguments (callback signatures)

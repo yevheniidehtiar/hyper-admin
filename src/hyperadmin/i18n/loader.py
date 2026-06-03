@@ -33,8 +33,10 @@ DOMAIN = "messages"
 
 _warned_missing: set[str] = set()
 
+# NullTranslations is a stateless sentinel (pass-through gettext), so sharing one
+# instance as the ContextVar default across contexts is safe.
 _current_translations: contextvars.ContextVar[babel.support.NullTranslations] = (
-    contextvars.ContextVar("hyperadmin_translations", default=babel.support.NullTranslations())
+    contextvars.ContextVar("hyperadmin_translations", default=babel.support.NullTranslations())  # noqa: B039
 )
 
 
@@ -57,10 +59,9 @@ def load_translations(locale: str) -> babel.support.NullTranslations:
         log.warning("Failed to load translation catalog for %r: %s", locale, exc)
         return babel.support.NullTranslations()
 
-    if not isinstance(result, babel.support.Translations):
-        if locale not in _warned_missing:
-            log.warning("No translation catalog for locale %r; using msgid passthrough", locale)
-            _warned_missing.add(locale)
+    if not isinstance(result, babel.support.Translations) and locale not in _warned_missing:
+        log.warning("No translation catalog for locale %r; using msgid passthrough", locale)
+        _warned_missing.add(locale)
     return result
 
 

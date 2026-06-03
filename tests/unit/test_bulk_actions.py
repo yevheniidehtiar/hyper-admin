@@ -287,9 +287,7 @@ def test_bulk_object_permission_denial_surfaces_per_row():
 
     class _DenyForId2(DefaultObjectPermissionChecker):
         async def has_object_permission(self, user, obj, action):  # type: ignore[override]
-            if getattr(obj, "id", None) == 2 and action.startswith("action_"):
-                return False
-            return True
+            return not (getattr(obj, "id", None) == 2 and action.startswith("action_"))
 
     class _ScopedAdmin(ModelAdmin):
         adapter_class = SQLModelAdapter

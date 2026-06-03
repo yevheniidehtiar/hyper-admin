@@ -4,6 +4,7 @@ import os
 import re
 from collections.abc import Generator
 from contextlib import contextmanager
+from http import HTTPStatus
 from typing import TYPE_CHECKING, Any, Union, cast, get_args, get_origin
 
 from fastapi import HTTPException, Query, Request
@@ -1379,9 +1380,10 @@ class DynamicModelView:
         raw = form.getlist("ids") if hasattr(form, "getlist") else []
         parsed: list[int] = []
         for value in raw:
+            # Per-value tolerance: silently skip any id that isn't an integer.
             try:
                 parsed.append(int(value))
-            except (TypeError, ValueError):
+            except (TypeError, ValueError):  # noqa: PERF203
                 continue
         return parsed
 
@@ -1418,7 +1420,9 @@ class DynamicModelView:
             try:
                 await action_def.handler(self._admin_instance, request, item_id, params=params)
             except HTTPException as exc:
-                status: BulkRowStatus = "forbidden" if exc.status_code == 403 else "failed"
+                status: BulkRowStatus = (
+                    "forbidden" if exc.status_code == HTTPStatus.FORBIDDEN else "failed"
+                )
                 outcomes.append(BulkRowResult(id=item_id, status=status, detail=str(exc.detail)))
             except Exception as exc:
                 logger.warning(
@@ -1530,7 +1534,7 @@ class DynamicModelView:
             raise HTTPException(status_code=400, detail="Selection required")
 
         form_model = action_def.form
-        payload = {key: value for key, value in form.items() if key not in {"ids"}}
+        payload = {key: value for key, value in form.items() if key != "ids"}
         try:
             params = form_model(**payload)
         except ValidationError as exc:
