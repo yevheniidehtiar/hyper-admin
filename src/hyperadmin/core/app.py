@@ -291,6 +291,32 @@ class Admin:
         async def _drain_realtime() -> None:
             await registry.drain()
 
+        if settings.enable_test_endpoints:
+            from hyperadmin.realtime._debug import (
+                make_count_handler,
+                make_disconnect_all_handler,
+                make_disconnect_transport_handler,
+            )
+
+            self.router.add_api_route(
+                "/_test/realtime/count",
+                make_count_handler(registry),
+                methods=["GET"],
+                name="admin-realtime-test-count",
+            )
+            self.router.add_api_route(
+                "/_test/realtime/disconnect_all",
+                make_disconnect_all_handler(registry),
+                methods=["POST"],
+                name="admin-realtime-test-disconnect-all",
+            )
+            self.router.add_api_route(
+                "/_test/realtime/disconnect/{transport}",
+                make_disconnect_transport_handler(registry),
+                methods=["POST"],
+                name="admin-realtime-test-disconnect-transport",
+            )
+
     def _register_locale_route(self, path: str) -> None:
         """Register the POST /locale route for the locale switcher."""
         from starlette.requests import Request
