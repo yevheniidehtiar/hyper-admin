@@ -117,7 +117,7 @@ class ModelAdmin:
     def __init__(self, model: Any) -> None:
         self.model = model
 
-    def get_queryset(self, request: "Request | None" = None) -> dict[str, Any]:
+    def get_queryset(self, request: "Request | None" = None) -> dict[str, Any]:  # noqa: ARG002
         """Return additional equality filters merged into list/detail queries.
 
         Override in a subclass to implement row-level scoping at the
