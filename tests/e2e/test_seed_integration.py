@@ -13,7 +13,6 @@ import examples.erp.accounting.models
 import examples.erp.contacts.models
 import examples.erp.purchases.models
 import examples.erp.sales.models  # noqa: F401
-import pytest
 from sqlalchemy import MetaData, Table, create_engine, func, select
 from sqlmodel import SQLModel
 
@@ -123,13 +122,24 @@ def test_cli_seeds_into_sqlite(tmp_path):
     engine.dispose()
 
 
-@pytest.mark.anyio
-async def test_examples_bulk_seed_wrapper(tmp_path):
-    """The async ``bulk_seed_erp`` wrapper creates the schema and seeds via a worker thread."""
+def test_examples_bulk_seed_wrapper(tmp_path):
+    """The async ``bulk_seed_erp`` wrapper creates the schema and seeds via a worker thread.
+
+    Run synchronously in a dedicated thread (fresh event loop) rather than as an ``async def``
+    test: the e2e suite activates both pytest-asyncio (auto mode) and the anyio plugin, and a
+    plain coroutine test gets claimed by both runners, which collide on loop teardown with
+    "Cannot run the event loop while another loop is running". A sync test sidesteps both.
+    """
+    import asyncio
+    from concurrent.futures import ThreadPoolExecutor
+
     from examples.erp.seed import bulk_seed_erp
 
     url = f"sqlite:///{tmp_path / 'wrapped.db'}"
-    summary = await bulk_seed_erp(300, batch_size=100, database_url=url)
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        summary = executor.submit(
+            lambda: asyncio.run(bulk_seed_erp(300, batch_size=100, database_url=url))
+        ).result()
     assert summary.rows_inserted == 300
 
     engine = create_engine(url)
