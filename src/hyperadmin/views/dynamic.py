@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Any, Union, cast, get_args, get_origin
 
 from fastapi import HTTPException, Query, Request
 from fastapi.templating import Jinja2Templates
+from pydantic import ValidationError
 from sqlalchemy.exc import IntegrityError
 from starlette.responses import RedirectResponse, Response
 
@@ -18,6 +19,7 @@ from starlette.datastructures import UploadFile as StarletteUpload
 
 from hyperadmin.adapters import SQLAlchemyAdapter, SQLModelAdapter
 from hyperadmin.core.actions import ActionDef
+from hyperadmin.core.bulk_results import BulkRowResult, BulkRowStatus
 from hyperadmin.core.choices import ChoiceItem, SelectFieldMeta
 from hyperadmin.core.discovery import build_filter_metadata
 from hyperadmin.core.display import get_display_name
@@ -1359,6 +1361,188 @@ class DynamicModelView:
         if "hx-request" in request.headers:
             return Response(status_code=200, headers={"HX-Redirect": str(redirect_url)})
         return RedirectResponse(url=redirect_url, status_code=303)
+
+    def _resolve_bulk_action(self, action_name: str) -> ActionDef:
+        """Return the bulk ``ActionDef`` for ``action_name`` or raise 404."""
+        action_def = self._action_map.get(action_name)
+        if action_def is None or not action_def.bulk:
+            raise HTTPException(status_code=404, detail=f"Bulk action '{action_name}' not found")
+        return action_def
+
+    @staticmethod
+    def _parse_ids(form: Any) -> list[int]:
+        """Parse the ``ids`` multi-valued form field into a list of ints.
+
+        Silently drops entries that aren't parseable as integers — those would
+        not match any row anyway.
+        """
+        raw = form.getlist("ids") if hasattr(form, "getlist") else []
+        parsed: list[int] = []
+        for value in raw:
+            try:
+                parsed.append(int(value))
+            except (TypeError, ValueError):
+                continue
+        return parsed
+
+    async def _execute_bulk(
+        self,
+        request: Request,
+        action_def: ActionDef,
+        ids: list[int],
+        params: Any | None,
+    ) -> list[BulkRowResult]:
+        """Run ``action_def.handler`` over ``ids`` with per-row outcome capture.
+
+        Each row is wrapped in object-permission re-check + exception capture so
+        a single failure cannot abort the whole bulk run.
+        """
+        outcomes: list[BulkRowResult] = []
+        permission_codename = f"action_{action_def.name}"
+        for item_id in ids:
+            try:
+                item = await self.adapter.get(pk=item_id)
+            except Exception as exc:
+                outcomes.append(BulkRowResult(id=item_id, status="failed", detail=str(exc)))
+                continue
+            if item is None:
+                outcomes.append(BulkRowResult(id=item_id, status="failed", detail="not found"))
+                continue
+            try:
+                await self._check_object_permission(request, item, permission_codename)
+            except HTTPException as exc:
+                outcomes.append(
+                    BulkRowResult(id=item_id, status="forbidden", detail=str(exc.detail))
+                )
+                continue
+            try:
+                await action_def.handler(self._admin_instance, request, item_id, params=params)
+            except HTTPException as exc:
+                status: BulkRowStatus = "forbidden" if exc.status_code == 403 else "failed"
+                outcomes.append(BulkRowResult(id=item_id, status=status, detail=str(exc.detail)))
+            except Exception as exc:
+                logger.warning(
+                    "Bulk action %r failed on row %s: %s",
+                    action_def.name,
+                    item_id,
+                    exc,
+                )
+                outcomes.append(BulkRowResult(id=item_id, status="failed", detail=str(exc)))
+            else:
+                outcomes.append(BulkRowResult(id=item_id, status="ok", detail=None))
+        return outcomes
+
+    def _render_bulk_result(
+        self,
+        request: Request,
+        action_def: ActionDef,
+        outcomes: list[BulkRowResult],
+    ) -> Response:
+        """Render the per-row result page (or HTMX fragment)."""
+        context = {
+            "request": request,
+            "action": action_def,
+            "outcomes": outcomes,
+            "model_name": self._model_name_lower,
+            "bulk_endpoint_url": request.url_for(
+                f"{self._model_name_lower}-bulk-action", action_name=action_def.name
+            ),
+            "failed_ids": [o.id for o in outcomes if o.status != "ok"],
+        }
+        return self.templates.TemplateResponse(request, "components/bulk_result.html", context)
+
+    def _render_bulk_form(
+        self,
+        request: Request,
+        action_def: ActionDef,
+        ids: list[int],
+        errors: dict[str, list[str]] | None = None,
+    ) -> Response:
+        """Render the Pydantic-derived parameter form before bulk execution."""
+        form_model = action_def.form
+        fields: list[dict[str, Any]] = []
+        if form_model is not None:
+            for name, info in form_model.model_fields.items():
+                fields.append(
+                    {
+                        "name": name,
+                        "label": info.title or name.replace("_", " ").capitalize(),
+                        "required": info.is_required,
+                        "input_type": "number" if info.annotation is int else "text",
+                        "errors": (errors or {}).get(name, []),
+                    }
+                )
+        context = {
+            "request": request,
+            "action": action_def,
+            "ids": ids,
+            "fields": fields,
+            "model_name": self._model_name_lower,
+            "confirm_url": request.url_for(
+                f"{self._model_name_lower}-bulk-action-confirm",
+                action_name=action_def.name,
+            ),
+        }
+        return self.templates.TemplateResponse(request, "components/bulk_form.html", context)
+
+    async def run_bulk_action(self, request: Request, action_name: str) -> Response:
+        """Entry point for bulk actions.
+
+        ``POST /{model}/actions/{name}/bulk``
+
+        - When the action declares a Pydantic ``form``, this endpoint renders the
+          parameter-collection form with the selected ids preserved.
+        - Otherwise it executes the handler per row and renders the per-row
+          result page.
+        """
+        action_def = self._resolve_bulk_action(action_name)
+        await self._check_permission(request, f"action_{action_name}")
+
+        form = await request.form()
+        ids = self._parse_ids(form)
+
+        if action_def.requires_selection and not ids:
+            raise HTTPException(status_code=400, detail="Selection required")
+
+        if action_def.form is not None:
+            return self._render_bulk_form(request, action_def, ids)
+
+        outcomes = await self._execute_bulk(request, action_def, ids, params=None)
+        return self._render_bulk_result(request, action_def, outcomes)
+
+    async def confirm_bulk_action(self, request: Request, action_name: str) -> Response:
+        """Validate the Pydantic param form and execute the bulk handler.
+
+        ``POST /{model}/actions/{name}/bulk/confirm``
+        """
+        action_def = self._resolve_bulk_action(action_name)
+        await self._check_permission(request, f"action_{action_name}")
+
+        if action_def.form is None:
+            raise HTTPException(
+                status_code=404, detail=f"Bulk action '{action_name}' has no confirm step"
+            )
+
+        form = await request.form()
+        ids = self._parse_ids(form)
+
+        if action_def.requires_selection and not ids:
+            raise HTTPException(status_code=400, detail="Selection required")
+
+        form_model = action_def.form
+        payload = {key: value for key, value in form.items() if key not in {"ids"}}
+        try:
+            params = form_model(**payload)
+        except ValidationError as exc:
+            errors: dict[str, list[str]] = {}
+            for err in exc.errors():
+                loc = err.get("loc") or ("__all__",)
+                field = str(loc[0])
+                errors.setdefault(field, []).append(str(err.get("msg", "invalid")))
+            return self._render_bulk_form(request, action_def, ids, errors=errors)
+
+        outcomes = await self._execute_bulk(request, action_def, ids, params=params)
+        return self._render_bulk_result(request, action_def, outcomes)
 
 
 async def admin_dashboard(request: Request, templates: Jinja2Templates):
