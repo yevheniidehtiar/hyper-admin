@@ -3,11 +3,11 @@
 | Field | Value |
 |---|---|
 | Author | Claude Code |
-| Status | Draft |
+| Status | Approved |
 | Issue | #420 (epic), #438 (review gate) |
 | Milestone | v0.5.2 — OAuth SSO |
 | Created | 2026-05-10 |
-| Last updated | 2026-05-10 |
+| Last updated | 2026-06-04 |
 
 ---
 

@@ -2,7 +2,7 @@
 type: epic
 id: hHg_npkJyrk7
 title: "epic(auth): OAuth SSO — Google & GitHub"
-status: todo
+status: in_progress
 priority: medium
 owner: null
 labels:
@@ -57,7 +57,7 @@ Implement OAuth2/OIDC authentication backends for Google and GitHub SSO.
 ```
 
 ## Tasks
-- [ ] #438 — review(spec): approve SDD for OAuth SSO
+- [x] #438 — review(spec): approve SDD for OAuth SSO
 - [ ] #439 — feat(auth): create OAuthToken model
 - [ ] #440 — feat(auth): create OAuth provider configuration
 - [ ] #441 — feat(auth): create OAuth2/OIDC backend
