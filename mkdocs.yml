@@ -58,6 +58,7 @@ extra:
 
 nav:
   - Home: index.md
+  - Live Demo: demo.md
   - Guide:
       - Getting Started: getting-started.md
       - Tutorial: tutorial.md

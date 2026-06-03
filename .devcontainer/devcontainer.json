@@ -1,0 +1,26 @@
+{
+  "name": "HyperAdmin ERP Demo",
+  "image": "mcr.microsoft.com/devcontainers/python:3.12",
+  "features": {
+    "ghcr.io/va-h/devcontainers-features/uv:1": {}
+  },
+  "postCreateCommand": "uv sync --all-extras",
+  "forwardPorts": [8000],
+  "portsAttributes": {
+    "8000": {
+      "label": "ERP Demo",
+      "onAutoForward": "openPreview"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "charliermarsh.ruff"
+      ]
+    }
+  },
+  "postAttachCommand": {
+    "hint": "echo 'Run the demo with:  uv run fastapi dev examples/erp/main.py --host 0.0.0.0  — then open the forwarded port 8000'"
+  }
+}

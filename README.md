@@ -1,133 +1,131 @@
 <div align="center">
   <a href="https://yevheniidehtiar.github.io/hyper-admin/" target="_blank">
-    <img src="https://yevheniidehtiar.github.io/hyper-admin/assets/logo.svg" alt="HyperAdmin Logo" width="150"/>
+    <img src="https://yevheniidehtiar.github.io/hyper-admin/assets/logo.svg" alt="HyperAdmin Logo" width="140"/>
   </a>
   <h1>HyperAdmin</h1>
-  <p>A modern, Pydantic-native admin interface for FastAPI, powered by HTMX.</p>
+  <p><strong>The Django-admin experience for FastAPI — generated straight from your Pydantic models.</strong></p>
 
-  <!-- Badges -->
   <p>
-    <a href="https://github.com/yevheniidehtiar/hyper-admin/actions/workflows/ci.yml">
-      <img src="https://github.com/yevheniidehtiar/hyper-admin/actions/workflows/ci.yml/badge.svg" alt="CI">
+    <a href="https://yevheniidehtiar.github.io/hyper-admin/">
+      <img src="https://github.com/yevheniidehtiar/hyper-admin/actions/workflows/pages.yml/badge.svg?branch=develop" alt="Docs">
     </a>
-    <a href="https://codecov.io/gh/yevheniidehtiar/hyper-admin">
-      <img src="https://codecov.io/gh/yevheniidehtiar/hyper-admin/branch/main/graph/badge.svg" alt="Coverage">
-    </a>
-    <a href="https://pypi.org/project/hyperadmin/">
-      <img src="https://img.shields.io/pypi/v/hyperadmin.svg" alt="PyPI">
-    </a>
-    <a href="https://pypi.org/project/hyperadmin/">
-      <img src="https://img.shields.io/pypi/pyversions/hyperadmin.svg" alt="Python Versions">
-    </a>
+    <img src="https://img.shields.io/badge/python-3.10%2B-blue.svg" alt="Python 3.10+">
     <a href="https://github.com/astral-sh/ruff">
       <img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json" alt="Ruff">
     </a>
-    <a href="https://yevheniidehtiar.github.io/hyper-admin">
-      <img src="https://img.shields.io/badge/docs-latest-blue.svg" alt="Docs">
-    </a>
+    <img src="https://img.shields.io/badge/status-alpha-orange.svg" alt="Status: Alpha">
     <a href="LICENSE">
-      <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License">
+      <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT">
+    </a>
+    <a href="https://codespaces.new/yevheniidehtiar/hyper-admin?devcontainer_path=.devcontainer%2Fdevcontainer.json">
+      <img src="https://github.com/codespaces/badge.svg" alt="Open in GitHub Codespaces" height="20">
     </a>
   </p>
 
-  > **Alpha** — HyperAdmin is under active development. APIs may change between releases.
+  <sub><strong>Alpha</strong> — under active development; APIs may change between releases.</sub>
 
+  <br/><br/>
+  <img src="docs/assets/demo/list.png" alt="HyperAdmin list view" width="820"/>
 </div>
 
 ---
 
-**HyperAdmin** is a framework for building administrative interfaces on top of FastAPI applications. It leverages the power of **Pydantic** for data validation and **HTMX** for creating dynamic, modern user interfaces with minimal JavaScript. It is designed to be highly extensible and easy to use, allowing developers to quickly create rich, data-driven admin panels.
+## The story
 
-<div align="center">
-  <!-- TODO: Add a screenshot or GIF of the admin interface -->
-  <img src="https://placehold.co/800x400?text=HyperAdmin+Screenshot" alt="HyperAdmin Screenshot"/>
-</div>
+FastAPI gives you a fast API — but no batteries-included admin, the way Django has. So
+every team rebuilds the same CRUD screens by hand, and they drift out of sync with the
+models behind them.
 
-## ✨ Key Features
+HyperAdmin closes that gap. Point it at the Pydantic / SQLModel models you **already**
+have and it generates a full admin — list, detail, create, update, search, filters,
+auth — at a mount point in your existing app. No second schema to maintain, no JavaScript
+build step. The models are the single source of truth; the UI can't drift from them
+because it's derived from them.
 
-- **Pydantic-Native:** Define your admin interfaces directly from your Pydantic models.
-- **FastAPI Integration:** Mounts seamlessly into any FastAPI application.
-- **HTMX-Powered:** Delivers a rich, interactive user experience without writing complex JavaScript.
-- **SQLModel & SQLAlchemy Support:** Works out-of-the-box with popular database libraries.
-- **Automatic CRUD:** Generates list, detail, create, and update views from your data models.
-- **Extensible:** Easily customize views, templates, and actions to fit your needs.
+It's built model-first (domain → logic → views → UI) and developed with an AI-assisted
+[agentic workflow](https://yevheniidehtiar.github.io/hyper-admin/agentic-workflow/).
 
-## 📚 Documentation
+## Why the Pydantic stack
 
-For a full guide on how to install, configure, and use HyperAdmin, please see the [**official documentation**](https://yevheniidehtiar.github.io/hyper-admin/).
+| Choice | Why |
+|---|---|
+| **Pydantic v2 / SQLModel** | Your models already encode types, validation, and field metadata. HyperAdmin reads them directly, so forms, filters and detail views are *generated*, never hand-written — and stay correct by construction. |
+| **FastAPI** | Same async runtime, same dependency injection, same app. HyperAdmin mounts in; it doesn't take over. |
+| **HTMX + Jinja2** | Server-rendered HTML with interactivity sent over the wire. A rich admin with a tiny JS surface — no SPA, no node build, progressive enhancement by default. |
+| **SQLAlchemy 2.0 (async)** | A mature, async data layer underneath SQLModel — works with the databases you already run. |
 
-## 🚀 Getting Started
+## Quickstart
 
-### Installation
+Not on PyPI yet — install from source:
 
 ```bash
-pip install hyperadmin
+pip install "git+https://github.com/yevheniidehtiar/hyper-admin.git"
 ```
-
-### Example Usage
 
 ```python
 from fastapi import FastAPI
+from sqlmodel import SQLModel, Field
 from hyperadmin.admin import Admin
 from hyperadmin.views import ModelView
-from sqlmodel import SQLModel, Field
 
-# 1. Define your data model
 class Product(SQLModel, table=True):
     id: int = Field(default=None, primary_key=True)
     name: str
     price: float
 
-# 2. Create a FastAPI app
 app = FastAPI()
-
-# 3. Create an admin instance and register your model
 admin = Admin()
 admin.register_model(ModelView(Product))
-
-# 4. Mount the admin to your app
-admin.mount_to(app)
+admin.mount_to(app)          # full CRUD admin now live at /admin
 ```
-This will automatically create a full CRUD interface for your `Product` model at `/admin`.
 
-## 🛠️ Development
+Prefer to click around first? **[Open the demo in Codespaces](https://codespaces.new/yevheniidehtiar/hyper-admin?devcontainer_path=.devcontainer%2Fdevcontainer.json)** or browse the [screenshot tour](https://yevheniidehtiar.github.io/hyper-admin/demo/).
+
+## Resource map
+
+| | |
+|---|---|
+| 📖 **Documentation** | <https://yevheniidehtiar.github.io/hyper-admin/> |
+| ▶️ **Live demo & tour** | [docs › Live Demo](https://yevheniidehtiar.github.io/hyper-admin/demo/) · [Open in Codespaces](https://codespaces.new/yevheniidehtiar/hyper-admin?devcontainer_path=.devcontainer%2Fdevcontainer.json) |
+| 🚀 **Getting started** | [docs › Getting Started](https://yevheniidehtiar.github.io/hyper-admin/getting-started/) |
+| 🧩 **Example app (ERP)** | [`examples/erp/`](examples/erp) · [docs › ERP](https://yevheniidehtiar.github.io/hyper-admin/examples/erp/) |
+| 🗺️ **Roadmap** | [docs › Roadmap](https://yevheniidehtiar.github.io/hyper-admin/roadmap/) · [`ROADMAP.md`](ROADMAP.md) |
+| 🏛️ **Architecture** | [`CONSTITUTION.md`](CONSTITUTION.md) — principles, module boundaries, dependency rules |
+| 🤝 **Contributing** | [`CONTRIBUTING.md`](CONTRIBUTING.md) · [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) |
+| 🔒 **Security** | [`SECURITY.md`](SECURITY.md) |
+| 📓 **Changelog** | [docs › Changelog](https://yevheniidehtiar.github.io/hyper-admin/changelog/) |
+
+## Tech stack
+
+**[FastAPI](https://fastapi.tiangolo.com/)** ·
+**[Pydantic v2](https://docs.pydantic.dev/)** ·
+**[SQLModel](https://sqlmodel.tiangolo.com/)** / **[SQLAlchemy 2.0](https://www.sqlalchemy.org/)** ·
+**[HTMX](https://htmx.org/)** ·
+**[Jinja2](https://jinja.palletsprojects.com/)** ·
+[Starlette](https://www.starlette.io/) sessions ·
+[Argon2](https://argon2-cffi.readthedocs.io/) ·
+[Babel](https://babel.pocoo.org/) i18n ·
+[Typer](https://typer.tiangolo.com/) CLI ·
+[uv](https://docs.astral.sh/uv/) + [Ruff](https://docs.astral.sh/ruff/)
+
+## Development
 
 ```bash
-# Install just (task runner)
-# https://github.com/casey/just
-
-# Bootstrap dev environment
-just bootstrap
-
-# Run linter + formatter
-just lint
-
-# Run tests
-just test
-
-# Serve docs locally
-just docs
+just bootstrap   # set up the dev environment (uv sync --all-extras)
+just lint        # ruff + mypy + commitizen
+just test        # unit tests (just test-e2e for Playwright e2e)
+just run-erp     # run the example ERP admin locally
+just docs        # serve docs locally on :8080
 ```
-
-## 🤝 Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## Acknowledgements
 
-HyperAdmin stands on the shoulders of outstanding open-source projects and their communities:
+Standing on the shoulders of [Django](https://www.djangoproject.com/) (the original
+batteries-included admin), [FastAPI](https://fastapi.tiangolo.com/),
+[Pydantic](https://docs.pydantic.dev/), [HTMX](https://htmx.org/), and
+[SQLModel](https://sqlmodel.tiangolo.com/) / [SQLAlchemy](https://www.sqlalchemy.org/) —
+and built with AI-assisted development via [Claude](https://www.anthropic.com/).
 
-- [**Django**](https://www.djangoproject.com/) — the original inspiration for what a batteries-included admin framework should feel like.
-- [**FastAPI**](https://fastapi.tiangolo.com/) — the async Python web framework that makes building APIs a joy.
-- [**Pydantic**](https://docs.pydantic.dev/) — the data validation backbone that powers HyperAdmin's model-first approach.
-- [**HTMX**](https://htmx.org/) — for proving that modern, interactive UIs don't need mountains of JavaScript.
-- [**SQLModel**](https://sqlmodel.tiangolo.com/) & [**SQLAlchemy**](https://www.sqlalchemy.org/) — the database layer that makes ORM integration seamless.
-- [**Anthropic (Claude)**](https://www.anthropic.com/) — AI-assisted development that made it possible to build this project with a fraction of the usual time and effort.
+## License
 
-Inspired by the conversations and ideas shared by [**Gergely Orosz**](https://www.pragmaticengineer.com/), [**ThePrimeagen**](https://www.youtube.com/@ThePrimeagen), [**Kent Beck**](https://www.kentbeck.com/), [**Steven Bartlett**](https://www.youtube.com/@TheDiaryOfACEO) and their guests.
-
-Thank you to every maintainer, contributor, community member, and creator behind these projects and conversations.
-
-## 📄 License
-
-MIT — see [LICENSE](LICENSE) for details.
+MIT — see [LICENSE](LICENSE).
