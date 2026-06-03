@@ -2,7 +2,7 @@
 type: story
 id: ZnqW073pXFtY
 title: "test: unit tests for bulk insert batch generator"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -21,7 +21,7 @@ github:
   last_sync_hash: sha256:8bf2a6e78c862daa69b898ca7d077479ade1b0c575e81faed33638b8918f74f5
   synced_at: 2026-04-07T17:23:23.790Z
 created_at: 2026-03-27T01:05:33Z
-updated_at: 2026-03-29T18:26:13Z
+updated_at: 2026-06-03T00:00:00Z
 ---
 
 ## Context

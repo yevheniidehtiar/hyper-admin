@@ -2,7 +2,7 @@
 type: story
 id: WnjWJpDNp5lG
 title: "feat(loadtest): FK ID pool manager with Pareto distribution sampling"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -21,7 +21,7 @@ github:
   last_sync_hash: sha256:0150502d26306408000cf212eec225d9d82e41ac69306462e7fdc6a748d6fd75
   synced_at: 2026-04-07T17:23:23.790Z
 created_at: 2026-03-27T01:05:44Z
-updated_at: 2026-03-27T01:05:44Z
+updated_at: 2026-06-03T00:00:00Z
 ---
 
 ## Context

@@ -2,7 +2,7 @@
 type: story
 id: M0pkQ7lmoEon
 title: "test: integration test — seed 1K records into SQLite, verify FK integrity"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -21,7 +21,7 @@ github:
   last_sync_hash: sha256:00e8cc4a7a5aad017ec4c83dd42fe43795a540caf44041727cb6781c24e0c75f
   synced_at: 2026-04-07T17:23:23.790Z
 created_at: 2026-03-27T01:06:59Z
-updated_at: 2026-03-27T01:07:00Z
+updated_at: 2026-06-03T00:00:00Z
 ---
 
 ## Context

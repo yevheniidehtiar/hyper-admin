@@ -1,10 +1,13 @@
+import argparse
+import asyncio
 import logging
 import random
 from datetime import timedelta
 
 from faker import Faker
+from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlmodel import select
+from sqlmodel import SQLModel, select
 
 from examples.erp.accounting.models import Account, AccountType, JournalEntry, JournalLine
 from examples.erp.contacts.models import Contact, ContactType
@@ -13,6 +16,9 @@ from examples.erp.purchases.models import Bill, BillItem, BillStatus
 from examples.erp.sales.models import Invoice, InvoiceItem, InvoiceStatus
 from hyperadmin.auth.backend import hash_password
 from hyperadmin.auth.models import User
+from hyperadmin.loadtest import BulkSeeder
+from hyperadmin.loadtest.generators import build_plan
+from hyperadmin.management.commands.seed import _to_sync_url
 
 fake = Faker()
 logger = logging.getLogger("uvicorn")
@@ -212,3 +218,61 @@ async def seed_db():  # noqa: PLR0915
 
         logger.info("  Created 800 bills  (%d with journal entries)", bill_journal_entries)
         logger.info("Seeding completed.")
+
+
+async def bulk_seed_erp(
+    count: int,
+    *,
+    batch_size: int = 5000,
+    rng_seed: int = 42,
+    database_url: str | None = None,
+):
+    """Bulk-seed ``count`` synthetic ERP rows via :class:`hyperadmin.loadtest.BulkSeeder`.
+
+    The seeder is synchronous (SQLAlchemy Core ``insert`` is sync), so it runs in a worker
+    thread via :func:`asyncio.to_thread` to stay friendly to the example's async event loop.
+    Tables are created idempotently first so a fresh database works out of the box.
+    """
+    sync_url = _to_sync_url(database_url or str(engine.url))
+    sync_engine = create_engine(sync_url)
+    try:
+        SQLModel.metadata.create_all(sync_engine)
+        plan = build_plan("erp", seed=rng_seed).scaled(count)
+        seeder = BulkSeeder(
+            plan=plan,
+            engine=sync_engine,
+            batch_size=batch_size,
+            rng_seed=rng_seed,
+            install_signal_handlers=False,
+        )
+        return await asyncio.to_thread(seeder.run)
+    finally:
+        sync_engine.dispose()
+
+
+def _main() -> None:
+    parser = argparse.ArgumentParser(description="Seed the ERP example database.")
+    parser.add_argument(
+        "--bulk", type=int, metavar="N", help="bulk-seed N synthetic rows for load testing"
+    )
+    parser.add_argument("--batch-size", type=int, default=5000)
+    parser.add_argument("--seed", type=int, default=42)
+    args = parser.parse_args()
+
+    if args.bulk is not None:
+        summary = asyncio.run(
+            bulk_seed_erp(args.bulk, batch_size=args.batch_size, rng_seed=args.seed)
+        )
+        logger.info(
+            "Bulk-seeded %d rows in %.1fs (%.0f rows/s).",
+            summary.rows_inserted,
+            summary.elapsed_seconds,
+            summary.rows_per_second,
+        )
+    else:
+        asyncio.run(seed_db())
+
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+    _main()

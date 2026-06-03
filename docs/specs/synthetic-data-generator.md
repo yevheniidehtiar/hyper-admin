@@ -3,11 +3,11 @@
 | Field | Value |
 |---|---|
 | Author | Claude Code |
-| Status | Draft |
+| Status | Approved |
 | Issue | #246 |
 | Milestone | v0.7.1 — Load Testing & Synthetic Data |
 | Created | 2026-05-05 |
-| Last updated | 2026-05-05 |
+| Last updated | 2026-06-03 |
 
 ---
 
@@ -390,3 +390,12 @@ The only environment variable consulted is the standard `DATABASE_URL` (already 
 | `examples/erp/seed.py` keeps async wrapper that runs `BulkSeeder.run()` in a thread | Existing example is async (FastAPI flavour); `BulkSeeder` is sync because `insert().values()` is sync; `asyncio.to_thread` is the standard bridge with zero behavioural surprises. | Make `BulkSeeder` async (rejected — fights the SQLA Core API); rewrite `seed.py` as sync (rejected — diverges from the rest of the example) |
 | `BulkSeeder.run()` is synchronous | Underlying `insert().values()` is sync; an async wrapper would only add a `to_thread` layer; keeping it sync makes signal handling and checkpoint flush trivial. | Async-first API (rejected — adds complexity for no throughput gain) |
 | Soft-import Rich; degrade to plain logs without TTY | CI logs stay readable; developers get the rich UI; `--no-progress` is the explicit escape hatch. | Always-on Rich (rejected — garbled CI logs); always-plain (rejected — bad dev UX) |
+
+### Decision Log — amendments made during implementation (2026-06-03)
+
+| Decision | Rationale | Alternatives considered |
+|---|---|---|
+| FK sampling uses **inverse-transform of a bounded power law** (`q = u ** (a/(a-1))`) over the parent *rank*, not `random.paretovariate` | `paretovariate` is unbounded `[1, ∞)`; mapping it onto a finite ID list requires clamping the tail, which distorts the skew. The inverse-transform gives the documented "top 20% own ≈80%" property *exactly* (verified in `test_pool.py` on both the numpy and stdlib paths) and needs no clamping. numpy is still the soft-dep fast path for `sample_many`. | `random.paretovariate` + clamp (rejected — distorts tail); Zipf (more params, same shape) |
+| `SeedPlan.scaled(n)` **reserves one row per table**, then apportions the remainder by weight | At small `--count`, a low-weight parent (e.g. `erp_accounts`) rounded to 0 rows, leaving its children unable to sample a FK (an `EmptyPoolError`). Reserving 1 row per table guarantees FK integrity at every scale; `scaled(n)` now requires `n >= len(tables)`. | Proportional-only rounding (rejected — breaks FK integrity at small N); min-1 only for parent tables (more code, same effect) |
+| FK pool populated by querying parent PKs after each parent table completes (and on resume), not per-batch `RETURNING` | A plain `SELECT id` per parent table is dialect-agnostic and robust across SQLite/PostgreSQL; per-batch `RETURNING` via insertmanyvalues adds complexity for no benefit since parents always fully precede children. | `insert().returning(pk)` per batch (rejected — more fragile across dialects) |
+| Resume re-runs the uncommitted batch deterministically from `completed`; no separate IntegrityError retry loop | Unique columns derive from a monotonic global `seq`, so a regenerated batch never collides with committed rows — the unique-exhaustion edge case is unreachable for the shipped plans by construction (verified in `test_batch.py`). | Per-batch IntegrityError retry with fresh prefix (deferred — unreachable for v0.7.1 plans) |

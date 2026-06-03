@@ -2,7 +2,7 @@
 type: story
 id: 0X7QTljsHbZV
 title: "refactor(examples): migrate existing seed.py to use bulk seeder module"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -20,7 +20,7 @@ github:
   last_sync_hash: sha256:f80da3405da7bb13c5f9294c1e1412da8225ad9405208f92d5c59dd28e4d211c
   synced_at: 2026-04-07T17:23:23.790Z
 created_at: 2026-03-27T01:07:42Z
-updated_at: 2026-03-29T18:26:05Z
+updated_at: 2026-06-03T00:00:00Z
 ---
 
 ## Context
