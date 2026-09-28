@@ -1,7 +1,8 @@
 ---
 type: story
+id: rt-found-widget-01
 title: "feat(realtime): connection-status JS widget in _base.html (auto-reconnect + backoff)"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -11,9 +12,10 @@ labels:
   - area:realtime
   - area:ui
 estimate: null
-epic_ref: null
+epic_ref:
+  id: MxA3yEbHFb9t
 created_at: 2026-05-05T00:00:00Z
-updated_at: 2026-05-05T00:00:00Z
+updated_at: 2026-09-28T00:00:00Z
 ---
 
 ## Context
@@ -67,3 +69,7 @@ A small navbar dot (green / yellow / red) tells the operator that the real-time 
 
 ## Dependencies
 Blocked by: SSE endpoint story, WS endpoint story
+
+## Status note (2026-09-28 roadmap re-cut)
+
+Done — `static/js/realtime-status.js` + `_base.html`/`_navbar.html` hooks merged in PR #551.

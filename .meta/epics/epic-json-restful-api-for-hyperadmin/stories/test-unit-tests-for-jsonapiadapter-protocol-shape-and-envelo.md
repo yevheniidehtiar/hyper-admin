@@ -2,7 +2,7 @@
 type: story
 id: _B3YGCz9uOk8
 title: "test: unit tests for JsonApiAdapter protocol shape and envelope"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -17,7 +17,7 @@ github:
   last_sync_hash: sha256:4cfa029d425333aa41c8d5560eefd60f44a9ece6a4c3208d96536782105f6898
   synced_at: 2026-04-07T17:23:23.790Z
 created_at: 2026-03-25T13:41:53Z
-updated_at: 2026-03-30T20:51:49Z
+updated_at: 2026-09-28T00:00:00Z
 ---
 
 > **Part of:** #76
@@ -30,3 +30,6 @@ updated_at: 2026-03-30T20:51:49Z
 ## Files
 - `tests/unit/test_json_api_protocol.py` (new)
 
+## Status note (2026-09-28 roadmap re-cut)
+
+Done — covered by `tests/unit/test_json_api_adapter.py` (shape + envelope tests).

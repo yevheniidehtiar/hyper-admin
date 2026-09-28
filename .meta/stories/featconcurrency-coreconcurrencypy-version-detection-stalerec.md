@@ -11,14 +11,15 @@ labels:
   - size:S
   - area:concurrency
 estimate: null
-epic_ref: null
+epic_ref:
+  id: UxLOg-H5WxzR
 github:
   issue_number: 315
   repo: yevheniidehtiar/hyper-admin
   last_sync_hash: sha256:f4e9875015476ae29742070d9f83179dd335d1a97261ef99619b645f14b269bf
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-03-29T06:59:42Z
-updated_at: 2026-03-29T06:59:43Z
+updated_at: 2026-09-28T00:00:00Z
 ---
 
 ## Context

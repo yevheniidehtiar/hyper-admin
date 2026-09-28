@@ -11,7 +11,7 @@ labels:
   - upstream-readiness
 milestone_ref: null
 created_at: 2026-05-10T00:00:00Z
-updated_at: 2026-05-10T00:00:00Z
+updated_at: 2026-09-28T00:00:00Z
 ---
 
 ## Overview
@@ -32,8 +32,8 @@ matrix.
 
 | H#  | Capability                          | Status          | Milestone                              |
 |-----|-------------------------------------|-----------------|----------------------------------------|
-| H2  | Inline / nested forms               | shipped v0.5.0  | (polish patch — inline row errors)     |
-| H3  | Bulk actions with param forms       | planned         | v0.5.5 — Bulk Actions & Autocomplete   |
+| H2  | Inline / nested forms               | shipped         | v0.5.0 + row-error polish (#561)       |
+| H3  | Bulk actions with param forms       | partial         | v0.5.5 — Bulk Actions & Autocomplete   |
 | H4  | Detail-page panels / tabs           | planned         | v0.5.6 — Detail Panels & Filter Library|
 | H5  | Object-level permissions            | shipped v0.5.1  | —                                      |
 | H6  | HTMX FK/M2M autocomplete            | partial         | v0.5.5 — Bulk Actions & Autocomplete   |
@@ -70,7 +70,7 @@ The ten readiness checks run against `examples/full-demo/` (new in v0.5.7) using
 framework-generic domain models (`Order`, `Invoice`, `Product`, `Supplier`).
 When every check passes on `develop`, HyperAdmin is upstream-ready:
 
-- [ ] H2 polish — nested formset save with one failing child highlights that row
+- [x] H2 polish — nested formset save with one failing child highlights that row
 - [ ] H3 — bulk action across 5 rows, 1 fails, per-row outcome page rendered
 - [ ] H4 — detail page exposes Invoice/History/Transitions panels (panel registry + PDF demo)
 - [ ] H5 — list view filterable by current user via `IsOwnerFilter`
@@ -93,3 +93,7 @@ When every check passes on `develop`, HyperAdmin is upstream-ready:
 ## Children (stories)
 
 See `stories/` for per-H# tracker entries.
+
+## Status note (2026-09-28 roadmap re-cut)
+
+Re-cut sequencing (see `.meta/roadmap/roadmap.yaml`): v0.5.8 BYOA → v0.5.5 finish → v0.7.0a → v0.6.0a OCC → v0.5.2 → v0.5.3 → v0.5.6 → v0.5.7 → v0.5.4 → v0.3.2. H2 done; H3/H6 partially merged.

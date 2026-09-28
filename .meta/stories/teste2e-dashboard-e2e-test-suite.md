@@ -10,14 +10,15 @@ labels:
   - area:tests
   - size:L
 estimate: null
-epic_ref: null
+epic_ref:
+  id: _MkBhj2OoiGp
 github:
   issue_number: 469
   repo: yevheniidehtiar/hyper-admin
   last_sync_hash: sha256:3ee7d142c0919eea4cf697bfffca426dfde3f495d7bf7aa48ed2c05115e0e39f
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-04-01T21:45:50Z
-updated_at: 2026-04-01T21:45:50Z
+updated_at: 2026-09-28T00:00:00Z
 ---
 
 ## Context

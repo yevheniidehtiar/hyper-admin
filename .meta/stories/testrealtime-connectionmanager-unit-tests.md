@@ -2,7 +2,7 @@
 type: story
 id: 72lX_h3zC2v-
 title: "test(realtime): ConnectionRegistry unit tests"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -10,14 +10,15 @@ labels:
   - size:S
   - area:realtime
 estimate: null
-epic_ref: null
+epic_ref:
+  id: MxA3yEbHFb9t
 github:
   issue_number: 306
   repo: yevheniidehtiar/hyper-admin
   last_sync_hash: sha256:b343de975604d4b412517561679b43fd441b92d1aea53a25bb98d396b0243594
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-03-29T06:58:18Z
-updated_at: 2026-05-05T00:00:00Z
+updated_at: 2026-09-28T00:00:00Z
 ---
 
 ## Context
@@ -77,3 +78,7 @@ Blocks: `feat(realtime): ConnectionRegistry implementation`
 
 ## Notes for Implementer
 The connection objects in tests can be lightweight dataclasses with an async `close()` mock — no real SSE/WS needed. Use `pytest.mark.asyncio` and `asyncio.gather` for the concurrency scenario.
+
+## Status note (2026-09-28 roadmap re-cut)
+
+Done — rewritten as ConnectionRegistry tests: `tests/unit/realtime/test_registry.py` (PR #551).

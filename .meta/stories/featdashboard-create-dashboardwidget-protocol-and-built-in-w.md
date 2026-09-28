@@ -11,14 +11,15 @@ labels:
   - area:core
   - size:M
 estimate: null
-epic_ref: null
+epic_ref:
+  id: _MkBhj2OoiGp
 github:
   issue_number: 457
   repo: yevheniidehtiar/hyper-admin
   last_sync_hash: sha256:d6ec03962e5f47b50fbb39fe453ee6181db9cbefc830b67a58dfdac2a94b69fd
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-04-01T21:44:05Z
-updated_at: 2026-04-01T21:44:05Z
+updated_at: 2026-09-28T00:00:00Z
 ---
 
 ## Context

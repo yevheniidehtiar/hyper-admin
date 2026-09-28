@@ -12,14 +12,15 @@ labels:
   - area:adapters
   - size:M
 estimate: null
-epic_ref: null
+epic_ref:
+  id: _MkBhj2OoiGp
 github:
   issue_number: 459
   repo: yevheniidehtiar/hyper-admin
   last_sync_hash: sha256:20ca319c60589236fa4a23bc37007d75768723bbb09898b3270eaed690f00c4c
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-04-01T21:44:20Z
-updated_at: 2026-04-01T21:44:20Z
+updated_at: 2026-09-28T00:00:00Z
 ---
 
 ## Context

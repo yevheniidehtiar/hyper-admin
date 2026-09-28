@@ -1,7 +1,8 @@
 ---
 type: story
+id: rt-found-sse-01
 title: "feat(realtime): SSE endpoint + heartbeat + auth gate + Admin wiring"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -10,9 +11,10 @@ labels:
   - size:M
   - area:realtime
 estimate: null
-epic_ref: null
+epic_ref:
+  id: MxA3yEbHFb9t
 created_at: 2026-05-05T00:00:00Z
-updated_at: 2026-05-05T00:00:00Z
+updated_at: 2026-09-28T00:00:00Z
 ---
 
 ## Context
@@ -65,3 +67,7 @@ Adds a one-way Server-Sent Events endpoint at `GET {admin_prefix}/realtime/sse`.
 Spec: `docs/specs/realtime-connection-foundation.md`
 Blocked by: ConnectionRegistry implementation
 Can run in parallel with: WS endpoint story
+
+## Status note (2026-09-28 roadmap re-cut)
+
+Done — `src/hyperadmin/realtime/sse.py` + Admin wiring merged in PR #551.

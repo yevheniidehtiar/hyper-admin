@@ -2,7 +2,7 @@
 type: epic
 id: 0Ds0szEo93g1
 title: "Epic: JSON RESTful API for HyperAdmin"
-status: todo
+status: in_progress
 priority: medium
 owner: null
 labels:
@@ -15,7 +15,7 @@ github:
   last_sync_hash: sha256:440f20f9c1a8d4058a7cc5eb9370aa92fb71fb22a604f76a938a0d4778d020cf
   synced_at: 2026-04-07T17:23:23.790Z
 created_at: 2025-09-10T17:47:36Z
-updated_at: 2026-03-28T20:56:23Z
+updated_at: 2026-09-28T00:00:00Z
 ---
 
 ## Epic: JSON REST API
@@ -43,3 +43,7 @@ JsonApiAdapter protocol (core/adapters.py)
 - [ ] `feat(views)`: auth integration (session cookie + optional bearer token)
 - [ ] `test`: integration tests for all CRUD endpoints with permission checks
 - [ ] `docs`: JSON REST API usage guide with curl examples
+
+## Status note (2026-09-28 roadmap re-cut)
+
+Protocol layer shipped (#197/#198: `JsonApiAdapter`, `ListEnvelope`, `PaginationMeta`). Router (#199), auth (#200), integration tests (#201) and docs (#202) remain. Kept on the roadmap after v0.7.0b.

@@ -1,7 +1,8 @@
 ---
 type: story
+id: rt-found-reg-01
 title: "feat(realtime): ConnectionRegistry implementation"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -10,9 +11,10 @@ labels:
   - size:S
   - area:realtime
 estimate: null
-epic_ref: null
+epic_ref:
+  id: MxA3yEbHFb9t
 created_at: 2026-05-05T00:00:00Z
-updated_at: 2026-05-05T00:00:00Z
+updated_at: 2026-09-28T00:00:00Z
 ---
 
 ## Context
@@ -35,3 +37,7 @@ Implements the in-memory `ConnectionRegistry` to satisfy the unit tests in #306.
 Spec: `docs/specs/realtime-connection-foundation.md`
 Blocked by: SDD approval, #306 tests merged
 Blocks: SSE endpoint story, WS endpoint story
+
+## Status note (2026-09-28 roadmap re-cut)
+
+Done — `src/hyperadmin/realtime/registry.py` merged in PR #551.

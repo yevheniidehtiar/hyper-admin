@@ -2,7 +2,7 @@
 type: story
 id: 7Bx5akjhxebw
 title: "test(e2e): MFA login flow end-to-end"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -17,7 +17,7 @@ github:
   last_sync_hash: sha256:054d56269d0f668ad6a98506b171953545aa998e68f90044275ea20c10d40fdf
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-04-01T21:39:54Z
-updated_at: 2026-04-01T21:39:54Z
+updated_at: 2026-09-28T00:00:00Z
 ---
 
 ## Context
@@ -61,3 +61,7 @@ Depends on: #436 (MFA settings view)
 - For E2E tests, use `ConsoleEmailSender` and intercept the code via app state or session
 - Alternative: expose a test-only endpoint that returns the current OTP code
 - Follow patterns in `tests/e2e/test_auth_flow.py`
+
+## Status note (2026-09-28 roadmap re-cut)
+
+Done (superseded) — delivered by #488 (PR #546): `tests/e2e/test_mfa_login.py`.

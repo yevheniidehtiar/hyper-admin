@@ -9,14 +9,14 @@ labels:
   - agent-task
   - area:concurrency
 milestone_ref:
-  id: EnCx0HBhFy40
+  id: v060a-occ-01
 github:
   issue_number: 332
   repo: yevheniidehtiar/hyper-admin
   last_sync_hash: sha256:0827df042c26c7685838becc4af3ea039e2a9f8347f5bad3e2821dfda7c6cef2
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-03-29T07:02:28Z
-updated_at: 2026-03-29T07:02:28Z
+updated_at: 2026-09-28T00:00:00Z
 ---
 
 ## Overview
@@ -40,3 +40,7 @@ v0.6.2
 
 ## Parallel Tracks
 This entire epic (Track B) is INDEPENDENT of Epic 6.2.1 and 6.2.2 (Track A) and can be developed in parallel.
+
+## Status note (2026-09-28 roadmap re-cut)
+
+Re-cut: OCC split out of v0.6.0 into its own milestone v0.6.0a. It has no dependency on the pub/sub layer (version column + StaleRecordError + conflict dialog), and lost-update protection matters to any team adopting the admin on a live app. SDD: `docs/specs/realtime-occ.md`.

@@ -1,7 +1,8 @@
 ---
 type: story
+id: rt-found-ws-01
 title: "feat(realtime): WebSocket endpoint + ping/pong + auth gate + Admin wiring"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -10,9 +11,10 @@ labels:
   - size:M
   - area:realtime
 estimate: null
-epic_ref: null
+epic_ref:
+  id: MxA3yEbHFb9t
 created_at: 2026-05-05T00:00:00Z
-updated_at: 2026-05-05T00:00:00Z
+updated_at: 2026-09-28T00:00:00Z
 ---
 
 ## Context
@@ -67,3 +69,7 @@ Adds a bidirectional WebSocket endpoint at `WS {admin_prefix}/realtime/ws`. Zero
 Spec: `docs/specs/realtime-connection-foundation.md`
 Blocked by: ConnectionRegistry implementation
 Can run in parallel with: SSE endpoint story
+
+## Status note (2026-09-28 roadmap re-cut)
+
+Done — `src/hyperadmin/realtime/ws.py` + Admin wiring merged in PR #551.

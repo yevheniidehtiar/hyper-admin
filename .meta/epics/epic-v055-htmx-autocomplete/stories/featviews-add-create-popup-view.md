@@ -2,7 +2,7 @@
 type: story
 id: st-v055-ac-02
 title: "feat(views): add create_popup_view returning HX-Trigger payload"
-status: todo
+status: done
 priority: high
 assignee: null
 labels:
@@ -15,7 +15,7 @@ estimate: null
 epic_ref:
   id: ep-v055-ac-01
 created_at: 2026-05-10T00:00:00Z
-updated_at: 2026-05-10T00:00:00Z
+updated_at: 2026-09-28T00:00:00Z
 ---
 
 ## Summary
@@ -65,3 +65,7 @@ Scenario: popup create with permission denied returns 403
 ## Parent
 
 - Epic: `epic-v055-htmx-autocomplete`
+
+## Status note (2026-09-28 roadmap re-cut)
+
+Done — merged in PR #563 (1af6f7b): `create_popup_view` + `widgets/popup_form.html`.

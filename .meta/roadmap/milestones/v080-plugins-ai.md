@@ -10,8 +10,10 @@ github:
   last_sync_hash: sha256:38e5d6cb0f66885c2caf2342bda847f266131f0d82b1fce6272005c0481244c2
   synced_at: 2026-04-07T17:23:23.789Z
 created_at: 2026-03-29T09:35:06Z
-updated_at: 2026-03-29T09:35:06Z
+updated_at: 2026-09-28T00:00:00Z
 ---
+
+**Roadmap position 15/16 (2026-09-28 re-cut).** Plugin registry + lifecycle hooks and the first official plugin (hyperadmin-logfire); AI-assisted features after.
 
 Re-themed for v0.8.0: ship the **Plugin Registry + lifecycle hooks** (`hyperadmin.plugins`
 entry points) and the first official plugin **hyperadmin-logfire** as proof-of-concept.

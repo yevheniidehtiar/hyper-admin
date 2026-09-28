@@ -10,7 +10,9 @@ github:
   last_sync_hash: sha256:0d6421cdf8daddf4c1f6cec4a96d8630a7ad3ab97ceb698f74126b97462678a4
   synced_at: 2026-04-07T17:23:23.788Z
 created_at: 2026-03-29T06:57:28Z
-updated_at: 2026-03-29T09:34:07Z
+updated_at: 2026-09-28T00:00:00Z
 ---
+
+**Roadmap position 12/16 (2026-09-28 re-cut).** Presence (who is viewing/editing) on top of v0.6.0b pub/sub. Epic 6.2.4 (#333).
 
 Epic 6.2.4: Presence tracking — who is viewing/editing which record. InMemoryPresence + RedisPresence backends. Heartbeat-based with TTL expiry. Banner on edit forms.
