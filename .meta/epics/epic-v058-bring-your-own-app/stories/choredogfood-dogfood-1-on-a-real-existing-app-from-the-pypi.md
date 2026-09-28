@@ -49,10 +49,15 @@ Scenario: gaps are filed
 - [ ] gaps are filed
 - [ ] `poe lint` and `poe test:unit` pass
 
+## Review amendments (2026-09-28)
+
+- Runs after dogfood-0 (`-54`), whose gap log it re-checks.
+
 ## Blocked by
 
 - `buildrelease-0-5-0a1-pep440-commitizen-version-and-fixed-rel` (st-v058-byoa-50)
 - `docsguides-existing-app-guide-examples-byoa-csrf-upgrade-not` (st-v058-byoa-51)
+- `choredogfood-dogfood-0-from-a-repository-install` (st-v058-byoa-54)
 
 ## Parent
 

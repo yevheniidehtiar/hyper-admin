@@ -54,6 +54,10 @@ Scenario: unknown type falls back
 - [ ] unknown type falls back
 - [ ] `poe lint` and `poe test:unit` pass
 
+## Review amendments (2026-09-28)
+
+- **Deferral candidate** (Owner decision 8). Nothing on the critical path depends on this story.
+
 ## Blocked by
 
 - `reviewspec-approve-byoa-sdd` (st-v058-byoa-00)

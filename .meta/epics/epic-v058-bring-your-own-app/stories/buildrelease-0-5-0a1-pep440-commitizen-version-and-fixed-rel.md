@@ -60,6 +60,12 @@ Scenario: draft releases do not publish
 - [ ] draft releases do not publish
 - [ ] `poe lint` and `poe test:unit` pass
 
+## Review amendments (2026-09-28)
+
+- A release created with `GITHUB_TOKEN` does not trigger other workflows, so `publish.yml` becomes `on: workflow_call` (plus `workflow_dispatch`), and `release.yml` calls it in the same run.
+- The version bump is a normal commit in the `develop → master` PR. `release.yml` never pushes a commit to `master`. It checks that `inputs.version` matches `pyproject.toml`, pushes the tag, and runs `gh release create`.
+- Wheel smoke test: install into a clean venv with no dev dependencies, build a FastAPI app, call `Admin(app).mount("/admin")`, and `GET /admin/` with `TestClient` must return 200.
+
 ## Blocked by
 
 - `build-commit-uv-lock-enforce-uv-sync-locked-in-ci-and-gate-p` (st-v058-byoa-12)

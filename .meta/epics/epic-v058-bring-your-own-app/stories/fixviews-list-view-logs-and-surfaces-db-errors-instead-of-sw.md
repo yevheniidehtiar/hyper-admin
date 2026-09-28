@@ -50,9 +50,14 @@ Scenario: debug re-raises
 - [ ] debug re-raises
 - [ ] `poe lint` and `poe test:unit` pass
 
+## Review amendments (2026-09-28)
+
+- Narrowing the `except` must not turn user input into a 500. So `sort_by` is validated first (whitelist from `-53`), and legacy dict filters are normalised before the adapter call. Add a scenario: `?sort_by=nope` returns 200 with the default sort.
+
 ## Blocked by
 
 - `refactorviews-dynamicmodelview-item-handlers-use-self-pk-and` (st-v058-byoa-29)
+- `fixviews-close-query-oracles-sensitive-fields-sort-and-choices` (st-v058-byoa-53)
 
 ## Parent
 

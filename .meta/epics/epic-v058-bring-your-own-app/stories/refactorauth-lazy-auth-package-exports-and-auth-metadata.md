@@ -54,6 +54,10 @@ Scenario: metadata() returns only hyperadmin tables
 - [ ] metadata() returns only hyperadmin tables
 - [ ] `poe lint` and `poe test:unit` pass
 
+## Review amendments (2026-09-28)
+
+- Document that `metadata()` is for built-in-auth hosts only. Calling it imports `auth/models.py`, which registers the `hyperadmin_*` tables on the global `SQLModel.metadata`. It logs a `WARNING` if an `Admin` in bridge mode was already constructed.
+
 ## Blocked by
 
 - `reviewspec-approve-byoa-sdd` (st-v058-byoa-00)

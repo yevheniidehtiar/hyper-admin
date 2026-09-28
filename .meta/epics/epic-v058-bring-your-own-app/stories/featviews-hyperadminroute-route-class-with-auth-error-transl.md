@@ -75,6 +75,18 @@ Scenario: API prefix gets 401
 - [ ] API prefix gets 401
 - [ ] `poe lint` and `poe test:unit` pass
 
+## Review amendments (2026-09-28)
+
+- The pipeline order is fixed, with one `Request` object throughout:
+  1. Bridge the token cookie by mutating `scope["headers"]` before any body read.
+  2. Solve auth.
+  3. Verify CSRF on the same `Request` that is passed to the handler.
+  4. Run the handler and attach the CSRF cookie.
+  No second `Request` is built from a copied scope.
+- Only `AdminAccessDenied` and 403s raised during dependency solving map to the `can_access` page. `HTTPException(403)` raised by views passes through unchanged.
+- When the host rejects a token that came from the cookie, clear the cookie before redirecting.
+- Add a unit test: a plain multipart POST with the token cookie and a body `csrf_token` reaches the handler with every field.
+
 ## Blocked by
 
 - `featcore-admin-auth-exceptions-and-pure-csrftokensigner` (st-v058-byoa-18)

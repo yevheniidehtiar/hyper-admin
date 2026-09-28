@@ -61,6 +61,12 @@ Scenario: neither engine nor factory
 - [ ] neither engine nor factory
 - [ ] `poe lint` and `poe test:unit` pass
 
+## Review amendments (2026-09-28)
+
+- Cover the construction sites that pass only an engine: `routing.py:63`, `HyperAdminRouter` (`routing.py:262-267,323`, which now takes and forwards `session_factory`), `core/discovery.py:81` and the inline adapters (through `for_model`).
+- The MFA views stop reading `auth_backend.engine` (`auth/views.py:228,292,476,542`) and use `auth_backend._session()` instead.
+- Add a scenario: with only `session_factory=`, a parent with inlines and an FK filter lists and saves without a `ValueError`.
+
 ## Blocked by
 
 - `refactordb-lazy-default-engine-deprecate-hyperadmin-db-engin` (st-v058-byoa-20)

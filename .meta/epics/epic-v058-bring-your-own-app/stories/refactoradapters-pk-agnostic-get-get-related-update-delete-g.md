@@ -80,6 +80,11 @@ Scenario: pk 0 inline delete
 - [ ] pk 0 inline delete
 - [ ] `poe lint` and `poe test:unit` pass
 
+## Review amendments (2026-09-28)
+
+- Add the non-abstract `BaseAdapter.for_model(model)`, which carries over the engine and `session_factory`. `save_inline_rows` uses it instead of `SQLModelAdapter(spec.model, self.engine)` (`adapters/sqlmodel.py:277`, `adapters/sqlalchemy.py:218`).
+- `get_choices` receives only the declared cascade keys (from `-53`) and applies the target adapter's queryset filter. Keep the inline ownership check added in `-10`.
+
 ## Blocked by
 
 - `featadapters-introspection-of-primary-keys-datetime-kinds-an` (st-v058-byoa-15)

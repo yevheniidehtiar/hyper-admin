@@ -65,6 +65,13 @@ Scenario: init-db creates only hyperadmin tables
 - [ ] init-db creates only hyperadmin tables
 - [ ] `poe lint` and `poe test:unit` pass
 
+## Review amendments (2026-09-28)
+
+- `core/lifecycle.py` is pure orchestration. DDL (`db.create_tables`), bind resolution (`db.resolve_bind`) and the auth-metadata lookup are injected as callables from `core/app.py` (CONSTITUTION §1).
+- There is one startup mechanism: the explicit `startup()`/`lifespan()` plus the first-request guard. **Drop the `app.router.on_startup`/`on_shutdown` append.**
+- Shutdown: when realtime is enabled and startup ran through the guard, log a one-time `WARNING` to compose `admin.lifespan()`. SSE generators exit on `request.is_disconnected()`.
+- Demo mode auto-creates tables (scope `all`) **only for SQLite URLs**. For any other URL it runs no DDL and logs a `WARNING` naming `create_tables=True` or `init-db`. Add a BDD scenario for this.
+
 ## Blocked by
 
 - `refactorauth-lazy-auth-package-exports-and-auth-metadata` (st-v058-byoa-17)

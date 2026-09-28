@@ -50,9 +50,15 @@ Scenario: host route names still resolve
 - [ ] host route names still resolve
 - [ ] `poe lint` and `poe test:unit` pass
 
+## Review amendments (2026-09-28)
+
+- The spike has already run on fastapi 0.141.1 / starlette 1.7.0. `request.url_for("hyperadmin:user-list")` resolves from inside the sub-app, and the plain name raises `NoMatchFound`, so the fallback helper is required. A unit test pins this.
+- This story ships the helpers only: `admin_url_for`, `install_namespaced_url_for` and `admin_base_path(request)` (the per-request external admin path, which honours the host's `root_path`). The 9 `request.url_for` switches in `views/dynamic.py` move to `-35`, so this story is blocked only by the gate.
+- The namespace is read from `scope["hyperadmin"]`, not from `app.state`, which is now shared with the host.
+
 ## Blocked by
 
-- `refactorviews-bulk-ids-single-actions-and-popup-payload-are` (st-v058-byoa-30)
+- `reviewspec-approve-byoa-sdd` (st-v058-byoa-00)
 
 ## Parent
 

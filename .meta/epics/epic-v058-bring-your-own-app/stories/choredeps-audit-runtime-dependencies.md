@@ -55,6 +55,10 @@ Scenario: dev-only packages are not runtime deps
 - [ ] dev-only packages are not runtime deps
 - [ ] `poe lint` and `poe test:unit` pass
 
+## Review amendments (2026-09-28)
+
+- Move `aiosqlite` from dev extras to runtime dependencies (or a `hyper-admin[sqlite]` extra that the guide references). Demo mode's default URL is `sqlite+aiosqlite`.
+
 ## Blocked by
 
 - `reviewspec-approve-byoa-sdd` (st-v058-byoa-00)

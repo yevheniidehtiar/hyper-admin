@@ -99,11 +99,14 @@ Scenario: UUID fk coercion
 - [ ] UUID fk coercion
 - [ ] `poe lint` and `poe test:unit` pass
 
+## Review amendments (2026-09-28)
+
+- `coerce_column_value` moves to `st-v058-byoa-24`. This story covers only `introspect_primary_key` and `datetime_kind`, so it no longer waits for the filter work (`-19`).
+
 ## Blocked by
 
 - `featcore-primarykeyinfo-codec-invalidprimarykey-and-baseadap` (st-v058-byoa-13)
 - `featcore-timezones-module-and-settings-timezone` (st-v058-byoa-14)
-- `featcore-typed-filter-coercion-and-filtercondition` (st-v058-byoa-19)
 
 ## Parent
 

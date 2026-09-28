@@ -51,6 +51,10 @@ Scenario: filter error shown
 - [ ] filter error shown
 - [ ] `poe lint` and `poe test:unit` pass (and `poe test:e2e`)
 
+## Review amendments (2026-09-28)
+
+- **Deferral candidate** (Owner decision 8). Nothing on the critical path depends on this story, and `-51` is no longer blocked by it.
+
 ## Blocked by
 
 - `featviews-typed-whitelisted-filters-in-list-view` (st-v058-byoa-44)

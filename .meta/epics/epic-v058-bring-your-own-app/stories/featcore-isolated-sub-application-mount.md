@@ -71,10 +71,17 @@ Scenario: router mode legacy
 - [ ] router mode legacy
 - [ ] `poe lint` and `poe test:unit` pass
 
+## Review amendments (2026-09-28)
+
+- `mount()` shares the host's objects with the sub-app: `sub_app.dependency_overrides = app.dependency_overrides` and `sub_app.state = app.state`. Add BDD scenarios: a host override of `get_user` applies under `/admin`, and a host `get_db(request)` that reads `request.app.state` works.
+- Includes the 9 `request.url_for` → `admin_url_for` switches in `views/dynamic.py` (moved from `-34`).
+- Uploads are no longer mounted under the prefix. They are served per record in `-37`.
+
 ## Blocked by
 
 - `featcore-lifecycle-with-opt-in-create-tables-startup-shutdow` (st-v058-byoa-26)
 - `featviews-namespace-aware-url-helper-and-jinja-url-for-overr` (st-v058-byoa-34)
+- `refactorviews-bulk-ids-single-actions-and-popup-payload-are` (st-v058-byoa-30)
 
 ## Parent
 

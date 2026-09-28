@@ -1,7 +1,7 @@
 ---
 type: story
 id: st-v058-byoa-41
-title: "feat(auth): token handoff POST /auth/session and bridge logout"
+title: "feat(auth): token handoff, bearer login form, JWT-exp cookie lifetime and bridge logout"
 status: todo
 priority: high
 assignee: null
@@ -70,6 +70,14 @@ Scenario: no open redirect
 - [ ] logout clears cookie
 - [ ] no open redirect
 - [ ] `poe lint` and `poe test:unit` pass
+
+## Review amendments (2026-09-28)
+
+- The handoff route is protected by `Depends(build_admin_dependency(auth))`, with no internal sub-app request (this resolves Open Question 2). It is exempt from CSRF.
+- Add the opt-in admin login form for bearer hosts (`TokenCookie(token_endpoint=...)`). It posts credentials server side to the host token endpoint and stores the access token in the cookie.
+- The cookie's `Max-Age` is `min(max_age, jwt exp - now)`. A rejected cookie token is cleared before the redirect.
+- `next` validation: a relative path under the admin path plus `/`; `//`, backslashes and schemes are rejected.
+- Add a scenario: a bearer-only host with no frontend change reaches `/admin` in a browser.
 
 ## Blocked by
 

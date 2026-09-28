@@ -69,6 +69,13 @@ Scenario: guide under 20 lines
 - [ ] guide under 20 lines
 - [ ] `poe lint` and `poe test:unit` pass (and `poe test:e2e`)
 
+## Review amendments (2026-09-28)
+
+- The upgrade note gains a **TLS proxy** section: the Origin rule, `csrf_trusted_origins`, `HYPERADMIN_COOKIE_SECURE=true` and `forwarded_allow_ips`. It also covers the fail-safe bridge permissions and the sensitive-field changes.
+- Document that realtime users must compose `admin.lifespan()` so shutdown drains connections.
+- The guide covers bearer-only hosts through `TokenCookie(token_endpoint=...)`.
+- No longer blocked by `-47` (range-filter UI).
+
 ## Blocked by
 
 - `featauth-admin-scoped-session-cookie-via-adminsessionmiddlew` (st-v058-byoa-36)
@@ -76,7 +83,6 @@ Scenario: guide under 20 lines
 - `featauth-token-handoff-post-auth-session-and-bridge-logout` (st-v058-byoa-41)
 - `featrealtime-hashable-user-keys-bridge-aware-sse-ws-and-webs` (st-v058-byoa-42)
 - `featui-csrf-token-injection-and-bridge-aware-navbar` (st-v058-byoa-46)
-- `featui-range-inputs-and-filter-errors-in-the-filter-bar` (st-v058-byoa-47)
 - `teste2e-pk-type-and-timezone-fixture-app-uuid-natural-str-in` (st-v058-byoa-49)
 
 ## Parent

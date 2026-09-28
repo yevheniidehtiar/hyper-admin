@@ -75,6 +75,12 @@ Scenario: built-in models kept for auth_backend
 - [ ] built-in models kept for auth_backend
 - [ ] `poe lint` and `poe test:unit` pass
 
+## Review amendments (2026-09-28)
+
+- Fail-safe default permissions (Owner decision 3): without `has_permission`, superusers get full access and others get view-only. `ExternalAuth(allow_full_access=True)` opts into full access and logs a `WARNING`. By default, non-superusers never get change or delete on the host user model (the class of the object `get_user` returns).
+- `ModelPermissionChecker` combined with `auth=` raises `ValueError` unless `register_auth_models=True`.
+- Add scenarios: a staff user is view-only; a staff user cannot set their own `is_superuser`; and the rejected-checker combination.
+
 ## Blocked by
 
 - `featauth-externalauth-tokencookie-callablepermissionchecker` (st-v058-byoa-25)
