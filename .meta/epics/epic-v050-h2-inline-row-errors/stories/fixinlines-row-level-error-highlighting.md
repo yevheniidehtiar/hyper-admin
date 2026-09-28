@@ -2,7 +2,7 @@
 type: story
 id: st-v050-h2-01
 title: "fix(inlines): row-level error highlighting in nested formsets"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -16,7 +16,7 @@ estimate: null
 epic_ref:
   id: ep-v050-h2-01
 created_at: 2026-05-10T00:00:00Z
-updated_at: 2026-05-10T00:00:00Z
+updated_at: 2026-09-28T00:00:00Z
 ---
 
 ## Summary
@@ -61,3 +61,7 @@ Scenario: all-valid submission renders no row-level error marker
 ## Parent
 
 - Epic: `epic-v050-h2-inline-row-errors`
+
+## Status note (2026-09-28 roadmap re-cut)
+
+Done — merged in PR #561 (9017f57): `ha-inline-row-error` class + row-level markers in `templates/components/inline_row.html`, tests in `tests/unit/test_inline_row_error_markers.py`.

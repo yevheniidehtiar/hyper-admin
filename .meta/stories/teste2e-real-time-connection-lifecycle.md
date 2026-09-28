@@ -1,7 +1,8 @@
 ---
 type: story
+id: rt-found-e2e-01
 title: "test(e2e): real-time connection lifecycle (connect / navigate / refresh / restart / auth / drain)"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -11,9 +12,10 @@ labels:
   - area:realtime
   - test
 estimate: null
-epic_ref: null
+epic_ref:
+  id: MxA3yEbHFb9t
 created_at: 2026-05-05T00:00:00Z
-updated_at: 2026-05-05T00:00:00Z
+updated_at: 2026-09-28T00:00:00Z
 ---
 
 ## Context
@@ -70,3 +72,7 @@ End-to-end Playwright coverage for every lifecycle scenario in the MVP. Uses the
 
 ## Dependencies
 Blocked by: SSE, WS, status-widget stories
+
+## Status note (2026-09-28 roadmap re-cut)
+
+Done — `tests/e2e/test_realtime_connection_lifecycle.py` (PR #551) + reconnection scenarios (PR #567).

@@ -2,7 +2,7 @@
 type: story
 id: 26dtUfDV2IPf
 title: "feat(views): enhance detail/update/delete with object-level permission checks"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -18,7 +18,7 @@ github:
   last_sync_hash: sha256:7b88fdaabc918fd4b08c3e9ddb089cc9f2519fafc803ca8f57b308761bf8ff0b
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-04-01T21:38:11Z
-updated_at: 2026-04-01T21:38:11Z
+updated_at: 2026-09-28T00:00:00Z
 ---
 
 ## Context
@@ -66,3 +66,7 @@ Depends on: #429 (_check_object_permission helper)
 - Insert the check AFTER `adapter.get(pk=item_id)` and the 404 check
 - Pattern: `await self._check_object_permission(request, item, "view")`
 - Keep changes minimal — only add the check call, no logic changes
+
+## Status note (2026-09-28 roadmap re-cut)
+
+Done (superseded) — delivered by #481 (PR #544): object-level checks on detail/update/delete.

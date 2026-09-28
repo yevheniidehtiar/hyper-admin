@@ -2,7 +2,7 @@
 type: story
 id: DoAjgyxybD52
 title: "test(e2e): row-level security enforcement"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -17,7 +17,7 @@ github:
   last_sync_hash: sha256:8b3e6c8bbd2fb5198814002a58dd23a27a7048cd2c8ca1856bb85bb3fbee7db1
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-04-01T21:38:37Z
-updated_at: 2026-04-01T21:38:37Z
+updated_at: 2026-09-28T00:00:00Z
 ---
 
 ## Context
@@ -61,3 +61,7 @@ Depends on: #430 (all OLP view wiring complete)
 - Follow E2E patterns in `tests/e2e/test_auth_flow.py`
 - Need a test app with a model that has `owner_id` field
 - Use `page.get_by_role()`, `page.get_by_text()` — no `.ha-*` selectors
+
+## Status note (2026-09-28 roadmap re-cut)
+
+Done (superseded) — delivered by #482 (PR #547): `tests/e2e/test_object_permissions.py`.

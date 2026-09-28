@@ -2,10 +2,12 @@
 type: milestone
 id: v056-dpfl-01
 title: v0.5.6 — Detail Panels & Filter Library
-status: planned
+status: todo
 created_at: 2026-05-11T00:00:00Z
-updated_at: 2026-05-11T00:00:00Z
+updated_at: 2026-09-28T00:00:00Z
 ---
+
+**Roadmap position 7/16 (2026-09-28 re-cut).** Django-admin parity: tabbed detail panels (H4) and the filter library with saved views (H12).
 
 H4 + H12 from upstream readiness. Declarative `panels` registry on
 `AdminOptions` with a tabbed detail layout supporting `HTMLResponse` /

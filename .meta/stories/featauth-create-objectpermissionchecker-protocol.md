@@ -2,7 +2,7 @@
 type: story
 id: XcRn9Q_2Svqy
 title: "feat(auth): create ObjectPermissionChecker protocol"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -18,7 +18,7 @@ github:
   last_sync_hash: sha256:c94e7e6ef890fe58e946cce4f47f9217088ca349b688824ec60a1edcbc3b9c6f
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-04-01T21:36:45Z
-updated_at: 2026-04-01T21:36:45Z
+updated_at: 2026-09-28T00:00:00Z
 ---
 
 ## Context
@@ -54,3 +54,7 @@ Depends on: #423 (SDD approved)
 - Follow existing protocol pattern in `core/auth.py` (see `PermissionChecker`)
 - `core/` must not import from `views/` or `adapters/` (CONSTITUTION.md §2)
 - Keep the protocol minimal: `has_object_permission(user: Any, obj: Any, action: str) -> bool`
+
+## Status note (2026-09-28 roadmap re-cut)
+
+Done (superseded) — delivered by v0.5.1 epic #473 stories #476/#477: `ObjectPermissionChecker` + `DefaultObjectPermissionChecker` in `core/auth.py` (PRs #534, #540).

@@ -2,7 +2,7 @@
 type: epic
 id: fkINeqAy7AVG
 title: "epic: Adapter Query Performance (selectinload, pagination, count, search)"
-status: todo
+status: in_progress
 priority: medium
 owner: null
 labels:
@@ -17,7 +17,7 @@ github:
   last_sync_hash: sha256:b4b729b660d93b2a6e7584cb09e53c4fe387ef5aaa76ccded09fcb763499ae5e
   synced_at: 2026-04-07T17:23:23.790Z
 created_at: 2026-03-27T00:37:38Z
-updated_at: 2026-03-27T00:46:38Z
+updated_at: 2026-09-28T00:00:00Z
 ---
 
 ## Overview
@@ -54,3 +54,7 @@ Parent epic for adapter-level query optimizations addressing 4 critical scalabil
 - OFFSET-based pagination degrades linearly (OFFSET 10M scans 10M rows)
 - COUNT(*) on every request with no caching (seconds on 10M rows)
 - ILIKE `%search%` on unindexed columns (full table scan)
+
+## Status note (2026-09-28 roadmap re-cut)
+
+Re-cut: this epic is now v0.7.0a (scale-core) and covers A1–A3 only. A4 keyset stories (#226–#230) moved to `epic-v070b-keyset-cursor-pagination` (v0.7.0b). #220 and #222 verified done on develop. #221 is partial — `SQLAlchemyAdapter.list()` still ignores `search_fields` (`# noqa: ARG002`); #219 has no dedicated configurable-search_fields tests yet.

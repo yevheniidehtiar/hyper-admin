@@ -2,7 +2,7 @@
 type: epic
 id: ep-v050-h2-01
 title: "fix(inlines): per-row error highlighting in nested formsets"
-status: todo
+status: done
 priority: medium
 owner: null
 labels:
@@ -12,9 +12,9 @@ labels:
   - upstream-readiness
   - H2
 milestone_ref:
-  id: 1U5Neu25VVR2
+  id: v055-bulk-ac-01
 created_at: 2026-05-10T00:00:00Z
-updated_at: 2026-05-10T00:00:00Z
+updated_at: 2026-09-28T00:00:00Z
 ---
 
 ## Overview
@@ -66,3 +66,7 @@ Scenario: all-valid submission renders no row-level error marker
 
 - Milestone: v0.5.0 (follow-up patch)
 - Tracking: `epic-upstream-readiness` (H2)
+
+## Status note (2026-09-28 roadmap re-cut)
+
+Done — PR #561 merged to develop. Re-homed from v0.6.1 (Presence, a mis-link) to v0.5.5.

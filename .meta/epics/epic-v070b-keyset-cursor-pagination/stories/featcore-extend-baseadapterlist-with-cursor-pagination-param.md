@@ -13,14 +13,14 @@ labels:
   - performance
 estimate: null
 epic_ref:
-  id: fkINeqAy7AVG
+  id: ep-v070b-keyset-01
 github:
   issue_number: 227
   repo: yevheniidehtiar/hyper-admin
   last_sync_hash: sha256:49c5db11d1bc89c3070ae293ac1595131da6d1a12d316f81172aa360e559665e
   synced_at: 2026-04-07T17:23:23.790Z
 created_at: 2026-03-27T00:41:20Z
-updated_at: 2026-03-27T00:41:20Z
+updated_at: 2026-09-28T00:00:00Z
 ---
 
 ## Context

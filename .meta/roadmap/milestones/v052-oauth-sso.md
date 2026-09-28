@@ -10,7 +10,9 @@ github:
   last_sync_hash: sha256:f7de6b45b84954c587486c14a646ff79b4b32af019f29b84f299a58f7a7933a1
   synced_at: 2026-04-07T17:23:23.788Z
 created_at: 2026-03-29T09:35:05Z
-updated_at: 2026-04-02T13:44:23Z
+updated_at: 2026-09-28T00:00:00Z
 ---
+
+**Roadmap position 5/16 (2026-09-28 re-cut).** OAuth2/OIDC (Google, GitHub) on top of the existing session auth. SDD approved (#438, PR #573). Epic #420, stories #439–#446. Must compose with bring-your-own-auth (v0.5.8), never replace it.
 
 P2: OAuth2/OIDC/SAML2 auth backends + MFA + dashboard builder with widgets. Epics 5.3, 5.4.

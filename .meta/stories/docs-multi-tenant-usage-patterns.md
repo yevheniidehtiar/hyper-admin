@@ -10,14 +10,15 @@ labels:
   - agent-task
   - size:S
 estimate: null
-epic_ref: null
+epic_ref:
+  id: vjTPDDofso4Q
 github:
   issue_number: 454
   repo: yevheniidehtiar/hyper-admin
   last_sync_hash: sha256:43953057d283017c70ad84ab822a3af2a194cfaac91a548e699131d10235fff5
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-04-01T21:43:20Z
-updated_at: 2026-04-01T21:43:20Z
+updated_at: 2026-09-28T00:00:00Z
 ---
 
 ## Context

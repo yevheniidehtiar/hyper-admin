@@ -12,14 +12,15 @@ labels:
   - size:S
   - area:frontend
 estimate: null
-epic_ref: null
+epic_ref:
+  id: hHg_npkJyrk7
 github:
   issue_number: 445
   repo: yevheniidehtiar/hyper-admin
   last_sync_hash: sha256:d7e2daeeddd2652eb14876b3b4582c39f5a97c1c9c749d8c5de72cc9a59df63d
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-04-01T21:41:53Z
-updated_at: 2026-04-01T21:41:53Z
+updated_at: 2026-09-28T00:00:00Z
 ---
 
 ## Context

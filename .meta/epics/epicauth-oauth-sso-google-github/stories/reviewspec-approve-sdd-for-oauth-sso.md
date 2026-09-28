@@ -2,7 +2,7 @@
 type: story
 id: THJntOBspNTC
 title: "review(spec): approve SDD for OAuth SSO"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -19,7 +19,7 @@ github:
   last_sync_hash: sha256:52ece39db29aa0e4b746d637515df44e33b1785267964baf5e3eb3b330cedce5
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-04-01T21:40:08Z
-updated_at: 2026-04-01T21:40:08Z
+updated_at: 2026-09-28T00:00:00Z
 ---
 
 ## Context
@@ -48,3 +48,7 @@ Depends on: Epic #419 complete (AuthBackend protocol stable)
 - SDD template: `docs/specs/TEMPLATE.md`
 - Must address: What happens if OAuth email matches existing local user?
 - Must address: Token storage security (encryption at rest?)
+
+## Status note (2026-09-28 roadmap re-cut)
+
+Done — SDD approved in PR #573 (047324a); `docs/specs/oauth-sso.md` status Approved.

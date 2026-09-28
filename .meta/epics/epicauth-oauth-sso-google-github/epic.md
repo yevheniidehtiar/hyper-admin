@@ -10,14 +10,15 @@ labels:
   - area:core
   - area:auth
   - roadmap
-milestone_ref: null
+milestone_ref:
+  id: 99CTiIt2Wnd1
 github:
   issue_number: 420
   repo: yevheniidehtiar/hyper-admin
   last_sync_hash: sha256:9ed270d8025b1e3289b0d9cd86d88843484c94faa133daa0d5f96342e7edd024
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-04-01T21:35:53Z
-updated_at: 2026-04-01T21:46:25Z
+updated_at: 2026-09-28T00:00:00Z
 ---
 
 ## Overview
@@ -66,3 +67,7 @@ Implement OAuth2/OIDC authentication backends for Google and GitHub SSO.
 - [ ] #444 — feat(auth): OAuth token refresh middleware
 - [ ] #445 — feat(ui): add OAuth login buttons to login page
 - [ ] #446 — test(e2e): OAuth login flow end-to-end
+
+## Status note (2026-09-28 roadmap re-cut)
+
+Linked to milestone v0.5.2 — OAuth SSO. SDD approved (#438, PR #573); stories #439–#446 linked.

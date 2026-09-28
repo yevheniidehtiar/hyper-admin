@@ -2,7 +2,7 @@
 type: story
 id: st-v055-bulk-01
 title: "feat(core): extend ActionDef and @action with bulk/form parameters"
-status: todo
+status: done
 priority: high
 assignee: null
 labels:
@@ -15,7 +15,7 @@ estimate: null
 epic_ref:
   id: ep-v055-bulk-01
 created_at: 2026-05-10T00:00:00Z
-updated_at: 2026-05-10T00:00:00Z
+updated_at: 2026-09-28T00:00:00Z
 ---
 
 ## Summary
@@ -69,3 +69,7 @@ Scenario: legacy single-record @action(label="X") still works
 ## Parent
 
 - Epic: `epic-v055-bulk-actions`
+
+## Status note (2026-09-28 roadmap re-cut)
+
+Done — merged in PR #559 (cb38885): `core/actions.py` bulk/form parameters.

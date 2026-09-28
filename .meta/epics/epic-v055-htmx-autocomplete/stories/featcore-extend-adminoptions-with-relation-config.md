@@ -2,7 +2,7 @@
 type: story
 id: st-v055-ac-01
 title: "feat(core): extend AdminOptions with relation_filters and relation_display"
-status: todo
+status: done
 priority: high
 assignee: null
 labels:
@@ -15,7 +15,7 @@ estimate: null
 epic_ref:
   id: ep-v055-ac-01
 created_at: 2026-05-10T00:00:00Z
-updated_at: 2026-05-10T00:00:00Z
+updated_at: 2026-09-28T00:00:00Z
 ---
 
 ## Summary
@@ -60,3 +60,7 @@ Scenario: relation_display format string with valid placeholder is accepted
 ## Parent
 
 - Epic: `epic-v055-htmx-autocomplete`
+
+## Status note (2026-09-28 roadmap re-cut)
+
+Done — merged in PR #560 (3e21174): `relation_filters` / `relation_display` on `AdminOptions`.
