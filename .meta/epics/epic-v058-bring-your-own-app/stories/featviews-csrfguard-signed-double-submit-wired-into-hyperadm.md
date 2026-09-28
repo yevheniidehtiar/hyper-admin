@@ -1,7 +1,7 @@
 ---
 type: story
 id: st-v058-byoa-39
-title: "feat(views): CsrfGuard signed double-submit wired into HyperAdminRoute and settings"
+title: "feat(views): CsrfGuard signed double-submit with proxy-safe Origin check and token injection"
 status: todo
 priority: high
 assignee: null
@@ -72,6 +72,11 @@ Scenario: multipart with header token
 - [ ] off without auth
 - [ ] multipart with header token
 - [ ] `poe lint` and `poe test:unit` pass
+
+## Review amendments (2026-09-28)
+
+- The Origin check compares `host[:port]` with `Host`, or with the trusted `X-Forwarded-Host`. It does not compare schemes when the request is http and the Origin is https, and it accepts `Sec-Fetch-Site: same-origin`. A failure logs the observed Origin and Host, naming `csrf_trusted_origins`. Add a TLS-proxy scenario.
+- **Token injection moves here from `-46`:** `_base.html` `hx-headers`, the `<meta name="csrf-token">` tag and the `csrf_input()` global, in `_navbar.html`, `login.html`, `auth/mfa_*.html`, `components/bulk_form.html`, `components/bulk_result.html` and `widgets/popup_form.html`. Without it, enforcement under `csrf_mode=auto` would 403 every built-in-auth login and HTMX save, and this story's own `poe test:e2e` gate could not pass.
 
 ## Blocked by
 

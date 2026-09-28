@@ -50,6 +50,11 @@ Scenario: legacy engine import still works
 - [ ] legacy engine import still works
 - [ ] `poe lint` and `poe test:unit` pass
 
+## Review amendments (2026-09-28)
+
+- Remove `core/app.py:17` (`from hyperadmin.db import engine as default_engine`, used at `:85`). `Admin.__init__` calls `get_default_engine()` lazily, only in demo mode. Otherwise the deprecated `__getattr__("engine")` fires on every `import hyperadmin`, and the scenario "importing hyperadmin creates no engine" fails.
+- Add `db.create_tables(engine, tables)`, `db.resolve_bind(session_factory)` and `db.is_sqlite_url(url)`. The DDL lives here, not in `core/`.
+
 ## Blocked by
 
 - `reviewspec-approve-byoa-sdd` (st-v058-byoa-00)

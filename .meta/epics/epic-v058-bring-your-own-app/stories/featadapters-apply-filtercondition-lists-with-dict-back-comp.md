@@ -57,6 +57,11 @@ Scenario: isnull condition applies
 - [ ] isnull condition applies
 - [ ] `poe lint` and `poe test:unit` pass
 
+## Review amendments (2026-09-28)
+
+- Adds `adapters/introspection.coerce_column_value` (moved from `-15`) and applies it to the choices cascade values.
+- Range operators (`gte`, `lte`, `in`, `isnull`) are deferral candidates under Owner decision 8. If they are deferred, ship `exact` only and keep the `op` field.
+
 ## Blocked by
 
 - `featcore-typed-filter-coercion-and-filtercondition` (st-v058-byoa-19)

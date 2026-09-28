@@ -67,6 +67,11 @@ Scenario: composite list-only
 - [ ] composite list-only
 - [ ] `poe lint` and `poe test:unit` pass
 
+## Review amendments (2026-09-28)
+
+- For composite keys, registration also forces `can_detail`, `can_edit`, `can_delete` and `can_create` to `False`, empties `list_editable` and `inlines`, and removes actions. Otherwise `components/table.html:22-39` would fail with `NoMatchFound` (500).
+- Add a scenario: the list page of a composite-key model returns 200 with no row links.
+
 ## Blocked by
 
 - `featadapters-introspection-of-primary-keys-datetime-kinds-an` (st-v058-byoa-15)

@@ -50,6 +50,13 @@ Scenario: host session untouched
 - [ ] host session untouched
 - [ ] `poe lint` and `poe test:unit` pass
 
+## Review amendments (2026-09-28)
+
+- Replace `session_https_only` with `cookie_secure: "auto" | bool = "auto"` for all admin cookies. `auto` sets `Secure` from the effective request scheme, so plain-http installs and `TestClient` keep working. Add a TestClient login scenario.
+- Cookie paths use the per-request admin path (`admin_base_path`), which honours the host's `root_path`. Add a scenario with the host under `root_path="/api"`.
+- Fix `views/locale.py`: the cookie path is the admin path, not the hard-coded `"/admin"`, and a `Referer` is used only when it is same-origin and under the admin path (open-redirect fix). Add scenarios for `mount("/backoffice")` and an off-site `Referer`.
+- Route `AuthenticationMiddleware`'s `login_url` and the redirects in `auth/views.py` through the admin path.
+
 ## Blocked by
 
 - `featcore-isolated-sub-application-mount` (st-v058-byoa-35)

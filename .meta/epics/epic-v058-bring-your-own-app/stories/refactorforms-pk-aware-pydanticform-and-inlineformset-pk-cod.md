@@ -62,6 +62,10 @@ Scenario: inline invalid pk
 - [ ] inline invalid pk
 - [ ] `poe lint` and `poe test:unit` pass
 
+## Review amendments (2026-09-28)
+
+- `InlineFormset` never trusts a submitted pk on its own. Ownership is enforced by the adapter (`-10`), and this story keeps that check while switching to `pk.parse`.
+
 ## Blocked by
 
 - `refactorviews-dynamicmodelview-item-handlers-use-self-pk-and` (st-v058-byoa-29)

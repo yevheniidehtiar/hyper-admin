@@ -69,6 +69,11 @@ Scenario: aware list cell
 - [ ] aware list cell
 - [ ] `poe lint` and `poe test:unit` pass (and `poe test:e2e`)
 
+## Review amendments (2026-09-28)
+
+- Also cover `components/bulk_result.html` (19, 22, 33; `ha_dom_token` for the `outcome.id` testid), `components/bulk_form.html:17-18`, and `components/inline_row.html:10`: `{% if row.pk is not none %}` instead of the truthy check.
+- `detail.html:14` links files through the per-record route `<model>-file` (`-37`).
+
 ## Blocked by
 
 - `featforms-tz-aware-datetime-parsing-aware-naivedatetime-widg` (st-v058-byoa-32)

@@ -13,6 +13,18 @@
 
 **Baseline:** all `file:line` references point to `origin/fix/restore-green-develop` @ `f96dcc0`, which is `origin/develop` @ `30f58d5` plus the CI fix. That fix deletes the orphan `auth/oauth/backend.py`, caps `sqlmodel<0.0.45` and fixes the inline-editor Escape race. Implementation branches start from that commit (or from `develop` once it is merged).
 
+**Review (2026-09-28):** the architecture and adoption reviews have been folded into this draft. Every finding was checked against the code first. The main changes:
+- **B.6** grows to cover the file-delete, inline IDOR and row-scoping gaps.
+- **Oracles:** new sensitive-field, `sort_by` and choices hardening (story `-53`).
+- **Bridge permissions** now default to fail-safe.
+- **Bearer hosts** get an admin login form.
+- **Isolated sub-app:** it shares the host's `dependency_overrides` and `state`.
+- **Proxy safety:** a proxy-safe CSRF Origin check, `cookie_secure`, and per-request cookie paths.
+- **Files** are served per record.
+- **Lifecycle:** a single startup mechanism, and SQLite-only demo DDL.
+- **Release:** a working release chain and a real wheel smoke test.
+- **Plan:** a re-sequenced critical path, including dogfood-0.
+
 ---
 
 > ### Owner decisions needed
@@ -20,23 +32,45 @@
 > Each item below has a recommended default. If a decision is not recorded, the SDD proceeds with that default.
 >
 > 1. **Default mount mode.** The admin becomes an isolated sub-application (`mount_mode="isolated"`). As a result:
->    - `/static` and `/uploads` move under `/admin/`;
+>    - `/static` moves under `/admin/`, and uploaded files are served per record under `/admin/` (C.5);
 >    - route names become `hyperadmin:*`;
 >    - the session cookie is renamed, so every user logs in once more.
 >
 >    **Recommended:** `isolated` is the default, and `mount_mode="router"` stays available with a `DeprecationWarning` for one release (it is removed in 0.6).
+>
+>    The deciding spike has already been run on fastapi 0.141.1 / starlette 1.7.0. From inside the sub-app, `request.url_for("hyperadmin:user-list")` resolves to `/admin/user`, and the plain `"user-list"` raises `NoMatchFound`. So isolated mode works, but it needs the fallback helper in C.1. The sub-app also shares the host's `dependency_overrides` and `state` (C.1).
 > 2. **Rolling out CSRF to existing built-in-auth apps.** Two options: enforce immediately, or run report-only for one release.
->    **Recommended:** enforce immediately. `HYPERADMIN_CSRF_MODE=report` is the escape hatch, documented in the upgrade note. Every template that extends `_base.html` is covered automatically. Only custom raw `<form method="post">` templates and scripts need changes.
-> 3. **Bridge-mode permissions when `has_permission` is omitted.** Two options: full access for every user who passes `can_access`, or view-only.
->    **Recommended:** full access, plus a startup `WARNING` naming the setting. `can_access` is already deny-by-default (it requires `is_staff` or `is_superuser`), and view-only would break the 10-minute goal.
-> 4. **The authorization gaps are live today.** Inline edit/save, the update form, file delete and single-row actions skip object-level checks, and inline edit/save also skips model-level checks.
->    **Recommended:** ship story `st-v058-byoa-10` as a standalone `fix(views)` PR now, without waiting for this SDD's approval. Bug fixes need no SDD under sdd-conventions.
+>    **Recommended:** enforce immediately, using the proxy-safe Origin rule in D.1 (the host is compared; a scheme mismatch alone never fails the check). `HYPERADMIN_CSRF_MODE=report` is the escape hatch, documented in the upgrade note. Every template that extends `_base.html` is covered automatically, because token injection ships in the same story that turns enforcement on (`st-v058-byoa-39`). Only custom raw `<form method="post">` templates and scripts need changes.
+> 3. **Bridge-mode permissions when `has_permission` is omitted.** Granting full access to everyone who passes `can_access` would let a host "staff" user open the host `User` model and set their own `is_superuser`. That is privilege escalation, not just a permissive default.
+>    **Recommended (fail-safe):** without `has_permission`, superusers get full access and every other user who passes `can_access` gets **view-only** access. Full access for all staff needs the explicit opt-in `ExternalAuth(allow_full_access=True)`, which logs a startup `WARNING`. The 10-minute guide uses a superuser, so the thesis still holds.
+> 4. **The authorization gaps are live today.**
+>    - Inline edit/save, the update form, file delete and single-row actions skip object-level checks.
+>    - Inline edit/save and inline add-row skip model-level checks.
+>    - `delete_file_view` can delete arbitrary server files.
+>    - Inline formsets let a user rewrite, reparent or delete another parent's child rows.
+>    - Item and bulk handlers bypass `get_queryset` scoping.
+>
+>    **Recommended:** ship `st-v058-byoa-10` (authorization) and `st-v058-byoa-53` (query-oracle hardening) as standalone `fix(views)` PRs now, without waiting for this SDD's approval. Bug fixes need no SDD under sdd-conventions, so neither story is blocked by the gate.
 > 5. **PyPI release.** The distribution name is `hyper-admin` and the import name is `hyperadmin`. The first release is the pre-release `0.5.0a1`, published with trusted publishing from GitHub environment `pypi`.
 >    **Owner action:** confirm the name is available on PyPI, and configure the trusted publisher before story `st-v058-byoa-50` merges.
 > 6. **Existing `hyperadmin_*` timestamps.** Built-in auth rows were written with naive local `datetime.now()`. After this change they are read back as UTC, so on servers that do not run in UTC the displayed `created_at` shifts.
 >    **Recommended:** accept this and add a release note. No data-fix command.
-> 7. **URL filters restricted to `list_filter`.** Today any `filter_<column>=` query parameter is accepted, which lets anyone test equality on secret columns such as `password_hash`.
->    **Recommended:** accept only fields named in `list_filter`, and ignore the rest. Record this in the changelog as a security fix.
+> 7. **Closing the secret-column oracles.** Four query paths let a user probe secret columns today:
+>    - any `filter_<column>=` parameter;
+>    - any `?sort_by=`;
+>    - the inferred `?search=`, which covers every `str` column including `password_hash`;
+>    - the FK choices endpoint, which turns every extra query parameter into an equality filter on the target model.
+>
+>    On top of that, `detail_view` shows `password_hash` outright.
+>    **Recommended:**
+>    - URL filters accept only `list_filter` fields.
+>    - `sort_by` accepts only sortable displayed columns.
+>    - A *sensitive-field* marker excludes a field from inferred search, list, detail, filters and sorting. It is set with `json_schema_extra={"hyperadmin_sensitive": True}`, or by default for names matching `password|secret|token|hash`. `User.password_hash` is marked.
+>    - The choices endpoint accepts only the cascade keys declared by the relation widget, requires `view` on the target model and applies the target admin's `get_queryset`.
+>
+>    Record all of this in the changelog as a security fix (D.3, story `st-v058-byoa-53`).
+> 8. **Scope trim for dogfood-1.** Typed *range* filters and their UI (`__gte`, `__lte`, `__in`, `__isnull` and story `st-v058-byoa-47`) and validation-message i18n (#531, story `st-v058-byoa-27`) do not serve the BYOA thesis.
+>    **Recommended:** keep the typed *exact* filters and the whitelist, which are security fixes. Move the range operators, story `-47` and story `-27` to a follow-up milestone. The critical path no longer runs through them (`-15` does not wait for `-19`, and `-51` does not wait for `-47`), so the trim only changes labels, not the plan. An early **dogfood-0**, installed from the repository (`st-v058-byoa-54`), runs as soon as the bridge and the isolated mount land.
 
 ---
 
@@ -129,7 +163,10 @@ The adoption thesis for this milestone: **HyperAdmin can be added to an existing
 | `core/auth.py` | changed | domain | Adds `AdminAuthenticationRequired` and `AdminAccessDenied` |
 | `core/adapters.py` | changed | domain | `BaseAdapter.pk`, `BaseAdapter.datetime_kind()`, `session_factory` keyword, `_session()`, `SessionFactory` typing alias |
 | `core/settings.py` | changed | domain | New settings (see Configuration Changes) |
-| `core/lifecycle.py` | new | logic | `AdminLifecycle`: idempotent startup/shutdown, first-request guard, table-creation scopes |
+| `core/lifecycle.py` | new | logic | `AdminLifecycle`: pure orchestration of idempotent startup/shutdown and the first-request guard. Its DDL and permission-sync steps are **injected callables**, so it imports no ORM and no `auth/` |
+| `db.py` (DDL helpers) | changed | root | `create_tables(engine, tables)`, `resolve_bind(session_factory)` (reads `session_factory.kw["bind"]`), `is_sqlite_url(url)`. This is where the ORM-specific table creation lives |
+| `core/storage_paths.py` | new | domain (pure) | `resolve_storage_path(root, name)`: resolves the path and raises unless it lies inside the storage root. Shared by `delete_file_view`, `_collect_file_paths` and `views/uploads.py` |
+| `core/sensitive.py` | new | domain (pure) | `is_sensitive(name, field_info)`, which checks the `hyperadmin_sensitive` marker and the default name patterns |
 | `adapters/introspection.py` | new | adapters | `introspect_primary_key`, `datetime_kind`, `coerce_column_value`. Uses SQLAlchemy `inspect` |
 | `adapters/_filter_clause.py` | new (private to `adapters/`) | adapters | `build_clause(model, FilterCondition)` |
 | `adapters/sqlmodel.py`, `adapters/sqlalchemy.py` | changed | adapters | pk codec, `_session()`, `FilterCondition` lists, pk-stripping `update()` |
@@ -141,7 +178,7 @@ The adoption thesis for this milestone: **HyperAdmin can be added to an existing
 | `views/csrf.py` | new | views | `CsrfGuard` (reads the cookie, header or form field; checks the origin) |
 | `views/urls.py` | new | views | `admin_url_for`, `install_namespaced_url_for` |
 | `views/template_filters.py` | new | views | `ha_pk`, `ha_dom_token`, `ha_datetime_input`, `ha_display`, `resolve_tz` |
-| `views/uploads.py` | new | views | Authenticated upload streaming with a header policy |
+| `views/uploads.py` | new | views | Per-record file streaming (`{model}/{item_id}/file/{field}`) with permission, object and queryset checks, plus a header policy |
 | `views/dynamic.py`, `views/forms.py` | changed | views | pk-agnostic handlers, tz-aware forms, typed filters, error surfacing |
 | `i18n/validation_messages.py` | new | i18n | `translate_error(ErrorDetails)` |
 | `routing.py` | changed | views | Per-model pk converter, literal routes registered first, `route_class` |
@@ -176,6 +213,8 @@ The table uses the names `adapters/introspection.py` and `views/template_filters
   - `InlineFormset` gets the inline model's adapter from `adapter_registry`.
 - `core/app.py` is the existing composition root. It keeps importing `views/`, `auth/` and `realtime/` **lazily inside methods**, as it does today. No new top-level `core → views` or `core → adapters` imports are added.
 - `auth/bridge.py` may import only `core/`. A unit test running in a subprocess checks that importing it leaves `SQLModel.metadata` without any `hyperadmin_*` tables.
+- `core/lifecycle.py` receives its DDL step (`db.create_tables`), its bind resolution (`db.resolve_bind`) and the auth-metadata lookup (`hyperadmin.auth.metadata`) as callables from `core/app.py`. It imports none of them.
+- **Known existing violation:** `core/discovery.py:77-81` already imports `adapters.registry` (core → adapters, against §2) and builds FK choice values itself. This milestone does not deepen it. Story `st-v058-byoa-23` routes FK choice formatting through the adapter contract (`target_adapter.pk.to_str`, `adapter.for_model`). Removing the import is recorded as follow-up debt.
 
 ### A. Keys and datetimes
 
@@ -234,7 +273,7 @@ Third-party adapters keep working without changes.
 4. The column type is `DateTime(timezone=True)`, or a `TypeDecorator` whose `impl.timezone` is true (aware).
 5. Otherwise naive.
 
-**`coerce_column_value(model, attr, raw)`** converts raw strings used in cascading choice filters to the column's Python type. It delegates to `core.filtering.coerce_filter_value`, so both paths coerce values the same way.
+**`coerce_column_value(model, attr, raw)`** converts raw strings used in cascading choice filters to the column's Python type. It delegates to `core.filtering.coerce_filter_value`, so both paths coerce values the same way. It is added in story `st-v058-byoa-24`, not `-15`, so primary-key introspection does not wait on the filter work. Primary keys are coerced by `PrimaryKeyInfo.parse`, which has its own cached `TypeAdapter`.
 
 `SQLModelAdapter` and `SQLAlchemyAdapter` set `self.pk = introspect_primary_key(model)` and implement `datetime_kind`.
 
@@ -245,8 +284,14 @@ Third-party adapters keep working without changes.
 - **`delete()` and `update()`** parse the key before calling `session.get`.
 - **`get_choices()`**:
   - the option value is `target_pk.to_str(target_pk.value_of(item))`, where `target_pk` is cached per target class;
-  - cascade filter values go through `coerce_column_value`.
-- **`save_inline_rows()`** checks `row.get("_pk") is not None` rather than truthiness, so a row with key `0` is not skipped.
+  - it accepts only the cascade keys the view passes in, which are the keys declared by the relation widget (`dependent_on`). It no longer applies `hasattr(target_model, key)` to arbitrary query parameters (D.3);
+  - it applies the target adapter's queryset filter;
+  - cascade filter values go through `coerce_column_value` (story `-24`).
+- **`save_inline_rows()`**:
+  - checks `row.get("_pk") is not None` rather than truthiness, so a row with key `0` is not skipped;
+  - **enforces ownership.** It loads the parent's existing child keys (`WHERE fk_field == parent_pk`), and any submitted `_pk` outside that set raises `InlineRowNotOwned`, which the view turns into a 404 before any write. This closes the IDOR and reparenting hole where `<prefix>-<i>-pk` was trusted as-is (`views/forms.py:650-660`, `adapters/sqlmodel.py:277-288`, `adapters/sqlalchemy.py:218`). The fix lands in story `-10`;
+  - uses `self.for_model(spec.model)` instead of `SQLModelAdapter(spec.model, self.engine)`, so the inline adapter shares the engine or `session_factory` (C.3).
+- **`for_model(model)`** is a new non-abstract `BaseAdapter` method. It returns an adapter of the same class for another model, carrying over the engine and `session_factory`.
 - **Composite keys:** `get`, `get_related`, `update` and `delete` raise `NotImplementedError`.
 
 #### A.4 Core helpers
@@ -269,7 +314,7 @@ Third-party adapters keep working without changes.
    - **int keys** keep `{item_id:int}` byte-for-byte;
    - **UUID keys** use Starlette's `uuid` converter, so a malformed UUID never matches the route and returns 404 before any view runs.
 3. **Every fixed-literal route is registered before the `/{item_id}` routes.** These are create, create-popup, choices, inline add-row, bulk, bulk-confirm and upload. Starlette uses the first full match, so for `str` keys these words become reserved segments on GET. This is documented.
-4. **Composite keys** get only the list and choices routes, and log `WARNING … composite primary key; registering list-only`.
+4. **Composite keys** get only the list and choices routes, and log `WARNING … composite primary key; registering list-only`. Registration also forces `can_detail`, `can_edit`, `can_delete` and `can_create` to `False`, empties `list_editable` and `inlines`, and removes all actions. Otherwise `components/table.html:22-39` would call `url_for` on routes that were never registered, and the list page would fail with a 500 (`NoMatchFound`).
 5. The `item_id` parameter name does not change.
 6. The router takes `route_class=` (see pillar B).
 
@@ -315,6 +360,8 @@ It also changes in three ways:
 - `InlineFormRow.pk` is typed `Any`.
 - `int(pk_val)` becomes `pk.parse`. If parsing fails, that row gets an error.
 - `getattr(inst, "id")` becomes `pk.value_of`.
+- A submitted pk is **never trusted on its own**. The adapter's ownership check (A.3) rejects any pk that is not an existing child of the parent being edited.
+- `inline_save`/`update` enforces the inline model's own `add`, `change` and `delete` permissions, codenames `<action>_<inline model>`, on the rows it creates, updates or deletes.
 
 #### A.7 Timezones (in `core/timezones.py`)
 
@@ -367,7 +414,12 @@ This column type:
 | `ha_display(value)` | For aware datetimes, renders `<time datetime="{utc iso}">{local text}</time>`. Every other value passes through unchanged |
 
 **Templates:**
-- `item.id` becomes `item|ha_pk(pk_attr)` in URLs and `…|ha_dom_token` in ids and testids. This applies to `components/table.html`, `components/inline_cell.html`, `components/inline_editor.html`, `components/inline_cell_error.html`, `update.html` and `detail.html`.
+- `item.id` becomes `item|ha_pk(pk_attr)` in URLs and `…|ha_dom_token` in ids and testids. This applies to:
+  - `components/table.html`, `components/inline_cell.html`, `components/inline_editor.html` and `components/inline_cell_error.html`;
+  - `update.html` and `detail.html`;
+  - `components/bulk_result.html` (the `outcome.id` testid at line 22, and the ids at 19 and 33);
+  - `components/bulk_form.html:17-18` (hidden ids use `ha_pk` semantics, stringified with `pk.to_str`).
+- `components/inline_row.html:10` changes its truthy `{% if row.pk %}` to `{% if row.pk is not none %}`. Without this, a child row whose key is `0` or `""` loses its hidden pk and is re-created on save.
 - In `components/table.html:16`, `field != 'id'` becomes `field != pk_attr`.
 - Display cells use `|ha_display`.
 - In `widgets/datetime_input.html`, the input uses `|ha_datetime_input` and `step="1"`. It also shows a timezone hint with `data-testid="{field}-tz"`.
@@ -390,7 +442,10 @@ The bridge is attached as `include_router(protected_router, dependencies=[Depend
 - `Security` scopes;
 - dependencies that `yield`;
 - sync functions;
-- `app.dependency_overrides` in the host's tests.
+- `app.dependency_overrides` in the host's tests;
+- host dependencies that read `request.app.state` (for example a `get_db(request)` that uses `request.app.state.sessionmaker`).
+
+The last two need care in isolated mode. FastAPI resolves overrides from the app that owns the router, and Starlette sets `scope["app"]` to the sub-app. This was reproduced on fastapi 0.141.1 / starlette 1.7.0: a host override of `get_user` was ignored under `/admin`, and `request.app.state` was the sub-app's empty `State`. So `mount()` **shares the host's objects** with the sub-app: `sub_app.dependency_overrides = app.dependency_overrides` (the same dict) and `sub_app.state = app.state`. Admin-private values such as the route namespace are therefore kept on the sub-app instance and in `scope["hyperadmin"]`, not in `state`, so they never pollute the host's state.
 
 A middleware would need FastAPI's private `solve_dependencies` API. The route-level dependency also scopes auth to admin routes only.
 
@@ -398,20 +453,24 @@ A middleware would need FastAPI's private `solve_dependencies` API. The route-le
 
 A host dependency using `OAuth2PasswordBearer(auto_error=True)` raises `HTTPException(401)` before our code runs. The only admin-scoped place to turn that into a browser redirect is a wrapper around the route handler.
 
-`make_admin_route_class(...)` returns `HyperAdminRoute`, which is set as `route_class` on every admin `APIRouter` (`routing.py:61,284` and the routers in `core/app.py`). FastAPI's `include_router` keeps `type(route)`. This one class is also the only place that:
-1. copies the token cookie into an `Authorization` header;
-2. verifies CSRF;
-3. attaches the CSRF cookie to the response;
-4. maps auth errors to responses:
+`make_admin_route_class(...)` returns `HyperAdminRoute`, which is set as `route_class` on every admin `APIRouter` (`routing.py:61,284` and the routers in `core/app.py`). FastAPI's `include_router` keeps `type(route)`. This one class is also the only place that performs the steps below, **in this order**:
+1. **Token-cookie bridge.** When no `Authorization` header is present, the class copies the token cookie into one by mutating `scope["headers"]` *before any body read*. There is exactly one `Request` object per request; no second `Request` is built from a copied scope. So the handler's `form()` reads from Starlette's `_form` cache and never from a receive stream that has already been consumed.
+2. **Auth.** Route dependencies are solved, including the admin principal. This happens before CSRF, so an anonymous POST gets the 401/303 below and not a CSRF 403.
+3. **CSRF.** CSRF is verified on the same `Request` object that is passed to the handler (D.1).
+4. The handler runs, and the CSRF cookie is attached to its response.
+5. **Auth errors** are mapped to responses:
 
 | Condition | Plain browser request | HTMX request (`HX-Request`) | API prefix (`/realtime/`) |
 |---|---|---|---|
 | `AdminAuthenticationRequired` or host 401, with `login_url` set | 303 to `login_url?next=<admin path+query>` | 401 plus `HX-Redirect: <same>` | 401 |
 | The same, without `login_url` | 401 HTML page: "Sign in to the host application" | 401 plus `HX-Refresh: true` | 401 |
-| `AdminAccessDenied` or host 403 | 403 HTML page naming `can_access` | 403 | 403 |
+| `AdminAccessDenied`, or a 403 raised **during dependency solving** (the host's own `get_user` chain) | 403 HTML page naming `can_access` | 403 | 403 |
+| `HTTPException(403)` raised by a view (model or object permission, `views/dynamic.py:133,136,1198`) | Passed through unchanged. It is not the `can_access` page | | |
 | Any other error | Passed through unchanged | | |
 
-The `next` value is always the relative admin path built on the server, never user input, so it cannot be used as an open redirect.
+The class tells the two 403 cases apart by the phase it is in: dependency solving versus the endpoint call.
+
+When the auth-error redirect is built, its `next` value is the relative admin path, built on the server from the current request. It is never taken from user input, so it cannot be used as an open redirect. A user-supplied `next` exists only on the token handoff and the bridge login form (B.4), where it is validated.
 
 In built-in mode, the same route class still does CSRF, but auth redirects stay in `AuthenticationMiddleware`.
 
@@ -424,14 +483,20 @@ This applies when `auth=ExternalAuth(...)` is set.
 
 **Routers**
 - There are two routers. `router` (protected) is included with `Depends(build_admin_dependency(auth))`.
-- `public_router` holds only the token-handoff route.
-- There is no login route, no MFA routes and no `SessionMiddleware` or `AuthenticationMiddleware`.
+- The token-handoff route sits on the protected router, because it is authenticated by the same dependency, and it is exempt from CSRF (B.4). `public_router` holds only the optional bridge login form (`token_endpoint`, B.4).
+- There is no built-in username/password login (except the opt-in bridge login form in B.4), no MFA routes and no `SessionMiddleware` or `AuthenticationMiddleware`.
 - `POST {prefix}/logout` is protected and CSRF-checked. It clears the token cookie, then returns 303 to `logout_url or "/"`.
 
 **Permission checker**, first match wins:
-1. an explicit `Admin(permission_checker=…)`;
-2. `auth.has_permission`, wrapped in `CallablePermissionChecker` when it is a plain callable;
-3. `None`: full access for every user who passes `can_access`, plus a startup `WARNING` (see Owner decision 3).
+1. An explicit `Admin(permission_checker=…)`.
+   - A `ModelPermissionChecker` combined with `auth=` raises `ValueError` unless `register_auth_models=True`. It queries `hyperadmin_*` tables keyed on `user.id` (`auth/permissions.py:78-107`), so it also needs host user ids that are ints. The error message says so.
+2. `auth.has_permission`, wrapped in `CallablePermissionChecker` when it is a plain callable.
+3. **Fail-safe default** (`BridgeDefaultPermissionChecker`), per Owner decision 3:
+   - a user with a truthy `is_superuser` has every permission;
+   - every other user has `view_*` only.
+   - `ExternalAuth(allow_full_access=True)` restores full access for everyone who passes `can_access`, and logs a startup `WARNING` naming the setting.
+
+Whichever checker applies, the host user model (the class of the object `get_user` returns) never gets `change_*` or `delete_*` for a user who is not a superuser, unless `has_permission` grants it explicitly. This stops a staff user from editing their own role or superuser flag.
 
 **Other wiring**
 - `core/app.py:161` changes its guard from `if self.auth_backend` to `if self._auth_mode is not None`.
@@ -443,30 +508,66 @@ This applies when `auth=ExternalAuth(...)` is set.
 
 This is enabled only when `token_cookie=TokenCookie()` is set. Apps that already authenticate with a cookie need none of it.
 
-**`POST {prefix}/auth/session`**
-- It lives on the public router and is exempt from CSRF: it is authenticated by the `Authorization` header, which a cross-site page cannot set.
-- It validates the bearer token by calling the host dependency through an internal sub-application request.
-- On success it sets `hyperadmin_token=<jwt>` with `HttpOnly`, `SameSite=Lax`, `Path=<prefix>`, `Max-Age`, and `Secure` when served over https. It then returns 204, or 303 to a validated `next`.
+A bearer-only host (for example one using `OAuth2PasswordBearer` with an SPA) has a problem: a browser that navigates to `/admin` sends no `Authorization` header. So bridge mode offers two ways in, and **the second needs no host frontend change**.
+
+**1. `POST {prefix}/auth/session` (programmatic handoff, for SPAs)**
+- It is exempt from CSRF: it is authenticated by the `Authorization` header, which a cross-site page cannot set.
+- It is protected by `Depends(build_admin_dependency(auth))` itself, so the host dependency validates the token natively, including overrides. No internal sub-application request is made, which resolves Open Question 2.
+- On success it sets `hyperadmin_token=<jwt>` with `HttpOnly`, `SameSite=Lax`, `Path=<admin path>` (C.1), `Secure` per `cookie_secure` (C.4), and a `Max-Age` (below). It then returns 204, or 303 to a validated `next`.
 - It returns 400 if the token is longer than 3,800 bytes, and 401 if the host rejects it (no cookie is set).
 
-**On later admin requests**, the route class copies the cookie into `Authorization: <scheme> <token>`, but **only when no `Authorization` header is present**. It does this by building a new `Request` from a copied scope before dependency solving.
+**2. Admin login form (opt-in, for bearer apps without frontend changes)**
+- Set `TokenCookie(token_endpoint=...)`. The value is either the host's token URL (by default the `tokenUrl` of the `OAuth2PasswordBearer` found in the `get_user` dependency tree), or an `issue_token(username, password) -> str | None` callable.
+- The admin then serves `GET/POST {prefix}/login`, a CSRF-protected form. It posts the credentials **server side** to the token endpoint, using the OAuth2 password grant form fields or the callable, and stores the returned access token in the cookie.
+- When `login_url` is not set, auth-error redirects go to this form. A user reaches `/admin` in a plain browser with no host code changes.
+
+**Cookie lifetime**
+- `Max-Age` is `min(TokenCookie.max_age, exp - now)`, where `exp` comes from the JWT payload. The payload is read without verifying the signature, and only to compute the lifetime; the host dependency still verifies the token.
+- Opaque tokens use `max_age`.
+- There is no refresh. When the host rejects a token that came from the cookie (a 401), the route class **clears the cookie** before redirecting, so a dead cookie never causes a login loop.
+
+**Validating `next`** (for the handoff and the login form): it must be a relative path that starts with the admin path plus `/`. A value starting with `//`, or containing a backslash or a scheme, falls back to the dashboard.
+
+**On later admin requests**, the route class copies the cookie into `Authorization: <scheme> <token>`, but **only when no `Authorization` header is present**. It does this by mutating `scope["headers"]` before any body read (B.2).
 
 #### B.5 Import hygiene
 
 `auth/__init__.py` switches to PEP 562 lazy `__getattr__`:
 - `from hyperadmin.auth import User` still works.
 - `from hyperadmin.auth import ExternalAuth` no longer imports `auth/models.py`, so it no longer registers `hyperadmin_*` tables.
-- `hyperadmin.auth.metadata()` returns a copy of the metadata containing only the `hyperadmin_*` tables, for Alembic users.
+- `hyperadmin.auth.metadata()` returns a copy of the metadata containing only the `hyperadmin_*` tables, for Alembic users of **built-in auth only**. Calling it imports `auth/models.py`, and SQLModel table classes register on the global `SQLModel.metadata` when they are imported. So it also puts `hyperadmin_*` tables into that process's autogenerate target. The docs say so explicitly, and the function logs a `WARNING` when an `Admin` in bridge mode has already been constructed in the same process. A dedicated `MetaData` for the auth tables is follow-up work, if the sqlmodel floor allows it.
 
 #### B.6 Closing the authorization gaps
 
-Story `st-v058-byoa-10` (see Owner decision 4) adds these checks:
+Story `st-v058-byoa-10` (see Owner decision 4) closes these gaps. It is not blocked by the SDD gate.
 
-| Handler | Model-level check | Object-level check |
+**Checks per handler**
+
+| Handler | Model-level check | Object-level check and row scoping |
 |---|---|---|
-| `inline_edit_form_view`, `inline_save_view` | `_check_permission("change")` | `_check_object_permission(item, "change")` |
-| `update_form_view`, `delete_file_view` | already present | `"change"` |
-| `run_action` | already present | Loads the object, applies `_request_queryset_filter`, then checks `f"action_{name}"`, mirroring the bulk path at `views/dynamic.py:1414` |
+| `inline_edit_form_view`, `inline_save_view` | `_check_permission("change")` | Loaded under the request's queryset filter; `_check_object_permission(item, "change")` |
+| `inline_add_row_view` (has no check today, `views/dynamic.py:866-889`) | `"add"` or `"change"` on the parent | — |
+| `update_form_view` | already present | `"change"`, loaded under the queryset filter |
+| `delete_file_view` | already present | `"change"`, loaded under the queryset filter, plus the file-field check below |
+| `upload_file_view` | `"add"` or `"change"` | `field_name` must be a file field |
+| `run_action` | already present | Loads the object under the queryset filter, then checks `f"action_{name}"` |
+| `_execute_bulk` (`views/dynamic.py:1406`) | already present | Each `adapter.get` runs under the queryset filter. Today it does not, so the bulk path is **not** the model to copy; both paths are fixed together |
+| `choices_view` | `view` on the source model **and** on the target model | The target admin's `get_queryset` applies; only declared cascade keys are accepted (D.3) |
+
+**File fields (`delete_file_view`, `views/dynamic.py:1115-1135`)**
+- Today the handler never checks that `field_name` is a file field. It nulls whatever column is named and calls `os.remove` on a path built from that column's value.
+- `FileSystemStorage.get_path` returns `self._path / Path(name)`, so an absolute value replaces the storage root. A user with `change` permission could write `/etc/…` into any text field and then delete that server file.
+- The fix: return 404 unless `field_name` is in `self._get_file_fields()`, and resolve every storage path through `core/storage_paths.resolve_storage_path`, which refuses anything outside the storage root. The same helper is used by `delete_file_view`, `_collect_file_paths` and `views/uploads.py`.
+
+**Inline formsets**
+- Submitted child pks are checked for ownership, and the inline model's own permissions are enforced (A.3, A.6).
+- Posting another parent's child pk returns 404, and nothing is written.
+
+**Request-scoped queryset filter**
+- Today `_request_queryset_filter` stores a closure on the **shared adapter instance** (`views/dynamic.py:150-166`), and `BaseAdapter._resolve_queryset_filters(request=None)` evaluates it (`core/adapters.py:83-85`). Any call made outside the context manager therefore runs another request's filter, or none at all.
+- The fix: the active request is kept in a `contextvars.ContextVar` set by the context manager, and not on the adapter. `adapter.get`, `list`, `get_related` and `get_choices` read the filter from that context variable.
+- Every item and bulk handler enters `_request_queryset_filter`. A unit test asserts that each handler in `DynamicModelView` that calls the adapter does so inside the context.
+- The v0.5.3 tenancy amendment depends on this.
 
 ### C. Non-invasive mount
 
@@ -475,7 +576,8 @@ Story `st-v058-byoa-10` (see Owner decision 4) adds these checks:
 `Admin.mount(path)` builds a private `FastAPI(openapi_url=None, docs_url=None, redoc_url=None)` and attaches it with `app.mount(path, sub_app, name=settings.route_namespace)`. As a result:
 
 - **Middleware is scoped to the admin.** `LocaleMiddleware`, `AdminSessionMiddleware` and `AuthenticationMiddleware` wrap only admin requests.
-- **Admin assets move under the prefix:** `/static`, `/uploads` and `/realtime/ws` become `{prefix}/static/…`, `{prefix}/uploads/…` and `{prefix}/realtime/ws`.
+- **Admin assets move under the prefix:** `/static` and `/realtime/ws` become `{prefix}/static/…` and `{prefix}/realtime/ws`. Uploaded files are served per record under `{prefix}/{model}/{item_id}/file/{field}` (C.5).
+- **Host objects are shared:** `sub_app.dependency_overrides = app.dependency_overrides` and `sub_app.state = app.state` (B.1).
   - The `/static` mount moves **out of `Admin.__init__`**, where it happens today at `core/app.py:108-110`, into `mount()`.
 - **Route names are namespaced** as `hyperadmin:user-list`, and admin routes are left out of the host's OpenAPI schema.
 - **Legacy mode.** `settings.mount_mode = "router"` keeps today's exact behaviour: `include_router`, global middleware, `/static` at the root and un-namespaced route names. It emits a `DeprecationWarning` and is removed in 0.6.
@@ -483,7 +585,7 @@ Story `st-v058-byoa-10` (see Owner decision 4) adds these checks:
 - **The auth bridge in isolated mode.** The protected and public routers are included into the sub-app. The auth dependency and route class behave exactly as in B.3.
 
 **Resolving URLs.** `views/urls.py` provides:
-- `admin_url_for(request, name, **params)`: it tries `f"{ns}:{name}"` when `request.app.state.hyperadmin_namespace` is set, and plain `name` otherwise.
+- `admin_url_for(request, name, **params)`: it tries `f"{ns}:{name}"` when `scope["hyperadmin"]["namespace"]` is set, and plain `name` otherwise. The namespace is not kept in `app.state`, which is now the host's.
 - `install_namespaced_url_for(env)`: it replaces the Jinja `url_for` global with a context-aware wrapper that falls back the same way.
 
 With these, none of the roughly 25 template `url_for` calls needs editing, and host-overridden templates that link to host routes keep working. The 9 `request.url_for` calls in `views/dynamic.py` switch to `admin_url_for`.
@@ -492,6 +594,20 @@ With these, none of the roughly 25 template `url_for` calls needs editing, and h
 - In the sub-app it uses `get_route_path(scope)`.
 - In router mode it requires a segment boundary: `path == prefix or path.startswith(prefix + "/")`. This fixes `/administrator` being treated as an admin path (`auth/middleware.py:45`).
 
+**The external admin path is computed per request.** A host can itself run under a `root_path`, for example behind an ingress that serves it at `/api`. The browser path is then `/api/admin/...`, while the static prefix string is only `/admin`. So every cookie path and every server-built URL uses an **admin path** computed from the request:
+- in isolated mode, the sub-app's `scope["root_path"]`, which already holds the full external prefix;
+- in router mode, `scope["root_path"] + prefix`.
+
+The helper is `views/urls.admin_base_path(request)`. It is exposed to templates as `admin_prefix`, and it is used for:
+- the `Path` of the session, CSRF, token and locale cookies;
+- `AuthenticationMiddleware`'s `login_url` (`auth/middleware.py:82`);
+- the redirects in `auth/views.py`;
+- the 14 template sites that build `{{ admin_prefix }}/...` (`_navbar.html:14,24,62`, `login.html:21`, `auth/mfa_*.html`).
+
+**Locale switcher (`views/locale.py`)**, story `st-v058-byoa-36`:
+- `_COOKIE_PATH = "/admin"` becomes the per-request admin path. Today the locale cookie is never sent back under `mount("/backoffice")`.
+- The redirect target follows the `next` rule from B.4. The raw `Referer` header is used only when it is a same-origin URL whose path starts with the admin path; otherwise the redirect goes to the dashboard. This closes today's open redirect (`views/locale.py:64-67`).
+
 #### C.2 Lifecycle
 
 - Every `app.on_event` and `router.on_startup` use is removed (`core/app.py:112-116,290-292,477`).
@@ -499,10 +615,19 @@ With these, none of the roughly 25 template `url_for` calls needs editing, and h
   - `await admin.startup()` creates tables (if opted in), then syncs permissions;
   - `await admin.shutdown()` drains realtime connections;
   - `admin.lifespan()` is an async context manager the host can compose into its own lifespan.
-- **Safety net.** Starlette silently ignores `on_event` handlers when the host passes `lifespan=`. So a sub-app `_StartupGuard` runs `startup()` exactly once, under an `asyncio.Lock`, on the first admin request. Failures are logged and not cached, so the next request retries. When the host keeps Starlette's default lifespan, `mount()` also appends to `app.router.on_startup` and `on_shutdown`.
+- **One startup mechanism.** Starlette silently ignores `on_event` handlers when the host passes `lifespan=`, and mounted sub-apps never receive lifespan events at all. The design therefore keeps exactly two paths, and drops the `app.router.on_startup` append:
+  - **the explicit path:** `admin.lifespan()` (or `startup()`/`shutdown()`) composed into the host's lifespan;
+  - **the safety net:** a sub-app `_StartupGuard` runs `startup()` exactly once, under an `asyncio.Lock`, on the first admin request. Failures are logged and not cached, so the next request retries.
+- **Shutdown has no safety net.** `admin.shutdown()` drains realtime SSE and WebSocket connections, and it runs only when the host composes `admin.lifespan()`. So:
+  - when realtime is enabled and `startup()` was first reached through the guard, the admin logs a one-time `WARNING` telling the host to compose `admin.lifespan()`;
+  - independently, SSE generators poll `request.is_disconnected()` and exit when the server closes the connection, so open streams never stall a graceful shutdown.
+- **`core/lifecycle.py` stays pure orchestration.** It receives `create_tables`, `resolve_bind` (both in `db.py`) and the auth-metadata lookup (from `auth/`) as callables. The DDL and the SQLAlchemy-specific `session_factory.kw["bind"]` inspection never live in `core/`.
 - **`create_tables` defaults to `False`.**
   - `await admin.create_tables(scope="hyperadmin" | "all")`. Setting `settings.create_tables=True` keeps today's `"all"` behaviour.
-  - **Demo mode:** when neither `engine` nor `session_factory` is passed, a lazy default engine is built from `settings.database_url` and tables are created automatically, with `WARNING "HyperAdmin demo mode"`. Zero-config `Admin(app).mount("/admin")` keeps working.
+  - **Demo mode:** when neither `engine` nor `session_factory` is passed, a lazy default engine is built from `settings.database_url`.
+    - Tables (scope `"all"`) are created automatically **only when that URL is SQLite** (`db.is_sqlite_url`), with `WARNING "HyperAdmin demo mode"`. Zero-config `Admin(app).mount("/admin")` keeps working.
+    - For any other URL, for example a `HYPERADMIN_DATABASE_URL` pointing at the host's Postgres, no DDL runs. A `WARNING` points to `create_tables=True` or `hyperadmin init-db`. This keeps Goal 4: no DDL against a host database behind Alembic's back.
+  - Demo mode's default URL uses `sqlite+aiosqlite`, so `aiosqlite` becomes a runtime dependency (E).
   - New CLI command: `hyperadmin init-db --database-url URL [--all]`.
 - The private `_create_db_and_tables()` and `_sync_permissions()` remain as aliases for one release. The ERP example uses them.
 
@@ -520,9 +645,16 @@ With these, none of the roughly 25 template `url_for` calls needs editing, and h
 
 **Call sites**
 - All 20 `AsyncSession(self.engine)` sites move to `self._session()`.
-- `SessionAuthBackend`, `ModelPermissionChecker` and `PermissionSyncService` gain the same `session_factory` keyword.
+- Every adapter construction that passes only an engine goes through `adapter.for_model(model)` (A.3), or receives the `session_factory` explicitly. Otherwise a `session_factory=`-only admin would hit the new `ValueError`. The sites are:
+  - `routing.py:63` (`admin_instance.adapter_class(model, engine=engine)`);
+  - `HyperAdminRouter.__init__` and `routing.py:262-267,323`, which now take and forward `session_factory`;
+  - `core/discovery.py:81` (`target_adapter_cls(target_model, adapter.engine)`), which becomes `adapter.for_model(target_model)`;
+  - `adapters/sqlmodel.py:277` and `adapters/sqlalchemy.py:218` (`(spec.model, self.engine)` in `save_inline_rows`).
+- `SessionAuthBackend`, `ModelPermissionChecker` and `PermissionSyncService` gain the same `session_factory` keyword, and a `_session()` method.
+- The MFA views read `auth_backend.engine` directly (`auth/views.py:228,292,476,542`). They switch to `auth_backend._session()`, passed into `_load_partial_user` and `_persist_mfa_state`.
+- `core/app.py:17` imports `engine` from `hyperadmin.db` at module top level (used at `:85`). That import is removed, and `Admin.__init__` calls `get_default_engine()` lazily, only in demo mode. Otherwise the deprecated `__getattr__("engine")` would fire, and create an engine, on every `import hyperadmin`.
 - An `async_sessionmaker` works as-is. A host that uses a generator dependency passes `asynccontextmanager(get_session)`.
-- Creating tables needs an engine. It is taken from `session_factory.kw["bind"]` when available; otherwise `create_tables` raises an error explaining what to pass.
+- Creating tables needs an engine. `db.resolve_bind` takes it from `session_factory.kw["bind"]` when available; otherwise `create_tables` raises an error explaining what to pass.
 
 #### C.4 Session cookie scoped to the admin
 
@@ -533,9 +665,13 @@ New settings:
 | `session_cookie` | `"hyperadmin_session"` |
 | `session_max_age` | `1209600` |
 | `session_same_site` | `"lax"` |
-| `session_https_only` | `None`, which means `not debug` |
+| `cookie_secure` | `"auto"` (or `true` / `false`). It applies to **every** admin cookie: session, CSRF, token and locale |
 
-The cookie `path` is the admin prefix.
+The cookie `path` is the per-request admin path (C.1).
+
+**How `cookie_secure="auto"` resolves.** The cookie is `Secure` when the effective request scheme is https. That is `request.url.scheme`, which already honours `X-Forwarded-Proto` when uvicorn's `forwarded_allow_ips` trusts the proxy.
+- An earlier draft proposed `None` meaning `not debug`. That would have made the cookie `Secure` on plain-http LAN installs and in TestClient (`http://testserver`), dropping the session and breaking login-based tests, which contradicts the plain-http edge case below. It is rejected.
+- Behind a TLS-terminating proxy that uvicorn does not trust, the app sees `http`, so `auto` leaves `Secure` off. That is a hardening gap, not an outage. The admin logs a one-time `WARNING` the first time it sees `Origin: https://…` on an http request, recommending `HYPERADMIN_COOKIE_SECURE=true` or `forwarded_allow_ips`. The production guide sets `cookie_secure=true`.
 
 In isolated mode, `AdminSessionMiddleware` wraps Starlette's `SessionMiddleware`. It saves the host's `scope["session"]` and restores it before forwarding `http.response.start`. A `Mount` shares the scope dict, so without this the host's session middleware would serialise the admin session into the host cookie.
 
@@ -543,12 +679,21 @@ In router mode, the legacy cookie settings (`session`, path `/`) stay the defaul
 
 #### C.5 Uploads behind auth
 
-The public mount at the root (`core/app.py:363-374`) is removed. `views/uploads.py` serves `GET {prefix}/uploads/{path:path}` (route name `uploads`), streaming from `storage`. It:
-- returns 404 for path traversal;
+The public mount at the root (`core/app.py:363-374`) is removed. Authentication alone is not enough to gate a file route: any admin user could read any stored file by its guessable original name, whatever their model, object or tenant permissions. So files are served **per record and field**.
+
+**`GET {prefix}/{model}/{item_id}/file/{field}`** (route name `<model>-file`, in `views/uploads.py`):
+- requires `view` on the model;
+- loads the record under the request's queryset filter (B.6), then runs the object `view` check;
+- returns 404 unless `field` is a file field and the record holds a value;
+- resolves the stored name through `resolve_storage_path`, so a value outside the storage root returns 404;
 - sends `X-Content-Type-Options: nosniff` and `Content-Security-Policy: sandbox`;
 - sends `Content-Disposition: attachment` for everything except PNG, JPEG, GIF and WebP (**not SVG**).
 
-`detail.html:14` changes to `url_for('uploads', path=value)`.
+**Writes never overwrite.** Today `upload_file_view` needs only `add` on any model, and `FileSystemStorage.write` opens the target with `"wb"`, so one user can replace another record's file by uploading the same name. Now:
+- `upload_file_view` requires `add` or `change` and a file-field `field_name`;
+- it stores the file under a generated unique name, `<uuid4 hex>/<secure original name>`.
+
+`detail.html:14` changes to `url_for(model_name|lower ~ '-file', item_id=item|ha_pk(pk_attr), field=key)`.
 
 Escape hatch: setting `settings.public_uploads_path` restores the legacy public mount, with a startup warning.
 
@@ -563,16 +708,22 @@ Escape hatch: setting `settings.public_uploads_path` restores the legacy public 
 
 **Token lifecycle.** On every admin request, `views/csrf.py` `CsrfGuard.ensure_token`:
 - reads `hyperadmin_csrf`;
-- if the cookie is missing or its signature is invalid, issues a new cookie (`HttpOnly; SameSite=Lax; Path=<prefix>`, plus `Secure` over https);
+- if the cookie is missing or its signature is invalid, issues a new cookie (`HttpOnly; SameSite=Lax; Path=<admin path>`, plus `Secure` per `cookie_secure`, C.4);
 - sets `request.state.csrf_token`.
 
 Tokens are per cookie, not per request, so several tabs and parallel HTMX requests stay valid.
 
 **Unsafe methods** are checked in this order:
 1. `Sec-Fetch-Site: cross-site` fails.
-2. An `Origin` that is neither same-origin nor listed in `csrf_trusted_origins` fails.
-3. The token is taken from the `X-CSRF-Token` header. If there is none, it is taken from the `csrf_token` form field of a urlencoded or multipart body, using Starlette's cached `request.form()`.
+2. **Origin check.** When `Origin` is present, it passes if either:
+   - its `host[:port]` equals the request's `Host` header. When the proxy is trusted, `X-Forwarded-Host` is used instead, as resolved by uvicorn's `forwarded_allow_ips`;
+   - or it is listed in `csrf_trusted_origins`.
+
+   Otherwise it fails. The **scheme is not compared** when the request scheme is `http` and the Origin is `https`. That is the standard TLS-terminating proxy setup, where uvicorn trusts forwarded headers only from `127.0.0.1` by default and so sees `http`, while browsers send `Origin: https://…`. Comparing schemes would turn every unsafe request into a 403 right after the upgrade. `Sec-Fetch-Site: same-origin` also counts as a pass. Every Origin failure logs the observed Origin and Host at `WARNING`, naming `csrf_trusted_origins`. At startup the admin also logs the effective trusted origins.
+3. The token is taken from the `X-CSRF-Token` header. If there is none, it is taken from the `csrf_token` form field of a urlencoded or multipart body, using `request.form()` on **the same `Request` object that the handler receives** (B.2). Starlette caches the parsed form there, so the handler does not read an empty or hanging stream.
 4. The token must pass `is_valid` and `matches(cookie)`.
+
+The Origin check still defends against cross-site requests, because the double-submit token (steps 3 and 4) is the primary control.
 
 **On failure** the response is 403 "CSRF token missing or invalid" with `X-HyperAdmin-CSRF: failed`. In `report` mode the request goes through and a `WARNING` is logged.
 
@@ -580,7 +731,7 @@ Tokens are per cookie, not per request, so several tabs and parallel HTMX reques
 
 **Exempt:** the token-handoff path. WebSockets do not go through `APIRoute`, so the WebSocket handler checks `Origin` itself, which closes cross-site WebSocket hijacking.
 
-**UI:**
+**UI.** All token injection ships in `st-v058-byoa-39`, the same story that turns enforcement on. Otherwise, after that story merged, every built-in-auth login, HTMX save and delete would return 403, and its own `poe test:e2e` gate could not pass. Story `-46` keeps only the bridge-aware navbar and the reload banner.
 - `_base.html` sets `<body hx-headers='{"X-CSRF-Token": "{{ csrf_token() }}"}'>`, which every htmx request inherits.
 - A `<meta name="csrf-token">` tag serves JS `fetch` calls.
 - The `csrf_input()` Jinja global is added to every plain `<form method="post">`: `_navbar.html`, `login.html`, `auth/mfa_*.html`, `components/bulk_form.html`, `components/bulk_result.html` and `widgets/popup_form.html`.
@@ -598,6 +749,11 @@ Tokens are per cookie, not per request, so several tabs and parallel HTMX reques
 3. otherwise renders a `list-error` banner (`data-testid="list-error"`), with status 500 for a full page or 200 for an HTMX partial.
 
 When the error is an `OperationalError` matching `no such table|does not exist|UndefinedTable`, the banner adds the hint "run your migrations or `hyperadmin init-db`". Exceptions that are not database errors propagate.
+
+**Validate user input before narrowing the handler.** Today an unknown `?sort_by=` raises `AttributeError` inside the adapter (`getattr(self.model, order_by)`, `adapters/sqlmodel.py:96-99`), and the blanket `except Exception` hides it as an empty list. Once only `SQLAlchemyError` is caught, that would become a 500 on a URL anyone can edit. So `list_view` validates its input first. The `sort_by` whitelist ships in `st-v058-byoa-53`, which `-43` is blocked by:
+- validates `sort_by` against the sortable columns: the displayed `column_list` fields that are real model attributes and not sensitive (D.3);
+- falls back to the default sort for an unknown value, and logs it at `DEBUG`;
+- normalises filters through `parse_filter_params` before calling the adapter, so legacy dict filters with unknown keys are dropped rather than raising.
 
 #### D.3 Typed, whitelisted filters (in `core/filtering.py`)
 
@@ -617,9 +773,31 @@ def normalize_filters(filters: Mapping | Sequence[FilterCondition] | None) -> li
 - An exact `date` value on a `datetime` column becomes the range `[d, d+1)`.
 - On aware columns, date bounds are converted with `core/timezones.py` using the display timezone.
 
+Range operators are subject to Owner decision 8. If they are deferred, this milestone ships `exact` only; the dataclass keeps the `op` field so the follow-up milestone adds operators without an API change.
+
 **Rules**
 - Only fields named in `options.list_filter` are allowed. Anything else is ignored and logged at `DEBUG` (Owner decision 7).
 - A value that cannot be coerced drops that condition. The page still returns 200, with an inline `filter-error`.
+
+**Closing the other query oracles** (story `st-v058-byoa-53`, which ships early like `-10`):
+- **Sensitive fields.** `core/sensitive.is_sensitive(name, field_info)` is true when:
+  - the field sets `json_schema_extra={"hyperadmin_sensitive": True}`;
+  - or its name matches `(^|_)(password|secret|token|hash)(_|$)`. `AdminOptions.sensitive_fields` can override this in either direction.
+
+  A sensitive field is:
+  - excluded from `infer_search_fields` (`core/introspection.py:168-183`, which today returns every `str` field, so `?search=` is a substring oracle on `password_hash`);
+  - excluded from inferred `column_list`, from `detail_view` (`item.model_dump()` at `views/dynamic.py:379`, rendered by `detail.html:7`), from filters and from sorting;
+  - rendered as an empty, write-only input on forms. An empty submission leaves the stored value unchanged.
+
+  `auth/models.User.password_hash` is marked explicitly. The same rules apply to a host `User` model registered through `auto_discover` in bridge mode.
+- **Sort.** `sort_by` is whitelisted (D.2), which closes the ordering oracle.
+- **Choices endpoint** (`views/dynamic.py:906-930`, `adapters/sqlmodel.py:240-245`):
+  - only the cascade keys declared by the relation widget (`dependent_on`) are forwarded, and the rest are ignored;
+  - it requires `view` on the **target** model, not only on the source;
+  - the target `ModelAdmin.get_queryset` applies.
+
+  Without these checks, `/order/choices/customer?password_hash=…` would be an equality oracle across the whole FK graph.
+- The changelog security note lists all four oracles: filters, search, sort and choices.
 
 **Adapters.** `adapters/_filter_clause.build_clause` is shared by both adapters. `BaseAdapter.list(filters=...)` accepts either the legacy dict or a `Sequence[FilterCondition]`.
 
@@ -650,6 +828,7 @@ It replaces the three current call sites: `views/forms.py:494` and `views/forms.
 - Drop `appnope`, `uvicorn` and `httpx` (they move to dev dependencies).
 - Remove the duplicate `python-multipart` entry, keeping `>=0.0.26`.
 - Add `tzdata; sys_platform == 'win32'`.
+- Move `aiosqlite` from the dev extras (`pyproject.toml:66`) into runtime dependencies. Zero-config demo mode builds its engine from `sqlite+aiosqlite` (`core/settings.py:9`), so without it a clean `pip install hyper-admin` followed by `Admin(app).mount("/admin")` fails on the first request (CONSTITUTION §6 justification: the promised zero-config path). A `hyper-admin[sqlite]` extra is the alternative if the owner prefers a leaner install; the guide would then reference it.
 - Add a one-line comment for each dependency that is not obvious.
 - Remove the GHSA-4xgf-cpjx-pc3j ignore once the lower bound includes the fix. The comment on that ignore currently claims pydantic-settings is dev-only, which is wrong.
 
@@ -664,14 +843,22 @@ It replaces the three current call sites: `views/forms.py:494` and `views/forms.
 - `hyperadmin.__version__` comes from `importlib.metadata`.
 - The package version is decoupled from the roadmap labels (`v0.5.x`).
 
-**`publish.yml`**
-- Triggers on `release: published`, not `created`, which also fires for drafts.
-- The `build` job runs `uv build` and `twine check`, then installs the wheel into a clean venv and runs `from hyperadmin import Admin`. That smoke test catches missing runtime dependencies such as pydantic-settings.
-- The `publish` job (`environment: pypi`) publishes with trusted publishing via `uv publish`.
+**Why the planned chain would not fire.** A release that `release.yml` creates with the default `GITHUB_TOKEN` does not trigger other workflows, so a separate `publish.yml` listening for `release: published` would never run. Today's `release.yml` also has three other problems:
+- it pushes a bump commit and tags straight to the default branch, which branch protection rejects;
+- it ignores its `version` input (`cz bump --yes`);
+- it targets the non-existent `main`.
 
-**`release.yml`**
-- Pushes to `master`; today it targets the non-existent `main`.
-- Runs `gh release create v$VER --generate-notes`, adding `--prerelease` for `a`, `b` and `rc` versions.
+**The fixed chain: one workflow run, no bot pushes to `master`.**
+- **The version bump is a normal commit in the `develop → master` PR.** Story `-50` sets `0.5.0a1` in the code, so `release.yml` never pushes a commit.
+- **`release.yml`** (`workflow_dispatch` on `master`) does the rest in one run:
+  1. reads the version from `pyproject.toml` and checks it against `inputs.version` (it fails on a mismatch, so the input is no longer ignored);
+  2. pushes the tag `v$VER`. Pushing a tag is allowed with `GITHUB_TOKEN`; a tag ruleset, if one exists, must allow the workflow;
+  3. runs `gh release create v$VER --generate-notes`, adding `--prerelease` for `a`, `b` and `rc` versions;
+  4. calls `publish.yml` through `workflow_call` in the **same run**.
+- **`publish.yml`** is `on: workflow_call` (plus `workflow_dispatch` for manual reruns). It is no longer `on: release`.
+  - The `build` job runs `uv build` and `twine check`. It installs the wheel into a clean venv, then runs a **real smoke test**: it builds a FastAPI app, calls `Admin(app).mount("/admin")` and requests `GET /admin/` with `TestClient`. A bare `from hyperadmin import Admin` passes even when demo mode's `aiosqlite` is missing, because engine creation is lazy; the real request catches it.
+  - The `publish` job (`environment: pypi`) publishes with trusted publishing via `uv publish`.
+- **Fallback:** the owner creates the GitHub release by hand and dispatches `publish.yml`.
 
 **Docs.** The README and getting-started guide say `pip install hyper-admin==0.5.0a1`, noting that the import name is `hyperadmin`.
 
@@ -706,6 +893,8 @@ class Admin:
 class TokenCookie:
     name: str = "hyperadmin_token"; scheme: str = "Bearer"
     max_age: int | None = 8 * 3600; handoff_path: str = "/auth/session"
+    # opt-in admin login form for bearer-only hosts (B.4): a token URL, or issue_token(username, password)
+    token_endpoint: str | Callable[[str, str], MaybeAwaitable[str | None]] | None = None
 
 @dataclass(frozen=True, slots=True, kw_only=True)
 class ExternalAuth:
@@ -719,6 +908,7 @@ class ExternalAuth:
     user_key: Callable[[Any], Hashable] = default_user_key     # getattr(user, "id")
     token_cookie: TokenCookie | None = None
     websocket_user: Callable[[WebSocket], Awaitable[Any | None]] | None = None
+    allow_full_access: bool = False   # without has_permission: False = superuser full, others view-only (B.3)
 
 class CallablePermissionChecker:   # satisfies core.auth.PermissionChecker
     def __init__(self, fn: Callable[[Any, str], MaybeAwaitable[bool]]) -> None: ...
@@ -733,6 +923,7 @@ def utc_now() -> datetime: ...
 BaseAdapter.pk: PrimaryKeyInfo                          # non-abstract, default DEFAULT_PK
 BaseAdapter.datetime_kind(field) -> DateTimeKind | None  # non-abstract
 BaseAdapter.__init__(model, engine=None, *, session_factory=None)
+BaseAdapter.for_model(model) -> BaseAdapter                # non-abstract; carries engine/session_factory
 BaseAdapter.list(..., filters: Mapping | Sequence[FilterCondition] | None)
 
 # hyperadmin.db
@@ -748,8 +939,9 @@ __version__: str
 - **New:**
   - `POST {prefix}/auth/session` (bridge mode, with `token_cookie`);
   - `POST {prefix}/logout` (bridge mode);
-  - `GET {prefix}/uploads/{path}`.
-- **Moved (isolated mode):** `/static` becomes `{prefix}/static`, and `/uploads` becomes `{prefix}/uploads`.
+  - `GET|POST {prefix}/login` in bridge mode, only with `TokenCookie(token_endpoint=...)`;
+  - `GET {prefix}/{model}/{item_id}/file/{field}` (per-record file download, C.5).
+- **Moved (isolated mode):** `/static` becomes `{prefix}/static`. The public `/uploads` mount is removed.
 - **New response headers:** `X-HyperAdmin-CSRF`; `HX-Redirect` / `HX-Refresh` on 401 in bridge mode.
 - **Popup `HX-Trigger`:** `id` is a JSON number for int keys and a string otherwise.
 - **CLI:** `hyperadmin init-db --database-url URL [--all]`.
@@ -768,7 +960,8 @@ All new configuration lives in `HyperAdminSettings`, prefix `HYPERADMIN_`. Non-s
 | `create_tables` | `bool = False` (**default changed**; was `True`) | C |
 | `mount_mode` | `"isolated" \| "router" = "isolated"` | C |
 | `route_namespace` | `str = "hyperadmin"` | C |
-| `session_cookie` / `session_max_age` / `session_same_site` / `session_https_only` | `"hyperadmin_session"` / `1209600` / `"lax"` / `None` | C |
+| `session_cookie` / `session_max_age` / `session_same_site` | `"hyperadmin_session"` / `1209600` / `"lax"` | C |
+| `cookie_secure` | `"auto" \| bool = "auto"`. `auto` sets `Secure` from the effective request scheme; applies to all admin cookies (C.4) | C |
 | `public_uploads_path` | `str \| None = None` | C |
 | `database_url` | existing; **now actually used**, for demo mode only | C |
 | `datetime_format` | existing; **now actually used** by `ha_display` | A |
@@ -778,14 +971,14 @@ All new configuration lives in `HyperAdminSettings`, prefix `HYPERADMIN_`. Non-s
 | Topic | Conflict between investigations | Resolution |
 |---|---|---|
 | Datetime helper module | Pillar C cited `core/datetimes.py`; pillar A defined `core/timezones.py` | **`core/timezones.py`** is the only module. The date-range filters use it |
-| Value coercion | `adapters/_introspect.coerce_column_value` (A) vs `core/filtering.coerce_filter_value` (C) | `core/filtering.coerce_filter_value` is the single pure coercer. `adapters/introspection.coerce_column_value` resolves the column's type and delegates to it |
+| Value coercion | `adapters/_introspect.coerce_column_value` (A) vs `core/filtering.coerce_filter_value` (C) | `core/filtering.coerce_filter_value` is the single pure coercer. `adapters/introspection.coerce_column_value` resolves the column's type and delegates to it. It lands with the filter work (`-24`), so primary-key introspection (`-15`) does not wait for `-19` |
 | Private-module imports | `adapters/_introspect.py` and `views/_templating.py` were meant to be imported across modules | Renamed to `adapters/introspection.py` and `views/template_filters.py`. Views reach introspection through `BaseAdapter.pk` / `.datetime_kind()` |
 | Realtime user id | Both A and B widened `RealtimeConnection.user_id` | **One story** (`st-v058-byoa-42`): widen to `Hashable` and read the key from `request.state.user_key` |
 | Authorization gaps | A listed them as an open question; B had a story | **One story** (`st-v058-byoa-10`), a `fix` that can ship early (Owner decision 4) |
 | Session cookie vs bridge | C adds `AdminSessionMiddleware`; B says bridge mode has no session middleware | Both hold. `AdminSessionMiddleware` is installed **only** for built-in auth, and bridge mode uses the token cookie or the host's own cookie |
-| CSRF cookie path and route class vs sub-app | B assumed an `APIRouter` include; C builds a sub-app | The route class goes on every admin router, and those routers are included **into the sub-app**. `Path=<prefix>` holds in both modes because `root_path` equals the prefix |
+| CSRF cookie path and route class vs sub-app | B assumed an `APIRouter` include; C builds a sub-app | The route class goes on every admin router, and those routers are included **into the sub-app**. Cookie paths use the per-request admin path (C.1). A static `Path=<prefix>` would break when the host itself runs under a `root_path` (for example `/api`) |
 | Table creation | B's `register_auth_models` vs C's `create_tables` scope | Kept separate. `register_auth_models` decides whether the tables are *registered*; `create_tables` / `init-db` decides whether DDL runs. In bridge mode the default is no registration, so no DDL either |
-| Multi-tenancy (v0.5.3) | Its SDD resolves tenants in `TenantMiddleware` from `request.state.user`. That is empty in bridge mode, where the user is only resolved during dependency solving | Amend `docs/specs/multi-tenancy.md` so tenants are resolved in a route dependency that runs after the admin principal, or in `ModelAdmin.get_queryset`. This works in both modes and is done in the docs story |
+| Multi-tenancy (v0.5.3) | Its SDD resolves tenants in `TenantMiddleware` from `request.state.user`. That is empty in bridge mode, where the user is only resolved during dependency solving | Amend `docs/specs/multi-tenancy.md` so tenants are resolved in a route dependency that runs after the admin principal, or in `ModelAdmin.get_queryset`. This works in both modes and is done in the docs story. It relies on the request-scoped queryset filter from B.6 (`st-v058-byoa-10`) |
 | DeclarativeBase | The re-cut stub `st-v058-byoa-04` included it | Out of scope. The host engine/session reuse half is kept (`st-v058-byoa-21`) |
 | Changes to the same lines | A and C both edit `dynamic.py` (`row["id"]`, `url_for`) and `routing.py` | The stories are sequenced by `Blocked by` (see the Story breakdown). The pillar A view stories land before `st-v058-byoa-34` and `st-v058-byoa-35` |
 
@@ -813,7 +1006,23 @@ All new configuration lives in `HyperAdminSettings`, prefix `HYPERADMIN_`. Non-s
 | Bridge mode without `websocket_user` | The WebSocket route is not registered (INFO log). SSE still works |
 | Stale CSRF cookie after the secret rotates | A new cookie is issued on the next GET. An HTMX POST gets 403 plus `X-HyperAdmin-CSRF`, and a reload banner is shown |
 | Multipart upload over HTMX | The token comes from the header, so the body is not parsed early |
-| Admin served over plain http in dev or TestClient | `Secure` is left off |
+| Admin served over plain http in dev or TestClient | `cookie_secure="auto"` leaves `Secure` off, so login works over http and in TestClient |
+| TLS-terminating proxy whose forwarded headers uvicorn does not trust (the app sees `http`; browsers send `Origin: https://…`) | CSRF compares hosts, not schemes, so there is no 403. Cookies under `auto` lack `Secure`, and a one-time `WARNING` recommends `HYPERADMIN_COOKIE_SECURE=true` or `forwarded_allow_ips` |
+| Host runs under its own `root_path` (for example `/api`) | Cookie paths and redirects use the per-request admin path, `/api/admin` |
+| Host test suite overrides `get_current_user` through `app.dependency_overrides` | The sub-app shares the same dict, so the override applies under `/admin` |
+| Host `get_db(request)` reads `request.app.state.sessionmaker` | The sub-app shares `app.state`, so it works under `/admin` |
+| Bearer-only host; the user opens `/admin` in a plain browser | With `TokenCookie(token_endpoint=...)`, the admin login form gets a token server side. With neither that nor `login_url`, the user sees a 401 page explaining both options |
+| Token cookie expired or rejected by the host | The cookie is cleared, then the user is redirected to login. There is no loop |
+| Unknown `?sort_by=` | Ignored. The default sort applies and the page returns 200 |
+| `DELETE /m/{id}/file/<a field that is not a file field>` | 404. Nothing is removed or nulled |
+| A file-field value outside the storage root (an absolute path or `..`) | `resolve_storage_path` refuses it: delete skips the file, and download returns 404 |
+| An inline formset posts another parent's child pk | 404 before any write |
+| Two users upload files with the same name | Both are stored under unique names, so neither overwrites the other |
+| Staff user in bridge mode without `has_permission` | View-only, unless `allow_full_access=True` |
+| Staff user tries to edit `is_superuser` on their own host `User` row | 403. By default, change is never granted on the host user model |
+| `HYPERADMIN_DATABASE_URL` points at Postgres and no `engine=` is passed | No DDL runs. A `WARNING` names `create_tables=True` and `init-db` |
+| List page of a composite-key model | 200, with no View, Edit or Delete links and no actions |
+| Realtime is enabled, but the host lifespan does not compose `admin.lifespan()` | A one-time `WARNING`. SSE streams exit when the client disconnects |
 | Startup race on the first requests | `asyncio.Lock` plus a `_started` flag. A failure is logged and retried on the next request |
 | Host's own `SessionMiddleware` uses the cookie `session` | `AdminSessionMiddleware` saves and restores the host's scope. Tested |
 | Host has no `lifespan` | The guard is backed by an `on_startup` fallback |
@@ -821,7 +1030,7 @@ All new configuration lives in `HyperAdminSettings`, prefix `HYPERADMIN_`. Non-s
 | Missing table or migration | `list-error` banner with the migration hint, plus an `ERROR` log with the traceback |
 | Filter on a column not in `list_filter` | Ignored (`DEBUG` log) |
 | Invalid filter value | The condition is dropped, the page returns 200 and a `filter-error` is shown |
-| Upload path traversal, or an SVG or HTML upload | 404 for traversal. For SVG and HTML: `attachment`, `nosniff` and `CSP: sandbox` |
+| Download of a stored name outside the storage root, or an SVG or HTML upload | 404 outside the root. For SVG and HTML: `attachment`, `nosniff` and `CSP: sandbox` |
 | `session_factory` without a bind, with `create_tables=True` | An error explaining what to pass |
 
 ## Migration & Backward Compatibility
@@ -836,7 +1045,9 @@ The package is pre-1.0 (`major_version_zero`), so breaking defaults are allowed 
 | Direct `PydanticForm` users | The defaults keep today's behaviour | None |
 | Built-in auth (`auth_backend=`) | Same login, MFA and auto-registered auth admins. **CSRF is enforced.** The cookie is renamed, so users log in again once | Add `{{ csrf_input() }}` to custom raw POST forms, or temporarily set `HYPERADMIN_CSRF_MODE=report` |
 | Relied on `create_tables=True` being the default | Tables are no longer created automatically, except in demo mode | Set `create_tables=True`, or use Alembic or `hyperadmin init-db` |
-| Linked to `/static/…` or `/uploads/…` directly | These moved under the admin prefix | Update the links, or set `public_uploads_path` / `mount_mode="router"` |
+| Linked to `/static/…` or `/uploads/…` directly | `/static` moved under the admin prefix. Files are now served per record, at `{prefix}/{model}/{id}/file/{field}` | Update the links, or set `public_uploads_path` / `mount_mode="router"` |
+| Bridge mode without `has_permission` | Users who are not superusers are view-only (fail-safe) | Pass `has_permission`, or opt in with `allow_full_access=True` |
+| `?search=`, `?sort_by=`, detail pages or choices that touch fields like `password_hash` | Sensitive fields are excluded (security fix) | Opt a field back in with `AdminOptions.sensitive_fields` |
 | Host code reads a `request.session` that HyperAdmin created | HyperAdmin no longer installs session middleware globally | Add your own `SessionMiddleware`, or use `mount_mode="router"` |
 | `app.url_path_for("user-list")` | The name is now `hyperadmin:user-list` | Use the namespaced name, or router mode |
 | `from hyperadmin.db import engine` | Still works, with a `DeprecationWarning` | Pass your own engine or session factory |
@@ -851,13 +1062,15 @@ The package is pre-1.0 (`major_version_zero`), so breaking defaults are allowed 
 
 | Risk | Likelihood / impact | Mitigation |
 |---|---|---|
-| Starlette's namespaced `url_for` does not resolve through a mounted FastAPI sub-app | Medium / High | Story `st-v058-byoa-34` **starts with a spike test**. If it fails, router mode stays the default and route names get a `hyperadmin-` prefix instead |
+| Starlette's namespaced `url_for` does not resolve through a mounted FastAPI sub-app | Low / High | **The spike has already run** on fastapi 0.141.1 / starlette 1.7.0. From inside the sub-app, `request.url_for("hyperadmin:user-list")` resolves to `/admin/user`, while the plain `"user-list"` raises `NoMatchFound`. So the fallback helper (`-34`) is required, and it is unblocked early. A unit test pins this behaviour |
+| Host `dependency_overrides` and `app.state` are not visible in the sub-app | Reproduced / High | `mount()` shares both objects (B.1). Two BDD scenarios cover it |
+| A TLS-terminating proxy turns every unsafe request into a 403 after the upgrade | Medium / High | Origin comparison by host only (D.1), a proxy row in Edge Cases, and a section in the upgrade note |
 | htmx 1.9.10 ignores `HX-Redirect` on a 401 | Medium / Medium | Pinned by an e2e test. Fallback: status 200 plus `HX-Redirect` |
-| Default-on CSRF breaks custom templates or scripts | Medium / Medium | `report` mode, an upgrade note, and `_base.html` `hx-headers` covering every built-in view |
+| Default-on CSRF breaks custom templates or scripts | Medium / Medium | `report` mode, an upgrade note, and `_base.html` `hx-headers` covering every built-in view. The injection ships in the same story as enforcement (`-39`) |
 | The route-order change hides a route | Low / Medium | Only routes inside the admin router are reordered. A unit test asserts the registration order |
 | `register_url_convertor` is global | Low | The key is namespaced (`hyperadmin_pk`) and registered idempotently |
-| Moving a JWT into a cookie widens exposure | Low / High | Opt-in only. The cookie is `HttpOnly`, scoped to the admin path, `SameSite=Lax`, `Secure` and covered by CSRF |
-| The permissive default when `has_permission` is omitted | Medium / High | Startup `WARNING` and docs (Owner decision 3) |
+| Moving a JWT into a cookie widens exposure | Low / High | Opt-in only. The cookie is `HttpOnly`, scoped to the admin path, `SameSite=Lax`, `Secure` per `cookie_secure` (the production guide sets `true`), limited to the JWT's own lifetime, and covered by CSRF |
+| Privilege escalation through the bridge default | Low / High | Fail-safe default: users who are not superusers are view-only, and by default they can never edit the host user model; only `has_permission` can grant that (Owner decision 3) |
 | Two auth mechanisms (middleware and dependency) drift apart | Medium / Low | They share the route class and the `request.state` keys. Convergence is deferred |
 | Scope bleed between nested session middleware | Low / High | Save and restore the host's session, with a dedicated test |
 | The sqlmodel matrix: 0.0.19 on the lowest-direct run, ≥0.0.47 on highest | Medium / Medium | `poe deps:bump` across 3 combinations, with explicit column types in tests |
@@ -867,13 +1080,16 @@ The package is pre-1.0 (`major_version_zero`), so breaking defaults are allowed 
 
 ## Rollout
 
-1. **Security fix first:** `st-v058-byoa-10` ships as a standalone `fix(views)` PR if Owner decision 4 is accepted.
+1. **Security fixes first:** if Owner decision 4 is accepted, two standalone `fix(views)` PRs ship first. Neither is blocked by the SDD gate.
+   - `st-v058-byoa-10`: authorization, the inline IDOR, file delete and row scoping.
+   - `st-v058-byoa-53`: the query oracles.
 2. **Packaging hygiene** (`st-v058-byoa-11`, `st-v058-byoa-12`) can land as soon as this SDD is approved. It has no runtime risk.
 3. **Pillars A to D** are built bottom-up in the order of the Story breakdown. Each story is one PR against `develop` and must pass `poe lint`, `poe test:unit` and, for UI stories, `poe test:e2e`.
 4. **Remove the sqlmodel cap** (`st-v058-byoa-48`) once the datetime, form and template stories are merged.
 5. **Publish `0.5.0a1`** to PyPI as a pre-release (`st-v058-byoa-50`), after the owner has set up the trusted publisher. `develop` merges into `master`, `release.yml` tags the release and creates a GitHub pre-release, and `publish.yml` builds, smoke-tests and publishes.
 6. **Docs and example** (`st-v058-byoa-51`): the guide "Add HyperAdmin to an existing FastAPI app", plus `examples/byoa/`, which has JWT host auth, UUID and string keys, its own lifespan, `/static` and a `session` cookie.
-7. **Dogfood-1** (`st-v058-byoa-52`): install `hyper-admin==0.5.0a1` from PyPI into a real, pre-existing application (not named in this repo), following only the guide and timing it.
+7. **Dogfood-0** (`st-v058-byoa-54`), before the release: install from the repository into a real existing app once the bridge (`-41`) and the isolated mount (`-35`) have landed. This surfaces friction early, while pillars D and E are still in progress.
+8. **Dogfood-1** (`st-v058-byoa-52`): install `hyper-admin==0.5.0a1` from PyPI into a real, pre-existing application (not named in this repo), following only the guide and timing it.
    - Every friction point is filed as a framework-neutral story.
    - Blockers are fixed in v0.5.8 and released as `0.5.0a2`, and so on.
    - The milestone closes when the guide can be completed in 10 minutes or less with no blockers.
@@ -957,6 +1173,64 @@ Scenario: composite primary key model is registered list-only
   When  the admin generates routes
   Then  only the list and choices routes exist for that model
   And   a warning is logged
+
+Scenario: composite primary key list page renders without item links
+  Given a model with a two-column primary key is registered
+  When  the user requests its list page
+  Then  the response status is 200
+  And   no row-view-link, row-edit-link or row-delete-btn is rendered
+
+Scenario: inline row with primary key 0 keeps its hidden pk
+  Given a parent with an inline child row whose primary key is 0
+  When  the parent edit form is rendered
+  Then  the inline row contains a hidden pk input with value 0
+```
+
+### Authorization and row scoping (stories 10 and 53)
+
+```
+Scenario: deleting a non-file field is refused
+  Given an authenticated user with change_order
+  When  DELETE /admin/order/5/file/notes is sent with a valid CSRF token
+  Then  the response is 404
+  And   order 5's notes are unchanged
+
+Scenario: file delete never leaves the storage root
+  Given Invoice 1 whose file field pdf holds "/etc/hosts"
+  When  DELETE /admin/invoice/1/file/pdf is sent
+  Then  no file outside the storage root is removed
+
+Scenario: inline formset rejects another parent's child row
+  Given Order 1 with line 10 and Order 2 with line 20
+  When  the user saves Order 1 posting lines-0-pk=20
+  Then  the response is 404
+  And   line 20 still belongs to Order 2 with its original values
+
+Scenario: inline formset cannot delete another parent's child row
+  Given Order 2 with line 20
+  When  the user saves Order 1 posting lines-0-pk=20 and lines-0-DELETE=on
+  Then  line 20 still exists
+
+Scenario: inline add-row requires permission
+  Given a user without add_order or change_order
+  When  GET /admin/order/inline/lines/add-row is requested
+  Then  the response is 403
+
+Scenario: inline save respects the tenant queryset
+  Given get_queryset hides order 5 from the user
+  When  POST /admin/order/5/inline/status is sent
+  Then  the response is 404
+
+Scenario: bulk action respects the tenant queryset
+  Given get_queryset hides order 5 from the user
+  When  the bulk archive action is posted with ids 4 and 5
+  Then  order 5 is reported as not found
+  And   the action handler is not called for order 5
+
+Scenario: a queryset filter never leaks across concurrent requests
+  Given two concurrent requests from tenants A and B
+  When  both load the same order id
+  Then  each request is filtered by its own tenant
 ```
 
 ### Datetimes
@@ -1088,6 +1362,59 @@ Scenario: inline cell save enforces change permission
   Then  the response is 403
   And   the field is unchanged
 
+Scenario: host dependency override applies under the isolated admin
+  Given a host app with host.dependency_overrides[get_user] returning user "override"
+  And   Admin(auth=ExternalAuth(get_user=get_user)) mounted at /admin in isolated mode
+  When  GET /admin/ is requested
+  Then  request.state.user is "override"
+
+Scenario: host dependency reading request.app.state works under the admin
+  Given a host lifespan that sets app.state.sessionmaker
+  And   the host get_user depends on get_db(request) reading request.app.state.sessionmaker
+  When  GET /admin/ is requested with valid credentials
+  Then  the response is 200
+
+Scenario: bearer-only host reaches the admin with no frontend change
+  Given a host using OAuth2PasswordBearer(tokenUrl="/token") and no admin handoff code
+  And   ExternalAuth(token_cookie=TokenCookie(token_endpoint="/token"))
+  When  a browser opens /admin/, submits valid credentials on the admin login form and follows redirects
+  Then  the dashboard returns 200
+  And   the hyperadmin_token cookie Max-Age is at most the JWT's remaining lifetime
+
+Scenario: a rejected token cookie is cleared before redirecting
+  Given a hyperadmin_token cookie holding an expired JWT
+  When  GET /admin/ is requested
+  Then  the response clears hyperadmin_token
+  And   redirects to the login page
+
+Scenario: token handoff rejects an off-site next
+  Given a valid bearer token
+  When  POST /admin/auth/session?next=//evil.example is sent
+  Then  the redirect target is /admin/
+
+Scenario: staff user without has_permission is view-only in bridge mode
+  Given ExternalAuth without has_permission and a staff user who is not a superuser
+  When  the user sends POST /admin/order/5 with a valid CSRF token
+  Then  the response is 403
+
+Scenario: staff user cannot edit their own is_superuser flag
+  Given the host User model is registered and ExternalAuth has no has_permission
+  When  a staff user posts is_superuser=true to their own User edit form
+  Then  the response is 403
+  And   the user is still not a superuser
+
+Scenario: ModelPermissionChecker with auth= is rejected without auth models
+  Given Admin(auth=ExternalAuth(...), permission_checker=ModelPermissionChecker(engine))
+  And   register_auth_models is not set
+  When  Admin(...) is constructed
+  Then  ValueError is raised explaining that it needs register_auth_models=True
+
+Scenario: multipart POST through the bridged token cookie reaches the handler intact
+  Given a hyperadmin_token cookie and a valid CSRF cookie and token pair
+  When  a plain multipart form POST with csrf_token in the body is sent to /admin/order/create
+  Then  the handler receives every form field
+  And   the order is created
+
 Scenario: realtime SSE works with a UUID principal
   Given realtime is enabled and a bridged user has a UUID id
   When  GET /admin/realtime/sse is requested
@@ -1136,6 +1463,16 @@ Scenario: CSRF report mode logs but allows
   Then  the request is processed
   And   a WARNING log record mentioning csrf is emitted
 
+Scenario: TLS-terminating proxy does not break CSRF
+  Given the app sees scheme http and Host admin.example
+  When  POST /admin/order is sent with Origin: https://admin.example and a valid token pair
+  Then  the response is not 403
+
+Scenario: CSRF injection ships with enforcement
+  Given built-in auth and the default csrf_mode
+  When  a logged-in user saves an inline cell from the rendered list page
+  Then  the request carries X-CSRF-Token and succeeds
+
 Scenario: CSRF is off for admins without auth
   Given Admin() with no auth_backend and no auth
   When  POST /admin/order is sent without a token
@@ -1172,6 +1509,26 @@ Scenario: admin session cookie is scoped to the admin prefix
   When  a user logs in successfully
   Then  the Set-Cookie header names hyperadmin_session with Path=/admin
 
+Scenario: login works over plain http in TestClient
+  Given built-in auth, default settings and TestClient at http://testserver
+  When  the user logs in and requests /admin/
+  Then  the response is 200
+
+Scenario: cookies follow the host root_path
+  Given a host served with root_path="/api" and the admin mounted at /admin
+  When  a user logs in
+  Then  the session cookie has Path=/api/admin
+
+Scenario: locale cookie follows a custom prefix
+  Given the admin mounted at /backoffice
+  When  the user switches the locale
+  Then  the hyperadmin_locale cookie has Path=/backoffice
+
+Scenario: locale switcher ignores an off-site Referer
+  Given a Referer of https://evil.example/
+  When  POST /admin/locale is sent
+  Then  the redirect target is /admin/
+
 Scenario: host session is not overwritten by the admin session
   Given the host installs its own SessionMiddleware with cookie "session"
   When  a user logs in to /admin/login
@@ -1186,6 +1543,17 @@ Scenario: demo mode still works zero-config
   Given Admin(app) is built with no engine and no session factory
   When  a client requests GET /admin/
   Then  the response status is 200
+
+Scenario: demo mode runs no DDL against a non-SQLite URL
+  Given HYPERADMIN_DATABASE_URL points at a Postgres database and no engine is passed
+  When  the application starts and GET /admin/ is requested
+  Then  no CREATE TABLE statement is executed
+  And   a WARNING mentions create_tables and init-db
+
+Scenario: session_factory alone works for inline and FK adapters
+  Given Admin is built with only session_factory=host_sessionmaker
+  When  a parent with inlines and an FK filter is listed and edited
+  Then  no ValueError is raised
 
 Scenario: permission sync runs under a host lifespan
   Given a host app created with FastAPI(lifespan=host_lifespan) and built-in auth
@@ -1207,10 +1575,20 @@ Scenario: init-db creates only hyperadmin tables
   When  hyperadmin init-db --database-url URL runs
   Then  only hyperadmin_* tables exist
 
-Scenario: uploads require authentication
-  Given built-in auth is enabled and a file "a.pdf" exists in storage
-  When  an anonymous client requests GET /admin/uploads/a.pdf
+Scenario: file downloads require authentication
+  Given built-in auth is enabled and Invoice 1 has file field pdf = "a.pdf"
+  When  an anonymous client requests GET /admin/invoice/1/file/pdf
   Then  the response is a redirect to /admin/login
+
+Scenario: file downloads require view permission on the owning model
+  Given a user who has view_order but not view_invoice
+  When  the user requests GET /admin/invoice/1/file/pdf
+  Then  the response is 403
+
+Scenario: uploading a file with an existing name does not overwrite it
+  Given Invoice 1 stores "a.pdf"
+  When  another user uploads a different file named "a.pdf" for Invoice 2
+  Then  Invoice 1's file content is unchanged
 
 Scenario: uploads are not served at the host root
   Given file storage is configured
@@ -1218,13 +1596,13 @@ Scenario: uploads are not served at the host root
   Then  the response status is 404
 
 Scenario: uploaded SVG is downloaded, not rendered
-  Given an authenticated user and an uploaded file "x.svg"
-  When  the user requests GET /admin/uploads/x.svg
+  Given an authenticated user and Invoice 1 whose file field logo holds "x.svg"
+  When  the user requests GET /admin/invoice/1/file/logo
   Then  the response has Content-Disposition attachment and X-Content-Type-Options nosniff
 
-Scenario: path traversal on uploads is rejected
-  Given an authenticated user
-  When  the user requests GET /admin/uploads/..%2F..%2Fetc%2Fpasswd
+Scenario: a stored name outside the storage root is not served
+  Given Invoice 1 whose file field pdf holds "/etc/passwd"
+  When  the user requests GET /admin/invoice/1/file/pdf
   Then  the response status is 404
 ```
 
@@ -1253,6 +1631,36 @@ Scenario: UUID filter with an invalid value shows an error
   Then  the response status is 200
   And   the filter-error element names the customer_id field
 
+Scenario: unknown sort_by falls back to the default sort
+  Given Order is registered
+  When  the user requests /admin/order?sort_by=nope
+  Then  the response status is 200
+  And   the rows are in the default order
+
+Scenario: search does not match sensitive fields
+  Given User rows whose password_hash contains "abc" and whose other fields do not
+  When  the user requests /admin/user?search=abc
+  Then  no users are listed
+
+Scenario: sort_by on a sensitive field is ignored
+  When  the user requests /admin/user?sort_by=password_hash
+  Then  the rows are in the default order
+
+Scenario: detail page hides sensitive fields
+  Given a User row
+  When  the user opens its detail page
+  Then  the detail-fields container has no password_hash entry
+
+Scenario: choices ignore undeclared cascade parameters
+  Given Order.customer is an FK to User with no declared cascade
+  When  GET /admin/order/choices/customer?password_hash=abc is requested
+  Then  every User visible to the requester is returned
+
+Scenario: choices require view permission on the target model
+  Given a user with view_order but not view_user
+  When  GET /admin/order/choices/customer is requested
+  Then  the response is 403
+
 Scenario: filtering on a non-whitelisted column is ignored
   Given User has list_filter ["is_active"]
   When  the user requests /admin/user?filter_password_hash=abc
@@ -1263,28 +1671,29 @@ Scenario: validation message is translated
   When  the user submits the create form with value 3
   Then  the field error list shows the Ukrainian translation of "Input should be greater than 5"
 
-Scenario: built wheel imports cleanly
-  Given the wheel produced by uv build installed in a fresh venv
-  When  python -c "from hyperadmin import Admin" runs
-  Then  it exits 0
+Scenario: built wheel serves the zero-config admin
+  Given the wheel produced by uv build installed in a fresh venv with no dev dependencies
+  When  a script builds FastAPI(), calls Admin(app).mount("/admin") and requests GET /admin/ with TestClient
+  Then  the response status is 200
 ```
 
 ## Story breakdown
 
 Stories live in `.meta/epics/epic-v058-bring-your-own-app/stories/`.
-- Every implementation story is **blocked by `st-v058-byoa-00`**, the human gate for this SDD. The only possible exception is `-10`, if Owner decision 4 is accepted.
+- Every implementation story is **blocked by `st-v058-byoa-00`**, the human gate for this SDD. The exceptions are the two security fixes, `-10` and `-53`. They are bug fixes, so they need no SDD (Owner decision 4), and their front-matter carries no gate blocker, so agents can pick them up now.
+- Stories marked † are candidates for deferral under Owner decision 8. Nothing on the critical path depends on them.
 - Stories are ordered bottom-up: packaging, then domain, then logic, then views, then UI, then release.
 - These stories supersede the re-cut stubs `st-v058-byoa-01` to `-07` from `chore/meta-roadmap-recut`, which should be deleted when that branch merges.
 
 | ID | Title | Size | Layer | Blocked by |
 |---|---|---|---|---|
 | 00 | review(spec): approve BYOA SDD | S | gate | — |
-| 10 | fix(views): enforce model + object permissions on inline edit/save, update form, file delete, single actions | S | views | 00* |
+| 10 | fix(views): enforce model + object permissions and request-scoped queryset filtering on item, inline, bulk, file and choices handlers; inline-formset ownership; file-field and storage-root checks | M | views | — |
 | 11 | chore(deps): audit runtime deps (add pydantic-settings, tzdata on win32; drop appnope/uvicorn/httpx; fastapi[standard]→fastapi; dedupe python-multipart) | S | packaging | 00 |
 | 12 | build: commit uv.lock, `uv sync --locked` in CI, gate PRs to master/develop | S | packaging | 11 |
 | 13 | feat(core): PrimaryKeyInfo codec + InvalidPrimaryKey + BaseAdapter.pk/datetime_kind | S | domain | 00 |
 | 14 | feat(core): timezones module + settings.timezone | M | domain | 00 |
-| 15 | feat(adapters): introspection — introspect_primary_key, datetime_kind, coerce_column_value | M | domain | 13, 14, 19 |
+| 15 | feat(adapters): introspection — introspect_primary_key, datetime_kind | M | domain | 13, 14 |
 | 16 | fix(auth): tz-aware auth timestamps via UTCNaiveDateTime + utc_now | S | domain | 14 |
 | 17 | refactor(auth): lazy auth package exports + auth.metadata() | S | domain | 00 |
 | 18 | feat(core): AdminAuthenticationRequired/AdminAccessDenied + CsrfTokenSigner | S | domain | 00 |
@@ -1293,44 +1702,46 @@ Stories live in `.meta/epics/epic-v058-bring-your-own-app/stories/`.
 | 21 | feat(core): session_factory seam on BaseAdapter, adapters and auth services | M | domain | 20 |
 | 22 | refactor(adapters): pk-agnostic get/get_related/update/delete/get_choices/save_inline_rows | M | logic | 15, 21 |
 | 23 | refactor(core): pk-aware display name, FK filter choices, list_display fallback, inline display fields | S | logic | 13 |
-| 24 | feat(adapters): apply FilterCondition lists (exact/gte/lte/in/isnull) with dict back-compat | S | logic | 19, 22 |
+| 24 | feat(adapters): apply FilterCondition lists with dict back-compat; coerce_column_value and choices cascade coercion (range ops †) | S | logic | 19, 22 |
 | 25 | feat(auth): ExternalAuth, TokenCookie, CallablePermissionChecker, build_admin_dependency | M | logic | 17, 18 |
 | 26 | feat(core): lifecycle — opt-in create_tables, startup/shutdown/lifespan, first-request guard, init-db CLI | M | logic | 17, 21 |
-| 27 | feat(i18n): translate Pydantic validation messages by error type (#531) | M | logic | 00 |
+| 27 † | feat(i18n): translate Pydantic validation messages by error type (#531) | M | logic | 00 |
 | 28 | feat(routing): per-model pk convertor, hyperadmin_pk convertor, literal routes first, composite list-only | M | views | 15 |
 | 29 | refactor(views): DynamicModelView item handlers use self.pk and _resolve_pk (404 on invalid) | M | views | 10, 22, 23, 28 |
 | 30 | refactor(views): bulk ids, single actions and popup payload are pk-type-agnostic | S | views | 29 |
 | 31 | refactor(forms): pk-aware PydanticForm (natural pk on create) and InlineFormset pk codec | M | views | 29 |
 | 32 | feat(forms): tz-aware datetime parsing, Aware/NaiveDatetime, broadened auto-now, preserve unchanged | M | views | 31 |
 | 33 | feat(views): template filters ha_pk/ha_dom_token/ha_datetime_input/ha_display + timezone plumbing | S | views | 13, 14 |
-| 34 | feat(views): namespace-aware url helper and Jinja url_for override (spike first) | S | views | 30 |
-| 35 | feat(core): isolated sub-application mount (scoped middleware, static/ws under prefix, router legacy mode) | M | views | 26, 34 |
-| 36 | feat(auth): admin-scoped session cookie via AdminSessionMiddleware | M | views | 35 |
-| 37 | fix(uploads): serve uploads under the admin prefix behind auth with nosniff/attachment policy | M | views | 35 |
-| 38 | feat(views): HyperAdminRoute route class — auth-error translation and token-cookie bridging | M | views | 18, 35 |
-| 39 | feat(views): CsrfGuard signed double-submit wired into HyperAdminRoute and settings | M | views | 38 |
-| 40 | feat(core): Admin(auth=ExternalAuth) wiring + register_auth_models opt-in | M | views | 25, 39 |
-| 41 | feat(auth): token handoff POST /auth/session and bridge logout | M | views | 40 |
+| 34 | feat(views): namespace-aware url helper, admin_base_path and Jinja url_for override (spike already passed; helper only) | S | views | 00 |
+| 35 | feat(core): isolated sub-application mount (scoped middleware, shared dependency_overrides/state, static/ws under prefix, router legacy mode, the 9 dynamic.py url_for switches) | M | views | 26, 30, 34 |
+| 36 | feat(auth): admin-scoped session cookie via AdminSessionMiddleware; cookie_secure; per-request cookie paths; locale cookie path and Referer fix | M | views | 35 |
+| 37 | fix(uploads): per-record file serving with permission/object/queryset checks, unique stored names, nosniff/attachment policy | M | views | 10, 35 |
+| 38 | feat(views): HyperAdminRoute route class — ordered bridge/auth/CSRF pipeline, auth-error translation, token-cookie bridging | M | views | 18, 35 |
+| 39 | feat(views): CsrfGuard signed double-submit with proxy-safe Origin check, wired into HyperAdminRoute, plus token injection (hx-headers, meta, csrf_input) | M | views | 38 |
+| 40 | feat(core): Admin(auth=ExternalAuth) wiring, fail-safe bridge permissions, register_auth_models opt-in | M | views | 25, 39 |
+| 41 | feat(auth): token handoff POST /auth/session, admin login form for bearer hosts (token_endpoint), JWT-exp cookie lifetime, bridge logout | M | views | 40 |
 | 42 | feat(realtime): hashable user keys, bridge-aware SSE/WS, WS Origin check | S | views | 40 |
-| 43 | fix(views): list_view logs and surfaces DB errors | S | views | 29 |
+| 43 | fix(views): list_view logs and surfaces DB errors | S | views | 29, 53 |
 | 44 | feat(views): typed, whitelisted filters in list_view | S | views | 24, 43 |
 | 45 | feat(templates): pk-agnostic links/testids and tz-aware datetime rendering | M | ui | 32, 33 |
-| 46 | feat(ui): CSRF token injection (hx-headers, meta, csrf_input) + bridge-aware navbar | M | ui | 39, 40 |
-| 47 | feat(ui): range inputs and filter errors in the filter bar | M | ui | 44 |
+| 46 | feat(ui): bridge-aware navbar and CSRF reload banner | S | ui | 40 |
+| 47 † | feat(ui): range inputs and filter errors in the filter bar | M | ui | 44 |
 | 48 | build(deps): lift sqlmodel<0.0.45 cap; migrate examples/fixtures to utc_now; refresh baselines | S | ui | 16, 32, 45 |
 | 49 | test(e2e): pk-type and timezone fixture app (UUID, natural str, int) | M | ui | 30, 45, 48 |
 | 50 | build(release): 0.5.0a1, pep440 commitizen, __version__, fixed release/publish workflows | M | packaging | 12, 48 |
-| 51 | docs(guides): existing-app guide + examples/byoa + CSRF upgrade note + multi-tenancy SDD amendment | M | ui | 36, 37, 41, 42, 46, 47, 49 |
-| 52 | chore(dogfood): dogfood-1 on a real existing app from the PyPI alpha; gap log | S | gate | 50, 51 |
+| 51 | docs(guides): existing-app guide + examples/byoa + CSRF/proxy upgrade note + multi-tenancy SDD amendment | M | ui | 36, 37, 41, 42, 46, 49 |
+| 52 | chore(dogfood): dogfood-1 on a real existing app from the PyPI alpha; gap log | S | gate | 50, 51, 54 |
+| 53 | fix(views): close query oracles — sensitive fields, sort_by whitelist, choices cascade whitelist and target permission | M | views | — |
+| 54 | chore(dogfood): dogfood-0 from a repository install once the bridge and isolated mount land; early gap log | S | gate | 35, 41 |
 
-\* `-10` may be unblocked early if Owner decision 4 is accepted.
+† Deferral candidate under Owner decision 8.
 
 ## Open Questions
 
 These are lower-stakes than the Owner decisions. Each has a proposed answer that the implementer applies unless the reviewer says otherwise.
 
 - [ ] **1. The pydantic-settings lower bound.** Raise it to the version that fixes GHSA-4xgf-cpjx-pc3j (≥2.14.2 per the current `pyproject.toml` comment), provided `poe deps:bump` stays green on Python 3.10 lowest-direct. Otherwise use `>=2.3` and keep the ignore.
-- [ ] **2. Validating the token handoff.** Options: an internal sub-application call to the host dependency (proposed), or requiring an explicit `verify_token` callable. The fallback is `verify_token` if the sub-app call proves brittle.
+- [x] **2. Validating the token handoff.** Resolved. The handoff route is itself protected by `Depends(build_admin_dependency(auth))` (B.4), so FastAPI validates the token natively, overrides included, and no internal sub-application request is needed.
 - [ ] **3. Pillow.** Keep it as a hard runtime dependency (proposed for 0.5.0a1), or move it to a `hyper-admin[images]` extra later.
 - [ ] **4. Reserved path segments for `str` keys** (`create`, `choices`, …). Document them only (proposed), or reject such values when a row is created.
 - [ ] **5. The popup `HX-Trigger` id.** Keep it a number for int keys (proposed, for back-compat), or always send a string.
@@ -1353,10 +1764,14 @@ These are lower-stakes than the Owner decisions. Each has a proposed answer that
 | `register_auth_models` and the other scalar options in settings | Follows the settings rule: scalar config lives in `HyperAdminSettings` | `Admin(include_auth_models=...)` |
 | Isolated sub-app as the default mount | The only way to scope Starlette middleware, cookies and route names without the host's cooperation | A router plus path-checking middleware (still global) |
 | Jinja `url_for` override with fallback from namespaced to plain names | No edits to about 25 template call sites; host template overrides keep working | A new `admin_url` global (touches every template) |
-| A first-request startup guard | Works under any host lifespan without the host changing code | Require composing the lifespan (fails the 10-minute thesis) |
+| A first-request startup guard plus an explicit `lifespan()`, with no `on_startup` append | Works under any host lifespan with no host code changes, and leaves one fewer mechanism to keep consistent | Require composing the lifespan (fails the 10-minute thesis); three parallel startup paths (redundant) |
+| The sub-app shares the host's `dependency_overrides` and `state` | Host test overrides and dependencies that read `request.app.state` keep working under `/admin`. Without sharing they fail (reproduced) | Document the limitation (breaks the common `get_db` pattern) |
+| Bridge default: superusers get full access, everyone else view-only | Fail-safe: a staff user cannot escalate by editing the host user model | Full access plus a `WARNING` (privilege escalation) |
+| An admin login form for bearer hosts (`token_endpoint`) | A bearer-only app reaches `/admin` with no frontend change | Only the handoff endpoint (needs SPA code, so the thesis fails for the target persona) |
+| Publish from the release workflow via `workflow_call` | Releases created with `GITHUB_TOKEN` do not trigger other workflows | `on: release` (never fires); a PAT (a long-lived secret) |
 | `create_tables=False` by default, with a demo-mode exception | Never issue DDL against a host database behind Alembic's back; zero-config demos still work | Keep `True` (unsafe in production) |
-| URL filters limited to `list_filter` | Closes the equality oracle on secret columns | Allow every column (the status quo) |
-| Uploads served through an authenticated route | Allows auth, a header policy and traversal checks | `StaticFiles` inside the sub-app (no header control) |
+| URL filters limited to `list_filter`, `sort_by` whitelisted, sensitive fields excluded from search, list and detail, and choices limited to declared cascade keys | Closes the filter, search, sort and choices oracles on secret columns | Allow every column (the status quo); the filter whitelist alone (leaves three oracles open) |
+| Files served per record and field, with unique stored names | Model, object and tenant permissions apply to downloads. Names cannot be guessed, and one record cannot overwrite another's file | `{prefix}/uploads/{path}` behind auth only (any admin reads any file); `StaticFiles` inside the sub-app (no header control); signed URLs (more moving parts) |
 | First release versioned `0.5.0a1` on PyPI | Honest pre-release that dogfooding can install; decoupled from roadmap labels | `0.1.0` (misleading); wait for 1.0 (blocks dogfooding) |
 | `DeclarativeBase` adapter deferred | Keeps the milestone focused on SQLModel hosts, which the dogfood apps are | Include it (doubles the adapter test matrix) |
 
@@ -1415,6 +1830,8 @@ This appendix was compiled for pillar A. Line numbers are from `f96dcc0`.
   - `components/inline_cell_error.html`
   - `update.html:8`
   - `detail.html:7,14,29`
-  - `components/bulk_form.html:5,18`
+  - `components/bulk_form.html:5,17-18`
   - `components/bulk_result.html:7,19,22,33`
+  - `components/inline_row.html:10-11`: truthy `{% if row.pk %}`
+- **`auth/permissions.py:78-107`**: `ModelPermissionChecker` is keyed on `user.id`. Combined with `auth=`, it is rejected unless `register_auth_models=True` (B.3)
   - `widgets/datetime_input.html:6`

@@ -1,7 +1,7 @@
 ---
 type: story
 id: st-v058-byoa-46
-title: "feat(ui): CSRF token injection and bridge-aware navbar"
+title: "feat(ui): bridge-aware navbar and CSRF reload banner"
 status: todo
 priority: high
 assignee: null
@@ -78,9 +78,12 @@ Scenario: bridged navbar
 - [ ] bridged navbar
 - [ ] `poe lint` and `poe test:unit` pass (and `poe test:e2e`)
 
+## Review amendments (2026-09-28)
+
+- CSRF token injection (`hx-headers`, meta and `csrf_input`) moved to `-39`, so enforcement and injection ship together. This story keeps only the bridge-aware navbar (logout form, display name) and the "reload page" banner for 403s that carry `X-HyperAdmin-CSRF`.
+
 ## Blocked by
 
-- `featviews-csrfguard-signed-double-submit-wired-into-hyperadm` (st-v058-byoa-39)
 - `featcore-adminauth-externalauth-wiring-and-opt-in-built-in-a` (st-v058-byoa-40)
 
 ## Parent

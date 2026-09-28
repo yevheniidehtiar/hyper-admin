@@ -78,6 +78,11 @@ Scenario: dependency overrides are honoured
 - [ ] dependency overrides are honoured
 - [ ] `poe lint` and `poe test:unit` pass
 
+## Review amendments (2026-09-28)
+
+- Add `ExternalAuth.allow_full_access: bool = False` and `TokenCookie.token_endpoint` (a token URL, or an `issue_token(username, password)` callable).
+- `CallablePermissionChecker` plus the new `BridgeDefaultPermissionChecker` (superusers get everything, others `view_*` only).
+
 ## Blocked by
 
 - `refactorauth-lazy-auth-package-exports-and-auth-metadata` (st-v058-byoa-17)

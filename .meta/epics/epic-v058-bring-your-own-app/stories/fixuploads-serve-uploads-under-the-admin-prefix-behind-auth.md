@@ -1,7 +1,7 @@
 ---
 type: story
 id: st-v058-byoa-37
-title: "fix(uploads): serve uploads under the admin prefix behind auth with a nosniff/attachment policy"
+title: "fix(uploads): serve files per record behind permission, object and queryset checks with a nosniff/attachment policy"
 status: todo
 priority: high
 assignee: null
@@ -65,8 +65,16 @@ Scenario: traversal rejected
 - [ ] traversal rejected
 - [ ] `poe lint` and `poe test:unit` pass
 
+## Review amendments (2026-09-28)
+
+- Replace `GET {prefix}/uploads/{path}` with a per-record route, `GET {prefix}/{model}/{item_id}/file/{field}`. It requires `view`, loads the record under the queryset filter, runs the object `view` check, and returns 404 for fields that are not file fields.
+- Resolve stored names through `core/storage_paths.resolve_storage_path` (from `-10`).
+- `upload_file_view` stores files under unique names (`<uuid4 hex>/<secure name>`), so no upload overwrites another record's file. It requires `add` or `change`.
+- Add scenarios: cross-model read denied (403), and a same-name upload does not overwrite.
+
 ## Blocked by
 
+- `fixviews-enforce-model-and-object-permissions-on-inline-edit` (st-v058-byoa-10)
 - `featcore-isolated-sub-application-mount` (st-v058-byoa-35)
 
 ## Parent

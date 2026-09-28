@@ -64,6 +64,10 @@ Scenario: FK filter choices
 - [ ] FK filter choices
 - [ ] `poe lint` and `poe test:unit` pass
 
+## Review amendments (2026-09-28)
+
+- `core/discovery.py:81` builds the target adapter with `adapter.for_model(target_model)`, and FK choice values use `target_adapter.pk.to_str`. The existing core → adapters import in `discovery.py` is recorded as known debt, and must not be deepened.
+
 ## Blocked by
 
 - `featcore-primarykeyinfo-codec-invalidprimarykey-and-baseadap` (st-v058-byoa-13)
