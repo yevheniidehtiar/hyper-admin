@@ -1,67 +1,57 @@
 # HyperAdmin Product Roadmap
 
-This document outlines the planned features and development phases for HyperAdmin. Our goal is to build a modern, powerful, and easy-to-use admin interface for FastAPI.
+> **Thesis:** HyperAdmin is the admin you add to an existing FastAPI app in 10 minutes
+> without it taking over — your models, your UUID keys, your migrations, your auth.
+> Then Django-admin parity plus enterprise features. HTMX-only, no JS build. Every
+> feature proven on real apps.
 
-> **For detailed epic-level planning, milestone tracking, and priority matrix, see [`docs/roadmap.md`](docs/roadmap.md).**
-
----
-
-## Phase 1: Foundation & The "Walking Skeleton" (Completed)
-
-This initial phase established the project's foundation, including the repository setup, a basic "walking skeleton" of the application, and a CI/CD pipeline. This work proved the core concept and allowed for rapid development.
-
----
-
-## Phase 2: Core Functionality & Admin UI (Completed)
-
-This phase built a complete and visually appealing admin interface with full CRUD functionality and a modern UI.
-
-- **CRUD Implementation**:
-    - [x] Add SQLAlchemy and SQLModel as dependencies.
-    - [x] Refactor `ModelView` to work with SQLModel classes.
-    - [x] Implement **Create View** with dynamic form generation.
-    - [x] Implement **Update View** with pre-filled forms.
-    - [x] Implement **Delete Action** with HTMX for a seamless UI experience.
-
-- **Admin UI Epics**:
-    - [x] **Navigation Sidebar**: Collapsible sidebar for easy navigation between different admin views.
-    - [x] **Data Table Component**: Reusable and feature-rich data table with sorting, pagination, and filtering.
-    - [x] **Forms & Widgets**: Standardized form elements including select/multiselect widgets (enum, FK, M2M, autocomplete).
-    - [x] **Styling & Theming**: Clean and modern design system with theme support.
-    - [x] **Custom Actions Framework**: Register and execute custom actions per model.
-    - [x] **Fieldsets**: Group fields in admin forms with collapsible sections.
-    - [x] **WCAG 2.1 AA Accessibility**: Keyboard navigation, ARIA, color contrast, screen reader support.
-
-- **Documentation & Community Outreach**:
-    - [x] Set up a documentation site using MkDocs with the `mkdocs-material` theme.
-    - [x] Write a "Getting Started" tutorial and document the core classes.
-    - [x] Create a complete, runnable project in the `examples/` directory.
+The roadmap is ordered by **adoption value**: what unblocks a team from putting
+HyperAdmin on a real app comes first. Nothing from the previous roadmap was cut —
+it was only re-ordered (re-cut 2026-09-28). The source of truth is
+[`.meta/roadmap/roadmap.yaml`](.meta/roadmap/roadmap.yaml); the detailed view with
+per-milestone scope lives in [`docs/roadmap.md`](docs/roadmap.md).
 
 ---
 
-## Phase 3: Advanced Features & Polish (In Progress)
+## Shipped
 
-With a solid foundation and a polished UI, this phase focuses on advanced features and making HyperAdmin more powerful and flexible.
+| Milestone | Highlights |
+|-----------|-----------|
+| Phase 1 / Phase 2 | CRUD, list/filter/search/sort, fieldsets, inlines, actions, select & multiselect widgets, themes, WCAG 2.1 AA |
+| v0.2.1 — Developer Experience | Bookkeeping ERP reference app, examples refactor |
+| v0.3.0 — Zero-Config & Auth | 3-line auto-discovery with smart defaults, `HyperAdminSettings`, session auth end-to-end |
+| v0.3.1 — File Uploads | `StorageBackend`, file/image fields, upload/delete endpoints |
+| v0.4.0 — Responsive Design | Mobile-first layout, collapsible sidebar, stacked-card tables |
+| v0.4.1 — i18n | gettext + Babel, RTL, locale switcher (now top-20 locales) |
+| v0.5.0 — Advanced UX | UI polish, dark mode, inline cell editing |
+| v0.5.1 — Object Permissions & MFA | `ObjectPermissionChecker`, `get_queryset` row-level security, email-OTP MFA |
 
-Closed milestones: **v0.2.1** (Developer Experience & Examples), **v0.3.0** (Zero-Config & Auth).
+Also on `develop` ahead of their milestones: H2 inline row-error highlighting,
+bulk-action endpoint and `@action` bulk/form params, relation config + create-popup
+view, SSE/WebSocket connection foundation, `JsonApiAdapter` protocol, synthetic
+data generator.
 
-- **Shipped**:
-  - [x] Zero-config admin (auto-discover all SQLModel models in 3 lines of code).
-  - [x] Authentication and authorization (login/logout, session management).
-  - [x] File upload support with local and S3-compatible storage backends.
-  - [x] Responsive design overhaul (mobile-first layout).
-  - [x] Internationalization (i18n) with `gettext`, RTL support, locale switcher.
-  - [x] Object-level permissions.
-  - [x] Multi-factor authentication (MFA / OTP).
-  - [x] Support for model relationships (FK, M2M, autocomplete).
-  - [x] Custom actions (bulk and single-object).
+---
 
-- **Planned (open milestones)**:
-  - [ ] Multi-tenancy filtering (`get_queryset` hook) — v0.5.3
-  - [ ] Dashboard builder — v0.5.4
-  - [ ] OAuth2 / OpenID Connect SSO — v0.5.2
-  - [ ] Real-time updates (SSE / WebSocket) — v0.6.0
-  - [ ] Presence tracking — v0.6.1
-  - [ ] Scalability: cursor-based pagination, connection pool tuning — v0.7.0
-  - [ ] Plugin & extension system — v0.8.0
-  - [ ] AI-powered features — v0.8.0
+## Next, in order
+
+| # | Milestone | Why here |
+|---|-----------|----------|
+| 1 | **v0.5.8 — Bring Your Own App (dogfood-1)** — *new, top priority* | Mount into an existing app: PK-agnostic routes (UUID/str), no DDL on the host DB, plain SQLAlchemy `DeclarativeBase` + host engine reuse, bring-your-own auth, 10-minute guide. Closes only after running on a real app. |
+| 2 | v0.5.5 — Bulk Actions & Autocomplete (finish) | Half-merged; finish the list-view bulk toolbar and `AutocompleteWidget`. |
+| 3 | v0.7.0a — Scale Core | N+1-free relation loading, configurable `search_fields` in both adapters, COUNT cache, FK preload threshold + filter cache. |
+| 4 | v0.6.0a — Optimistic Concurrency Control | Lost-update protection for live apps; no dependency on pub/sub. |
+| 5 | v0.5.2 — OAuth SSO | Google / GitHub OIDC, composing with (not replacing) host auth. |
+| 6 | v0.5.3 — Multi-Tenancy | Tenant middleware + `TenantAwareAdapter` on the shipped `get_queryset` hook. |
+| 7 | v0.5.6 — Detail Panels & Filter Library | Tabbed detail panels; date-range / multi-FK / boolean filters, saved views. |
+| 8 | v0.5.7 — Permissions Matrix | Model × action grid editor, `examples/full-demo/` qualification suite. |
+| 9 | v0.5.4 — Reporting & Charts | `ReportView` aggregates/crosstab, CSV/XLSX export, SVG + Chart.js widgets, dashboard layer. |
+| 10 | v0.3.2 — Advanced File Uploads | S3 config, thumbnails + EXIF, drag-and-drop, progress + retry. |
+| 11 | v0.6.0b — Real-Time Pub/Sub | InMemory/Redis pub/sub, live CRUD notifications over HTMX. |
+| 12 | v0.6.1 — Presence | Who is viewing / editing a record. |
+| 13 | v0.7.0b — Scale Advanced | Keyset pagination, pool tuning + rate limiting, E2E scalability suite (measured by v0.7.1 Locust + synthetic data). |
+| 14 | JSON REST API | `JsonApiRouter`, auth, docs on top of the shipped protocol. |
+| 15 | v0.8.0 — Plugins & AI | Plugin registry + lifecycle hooks, `hyperadmin-logfire`, AI-assisted features. |
+| 16 | v1.0 — Stable Release | API freeze, semver + deprecation policy, migration guides. |
+
+Version numbers are identifiers, not release order — milestones ship in the order above.
