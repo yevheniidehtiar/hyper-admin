@@ -7,11 +7,12 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 from dataclasses import dataclass
 from datetime import datetime
-from typing import TYPE_CHECKING, Annotated, Any, Literal, Union, get_args, get_origin
+from typing import TYPE_CHECKING, Annotated, Any, Union, get_args, get_origin
 
 from pydantic import AwareDatetime, NaiveDatetime
 
 from hyperadmin.core.primary_key import DEFAULT_PK, PrimaryKeyInfo
+from hyperadmin.core.timezones import DateTimeKind
 
 if TYPE_CHECKING:
     import builtins
@@ -116,12 +117,12 @@ class ListEnvelope:
     meta: PaginationMeta
 
 
-def _annotation_datetime_kind(annotation: Any) -> Literal["aware", "naive"] | None:
+def _annotation_datetime_kind(annotation: Any) -> DateTimeKind | None:
     origin = get_origin(annotation)
     if origin is Annotated:
         return _annotation_datetime_kind(get_args(annotation)[0])
     if origin is Union or origin is types.UnionType:
-        kinds: set[Literal["aware", "naive"] | None]
+        kinds: set[DateTimeKind | None]
         kinds = {_annotation_datetime_kind(arg) for arg in get_args(annotation)}
         kinds.discard(None)
         return kinds.pop() if len(kinds) == 1 else None
@@ -157,7 +158,7 @@ class BaseAdapter(ABC):
         self.engine = engine
         self._queryset_filter: QuerysetFilter | None = None
 
-    def datetime_kind(self, field: str) -> Literal["aware", "naive"] | None:
+    def datetime_kind(self, field: str) -> DateTimeKind | None:
         """Return whether ``field`` stores timezone-aware or naive datetimes.
 
         The default reads the pydantic annotation only: ``AwareDatetime`` is
