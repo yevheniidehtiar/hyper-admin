@@ -396,6 +396,19 @@ class PydanticForm:
                 return True
         return False
 
+    @property
+    def auto_now_field_names(self) -> frozenset[str]:
+        """Names of model fields hidden from the form because they stamp "now".
+
+        An update must not write these: validation would fill them from their
+        default factory and overwrite the stored timestamp.
+        """
+        return frozenset(
+            name
+            for name, field in self.model.model_fields.items()
+            if self._is_auto_now_field(field)
+        )
+
     def _build_all_fields(self) -> dict[str, FormField]:
         """Build all eligible form fields as a name->FormField mapping."""
         field_map: dict[str, FormField] = {}

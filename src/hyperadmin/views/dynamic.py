@@ -1102,9 +1102,13 @@ class DynamicModelView:
                 request, item_id=item_id, values=data, errors=hidden_refs, status_code=422
             )
 
-        # exclude_none: id is not submitted by the form and must not overwrite the PK
+        # exclude_none: id is not submitted by the form and must not overwrite the PK.
+        # Auto-now fields are not rendered; validation re-ran their default factory,
+        # so writing them would overwrite the stored timestamp on every edit.
         try:
-            update_data = instance.model_dump(exclude_none=True)
+            update_data = instance.model_dump(
+                exclude_none=True, exclude=set(form.auto_now_field_names)
+            )
             update_data.update(file_uploads)
             await self.adapter.update(pk=item_id, data=update_data)
         except IntegrityError as exc:
