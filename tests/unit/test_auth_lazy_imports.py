@@ -111,3 +111,26 @@ def test_metadata_keeps_foreign_keys_between_auth_tables() -> None:
         """
     )
     assert out == "['hyperadmin_groups.id', 'hyperadmin_users.id']"
+
+
+def test_metadata_warns_when_a_bridge_mode_admin_exists(monkeypatch, caplog) -> None:
+    """SDD B.5: ``metadata()`` after a bridge-mode ``Admin`` logs a WARNING."""
+    from hyperadmin import auth
+
+    monkeypatch.setattr(auth, "_bridge_admin_constructed", False)
+    auth._note_bridge_admin_constructed()
+
+    with caplog.at_level("WARNING", logger="hyperadmin"):
+        auth.metadata()
+
+    assert any(r.levelname == "WARNING" and "bridge mode" in r.getMessage() for r in caplog.records)
+
+
+def test_metadata_is_silent_without_a_bridge_mode_admin(monkeypatch, caplog) -> None:
+    from hyperadmin import auth
+
+    monkeypatch.setattr(auth, "_bridge_admin_constructed", False)
+    with caplog.at_level("WARNING", logger="hyperadmin"):
+        auth.metadata()
+
+    assert not [r for r in caplog.records if r.levelname == "WARNING"]

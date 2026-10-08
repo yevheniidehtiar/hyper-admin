@@ -10,6 +10,7 @@ actually used. ``from hyperadmin.auth import User`` keeps working.
 from __future__ import annotations
 
 import importlib
+import logging
 from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import MetaData
@@ -25,6 +26,8 @@ if TYPE_CHECKING:
         UserGroup,
         UserPermission,
     )
+
+_logger = logging.getLogger("hyperadmin")
 
 _MODELS_MODULE = "hyperadmin.auth.models"
 _TABLE_PREFIX = "hyperadmin_"
@@ -48,6 +51,16 @@ __all__ = [
     "hash_password",
     "metadata",
 ]
+
+
+# Set when an ``Admin`` in bridge mode (``auth=``) is built in this process.
+_bridge_admin_constructed = False
+
+
+def _note_bridge_admin_constructed() -> None:
+    """Record that a bridge-mode ``Admin`` exists (called by the auth bridge)."""
+    global _bridge_admin_constructed  # noqa: PLW0603 - process-wide flag by design
+    _bridge_admin_constructed = True
 
 
 def __getattr__(name: str) -> Any:
@@ -83,8 +96,16 @@ def metadata() -> MetaData:
         register on the global ``SQLModel.metadata`` when they are imported, so
         after this call the ``hyperadmin_*`` tables are also part of that
         process's ``SQLModel.metadata`` (and of any autogenerate target built
-        from it). Hosts that bring their own auth should not call it.
+        from it). Hosts that bring their own auth should not call it; doing so
+        after a bridge-mode ``Admin`` was built logs a WARNING.
     """
+    if _bridge_admin_constructed:
+        _logger.warning(
+            "hyperadmin.auth.metadata() called while an Admin in bridge mode (auth=) "
+            "exists: the built-in hyperadmin_* tables are now registered on "
+            "SQLModel.metadata and will appear in Alembic autogenerate. Bridge-mode "
+            "hosts do not need them."
+        )
     importlib.import_module(_MODELS_MODULE)
     target = MetaData()
     for table in SQLModel.metadata.sorted_tables:
