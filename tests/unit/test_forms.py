@@ -372,3 +372,39 @@ def test_pydantic_form_media():
 
     form = PydanticForm(model=MediaTestModel, widgets={"name": MediaWidget()})
     assert form.media == ("test.css", "test.js")
+
+
+def test_pydantic_form_excludes_utc_now_auto_field():
+    """
+    Scenario: utc_now default factory is treated as auto-now
+      Given a model whose created_at uses default_factory=utc_now
+      When  a PydanticForm is built for it
+      Then  created_at is not rendered as a form field
+    """
+    from datetime import datetime, timezone
+
+    from hyperadmin.core.timezones import utc_now
+
+    class Stamped(BaseModel):
+        name: str
+        created_at: datetime = Field(default_factory=utc_now)
+        aware_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+        legacy_at: datetime = Field(default_factory=datetime.now)
+
+    form = PydanticForm(model=Stamped)
+
+    assert [f.name for f in form.fields] == ["name"]
+
+
+def test_pydantic_form_keeps_named_datetime_factory_editable():
+    from datetime import datetime
+
+    def default_publish_at() -> datetime:
+        return datetime(2026, 1, 1)
+
+    class Scheduled(BaseModel):
+        publish_at: datetime = Field(default_factory=default_publish_at)
+
+    form = PydanticForm(model=Scheduled)
+
+    assert [f.name for f in form.fields] == ["publish_at"]
