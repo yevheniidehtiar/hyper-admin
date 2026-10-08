@@ -15,12 +15,13 @@ requires-python = ">=3.10,<4.0"
 dependencies = [
   "fastapi>=0.116.0",
   "fastapi-storages>=0.1.0",  # FileType/ImageType column types and storage for upload fields
-  "pydantic>=2.7; python_version < '3.13'",
+  "pydantic>=2.10.1; python_version < '3.13'",  # <2.10 can't resolve the InlineModelSpec forward ref; 2.10.0 breaks sqlmodel defaults
   "pydantic>=2.11; python_version >= '3.13'",
   "pydantic-settings>=2.14.2",  # HyperAdminSettings (core/settings.py); >=2.14.2 fixes GHSA-4xgf-cpjx-pc3j
   "jinja2>=3.1.6",
   "python-multipart>=0.0.26",  # form and file-upload parsing for admin POST views
-  "sqlalchemy>=2.0.14",
+  "sqlalchemy>=2.0.14; python_version < '3.13'",
+  "sqlalchemy>=2.0.31; python_version >= '3.13'",  # first release importable on Python 3.13
   "sqlmodel>=0.0.19,<0.0.45",  # 0.0.45 enforces tz-aware datetimes; support tracked for v0.5.8
   "aiosqlite>=0.22.1",  # async SQLite driver for zero-config demo mode (sqlite+aiosqlite default URL)
   "greenlet>=1.0.1; python_version < '3.13'",  # SQLAlchemy asyncio bridge

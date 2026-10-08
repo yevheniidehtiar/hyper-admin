@@ -110,3 +110,33 @@ def test_built_wheel_imports_cleanly(tmp_path: Path) -> None:
 
     assert result.returncode == 0, result.stderr
     assert result.stdout.strip() == "Admin"
+
+
+def test_pydantic_lower_bound_resolves_admin_forward_references() -> None:
+    """pydantic < 2.10 cannot resolve the ``InlineModelSpec`` forward reference.
+
+    With pydantic 2.7-2.9 registering admin routes fails with
+    ``PydanticUndefinedAnnotation: name 'InlineModelSpec' is not defined``, so
+    every declared pydantic floor must exclude those versions (and 2.10.0).
+    """
+    pydantic = [r for r in _runtime_requirements() if r.name.lower() == "pydantic"]
+
+    assert pydantic
+    for req in pydantic:
+        assert not req.specifier.contains("2.9.2"), str(req)
+        # 2.10.0 regressed default factories (fixed in 2.10.1); sqlmodel defaults break.
+        assert not req.specifier.contains("2.10.0"), str(req)
+        assert req.specifier.contains("2.11.7"), str(req)
+
+
+def test_sqlalchemy_floor_on_python_313_is_importable() -> None:
+    """SQLAlchemy < 2.0.31 fails to import on Python 3.13 (TypingOnly assertion)."""
+    sqlalchemy = [r for r in _runtime_requirements() if r.name.lower() == "sqlalchemy"]
+    py313 = [
+        r for r in sqlalchemy if r.marker is None or r.marker.evaluate({"python_version": "3.13"})
+    ]
+
+    assert py313
+    for req in py313:
+        assert not req.specifier.contains("2.0.30"), str(req)
+        assert req.specifier.contains("2.0.31"), str(req)

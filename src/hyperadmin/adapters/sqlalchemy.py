@@ -185,6 +185,8 @@ class SQLAlchemyAdapter(BaseAdapter):
             return []
 
         target_inspector = inspect(target_model)
+        if target_inspector is None:  # Optional in SQLAlchemy < 2.0.2x type stubs
+            return []
         async with AsyncSession(self.engine) as session:
             query = select(target_model)
 
