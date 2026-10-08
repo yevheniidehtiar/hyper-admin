@@ -5,7 +5,6 @@ from typing import Any
 from fastapi import APIRouter, FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from sqlmodel import SQLModel
 
 from hyperadmin.core.introspection import (
     discover_sqlmodel_models,
@@ -14,7 +13,6 @@ from hyperadmin.core.introspection import (
     infer_search_fields,
 )
 from hyperadmin.core.settings import HyperAdminSettings
-from hyperadmin.db import engine as default_engine
 from hyperadmin.discover import discover_admin_modules
 from hyperadmin.realtime import ConnectionRegistry, RealtimeSettings
 from hyperadmin.realtime.sse import make_sse_handler
@@ -60,8 +58,9 @@ class Admin:
 
         Args:
             app: The FastAPI application instance to attach the admin to.
-            engine: An async SQLAlchemy engine. Defaults to the built-in
-                ``hyperadmin.db.engine`` if not provided.
+            engine: An async SQLAlchemy engine. When ``None`` (demo mode), one
+                is built lazily from ``settings.database_url`` by
+                ``hyperadmin.db.get_default_engine``.
             settings: A ``HyperAdminSettings`` instance. When ``None``, one is
                 auto-instantiated (reads ``HYPERADMIN_*`` env vars and ``.env``).
             auth_backend: An optional authentication backend implementing the
@@ -82,7 +81,7 @@ class Admin:
         self.settings = settings or HyperAdminSettings()
         self.app = app
         self.router = APIRouter()
-        self.engine = engine or default_engine
+        self.engine = engine if engine is not None else self._default_engine()
         self.auth_backend = auth_backend
         self.permission_checker = permission_checker
         self.permission_registry = permission_registry
@@ -146,10 +145,17 @@ class Admin:
 
     # ── Internal helpers ───────────────────────────────────────────────────
 
+    def _default_engine(self) -> Any:
+        """Build (or reuse) the demo-mode engine for ``settings.database_url``."""
+        from hyperadmin.db import get_default_engine
+
+        return get_default_engine(self.settings)
+
     async def _create_db_and_tables(self) -> None:
         """Creates the database and all tables using the configured engine."""
-        async with self.engine.begin() as conn:
-            await conn.run_sync(SQLModel.metadata.create_all)
+        from hyperadmin.db import create_tables
+
+        await create_tables(self.engine)
 
     def _register_views(self) -> None:
         """Registers the views from the site registry."""
