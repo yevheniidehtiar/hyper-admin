@@ -13,6 +13,8 @@ from zoneinfo import ZoneInfo
 
 import pytest
 from pydantic import AwareDatetime, BaseModel, Field
+from sqlalchemy import DateTime, Integer, Uuid
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from hyperadmin.core import FilterCondition, FilterValueError
 from hyperadmin.core.filtering import (
@@ -445,3 +447,109 @@ def test_in_operator_with_only_separators_is_skipped() -> None:
     parsed = parse_filter_params(Order, {"filter_quantity__in": " , "}, ["quantity"])
 
     assert parsed == ParsedFilters()
+
+
+# ---------------------------------------------------------------------------
+# Out-of-range values (review of st-v058-byoa-19)
+# ---------------------------------------------------------------------------
+
+NYC = ZoneInfo("America/New_York")
+
+
+class Stamped(BaseModel):
+    ts: AwareDatetime | None = None
+    n: datetime | None = None
+
+
+@pytest.mark.parametrize(
+    ("key", "raw", "tz"),
+    [
+        ("filter_ts", "9999-12-31", NYC),
+        ("filter_ts__lte", "9999-12-31", NYC),
+        ("filter_ts__gte", "9999-12-31", NYC),
+        ("filter_ts", "0001-01-01", AMS),
+        ("filter_ts__gte", "0001-01-01", AMS),
+        ("filter_ts__gte", "9999-12-31T23:00:00-05:00", UTC),
+        ("filter_ts__in", "2026-01-01,9999-12-31", NYC),
+        ("filter_n__gte", "0001-01-01T00:00:00+05:00", UTC),
+        ("filter_n__lte", "9999-12-31T23:00:00-05:00", AMS),
+    ],
+)
+def test_out_of_range_datetimes_record_errors(key: str, raw: str, tz: ZoneInfo) -> None:
+    """
+    Scenario: a value that overflows on conversion drops its condition
+      Given a datetime filter value at the edge of the supported date range
+      When  parse_filter_params converts it to UTC or the display timezone
+      Then  no condition is produced and the field records an error
+    """
+    field_name = key[len("filter_") :].split("__", maxsplit=1)[0]
+
+    parsed = parse_filter_params(Stamped, {key: raw}, ["ts", "n"], tz=tz)
+
+    assert parsed.conditions == []
+    assert field_name in parsed.errors
+
+
+# ---------------------------------------------------------------------------
+# Annotation resolver for non-pydantic models (review of st-v058-byoa-19)
+# ---------------------------------------------------------------------------
+
+
+class _Base(DeclarativeBase):
+    pass
+
+
+class SaOrder(_Base):
+    __tablename__ = "filtering_sa_order"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    quantity: Mapped[int] = mapped_column(Integer)
+    customer_id: Mapped[uuid.UUID] = mapped_column(Uuid)
+    created_at: Mapped[datetime] = mapped_column(DateTime)
+
+
+def _sa_annotation(name: str) -> Any:
+    column = SaOrder.__table__.columns.get(name)
+    return column.type.python_type if column is not None else None
+
+
+def test_annotation_resolver_coerces_declarative_models() -> None:
+    """
+    Scenario: plain SQLAlchemy models get typed filters through a resolver
+      Given a DeclarativeBase model with int, UUID and DateTime columns
+      And   an annotation_of resolver returning each column's python type
+      When  parse_filter_params runs
+      Then  '3' becomes 3 and a date-only bound becomes a datetime
+      And   an invalid UUID is recorded as an error
+    """
+    parsed = parse_filter_params(
+        SaOrder,
+        {
+            "filter_quantity": "3",
+            "filter_customer_id": "not-a-uuid",
+            "filter_created_at__gte": "2026-07-01",
+        },
+        ["quantity", "customer_id", "created_at"],
+        annotation_of=_sa_annotation,
+    )
+
+    assert parsed.conditions == [
+        FilterCondition("quantity", "exact", 3),
+        FilterCondition("created_at", "gte", datetime(2026, 7, 1)),  # noqa: DTZ001
+    ]
+    assert set(parsed.errors) == {"customer_id"}
+
+
+def test_annotation_resolver_falls_back_to_model_fields() -> None:
+    parsed = parse_filter_params(
+        Order, {"filter_quantity": "4"}, ["quantity"], annotation_of=lambda _name: None
+    )
+
+    assert parsed.conditions == [FilterCondition("quantity", "exact", 4)]
+
+
+def test_annotation_resolver_overrides_model_fields() -> None:
+    parsed = parse_filter_params(
+        Order, {"filter_note": "7"}, ["note"], annotation_of=lambda _name: int
+    )
+
+    assert parsed.conditions == [FilterCondition("note", "exact", 7)]

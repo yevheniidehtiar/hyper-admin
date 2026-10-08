@@ -44,6 +44,7 @@ _TRUE = frozenset({"true", "1", "yes", "on"})
 _FALSE = frozenset({"false", "0", "no", "off"})
 
 DateTimeKindResolver = Callable[[str], "DateTimeKind | str | None"]
+AnnotationResolver = Callable[[str], Any]
 
 
 class FilterValueError(ValueError):
@@ -216,6 +217,12 @@ def _split_key(key: str) -> tuple[str, FilterOp]:
 
 
 def _day_bounds(raw: str, kind: str, tz: tzinfo) -> tuple[datetime, datetime]:
+    """Return the whole-day bounds for ``raw``.
+
+    Raises:
+        ValueError: For an invalid date; ``OverflowError`` near ``date.min``/``max``
+            on aware columns (callers treat both as invalid input).
+    """
     day = date.fromisoformat(raw)
     start = datetime.combine(day, time.min)
     end = datetime.combine(day, time.max)
@@ -244,7 +251,7 @@ class _FieldContext:
                 return _day_bounds(text, self.kind, self.tz)[0]
             kind: DateTimeKind = "aware" if self.kind == "aware" else "naive"
             return parse_datetime_input(text, kind=kind, tz=self.tz)
-        except ValueError as exc:
+        except (ValueError, OverflowError) as exc:
             raise _invalid(raw, "date/time", self.name) from exc
 
     def conditions(self, op: FilterOp, raws: list[str]) -> list[FilterCondition]:
@@ -256,7 +263,7 @@ class _FieldContext:
         if self.is_datetime and _DATE_ONLY.match(raw) and op in ("exact", "lte"):
             try:
                 start, end = _day_bounds(raw, self.kind, self.tz)
-            except ValueError as exc:
+            except (ValueError, OverflowError) as exc:
                 raise _invalid(raw, "date", self.name) from exc
             if op == "lte":
                 return [FilterCondition(self.name, "lte", end)]
@@ -290,6 +297,7 @@ def parse_filter_params(
     *,
     tz: tzinfo = timezone.utc,
     datetime_kind: DateTimeKindResolver | None = None,
+    annotation_of: AnnotationResolver | None = None,
 ) -> ParsedFilters:
     """Parse ``filter_*`` query parameters into typed conditions.
 
@@ -303,6 +311,10 @@ def parse_filter_params(
         tz: Display timezone used to localise datetime input on aware columns.
         datetime_kind: Resolves a field to ``"aware"`` or ``"naive"`` (typically
             ``adapter.datetime_kind``). Defaults to naive.
+        annotation_of: Resolves a field to the type its values coerce to (an
+            adapter passes the mapped column's ``python_type``). ``None`` from the
+            resolver falls back to ``model_fields``, then to ``str``. Needed for
+            plain SQLAlchemy models, which have no ``model_fields``.
 
     Returns:
         The conditions, the active raw values and per-field error messages. A
@@ -313,13 +325,15 @@ def parse_filter_params(
     for (name, op), raws in _collect_raw_values(params, set(allowed)).items():
         if not raws:
             continue
-        if isinstance(model_fields, Mapping):
-            if name not in model_fields:
-                logger.debug("Ignoring filter on unknown field %r", name)
-                continue
-            annotation = model_fields[name].annotation
-        else:
-            annotation = str
+        annotation = annotation_of(name) if annotation_of else None
+        if annotation is None:
+            if isinstance(model_fields, Mapping):
+                if name not in model_fields:
+                    logger.debug("Ignoring filter on unknown field %r", name)
+                    continue
+                annotation = model_fields[name].annotation
+            else:
+                annotation = str
         kind = (datetime_kind(name) if datetime_kind else None) or (
             "aware" if _unwrap(annotation) is AwareDatetime else "naive"
         )
