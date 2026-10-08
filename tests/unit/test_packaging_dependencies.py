@@ -1,0 +1,112 @@
+"""Runtime dependency audit (st-v058-byoa-11, SDD section E).
+
+The installed distribution metadata is the same ``Requires-Dist`` list a built
+wheel carries, so these tests check what a ``pip install hyper-admin`` pulls in.
+"""
+
+from __future__ import annotations
+
+import os
+import shutil
+import subprocess
+import sys
+from importlib.metadata import requires
+from pathlib import Path
+
+import pytest
+from packaging.requirements import Requirement
+
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
+def _runtime_requirements() -> list[Requirement]:
+    """Return the distribution's requirements that are not tied to an extra."""
+    parsed = [Requirement(raw) for raw in requires("hyper-admin") or []]
+    return [req for req in parsed if req.marker is None or "extra" not in str(req.marker)]
+
+
+def _runtime_names() -> set[str]:
+    return {req.name.lower() for req in _runtime_requirements()}
+
+
+def test_dev_only_packages_are_not_runtime_deps() -> None:
+    """Scenario: dev-only packages are not runtime deps."""
+    names = _runtime_names()
+
+    assert "appnope" not in names
+    assert "uvicorn" not in names
+    assert "httpx" not in names
+    assert "pydantic-settings" in names
+
+
+def test_fastapi_is_required_without_the_standard_extra() -> None:
+    fastapi = [req for req in _runtime_requirements() if req.name.lower() == "fastapi"]
+
+    assert len(fastapi) == 1
+    assert fastapi[0].extras == set()
+
+
+def test_python_multipart_is_declared_once() -> None:
+    multipart = [req for req in _runtime_requirements() if req.name.lower() == "python-multipart"]
+
+    assert len(multipart) == 1
+
+
+def test_demo_mode_and_timezone_dependencies_are_runtime() -> None:
+    """Zero-config demo mode needs aiosqlite; zoneinfo needs tzdata on Windows."""
+    by_name = {req.name.lower(): req for req in _runtime_requirements()}
+
+    assert "aiosqlite" in by_name
+    assert "tzdata" in by_name
+    assert str(by_name["tzdata"].marker) == 'sys_platform == "win32"'
+
+
+def test_pydantic_settings_lower_bound_includes_the_advisory_fix() -> None:
+    """GHSA-4xgf-cpjx-pc3j is fixed in pydantic-settings 2.14.2."""
+    (req,) = [r for r in _runtime_requirements() if r.name.lower() == "pydantic-settings"]
+
+    assert req.specifier.contains("2.14.2")
+    assert not req.specifier.contains("2.14.1")
+
+
+@pytest.mark.skipif(shutil.which("uv") is None, reason="uv is required to build the wheel")
+def test_built_wheel_imports_cleanly(tmp_path: Path) -> None:
+    """Scenario: built wheel imports cleanly (fresh venv, no dev dependencies)."""
+    uv = shutil.which("uv")
+    assert uv is not None
+    dist = tmp_path / "dist"
+    venv = tmp_path / "venv"
+    env = {k: v for k, v in os.environ.items() if k != "VIRTUAL_ENV"}
+
+    subprocess.run(
+        [uv, "build", "--wheel", "--out-dir", str(dist), str(_REPO_ROOT)],
+        check=True,
+        capture_output=True,
+        env=env,
+    )
+    (wheel,) = dist.glob("hyper_admin-*.whl")
+    subprocess.run(
+        [uv, "venv", "--python", sys.executable, str(venv)],
+        check=True,
+        capture_output=True,
+        env=env,
+    )
+    python = venv / ("Scripts/python.exe" if sys.platform == "win32" else "bin/python")
+    subprocess.run(
+        [uv, "pip", "install", "--python", str(python), str(wheel)],
+        check=True,
+        capture_output=True,
+        env=env,
+    )
+
+    result = subprocess.run(
+        [str(python), "-c", "from hyperadmin import Admin; print(Admin.__name__)"],
+        check=False,
+        capture_output=True,
+        text=True,
+        cwd=tmp_path,
+        env=env,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert result.stdout.strip() == "Admin"
