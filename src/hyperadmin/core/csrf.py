@@ -26,8 +26,20 @@ def _b64encode(raw: bytes) -> str:
 
 
 def _b64decode(text: str) -> bytes:
+    """Decode unpadded base64url, accepting only the canonical encoding.
+
+    Non-strict decoding ignores the unused low bits of the final character, so
+    several spellings decode to the same bytes; re-encoding rejects all but one.
+
+    Raises:
+        ValueError: When ``text`` is not canonical unpadded base64url.
+    """
     padded = text + "=" * (-len(text) % 4)
-    return base64.urlsafe_b64decode(padded.encode("ascii"))
+    raw = base64.b64decode(padded.encode("ascii"), altchars=b"-_", validate=True)
+    if _b64encode(raw) != text:
+        msg = "Non-canonical base64url encoding"
+        raise ValueError(msg)
+    return raw
 
 
 class CsrfTokenSigner:

@@ -55,6 +55,34 @@ def test_tampered_token_fails() -> None:
     assert signer.is_valid(token) is False
 
 
+_B64URL_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"
+
+
+@pytest.mark.parametrize("part", ["nonce", "signature"])
+def test_any_changed_last_character_fails(part: str) -> None:
+    """
+    Scenario: tampered token fails (non-canonical encoding)
+      Given an issued token
+      When  the last character of its nonce or signature is replaced by any other
+            base64url character
+      Then  is_valid returns False for every replacement
+    """
+    signer = CsrfTokenSigner(SECRET)
+    nonce, sig = signer.issue().split(".")
+    target = nonce if part == "nonce" else sig
+
+    accepted = []
+    for char in _B64URL_ALPHABET:
+        if char == target[-1]:
+            continue
+        changed = target[:-1] + char
+        token = f"{changed}.{sig}" if part == "nonce" else f"{nonce}.{changed}"
+        if signer.is_valid(token):
+            accepted.append(char)
+
+    assert accepted == []
+
+
 def test_foreign_secret_fails() -> None:
     """
     Scenario: foreign secret fails
