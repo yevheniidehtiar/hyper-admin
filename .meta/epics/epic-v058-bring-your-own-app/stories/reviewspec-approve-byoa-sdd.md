@@ -2,7 +2,7 @@
 type: story
 id: st-v058-byoa-00
 title: "review(spec): approve BYOA SDD"
-status: todo
+status: done
 priority: critical
 assignee: null
 labels:
@@ -15,7 +15,7 @@ estimate: null
 epic_ref:
   id: ep-v058-byoa-01
 created_at: 2026-09-28T00:00:00Z
-updated_at: 2026-09-28T00:00:00Z
+updated_at: 2026-10-08T00:00:00Z
 ---
 
 ## Summary
@@ -26,14 +26,18 @@ updated_at: 2026-09-28T00:00:00Z
 
 ## Checklist
 
-- [ ] Problem, goals and non-goals match the BYOA thesis (10-minute add to an existing app)
-- [ ] Owner decisions 1-8 answered (or the recommended defaults accepted)
-- [ ] Module boundaries comply with CONSTITUTION §1/§2 (pure core modules; views reach introspection via BaseAdapter)
-- [ ] Breaking defaults (isolated mount, CSRF enforce, create_tables=False, filter whitelist) accepted with their escape hatches
-- [ ] BDD scenarios cover the happy path and at least one failure path per pillar
-- [ ] The story breakdown order and `Blocked by` graph are acceptable
-- [ ] Decide whether `st-v058-byoa-10` (authz gaps) and `st-v058-byoa-53` (query oracles) ship ahead as standalone fixes
-- [ ] Set the SDD `Status` to `Approved`
+- [x] Problem, goals and non-goals match the BYOA thesis (10-minute add to an existing app)
+- [x] Owner decisions 1-8 answered (or the recommended defaults accepted)
+- [x] Module boundaries comply with CONSTITUTION §1/§2 (pure core modules; views reach introspection via BaseAdapter)
+- [x] Breaking defaults (isolated mount, CSRF enforce, create_tables=False, filter whitelist) accepted with their escape hatches
+- [x] BDD scenarios cover the happy path and at least one failure path per pillar
+- [x] The story breakdown order and `Blocked by` graph are acceptable
+- [x] Decide whether `st-v058-byoa-10` (authz gaps) and `st-v058-byoa-53` (query oracles) ship ahead as standalone fixes
+- [x] Set the SDD `Status` to `Approved`
+
+## Outcome (2026-10-08)
+
+Approved. The owner accepted the recommended default for all eight decisions; they are recorded in the SDD under *Owner decisions (recorded 2026-10-08)*. `st-v058-byoa-10` and `st-v058-byoa-53` ship now as standalone `fix(views)` work. `st-v058-byoa-27` and `st-v058-byoa-47` moved to a follow-up milestone (decision 8).
 
 ## Files to Change
 

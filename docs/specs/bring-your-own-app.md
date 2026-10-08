@@ -3,11 +3,11 @@
 | Field | Value |
 |---|---|
 | Author | Claude Code |
-| Status | Draft |
+| Status | Approved (2026-10-08) |
 | Issue | _TBD. Tracked in `.meta/epics/epic-v058-bring-your-own-app/`_ |
 | Milestone | v0.5.8 — Bring Your Own App (dogfood-1) |
 | Created | 2026-09-28 |
-| Last updated | 2026-09-28 |
+| Last updated | 2026-10-08 |
 
 **Rules applied:** the Rippletide hook returned none. This SDD follows CONSTITUTION.md §1 (`core/` holds contracts with no ORM or HTTP code), §2 (dependencies point inward), §3 (banned file names), §4 (public API is additive and opt-in), §5 (new features go in new modules) and §6 (each runtime dependency is justified). It also follows `.claude/rules/sdd-conventions.md`, `bdd-conventions.md` (one behaviour per scenario) and `planning-playbook.md` (stories ordered bottom-up), plus the E2E selector convention in CLAUDE.md (`data-testid` tokens stay unchanged for int keys).
 
@@ -27,22 +27,22 @@
 
 ---
 
-> ### Owner decisions needed
+> ### Owner decisions (recorded 2026-10-08)
 >
-> Each item below has a recommended default. If a decision is not recorded, the SDD proceeds with that default.
+> The owner accepted the recommended default for all eight decisions on 2026-10-08 (story `st-v058-byoa-00`). Each item below states the accepted outcome.
 >
 > 1. **Default mount mode.** The admin becomes an isolated sub-application (`mount_mode="isolated"`). As a result:
 >    - `/static` moves under `/admin/`, and uploaded files are served per record under `/admin/` (C.5);
 >    - route names become `hyperadmin:*`;
 >    - the session cookie is renamed, so every user logs in once more.
 >
->    **Recommended:** `isolated` is the default, and `mount_mode="router"` stays available with a `DeprecationWarning` for one release (it is removed in 0.6).
+>    **Accepted (default):** `isolated` is the default, and `mount_mode="router"` stays available with a `DeprecationWarning` for one release (it is removed in 0.6).
 >
 >    The deciding spike has already been run on fastapi 0.141.1 / starlette 1.7.0. From inside the sub-app, `request.url_for("hyperadmin:user-list")` resolves to `/admin/user`, and the plain `"user-list"` raises `NoMatchFound`. So isolated mode works, but it needs the fallback helper in C.1. The sub-app also shares the host's `dependency_overrides` and `state` (C.1).
 > 2. **Rolling out CSRF to existing built-in-auth apps.** Two options: enforce immediately, or run report-only for one release.
->    **Recommended:** enforce immediately, using the proxy-safe Origin rule in D.1 (the host is compared; a scheme mismatch alone never fails the check). `HYPERADMIN_CSRF_MODE=report` is the escape hatch, documented in the upgrade note. Every template that extends `_base.html` is covered automatically, because token injection ships in the same story that turns enforcement on (`st-v058-byoa-39`). Only custom raw `<form method="post">` templates and scripts need changes.
+>    **Accepted (default):** enforce immediately, using the proxy-safe Origin rule in D.1 (the host is compared; a scheme mismatch alone never fails the check). `HYPERADMIN_CSRF_MODE=report` is the escape hatch, documented in the upgrade note. Every template that extends `_base.html` is covered automatically, because token injection ships in the same story that turns enforcement on (`st-v058-byoa-39`). Only custom raw `<form method="post">` templates and scripts need changes.
 > 3. **Bridge-mode permissions when `has_permission` is omitted.** Granting full access to everyone who passes `can_access` would let a host "staff" user open the host `User` model and set their own `is_superuser`. That is privilege escalation, not just a permissive default.
->    **Recommended (fail-safe):** without `has_permission`, superusers get full access and every other user who passes `can_access` gets **view-only** access. Full access for all staff needs the explicit opt-in `ExternalAuth(allow_full_access=True)`, which logs a startup `WARNING`. The 10-minute guide uses a superuser, so the thesis still holds.
+>    **Accepted (default, fail-safe):** without `has_permission`, superusers get full access and every other user who passes `can_access` gets **view-only** access. Full access for all staff needs the explicit opt-in `ExternalAuth(allow_full_access=True)`, which logs a startup `WARNING`. The 10-minute guide uses a superuser, so the thesis still holds.
 > 4. **The authorization gaps are live today.**
 >    - Inline edit/save, the update form, file delete and single-row actions skip object-level checks.
 >    - Inline edit/save and inline add-row skip model-level checks.
@@ -50,11 +50,11 @@
 >    - Inline formsets let a user rewrite, reparent or delete another parent's child rows.
 >    - Item and bulk handlers bypass `get_queryset` scoping.
 >
->    **Recommended:** ship `st-v058-byoa-10` (authorization) and `st-v058-byoa-53` (query-oracle hardening) as standalone `fix(views)` PRs now, without waiting for this SDD's approval. Bug fixes need no SDD under sdd-conventions, so neither story is blocked by the gate.
+>    **Accepted (default):** ship `st-v058-byoa-10` (authorization) and `st-v058-byoa-53` (query-oracle hardening) as standalone `fix(views)` PRs now, without waiting for this SDD's approval. Bug fixes need no SDD under sdd-conventions, so neither story is blocked by the gate.
 > 5. **PyPI release.** The distribution name is `hyper-admin` and the import name is `hyperadmin`. The first release is the pre-release `0.5.0a1`, published with trusted publishing from GitHub environment `pypi`.
->    **Owner action:** confirm the name is available on PyPI, and configure the trusted publisher before story `st-v058-byoa-50` merges.
+>    **Accepted (default):** distribution name `hyper-admin` (verified free on PyPI), first release `0.5.0a1` via trusted publishing. **Owner action:** configure the trusted publisher before story `st-v058-byoa-50` merges.
 > 6. **Existing `hyperadmin_*` timestamps.** Built-in auth rows were written with naive local `datetime.now()`. After this change they are read back as UTC, so on servers that do not run in UTC the displayed `created_at` shifts.
->    **Recommended:** accept this and add a release note. No data-fix command.
+>    **Accepted (default):** accept this and add a release note. No data-fix command.
 > 7. **Closing the secret-column oracles.** Four query paths let a user probe secret columns today:
 >    - any `filter_<column>=` parameter;
 >    - any `?sort_by=`;
@@ -62,7 +62,7 @@
 >    - the FK choices endpoint, which turns every extra query parameter into an equality filter on the target model.
 >
 >    On top of that, `detail_view` shows `password_hash` outright.
->    **Recommended:**
+>    **Accepted (default):**
 >    - URL filters accept only `list_filter` fields.
 >    - `sort_by` accepts only sortable displayed columns.
 >    - A *sensitive-field* marker excludes a field from inferred search, list, detail, filters and sorting. It is set with `json_schema_extra={"hyperadmin_sensitive": True}`, or by default for names matching `password|secret|token|hash`. `User.password_hash` is marked.
@@ -70,7 +70,7 @@
 >
 >    Record all of this in the changelog as a security fix (D.3, story `st-v058-byoa-53`).
 > 8. **Scope trim for dogfood-1.** Typed *range* filters and their UI (`__gte`, `__lte`, `__in`, `__isnull` and story `st-v058-byoa-47`) and validation-message i18n (#531, story `st-v058-byoa-27`) do not serve the BYOA thesis.
->    **Recommended:** keep the typed *exact* filters and the whitelist, which are security fixes. Move the range operators, story `-47` and story `-27` to a follow-up milestone. The critical path no longer runs through them (`-15` does not wait for `-19`, and `-51` does not wait for `-47`), so the trim only changes labels, not the plan. An early **dogfood-0**, installed from the repository (`st-v058-byoa-54`), runs as soon as the bridge and the isolated mount land.
+>    **Accepted (default):** keep the typed *exact* filters and the whitelist, which are security fixes. Move the range operators, story `-47` and story `-27` to a follow-up milestone (both stories are now labelled `deferred`). The critical path no longer runs through them (`-15` does not wait for `-19`, and `-51` does not wait for `-47`), so the trim only changes labels, not the plan. An early **dogfood-0**, installed from the repository (`st-v058-byoa-54`), runs as soon as the bridge and the isolated mount land, before the release.
 
 ---
 

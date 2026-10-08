@@ -7,7 +7,7 @@ priority: high
 assignee: null
 labels:
   - size:M
-  - planned
+  - deferred
   - area:templates
   - layer:ui
   - frontend
@@ -15,8 +15,12 @@ estimate: null
 epic_ref:
   id: ep-v058-byoa-01
 created_at: 2026-09-28T00:00:00Z
-updated_at: 2026-09-28T00:00:00Z
+updated_at: 2026-10-08T00:00:00Z
 ---
+
+## Deferred (2026-10-08)
+
+Moved to follow-up milestone per Owner decision 8 (recorded in the SDD on 2026-10-08). Not part of the v0.5.8 critical path; do not start this story in v0.5.8.
 
 ## Summary
 

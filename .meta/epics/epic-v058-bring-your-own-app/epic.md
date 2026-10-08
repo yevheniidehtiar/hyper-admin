@@ -21,7 +21,7 @@ updated_at: 2026-09-28T00:00:00Z
 Make HyperAdmin the admin you add to an existing FastAPI app in about 10 minutes, with fewer than 20 lines of code,
 without it taking over the app: your models, your UUID and string keys, your migrations, your engine, your auth.
 
-**Spec**: [docs/specs/bring-your-own-app.md](../../../docs/specs/bring-your-own-app.md) (Status: Draft; the first story is its human gate)
+**Spec**: [docs/specs/bring-your-own-app.md](../../../docs/specs/bring-your-own-app.md) (Status: Approved 2026-10-08 via st-v058-byoa-00)
 
 ## Pillars
 
@@ -65,7 +65,7 @@ without it taking over the app: your models, your UUID and string keys, your mig
 | st-v058-byoa-24 | [feat(adapters): apply FilterCondition lists with dict back-compat](stories/featadapters-apply-filtercondition-lists-with-dict-back-comp.md) | S | byoa-19, byoa-22 |
 | st-v058-byoa-25 | [feat(auth): ExternalAuth, TokenCookie, CallablePermissionChecker and build_admin_dependency](stories/featauth-externalauth-tokencookie-callablepermissionchecker.md) | M | byoa-17, byoa-18 |
 | st-v058-byoa-26 | [feat(core): lifecycle with opt-in create_tables, startup/shutdown/lifespan, first-request guard and init-db CLI](stories/featcore-lifecycle-with-opt-in-create-tables-startup-shutdow.md) | M | byoa-17, byoa-21 |
-| st-v058-byoa-27 † | [feat(i18n): translate Pydantic validation messages by error type (#531)](stories/feati18n-translate-pydantic-validation-messages-by-error-typ.md) | M | byoa-00 |
+| st-v058-byoa-27 † (deferred) | [feat(i18n): translate Pydantic validation messages by error type (#531)](stories/feati18n-translate-pydantic-validation-messages-by-error-typ.md) | M | byoa-00 |
 | st-v058-byoa-28 | [feat(routing): per-model pk convertor, hyperadmin_pk convertor, literal routes first, composite list-only](stories/featrouting-per-model-pk-convertor-hyperadmin-pk-convertor-l.md) | M | byoa-15 |
 | st-v058-byoa-29 | [refactor(views): DynamicModelView item handlers use self.pk and _resolve_pk](stories/refactorviews-dynamicmodelview-item-handlers-use-self-pk-and.md) | M | byoa-10, byoa-22, byoa-23, byoa-28 |
 | st-v058-byoa-30 | [refactor(views): bulk ids, single actions and popup payload are pk-type-agnostic](stories/refactorviews-bulk-ids-single-actions-and-popup-payload-are.md) | S | byoa-29 |
@@ -85,7 +85,7 @@ without it taking over the app: your models, your UUID and string keys, your mig
 | st-v058-byoa-44 | [feat(views): typed, whitelisted filters in list_view](stories/featviews-typed-whitelisted-filters-in-list-view.md) | S | byoa-24, byoa-43 |
 | st-v058-byoa-45 | [feat(templates): pk-agnostic item links/testids and tz-aware datetime rendering](stories/feattemplates-pk-agnostic-item-links-testids-and-tz-aware-da.md) | M | byoa-32, byoa-33 |
 | st-v058-byoa-46 | [feat(ui): bridge-aware navbar and CSRF reload banner](stories/featui-csrf-token-injection-and-bridge-aware-navbar.md) | S | byoa-40 |
-| st-v058-byoa-47 † | [feat(ui): range inputs and filter errors in the filter bar](stories/featui-range-inputs-and-filter-errors-in-the-filter-bar.md) | M | byoa-44 |
+| st-v058-byoa-47 † (deferred) | [feat(ui): range inputs and filter errors in the filter bar](stories/featui-range-inputs-and-filter-errors-in-the-filter-bar.md) | M | byoa-44 |
 | st-v058-byoa-48 | [build(deps): lift the sqlmodel<0.0.45 cap and migrate examples and fixtures to utc_now](stories/builddeps-lift-the-sqlmodel-0-0-45-cap-and-migrate-examples.md) | S | byoa-16, byoa-32, byoa-45 |
 | st-v058-byoa-49 | [test(e2e): pk-type and timezone fixture app (UUID, natural str, int)](stories/teste2e-pk-type-and-timezone-fixture-app-uuid-natural-str-in.md) | M | byoa-30, byoa-45, byoa-48 |
 | st-v058-byoa-50 | [build(release): 0.5.0a1, pep440 commitizen, __version__ and fixed release/publish workflows](stories/buildrelease-0-5-0a1-pep440-commitizen-version-and-fixed-rel.md) | M | byoa-12, byoa-48 |
@@ -94,7 +94,7 @@ without it taking over the app: your models, your UUID and string keys, your mig
 | st-v058-byoa-53 | [fix(views): close query oracles — sensitive fields, sort_by whitelist, choices cascade whitelist](stories/fixviews-close-query-oracles-sensitive-fields-sort-and-choices.md) | M | — (security fix, not gated) |
 | st-v058-byoa-54 | [chore(dogfood): dogfood-0 from a repository install once the bridge and isolated mount land](stories/choredogfood-dogfood-0-from-a-repository-install.md) | S | byoa-35, byoa-41 |
 
-† Deferral candidate under Owner decision 8 (off the critical path).
+† Moved to follow-up milestone under Owner decision 8 (recorded 2026-10-08); off the v0.5.8 critical path and labelled `deferred`.
 
 These supersede the re-cut stubs `st-v058-byoa-01` to `-07` on `chore/meta-roadmap-recut`. When that branch merges,
 delete the stub story files and keep this `epic.md`.
