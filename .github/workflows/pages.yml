@@ -28,7 +28,7 @@ jobs:
       - uses: astral-sh/setup-uv@v7
         with:
           python-version: "3.13"
-      - run: uv sync --all-extras
+      - run: uv sync --locked --all-extras
       # Zensical (successor to Material for MkDocs); config lives in zensical.toml.
       # Zensical has no --strict flag; fail the deploy unless the build reports no issues.
       - run: |

@@ -12,7 +12,7 @@ updates:
       ci-dependencies:
         patterns:
           - "*"
-  - package-ecosystem: "pip"
+  - package-ecosystem: "uv"  # bumps pyproject.toml and the committed uv.lock together
     directory: "/"
     schedule:
       interval: "weekly"

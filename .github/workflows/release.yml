@@ -23,7 +23,7 @@ jobs:
       - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
-      - run: uv sync --all-extras
+      - run: uv sync --locked --all-extras
       - name: Release Candidate Report
         if: false # TODO: Enable after setting up ANTHROPIC_API_KEY
         uses: anthropics/claude-code-action@v1

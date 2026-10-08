@@ -65,9 +65,6 @@ dist/
 # Terraform
 .terraform/
 
-# uv
-uv.lock
-
 # VS Code
 .vscode/
 
@@ -102,4 +99,6 @@ messages.pot
 
 # Claude Code runtime locks
 *.lock
+# uv lock file is committed (reproducible installs; CI runs uv sync --locked)
+!uv.lock
 
