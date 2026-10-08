@@ -37,12 +37,12 @@ class UTCNaiveDateTime(TypeDecorator[datetime]):
     def python_type(self) -> type[datetime]:
         return datetime
 
-    def process_bind_param(self, value: datetime | None, dialect: Dialect) -> datetime | None:  # noqa: ARG002
+    def process_bind_param(self, value: datetime | None, dialect: Dialect) -> datetime | None:
         if value is None or value.tzinfo is None:
             return value
         return value.astimezone(timezone.utc).replace(tzinfo=None)
 
-    def process_result_value(self, value: Any | None, dialect: Dialect) -> datetime | None:  # noqa: ARG002
+    def process_result_value(self, value: Any | None, dialect: Dialect) -> datetime | None:
         if value is None:
             return None
         if value.tzinfo is None:

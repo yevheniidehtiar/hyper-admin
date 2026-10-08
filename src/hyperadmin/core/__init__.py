@@ -2,7 +2,12 @@
 
 from hyperadmin.core.actions import ActionDef, action, collect_actions
 from hyperadmin.core.adapters import JsonApiAdapter, ListEnvelope, PaginationMeta
-from hyperadmin.core.auth import DefaultObjectPermissionChecker, ObjectPermissionChecker
+from hyperadmin.core.auth import (
+    AdminAccessDenied,
+    AdminAuthenticationRequired,
+    DefaultObjectPermissionChecker,
+    ObjectPermissionChecker,
+)
 from hyperadmin.core.choices import ChoiceItem, ChoicesProvider, SelectFieldMeta
 from hyperadmin.core.display import get_field_label
 from hyperadmin.core.fields import classify_field
@@ -22,6 +27,8 @@ from hyperadmin.core.primary_key import DEFAULT_PK, InvalidPrimaryKey, PrimaryKe
 __all__ = [
     "DEFAULT_PK",
     "ActionDef",
+    "AdminAccessDenied",
+    "AdminAuthenticationRequired",
     "ChoiceItem",
     "ChoicesProvider",
     "DefaultObjectPermissionChecker",
