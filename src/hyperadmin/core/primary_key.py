@@ -59,7 +59,8 @@ class PrimaryKeyInfo:
     def kind(self) -> PkKind:
         """Return the coarse key kind used for routing and serialisation."""
         python_type = self.python_type
-        if python_type is bool:
+        # NewType, Optional[...] and other typing constructs are not classes.
+        if python_type is bool or not isinstance(python_type, type):
             return "other"
         if issubclass(python_type, int):
             return "int"

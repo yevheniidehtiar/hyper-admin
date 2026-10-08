@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import uuid
 from datetime import datetime
-from typing import Any
+from typing import Any, NewType, Optional
 
 import pytest
 from pydantic import AwareDatetime, BaseModel
@@ -93,6 +93,27 @@ def test_kind_and_path_convertor(
 ) -> None:
     assert info.kind == expected_kind
     assert info.path_convertor == expected_convertor
+
+
+OrderId = NewType("OrderId", int)
+
+
+@pytest.mark.parametrize(
+    "python_type",
+    [OrderId, Optional[int], int | None, list[int]],  # noqa: UP045
+    ids=["newtype", "optional", "union", "generic-alias"],
+)
+def test_non_class_key_type_falls_back_to_other(python_type: Any) -> None:
+    """
+    Scenario: a non-class key type maps to the custom convertor
+      Given a PrimaryKeyInfo whose python_type is not a class
+      When  kind and path_convertor are read
+      Then  'other' and 'hyperadmin_pk' are returned instead of a TypeError
+    """
+    info = PrimaryKeyInfo(attr="id", python_type=python_type, generated=True)
+
+    assert info.kind == "other"
+    assert info.path_convertor == "hyperadmin_pk"
 
 
 def test_int_parse_accepts_numeric_strings() -> None:
