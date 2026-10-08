@@ -32,8 +32,7 @@ dependencies = [
   "argon2-cffi",
   "itsdangerous>=2.0",
   "python-multipart>=0.0.26",
-  "babel>=2.13",
-  "tzdata>=2024.1; sys_platform == 'win32'",  # IANA zone data for zoneinfo on Windows
+  "babel>=2.13"
 ]
 
 [project.scripts]

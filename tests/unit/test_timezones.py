@@ -249,3 +249,48 @@ def test_timezone_setting_reads_env(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_timezone_setting_rejects_bad_keys(value: str) -> None:
     with pytest.raises(ValidationError):
         HyperAdminSettings(timezone=value)
+
+
+@pytest.mark.parametrize("value", ["utc", "europe/amsterdam", "EUROPE/AMSTERDAM"])
+def test_timezone_setting_rejects_non_canonical_case(value: str) -> None:
+    """
+    Scenario: a wrongly-cased zone fails on every host
+      Given HYPERADMIN_TIMEZONE spelled with the wrong case
+      When  settings load (even on a case-insensitive filesystem)
+      Then  a validation error naming the canonical spelling is raised
+    """
+    with pytest.raises(ValidationError, match="timezone"):
+        HyperAdminSettings(timezone=value)
+
+
+# ---------------------------------------------------------------------------
+# Out-of-range input (review of st-v058-byoa-14)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("raw", "kind", "tz"),
+    [
+        ("0001-01-01T00:00", "aware", AMS),
+        ("9999-12-31T23:00", "aware", ZoneInfo("America/New_York")),
+        ("9999-12-31T23:00:00-05:00", "aware", UTC),
+        ("0001-01-01T00:00:00+05:00", "naive", UTC),
+        ("9999-12-31T23:00:00-05:00", "naive", AMS),
+    ],
+)
+def test_out_of_range_input_raises_value_error(raw: str, kind: str, tz: ZoneInfo) -> None:
+    """
+    Scenario: a datetime that overflows on conversion is invalid input
+      Given a value at the edge of the supported date range
+      When  parse_datetime_input converts it between zones
+      Then  ValueError (not OverflowError) is raised
+    """
+    with pytest.raises(ValueError, match="range"):
+        parse_datetime_input(raw, kind=kind, tz=tz)  # type: ignore[arg-type]
+
+
+def test_utc_now_is_exported_from_core() -> None:
+    from hyperadmin import core
+
+    assert core.utc_now is utc_now
+    assert "utc_now" in core.__all__

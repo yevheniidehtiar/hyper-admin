@@ -66,15 +66,20 @@ def parse_datetime_input(raw: str, *, kind: DateTimeKind, tz: tzinfo) -> datetim
       to ``tz`` wall-clock time and returned naive.
 
     Raises:
-        ValueError: When ``raw`` is not a valid ISO-8601 datetime.
+        ValueError: When ``raw`` is not a valid ISO-8601 datetime, or converting it
+            between zones leaves the supported date range (year 1 to 9999).
     """
     value = _fromisoformat(raw)
-    if kind == "aware":
-        if value.tzinfo is None:
-            value = value.replace(tzinfo=tz, fold=0)
-        return value.astimezone(timezone.utc)
-    if value.tzinfo is not None:
-        return value.astimezone(tz).replace(tzinfo=None)
+    try:
+        if kind == "aware":
+            if value.tzinfo is None:
+                value = value.replace(tzinfo=tz, fold=0)
+            return value.astimezone(timezone.utc)
+        if value.tzinfo is not None:
+            return value.astimezone(tz).replace(tzinfo=None)
+    except OverflowError as exc:
+        msg = f"Datetime {raw!r} is out of range after timezone conversion"
+        raise ValueError(msg) from exc
     return value
 
 

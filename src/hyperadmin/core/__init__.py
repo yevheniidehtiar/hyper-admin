@@ -24,6 +24,7 @@ from hyperadmin.core.introspection import (
 )
 from hyperadmin.core.layouts import FormLayout
 from hyperadmin.core.primary_key import DEFAULT_PK, InvalidPrimaryKey, PrimaryKeyInfo
+from hyperadmin.core.timezones import utc_now
 
 __all__ = [
     "DEFAULT_PK",
@@ -55,4 +56,5 @@ __all__ = [
     "infer_list_display",
     "infer_list_filter",
     "infer_search_fields",
+    "utc_now",
 ]
