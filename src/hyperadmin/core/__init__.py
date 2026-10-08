@@ -12,6 +12,7 @@ from hyperadmin.core.choices import ChoiceItem, ChoicesProvider, SelectFieldMeta
 from hyperadmin.core.display import get_field_label
 from hyperadmin.core.fields import classify_field
 from hyperadmin.core.fieldsets import FieldsetSpec
+from hyperadmin.core.filtering import FilterCondition, FilterValueError
 from hyperadmin.core.inlines import InlineModelSpec
 from hyperadmin.core.introspection import (
     FieldMeta,
@@ -34,6 +35,8 @@ __all__ = [
     "DefaultObjectPermissionChecker",
     "FieldMeta",
     "FieldsetSpec",
+    "FilterCondition",
+    "FilterValueError",
     "FormLayout",
     "InlineModelSpec",
     "InvalidPrimaryKey",
