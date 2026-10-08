@@ -205,3 +205,57 @@ async def test_create_tables_accepts_an_open_connection() -> None:
     assert "lazy_engine_beta" in names
     assert "lazy_engine_alpha" not in names
     await engine.dispose()
+
+
+def test_db_module_does_not_import_core_at_module_level() -> None:
+    """CONSTITUTION section 2: no import cycle between ``db`` and ``core``."""
+    import ast
+    from pathlib import Path
+
+    tree = ast.parse(Path(db.__file__).read_text())
+    top_level: list[str] = []
+    for node in tree.body:  # an ``if TYPE_CHECKING:`` block is not a direct child
+        if isinstance(node, ast.Import):
+            top_level.extend(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom):
+            top_level.append(node.module or "")
+    assert not [m for m in top_level if m.startswith("hyperadmin.core")]
+
+
+_HOST_DB_URL = "postgresql+asyncpg://u:p@localhost/app"
+
+
+def _demo_admin(monkeypatch, **settings_kwargs: object) -> FastAPI:
+    monkeypatch.setattr(db, "get_default_engine", lambda _settings=None: object())
+    app = FastAPI()
+    Admin(app, settings=HyperAdminSettings(**settings_kwargs))  # type: ignore[arg-type]
+    return app
+
+
+def test_demo_mode_with_a_non_sqlite_url_runs_no_ddl(monkeypatch, caplog) -> None:
+    """Scenario: demo mode never runs DDL against a host database (SDD C.2, Goal 4)."""
+    with caplog.at_level("WARNING", logger="hyperadmin"):
+        app = _demo_admin(monkeypatch, database_url=_HOST_DB_URL)
+
+    assert app.router.on_startup == []
+    assert any(
+        "HyperAdmin demo mode" in r.getMessage() and "create_tables=True" in r.getMessage()
+        for r in caplog.records
+    )
+
+
+def test_demo_mode_with_a_non_sqlite_url_honours_explicit_create_tables(monkeypatch) -> None:
+    app = _demo_admin(monkeypatch, database_url=_HOST_DB_URL, create_tables=True)
+    assert len(app.router.on_startup) == 1
+
+
+def test_demo_mode_with_sqlite_still_creates_tables(monkeypatch) -> None:
+    app = _demo_admin(monkeypatch)
+    assert len(app.router.on_startup) == 1
+
+
+def test_explicit_engine_keeps_create_tables_default(monkeypatch) -> None:
+    app = FastAPI()
+    engine = create_async_engine("sqlite+aiosqlite:///:memory:")
+    Admin(app, engine=engine, settings=HyperAdminSettings(database_url=_HOST_DB_URL))
+    assert len(app.router.on_startup) == 1

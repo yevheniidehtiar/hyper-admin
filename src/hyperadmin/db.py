@@ -15,13 +15,13 @@ from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine, create_async_engine
 from sqlmodel import SQLModel
 
-from hyperadmin.core.settings import HyperAdminSettings
-
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from sqlalchemy import Table
     from sqlalchemy.engine import URL, Connection
+
+    from hyperadmin.core.settings import HyperAdminSettings
 
 sqlite_url = "sqlite+aiosqlite:///:memory:"
 
@@ -38,7 +38,12 @@ def get_default_engine(settings: HyperAdminSettings | None = None) -> AsyncEngin
         settings: The settings to read ``database_url`` from. When ``None``, a
             default ``HyperAdminSettings()`` is used (``HYPERADMIN_*`` env vars).
     """
-    url = (settings or HyperAdminSettings()).database_url
+    if settings is None:
+        # Deferred: ``core`` depends on ``db``, never the other way round at import.
+        from hyperadmin.core.settings import HyperAdminSettings  # noqa: PLC0415
+
+        settings = HyperAdminSettings()
+    url = settings.database_url
     engine = _default_engines.get(url)
     if engine is None:
         engine = create_async_engine(url, echo=False)

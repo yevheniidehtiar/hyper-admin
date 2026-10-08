@@ -108,7 +108,7 @@ class Admin:
         if os.path.exists(static_dir):
             app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
-        if self.settings.create_tables:
+        if self._should_create_tables(demo_mode=engine is None):
 
             @app.on_event("startup")
             async def startup_event() -> None:
@@ -144,6 +144,29 @@ class Admin:
             raise ValueError(msg)
 
     # ── Internal helpers ───────────────────────────────────────────────────
+
+    def _should_create_tables(self, *, demo_mode: bool) -> bool:
+        """Whether to run ``create_all`` at startup.
+
+        Demo mode (no ``engine=``) builds its engine from ``settings.database_url``,
+        which may be the host's own database (``HYPERADMIN_DATABASE_URL``). DDL then
+        runs only for SQLite or when ``create_tables`` was set explicitly, so a host
+        database is never altered behind its migrations' back (SDD C.2, Goal 4).
+        """
+        if not self.settings.create_tables:
+            return False
+        if not demo_mode or "create_tables" in self.settings.model_fields_set:
+            return True
+        from hyperadmin.db import is_sqlite_url
+
+        if is_sqlite_url(self.settings.database_url):
+            return True
+        logger.warning(
+            "HyperAdmin demo mode: database_url is not SQLite, so no tables are created "
+            "automatically. Set create_tables=True (HYPERADMIN_CREATE_TABLES=true) to "
+            "create them at startup, or create them with your migrations."
+        )
+        return False
 
     def _default_engine(self) -> Any:
         """Build (or reuse) the demo-mode engine for ``settings.database_url``."""
