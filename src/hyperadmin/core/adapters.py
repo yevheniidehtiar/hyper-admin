@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
+from contextlib import contextmanager
+from contextvars import ContextVar
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any
 
@@ -14,6 +16,78 @@ if TYPE_CHECKING:
     from hyperadmin.core.inlines import InlineModelSpec
 
     QuerysetFilter = Callable[["Request | None"], dict[str, Any]]
+
+#: Resolves the row-scoping callable for a model class inside a request scope.
+QuerysetFilterResolver = Callable[[Any], "Callable[[Any], dict[str, Any]] | None"]
+
+
+class InlineRowNotOwned(LookupError):
+    """A submitted inline child pk is not an existing child of the parent being saved.
+
+    Raised before any write so the view can answer 404 (IDOR / reparenting guard).
+    """
+
+
+@dataclass(frozen=True)
+class QuerysetScope:
+    """The request-scoped row filter active for the current task.
+
+    Attributes:
+        request: The active request, passed to each model's queryset callable.
+        resolver: Maps a model class to its queryset callable (typically the
+            registered ``ModelAdmin.get_queryset``) or ``None`` when the model
+            has no row scoping.
+    """
+
+    request: Any
+    resolver: QuerysetFilterResolver
+
+    def filters_for(self, model: Any, request: Any = None) -> dict[str, Any]:
+        """Evaluate the queryset callable for ``model`` (``{}`` when there is none)."""
+        filter_fn = self.resolver(model)
+        if filter_fn is None:
+            return {}
+        result = filter_fn(request if request is not None else self.request)
+        if not isinstance(result, dict):
+            raise TypeError(
+                f"get_queryset() for {getattr(model, '__name__', model)!s} must return a dict, "
+                f"got {type(result).__name__}"
+            )
+        return result
+
+
+_QUERYSET_SCOPE: ContextVar[QuerysetScope | None] = ContextVar(
+    "hyperadmin_queryset_scope", default=None
+)
+
+
+@contextmanager
+def queryset_scope(request: Any, resolver: QuerysetFilterResolver) -> Iterator[QuerysetScope]:
+    """Activate row scoping for the current request.
+
+    The scope lives in a :class:`contextvars.ContextVar`, not on the (shared,
+    long-lived) adapter instance, so concurrent requests can never observe each
+    other's filters. Nested scopes restore the outer scope on exit.
+    """
+    scope = QuerysetScope(request=request, resolver=resolver)
+    token = _QUERYSET_SCOPE.set(scope)
+    try:
+        yield scope
+    finally:
+        _QUERYSET_SCOPE.reset(token)
+
+
+def current_queryset_scope() -> QuerysetScope | None:
+    """Return the active :class:`QuerysetScope`, or ``None`` outside a request scope."""
+    return _QUERYSET_SCOPE.get()
+
+
+def scoped_queryset_filters(model: Any, request: Any = None) -> dict[str, Any]:
+    """Return the request-scoped equality filters for ``model`` (``{}`` outside a scope)."""
+    scope = _QUERYSET_SCOPE.get()
+    if scope is None:
+        return {}
+    return scope.filters_for(model, request)
 
 
 @dataclass
@@ -110,7 +184,40 @@ class BaseAdapter(ABC):
                 f"{type(self).__name__}.get_queryset() must return a dict, "
                 f"got {type(result).__name__}"
             )
-        return result
+        scoped = scoped_queryset_filters(self.model, request)
+        if not scoped:
+            return result
+        return {**result, **scoped}
+
+    async def ensure_inline_rows_owned(
+        self,
+        spec: InlineModelSpec,
+        rows: builtins.list[dict[str, Any]],
+        parent_pk: Any,
+    ) -> None:
+        """Raise :class:`InlineRowNotOwned` unless every submitted ``_pk`` belongs to ``parent_pk``.
+
+        Must run before any write. A submitted child pk is never trusted on its
+        own: it must be an existing child (``fk_field == parent_pk``) of the
+        parent being saved. Adapters provide the lookup via :meth:`inline_child_pks`.
+        """
+        submitted = {row["_pk"] for row in rows if row.get("_pk") is not None}
+        if not submitted:
+            return
+        owned = await self.inline_child_pks(spec, parent_pk) if parent_pk is not None else set()
+        foreign = submitted - owned
+        if foreign:
+            raise InlineRowNotOwned(
+                f"Inline rows {sorted(map(str, foreign))} do not belong to this parent"
+            )
+
+    async def inline_child_pks(self, spec: InlineModelSpec, parent_pk: Any) -> set[Any]:  # noqa: ARG002
+        """Return the primary keys of ``spec.model`` rows whose FK points at ``parent_pk``.
+
+        Adapters that support inline formsets override this. The default vouches
+        for no key, so any submitted child pk is rejected.
+        """
+        return set()
 
     @abstractmethod
     async def get(self, pk: Any) -> Any:

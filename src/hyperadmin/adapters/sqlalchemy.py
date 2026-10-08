@@ -121,12 +121,15 @@ class SQLAlchemyAdapter(BaseAdapter):
     async def get_related(self, pk: Any, field: str) -> builtins.list[Any]:
         if not self.inspector or not hasattr(self.model, field):
             return []
+        queryset_filters = self._resolve_queryset_filters()
         async with AsyncSession(self.engine) as session:
             query = (
                 select(self.model)
                 .where(self.inspector.primary_key[0] == pk)
                 .options(selectinload(getattr(self.model, field)))
             )
+            for key, value in queryset_filters.items():
+                query = query.where(getattr(self.model, key) == value)
             result = await session.execute(query)
             db_obj = result.scalar_one_or_none()
 
@@ -214,16 +217,36 @@ class SQLAlchemyAdapter(BaseAdapter):
             rows: Validated row dicts, each optionally containing ``_pk`` (for
                 update/delete) and ``_delete`` (for deletion).
             parent_pk: The primary key of the parent object to associate new rows with.
+
+        Raises:
+            InlineRowNotOwned: Before any write, when a submitted ``_pk`` is not an
+                existing child of ``parent_pk``.
         """
+        await self.ensure_inline_rows_owned(spec, rows, parent_pk)
         inline_adapter = SQLAlchemyAdapter(spec.model, self.engine)
+        pk_attrs = {col.key for col in inspect(spec.model).primary_key}
         for row in rows:
-            if row.get("_delete") and row.get("_pk"):
-                await inline_adapter.delete(pk=row["_pk"])
-            elif "_pk" in row:
-                pk = row["_pk"]
-                row_data = {k: v for k, v in row.items() if k not in ("_pk", "_delete")}
-                await inline_adapter.update(pk=pk, data=row_data)
-            else:
+            row_pk = row.get("_pk")
+            if row.get("_delete") and row_pk is not None:
+                await inline_adapter.delete(pk=row_pk)
+            elif row_pk is not None:
+                # Keys are immutable and the row stays attached to its parent.
+                row_data = {
+                    k: v
+                    for k, v in row.items()
+                    if k not in ("_pk", "_delete", spec.fk_field) and k not in pk_attrs
+                }
+                await inline_adapter.update(pk=row_pk, data=row_data)
+            elif not row.get("_delete"):
                 row_data = {k: v for k, v in row.items() if k not in ("_pk", "_delete")}
                 row_data[spec.fk_field] = parent_pk
                 await inline_adapter.create(data=row_data)
+
+    async def inline_child_pks(self, spec: InlineModelSpec, parent_pk: Any) -> set[Any]:
+        """Return the primary keys of ``spec.model`` rows owned by ``parent_pk``."""
+        pk_col = inspect(spec.model).primary_key[0]
+        async with AsyncSession(self.engine) as session:
+            result = await session.execute(
+                select(pk_col).where(getattr(spec.model, spec.fk_field) == parent_pk)
+            )
+            return set(result.scalars().all())

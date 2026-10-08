@@ -650,14 +650,14 @@ class InlineFormset:
                 pk_key = f"{prefix}-{i}-pk"
                 pk_val = form_data.get(pk_key)
                 if pk_val:
-                    results.append({"_delete": True, "_pk": int(pk_val)})
+                    results.append({"_delete": True, "_pk": _parse_inline_pk(pk_val)})
                 continue
 
             row_data: dict[str, Any] = {}
             pk_key = f"{prefix}-{i}-pk"
             pk_val = form_data.get(pk_key)
             if pk_val:
-                row_data["_pk"] = int(pk_val)
+                row_data["_pk"] = _parse_inline_pk(pk_val)
 
             has_data = False
             for field_name in self.display_fields:
@@ -741,7 +741,7 @@ class InlineFormset:
 
             pk_key = f"{prefix}-{i}-pk"
             pk_val = form_data.get(pk_key)
-            pk = int(pk_val) if pk_val else None
+            pk = _parse_inline_pk(pk_val) if pk_val else None
 
             row = self._build_row(i, values=vals, pk=pk)
 
@@ -754,6 +754,19 @@ class InlineFormset:
             row.delete = bool(form_data.get(delete_key))
 
             self.rows.append(row)
+
+
+def _parse_inline_pk(raw: Any) -> Any:
+    """Parse a submitted inline ``<prefix>-<i>-pk`` value.
+
+    Integer keys are returned as ``int``. Anything else is kept as the raw
+    string: it can never match an owned child key, so the adapter's ownership
+    check rejects it (404) instead of the parse raising a 500.
+    """
+    try:
+        return int(raw)
+    except (TypeError, ValueError):
+        return str(raw)
 
 
 def _pick_inline_widget(name: str, field_info: FieldInfo) -> HtmxWidget:

@@ -1,11 +1,12 @@
+import functools
 import logging
 import math
 import os
 import re
-from collections.abc import Generator
+from collections.abc import Awaitable, Callable, Generator
 from contextlib import contextmanager
 from http import HTTPStatus
-from typing import TYPE_CHECKING, Any, Union, cast, get_args, get_origin
+from typing import TYPE_CHECKING, Any, TypeVar, Union, cast, get_args, get_origin
 
 from fastapi import HTTPException, Query, Request
 from fastapi.templating import Jinja2Templates
@@ -20,6 +21,7 @@ from starlette.datastructures import UploadFile as StarletteUpload
 
 from hyperadmin.adapters import SQLAlchemyAdapter, SQLModelAdapter
 from hyperadmin.core.actions import ActionDef
+from hyperadmin.core.adapters import InlineRowNotOwned, queryset_scope
 from hyperadmin.core.bulk_results import BulkRowResult, BulkRowStatus
 from hyperadmin.core.choices import ChoiceItem, SelectFieldMeta
 from hyperadmin.core.discovery import build_filter_metadata
@@ -27,6 +29,7 @@ from hyperadmin.core.display import get_display_name
 from hyperadmin.core.fields import classify_field
 from hyperadmin.core.options import AdminOptions
 from hyperadmin.core.registry import site
+from hyperadmin.core.storage_paths import resolve_storage_path
 from hyperadmin.discover import app_label_var
 from hyperadmin.views.forms import (
     CheckboxInput,
@@ -43,6 +46,24 @@ from hyperadmin.views.htmx import HtmxTemplateResponse
 logger = logging.getLogger(__name__)
 
 _MAX_CHOICES_LIMIT = 200
+
+_HandlerT = TypeVar("_HandlerT", bound=Callable[..., Awaitable[Any]])
+
+
+def _request_scoped(handler: _HandlerT) -> _HandlerT:
+    """Run a ``DynamicModelView`` handler inside its request's queryset scope.
+
+    Every adapter call the handler makes (``get``, ``list``, ``update``,
+    ``get_choices``, ...) therefore applies the registered ``get_queryset`` row
+    filters of the request being served, and never another request's.
+    """
+
+    @functools.wraps(handler)
+    async def wrapper(self: "DynamicModelView", request: Request, *args: Any, **kwargs: Any) -> Any:
+        with self._request_queryset_filter(request):
+            return await handler(self, request, *args, **kwargs)
+
+    return cast("_HandlerT", wrapper)
 
 
 def _integrity_error_to_field_errors(exc: IntegrityError) -> dict[str, str]:
@@ -100,6 +121,7 @@ class DynamicModelView:
         search_fields: list[str] | None = None,
         field_labels: dict[str, str] | None = None,
         storage: Any = None,
+        admin_lookup: Callable[[Any], Any] | None = None,
     ):
         self.adapter = adapter
         self.model = adapter.model
@@ -117,53 +139,94 @@ class DynamicModelView:
         self.search_fields = search_fields
         self.field_labels = field_labels or {}
         self.storage = storage
+        self._admin_lookup = admin_lookup
+        self._fallback_admins: dict[Any, Any] = {}
         # Expose the live adapter on the admin instance so action handlers can use self.adapter
         if admin_instance is not None:
             admin_instance.adapter = self.adapter
 
-    async def _check_permission(self, request: Request, action: str) -> None:
-        """Raise 403 if the user lacks the required permission.
-
-        Does nothing when ``permission_checker`` is ``None`` (auth disabled).
-        """
+    async def _has_permission(self, request: Request, codename: str) -> bool:
+        """Return whether the request's user holds ``codename`` (always true without auth)."""
         if self.permission_checker is None:
-            return
+            return True
         user = getattr(request.state, "user", None)
         if user is None:
             raise HTTPException(status_code=403, detail="Authentication required")
-        codename = f"{action}_{self._model_name_lower}"
-        if not await self.permission_checker.has_permission(user, codename):
+        return bool(await self.permission_checker.has_permission(user, codename))
+
+    async def _check_permission(
+        self, request: Request, action: str, *, model_name: str | None = None
+    ) -> None:
+        """Raise 403 if the user lacks the required permission.
+
+        ``model_name`` defaults to this view's model; pass another lowercase model
+        name to check a related model (choices target, inline model).
+
+        Does nothing when ``permission_checker`` is ``None`` (auth disabled).
+        """
+        codename = f"{action}_{model_name or self._model_name_lower}"
+        if not await self._has_permission(request, codename):
             raise HTTPException(status_code=403, detail="Permission denied")
+
+    async def _check_any_permission(self, request: Request, actions: tuple[str, ...]) -> None:
+        """Raise 403 unless the user holds at least one of ``actions`` on this model."""
+        for action in actions:
+            if await self._has_permission(request, f"{action}_{self._model_name_lower}"):
+                return
+        raise HTTPException(status_code=403, detail="Permission denied")
+
+    def _admin_for_model(self, model: Any) -> Any:
+        """Return the registered ``ModelAdmin`` instance for ``model`` (or ``None``)."""
+        if model is self.model:
+            return self._admin_instance
+        if self._admin_lookup is not None:
+            return self._admin_lookup(model)
+        if model not in self._fallback_admins:
+            admin_class = site._registry.get(model)
+            self._fallback_admins[model] = admin_class(model) if admin_class else None
+        return self._fallback_admins[model]
+
+    def _queryset_filter_for(self, model: Any) -> Callable[[Any], dict[str, Any]] | None:
+        """Return the ``get_queryset`` callable that scopes rows of ``model``."""
+        get_queryset = getattr(self._admin_for_model(model), "get_queryset", None)
+        if get_queryset is None:
+            return None
+
+        def _filter(req: Any) -> dict[str, Any]:
+            result = get_queryset(req)
+            return result if isinstance(result, dict) else {}
+
+        return _filter
 
     @contextmanager
     def _request_queryset_filter(self, request: Request) -> Generator[None, None, None]:
-        """Register the per-request queryset filter on the adapter for the duration of a view.
+        """Activate this request's row scoping for every adapter call made inside the block.
 
-        Composes :meth:`hyperadmin.core.model.ModelAdmin.get_queryset` (when an admin
-        instance is wired) into the adapter's ``set_queryset_filter`` seam so that
-        ``adapter.list()`` and ``adapter.get()`` apply ModelAdmin-defined row-level
-        filters before any view-layer filters.
-
-        The previous filter (if any) is restored on exit so that a long-lived adapter
-        cannot leak filters across requests.
+        Composes :meth:`hyperadmin.core.model.ModelAdmin.get_queryset` of this view's
+        model (and of related models, for the choices endpoint) into a
+        request-scoped :func:`hyperadmin.core.adapters.queryset_scope`. The scope is
+        held in a ``ContextVar``, never on the shared adapter instance, so
+        concurrent requests cannot observe each other's filters.
         """
-        admin_instance = self._admin_instance
-        previous_filter = getattr(self.adapter, "_queryset_filter", None)
-
-        def _filter_for_request(req: Request | None) -> dict[str, Any]:
-            if admin_instance is None:
-                return {}
-            get_queryset = getattr(admin_instance, "get_queryset", None)
-            if get_queryset is None:
-                return {}
-            result = get_queryset(req if req is not None else request)
-            return result if isinstance(result, dict) else {}
-
-        self.adapter.set_queryset_filter(_filter_for_request)
-        try:
+        with queryset_scope(request, self._queryset_filter_for):
             yield
-        finally:
-            self.adapter._queryset_filter = previous_filter
+
+    def _relation_targets(self) -> dict[str, Any]:
+        """Map each ORM relationship name on the model to its target class (or ``None``)."""
+        inspector = getattr(self.adapter, "inspector", None)
+        if not inspector:
+            return {}
+        return {
+            rel.key: getattr(getattr(rel, "mapper", None), "class_", None)
+            for rel in inspector.relationships
+        }
+
+    async def _get_or_404(self, item_id: Any) -> Any:
+        """Load ``item_id`` under the active queryset scope or raise 404."""
+        item = await self.adapter.get(pk=item_id)
+        if not item:
+            raise HTTPException(status_code=404, detail="Item not found")
+        return item
 
     async def _check_object_permission(self, request: Request, obj: Any, action: str) -> None:
         """Raise 403 if ``obj`` fails the configured object-level permission check.
@@ -234,6 +297,7 @@ class DynamicModelView:
                 result.add(name)
         return result
 
+    @_request_scoped
     async def list_view(
         self,
         request: Request,
@@ -272,17 +336,16 @@ class DynamicModelView:
         order_by = f"-{sort_by}" if sort_direction == "desc" else sort_by
 
         try:
-            # Use adapter's list method, scoped to the per-request queryset filter
-            # so that ModelAdmin.get_queryset(request) is merged into the WHERE clause.
-            with self._request_queryset_filter(request):
-                items, total_items = await self.adapter.list(
-                    page=page,
-                    page_size=page_size,
-                    search=search or None,
-                    filters=filters_to_apply,
-                    order_by=order_by,
-                    search_fields=self.search_fields,
-                )
+            # The handler runs inside the request's queryset scope, so
+            # ModelAdmin.get_queryset(request) is merged into the WHERE clause.
+            items, total_items = await self.adapter.list(
+                page=page,
+                page_size=page_size,
+                search=search or None,
+                filters=filters_to_apply,
+                order_by=order_by,
+                search_fields=self.search_fields,
+            )
 
             # Calculate pagination info
             total_pages = math.ceil(total_items / page_size) if page_size > 0 else 0
@@ -361,17 +424,14 @@ class DynamicModelView:
         )
         return self.templates.TemplateResponse(request, template_name, context)
 
+    @_request_scoped
     async def detail_view(self, request: Request, item_id: int):
         """
         Renders the detail view for a single item.
         Assumes the model has an 'id' field.
         """
         await self._check_permission(request, "view")
-        with self._request_queryset_filter(request):
-            item = await self.adapter.get(pk=item_id)
-
-        if not item:
-            raise HTTPException(status_code=404, detail="Item not found")
+        item = await self._get_or_404(item_id)
 
         await self._check_object_permission(request, item, "view")
 
@@ -491,6 +551,7 @@ class DynamicModelView:
                 )
         return widgets
 
+    @_request_scoped
     async def create_form_view(
         self,
         request: Request,
@@ -605,6 +666,7 @@ class DynamicModelView:
                     uploads[field.name] = val
         return uploads
 
+    @_request_scoped
     async def create_view(self, request: Request):
         """Handles form submission for creating a new item."""
         await self._check_permission(request, "add")
@@ -668,6 +730,9 @@ class DynamicModelView:
                 inline_formsets=inline_formsets,
             )
 
+        # A new parent owns no children yet: any submitted child pk is foreign.
+        await self._authorize_inline_rows(request, inline_valid_data, parent_pk=None)
+
         try:
             create_data = instance.model_dump()
             create_data.update(file_uploads)
@@ -695,6 +760,7 @@ class DynamicModelView:
 
         return RedirectResponse(url=redirect_url, status_code=303)
 
+    @_request_scoped
     async def update_form_view(
         self,
         request: Request,
@@ -706,10 +772,8 @@ class DynamicModelView:
     ):
         """Renders the update form, optionally pre-filled with submitted values and errors."""
         await self._check_permission(request, "change")
-        with self._request_queryset_filter(request):
-            item = await self.adapter.get(pk=item_id)
-        if not item:
-            raise HTTPException(status_code=404, detail="Item not found")
+        item = await self._get_or_404(item_id)
+        await self._check_object_permission(request, item, "change")
 
         initial_func = getattr(item, "model_dump", None)
         initial_values = cast(
@@ -772,13 +836,11 @@ class DynamicModelView:
             status_code=status_code,
         )
 
+    @_request_scoped
     async def update_view(self, request: Request, item_id: int):
         """Handles form submission for updating an item."""
         await self._check_permission(request, "change")
-        with self._request_queryset_filter(request):
-            existing = await self.adapter.get(pk=item_id)
-        if not existing:
-            raise HTTPException(status_code=404, detail="Item not found")
+        existing = await self._get_or_404(item_id)
         await self._check_object_permission(request, existing, "change")
         form_data = await request.form()
 
@@ -832,6 +894,9 @@ class DynamicModelView:
                 request, item_id=item_id, values=data, errors={}, status_code=422
             )
 
+        # Ownership and inline-model permissions are checked before any write.
+        await self._authorize_inline_rows(request, inline_valid_data, parent_pk=item_id)
+
         # exclude_none: id is not submitted by the form and must not overwrite the PK
         try:
             update_data = instance.model_dump(exclude_none=True)
@@ -861,8 +926,41 @@ class DynamicModelView:
     ) -> None:
         """Persist validated inline rows — create, update, or delete as needed."""
         for formset, rows in inline_valid_data:
-            await self.adapter.save_inline_rows(formset.spec, rows, parent_pk)
+            try:
+                await self.adapter.save_inline_rows(formset.spec, rows, parent_pk)
+            except InlineRowNotOwned as exc:
+                raise HTTPException(status_code=404, detail="Inline row not found") from exc
 
+    async def _authorize_inline_rows(
+        self,
+        request: Request,
+        inline_valid_data: list[tuple[InlineFormset, list[dict]]],
+        parent_pk: Any,
+    ) -> None:
+        """Reject foreign child rows (404) and rows the user may not write (403).
+
+        Runs before any write. A submitted ``<prefix>-<i>-pk`` is never trusted
+        on its own: it must be an existing child of ``parent_pk`` (``None`` for a
+        parent being created, which owns no rows). Each row also needs the
+        inline model's own ``add`` / ``change`` / ``delete`` permission.
+        """
+        for formset, rows in inline_valid_data:
+            try:
+                await self.adapter.ensure_inline_rows_owned(formset.spec, rows, parent_pk)
+            except InlineRowNotOwned as exc:
+                raise HTTPException(status_code=404, detail="Inline row not found") from exc
+            needed: set[str] = set()
+            for row in rows:
+                if row.get("_delete"):
+                    needed.add("delete")
+                elif row.get("_pk") is not None:
+                    needed.add("change")
+                else:
+                    needed.add("add")
+            for verb in sorted(needed):
+                await self._check_permission(request, verb, model_name=formset.spec.model_name)
+
+    @_request_scoped
     async def inline_add_row_view(
         self,
         request: Request,
@@ -873,6 +971,7 @@ class DynamicModelView:
 
         GET /{model_name}/inline/{inline_prefix}/add-row?index=N
         """
+        await self._check_any_permission(request, ("add", "change"))
         spec = None
         for s in getattr(self.options, "inlines", []):
             if s.model_name == inline_prefix:
@@ -888,6 +987,7 @@ class DynamicModelView:
         html = template.render(context)
         return Response(content=html, media_type="text/html")
 
+    @_request_scoped
     async def choices_view(
         self,
         request: Request,
@@ -910,10 +1010,14 @@ class DynamicModelView:
             )
 
         # Validate that field_name is a known relation on this model
-        inspector = getattr(self.adapter, "inspector", None)
-        known_fields = {rel.key for rel in inspector.relationships} if inspector else set()
-        if field_name not in known_fields:
+        targets = self._relation_targets()
+        if field_name not in targets:
             raise HTTPException(status_code=404, detail=f"Unknown relation field: {field_name!r}")
+
+        # Listing related rows discloses the target model: require view on it too.
+        target_model = targets[field_name]
+        if target_model is not None:
+            await self._check_permission(request, "view", model_name=target_model.__name__.lower())
 
         # Forward any extra query params as cascading filters (e.g. country_id=1)
         reserved = {"q", "limit", "offset"}
@@ -957,6 +1061,7 @@ class DynamicModelView:
             )
             return str(instance)
 
+    @_request_scoped
     async def create_popup_view(self, request: Request) -> Response:
         """Inline-create endpoint for FK/M2M autocomplete widgets.
 
@@ -1086,18 +1191,24 @@ class DynamicModelView:
             status_code=status_code,
         )
 
+    @_request_scoped
     async def upload_file_view(
         self,
         request: Request,
-        field_name: str,  # noqa: ARG002 — path param required by route
+        field_name: str,
     ) -> Response:
         """Accept a file upload and store it via the configured storage.
 
         ``POST /{model}/upload/{field_name}``
 
+        Requires ``add`` or ``change`` on the model, and ``field_name`` must be a
+        file field (404 otherwise).
+
         Returns a JSON response with the stored filename.
         """
-        await self._check_permission(request, "add")
+        await self._check_any_permission(request, ("add", "change"))
+        if field_name not in self._get_file_fields():
+            raise HTTPException(status_code=404, detail=f"Unknown file field: {field_name!r}")
         if not self.storage:
             raise HTTPException(
                 status_code=400,
@@ -1112,6 +1223,7 @@ class DynamicModelView:
 
         return JSONResponse({"filename": filename})
 
+    @_request_scoped
     async def delete_file_view(
         self,
         request: Request,
@@ -1121,17 +1233,18 @@ class DynamicModelView:
         """Delete a file from storage and clear the field on the record.
 
         ``DELETE /{model}/{item_id}/file/{field_name}``
+
+        ``field_name`` must be a file field (404 otherwise), and the file is
+        removed only when its path resolves inside the storage root.
         """
         await self._check_permission(request, "change")
-        item = await self.adapter.get(pk=item_id)
-        if not item:
-            raise HTTPException(status_code=404, detail="Item not found")
-        val = getattr(item, field_name, None)
-        if val and self.storage:
-            fname = val.name if hasattr(val, "name") else str(val)
-            path = self.storage.get_path(fname)
-            if os.path.exists(path):  # noqa: ASYNC240 — sync I/O acceptable for local file cleanup
-                os.remove(path)
+        if field_name not in self._get_file_fields():
+            raise HTTPException(status_code=404, detail=f"Unknown file field: {field_name!r}")
+        item = await self._get_or_404(item_id)
+        await self._check_object_permission(request, item, "change")
+        path = self._stored_file_path(getattr(item, field_name, None))
+        if path is not None:
+            self._remove_files([str(path)])
         await self.adapter.update(pk=item_id, data={field_name: None})
         if "hx-request" in request.headers:
             return Response(
@@ -1149,25 +1262,28 @@ class DynamicModelView:
         """
         if not self.storage:
             return []
-        from hyperadmin.core.uploads import FileFieldMeta  # noqa: PLC0415
-
         paths: list[str] = []
-        for name, fi in self.model.model_fields.items():
-            meta = classify_field(fi, self.model)
-            if not isinstance(meta, FileFieldMeta):
-                continue
-            val = getattr(item, name, None)
-            if not val:
-                continue
-            fname = val.name if hasattr(val, "name") else str(val)
-            paths.append(self.storage.get_path(fname))
+        for name in sorted(self._get_file_fields()):
+            path = self._stored_file_path(getattr(item, name, None))
+            if path is not None:
+                paths.append(str(path))
         return paths
+
+    def _stored_file_path(self, value: Any) -> Any:
+        """Resolve a file column value to a path inside the storage root, or ``None``."""
+        if not value or not self.storage:
+            return None
+        name = value.name if hasattr(value, "name") else str(value)
+        return resolve_storage_path(self.storage, name)
 
     @staticmethod
     def _remove_files(paths: list[str]) -> None:
-        """Remove files from disk, ignoring missing ones."""
+        """Remove regular files from disk, ignoring missing ones.
+
+        Paths must come from :func:`resolve_storage_path` (storage-root contained).
+        """
         for path in paths:
-            if os.path.exists(path):
+            if os.path.isfile(path):
                 os.remove(path)
 
     def _is_inline_editable(self, field: str) -> bool:
@@ -1181,6 +1297,7 @@ class DynamicModelView:
             return False
         return field in (self.options.list_editable or [])
 
+    @_request_scoped
     async def inline_edit_form_view(
         self,
         request: Request,
@@ -1194,12 +1311,12 @@ class DynamicModelView:
         button in the editor to restore the read-only view without hitting
         a separate endpoint.
         """
+        await self._check_permission(request, "change")
         if not self._is_inline_editable(field):
             raise HTTPException(status_code=403, detail="Field not editable")
 
-        item = await self.adapter.get(pk=item_id)
-        if not item:
-            raise HTTPException(status_code=404, detail="Item not found")
+        item = await self._get_or_404(item_id)
+        await self._check_object_permission(request, item, "change")
 
         if cancel:
             context = {
@@ -1228,14 +1345,15 @@ class DynamicModelView:
         }
         return self.templates.TemplateResponse(request, "components/inline_editor.html", context)
 
+    @_request_scoped
     async def inline_save_view(self, request: Request, item_id: int, field: str):
         """Validates and persists a single field for ``item_id``."""
+        await self._check_permission(request, "change")
         if not self._is_inline_editable(field):
             raise HTTPException(status_code=403, detail="Field not editable")
 
-        item = await self.adapter.get(pk=item_id)
-        if not item:
-            raise HTTPException(status_code=404, detail="Item not found")
+        item = await self._get_or_404(item_id)
+        await self._check_object_permission(request, item, "change")
 
         form_data = await request.form()
         raw_value: Any = form_data.get(field)
@@ -1318,13 +1436,11 @@ class DynamicModelView:
         )
         return response
 
+    @_request_scoped
     async def delete_action(self, request: Request, item_id: int):
         """Deletes an item."""
         await self._check_permission(request, "delete")
-        with self._request_queryset_filter(request):
-            item = await self.adapter.get(pk=item_id)
-        if not item:
-            raise HTTPException(status_code=404, detail="Item not found")
+        item = await self._get_or_404(item_id)
 
         await self._check_object_permission(request, item, "delete")
 
@@ -1339,6 +1455,7 @@ class DynamicModelView:
 
         return RedirectResponse(url=redirect_url, status_code=303)
 
+    @_request_scoped
     async def run_action(self, request: Request, item_id: int, action_name: str) -> Response:
         """Dispatch a custom action registered via ``@action`` on the ModelAdmin.
 
@@ -1352,6 +1469,9 @@ class DynamicModelView:
             raise HTTPException(status_code=404, detail=f"Action '{action_name}' not found")
 
         await self._check_permission(request, f"action_{action_name}")
+        # Load under the queryset scope (404 for hidden rows) and re-check per object.
+        item = await self._get_or_404(item_id)
+        await self._check_object_permission(request, item, f"action_{action_name}")
 
         result = await action_def.handler(self._admin_instance, request, item_id)
 
@@ -1489,6 +1609,7 @@ class DynamicModelView:
         }
         return self.templates.TemplateResponse(request, "components/bulk_form.html", context)
 
+    @_request_scoped
     async def run_bulk_action(self, request: Request, action_name: str) -> Response:
         """Entry point for bulk actions.
 
@@ -1514,6 +1635,7 @@ class DynamicModelView:
         outcomes = await self._execute_bulk(request, action_def, ids, params=None)
         return self._render_bulk_result(request, action_def, outcomes)
 
+    @_request_scoped
     async def confirm_bulk_action(self, request: Request, action_name: str) -> Response:
         """Validate the Pydantic param form and execute the bulk handler.
 
