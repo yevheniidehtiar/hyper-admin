@@ -79,6 +79,19 @@ class AdminOptions(BaseModel):
     - ``[]``: filtering disabled.
     - ``["is_active", "status"]``: explicit list used as-is.
     """
+    sensitive_fields: dict[str, bool] = Field(default_factory=dict)
+    """Override sensitive-field detection, in either direction.
+
+    Fields marked ``json_schema_extra={"hyperadmin_sensitive": True}`` or whose
+    name matches ``(^|_)(password|secret|token|hash)(_|$)`` are sensitive: they
+    are hidden from the detail page, inferred list columns and inferred search,
+    can never be filtered or sorted on, and are write-only on forms.
+
+    Example:
+        ```python
+        AdminOptions(sensitive_fields={"token_count": False, "ssn": True})
+        ```
+    """
     list_editable: list[str] = Field(default_factory=list)
     """Allow-list of field names that can be inline-edited in the list view.
 

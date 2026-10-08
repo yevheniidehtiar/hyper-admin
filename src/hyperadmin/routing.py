@@ -222,7 +222,7 @@ def _resolve_smart_defaults(
             resolved_columns = options.list_display or None
         else:
             try:
-                resolved_columns = infer_list_display(model)
+                resolved_columns = infer_list_display(model, options.sensitive_fields)
             except Exception:
                 resolved_columns = None
 
@@ -231,13 +231,15 @@ def _resolve_smart_defaults(
         resolved_search = options.search_fields
     else:
         try:
-            resolved_search = infer_search_fields(model)
+            resolved_search = infer_search_fields(model, options.sensitive_fields)
         except Exception:
             resolved_search = None
 
     if options.list_filter is None:
         try:
-            options = options.model_copy(update={"list_filter": infer_list_filter(model)})
+            options = options.model_copy(
+                update={"list_filter": infer_list_filter(model, options.sensitive_fields)}
+            )
         except Exception:
             options = options.model_copy(update={"list_filter": []})
 

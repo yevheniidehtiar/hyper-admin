@@ -4,12 +4,13 @@ from typing import Any
 from sqlalchemy import func, inspect, or_
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy.orm import selectinload
-from sqlalchemy.sql.sqltypes import String
-from sqlmodel import AutoString, SQLModel, select
+from sqlmodel import SQLModel, select
 
-from hyperadmin.core.adapters import BaseAdapter
+from hyperadmin.adapters._search import detect_search_columns
+from hyperadmin.core.adapters import BaseAdapter, scoped_queryset_filters
 from hyperadmin.core.choices import ChoiceItem
 from hyperadmin.core.inlines import InlineModelSpec
+from hyperadmin.core.sensitive import is_sensitive
 
 _MAX_CHOICES_LIMIT = 200
 
@@ -113,13 +114,8 @@ class SQLModelAdapter(BaseAdapter):
             return list(results.scalars().all()), total_count
 
     def _detect_search_fields(self) -> builtins.list[str]:
-        """Detect string columns on the model for search fallback."""
-        mapper: Any = self.inspector
-        return [
-            col.key
-            for col in mapper.columns
-            if isinstance(col.type, (String, AutoString)) and not col.primary_key
-        ]
+        """Detect non-sensitive string columns on the model for search fallback."""
+        return detect_search_columns(self.model, self.inspector)
 
     async def create(self, data: dict[str, Any]) -> Any:
         """
@@ -237,14 +233,21 @@ class SQLModelAdapter(BaseAdapter):
             query = select(target_model)
 
             if q:
+                # Never match on sensitive columns (q would be a substring oracle).
                 str_cols = [
-                    c for c in target_inspector.c if isinstance(c.type, AutoString | String)
+                    getattr(target_model, name)
+                    for name in detect_search_columns(target_model, target_inspector)
                 ]
                 if str_cols:
                     query = query.where(or_(*[c.ilike(f"%{q}%") for c in str_cols[:3]]))
 
+            # Row scoping of the target model's admin (tenant / RLS) always applies.
+            for key, value in scoped_queryset_filters(target_model).items():
+                query = query.where(getattr(target_model, key) == value)
+
+            # Cascade filters: the view forwards only keys declared by the widget.
             for key, value in filters.items():
-                if hasattr(target_model, key):
+                if hasattr(target_model, key) and not is_sensitive(key):
                     query = query.where(getattr(target_model, key) == value)
 
             query = query.offset(offset).limit(limit)

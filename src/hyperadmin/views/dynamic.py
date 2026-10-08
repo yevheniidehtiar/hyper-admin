@@ -29,6 +29,7 @@ from hyperadmin.core.display import get_display_name
 from hyperadmin.core.fields import classify_field
 from hyperadmin.core.options import AdminOptions
 from hyperadmin.core.registry import site
+from hyperadmin.core.sensitive import is_sensitive, sensitive_field_names
 from hyperadmin.core.storage_paths import resolve_storage_path
 from hyperadmin.discover import app_label_var
 from hyperadmin.views.forms import (
@@ -211,6 +212,45 @@ class DynamicModelView:
         with queryset_scope(request, self._queryset_filter_for):
             yield
 
+    def _fk_to_relation(self) -> dict[str, str]:
+        """Map each FK column on the model to the name of its ORM relationship."""
+        fk_to_rel: dict[str, str] = {}
+        inspector = getattr(self.adapter, "inspector", None)
+        if inspector:
+            for rel in inspector.relationships:
+                for col in getattr(rel, "local_columns", []):
+                    col_key = getattr(col, "key", None) or getattr(col, "name", None)
+                    if col_key:
+                        fk_to_rel[col_key] = rel.key
+        return fk_to_rel
+
+    def _declared_cascade_keys(self, rel_name: str) -> set[str]:
+        """Return the parent-field names a relation widget declares it depends on.
+
+        Sources: ``SelectFieldMeta.dependent_on``, ``AdminOptions.dependent_fields``
+        and ``AdminOptions.relation_filters``, keyed by the FK column (or the
+        relationship name) that renders the ``rel_name`` widget. Sensitive names
+        are never accepted.
+        """
+        fk_to_rel = self._fk_to_relation()
+        owners = {name for name, rel in fk_to_rel.items() if rel == rel_name} | {rel_name}
+        dependent_fields = getattr(self.options, "dependent_fields", None) or {}
+        relation_filters = getattr(self.options, "relation_filters", None) or {}
+        model_fields = getattr(self.model, "model_fields", {})
+        keys: set[str] = set()
+        for name in owners:
+            if dependent_fields.get(name):
+                keys.add(dependent_fields[name])
+            dependency = relation_filters.get(name)
+            if dependency is not None:
+                keys.add(dependency.depends_on)
+            field_info = model_fields.get(name)
+            if field_info is not None:
+                meta = classify_field(field_info, self.model)
+                if isinstance(meta, SelectFieldMeta) and meta.dependent_on:
+                    keys.add(meta.dependent_on)
+        return {k for k in keys if k not in self._sensitive_fields and not is_sensitive(k)}
+
     def _relation_targets(self) -> dict[str, Any]:
         """Map each ORM relationship name on the model to its target class (or ``None``)."""
         inspector = getattr(self.adapter, "inspector", None)
@@ -284,7 +324,46 @@ class DynamicModelView:
 
     async def _get_filter_metadata(self) -> list[dict[str, Any]]:
         """Introspects list_filter fields to build metadata for filter UI."""
-        return await build_filter_metadata(self.model, self.options.list_filter or [], self.adapter)
+        allowed = self._filterable_fields()
+        fields = [f for f in (self.options.list_filter or []) if f in allowed]
+        return await build_filter_metadata(self.model, fields, self.adapter)
+
+    @functools.cached_property
+    def _sensitive_fields(self) -> frozenset[str]:
+        """Names of the model's sensitive fields (see :mod:`hyperadmin.core.sensitive`)."""
+        overrides = getattr(self.options, "sensitive_fields", None) or None
+        return frozenset(sensitive_field_names(self.model, overrides))
+
+    def _without_sensitive(self, values: dict[str, Any]) -> dict[str, Any]:
+        """Return ``values`` without sensitive keys (detail page, form initial values)."""
+        return {k: v for k, v in values.items() if k not in self._sensitive_fields}
+
+    def _keep_stored_secrets(self, data: dict[str, Any], existing: Any) -> None:
+        """Write-only semantics: an empty sensitive input keeps the stored value."""
+        for name in self._sensitive_fields:
+            if name in self.model.model_fields and data.get(name) in (None, ""):
+                data[name] = getattr(existing, name, None)
+
+    def _filterable_fields(self) -> set[str]:
+        """Fields a URL ``filter_<name>`` may target: ``list_filter`` minus sensitive fields."""
+        model_fields = getattr(self.model, "model_fields", {})
+        return {
+            f
+            for f in (getattr(self.options, "list_filter", None) or [])
+            if f in model_fields and f not in self._sensitive_fields
+        }
+
+    def _sortable_fields(self) -> set[str]:
+        """Fields ``sort_by`` may target: displayed, real, non-sensitive model fields."""
+        model_fields = getattr(self.model, "model_fields", {})
+        return {
+            f for f in self.column_list if f in model_fields and f not in self._sensitive_fields
+        }
+
+    def _default_sort_field(self) -> str:
+        """The first non-sensitive model field (``id`` when there is none)."""
+        model_fields = getattr(self.model, "model_fields", {})
+        return next((f for f in model_fields if f not in self._sensitive_fields), "id")
 
     def _get_file_fields(self) -> set[str]:
         """Return the set of field names backed by FileType/ImageType columns."""
@@ -310,27 +389,35 @@ class DynamicModelView:
         """Renders the list view for the model with pagination, sorting, and filtering."""
         await self._check_permission(request, "view")
 
-        # Parse filters from query params
+        # Parse filters from query params. Only whitelisted (list_filter),
+        # non-sensitive model fields are honoured; anything else is ignored so
+        # the URL cannot become an equality oracle on arbitrary columns.
+        allowed_filters = self._filterable_fields()
         active_filters: dict[str, str] = {}
         filters_to_apply: dict[str, Any] = {}
         for key, value in request.query_params.items():
             if key.startswith("filter_") and value:
                 field_name = key[7:]
+                if field_name not in allowed_filters:
+                    logger.debug("Ignoring filter on non-whitelisted field %r", field_name)
+                    continue
                 active_filters[field_name] = value
 
                 # Type conversion for bool
-                if field_name in self.model.model_fields:
-                    ann = self.model.model_fields[field_name].annotation
-                    if ann is bool or (get_origin(ann) is Union and bool in get_args(ann)):
-                        filters_to_apply[field_name] = value.lower() == "true"
-                    else:
-                        filters_to_apply[field_name] = value
+                ann = self.model.model_fields[field_name].annotation
+                if ann is bool or (get_origin(ann) is Union and bool in get_args(ann)):
+                    filters_to_apply[field_name] = value.lower() == "true"
+                else:
+                    filters_to_apply[field_name] = value
 
-        # Get default sort column if none specified
+        # sort_by is whitelisted against the sortable displayed columns. An
+        # unknown or sensitive value falls back to the default sort.
+        if sort_by and sort_by not in self._sortable_fields():
+            logger.debug("Ignoring sort on non-sortable field %r", sort_by)
+            sort_by = ""
+            sort_direction = "asc"
         if not sort_by:
-            sort_by = (
-                next(iter(self.model.model_fields.keys())) if self.model.model_fields else "id"
-            )
+            sort_by = self._default_sort_field()
 
         # Format order_by for adapter (use negative prefix for descending)
         order_by = f"-{sort_by}" if sort_direction == "desc" else sort_by
@@ -436,8 +523,8 @@ class DynamicModelView:
         await self._check_object_permission(request, item, "view")
 
         file_fields = self._get_file_fields()
-        item_data = item.model_dump()
-        for fname in file_fields:
+        item_data = self._without_sensitive(item.model_dump())
+        for fname in file_fields - self._sensitive_fields:
             val = getattr(item, fname, None)
             if val is not None:
                 item_data[fname] = val.name if hasattr(val, "name") else str(val)
@@ -501,16 +588,9 @@ class DynamicModelView:
         sv = selected_values or {}
         dependent_fields: dict[str, str] = getattr(self.options, "dependent_fields", {})
 
-        # Pre-build FK-column → relationship-name mapping via the adapter's inspector
-        # so that country_id → "country" for get_choices() and the HTMX URL.
-        fk_to_rel: dict[str, str] = {}
-        inspector = getattr(self.adapter, "inspector", None)
-        if inspector:
-            for rel in inspector.relationships:
-                for col in rel.local_columns:
-                    col_key = getattr(col, "key", None) or getattr(col, "name", None)
-                    if col_key:
-                        fk_to_rel[col_key] = rel.key
+        # FK-column → relationship-name mapping so that country_id → "country"
+        # for get_choices() and the HTMX URL.
+        fk_to_rel = self._fk_to_relation()
 
         for name, field_info in self.model.model_fields.items():
             if field_names and name not in field_names:
@@ -785,6 +865,11 @@ class DynamicModelView:
         if values:
             initial_values.update(values)
 
+        # Sensitive fields are write-only: never render their stored value.
+        initial_values = self._without_sensitive(initial_values)
+        if values:
+            values = self._without_sensitive(values)
+
         relation_widgets = await self._build_relation_widgets(
             field_names=self.form_include or [], selected_values=initial_values
         )
@@ -857,6 +942,7 @@ class DynamicModelView:
         )
         data = self._extract_form_data(form_data, form)
         file_uploads = self._pop_file_uploads(data, form)
+        self._keep_stored_secrets(data, existing)
 
         form.bind(data)
         instance, errs = form.validate(data)
@@ -1000,8 +1086,11 @@ class DynamicModelView:
 
         GET /{model_name}/choices/{field_name}?q=&limit=50&offset=0[&{parent_field}={value}]
 
-        Extra query parameters (beyond q/limit/offset) are forwarded as equality filters
-        to ``adapter.get_choices()`` to support cascading selects.
+        Only the cascade keys declared for this relation's widget (``dependent_on``,
+        ``AdminOptions.dependent_fields`` / ``relation_filters``) are forwarded as
+        equality filters to ``adapter.get_choices()``; any other query parameter
+        is ignored, so the endpoint is not an equality oracle on the target model.
+        The target model's admin ``get_queryset`` applies through the request scope.
         """
         await self._check_permission(request, "view")
         if limit > _MAX_CHOICES_LIMIT:
@@ -1019,9 +1108,12 @@ class DynamicModelView:
         if target_model is not None:
             await self._check_permission(request, "view", model_name=target_model.__name__.lower())
 
-        # Forward any extra query params as cascading filters (e.g. country_id=1)
-        reserved = {"q", "limit", "offset"}
-        extra_filters = {k: v for k, v in request.query_params.items() if k not in reserved}
+        # Forward only the declared cascade keys (e.g. country_id=1)
+        declared = self._declared_cascade_keys(field_name)
+        extra_filters = {k: v for k, v in request.query_params.items() if k in declared}
+        ignored = set(request.query_params) - declared - {"q", "limit", "offset"}
+        if ignored:
+            logger.debug("Ignoring undeclared choices parameters %s", sorted(ignored))
 
         choices = await self.adapter.get_choices(
             field_name, q=q, limit=limit, offset=offset, **extra_filters

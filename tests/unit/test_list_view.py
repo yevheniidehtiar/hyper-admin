@@ -225,7 +225,8 @@ async def test_list_view_with_search(view_instance, mock_request, mock_templates
 
 
 async def test_list_view_with_sorting(view_instance, mock_request, mock_templates, anyio_backend):
-    """Test list view with sorting parameters."""
+    """Test list view with sorting parameters (sort_by must be a displayed column)."""
+    view_instance.column_list = ["id", "name"]
     await view_instance.list_view(
         request=mock_request, page=1, page_size=10, search="", sort_by="name", sort_direction="desc"
     )
@@ -319,6 +320,7 @@ async def test_list_view_parameter_validation(
     view_instance, mock_request, mock_templates, anyio_backend
 ):
     """Test that parameters are passed correctly to the adapter."""
+    view_instance.column_list = ["id", "name"]
     # Mock the adapter to capture the parameters
     mock_list = AsyncMock(return_value=([], 0))
     view_instance.adapter.list = mock_list
@@ -344,7 +346,8 @@ async def test_list_view_parameter_validation(
 
 
 async def test_list_view_with_filters(view_instance, mock_request, mock_templates, anyio_backend):
-    """Test list view with filter parameters."""
+    """Test list view with filter parameters (only list_filter fields are honoured)."""
+    view_instance.options.list_filter = ["is_active", "color"]
     # Mock query params
     mock_request.query_params = {"filter_is_active": "true", "filter_color": "red"}
 

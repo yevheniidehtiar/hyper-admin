@@ -5,12 +5,13 @@ from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm import selectinload
-from sqlalchemy.sql.sqltypes import String
-from sqlmodel import AutoString, SQLModel
+from sqlmodel import SQLModel
 
-from hyperadmin.core.adapters import BaseAdapter
+from hyperadmin.adapters._search import detect_search_columns
+from hyperadmin.core.adapters import BaseAdapter, scoped_queryset_filters
 from hyperadmin.core.choices import ChoiceItem
 from hyperadmin.core.inlines import InlineModelSpec
+from hyperadmin.core.sensitive import is_sensitive
 
 _MAX_CHOICES_LIMIT = 200
 
@@ -48,7 +49,7 @@ class SQLAlchemyAdapter(BaseAdapter):
         search: str | None = None,
         filters: dict[str, Any] | None = None,
         order_by: str | None = None,
-        search_fields: list[str] | None = None,  # noqa: ARG002
+        search_fields: list[str] | None = None,
     ) -> tuple[list[Any], int]:
         queryset_filters = self._resolve_queryset_filters()
         where_conditions = [
@@ -59,10 +60,11 @@ class SQLAlchemyAdapter(BaseAdapter):
                 where_conditions.append(getattr(self.model, key) == value)
 
         if search and self.inspector:
+            fields_to_search = search_fields or detect_search_columns(self.model, self.inspector)
             search_clauses = [
-                getattr(self.model, column.name).ilike(f"%{search}%")
-                for column in self.inspector.c
-                if isinstance(column.type, AutoString | String)
+                getattr(self.model, name).ilike(f"%{search}%")
+                for name in fields_to_search
+                if getattr(self.model, name, None) is not None
             ]
             if search_clauses:
                 where_conditions.append(or_(*search_clauses))
@@ -181,14 +183,21 @@ class SQLAlchemyAdapter(BaseAdapter):
             query = select(target_model)
 
             if q:
+                # Never match on sensitive columns (q would be a substring oracle).
                 str_cols = [
-                    c for c in target_inspector.c if isinstance(c.type, AutoString | String)
+                    getattr(target_model, name)
+                    for name in detect_search_columns(target_model, target_inspector)
                 ]
                 if str_cols:
                     query = query.where(or_(*[c.ilike(f"%{q}%") for c in str_cols[:3]]))
 
+            # Row scoping of the target model's admin (tenant / RLS) always applies.
+            for key, value in scoped_queryset_filters(target_model).items():
+                query = query.where(getattr(target_model, key) == value)
+
+            # Cascade filters: the view forwards only keys declared by the widget.
             for key, value in filters.items():
-                if hasattr(target_model, key):
+                if hasattr(target_model, key) and not is_sensitive(key):
                     query = query.where(getattr(target_model, key) == value)
 
             query = query.offset(offset).limit(limit)

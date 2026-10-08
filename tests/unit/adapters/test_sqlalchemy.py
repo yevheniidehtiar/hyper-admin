@@ -103,8 +103,9 @@ async def test_list(engine):
     assert len(items) == 1
     assert items[0].secret_name == "Tommy Sharp"
 
-    # Test search
-    items, total_count = await hero_adapter.list(search="Pedro")
+    # Test search. ``secret_name`` matches the sensitive-name rule, so it is only
+    # searched when listed explicitly in ``search_fields``.
+    items, total_count = await hero_adapter.list(search="Pedro", search_fields=["secret_name"])
     assert total_count == 1
     assert len(items) == 1
     assert items[0].name == "Spider-Boy"
