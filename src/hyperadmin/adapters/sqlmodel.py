@@ -9,8 +9,9 @@ from sqlmodel import SQLModel, select
 from hyperadmin.adapters._search import detect_search_columns
 from hyperadmin.core.adapters import BaseAdapter, scoped_queryset_filters
 from hyperadmin.core.choices import ChoiceItem
+from hyperadmin.core.display import get_display_name
 from hyperadmin.core.inlines import InlineModelSpec
-from hyperadmin.core.sensitive import is_sensitive
+from hyperadmin.core.sensitive import effective_sensitive_field_names
 
 _MAX_CHOICES_LIMIT = 200
 
@@ -83,7 +84,9 @@ class SQLModelAdapter(BaseAdapter):
 
             # Apply searching using configured search_fields
             if search:
-                fields_to_search = search_fields or self._detect_search_fields()
+                fields_to_search = (
+                    search_fields if search_fields is not None else self._detect_search_fields()
+                )
                 if fields_to_search:
                     conditions = []
                     for field_name in fields_to_search:
@@ -246,8 +249,9 @@ class SQLModelAdapter(BaseAdapter):
                 query = query.where(getattr(target_model, key) == value)
 
             # Cascade filters: the view forwards only keys declared by the widget.
+            target_sensitive = effective_sensitive_field_names(target_model)
             for key, value in filters.items():
-                if hasattr(target_model, key) and not is_sensitive(key):
+                if hasattr(target_model, key) and key not in target_sensitive:
                     query = query.where(getattr(target_model, key) == value)
 
             query = query.offset(offset).limit(limit)
@@ -257,7 +261,8 @@ class SQLModelAdapter(BaseAdapter):
         return [
             ChoiceItem(
                 value=str(getattr(item, "id", "")),
-                label=str(item),
+                # Never str(item): SQLModel's default __str__ prints every column.
+                label=get_display_name(item),
                 selected=False,
             )
             for item in items

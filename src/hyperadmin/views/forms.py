@@ -12,6 +12,7 @@ from pydantic import BaseModel, ValidationError
 from pydantic.fields import FieldInfo
 
 from hyperadmin.core.choices import ChoiceItem
+from hyperadmin.core.sensitive import effective_sensitive_field_names
 from hyperadmin.i18n import gettext_lazy
 
 try:
@@ -567,6 +568,11 @@ class InlineFormset:
         return self.spec.get_display_fields()
 
     @property
+    def sensitive_fields(self) -> set[str]:
+        """Sensitive fields of the inline model (write-only: never rendered with a value)."""
+        return effective_sensitive_field_names(self.spec.model)
+
+    @property
     def field_labels(self) -> list[str]:
         """Return human-readable labels for each display field."""
         model_fields = getattr(self.spec.model, "model_fields", {})
@@ -591,13 +597,15 @@ class InlineFormset:
         """Build a single ``InlineFormRow`` for the given index."""
         model_fields = getattr(self.spec.model, "model_fields", {})
         vals = values or {}
+        sensitive = self.sensitive_fields
         fields: list[FormField] = []
         for name in self.display_fields:
             fi = model_fields.get(name)
             if fi is None:
                 continue
             widget = _pick_inline_widget(name, fi)
-            value = vals.get(name)
+            # Sensitive values are write-only: an empty input keeps the stored value.
+            value = None if name in sensitive else vals.get(name)
             fields.append(FormField(name=name, model_field=fi, widget=widget, value=value))
         return InlineFormRow(index=index, fields=fields, pk=pk)
 

@@ -7,7 +7,7 @@ from typing import Any
 from sqlalchemy.sql.sqltypes import String
 from sqlmodel import AutoString
 
-from hyperadmin.core.sensitive import sensitive_field_names
+from hyperadmin.core.sensitive import effective_sensitive_field_names
 
 
 def detect_search_columns(model: Any, mapper: Any) -> list[str]:
@@ -15,11 +15,12 @@ def detect_search_columns(model: Any, mapper: Any) -> list[str]:
 
     Used when no explicit ``search_fields`` are configured. Sensitive columns
     (``password_hash``, tokens, ...) are never searched: a substring search on
-    them would leak their value one character at a time.
+    them would leak their value one character at a time. Inside a request, the
+    model admin's ``AdminOptions.sensitive_fields`` overrides apply too.
     """
     if mapper is None:
         return []
-    sensitive = sensitive_field_names(model)
+    sensitive = effective_sensitive_field_names(model)
     return [
         col.key
         for col in mapper.columns

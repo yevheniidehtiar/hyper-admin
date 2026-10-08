@@ -82,10 +82,12 @@ class AdminOptions(BaseModel):
     sensitive_fields: dict[str, bool] = Field(default_factory=dict)
     """Override sensitive-field detection, in either direction.
 
-    Fields marked ``json_schema_extra={"hyperadmin_sensitive": True}`` or whose
-    name matches ``(^|_)(password|secret|token|hash)(_|$)`` are sensitive: they
-    are hidden from the detail page, inferred list columns and inferred search,
-    can never be filtered or sorted on, and are write-only on forms.
+    Fields that carry the ``hyperadmin_sensitive`` marker, and text fields whose
+    name matches ``(^|_)(password|secret|token|hash)(_|$)``, are sensitive: they
+    are hidden from the detail page, inferred list columns, relation labels and
+    search, can never be filtered or sorted on, and are write-only on forms.
+    With SQLModel, mark a field with
+    ``Field(schema_extra={"json_schema_extra": {"hyperadmin_sensitive": True}})``.
 
     Example:
         ```python

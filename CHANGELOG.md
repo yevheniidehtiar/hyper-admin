@@ -44,20 +44,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - **Filters:** URL `filter_<field>` parameters are honoured only for fields in
     `list_filter`; anything else is ignored.
   - **Search:** inferred search fields (and the adapters' fallback search, and
-    the choices `q` search) skip sensitive fields.
+    the choices `q` search) skip sensitive fields, including fields made
+    sensitive only through `AdminOptions.sensitive_fields` on the model's (or
+    the choices target's) admin. An explicit `search_fields=[]` passed to an
+    adapter now disables search instead of falling back to every text column.
   - **Sort:** `sort_by` is whitelisted against the displayed, non-sensitive
     columns. An unknown value falls back to the default sort (200, never 500).
   - **Choices:** `/{model}/choices/{field}` forwards only the cascade keys the
     relation widget declares (`dependent_on`, `dependent_fields`,
     `relation_filters`) and applies the target admin's `get_queryset`.
-  - New `hyperadmin.core.sensitive`: a field is sensitive when it is marked
-    `json_schema_extra={"hyperadmin_sensitive": True}` or its name matches
-    `(^|_)(password|secret|token|hash)(_|$)`; `AdminOptions.sensitive_fields`
-    overrides this either way. Sensitive fields are hidden from the detail page
-    and inferred list columns, and are write-only on forms (an empty submission
-    keeps the stored value). The built-in `User.password_hash` is marked.
-  - Upgrade note: a column such as `secret_name` or `token_count` now counts as
-    sensitive. Opt it back in with `AdminOptions(sensitive_fields={"secret_name": False})`.
+  - **Relation labels:** FK filter dropdowns, relation widgets, the choices
+    endpoint, popup-create labels and list cells label related rows with the
+    model's own `__str__` when it defines one, otherwise with the first
+    non-sensitive of `name`, `title`, `label`, `username`, `email`, otherwise
+    `Model (pk)`. SQLModel's default `__str__`, which prints every column
+    (password hashes included), is never used.
+  - **Writes:** a submitted FK value must be a row that the target admin's
+    `get_queryset` exposes; otherwise the form is re-rendered with a field
+    error (422) and nothing is written.
+  - New `hyperadmin.core.sensitive`: a field is sensitive when it carries the
+    `hyperadmin_sensitive` marker, or when it is a text (`str` / `bytes`) field
+    whose name matches `(^|_)(password|secret|token|hash)(_|$)`;
+    `AdminOptions.sensitive_fields` overrides this either way. With SQLModel,
+    mark a field with
+    `Field(schema_extra={"json_schema_extra": {"hyperadmin_sensitive": True}})`
+    (SQLModel's `Field()` rejects a direct `json_schema_extra=` argument); with
+    plain Pydantic use `Field(json_schema_extra={"hyperadmin_sensitive": True})`.
+    Sensitive fields are hidden from the detail page and inferred list columns.
+    Sensitive text fields are write-only on forms and inline rows (an empty
+    submission keeps the stored value). A sensitive non-text field (a marked
+    boolean or enum) is left out of the edit form and keeps its stored value.
+    The built-in `User.password_hash` is marked.
+  - Upgrade note: a text column such as `secret_name` now counts as sensitive.
+    Opt it back in with `AdminOptions(sensitive_fields={"secret_name": False})`.
+    The name heuristic does not apply to booleans, numbers or enums
+    (`is_secret: bool`, `token_count: int`).
 
 ### Added
 - Initial project scaffold

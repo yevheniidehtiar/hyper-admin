@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Any, TypeVar, Union, cast, get_args, get_origi
 
 from fastapi import HTTPException, Query, Request
 from fastapi.templating import Jinja2Templates
-from pydantic import ValidationError
+from pydantic import BaseModel, ValidationError
 from sqlalchemy.exc import IntegrityError
 from starlette.responses import RedirectResponse, Response
 
@@ -23,7 +23,11 @@ from starlette.datastructures import UploadFile as StarletteUpload
 
 from hyperadmin.adapters import SQLAlchemyAdapter, SQLModelAdapter
 from hyperadmin.core.actions import ActionDef
-from hyperadmin.core.adapters import InlineRowNotOwned, queryset_scope
+from hyperadmin.core.adapters import (
+    InlineRowNotOwned,
+    queryset_scope,
+    scoped_queryset_filters,
+)
 from hyperadmin.core.bulk_results import BulkRowResult, BulkRowStatus
 from hyperadmin.core.choices import ChoiceItem, SelectFieldMeta
 from hyperadmin.core.discovery import build_filter_metadata
@@ -31,7 +35,12 @@ from hyperadmin.core.display import get_display_name
 from hyperadmin.core.fields import classify_field
 from hyperadmin.core.options import AdminOptions
 from hyperadmin.core.registry import site
-from hyperadmin.core.sensitive import is_sensitive, sensitive_field_names
+from hyperadmin.core.sensitive import (
+    is_sensitive,
+    is_text_annotation,
+    sensitive_field_names,
+    sensitive_overrides_scope,
+)
 from hyperadmin.core.storage_paths import resolve_storage_path, storage_root
 from hyperadmin.discover import app_label_var
 from hyperadmin.views.forms import (
@@ -233,8 +242,18 @@ class DynamicModelView:
         held in a ``ContextVar``, never on the shared adapter instance, so
         concurrent requests cannot observe each other's filters.
         """
-        with queryset_scope(request, self._queryset_filter_for):
+        with (
+            queryset_scope(request, self._queryset_filter_for),
+            sensitive_overrides_scope(self._sensitive_overrides_for),
+        ):
             yield
+
+    def _sensitive_overrides_for(self, model: Any) -> Any:
+        """Return ``AdminOptions.sensitive_fields`` of the admin registered for ``model``."""
+        options = self.options if model is self.model else None
+        if options is None:
+            options = getattr(self._admin_for_model(model), "options", None)
+        return getattr(options, "sensitive_fields", None) or None
 
     def _fk_to_relation(self) -> dict[str, str]:
         """Map each FK column on the model to the name of its ORM relationship."""
@@ -371,10 +390,32 @@ class DynamicModelView:
         """Return ``values`` without sensitive keys (detail page, form initial values)."""
         return {k: v for k, v in values.items() if k not in self._sensitive_fields}
 
+    @functools.cached_property
+    def _opaque_sensitive_fields(self) -> list[str]:
+        """Sensitive fields that cannot be write-only inputs (booleans, enums, numbers...).
+
+        A blank text input can mean "keep the stored value"; a checkbox or a
+        select cannot, so these fields are left out of the edit form entirely
+        and always keep their stored value on update.
+        """
+        model_fields = self.model.model_fields
+        return sorted(
+            name
+            for name in self._sensitive_fields
+            if name in model_fields and not is_text_annotation(model_fields[name].annotation)
+        )
+
     def _keep_stored_secrets(self, data: dict[str, Any], existing: Any) -> None:
-        """Write-only semantics: an empty sensitive input keeps the stored value."""
+        """Write-only semantics for sensitive fields on update.
+
+        An empty text input keeps the stored value. A non-text sensitive field
+        is not on the edit form, so its stored value is always kept.
+        """
+        opaque = set(self._opaque_sensitive_fields)
         for name in self._sensitive_fields:
-            if name in self.model.model_fields and data.get(name) in (None, ""):
+            if name not in self.model.model_fields:
+                continue
+            if name in opaque or data.get(name) in (None, ""):
                 data[name] = getattr(existing, name, None)
 
     def _filterable_fields(self) -> set[str]:
@@ -508,6 +549,9 @@ class DynamicModelView:
                     val = getattr(item, field, None)
                     if field in file_fields and val is not None:
                         val = val.name if hasattr(val, "name") else str(val)
+                    elif isinstance(val, BaseModel):
+                        # A related row: never its default __str__ (prints secrets).
+                        val = get_display_name(val)
                     row[field] = val
             row["id"] = getattr(item, "id", None)
             rows.append(row)
@@ -870,6 +914,13 @@ class DynamicModelView:
         # A new parent owns no children yet: any submitted child pk is foreign.
         await self._authorize_inline_rows(request, inline_valid_data, parent_pk=None)
 
+        # References must point at rows the target admin's get_queryset exposes.
+        hidden_refs = await self._hidden_reference_errors(instance.model_dump())
+        if hidden_refs:
+            return await self.create_form_view(
+                request, values=data, errors=hidden_refs, status_code=422
+            )
+
         try:
             create_data = instance.model_dump()
             create_data.update(file_uploads)
@@ -934,6 +985,7 @@ class DynamicModelView:
             self.model,
             widgets=relation_widgets,
             include=self.form_include,
+            exclude=self._opaque_sensitive_fields or None,
             initial=initial_values,
             fieldsets=getattr(self.options, "fieldsets", None) or None,
             form_layout=getattr(self.options, "form_layout", None),
@@ -994,6 +1046,7 @@ class DynamicModelView:
             self.model,
             widgets=relation_widgets,
             include=self.form_include,
+            exclude=self._opaque_sensitive_fields or None,
             fieldsets=getattr(self.options, "fieldsets", None) or None,
             form_layout=getattr(self.options, "form_layout", None),
             form_fields=getattr(self.options, "form_fields", None) or None,
@@ -1012,6 +1065,7 @@ class DynamicModelView:
         for spec in getattr(self.options, "inlines", []):
             formset = InlineFormset(spec=spec)
             rows_data = formset.extract_submitted_data(form_data)
+            await self._keep_stored_inline_secrets(formset, rows_data, item_id)
             valid_rows, row_errors = formset.validate_rows(rows_data, parent_pk=item_id)
             if row_errors:
                 has_inline_errors = True
@@ -1040,6 +1094,13 @@ class DynamicModelView:
 
         # Ownership and inline-model permissions are checked before any write.
         await self._authorize_inline_rows(request, inline_valid_data, parent_pk=item_id)
+
+        # References must point at rows the target admin's get_queryset exposes.
+        hidden_refs = await self._hidden_reference_errors(instance.model_dump(exclude_none=True))
+        if hidden_refs:
+            return await self.update_form_view(
+                request, item_id=item_id, values=data, errors=hidden_refs, status_code=422
+            )
 
         # exclude_none: id is not submitted by the form and must not overwrite the PK
         try:
@@ -1074,6 +1135,70 @@ class DynamicModelView:
                 await self.adapter.save_inline_rows(formset.spec, rows, parent_pk)
             except InlineRowNotOwned as exc:
                 raise HTTPException(status_code=404, detail="Inline row not found") from exc
+
+    async def _keep_stored_inline_secrets(
+        self, formset: InlineFormset, rows: list[dict[str, Any]], parent_pk: Any
+    ) -> None:
+        """Write-only semantics for sensitive inline fields on existing rows.
+
+        Inline rows never render a stored secret, so an empty submitted value on
+        an existing child keeps the stored one (a non-text sensitive field always
+        keeps it). Rows that are not children of ``parent_pk`` are left as
+        submitted; the ownership check rejects them before any write.
+        """
+        sensitive = [f for f in formset.display_fields if f in formset.sensitive_fields]
+        existing_rows = [r for r in rows if r.get("_pk") is not None and not r.get("_delete")]
+        if not sensitive or not existing_rows:
+            return
+        related = await self.adapter.get_related(pk=parent_pk, field=formset.spec.relationship_name)
+        by_pk = {getattr(child, "id", None): child for child in related or []}
+        model_fields = getattr(formset.spec.model, "model_fields", {})
+        for row in existing_rows:
+            child = by_pk.get(row["_pk"])
+            if child is None:
+                continue
+            for name in sensitive:
+                info = model_fields.get(name)
+                opaque = info is not None and not is_text_annotation(info.annotation)
+                if opaque or row.get(name) in (None, ""):
+                    row[name] = getattr(child, name, None)
+
+    def _many_to_one_targets(self) -> dict[str, Any]:
+        """Map each local FK column of a many-to-one relationship to its target class."""
+        inspector = getattr(self.adapter, "inspector", None)
+        targets: dict[str, Any] = {}
+        if not inspector:
+            return targets
+        for rel in inspector.relationships:
+            if getattr(getattr(rel, "direction", None), "name", "") != "MANYTOONE":
+                continue
+            target = getattr(getattr(rel, "mapper", None), "class_", None)
+            for col in getattr(rel, "local_columns", []):
+                key = getattr(col, "key", None) or getattr(col, "name", None)
+                if key and target is not None:
+                    targets[key] = target
+        return targets
+
+    async def _hidden_reference_errors(self, data: dict[str, Any]) -> dict[str, str]:
+        """Return a field error for each FK value the target admin's queryset hides.
+
+        The edit form and the choices endpoint never offer such rows, but a
+        crafted POST/PUT could still submit their key. Only targets with active
+        row scoping need the lookup; the database FK constraint covers the rest.
+        """
+        from hyperadmin.adapters.registry import adapter_registry  # noqa: PLC0415
+
+        errors: dict[str, str] = {}
+        for name, target in self._many_to_one_targets().items():
+            value = data.get(name)
+            if value in (None, "") or not scoped_queryset_filters(target):
+                continue
+            target_adapter = adapter_registry.find_adapter_for_model(target)(
+                target, self.adapter.engine
+            )
+            if await target_adapter.get(pk=value) is None:
+                errors[name] = "Select a valid choice."
+        return errors
 
     async def _authorize_inline_rows(
         self,
@@ -1189,32 +1314,34 @@ class DynamicModelView:
     def _resolve_relation_label(self, instance: Any, target_field: str) -> str:
         """Render the option label for ``instance`` per ``AdminOptions.relation_display``.
 
-        Falls back to ``str(instance)`` when no template / callable is configured
-        or when rendering raises. The view never crashes a popup response over a
+        Falls back to :func:`get_display_name` (never the default ``__str__``,
+        which prints every column) when no template / callable is configured or
+        when rendering raises. The view never crashes a popup response over a
         cosmetic label.
         """
         relation_display = getattr(self.options, "relation_display", None) or {}
         template = relation_display.get(target_field)
         if template is None:
-            return str(instance)
+            return get_display_name(instance)
         if callable(template):
             try:
                 return str(template(instance))
             except Exception:
                 logger.warning(
-                    "relation_display callable for %r raised; falling back to str()",
+                    "relation_display callable for %r raised; falling back to the display name",
                     target_field,
                 )
-                return str(instance)
+                return get_display_name(instance)
         try:
             return template.format(
                 **{name: getattr(instance, name, "") for name in instance.model_fields}
             )
         except Exception:
             logger.warning(
-                "relation_display template %r raised; falling back to str()", target_field
+                "relation_display template %r raised; falling back to the display name",
+                target_field,
             )
-            return str(instance)
+            return get_display_name(instance)
 
     @_request_scoped
     async def create_popup_view(self, request: Request) -> Response:

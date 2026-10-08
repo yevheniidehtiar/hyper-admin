@@ -23,6 +23,7 @@ from hyperadmin import Admin
 from hyperadmin.adapters.sqlalchemy import SQLAlchemyAdapter
 from hyperadmin.adapters.sqlmodel import SQLModelAdapter
 from hyperadmin.auth.models import User as AuthUser
+from hyperadmin.core.inlines import InlineModelSpec
 from hyperadmin.core.introspection import (
     infer_list_display,
     infer_list_filter,
@@ -409,3 +410,360 @@ def test_inferred_defaults_exclude_sensitive_fields() -> None:
         assert "password_hash" not in inferred
         assert "api_key" not in inferred
     assert "password_hash" not in infer_list_filter(OrUser)
+
+
+# ---------------------------------------------------------------------------
+# Review follow-ups
+# ---------------------------------------------------------------------------
+
+_SECRETS = ("h3abc", "h1abc", "h2abc", "key-zzz", "key-aaa", "key-bbb")
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "/admin/ororder",
+        "/admin/ororder/create",
+        "/admin/ororder/1/edit",
+        "/admin/ororder/choices/customer",
+    ],
+)
+def test_relation_labels_never_print_sensitive_values(path: str) -> None:
+    """Scenario: relation labels never print a secret of the target row."""
+    client, _ = _client()
+
+    resp = client.get(path)
+
+    assert resp.status_code == 200
+    for secret in _SECRETS:
+        assert secret not in resp.text
+    assert "zed-1" in resp.text
+
+
+def test_relation_labels_skip_an_override_sensitive_label_field() -> None:
+    client, _ = _client(user_options=AdminOptions(sensitive_fields={"username": True}))
+
+    resp = client.get("/admin/ororder/choices/customer")
+
+    assert resp.status_code == 200
+    assert "zed-1" not in resp.text
+    assert sorted(_choice_values(resp.text)) == ["1", "2", "3"]
+
+
+def test_writing_a_reference_to_a_row_hidden_by_the_target_admin_is_refused() -> None:
+    """Scenario: a crafted write cannot link to a row the target admin hides."""
+    client, engine = _client(user_admin=OrActiveUserAdmin)
+
+    resp = client.put(
+        "/admin/ororder/1", data={"title": "o1", "customer_id": "3"}, follow_redirects=False
+    )
+
+    assert resp.status_code == 422
+    assert _scalar(engine, "SELECT customer_id FROM oracle_order WHERE id = 1") is None
+
+
+def test_creating_with_a_reference_to_a_hidden_row_is_refused() -> None:
+    client, engine = _client(user_admin=OrActiveUserAdmin)
+
+    resp = client.post(
+        "/admin/ororder", data={"title": "new", "customer_id": "3"}, follow_redirects=False
+    )
+
+    assert resp.status_code == 422
+    assert _scalar(engine, "SELECT count(*) FROM oracle_order") == 1
+
+
+def test_writing_a_reference_to_a_visible_row_still_works() -> None:
+    client, engine = _client(user_admin=OrActiveUserAdmin)
+
+    resp = client.put(
+        "/admin/ororder/1", data={"title": "o1", "customer_id": "2"}, follow_redirects=False
+    )
+
+    assert resp.status_code == 303
+    assert _scalar(engine, "SELECT customer_id FROM oracle_order WHERE id = 1") == 2
+
+
+def _scalar(engine: AsyncEngine, sql: str) -> Any:
+    async def _run() -> Any:
+        async with engine.connect() as conn:
+            return (await conn.execute(text(sql))).scalar()
+
+    return anyio.run(_run)
+
+
+# Override-only sensitive field (no marker, no secret-looking name) -----------
+
+
+class PbPerson(SQLModel, table=True):
+    __tablename__ = "oracle_pb_person"
+
+    id: int | None = Field(default=None, primary_key=True)
+    ssn: str = ""
+    age: int = 0
+
+
+class PbVisit(SQLModel, table=True):
+    __tablename__ = "oracle_pb_visit"
+
+    id: int | None = Field(default=None, primary_key=True)
+    note: str = ""
+    person_id: int | None = Field(default=None, foreign_key="oracle_pb_person.id")
+
+    person: Optional[PbPerson] = Relationship()  # noqa: UP045
+
+
+class PbPersonAdmin(ModelAdmin):
+    adapter_class = SQLModelAdapter
+
+
+class PbVisitAdmin(ModelAdmin):
+    adapter_class = SQLModelAdapter
+
+
+def _person_client() -> TestClient:
+    engine = create_async_engine("sqlite+aiosqlite:///:memory:")
+
+    async def _seed_people() -> None:
+        async with engine.begin() as conn:
+            await conn.run_sync(SQLModel.metadata.create_all)
+            await conn.execute(
+                text("INSERT INTO oracle_pb_person (id, ssn, age) VALUES (1, '111-22-3333', 30)")
+            )
+
+    anyio.run(_seed_people)
+    app = FastAPI()
+    admin = Admin(app=app, engine=engine, settings=HyperAdminSettings(create_tables=False))
+    site.register(PbPerson, PbPersonAdmin, options=AdminOptions(sensitive_fields={"ssn": True}))
+    site.register(PbVisit, PbVisitAdmin, options=AdminOptions())
+    admin.mount(path="/admin")
+    return TestClient(app)
+
+
+def test_list_search_does_not_match_an_override_sensitive_field() -> None:
+    """Scenario: a field made sensitive by the admin override is not searchable."""
+    client = _person_client()
+
+    def _row_count(term: str) -> int:
+        resp = client.get(f"/admin/pbperson?search={term}", headers={"hx-request": "true"})
+        assert resp.status_code == 200
+        return resp.text.count('data-testid="list-row"')
+
+    # The result must not depend on whether the term matches the secret.
+    assert _row_count("111-22") == _row_count("zzzz-none")
+
+
+def test_choices_search_does_not_match_an_override_sensitive_field() -> None:
+    client = _person_client()
+
+    hit = client.get("/admin/pbvisit/choices/person?q=111-22")
+    miss = client.get("/admin/pbvisit/choices/person?q=zzzz-none")
+
+    assert hit.status_code == miss.status_code == 200
+    assert _choice_values(hit.text) == _choice_values(miss.text)
+
+
+def test_choices_label_hides_an_override_sensitive_field() -> None:
+    client = _person_client()
+
+    resp = client.get("/admin/pbvisit/choices/person")
+
+    assert _choice_values(resp.text) == ["1"]
+    assert "111-22" not in resp.text
+
+
+@pytest.mark.anyio
+@pytest.mark.parametrize("adapter_cls", [SQLModelAdapter, SQLAlchemyAdapter])
+async def test_empty_search_fields_disable_search(adapter_cls: type) -> None:
+    engine = create_async_engine("sqlite+aiosqlite:///:memory:")
+    await _seed(engine)
+
+    items, total = await adapter_cls(OrUser, engine).list(search="zzz-none", search_fields=[])
+
+    assert total == 3
+    assert len(items) == 3
+
+
+# Inline formsets with a secret column -----------------------------------------
+
+
+class PbAccount(SQLModel, table=True):
+    __tablename__ = "oracle_pb_account"
+
+    id: int | None = Field(default=None, primary_key=True)
+    name: str = ""
+
+    api_keys: list["PbApiKey"] = Relationship(back_populates="account")
+
+
+class PbApiKey(SQLModel, table=True):
+    __tablename__ = "oracle_pb_api_key"
+
+    id: int | None = Field(default=None, primary_key=True)
+    account_id: int | None = Field(default=None, foreign_key="oracle_pb_account.id")
+    name: str = ""
+    api_token: str
+
+    account: Optional[PbAccount] = Relationship(back_populates="api_keys")  # noqa: UP045
+
+
+class PbAccountAdmin(ModelAdmin):
+    adapter_class = SQLModelAdapter
+
+
+def _account_client() -> tuple[TestClient, AsyncEngine]:
+    engine = create_async_engine("sqlite+aiosqlite:///:memory:")
+
+    async def _seed_accounts() -> None:
+        async with engine.begin() as conn:
+            await conn.run_sync(SQLModel.metadata.create_all)
+            await conn.execute(text("INSERT INTO oracle_pb_account (id, name) VALUES (1, 'acme')"))
+            await conn.execute(
+                text(
+                    "INSERT INTO oracle_pb_api_key (id, account_id, name, api_token) "
+                    "VALUES (1, 1, 'ci', 'SUPERSECRETTOKEN')"
+                )
+            )
+
+    anyio.run(_seed_accounts)
+    app = FastAPI()
+    admin = Admin(app=app, engine=engine, settings=HyperAdminSettings(create_tables=False))
+    site.register(
+        PbAccount,
+        PbAccountAdmin,
+        options=AdminOptions(
+            inlines=[
+                InlineModelSpec(model=PbApiKey, fk_field="account_id", relationship_name="api_keys")
+            ]
+        ),
+    )
+    admin.mount(path="/admin")
+    return TestClient(app), engine
+
+
+def test_inline_rows_never_render_a_stored_secret() -> None:
+    """Scenario: an inline child's secret is write-only on the parent's edit page."""
+    client, _ = _account_client()
+
+    resp = client.get("/admin/pbaccount/1/edit")
+
+    assert resp.status_code == 200
+    assert "SUPERSECRETTOKEN" not in resp.text
+    assert 'name="pbapikey-0-api_token"' in resp.text
+
+
+def test_empty_inline_secret_keeps_the_stored_value() -> None:
+    client, engine = _account_client()
+
+    resp = client.put(
+        "/admin/pbaccount/1",
+        data={
+            "name": "acme",
+            "pbapikey-0-pk": "1",
+            "pbapikey-0-name": "ci-renamed",
+            "pbapikey-0-api_token": "",
+        },
+        follow_redirects=False,
+    )
+
+    assert resp.status_code == 303
+    assert _scalar(engine, "SELECT name FROM oracle_pb_api_key WHERE id = 1") == "ci-renamed"
+    assert (
+        _scalar(engine, "SELECT api_token FROM oracle_pb_api_key WHERE id = 1")
+        == "SUPERSECRETTOKEN"
+    )
+
+
+def test_non_empty_inline_secret_is_written() -> None:
+    client, engine = _account_client()
+
+    resp = client.put(
+        "/admin/pbaccount/1",
+        data={
+            "name": "acme",
+            "pbapikey-0-pk": "1",
+            "pbapikey-0-name": "ci",
+            "pbapikey-0-api_token": "rotated",
+        },
+        follow_redirects=False,
+    )
+
+    assert resp.status_code == 303
+    assert _scalar(engine, "SELECT api_token FROM oracle_pb_api_key WHERE id = 1") == "rotated"
+
+
+# Non-string fields matched by the name heuristic ------------------------------
+
+
+class RvDoc(SQLModel, table=True):
+    __tablename__ = "oracle_rv_doc"
+
+    id: int | None = Field(default=None, primary_key=True)
+    title: str = ""
+    is_secret: bool = True
+
+
+class RvMarked(SQLModel, table=True):
+    __tablename__ = "oracle_rv_marked"
+
+    id: int | None = Field(default=None, primary_key=True)
+    title: str = ""
+    flag: bool = Field(default=True, schema_extra={"json_schema_extra": {SENSITIVE_MARKER: True}})
+
+
+class RvAdmin(ModelAdmin):
+    adapter_class = SQLModelAdapter
+
+
+def _doc_client() -> tuple[TestClient, AsyncEngine]:
+    engine = create_async_engine("sqlite+aiosqlite:///:memory:")
+
+    async def _seed_docs() -> None:
+        async with engine.begin() as conn:
+            await conn.run_sync(SQLModel.metadata.create_all)
+            await conn.execute(
+                text("INSERT INTO oracle_rv_doc (id, title, is_secret) VALUES (1, 'd', 0)")
+            )
+            await conn.execute(
+                text("INSERT INTO oracle_rv_marked (id, title, flag) VALUES (1, 'm', 0)")
+            )
+
+    anyio.run(_seed_docs)
+    app = FastAPI()
+    admin = Admin(app=app, engine=engine, settings=HyperAdminSettings(create_tables=False))
+    site.register(RvDoc, RvAdmin, options=AdminOptions())
+    site.register(RvMarked, type("RvMarkedAdmin", (RvAdmin,), {}), options=AdminOptions())
+    admin.mount(path="/admin")
+    return TestClient(app), engine
+
+
+def test_name_heuristic_only_applies_to_text_fields() -> None:
+    assert is_sensitive("is_secret", RvDoc.model_fields["is_secret"]) is False
+    assert is_sensitive("flag", RvMarked.model_fields["flag"]) is True
+    assert "is_secret" not in sensitive_field_names(RvDoc)
+
+
+def test_saving_a_form_as_rendered_keeps_a_secret_looking_boolean() -> None:
+    """Scenario: a boolean named like a secret round-trips through the edit form."""
+    client, engine = _doc_client()
+
+    page = client.get("/admin/rvdoc/1/edit")
+    resp = client.put("/admin/rvdoc/1", data={"title": "edited"}, follow_redirects=False)
+
+    assert re.search(r'<input[^>]*name="is_secret"', page.text)
+    assert not re.search(r'<input[^>]*name="is_secret"[^>]*checked', page.text)
+    assert resp.status_code == 303
+    assert _scalar(engine, "SELECT is_secret FROM oracle_rv_doc WHERE id = 1") == 0
+
+
+def test_a_marked_non_text_field_is_left_out_of_the_edit_form() -> None:
+    client, engine = _doc_client()
+
+    page = client.get("/admin/rvmarked/1/edit")
+    resp = client.put(
+        "/admin/rvmarked/1", data={"title": "edited", "flag": "on"}, follow_redirects=False
+    )
+
+    assert 'name="flag"' not in page.text
+    assert resp.status_code == 303
+    assert _scalar(engine, "SELECT flag FROM oracle_rv_marked WHERE id = 1") == 0
