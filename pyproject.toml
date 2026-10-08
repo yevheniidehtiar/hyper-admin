@@ -359,15 +359,21 @@ type = "simple"
   shell = """
 set -e
 
-cleanup() {
-  echo ""
-  echo "==> Restoring default environment (highest resolution)..."
-  uv sync --all-extras --resolution highest 2>/dev/null || true
-}
-trap cleanup EXIT
-
 echo "==> Upgrading lock file to latest compatible versions..."
 uv lock --upgrade
+
+# A lowest-direct sync rewrites uv.lock; keep the upgraded lock to restore it.
+LOCK_BACKUP="$(mktemp)"
+cp uv.lock "$LOCK_BACKUP"
+
+cleanup() {
+  echo ""
+  echo "==> Restoring the upgraded lock and default environment (highest resolution)..."
+  cp "$LOCK_BACKUP" uv.lock
+  rm -f "$LOCK_BACKUP"
+  uv sync --all-extras --locked 2>/dev/null || true
+}
+trap cleanup EXIT
 
 COMBOS="3.10:lowest-direct 3.13:lowest-direct 3.13:highest"
 
@@ -379,9 +385,15 @@ for combo in $COMBOS; do
   echo "==> Python $pyver + $resolution"
   echo "=========================================="
   uv sync --all-extras --python "$pyver" --resolution "$resolution"
-  uv run poe lint
-  uv run poe test:unit
-  uv run poe security-check
+  cp "$LOCK_BACKUP" uv.lock
+  # UV_NO_SYNC=1: a plain `uv run` (also inside pre-commit hooks) would re-lock
+  # at highest and reinstall, so the lowest-direct versions would never be tested.
+  UV_NO_SYNC=1 uv run poe lint
+  UV_NO_SYNC=1 uv run poe test:unit
+  if [ "$resolution" = "highest" ]; then
+    # Floors' old releases carry known advisories; audit the shipped set only.
+    UV_NO_SYNC=1 uv run poe security-check
+  fi
 done
 
 echo ""

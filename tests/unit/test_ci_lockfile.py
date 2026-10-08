@@ -95,3 +95,49 @@ def test_committed_lock_matches_pyproject() -> None:
         text=True,
     )
     assert result.returncode == 0, result.stderr
+
+
+def _lowest_direct_install_steps(workflow: dict[Any, Any]) -> list[tuple[str, str]]:
+    found = []
+    for job_name, job in workflow["jobs"].items():
+        for step in job["steps"]:
+            run = step.get("run", "")
+            if "--resolution" in run and "uv sync" in run:
+                found.append((job_name, run))
+    return found
+
+
+def test_lowest_direct_rows_keep_the_lowest_environment() -> None:
+    """Scenario: lowest-direct rows really test the lowest versions.
+
+    ``uv sync --resolution lowest-direct`` rewrites uv.lock; a later plain
+    ``uv run`` would re-lock at highest and reinstall. The install step must
+    restore the committed lock and turn off syncing for the following steps.
+    """
+    steps = _lowest_direct_install_steps(_load_workflow("test.yml"))
+
+    assert steps
+    for job_name, run in steps:
+        assert "git checkout -- uv.lock" in run, job_name
+        assert "UV_NO_SYNC=1" in run and "GITHUB_ENV" in run, job_name
+
+
+def test_deps_bump_runs_checks_without_resyncing() -> None:
+    """``poe deps:bump`` must run lint/tests on the environment it just synced."""
+    pyproject = (_REPO_ROOT / "pyproject.toml").read_text()
+    start = pyproject.index('[tool.poe.tasks."deps:bump"]')
+    task = pyproject[start : pyproject.index('"""', pyproject.index('"""', start) + 3)]
+
+    # Nested ``uv run`` calls (pre-commit hooks) need the env var, not just a flag.
+    for check in ("poe lint", "poe test:unit", "poe security-check"):
+        assert f"UV_NO_SYNC=1 uv run {check}" in task, check
+    # The upgraded lock is restored after every lowest-direct sync rewrites it.
+    assert 'cp "$LOCK_BACKUP" uv.lock' in task
+
+
+def test_security_audit_runs_on_the_locked_highest_set_only() -> None:
+    """Old floor releases carry known advisories; audit what the lock ships."""
+    workflow = _load_workflow("test.yml")
+    for job_name, job in workflow["jobs"].items():
+        (step,) = [s for s in job["steps"] if "security-check" in s.get("run", "")]
+        assert step.get("if") == "matrix.resolution == 'highest'", job_name

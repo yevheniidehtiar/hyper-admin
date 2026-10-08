@@ -48,11 +48,16 @@ jobs:
       - name: Install dependencies
         # "highest" installs exactly what uv.lock pins; "lowest-direct" cannot be
         # locked by definition, so it re-resolves (the step above still guards the lock).
+        # That re-resolve rewrites uv.lock, and any later plain `uv run` would re-lock
+        # at highest and reinstall. So restore the committed lock and set UV_NO_SYNC
+        # for every following step (nested `uv run` in pre-commit hooks included).
         run: |
           if [ "${{ matrix.resolution }}" = "highest" ]; then
             uv sync --locked --all-extras --python ${{ matrix.python-version }}
           else
             uv sync --all-extras --python ${{ matrix.python-version }} --resolution ${{ matrix.resolution }}
+            git checkout -- uv.lock
+            echo "UV_NO_SYNC=1" >> "$GITHUB_ENV"
           fi
 
       - name: Lint package
@@ -62,6 +67,10 @@ jobs:
         run: uv run poe test:unit
 
       - name: Security checks
+        # Audits the shipped (locked, highest) set. lowest-direct rows are a
+        # compatibility check of the declared floors, whose old releases carry
+        # known advisories by definition.
+        if: matrix.resolution == 'highest'
         run: uv run poe security-check
 
       - name: Install Playwright browsers
@@ -117,11 +126,16 @@ jobs:
       - name: Install dependencies
         # "highest" installs exactly what uv.lock pins; "lowest-direct" cannot be
         # locked by definition, so it re-resolves (the step above still guards the lock).
+        # That re-resolve rewrites uv.lock, and any later plain `uv run` would re-lock
+        # at highest and reinstall. So restore the committed lock and set UV_NO_SYNC
+        # for every following step (nested `uv run` in pre-commit hooks included).
         run: |
           if [ "${{ matrix.resolution }}" = "highest" ]; then
             uv sync --locked --all-extras --python ${{ matrix.python-version }}
           else
             uv sync --all-extras --python ${{ matrix.python-version }} --resolution ${{ matrix.resolution }}
+            git checkout -- uv.lock
+            echo "UV_NO_SYNC=1" >> "$GITHUB_ENV"
           fi
 
       - name: Lint package
@@ -131,4 +145,8 @@ jobs:
         run: uv run poe test:unit
 
       - name: Security checks
+        # Audits the shipped (locked, highest) set. lowest-direct rows are a
+        # compatibility check of the declared floors, whose old releases carry
+        # known advisories by definition.
+        if: matrix.resolution == 'highest'
         run: uv run poe security-check
