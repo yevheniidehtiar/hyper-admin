@@ -17,8 +17,10 @@ from hyperadmin.core.introspection import (
     infer_search_fields,
 )
 from hyperadmin.core.layouts import FormLayout
+from hyperadmin.core.primary_key import DEFAULT_PK, InvalidPrimaryKey, PrimaryKeyInfo
 
 __all__ = [
+    "DEFAULT_PK",
     "ActionDef",
     "ChoiceItem",
     "ChoicesProvider",
@@ -27,10 +29,12 @@ __all__ = [
     "FieldsetSpec",
     "FormLayout",
     "InlineModelSpec",
+    "InvalidPrimaryKey",
     "JsonApiAdapter",
     "ListEnvelope",
     "ObjectPermissionChecker",
     "PaginationMeta",
+    "PrimaryKeyInfo",
     "SelectFieldMeta",
     "action",
     "classify_field",
