@@ -374,7 +374,7 @@ async def test_filter_metadata_builder_bool(view_instance, anyio_backend):
     """Test filter metadata generation for boolean fields."""
     view_instance.options.list_filter = ["is_active"]
 
-    metadata = await view_instance._get_filter_metadata()
+    metadata = await view_instance._get_filter_metadata(MagicMock())
 
     assert len(metadata) == 1
     assert metadata[0]["name"] == "is_active"
@@ -388,7 +388,7 @@ async def test_filter_metadata_builder_enum(view_instance, anyio_backend):
     """Test filter metadata generation for enum fields."""
     view_instance.options.list_filter = ["color"]
 
-    metadata = await view_instance._get_filter_metadata()
+    metadata = await view_instance._get_filter_metadata(MagicMock())
 
     assert len(metadata) == 1
     assert metadata[0]["name"] == "color"

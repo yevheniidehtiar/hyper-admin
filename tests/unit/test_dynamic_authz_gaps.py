@@ -15,6 +15,7 @@ security hole that existed before the fix:
 
 import asyncio
 import os
+import re
 import tempfile
 from pathlib import Path
 from typing import Any, Optional
@@ -123,6 +124,10 @@ class AzInvoiceAdmin(ModelAdmin):
     adapter_class = SQLModelAdapter
 
 
+class AzLineAdmin(ModelAdmin):
+    adapter_class = SQLModelAdapter
+
+
 ALL_PERMS = frozenset(
     f"{verb}_{model}"
     for verb in ("view", "add", "change", "delete")
@@ -207,6 +212,7 @@ def _build_app(
     object_checker: Any = None,
     order_admin: type[ModelAdmin] = AzOrderAdmin,
     adapter_class: type | None = None,
+    register_line: bool = False,
 ) -> FastAPI:
     app = FastAPI()
 
@@ -234,6 +240,8 @@ def _build_app(
         ),
     )
     site.register(AzInvoice, AzInvoiceAdmin)
+    if register_line:
+        site.register(AzLine, AzLineAdmin)
     if adapter_class is not None:
         order_admin.adapter_class = adapter_class
     admin.mount(path="/admin")
@@ -246,11 +254,16 @@ def _client(
     tenant: str | None = None,
     object_checker: Any = None,
     notes_for_5: str = "",
+    register_line: bool = False,
 ) -> tuple[TestClient, AsyncEngine]:
     engine = create_async_engine("sqlite+aiosqlite:///:memory:")
     anyio.run(_seed, engine, notes_for_5)
     app = _build_app(
-        engine, user if user is not None else _User(), tenant=tenant, object_checker=object_checker
+        engine,
+        user if user is not None else _User(),
+        tenant=tenant,
+        object_checker=object_checker,
+        register_line=register_line,
     )
     return TestClient(app), engine
 
@@ -573,7 +586,7 @@ def test_inline_create_cannot_claim_an_existing_child_row() -> None:
 
 def test_inline_formset_enforces_inline_model_add_permission() -> None:
     perms = ALL_PERMS - {"add_azline"}
-    client, engine = _client(_User(perms))
+    client, engine = _client(_User(perms), register_line=True)
 
     resp = client.put(
         "/admin/azorder/1",
@@ -587,7 +600,7 @@ def test_inline_formset_enforces_inline_model_add_permission() -> None:
 
 def test_inline_formset_enforces_inline_model_delete_permission() -> None:
     perms = ALL_PERMS - {"delete_azline"}
-    client, engine = _client(_User(perms))
+    client, engine = _client(_User(perms), register_line=True)
 
     resp = client.put(
         "/admin/azorder/1",
@@ -683,3 +696,128 @@ def test_every_handler_calls_the_adapter_inside_the_request_scope() -> None:
     assert called >= set(_SCOPED_METHODS), set(_SCOPED_METHODS) - called
     outside = [name for name, in_scope in adapter_cls.calls if not in_scope]
     assert outside == []
+
+
+# ---------------------------------------------------------------------------
+# Review follow-ups: related rows embedded in pages, uploads, unregistered models
+# ---------------------------------------------------------------------------
+
+_NO_CUSTOMER_VIEW = {"view_azorder", "add_azorder", "change_azorder"}
+
+
+def _link_order_to_customer(engine: AsyncEngine, order_id: int, customer_id: int) -> None:
+    async def _run() -> None:
+        async with engine.begin() as conn:
+            await conn.execute(
+                text("UPDATE authz_order SET customer_id = :c WHERE id = :o"),
+                {"c": customer_id, "o": order_id},
+            )
+
+    anyio.run(_run)
+
+
+@pytest.mark.parametrize(
+    "path", ["/admin/azorder", "/admin/azorder/create", "/admin/azorder/1/edit"]
+)
+def test_pages_do_not_embed_target_rows_without_view_on_the_target(path: str) -> None:
+    """Scenario: pages never embed related rows the user may not view."""
+    client, _ = _client(_User(_NO_CUSTOMER_VIEW))
+
+    resp = client.get(path)
+
+    assert resp.status_code == 200
+    assert "alice" not in resp.text
+    assert "bob" not in resp.text
+
+
+def test_pages_embed_target_rows_with_view_on_the_target() -> None:
+    client, _ = _client(_User(_NO_CUSTOMER_VIEW | {"view_azcustomer"}))
+
+    resp = client.get("/admin/azorder/create")
+
+    assert resp.status_code == 200
+    assert "alice" in resp.text
+
+
+def test_edit_form_keeps_the_selected_target_without_view_on_the_target() -> None:
+    """The current FK value survives a save even when the target labels are hidden."""
+    client, engine = _client(_User(_NO_CUSTOMER_VIEW))
+    _link_order_to_customer(engine, 1, 2)
+
+    resp = client.get("/admin/azorder/1/edit")
+
+    assert resp.status_code == 200
+    assert "bob" not in resp.text
+    assert re.search(r'<option[^>]*value="2"[^>]*selected', resp.text)
+
+
+def test_upload_never_overwrites_an_existing_file() -> None:
+    """Scenario: an upload cannot overwrite another record's file."""
+    existing = Path(_STORAGE_ROOT) / f"tenantB-{os.getpid()}" / "contract.pdf"
+    existing.parent.mkdir(parents=True, exist_ok=True)
+    existing.write_bytes(b"ORIGINAL")
+    client, _ = _client(_User({"add_azinvoice"}))
+
+    resp = client.post(
+        "/admin/azinvoice/upload/pdf",
+        files={"file": (f"{existing.parent.name}/contract.pdf", b"PWNED", "application/pdf")},
+    )
+
+    assert resp.status_code == 200
+    assert existing.read_bytes() == b"ORIGINAL"
+    stored = resp.json()["filename"]
+    assert not os.path.isabs(stored)
+    assert "/" not in stored
+    assert (Path(_STORAGE_ROOT) / stored).read_bytes() == b"PWNED"
+
+
+def test_upload_with_the_same_name_twice_keeps_both_files() -> None:
+    client, _ = _client()
+
+    first = client.post("/admin/azinvoice/upload/pdf", files={"file": ("dup.txt", b"one")})
+    second = client.post("/admin/azinvoice/upload/pdf", files={"file": ("dup.txt", b"two")})
+
+    assert first.json()["filename"] != second.json()["filename"]
+    assert (Path(_STORAGE_ROOT) / first.json()["filename"]).read_bytes() == b"one"
+    assert (Path(_STORAGE_ROOT) / second.json()["filename"]).read_bytes() == b"two"
+
+
+_NO_LINE_PERMS = frozenset(p for p in ALL_PERMS if not p.endswith("_azline"))
+
+
+def test_unregistered_inline_model_falls_back_to_parent_permission_on_create() -> None:
+    """Scenario: staff with rights on the parent can add rows of an unregistered inline."""
+    client, engine = _client(_User(_NO_LINE_PERMS))
+
+    resp = client.post(
+        "/admin/azorder",
+        data=_order_form(**{"azline-0-sku": "new", "azline-0-qty": "1"}),
+        follow_redirects=False,
+    )
+
+    assert resp.status_code == 303
+    assert _scalar(engine, "SELECT id FROM authz_line WHERE sku = 'new'") is not None
+
+
+def test_unregistered_inline_model_falls_back_to_parent_permission_on_update() -> None:
+    client, _ = _client(_User(_NO_LINE_PERMS))
+
+    resp = client.put(
+        "/admin/azorder/1",
+        data=_order_form(**{"azline-0-pk": "10", "azline-0-sku": "line-10", "azline-0-qty": "1"}),
+        follow_redirects=False,
+    )
+
+    assert resp.status_code == 303
+
+
+def test_choices_on_an_unregistered_target_fall_back_to_the_source_permission() -> None:
+    client, _ = _client(_User({"view_azorder"}))
+
+    assert client.get("/admin/azorder/choices/lines").status_code == 200
+
+
+def test_choices_on_a_registered_inline_target_still_require_its_view_permission() -> None:
+    client, _ = _client(_User({"view_azorder"}), register_line=True)
+
+    assert client.get("/admin/azorder/choices/lines").status_code == 403

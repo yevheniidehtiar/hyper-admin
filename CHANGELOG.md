@@ -21,9 +21,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
     are refused). Uploads also require a file field.
   - Inline formsets reject a submitted child pk that is not an existing child of
     the parent being saved (404, nothing written), and enforce the inline
-    model's own `add` / `change` / `delete` permissions.
-  - The choices endpoint requires `view` on the target model as well as the
-    source model.
+    model's own `add` / `change` / `delete` permissions when that model is
+    registered. An unregistered inline model has no permission rows, so the
+    parent's `add` / `change` permission governs its rows.
+  - Related rows need `view` on the target model wherever they are disclosed:
+    the choices endpoint (403), list-page relation filters (omitted) and the
+    create/edit relation widgets (only the selected key is kept, labelled
+    `Model (pk)`). An unregistered target falls back to the source model's
+    permission.
+  - `POST /{model}/upload/{field}` ignores the client path: it stores the
+    sanitised basename under a fresh random prefix, never overwrites an
+    existing file, refuses names outside the storage root, and returns the
+    stored name relative to the storage root (not an absolute server path).
+  - Upgrade note for adapter authors: an adapter that implements
+    `save_inline_rows` must also implement `inline_child_pks(spec, parent_pk)`.
+    The default returns an empty set, so every save of a parent with existing
+    inline rows is rejected (404) until it is implemented. See
+    `docs/api/adapters.md`.
 - **Query oracles on secret columns closed** (st-v058-byoa-53). A user who could
   list a model could previously probe a column such as `password_hash` one
   query at a time. All four oracles are closed:

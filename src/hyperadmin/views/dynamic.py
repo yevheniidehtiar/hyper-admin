@@ -3,9 +3,11 @@ import logging
 import math
 import os
 import re
+import uuid
 from collections.abc import Awaitable, Callable, Generator
 from contextlib import contextmanager
 from http import HTTPStatus
+from pathlib import PurePosixPath
 from typing import TYPE_CHECKING, Any, TypeVar, Union, cast, get_args, get_origin
 
 from fastapi import HTTPException, Query, Request
@@ -30,7 +32,7 @@ from hyperadmin.core.fields import classify_field
 from hyperadmin.core.options import AdminOptions
 from hyperadmin.core.registry import site
 from hyperadmin.core.sensitive import is_sensitive, sensitive_field_names
-from hyperadmin.core.storage_paths import resolve_storage_path
+from hyperadmin.core.storage_paths import resolve_storage_path, storage_root
 from hyperadmin.discover import app_label_var
 from hyperadmin.views.forms import (
     CheckboxInput,
@@ -187,6 +189,28 @@ class DynamicModelView:
             self._fallback_admins[model] = admin_class(model) if admin_class else None
         return self._fallback_admins[model]
 
+    def _is_registered(self, model: Any) -> bool:
+        """Return whether ``model`` has its own registered admin (and thus permission rows)."""
+        return model is self.model or self._admin_for_model(model) is not None
+
+    async def _may_view_related(self, request: Request, target_model: Any) -> bool:
+        """Return whether rows of ``target_model`` may be disclosed to the request's user.
+
+        Single gate for every path that embeds related rows: the choices
+        endpoint, list-page FK filters and the create/edit relation widgets.
+        A registered target needs ``view_<target>``. An unregistered target has
+        no permission rows that could ever be granted, so it falls back to the
+        source model's permission, which every caller has already checked.
+        """
+        if target_model is None or not self._is_registered(target_model):
+            return True
+        return await self._has_permission(request, f"view_{target_model.__name__.lower()}")
+
+    def _relation_target_for_field(self, name: str) -> Any:
+        """Return the target class of the relation rendered for field ``name`` (or ``None``)."""
+        rel_name = self._fk_to_relation().get(name) or name
+        return self._relation_targets().get(rel_name)
+
     def _queryset_filter_for(self, model: Any) -> Callable[[Any], dict[str, Any]] | None:
         """Return the ``get_queryset`` callable that scopes rows of ``model``."""
         get_queryset = getattr(self._admin_for_model(model), "get_queryset", None)
@@ -322,10 +346,19 @@ class DynamicModelView:
 
         return f"{view_name}.html"
 
-    async def _get_filter_metadata(self) -> list[dict[str, Any]]:
-        """Introspects list_filter fields to build metadata for filter UI."""
+    async def _get_filter_metadata(self, request: Request) -> list[dict[str, Any]]:
+        """Introspects list_filter fields to build metadata for filter UI.
+
+        A relation filter lists rows of the target model, so it is only built
+        when the user may view that model (see :meth:`_may_view_related`).
+        """
         allowed = self._filterable_fields()
-        fields = [f for f in (self.options.list_filter or []) if f in allowed]
+        fields = [
+            f
+            for f in (self.options.list_filter or [])
+            if f in allowed
+            and await self._may_view_related(request, self._relation_target_for_field(f))
+        ]
         return await build_filter_metadata(self.model, fields, self.adapter)
 
     @functools.cached_property
@@ -480,7 +513,9 @@ class DynamicModelView:
             rows.append(row)
 
         # Get filter metadata if list_filter is configured
-        filter_metadata = await self._get_filter_metadata() if self.options.list_filter else []
+        filter_metadata = (
+            await self._get_filter_metadata(request) if self.options.list_filter else []
+        )
 
         context = {
             "request": request,
@@ -577,12 +612,17 @@ class DynamicModelView:
         self,
         field_names: list[str],
         selected_values: dict[str, Any] | None = None,
+        request: Request | None = None,
     ) -> dict[str, HtmxWidget]:
         """Return a widget override dict for relation fields detected by classify_field().
 
         For each field in *field_names* that resolves to a relation, this method
         either pre-fetches choices (preload=True) or creates a lazy HTMX widget
         (preload=False) pointing at the choices endpoint for that field.
+
+        When the user may not view the target model, no target row is fetched:
+        the widget only carries the currently selected key(s), labelled
+        ``"<Model> (<pk>)"``, so saving the form keeps the stored value.
         """
         widgets: dict[str, HtmxWidget] = {}
         sv = selected_values or {}
@@ -606,7 +646,10 @@ class DynamicModelView:
             choices_url = f"/{self._model_name_lower}/choices/{rel_name}"
             dependent_on = meta.dependent_on or dependent_fields.get(name)
             choices: list[ChoiceItem]
-            if meta.preload:
+            target = self._relation_target_for_field(name)
+            if request is not None and not await self._may_view_related(request, target):
+                choices = self._opaque_selected_choices(target, sv.get(name))
+            elif meta.preload:
                 raw_choices = await self.adapter.get_choices(rel_name)
                 current = str(sv.get(name, ""))
                 choices = [
@@ -631,6 +674,19 @@ class DynamicModelView:
                 )
         return widgets
 
+    @staticmethod
+    def _opaque_selected_choices(target: Any, current: Any) -> list[ChoiceItem]:
+        """Choices for the selected key(s) only, labelled without reading the target row."""
+        if current in (None, ""):
+            return []
+        values = current if isinstance(current, (list, tuple, set)) else [current]
+        target_name = getattr(target, "__name__", "Item")
+        return [
+            ChoiceItem(value=str(v), label=f"{target_name} ({v})", selected=True)
+            for v in values
+            if v not in (None, "")
+        ]
+
     @_request_scoped
     async def create_form_view(
         self,
@@ -652,7 +708,7 @@ class DynamicModelView:
         if create_include and self.form_create_exclude:
             create_include = [f for f in create_include if f not in self.form_create_exclude]
         relation_widgets = await self._build_relation_widgets(
-            field_names=create_include or [], selected_values=values
+            request=request, field_names=create_include or [], selected_values=values
         )
         form = PydanticForm(
             self.model,
@@ -757,6 +813,7 @@ class DynamicModelView:
         if create_include and self.form_create_exclude:
             create_include = [f for f in create_include if f not in self.form_create_exclude]
         relation_widgets = await self._build_relation_widgets(
+            request=request,
             field_names=create_include or [],
         )
         form = PydanticForm(
@@ -871,7 +928,7 @@ class DynamicModelView:
             values = self._without_sensitive(values)
 
         relation_widgets = await self._build_relation_widgets(
-            field_names=self.form_include or [], selected_values=initial_values
+            request=request, field_names=self.form_include or [], selected_values=initial_values
         )
         form = PydanticForm(
             self.model,
@@ -930,6 +987,7 @@ class DynamicModelView:
         form_data = await request.form()
 
         relation_widgets = await self._build_relation_widgets(
+            request=request,
             field_names=self.form_include or [],
         )
         form = PydanticForm(
@@ -1028,13 +1086,19 @@ class DynamicModelView:
         Runs before any write. A submitted ``<prefix>-<i>-pk`` is never trusted
         on its own: it must be an existing child of ``parent_pk`` (``None`` for a
         parent being created, which owns no rows). Each row also needs the
-        inline model's own ``add`` / ``change`` / ``delete`` permission.
+        inline model's own ``add`` / ``change`` / ``delete`` permission when that
+        model is registered (see :meth:`_is_registered`).
         """
         for formset, rows in inline_valid_data:
             try:
                 await self.adapter.ensure_inline_rows_owned(formset.spec, rows, parent_pk)
             except InlineRowNotOwned as exc:
                 raise HTTPException(status_code=404, detail="Inline row not found") from exc
+            if not self._is_registered(formset.spec.model):
+                # An unregistered inline model has no permission rows that could
+                # ever be granted: the parent's add/change check (made by the
+                # calling handler) governs its rows.
+                continue
             needed: set[str] = set()
             for row in rows:
                 if row.get("_delete"):
@@ -1104,9 +1168,8 @@ class DynamicModelView:
             raise HTTPException(status_code=404, detail=f"Unknown relation field: {field_name!r}")
 
         # Listing related rows discloses the target model: require view on it too.
-        target_model = targets[field_name]
-        if target_model is not None:
-            await self._check_permission(request, "view", model_name=target_model.__name__.lower())
+        if not await self._may_view_related(request, targets[field_name]):
+            raise HTTPException(status_code=403, detail="Permission denied")
 
         # Forward only the declared cascade keys (e.g. country_id=1)
         declared = self._declared_cascade_keys(field_name)
@@ -1186,7 +1249,9 @@ class DynamicModelView:
         create_include = self.form_include
         if create_include and self.form_create_exclude:
             create_include = [f for f in create_include if f not in self.form_create_exclude]
-        relation_widgets = await self._build_relation_widgets(field_names=create_include or [])
+        relation_widgets = await self._build_relation_widgets(
+            field_names=create_include or [], request=request
+        )
         form = PydanticForm(
             self.model,
             widgets=relation_widgets,
@@ -1296,7 +1361,11 @@ class DynamicModelView:
         Requires ``add`` or ``change`` on the model, and ``field_name`` must be a
         file field (404 otherwise).
 
-        Returns a JSON response with the stored filename.
+        The client-supplied name is never used as a path: only its sanitised
+        basename is kept, a fresh name is generated so an existing file is never
+        overwritten, and the target must resolve inside the storage root.
+
+        Returns a JSON response with the stored name, relative to the storage root.
         """
         await self._check_any_permission(request, ("add", "change"))
         if field_name not in self._get_file_fields():
@@ -1310,10 +1379,27 @@ class DynamicModelView:
         upload = form_data.get("file")
         if not isinstance(upload, StarletteUpload) or not upload.filename:
             raise HTTPException(status_code=400, detail="No file provided")
-        filename = self.storage.write(upload.file, upload.filename)
+        name = self._new_upload_name(upload.filename)
+        if storage_root(self.storage) is not None:
+            target = resolve_storage_path(self.storage, name)
+            if target is None or target.exists():
+                raise HTTPException(status_code=400, detail="Invalid file name")
+        self.storage.write(upload.file, name)
         from starlette.responses import JSONResponse  # noqa: PLC0415
 
-        return JSONResponse({"filename": filename})
+        return JSONResponse({"filename": name})
+
+    def _new_upload_name(self, client_name: str) -> str:
+        """Return a fresh, root-level storage name derived from ``client_name``.
+
+        Directory parts are dropped, the basename is sanitised, and a random
+        prefix makes the name unique so an upload never replaces a stored file.
+        """
+        basename = PurePosixPath(client_name.replace("\\", "/")).name
+        get_name = getattr(self.storage, "get_name", None)
+        safe = str(get_name(basename)) if callable(get_name) else basename
+        safe = PurePosixPath(safe.replace("\\", "/")).name.lstrip(".")
+        return f"{uuid.uuid4().hex}-{safe}" if safe else uuid.uuid4().hex
 
     @_request_scoped
     async def delete_file_view(
