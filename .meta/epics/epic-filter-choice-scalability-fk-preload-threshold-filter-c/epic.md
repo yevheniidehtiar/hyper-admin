@@ -17,7 +17,7 @@ github:
   last_sync_hash: sha256:5d360a47ad0211eef3eaa959b60f5dd7c2fcc63680b9348672cd27c8842e9893
   synced_at: 2026-04-07T17:23:23.790Z
 created_at: 2026-03-27T00:38:11Z
-updated_at: 2026-03-27T00:46:42Z
+updated_at: 2026-09-28T00:00:00Z
 ---
 
 ## Overview
@@ -39,3 +39,7 @@ Parent epic for FK widget and filter metadata optimizations.
 ## Bottlenecks addressed
 - FK `preload=True` default loads ALL related records as `<option>` tags — browser crash on large tables
 - Filter metadata loads `page_size=1000` for every FK field per request with no caching
+
+## Status note (2026-09-28 roadmap re-cut)
+
+Re-cut: stays in v0.7.0a (scale-core).

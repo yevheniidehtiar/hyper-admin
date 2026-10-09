@@ -12,14 +12,15 @@ labels:
   - area:auth
   - size:M
 estimate: null
-epic_ref: null
+epic_ref:
+  id: hHg_npkJyrk7
 github:
   issue_number: 443
   repo: yevheniidehtiar/hyper-admin
   last_sync_hash: sha256:5d5df593bccfbaa6e071711d339a5ea8ee908c2e45342647acc5937054ddd61c
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-04-01T21:41:24Z
-updated_at: 2026-04-01T21:41:24Z
+updated_at: 2026-09-28T00:00:00Z
 ---
 
 ## Context

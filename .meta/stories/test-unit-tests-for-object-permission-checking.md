@@ -2,7 +2,7 @@
 type: story
 id: tnJ9lOQerEjS
 title: "test: unit tests for object permission checking"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -18,7 +18,7 @@ github:
   last_sync_hash: sha256:80003ced5861b39185fc2094e3434c3ca5260d30e9fe80b71da288b6adad5216
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-04-01T21:38:24Z
-updated_at: 2026-04-01T21:38:24Z
+updated_at: 2026-09-28T00:00:00Z
 ---
 
 ## Context
@@ -48,3 +48,7 @@ Depends on: #430 (all OLP implementation complete)
 - Each BDD scenario from OLP-2 through OLP-8 maps to at least one test
 - Use mock objects for the permission checker in unit tests
 - Follow existing test patterns in `tests/unit/test_auth_permissions.py`
+
+## Status note (2026-09-28 roadmap re-cut)
+
+Done (superseded) — delivered by #482 (PR #547): `tests/unit/test_object_permissions.py`, `tests/unit/test_views_object_permissions.py`.

@@ -2,7 +2,7 @@
 type: story
 id: st-v055-bulk-02
 title: "feat(views): add run_bulk_action endpoint with per-row outcome"
-status: todo
+status: done
 priority: high
 assignee: null
 labels:
@@ -15,7 +15,7 @@ estimate: null
 epic_ref:
   id: ep-v055-bulk-01
 created_at: 2026-05-10T00:00:00Z
-updated_at: 2026-05-10T00:00:00Z
+updated_at: 2026-09-28T00:00:00Z
 ---
 
 ## Summary
@@ -77,3 +77,7 @@ Scenario: object-permission denial surfaces per row
 ## Parent
 
 - Epic: `epic-v055-bulk-actions`
+
+## Status note (2026-09-28 roadmap re-cut)
+
+Done — merged in PR #566 (c323d7b): `DynamicModelView.run_bulk_action`, `core/bulk_results.py`, `tests/unit/test_bulk_actions.py`.

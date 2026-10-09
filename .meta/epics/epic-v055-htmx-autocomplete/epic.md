@@ -2,7 +2,7 @@
 type: epic
 id: ep-v055-ac-01
 title: "epic(views): HTMX FK/M2M autocomplete with dependent filtering and inline create"
-status: todo
+status: in_progress
 priority: high
 owner: null
 labels:
@@ -15,7 +15,7 @@ labels:
 milestone_ref:
   id: v055-bulk-ac-01
 created_at: 2026-05-10T00:00:00Z
-updated_at: 2026-05-10T00:00:00Z
+updated_at: 2026-09-28T00:00:00Z
 ---
 
 ## Overview
@@ -76,3 +76,7 @@ compatible — existing relation widgets keep working unchanged.
 
 - Milestone: `v055-bulk-actions-autocomplete`
 - Tracking: `epic-upstream-readiness` (H6)
+
+## Status note (2026-09-28 roadmap re-cut)
+
+In progress — #560 (relation_filters/relation_display) and #563 (create_popup_view) merged. Open: `AutocompleteWidget` template + `ha-popup-root` slot, Playwright scenarios.

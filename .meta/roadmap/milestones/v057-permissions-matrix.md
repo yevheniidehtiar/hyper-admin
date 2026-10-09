@@ -2,10 +2,12 @@
 type: milestone
 id: v057-pmx-01
 title: v0.5.7 — Permissions Matrix
-status: planned
+status: todo
 created_at: 2026-05-11T00:00:00Z
-updated_at: 2026-05-11T00:00:00Z
+updated_at: 2026-09-28T00:00:00Z
 ---
+
+**Roadmap position 8/16 (2026-09-28 re-cut).** Enterprise: model × action permission grid (H20) and the `examples/full-demo/` qualification umbrella.
 
 H20 from upstream readiness. Tabular model × action grid editor for groups
 and roles; object-permission column integrates with H5; bulk save with

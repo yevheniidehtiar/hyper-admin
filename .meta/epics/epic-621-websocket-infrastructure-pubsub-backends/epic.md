@@ -2,7 +2,7 @@
 type: epic
 id: MxA3yEbHFb9t
 title: "Epic 6.2.1: WebSocket Infrastructure & PubSub Backends"
-status: todo
+status: in_progress
 priority: medium
 owner: null
 labels:
@@ -16,7 +16,7 @@ github:
   last_sync_hash: sha256:0f986f1a5da15205ca3e94daccc4678d5dcb2c88b130e8283c56fff4d2cb0d97
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-03-29T07:02:09Z
-updated_at: 2026-03-29T07:02:10Z
+updated_at: 2026-09-28T00:00:00Z
 ---
 
 ## Overview
@@ -54,3 +54,7 @@ The original #307 story (`feat(realtime): ConnectionManager + WebSocket endpoint
 
 ## Parallel Tracks
 The MVP slice runs sequentially (SDD → registry tests → registry impl → SSE + WS in parallel → widget → E2E). PubSub stories T1→T2→T3→T4 run independently and merge after the MVP. A short follow-up wires `pubsub_backend.subscribe(...)` into `realtime/ws.py` once both tracks land.
+
+## Status note (2026-09-28 roadmap re-cut)
+
+Connection foundation (SSE + WS endpoints, ConnectionRegistry, status widget, lifecycle E2E) shipped in PR #551 / #567. Remaining: PubSubBackend protocol + InMemory/Redis (#302–#305). Milestone v0.6.0b — Real-Time Pub/Sub.

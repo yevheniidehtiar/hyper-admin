@@ -1,7 +1,8 @@
 ---
 type: story
+id: rt-found-sdd-01
 title: "docs(spec): SDD for real-time connection foundation"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -10,9 +11,10 @@ labels:
   - size:M
   - area:realtime
 estimate: null
-epic_ref: null
+epic_ref:
+  id: MxA3yEbHFb9t
 created_at: 2026-05-05T00:00:00Z
-updated_at: 2026-05-05T00:00:00Z
+updated_at: 2026-09-28T00:00:00Z
 ---
 
 ## Context
@@ -34,3 +36,7 @@ Blocks every implementation story in the MVP slice.
 
 ## Notes for Implementer
 Re-use the BDD scenarios verbatim from the test/feat stories so the issue body and SDD never drift. Once approved, implementation sub-tasks unblock.
+
+## Status note (2026-09-28 roadmap re-cut)
+
+Done — `docs/specs/realtime-connection-foundation.md` merged in PR #551 (c11db0e).

@@ -2,7 +2,7 @@
 type: epic
 id: ep-v055-bulk-01
 title: "epic(actions): bulk actions with Pydantic parameter forms"
-status: todo
+status: in_progress
 priority: high
 owner: null
 labels:
@@ -15,7 +15,7 @@ labels:
 milestone_ref:
   id: v055-bulk-ac-01
 created_at: 2026-05-10T00:00:00Z
-updated_at: 2026-05-10T00:00:00Z
+updated_at: 2026-09-28T00:00:00Z
 ---
 
 ## Overview
@@ -77,3 +77,7 @@ enforcement. Permission re-check runs per row inside the bulk handler.
 
 - Milestone: `v055-bulk-actions-autocomplete`
 - Tracking: `epic-upstream-readiness` (H3)
+
+## Status note (2026-09-28 roadmap re-cut)
+
+In progress — #559 (ActionDef bulk/form params) and #566 (run_bulk_action endpoint) merged. Open: list-view checkbox column + action selector (`bulk-checkbox`, `bulk-action-select`, `bulk-run-btn` testids not yet in `list.html`), Playwright scenarios.

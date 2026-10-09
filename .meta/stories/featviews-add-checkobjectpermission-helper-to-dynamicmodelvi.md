@@ -2,7 +2,7 @@
 type: story
 id: y2JzXFHem8Vx
 title: "feat(views): add _check_object_permission helper to DynamicModelView"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -18,7 +18,7 @@ github:
   last_sync_hash: sha256:7fbf3cf10fe7f93917c4e6b6581987fb4b8e112a42f1b936ec08cafd6f0375a8
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-04-01T21:37:56Z
-updated_at: 2026-04-01T21:37:56Z
+updated_at: 2026-09-28T00:00:00Z
 ---
 
 ## Context
@@ -56,3 +56,7 @@ Depends on: #424 (ObjectPermissionChecker protocol), #425 (AdminOptions config)
 - Follow the pattern of existing `_check_permission()` at line 119 of `dynamic.py`
 - The checker is async: `await checker.has_object_permission(user, obj, action)`
 - Superuser check: `if user.is_superuser: return` (same as model-level check)
+
+## Status note (2026-09-28 roadmap re-cut)
+
+Done (superseded) — `DynamicModelView._check_object_permission` exists in `views/dynamic.py` (PR #544).

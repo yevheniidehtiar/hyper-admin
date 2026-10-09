@@ -2,7 +2,7 @@
 type: story
 id: xDYxl4HL2-TR
 title: "feat(auth): add MFA enable/disable settings view"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -20,7 +20,7 @@ github:
   last_sync_hash: sha256:1a7e7805a6bc611ca17b9276017d8921859ef8fd7a97cab1ee85ae75cd81f8e8
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-04-01T21:39:41Z
-updated_at: 2026-04-01T21:39:41Z
+updated_at: 2026-09-28T00:00:00Z
 ---
 
 ## Context
@@ -68,3 +68,7 @@ Depends on: #435 (MFA challenge view — reuses code verification flow)
 - Enabling MFA requires email verification (send code, then verify)
 - Disabling MFA is immediate — no code required (user is already authenticated)
 - Store `mfa_enabled` and `mfa_method` on the User model (via adapter update)
+
+## Status note (2026-09-28 roadmap re-cut)
+
+Done (superseded) — delivered by #487 (PR #545): `mfa_settings_view` / `mfa_enable_view` in `auth/views.py`.

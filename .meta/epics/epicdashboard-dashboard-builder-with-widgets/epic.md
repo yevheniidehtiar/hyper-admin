@@ -10,14 +10,15 @@ labels:
   - area:core
   - area:views
   - roadmap
-milestone_ref: null
+milestone_ref:
+  id: 8DidH5NiN6cP
 github:
   issue_number: 422
   repo: yevheniidehtiar/hyper-admin
   last_sync_hash: sha256:10e571bcd1e0b262db9289b059467c0fc5bdee48f1673f35ddaff402e1da3280
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-04-01T21:36:16Z
-updated_at: 2026-04-01T21:46:50Z
+updated_at: 2026-09-28T00:00:00Z
 ---
 
 ## Overview
@@ -61,3 +62,7 @@ Implement a customizable dashboard builder with widget cards, aggregation helper
 - [ ] #466 — feat(ui): add Sortable.js drag-drop widget reordering
 - [ ] #468 — feat(core): add dashboard config to Admin class
 - [ ] #469 — test(e2e): dashboard E2E test suite
+
+## Status note (2026-09-28 roadmap re-cut)
+
+Linked to v0.5.4 — Reporting & Charts, which re-scoped the dashboard milestone around ReportView + charts. The widget/drag-drop dashboard stories stay in scope as the follow-on layer on top of ReportView (nothing cut).

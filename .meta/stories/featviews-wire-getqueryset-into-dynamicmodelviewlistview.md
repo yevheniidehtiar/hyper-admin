@@ -2,7 +2,7 @@
 type: story
 id: _jrhZw9RSd6K
 title: "feat(views): wire get_queryset into DynamicModelView.list_view"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -18,7 +18,7 @@ github:
   last_sync_hash: sha256:3c7876d5ab13b07290867ec38758e43433a8ad6475fd112afc0febf04c763a2b
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-04-01T21:37:44Z
-updated_at: 2026-04-01T21:37:44Z
+updated_at: 2026-09-28T00:00:00Z
 ---
 
 ## Context
@@ -64,3 +64,7 @@ Depends on: #426 (get_queryset in BaseAdapter), #427 (get_queryset in ModelAdmin
 - `DynamicModelView` already has `self._admin_instance` — use it to delegate `get_queryset`
 - The adapter's `list()` currently takes `(page, page_size, search, filters, order_by, search_fields)` — add `request=None`
 - `dynamic.py` is 989 LOC — keep changes minimal, watch the 300 LOC review trigger
+
+## Status note (2026-09-28 roadmap re-cut)
+
+Done (superseded) — delivered by #480 (PR #544): `get_queryset` wired into list/detail views.

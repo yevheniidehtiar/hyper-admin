@@ -9,14 +9,14 @@ labels:
   - area:core
   - performance
 milestone_ref:
-  id: y5aWINuIPslG
+  id: v070b-scale-02
 github:
   issue_number: 212
   repo: yevheniidehtiar/hyper-admin
   last_sync_hash: sha256:69b771c932a870ca9e2819798df27393c85834d755cc861680d6282f5760c7ad
   synced_at: 2026-04-07T17:23:23.790Z
 created_at: 2026-03-27T00:38:07Z
-updated_at: 2026-03-27T00:46:40Z
+updated_at: 2026-09-28T00:00:00Z
 ---
 
 ## Overview
@@ -36,3 +36,7 @@ Parent epic for engine configuration and request-level protection.
 ## Bottlenecks addressed
 - Default connection pool (size=5, overflow=10) can't sustain 100 req/s
 - No rate limiting — spike traffic directly hits DB
+
+## Status note (2026-09-28 roadmap re-cut)
+
+Re-cut: moved to v0.7.0b (scale-advanced). BYOA (v0.5.8) reuses the host app's engine, so pool tuning and rate limiting are not on the adoption critical path.

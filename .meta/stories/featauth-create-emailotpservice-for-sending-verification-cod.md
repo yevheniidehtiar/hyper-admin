@@ -2,7 +2,7 @@
 type: story
 id: kHAyZyym3Iw6
 title: "feat(auth): create EmailOTPService for sending verification codes"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -18,7 +18,7 @@ github:
   last_sync_hash: sha256:3b99493fbda86d76fe4414ee2f7e195b94e8a3600025295309dcdfa30f1e0693
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-04-01T21:39:09Z
-updated_at: 2026-04-01T21:39:09Z
+updated_at: 2026-09-28T00:00:00Z
 ---
 
 ## Context
@@ -67,3 +67,7 @@ Depends on: #433 (MFA fields on User model)
 - TTL check: compare `datetime.now()` against `mfa_code_expires`
 - After successful verify, clear all `mfa_*` session keys
 - `EmailSender` protocol: `async def send(to: str, subject: str, body: str) -> None`
+
+## Status note (2026-09-28 roadmap re-cut)
+
+Done (superseded) — delivered by #484 (PR #539): `EmailOTPService`.

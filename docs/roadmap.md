@@ -1,175 +1,158 @@
 # Roadmap
 
-HyperAdmin is a Pydantic-native, async-first admin interface for FastAPI powered by HTMX. This roadmap outlines what has shipped and what is coming next.
+## Strategy
+
+**HyperAdmin is the admin you add to an existing FastAPI app in 10 minutes without it
+taking over** — your models, your UUID keys, your migrations, your auth. Then
+Django-admin parity plus enterprise features. HTMX-only, no JS build. Every feature
+proven on real apps.
+
+Milestones are ordered by **adoption value**: whatever stops a team from putting
+HyperAdmin on a real, existing application comes first. The 2026-09-28 re-cut kept
+every item from the previous roadmap and only changed the order. Version numbers are
+identifiers, not release order.
+
+The source of truth is `.meta/roadmap/roadmap.yaml` in the repository (GitPM); epics
+and stories live under `.meta/epics/`.
 
 ---
 
 ## What's shipped
 
-### v0.2.0 — Foundation
+### Foundation (Phase 1 / Phase 2)
 
-- Full CRUD operations (list, detail, create, update, delete)
-- Dynamic forms with 12+ widgets (text, number, select, checkbox, datetime, textarea, and more)
-- Foreign key and many-to-many relationship support
-- Configurable search across model fields
-- Sorting, filtering, and pagination
-- Form validation with field-level error display
-- Delete confirmation dialogs
-- WCAG 2.1 AA accessibility (keyboard navigation, skip-to-content, ARIA live regions, focus management, color contrast)
-- Theme system with light/dark mode toggle and system preference detection
-- `prefers-reduced-motion` support and high-contrast mode
-- Custom model actions with bulk and single-object support
+- Full CRUD (list, detail, create, update, delete) with dynamic Pydantic forms and 12+ widgets
+- FK / M2M relations, select & multiselect widgets, dependent (cascading) selects
+- Search, sorting, filtering, pagination; fieldsets; inline formsets; custom actions
+- Light/dark themes, WCAG 2.1 AA accessibility
 
----
+### v0.2.1 — Developer Experience & Examples
 
-## Coming next
+- Bookkeeping ERP reference app, examples restructure, onboarding docs
 
-### v0.3.0 — Developer Love
+### v0.3.0 — Zero-Config & Auth
 
-**Theme: Make developers productive in minutes, not hours**
+- Auto-discovery of models with smart defaults (`list_display`, `search_fields`, `list_filter`)
+- `HyperAdminSettings` (pydantic-settings), session authentication end-to-end
 
-#### Zero-Config Admin (3 Lines of Code)
+### v0.3.1 — File Uploads
 
-The killer feature — beat every competitor on setup speed:
+- `StorageBackend` protocol, file / image fields, upload and delete endpoints, validation
 
-```python
-from hyperadmin import Admin
-admin = Admin(app, engine=engine)
-admin.mount("/admin")  # auto-discovers all SQLModel models
-```
+### v0.4.0 — Responsive Design
 
-- Auto-register all SQLModel/SQLAlchemy models without explicit `admin.py`
-- Smart defaults: infer `list_display`, `search_fields`, `list_filter` from model fields
-- Convention-over-configuration: sensible defaults that work 90% of the time
+- Mobile-first layout, collapsible sidebar, stacked-card tables, touch-friendly forms
 
-#### File Upload System
+### v0.4.1 — i18n
 
-- `FileField`, `ImageField` support in forms
-- Storage backends: local filesystem + S3-compatible
-- Image preview widget with drag-and-drop
-- Thumbnail generation for image fields
+- gettext + Babel, RTL layouts, locale switcher; expanded to the top-20 locales
 
-#### Export / Import
+### v0.5.0 — Advanced UX
 
-- CSV and JSON export from list view (respects current filters)
-- CSV/JSON import with validation preview
-- Background processing for large datasets
+- UI polish, dark mode, inline cell editing in list view
 
-#### Advanced Filtering
+### v0.5.1 — Object Permissions & MFA
 
-- Date range and numeric range filters
-- Multi-value select filters
-- Saved filter presets per user
-- Filter builder UI (AND/OR conditions)
+- `ObjectPermissionChecker`, `get_queryset` row-level security, email-OTP MFA
+
+### Landed ahead of their milestones
+
+- H2 inline formset row-level error highlighting (v0.5.5)
+- `@action` bulk/form parameters and the bulk-action endpoint with per-row outcomes (v0.5.5)
+- `relation_filters` / `relation_display` options and the create-popup view (v0.5.5)
+- SSE + WebSocket connection foundation with `ConnectionRegistry` (v0.6.0b)
+- `JsonApiAdapter` / `ListEnvelope` protocol (JSON REST API)
+- Synthetic data generator (`hyperadmin seed`) (v0.7.1)
 
 ---
 
-### v0.4.0 — Accessible & Beautiful
+## What's next, in order
 
-**Theme: Modern design system and full i18n**
+### 1. v0.5.8 — Bring Your Own App (dogfood-1) · *new, top priority*
 
-#### Responsive Design Overhaul
+Make HyperAdmin a guest in someone else's app.
 
-- Mobile-first responsive grid system
-- Collapsible sidebar with swipe gestures
-- Responsive data tables (card layout on small screens)
-- Touch-friendly action buttons and form controls
+- **Your keys** — primary-key-agnostic routes: UUID, string and int PKs end-to-end
+- **Your migrations** — no DDL against the host database unless explicitly requested
+- **Your models / engine** — plain SQLAlchemy 2.0 `DeclarativeBase` models; reuse the host `AsyncEngine` / sessionmaker
+- **Your auth** — bring-your-own-auth adapter mapping the host's user/session to admin permissions
+- A "10-minute" guide and an example app with Alembic, UUID keys and its own auth
+- **Dogfood-1:** the milestone closes only after the admin runs on a real existing app and blocking gaps are fixed
 
-#### Internationalization (i18n)
+### 2. v0.5.5 — Bulk Actions & Autocomplete (finish)
 
-- Translation system using Python `gettext`
-- Ship with English, Spanish, French, German, Chinese, Japanese, Ukrainian
-- RTL layout support (Arabic, Hebrew)
-- `Admin(locale="uk")` configuration
+- List-view checkbox column, action selector and run button
+- `AutocompleteWidget` template with dependent filtering and inline "+" create
+- Playwright suites for both
 
----
+### 3. v0.7.0a — Scale Core
 
-### v0.5.0 — Enterprise Ready
+- Configurable `selectinload` (no N+1 on list/detail)
+- Configurable `search_fields` in both adapters
+- COUNT caching with TTL
+- FK preload threshold and filter-metadata caching
 
-**Theme: Features that make HyperAdmin viable for production enterprise apps**
+### 4. v0.6.0a — Optimistic Concurrency Control
 
-#### Audit / Activity Log
+- Version column detection, `StaleRecordError`, hidden version field on update forms
+- Conflict dialog when two people edit the same record
 
-- Track all CRUD operations (who, what, when, old/new values)
-- Audit trail view per object (timeline UI)
-- Configurable per model via `AdminOptions`
+### 5. v0.5.2 — OAuth SSO
 
-#### Row-Level Security & Multi-Tenancy
+- OAuth2 / OIDC backend (Google, GitHub), provider configuration, token refresh
+- Login buttons; composes with bring-your-own auth
 
-- Object-level permissions (e.g., "user can only see their own records")
-- `get_queryset(request)` hook for dynamic filtering
-- Tenant-aware adapter filtering
+### 6. v0.5.3 — Multi-Tenancy
 
-#### SSO & OAuth2 Authentication
+- Tenant resolution middleware, `TenantAwareAdapter`, tenant options on `AdminOptions`
 
-- OAuth2 / OpenID Connect backend (Google, GitHub, Azure AD)
-- SAML2 backend for enterprise SSO
-- MFA support (TOTP)
+### 7. v0.5.6 — Detail Panels & Filter Library
 
-#### Dashboard Builder
+- Tabbed detail panels with HTMX lazy-load and streaming (PDF) panels
+- Date-range, multi-FK, multi-choice, boolean and owner filters; URL-shareable state; saved views
 
-- Customizable admin dashboard with widget cards
-- Built-in widgets: count, chart, recent items, quick actions
-- Per-user dashboard layout (drag & drop)
-- Widget protocol for custom dashboard widgets
+### 8. v0.5.7 — Permissions Matrix
 
-#### Inline Editing
+- Model × action permission grid for groups/roles, object-permission column, audit logging
+- `examples/full-demo/` umbrella app and qualification suite
 
-- Inline formsets for related objects
-- Inline table editing (click cell -> edit in place)
-- Nested relationship creation from FK dropdown
+### 9. v0.5.4 — Reporting & Charts
 
----
+- `ReportView` with aggregates, crosstab and time bucketing; CSV / XLSX export
+- SVG chart primitives and a Chart.js widget; dashboard widgets on top of `ReportView`
 
-### v0.6.0 — Real-Time Layer
+### 10. v0.3.2 — Advanced File Uploads
 
-**Theme: WebSocket infrastructure and live CRUD notifications**
+- S3-compatible backend configuration, Pillow thumbnails, EXIF auto-rotate
+- Drag-and-drop preview widget, upload progress bar, error recovery with retry
 
-- WebSocket endpoint and connection manager with PubSub backends (InMemory, Redis)
-- CRUD event broadcasting via HTMX `hx-ws`
-- Live updates: new/updated/deleted rows appear without refresh
-- Optimistic concurrency control with conflict resolution
+### 11. v0.6.0b — Real-Time Pub/Sub & Live Notifications
 
-### v0.6.1 — Presence
+- `PubSubBackend` (InMemory + Redis), `RealtimeEvent` emission from adapters
+- Live list updates and toasts over HTMX
 
-- Presence tracking with heartbeat-based TTL
-- Banner on edit forms showing other editors
+### 12. v0.6.1 — Presence
 
----
+- Heartbeat-based presence (InMemory + Redis), "someone else is editing" banner
 
-### v0.7.0 — Scalability
+### 13. v0.7.0b — Scale Advanced
 
-**Theme: Make HyperAdmin work with 10M+ records and 100 req/s**
+- Keyset (cursor) pagination
+- Engine pool configuration and rate limiting
+- E2E scalability validation and configuration guide
+- Measured with **v0.7.1 — Load Testing & Synthetic Data** (Locust suite + seeder)
 
-- Adapter query performance (`selectinload`, cursor-based pagination, count estimation)
-- Connection pool tuning and rate limiting
-- FK preload thresholds and filter caching
-- Benchmark suite and performance regression CI
+### 14. JSON REST API
 
----
+- `JsonApiRouter` with CRUD endpoints per model, session / bearer auth, docs
 
-### v0.8.0 — The Future
+### 15. v0.8.0 — Plugins & AI
 
-**Theme: AI-powered, extensible**
+- Plugin registry with lifecycle hooks; `hyperadmin-logfire` as the first official plugin
+- AI-assisted features, more ORM adapters and custom pages afterwards
 
-#### Plugin & Extension System
+### 16. v1.0 — Stable Release
 
-- Formal plugin registry with entry points (`hyperadmin.plugins`)
-- Plugin hooks: `on_model_register`, `on_before_create`, `on_after_delete`, etc.
-- Plugin scaffold command: `hyperadmin create-plugin`
-
-#### AI-Powered Features
-
-- Natural language search ("show me orders over $1000 from last month")
-- AI-assisted data entry (auto-fill fields from context)
-- Smart suggestions for filter combinations
-
-#### Additional ORM Adapters
-
-- Tortoise ORM, Piccolo ORM, MongoDB (via Motor/Beanie)
-- Generic REST API adapter (connect to any API as data source)
-
-#### Custom Pages & Views
-
-- Register custom pages beyond CRUD (reports, charts, settings)
-- Custom view decorators with admin navigation integration
+- Public API audit and freeze, semver and deprecation policy
+- Migration guides from other Python admin frameworks
+- Every feature proven on at least one real app
