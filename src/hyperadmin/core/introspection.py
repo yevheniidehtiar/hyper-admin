@@ -223,6 +223,7 @@ def discover_sqlmodel_models() -> list[type]:
 def _collect_table_models(cls: type, models: list[type], seen_tables: set[str]) -> None:
     """Recursively collect table models from a class hierarchy."""
     # Check subclasses first (depth-first)
+    sub: type
     for sub in cls.__subclasses__():
         _collect_table_models(sub, models, seen_tables)
 

@@ -7,9 +7,7 @@
           data-testid="cell-editor-{{ field }}-{{ item.id }}"
           hx-post="{{- url_for(model_name|lower ~ '-inline-save', item_id=item.id, field=field) -}}"
           hx-target="closest td"
-          hx-swap="outerHTML"
-          x-data
-          @keydown.escape.prevent="$el.querySelector('[data-testid=\'cell-cancel-{{ field }}-{{ item.id }}\']').click()">
+          hx-swap="outerHTML">
         <label for="inline-{{ field }}-{{ item.id }}" class="ha-visually-hidden">
             {{- form_field.label if form_field else field -}}
         </label>
@@ -40,6 +38,7 @@
                     class="ha-btn ha-btn-link ha-btn-inline"
                     data-testid="cell-cancel-{{ field }}-{{ item.id }}"
                     hx-get="{{- url_for(model_name|lower ~ '-inline-edit-form', item_id=item.id, field=field) -}}?cancel=1"
+                    data-inline-cancel
                     hx-target="closest td"
                     hx-swap="outerHTML">
                 Cancel

@@ -55,6 +55,18 @@
     <script src="{{ url_for('static', path='/js/realtime-status.js') }}" defer></script>
     {% endif %}
     <script>
+      // Escape cancels an open inline cell editor. Delegated on document so
+      // it works the instant htmx swaps the editor in (no per-fragment init race).
+      document.addEventListener('keydown', function (event) {
+        if (event.key !== 'Escape' || !event.target.closest) return;
+        var form = event.target.closest('.ha-inline-form');
+        var cancel = form && form.querySelector('[data-inline-cancel]');
+        if (!cancel) return;
+        event.preventDefault();
+        if (window.htmx) window.htmx.process(form);
+        cancel.click();
+      });
+
       document.addEventListener('DOMContentLoaded', function () {
         document.addEventListener('keydown', function (event) {
           var search = document.querySelector('[name="search"]');

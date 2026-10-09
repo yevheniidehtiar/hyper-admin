@@ -22,7 +22,7 @@ dependencies = [
   "jinja2>=3.1.6",
   "python-multipart>=0.0.9",
   "sqlalchemy>=2.0.14",
-  "sqlmodel>=0.0.19",
+  "sqlmodel>=0.0.19,<0.0.45",  # 0.0.45 enforces tz-aware datetimes; support tracked for v0.5.8
   "httpx>=0.23.0",
   "greenlet>=1.0.1; python_version < '3.13'",
   "greenlet>=3.1.0; python_version >= '3.13'",
@@ -69,14 +69,14 @@ dev = [
   "pyzmq>=27.1.0",
   "ruff==0.15.8",
   "mkdocs>=1.6.1,<2.0",
-  "mkdocs-material>=9.7.5",
+  "mkdocs-material>=9.7.7",
   "mkdocstrings[python]>=1.0.3",
   "mkdocs-macros-plugin>=1.5.0",
   "mdx-include>=1.4.1",
   "mkdocs-redirects>=1.2.1",
   "griffe-typingdoc>=0.3.1",
   "pyyaml>=6.0.3",
-  "setuptools>=82.0.1",
+  "setuptools>=83.0.0",
   "numpy>=2.4.3; python_version >= '3.12'",
 ]
 
@@ -115,7 +115,6 @@ warn_unreachable = true
 [tool.basedpyright]  # https://docs.basedpyright.com/latest/configuration/config-files/
 typeCheckingMode = "standard"
 include = ["src"]
-exclude = ["src/hyperadmin/auth/oauth"]  # WIP package; providers/tokens modules not yet merged
 pythonVersion = "3.10"
 reportAny = false  # Too much noise for now
 
