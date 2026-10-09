@@ -69,14 +69,14 @@ dev = [
   "pyzmq>=27.1.0",
   "ruff==0.15.8",
   "mkdocs>=1.6.1,<2.0",
-  "mkdocs-material>=9.7.5",
+  "mkdocs-material>=9.7.7",
   "mkdocstrings[python]>=1.0.3",
   "mkdocs-macros-plugin>=1.5.0",
   "mdx-include>=1.4.1",
   "mkdocs-redirects>=1.2.1",
   "griffe-typingdoc>=0.3.1",
   "pyyaml>=6.0.3",
-  "setuptools>=82.0.1",
+  "setuptools>=83.0.0",
   "numpy>=2.4.3; python_version >= '3.12'",
 ]
 
