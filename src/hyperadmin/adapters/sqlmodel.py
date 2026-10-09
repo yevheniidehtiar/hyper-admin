@@ -4,12 +4,14 @@ from typing import Any
 from sqlalchemy import func, inspect, or_
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlalchemy.orm import selectinload
-from sqlalchemy.sql.sqltypes import String
-from sqlmodel import AutoString, SQLModel, select
+from sqlmodel import SQLModel, select
 
-from hyperadmin.core.adapters import BaseAdapter
+from hyperadmin.adapters._search import detect_search_columns
+from hyperadmin.core.adapters import BaseAdapter, scoped_queryset_filters
 from hyperadmin.core.choices import ChoiceItem
+from hyperadmin.core.display import get_display_name
 from hyperadmin.core.inlines import InlineModelSpec
+from hyperadmin.core.sensitive import effective_sensitive_field_names
 
 _MAX_CHOICES_LIMIT = 200
 
@@ -82,7 +84,9 @@ class SQLModelAdapter(BaseAdapter):
 
             # Apply searching using configured search_fields
             if search:
-                fields_to_search = search_fields or self._detect_search_fields()
+                fields_to_search = (
+                    search_fields if search_fields is not None else self._detect_search_fields()
+                )
                 if fields_to_search:
                     conditions = []
                     for field_name in fields_to_search:
@@ -113,13 +117,8 @@ class SQLModelAdapter(BaseAdapter):
             return list(results.scalars().all()), total_count
 
     def _detect_search_fields(self) -> builtins.list[str]:
-        """Detect string columns on the model for search fallback."""
-        mapper: Any = self.inspector
-        return [
-            col.key
-            for col in mapper.columns
-            if isinstance(col.type, (String, AutoString)) and not col.primary_key
-        ]
+        """Detect non-sensitive string columns on the model for search fallback."""
+        return detect_search_columns(self.model, self.inspector)
 
     async def create(self, data: dict[str, Any]) -> Any:
         """
@@ -183,12 +182,15 @@ class SQLModelAdapter(BaseAdapter):
         Returns:
             A list of related objects.
         """
+        queryset_filters = self._resolve_queryset_filters()
         async with AsyncSession(self.engine) as session:
             query = (
                 select(self.model)
                 .where(self.model.id == pk)
                 .options(selectinload(getattr(self.model, field)))
             )
+            for key, value in queryset_filters.items():
+                query = query.where(getattr(self.model, key) == value)
             result = await session.execute(query)
             db_obj = result.scalar_one_or_none()
             if db_obj:
@@ -234,14 +236,22 @@ class SQLModelAdapter(BaseAdapter):
             query = select(target_model)
 
             if q:
+                # Never match on sensitive columns (q would be a substring oracle).
                 str_cols = [
-                    c for c in target_inspector.c if isinstance(c.type, AutoString | String)
+                    getattr(target_model, name)
+                    for name in detect_search_columns(target_model, target_inspector)
                 ]
                 if str_cols:
                     query = query.where(or_(*[c.ilike(f"%{q}%") for c in str_cols[:3]]))
 
+            # Row scoping of the target model's admin (tenant / RLS) always applies.
+            for key, value in scoped_queryset_filters(target_model).items():
+                query = query.where(getattr(target_model, key) == value)
+
+            # Cascade filters: the view forwards only keys declared by the widget.
+            target_sensitive = effective_sensitive_field_names(target_model)
             for key, value in filters.items():
-                if hasattr(target_model, key):
+                if hasattr(target_model, key) and key not in target_sensitive:
                     query = query.where(getattr(target_model, key) == value)
 
             query = query.offset(offset).limit(limit)
@@ -251,7 +261,8 @@ class SQLModelAdapter(BaseAdapter):
         return [
             ChoiceItem(
                 value=str(getattr(item, "id", "")),
-                label=str(item),
+                # Never str(item): SQLModel's default __str__ prints every column.
+                label=get_display_name(item),
                 selected=False,
             )
             for item in items
@@ -273,16 +284,36 @@ class SQLModelAdapter(BaseAdapter):
             rows: Validated row dicts, each optionally containing ``_pk`` (for
                 update/delete) and ``_delete`` (for deletion).
             parent_pk: The primary key of the parent object to associate new rows with.
+
+        Raises:
+            InlineRowNotOwned: Before any write, when a submitted ``_pk`` is not an
+                existing child of ``parent_pk``.
         """
+        await self.ensure_inline_rows_owned(spec, rows, parent_pk)
         inline_adapter = SQLModelAdapter(spec.model, self.engine)
+        pk_attrs = {col.key for col in inspect(spec.model).primary_key}
         for row in rows:
-            if row.get("_delete") and row.get("_pk"):
-                await inline_adapter.delete(pk=row["_pk"])
-            elif "_pk" in row:
-                pk = row["_pk"]
-                row_data = {k: v for k, v in row.items() if k not in ("_pk", "_delete")}
-                await inline_adapter.update(pk=pk, data=row_data)
-            else:
+            row_pk = row.get("_pk")
+            if row.get("_delete") and row_pk is not None:
+                await inline_adapter.delete(pk=row_pk)
+            elif row_pk is not None:
+                # Keys are immutable and the row stays attached to its parent.
+                row_data = {
+                    k: v
+                    for k, v in row.items()
+                    if k not in ("_pk", "_delete", spec.fk_field) and k not in pk_attrs
+                }
+                await inline_adapter.update(pk=row_pk, data=row_data)
+            elif not row.get("_delete"):
                 row_data = {k: v for k, v in row.items() if k not in ("_pk", "_delete")}
                 row_data[spec.fk_field] = parent_pk
                 await inline_adapter.create(data=row_data)
+
+    async def inline_child_pks(self, spec: InlineModelSpec, parent_pk: Any) -> set[Any]:
+        """Return the primary keys of ``spec.model`` rows owned by ``parent_pk``."""
+        pk_col = inspect(spec.model).primary_key[0]
+        async with AsyncSession(self.engine) as session:
+            result = await session.execute(
+                select(pk_col).where(getattr(spec.model, spec.fk_field) == parent_pk)
+            )
+            return set(result.scalars().all())

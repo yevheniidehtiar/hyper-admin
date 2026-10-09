@@ -110,12 +110,12 @@ def view():
 
 @pytest.mark.anyio
 async def test_choices_view_forwards_extra_filters(view):
-    """Extra query params (parent field values) are forwarded as kwargs to get_choices."""
+    """The declared parent field value is forwarded; undeclared params are dropped."""
     view.adapter.get_choices = AsyncMock(return_value=[])
-    request = _make_request("country_id=3&q=&limit=50&offset=0")
+    request = _make_request("region_id=3&country_id=7&password_hash=x&q=&limit=50&offset=0")
     await view.choices_view(request, field_name="country", q="", limit=50, offset=0)
     view.adapter.get_choices.assert_awaited_once_with(
-        "country", q="", limit=50, offset=0, country_id="3"
+        "country", q="", limit=50, offset=0, region_id="3"
     )
 
 

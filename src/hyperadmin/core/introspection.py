@@ -12,12 +12,17 @@ from __future__ import annotations
 import types as _types
 from dataclasses import dataclass
 from enum import Enum
+from typing import TYPE_CHECKING, Union, get_args, get_origin
 from typing import Any as _Any
-from typing import Union, get_args, get_origin
 
 from sqlalchemy import inspect as sa_inspect
 from sqlalchemy.sql.sqltypes import Text
 from sqlmodel import SQLModel
+
+from hyperadmin.core.sensitive import sensitive_field_names
+
+if TYPE_CHECKING:
+    from collections.abc import Mapping
 
 
 @dataclass(frozen=True)
@@ -141,19 +146,24 @@ def _field_priority(name: str, fm: FieldMeta) -> int:
     return 5
 
 
-def infer_list_display(model: type[SQLModel]) -> list[str]:
+def infer_list_display(
+    model: type[SQLModel], sensitive_overrides: Mapping[str, bool] | None = None
+) -> list[str]:
     """Infer 3-5 fields for list view display via heuristics.
 
     Priority: id > name/title > email > created_at > status/enum > other short fields.
-    Long text fields (Text type, bio, description) are excluded.
+    Long text fields (Text type, bio, description) and sensitive fields are excluded.
     Cap at 5 fields.
     """
     meta = get_field_metadata(model)
     if not meta:
         return ["id", "__str__"]
 
+    sensitive = sensitive_field_names(model, sensitive_overrides)
     candidates = [
-        (name, fm) for name, fm in meta.items() if not _is_long_text(model, name) or fm.is_pk
+        (name, fm)
+        for name, fm in meta.items()
+        if (not _is_long_text(model, name) or fm.is_pk) and name not in sensitive
     ]
     candidates.sort(key=lambda pair: _field_priority(pair[0], pair[1]))
 
@@ -165,17 +175,21 @@ def infer_list_display(model: type[SQLModel]) -> list[str]:
     return result
 
 
-def infer_search_fields(model: type[SQLModel]) -> list[str]:
+def infer_search_fields(
+    model: type[SQLModel], sensitive_overrides: Mapping[str, bool] | None = None
+) -> list[str]:
     """Infer searchable fields — string/email/text fields only.
 
-    FK, numeric, boolean, binary fields are excluded.
+    FK, numeric, boolean, binary and sensitive fields are excluded (a sensitive
+    field in search would be a substring oracle on its value).
     Returns ``[]`` when no string fields exist.
     """
     meta = get_field_metadata(model)
+    sensitive = sensitive_field_names(model, sensitive_overrides)
     result: list[str] = []
 
     for name, fm in meta.items():
-        if fm.is_pk or fm.is_fk or fm.is_enum:
+        if fm.is_pk or fm.is_fk or fm.is_enum or name in sensitive:
             continue
         if fm.python_type is str:
             result.append(name)
@@ -183,17 +197,20 @@ def infer_search_fields(model: type[SQLModel]) -> list[str]:
     return result
 
 
-def infer_list_filter(model: type[SQLModel]) -> list[str]:
+def infer_list_filter(
+    model: type[SQLModel], sensitive_overrides: Mapping[str, bool] | None = None
+) -> list[str]:
     """Infer filterable fields — boolean, enum, and FK fields.
 
-    String, text, numeric-only fields are excluded.
+    String, text, numeric-only and sensitive fields are excluded.
     Returns ``[]`` when no filterable fields exist.
     """
     meta = get_field_metadata(model)
+    sensitive = sensitive_field_names(model, sensitive_overrides)
     result: list[str] = []
 
     for name, fm in meta.items():
-        if fm.is_pk:
+        if fm.is_pk or name in sensitive:
             continue
         if fm.python_type is bool or fm.is_enum or fm.is_fk:
             result.append(name)

@@ -3,6 +3,8 @@ from typing import Any
 from pydantic import BaseModel
 from sqlmodel import SQLModel
 
+from hyperadmin.core.sensitive import effective_sensitive_field_names
+
 _FK_SUFFIXES = ("_id", "_pk", "_fk")
 
 
@@ -34,9 +36,14 @@ def get_display_name(instance: Any) -> str:
 
     Logic:
     1. If the model has overridden __str__ from SQLModel/BaseModel, use it.
-    2. Otherwise, look for common descriptive attributes: name, title, label, username, email.
+    2. Otherwise, look for common descriptive attributes: name, title, label, username, email,
+       skipping any that are sensitive (see :mod:`hyperadmin.core.sensitive`).
     3. Fallback to "ModelName (PK)" if PK is available.
     4. Final fallback to "ModelName object".
+
+    The default ``__str__`` of SQLModel / Pydantic prints every field, secrets
+    included, so it is never used: relation labels and list cells go through
+    this function instead of ``str(instance)``.
     """
     cls = instance.__class__
 
@@ -54,7 +61,10 @@ def get_display_name(instance: Any) -> str:
         return str(instance)
 
     # Look for common descriptive attributes
+    sensitive = effective_sensitive_field_names(cls)
     for attr in ("name", "title", "label", "username", "email"):
+        if attr in sensitive:
+            continue
         if hasattr(instance, attr):
             val = getattr(instance, attr)
             if val is not None and val != "":

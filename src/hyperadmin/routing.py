@@ -56,6 +56,7 @@ def create_admin_router(  # noqa: PLR0913
     search_fields: list[str] | None = None,
     field_labels: dict[str, str] | None = None,
     storage: Any = None,
+    admin_lookup: Any = None,
 ) -> APIRouter:
     """Creates an APIRouter for a given model with the specified admin options."""
     router = APIRouter()
@@ -73,6 +74,7 @@ def create_admin_router(  # noqa: PLR0913
         search_fields=search_fields,
         field_labels=field_labels,
         storage=storage,
+        admin_lookup=admin_lookup,
     )
     model_name = model.__name__.lower()
 
@@ -220,7 +222,7 @@ def _resolve_smart_defaults(
             resolved_columns = options.list_display or None
         else:
             try:
-                resolved_columns = infer_list_display(model)
+                resolved_columns = infer_list_display(model, options.sensitive_fields)
             except Exception:
                 resolved_columns = None
 
@@ -229,13 +231,15 @@ def _resolve_smart_defaults(
         resolved_search = options.search_fields
     else:
         try:
-            resolved_search = infer_search_fields(model)
+            resolved_search = infer_search_fields(model, options.sensitive_fields)
         except Exception:
             resolved_search = None
 
     if options.list_filter is None:
         try:
-            options = options.model_copy(update={"list_filter": infer_list_filter(model)})
+            options = options.model_copy(
+                update={"list_filter": infer_list_filter(model, options.sensitive_fields)}
+            )
         except Exception:
             options = options.model_copy(update={"list_filter": []})
 
@@ -278,6 +282,9 @@ class HyperAdminRouter:
         from hyperadmin.core.registry import site
 
         self.routers = []
+        # model -> ModelAdmin instance, shared by every view so cross-model
+        # lookups (choices target get_queryset) use the registered admin.
+        admin_instances: dict[Any, Any] = {}
         nav_items: list[dict[str, str]] = []
 
         # Add the main admin dashboard route
@@ -292,6 +299,7 @@ class HyperAdminRouter:
 
         for model, admin_class in site._registry.items():
             admin_instance = admin_class(model)
+            admin_instances[model] = admin_instance
             # Prioritize options set on admin_class, then fall back to defaults
             options = getattr(admin_class, "options", None) or AdminOptions()
             # If admin_class has list_filter set directly (legacy or class-style)
@@ -330,6 +338,7 @@ class HyperAdminRouter:
                 search_fields=resolved_search_fields,
                 field_labels=field_labels,
                 storage=self.storage,
+                admin_lookup=admin_instances.get,
             )
             self.routers.append(router)
 

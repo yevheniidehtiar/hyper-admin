@@ -49,6 +49,20 @@ from hyperadmin.adapters.registry import adapter_registry
 adapter_registry.register(MyModel, MyAdapter)
 ```
 
+### Inline formsets and row scoping
+
+If your adapter supports inline formsets (it implements `save_inline_rows`), it
+must also implement `inline_child_pks(spec, parent_pk)` and return the primary
+keys of the `spec.model` rows whose `spec.fk_field` equals `parent_pk`. Before
+any write, HyperAdmin checks that every submitted inline row pk is one of those
+keys. The default implementation returns an empty set, so without an override
+every save of a parent that has existing inline rows is rejected with 404.
+
+Row scoping from `ModelAdmin.get_queryset` reaches adapters through
+`self._resolve_queryset_filters()` (for the adapter's own model) and
+`hyperadmin.core.adapters.scoped_queryset_filters(model)` (for related models,
+for example in `get_choices`). Apply both as equality filters on every read.
+
 ## API Reference
 
 ::: hyperadmin.core.adapters.BaseAdapter

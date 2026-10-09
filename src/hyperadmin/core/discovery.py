@@ -4,6 +4,8 @@ from typing import Any, Union, get_args, get_origin
 
 from sqlalchemy import inspect as sa_inspect
 
+from hyperadmin.core.display import get_display_name
+
 logger = logging.getLogger(__name__)
 
 
@@ -86,7 +88,10 @@ async def build_filter_metadata(
                             "label": label,
                             "type": "fk",
                             "choices": [
-                                {"value": str(getattr(item, "id", "")), "label": str(item)}
+                                {
+                                    "value": str(getattr(item, "id", "")),
+                                    "label": get_display_name(item),
+                                }
                                 for item in related_items
                             ],
                         }

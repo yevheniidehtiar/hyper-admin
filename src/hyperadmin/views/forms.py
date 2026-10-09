@@ -12,6 +12,7 @@ from pydantic import BaseModel, ValidationError
 from pydantic.fields import FieldInfo
 
 from hyperadmin.core.choices import ChoiceItem
+from hyperadmin.core.sensitive import effective_sensitive_field_names
 from hyperadmin.i18n import gettext_lazy
 
 try:
@@ -567,6 +568,11 @@ class InlineFormset:
         return self.spec.get_display_fields()
 
     @property
+    def sensitive_fields(self) -> set[str]:
+        """Sensitive fields of the inline model (write-only: never rendered with a value)."""
+        return effective_sensitive_field_names(self.spec.model)
+
+    @property
     def field_labels(self) -> list[str]:
         """Return human-readable labels for each display field."""
         model_fields = getattr(self.spec.model, "model_fields", {})
@@ -591,13 +597,15 @@ class InlineFormset:
         """Build a single ``InlineFormRow`` for the given index."""
         model_fields = getattr(self.spec.model, "model_fields", {})
         vals = values or {}
+        sensitive = self.sensitive_fields
         fields: list[FormField] = []
         for name in self.display_fields:
             fi = model_fields.get(name)
             if fi is None:
                 continue
             widget = _pick_inline_widget(name, fi)
-            value = vals.get(name)
+            # Sensitive values are write-only: an empty input keeps the stored value.
+            value = None if name in sensitive else vals.get(name)
             fields.append(FormField(name=name, model_field=fi, widget=widget, value=value))
         return InlineFormRow(index=index, fields=fields, pk=pk)
 
@@ -650,14 +658,14 @@ class InlineFormset:
                 pk_key = f"{prefix}-{i}-pk"
                 pk_val = form_data.get(pk_key)
                 if pk_val:
-                    results.append({"_delete": True, "_pk": int(pk_val)})
+                    results.append({"_delete": True, "_pk": _parse_inline_pk(pk_val)})
                 continue
 
             row_data: dict[str, Any] = {}
             pk_key = f"{prefix}-{i}-pk"
             pk_val = form_data.get(pk_key)
             if pk_val:
-                row_data["_pk"] = int(pk_val)
+                row_data["_pk"] = _parse_inline_pk(pk_val)
 
             has_data = False
             for field_name in self.display_fields:
@@ -741,7 +749,7 @@ class InlineFormset:
 
             pk_key = f"{prefix}-{i}-pk"
             pk_val = form_data.get(pk_key)
-            pk = int(pk_val) if pk_val else None
+            pk = _parse_inline_pk(pk_val) if pk_val else None
 
             row = self._build_row(i, values=vals, pk=pk)
 
@@ -754,6 +762,19 @@ class InlineFormset:
             row.delete = bool(form_data.get(delete_key))
 
             self.rows.append(row)
+
+
+def _parse_inline_pk(raw: Any) -> Any:
+    """Parse a submitted inline ``<prefix>-<i>-pk`` value.
+
+    Integer keys are returned as ``int``. Anything else is kept as the raw
+    string: it can never match an owned child key, so the adapter's ownership
+    check rejects it (404) instead of the parse raising a 500.
+    """
+    try:
+        return int(raw)
+    except (TypeError, ValueError):
+        return str(raw)
 
 
 def _pick_inline_widget(name: str, field_info: FieldInfo) -> HtmxWidget:
