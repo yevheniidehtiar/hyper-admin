@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.10, <4.0"
 resolution-markers = [
     "python_full_version >= '3.15'",
@@ -1848,7 +1848,7 @@ requires-dist = [
     { name = "mdx-include", marker = "extra == 'dev'", specifier = ">=1.4.1" },
     { name = "mkdocs", marker = "extra == 'dev'", specifier = ">=1.6.1,<2.0" },
     { name = "mkdocs-macros-plugin", marker = "extra == 'dev'", specifier = ">=1.5.0" },
-    { name = "mkdocs-material", marker = "extra == 'dev'", specifier = ">=9.7.5" },
+    { name = "mkdocs-material", marker = "extra == 'dev'", specifier = ">=9.7.7" },
     { name = "mkdocs-redirects", marker = "extra == 'dev'", specifier = ">=1.2.1" },
     { name = "mkdocstrings", extras = ["python"], marker = "extra == 'dev'", specifier = ">=1.0.3" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.19.1" },
@@ -1872,7 +1872,7 @@ requires-dist = [
     { name = "pyyaml", marker = "extra == 'dev'", specifier = ">=6.0.3" },
     { name = "pyzmq", marker = "extra == 'dev'", specifier = ">=27.1.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = "==0.15.8" },
-    { name = "setuptools", marker = "extra == 'dev'", specifier = ">=82.0.1" },
+    { name = "setuptools", marker = "extra == 'dev'", specifier = ">=83.0.0" },
     { name = "sqlalchemy", marker = "python_full_version < '3.13'", specifier = ">=2.0.14" },
     { name = "sqlalchemy", marker = "python_full_version >= '3.13'", specifier = ">=2.0.31" },
     { name = "sqlmodel", specifier = ">=0.0.19,<0.0.45" },
