@@ -71,6 +71,9 @@ dev = [
   # Docs site (Zensical requires Python >= 3.11; docs are built on 3.13 in CI).
   "zensical>=0.0.69; python_version >= '3.11'",
   "mkdocstrings-python>=2.0.9",
+  # Cap MkDocs below 2.0: mkdocstrings and mkdocs-autorefs still import the MkDocs
+  # plugin API (mkdocs.plugins/config/exceptions) under Zensical, which 2.0 removes.
+  "mkdocs>=1.6.1,<2.0",
   "mdx-include>=1.4.1",
   "griffe-typingdoc>=0.3.1",
   "pyyaml>=6.0.3",

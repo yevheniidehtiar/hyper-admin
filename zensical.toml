@@ -65,6 +65,8 @@ nav = [
 ]
 
 [project.theme]
+# Keep the Material for MkDocs look (Roboto, classic stylesheets) instead of Zensical's "modern" default.
+variant = "classic"
 logo = "assets/logo.svg"
 favicon = "assets/favicon.ico"
 features = [

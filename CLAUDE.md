@@ -42,6 +42,8 @@ uv sync --all-extras  # Install all dependencies
 uv run <cmd>          # Run commands in the virtual environment
 ```
 
+Zensical needs Python >= 3.11: use `poe docs:build` / `poe docs:serve` (or `UV_PYTHON=3.13 uv run zensical ...`), not plain `uv run zensical` in the default 3.10 env (it fails with "Failed to spawn: zensical").
+
 ## Dependency Management
 
 HyperAdmin is a library consumed by other projects, so dependency bounds matter:

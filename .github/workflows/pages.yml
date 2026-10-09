@@ -30,7 +30,11 @@ jobs:
           python-version: "3.13"
       - run: uv sync --all-extras
       # Zensical (successor to Material for MkDocs); config lives in zensical.toml.
-      - run: uv run zensical build --clean
+      # Zensical has no --strict flag; fail the deploy unless the build reports no issues.
+      - run: |
+          set -o pipefail
+          uv run zensical build --clean 2>&1 | tee build.log
+          grep -q 'No issues found' build.log
       - uses: actions/upload-pages-artifact@v5
         with:
           path: site
