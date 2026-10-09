@@ -2,16 +2,16 @@
 description: Review and maintain the documentation site
 ---
 
-You are the Documentation Maintenance Agent for HyperAdmin. Audit the MkDocs documentation site for structure, quality, and correctness.
+You are the Documentation Maintenance Agent for HyperAdmin. Audit the Zensical documentation site for structure, quality, and correctness.
 
 ## Step 1 — Read Current State
 
-1. Read `mkdocs.yml` to understand the nav structure
+1. Read `zensical.toml` (the `nav` key under `[project]`) to understand the nav structure
 2. List all `.md` files in `docs/` (excluding `agentic-workflow/` and `design/` which are internal)
 
 ## Step 2 — Structural Checks
 
-1. **Orphan pages**: Find `.md` files in `docs/` that are NOT listed in `mkdocs.yml` nav and NOT in excluded directories (`agentic-workflow/`, `design/`). Report them.
+1. **Orphan pages**: Find `.md` files in `docs/` that are NOT listed in the `zensical.toml` nav and NOT in excluded directories (`agentic-workflow/`, `design/`). Report them.
 2. **Broken internal links**: For each `docs/*.md` file in the nav, find markdown links `[text](path.md)` and verify the target file exists relative to the linking file.
 3. **Stub pages**: Flag any nav-listed page with fewer than 10 lines of content.
 4. **Missing navigation links**: Check if sequential pages (getting-started, tutorial, examples) have "Next:" links at the bottom.

@@ -1,0 +1,117 @@
+# Zensical configuration for the HyperAdmin documentation site.
+# Docs: https://zensical.org/docs/
+
+[project]
+site_name = "HyperAdmin"
+site_description = "A modern, Pydantic-native admin interface for FastAPI, powered by HTMX."
+site_url = "https://yevheniidehtiar.github.io/hyper-admin"
+repo_url = "https://github.com/yevheniidehtiar/hyper-admin"
+repo_name = "yevheniidehtiar/hyper-admin"
+
+nav = [
+  { "Home" = "index.md" },
+  { "Live Demo" = "demo.md" },
+  { "Guide" = [
+    { "Getting Started" = "getting-started.md" },
+    { "Tutorial" = "tutorial.md" },
+    { "File Uploads" = "guides/file-uploads.md" },
+    { "Examples" = [
+      { "Overview" = "examples.md" },
+      { "ERP (Bookkeeping)" = "examples/erp.md" },
+    ] },
+  ] },
+  { "Frontend" = [
+    { "Overview" = "frontend/overview.md" },
+    { "Widgets" = "frontend/widgets.md" },
+    { "HTMX Patterns" = "frontend/htmx_patterns.md" },
+  ] },
+  { "API Reference" = [
+    { "Overview" = "api/index.md" },
+    { "Application" = "api/application.md" },
+    { "Views" = "api/views.md" },
+    { "Core Components" = "api/core.md" },
+    { "Adapters" = "api/adapters.md" },
+    { "Routing" = "api/routing.md" },
+  ] },
+  { "Community" = [
+    { "Contributing" = "contributing.md" },
+    { "Changelog" = "changelog.md" },
+    { "Roadmap" = "roadmap.md" },
+    { "Agentic Workflow" = [
+      { "Overview" = "agentic-workflow/index.md" },
+      { "Onboarding" = [
+        { "Overview" = "agentic-workflow/onboarding.md" },
+        { "For Humans" = "agentic-workflow/onboarding-humans.md" },
+        { "For Agents" = "agentic-workflow/onboarding-agents.md" },
+      ] },
+      { "Agents" = [
+        { "Dev Agents" = "agentic-workflow/dev-agents.md" },
+        { "Code Review" = "agentic-workflow/code-review-agent.md" },
+        { "Deep Research" = "agentic-workflow/deep-research-agent.md" },
+        { "Roadmap Planning" = "agentic-workflow/roadmap-planning-agent.md" },
+        { "QA" = "agentic-workflow/qa-agent.md" },
+        { "Release" = "agentic-workflow/release-agent.md" },
+        { "Scheduled" = "agentic-workflow/scheduled-agent.md" },
+        { "Community Ingestion" = "agentic-workflow/community-ingestion.md" },
+        { "OSS Triage Auditor" = "agentic-workflow/oss-triage-auditor.md" },
+      ] },
+      { "Infrastructure" = [
+        { "Orchestration" = "agentic-workflow/orchestration.md" },
+        { "Cost Model" = "agentic-workflow/cost-model.md" },
+        { "Models Setup" = "agentic-workflow/models-setup.md" },
+      ] },
+    ] },
+  ] },
+]
+
+[project.theme]
+# Keep the Material for MkDocs look (Roboto, classic stylesheets) instead of Zensical's "modern" default.
+variant = "classic"
+logo = "assets/logo.svg"
+favicon = "assets/favicon.ico"
+features = [
+  "navigation.tabs",
+  "navigation.sections",
+  "navigation.expand",
+  "content.code.copy",
+  "search.suggest",
+]
+
+[[project.theme.palette]]
+scheme = "default"
+primary = "indigo"
+toggle.icon = "material/brightness-7"
+toggle.name = "Switch to dark mode"
+
+[[project.theme.palette]]
+scheme = "slate"
+primary = "indigo"
+toggle.icon = "material/brightness-4"
+toggle.name = "Switch to light mode"
+
+[[project.extra.social]]
+icon = "fontawesome/brands/github"
+link = "https://github.com/yevheniidehtiar"
+
+[[project.extra.social]]
+icon = "fontawesome/brands/linkedin"
+link = "https://www.linkedin.com/in/yevheniidehtiar/"
+
+# Search is built into Zensical and enabled by default — no plugin entry needed.
+
+[project.plugins.mkdocstrings]
+default_handler = "python"
+
+[project.plugins.mkdocstrings.handlers.python.options]
+show_root_heading = true
+show_source = true
+
+[project.markdown_extensions]
+admonition = {}
+pymdownx.details = {}
+pymdownx.superfences.custom_fences = [
+  { name = "mermaid", class = "mermaid", format = "pymdownx.superfences.fence_code_format" },
+]
+pymdownx.tabbed.alternate_style = true
+tables = {}
+pymdownx.highlight = {}

@@ -71,7 +71,7 @@ uv.lock
 # VS Code
 .vscode/
 
-# MkDocs
+# Zensical docs build output
 site/
 
 # Sqlite

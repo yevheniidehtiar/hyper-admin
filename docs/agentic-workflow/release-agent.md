@@ -44,7 +44,7 @@ All milestone tasks QA-green
   │
   ▼
 6. DOCUMENTATION
-   └── Docs site rebuild (mkdocs)
+   └── Docs site rebuild (zensical)
    └── API reference regenerated
    └── Version selector updated
   │

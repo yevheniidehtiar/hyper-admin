@@ -37,7 +37,7 @@ File naming: `{kebab-case-feature-slug}.md`
 UI/frontend design documents go in `docs/design/` (existing convention).
 Implementation/backend SDDs go in `docs/specs/`.
 
-SDDs are developer-only documents — they are NOT published to the docs site (`mkdocs.yml`).
+SDDs are developer-only documents — they are NOT published to the docs site (`zensical.toml`).
 They are consumed by agents and reviewers directly from the repository.
 
 ---

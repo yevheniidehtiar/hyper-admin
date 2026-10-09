@@ -28,7 +28,7 @@ Publish a plugin author guide and hook reference under the docs site.
 - **New:** `docs/plugins/index.md` — overview, installation, disable mechanism
 - **New:** `docs/plugins/authoring.md` — step-by-step "your first plugin"
 - **New:** `docs/plugins/hooks.md` — table of all hooks, signatures, fire timing
-- **Modified:** `mkdocs.yml` — add a "Plugins" nav section
+- **Modified:** `zensical.toml` — add a "Plugins" nav section
 
 ## Content Outline
 
@@ -55,7 +55,7 @@ Publish a plugin author guide and hook reference under the docs site.
 ## Acceptance Criteria
 
 - [ ] All three doc pages published
-- [ ] `mkdocs.yml` nav updated
+- [ ] `zensical.toml` nav updated
 - [ ] `poe docs:build` succeeds
 - [ ] `poe docs:serve` renders the new section locally
 - [ ] Internal links between pages work (no 404s)

@@ -29,7 +29,7 @@ new users can discover the plugin.
 
 - **Modified:** `plugins/hyperadmin-logfire/README.md` — full content
 - **New:** `docs/plugins/logfire.md` — short page on the main docs site
-- **Modified:** `mkdocs.yml` — add the page under the "Plugins" nav (the section
+- **Modified:** `zensical.toml` — add the page under the "Plugins" nav (the section
   added by Epic 1's `docs-plugin-author-guide-and-hook-reference` story)
 
 ## Content Outline

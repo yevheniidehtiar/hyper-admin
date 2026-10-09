@@ -36,11 +36,13 @@ poe test              # Run all tests (unit + e2e)
 poe test:unit         # Unit tests only (pytest with coverage)
 poe test:e2e          # E2E tests with Playwright
 poe deps:bump         # Bump deps and verify across compatibility matrix
-poe docs:serve        # Serve docs locally on port 8080
-poe docs:build        # Build documentation
+poe docs:serve        # Serve docs locally on port 8080 (Zensical, ephemeral Python 3.13 env)
+poe docs:build        # Build documentation site into site/ (zensical build --clean)
 uv sync --all-extras  # Install all dependencies
 uv run <cmd>          # Run commands in the virtual environment
 ```
+
+Zensical needs Python >= 3.11: use `poe docs:build` / `poe docs:serve` (or `UV_PYTHON=3.13 uv run zensical ...`), not plain `uv run zensical` in the default 3.10 env (it fails with "Failed to spawn: zensical").
 
 ## Dependency Management
 
@@ -206,5 +208,5 @@ PRs are still managed via `gh pr`. See `.claude/project-config.md` for full refe
 | `justfile` | All dev targets |
 | `scripts/` | Automation helpers |
 | `.claude/commands/` | Claude slash commands |
-| `docs/` | MkDocs source |
+| `docs/` | Zensical documentation source (config: `zensical.toml`) |
 | `docs/agentic-workflow/` | OSS agentic workflow specs |

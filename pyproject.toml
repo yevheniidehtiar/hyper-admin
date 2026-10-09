@@ -68,12 +68,13 @@ dev = [
   "pytest-xdist>=3.6.1",
   "pyzmq>=27.1.0",
   "ruff==0.15.8",
+  # Docs site (Zensical requires Python >= 3.11; docs are built on 3.13 in CI).
+  "zensical>=0.0.69; python_version >= '3.11'",
+  "mkdocstrings-python>=2.0.9",
+  # Cap MkDocs below 2.0: mkdocstrings and mkdocs-autorefs still import the MkDocs
+  # plugin API (mkdocs.plugins/config/exceptions) under Zensical, which 2.0 removes.
   "mkdocs>=1.6.1,<2.0",
-  "mkdocs-material>=9.7.7",
-  "mkdocstrings[python]>=1.0.3",
-  "mkdocs-macros-plugin>=1.5.0",
   "mdx-include>=1.4.1",
-  "mkdocs-redirects>=1.2.1",
   "griffe-typingdoc>=0.3.1",
   "pyyaml>=6.0.3",
   "setuptools>=83.0.0",
@@ -260,16 +261,13 @@ type = "simple"
 [tool.poe.tasks]
 
   [tool.poe.tasks."docs:build"]
-  help = "Build the documentation site"
-  cmd = "mkdocs build"
+  help = "Build the documentation site with Zensical (deployed to GitHub Pages by .github/workflows/pages.yml)"
+  # Zensical requires Python >= 3.11; run it in an ephemeral 3.13 env so the default 3.10 dev env still works.
+  cmd = "uv run --isolated --python 3.13 --all-extras zensical build --clean"
 
   [tool.poe.tasks."docs:serve"]
-  help = "Serve the documentation site"
-  cmd = "mkdocs serve --dev-addr localhost:8080"
-
-  [tool.poe.tasks."docs:deploy"]
-  help = "Deploy the documentation to GitHub Pages"
-  cmd = "mkdocs gh-deploy --force"
+  help = "Serve the documentation site with Zensical"
+  cmd = "uv run --isolated --python 3.13 --all-extras zensical serve --dev-addr localhost:8080"
 
   [tool.poe.tasks.typecheck]
   help = "Run basedpyright type checker"
@@ -289,8 +287,8 @@ type = "simple"
   [tool.poe.tasks.vulnerability-check]
   help = "Check this package's dependencies for vulnerabilities"
   # GHSA-4xh5-x5gv-qwph is a false positive for this project, as it's a vulnerability in pypy-3.11, and this project uses CPython.
-  # CVE-2026-4539: pygments vulnerability; pygments is a dev-only dep (rich, mkdocs-material, pytest) — not a runtime dep of this library. No fix available yet.
-  # CVE-2026-25645: requests vulnerability; requests is a dev-only transitive dep (mkdocs, pip-audit, pytest-base-url). Fix: requests>=2.33.0.
+  # CVE-2026-4539: pygments vulnerability; pygments is a dev-only dep (rich, zensical, pytest) — not a runtime dep of this library. No fix available yet.
+  # CVE-2026-25645: requests vulnerability; requests is a dev-only transitive dep (pip-audit, pytest-base-url). Fix: requests>=2.33.0.
   # CVE-2026-3219 / CVE-2026-6357: pip vulnerabilities in pip itself (the package manager, not a runtime dep of this library). Tracked upstream; no action required by this project.
   # PYSEC-2026-196: pip vulnerability in pip itself (the package manager); same rationale as CVE-2026-3219/CVE-2026-6357. Tracked upstream; no action required.
   # GHSA-6v7p-g79w-8964: msgpack vulnerability; msgpack is a dev-only transitive dep (via pyzmq) — not a runtime dep of this library. Fix: msgpack>=1.2.1 (tracked).
