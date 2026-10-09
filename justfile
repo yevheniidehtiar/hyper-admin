@@ -167,13 +167,13 @@ cc-test:
 
 # ── Docs ──────────────────────────────────────────────────────
 
-# Serve documentation locally
+# Serve documentation locally (Zensical)
 docs:
-    uv run mkdocs serve
+    uv run poe docs:serve
 
-# Deploy documentation to GitHub Pages
-docs-deploy:
-    uv run mkdocs gh-deploy --force
+# Build documentation (deployed to GitHub Pages by .github/workflows/pages.yml)
+docs-build:
+    uv run poe docs:build
 
 
 # ── Release ───────────────────────────────────────────────────

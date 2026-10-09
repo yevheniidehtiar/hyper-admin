@@ -87,7 +87,7 @@ Or just run `/bootstrap` in Claude Code — it detects what's missing and instal
 | `poe test:e2e` | Playwright E2E tests |
 | `poe test` | Unit + E2E sequence |
 | `just qa` | Full quality suite: lint + type-check + audit + test-cov |
-| `poe docs:serve` | MkDocs live-reload at `localhost:8080` |
+| `poe docs:serve` | Zensical live-reload at `localhost:8080` |
 | `just release` | Commitizen bump + push tags |
 
 ## How to Contribute

@@ -26,9 +26,9 @@ updated_at: 2026-03-29T18:26:36Z
 
 ## Acceptance Criteria
 - [ ] `docs/json-api.md`: authentication guide, endpoint reference table, curl examples for all 5 operations, pagination params
-- [ ] Linked from `mkdocs.yml` nav under "API Reference"
+- [ ] Linked from `zensical.toml` nav under "API Reference"
 
 ## Files
 - `docs/json-api.md` (new)
-- `mkdocs.yml`
+- `zensical.toml`
 
