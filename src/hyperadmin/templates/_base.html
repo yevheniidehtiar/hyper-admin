@@ -33,6 +33,13 @@
       document.addEventListener('htmx:beforeSwap', function (evt) {
         try {
           var xhr = evt.detail && evt.detail.xhr;
+          // A refused request (403 / 404 / 409) carries an error toast that the
+          // server retargets to the toast region: show it on the current page.
+          if (xhr && [403, 404, 409].indexOf(xhr.status) !== -1 && xhr.getResponseHeader('HX-Retarget')) {
+            evt.detail.shouldSwap = true;
+            evt.detail.isError = false;
+            return;
+          }
           if (xhr && xhr.status === 422) {
             // Force swap of the response HTML into the target and clear error state
             evt.detail.shouldSwap = true;

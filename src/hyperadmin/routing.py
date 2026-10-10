@@ -3,6 +3,7 @@
 from typing import Any
 
 from fastapi import APIRouter, Request
+from fastapi.routing import APIRoute
 from fastapi.templating import Jinja2Templates
 from sqlmodel import SQLModel
 
@@ -11,6 +12,7 @@ from hyperadmin.core.display import get_field_label
 from hyperadmin.core.introspection import infer_list_display, infer_list_filter, infer_search_fields
 from hyperadmin.core.options import AdminOptions
 from hyperadmin.views.dynamic import DynamicModelView
+from hyperadmin.views.error_pages import admin_route_class
 
 
 def _extract_column_names(raw: list[Any] | None, model: type | None = None) -> list[str] | None:
@@ -57,9 +59,10 @@ def create_admin_router(  # noqa: PLR0913, PLR0917
     field_labels: dict[str, str] | None = None,
     storage: Any = None,
     admin_lookup: Any = None,
+    route_class: type[APIRoute] = APIRoute,
 ) -> APIRouter:
     """Creates an APIRouter for a given model with the specified admin options."""
-    router = APIRouter()
+    router = APIRouter(route_class=route_class)
     view = DynamicModelView(
         adapter=admin_instance.adapter_class(model, engine=engine),
         options=options,
@@ -286,9 +289,10 @@ class HyperAdminRouter:
         # lookups (choices target get_queryset) use the registered admin.
         admin_instances: dict[Any, Any] = {}
         nav_items: list[dict[str, str]] = []
+        route_class = admin_route_class(self.templates)
 
         # Add the main admin dashboard route
-        dashboard_router = APIRouter()
+        dashboard_router = APIRouter(route_class=route_class)
         dashboard_router.add_api_route(
             "/",
             self.get_admin_dashboard_view(),
@@ -339,6 +343,7 @@ class HyperAdminRouter:
                 field_labels=field_labels,
                 storage=self.storage,
                 admin_lookup=admin_instances.get,
+                route_class=route_class,
             )
             self.routers.append(router)
 
@@ -359,6 +364,8 @@ class HyperAdminRouter:
                     "name": nav_name,
                     "url": f"/{model_name.lower()}",
                     "icon": getattr(admin_class, "icon", ""),
+                    # The sidebar hides the entry from users without this permission.
+                    "permission": f"view_{model_name.lower()}",
                 }
             )
 

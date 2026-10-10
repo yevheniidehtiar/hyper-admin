@@ -377,6 +377,7 @@ class Admin:
             AuthenticationMiddleware,
             auth_backend=self.auth_backend,
             admin_prefix=admin_prefix,
+            permission_checker=self.permission_checker,
         )
         self.app.add_middleware(
             SessionMiddleware,
@@ -478,6 +479,12 @@ class Admin:
 
     def mount(self, path: str) -> None:
         """Mounts the admin interface on the FastAPI application."""
+        from hyperadmin.views.error_pages import admin_route_class
+
+        # Admin routes render 403/404/409 inside the admin layout for people (JSON stays
+        # for API callers). Set before any route is added to the admin router.
+        self.router.route_class = admin_route_class(self.templates)
+
         if self.storage:
             self._mount_upload_storage()
 

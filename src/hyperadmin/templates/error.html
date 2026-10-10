@@ -1,0 +1,22 @@
+{%- extends "_base.html" -%}
+
+{%- set error_titles = {
+    403: _("You don't have access to this page"),
+    404: _("Page not found"),
+    409: _("This action can't be completed"),
+} -%}
+
+{%- block title -%}{{ error_titles.get(status_code, _("Error")) }}{%- endblock -%}
+
+{%- block content -%}
+<section class="ha-card ha-error-page" data-testid="error-page" aria-labelledby="error-title">
+    <p class="ha-text-muted">{{ _("Error") }} {{ status_code }}</p>
+    <h1 id="error-title" class="ha-page-title">{{ error_titles.get(status_code, _("Error")) }}</h1>
+    {%- if status_code == 403 -%}
+    <p>{{ _("Your account doesn't have permission for this. Ask an administrator if you need it.") }}</p>
+    {%- elif detail -%}
+    <p>{{ detail }}</p>
+    {%- endif -%}
+    <p><a href="{{ admin_prefix }}/" class="ha-btn ha-btn-secondary" data-testid="error-home-link">{{ _("Back to dashboard") }}</a></p>
+</section>
+{%- endblock -%}

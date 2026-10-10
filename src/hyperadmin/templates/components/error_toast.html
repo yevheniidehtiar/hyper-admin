@@ -1,0 +1,14 @@
+{#- Swapped into .ha-toast-container (HX-Retarget) when an HTMX request is refused. -#}
+<div x-data="{ show: true }" x-show="show" x-init="setTimeout(() => show = false, 8000)"
+     class="ha-toast ha-alert-error" role="alert" data-testid="error-toast">
+    <strong class="ha-alert-title">
+        {%- if status_code == 403 -%}{{ _("Permission denied") }}
+        {%- elif status_code == 404 -%}{{ _("Not found") }}
+        {%- else -%}{{ _("Action refused") }}{%- endif -%}
+    </strong>
+    <span>
+        {%- if status_code == 403 -%}{{ _("Your account doesn't have permission for this.") }}
+        {%- else -%}{{ detail }}{%- endif -%}
+    </span>
+    <button type="button" @click="show = false" class="ha-toast-close" aria-label="{{ _('Close') }}">&times;</button>
+</div>
