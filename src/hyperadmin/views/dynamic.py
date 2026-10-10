@@ -1774,7 +1774,16 @@ class DynamicModelView:
         await self._check_object_permission(request, item, "delete")
 
         file_paths = self._collect_file_paths(item)
-        await self.adapter.delete(pk=item_id)
+        try:
+            await self.adapter.delete(pk=item_id)
+        except IntegrityError:
+            # Still referenced by other rows (FK RESTRICT / NO ACTION); nothing was deleted.
+            logger.info("Delete of %s %s blocked by referencing rows", self.model.__name__, item_id)
+            raise HTTPException(
+                status_code=409,
+                detail=f"This {self.model.__name__} cannot be deleted: other records still "
+                "reference it.",
+            ) from None
         self._remove_files(file_paths)
 
         redirect_url = request.url_for(f"{self.model.__name__.lower()}-list")

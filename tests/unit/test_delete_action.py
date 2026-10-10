@@ -74,3 +74,26 @@ def test_delete_action_successful(client: TestClient):
 def test_delete_action_not_found(client: TestClient):
     response = client.delete("/admin/producttestdelete/999", follow_redirects=False)
     assert response.status_code == 404
+
+
+def test_delete_action_referenced_row_returns_409(client: TestClient, monkeypatch):
+    """
+    Scenario: deleting a row other records still reference
+      Given a product that a foreign key in another table points at
+      When  DELETE /admin/producttestdelete/1 is sent
+      Then  the response is 409 with an explanation, not a 500
+      And   the product still exists
+    """
+    from sqlalchemy.exc import IntegrityError
+
+    async def referenced(self, pk):
+        raise IntegrityError("DELETE", {}, Exception("violates foreign key constraint"))
+
+    monkeypatch.setattr(SQLModelAdapter, "delete", referenced)
+
+    response = client.delete("/admin/producttestdelete/1", follow_redirects=False)
+
+    assert response.status_code == 409
+    assert "other records still reference it" in response.text
+    monkeypatch.undo()
+    assert client.get("/admin/producttestdelete/1").status_code == 200
