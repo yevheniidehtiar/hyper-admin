@@ -123,18 +123,24 @@ def test_sorting_functionality(page: Page, demo_base_url: str) -> None:
         name_sort.click()
         page.wait_for_timeout(500)
         expect(page.get_by_test_id("list-table")).to_be_visible()
-        expect(page.get_by_test_id("sort-name")).to_contain_text("▲")
+        expect(
+            page.get_by_role("columnheader").filter(has=page.get_by_test_id("sort-name"))
+        ).to_have_attribute("aria-sort", "ascending")
 
         name_sort.click()
         page.wait_for_timeout(500)
-        expect(page.get_by_test_id("sort-name")).to_contain_text("▼")
+        expect(
+            page.get_by_role("columnheader").filter(has=page.get_by_test_id("sort-name"))
+        ).to_have_attribute("aria-sort", "descending")
 
     email_sort = page.get_by_test_id("sort-email")
     if email_sort.count() > 0:
         email_sort.click()
         page.wait_for_timeout(500)
         expect(page.get_by_test_id("list-table")).to_be_visible()
-        expect(page.get_by_test_id("sort-email")).to_contain_text("▲")
+        expect(
+            page.get_by_role("columnheader").filter(has=page.get_by_test_id("sort-email"))
+        ).to_have_attribute("aria-sort", "ascending")
 
 
 def test_combined_search_and_pagination(page: Page, demo_base_url: str) -> None:
@@ -171,7 +177,9 @@ def test_combined_search_and_sorting(page: Page, demo_base_url: str) -> None:
         page.wait_for_timeout(500)
         expect(page.get_by_test_id("list-table")).to_be_visible()
         expect(search_input).to_have_value("test")
-        expect(page.get_by_test_id("sort-name")).to_contain_text("▲")
+        expect(
+            page.get_by_role("columnheader").filter(has=page.get_by_test_id("sort-name"))
+        ).to_have_attribute("aria-sort", "ascending")
 
 
 def test_action_buttons_present(page: Page, demo_base_url: str) -> None:

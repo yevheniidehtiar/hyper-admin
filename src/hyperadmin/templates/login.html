@@ -1,6 +1,6 @@
 {%- extends "_base.html" -%}
 
-{%- block title -%}{{ _("Login") }} — HyperAdmin{%- endblock -%}
+{%- block title -%}{{ _("Login") }} — {{ site_title | default("HyperAdmin") }}{%- endblock -%}
 
 {%- block messages -%}{%- endblock -%}
 {%- block navbar -%}{%- endblock -%}
@@ -9,7 +9,8 @@
 {%- block content -%}
 <div class="ha-login-container">
     <div class="ha-login-card">
-        <h1 id="login-title" class="ha-login-title">HyperAdmin</h1>
+        <img class="ha-login-mark" src="{{ url_for('static', path='/img/hyperadmin-mark.svg') }}" alt="" width="40" height="40">
+        <h1 id="login-title" class="ha-login-title">{{ site_title | default("HyperAdmin") }}</h1>
         <p class="ha-text-muted">{{ _("Sign in to your account") }}</p>
 
         {%- if error -%}
