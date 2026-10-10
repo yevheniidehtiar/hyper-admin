@@ -5,10 +5,27 @@ serves HTMX requests from real FastAPI endpoints, and manages sessions. That mea
 a static host (like GitHub Pages, where these docs live) cannot run it: it needs a
 Python process.
 
-So this page gives you two ways to experience HyperAdmin:
+So this page gives you three ways to experience HyperAdmin:
 
-1. A **screenshot tour** of the bundled ERP demo (below) — no setup, runs in your browser right here.
-2. A **one-click live environment** via GitHub Codespaces, where the real app runs and you can click around.
+1. The **hosted demo** of the bundled ERP example — open it and sign in.
+2. A **screenshot tour** (below) — no setup, runs in your browser right here.
+3. A **one-click live environment** via GitHub Codespaces, where you run the app yourself.
+
+---
+
+## Hosted demo
+
+**[hyper-admin-demo.onrender.com/admin/](https://hyper-admin-demo.onrender.com/admin/)** —
+sign in with **`demo` / `demo`**.
+
+The demo account can manage every ERP record (contacts, invoices, bills, accounts, journal
+entries, the profit-and-loss report) but not users, groups or permissions.
+
+- It runs on a free plan and sleeps after 15 minutes without visitors, so the first page
+  can take about a minute to load.
+- The data is synthetic and is reset every night and on every deploy. Other visitors see
+  what you enter until then, so please don't type real personal data.
+- It is deployed automatically from the `develop` branch.
 
 ---
 
