@@ -1,0 +1,25 @@
+/* ==========================================================================
+   Self-hosted fonts (no Google Fonts request from inside someone's admin)
+
+   Inter 4 (SIL OFL 1.1): pinned to its 14pt optical size, weight axis 400–600,
+   subset to Latin, Latin Extended (incl. Vietnamese), Cyrillic and Greek.
+   JetBrains Mono 2.304 (SIL OFL 1.1): weight axis 400–500, same subset.
+   Other scripts fall through the --ha-font-family stack (Noto, then system UI).
+   Licences: ../fonts/*-OFL.txt
+   ========================================================================== */
+
+@font-face {
+  font-family: "Inter";
+  src: url("../fonts/InterVariable.woff2") format("woff2");
+  font-weight: 400 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "JetBrains Mono";
+  src: url("../fonts/JetBrainsMonoVariable.woff2") format("woff2");
+  font-weight: 400 500;
+  font-style: normal;
+  font-display: swap;
+}

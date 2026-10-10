@@ -1,0 +1,28 @@
+<!-- @dsCard group="Actions" height=230 -->
+<!doctype html>
+<html>
+<head><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="../../tokens.css"><link rel="stylesheet" href="../bundle.css"><script>(function(){var t=new URLSearchParams(location.search).get("theme")||"light";document.documentElement.setAttribute("data-theme",t);var d=new URLSearchParams(location.search).get("dir");if(d)document.documentElement.setAttribute("dir",d);})();</script><meta charset="utf-8"><title>Button — preview</title><style>body{margin:0;background:var(--ha-surface-base)} .pv{padding:16px;display:flex;flex-direction:column;gap:16px} .pv-l{font:500 12px/18px var(--font-sans);color:var(--ha-color-text-muted);margin:0 0 6px}</style></head>
+<body>
+<div class="ha-root pv">
+
+<div><p class="pv-l">Variants</p><div class="ha-row">
+<button class="ha-btn ha-btn--primary" type="submit" data-testid="btn-save">Save</button>
+<button class="ha-btn" type="button" data-testid="btn-save-continue">Save and continue editing</button>
+<button class="ha-btn ha-btn--ghost" type="button">Cancel</button>
+<button class="ha-btn ha-btn--accent" type="button" data-testid="btn-ask-ai"><svg class="ha-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>Ask the data</button>
+<button class="ha-btn ha-btn--danger" type="button" data-testid="btn-delete"><svg class="ha-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>Delete</button>
+<button class="ha-btn ha-btn--icon" type="button" aria-label="Edit invoice INV-0142" data-testid="btn-edit"><svg class="ha-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button>
+</div></div>
+<div><p class="pv-l">States: hover · pressed · focus · loading · disabled</p><div class="ha-row">
+<button class="ha-btn ha-btn--primary" style="background:var(--ha-color-primary-hover)">Hover</button>
+<button class="ha-btn ha-btn--primary" style="background:var(--ha-color-primary-hover);box-shadow:inset 0 2px 0 rgba(0,0,0,.18)">Pressed</button>
+<button class="ha-btn ha-btn--primary" style="outline:2px solid var(--ha-color-focus-ring);outline-offset:2px">Focus</button>
+<button class="ha-btn ha-btn--primary" aria-busy="true" aria-disabled="true" style="background:var(--ha-color-primary);color:var(--ha-color-on-primary);border-color:var(--ha-color-primary);opacity:.85"><span class="ha-spinner" aria-hidden="true"></span>Saving…</button>
+<button class="ha-btn ha-btn--primary" disabled>Disabled</button>
+<div data-density="compact" class="ha-row"><button class="ha-btn ha-btn--primary">Compact</button><button class="ha-btn">Compact</button></div>
+</div></div>
+<div dir="rtl" lang="ar"><p class="pv-l">RTL</p><div class="ha-row"><button class="ha-btn ha-btn--primary">حفظ</button><button class="ha-btn">إلغاء</button><button class="ha-btn ha-btn--danger"><svg class="ha-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>حذف</button></div></div>
+
+</div>
+</body>
+</html>

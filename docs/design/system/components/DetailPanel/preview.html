@@ -1,0 +1,22 @@
+<!-- @dsCard group="Data" height=560 -->
+<!doctype html>
+<html>
+<head><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="../../tokens.css"><link rel="stylesheet" href="../bundle.css"><script>(function(){var t=new URLSearchParams(location.search).get("theme")||"light";document.documentElement.setAttribute("data-theme",t);var d=new URLSearchParams(location.search).get("dir");if(d)document.documentElement.setAttribute("dir",d);})();</script><meta charset="utf-8"><title>DetailPanel — preview</title><style>body{margin:0;background:var(--ha-surface-base)} .pv{padding:16px;display:flex;flex-direction:column;gap:16px} .pv-l{font:500 12px/18px var(--font-sans);color:var(--ha-color-text-muted);margin:0 0 6px}</style></head>
+<body>
+<div class="ha-root pv">
+
+<article class="ha-card" data-testid="detail-invoice" aria-labelledby="dh">
+<div class="ha-summary"><div class="ha-stack" style="gap:4px"><div class="ha-row"><h2 class="ha-h2" id="dh">INV-2026-0142</h2><span class="ha-pill ha-pill--success">Paid</span></div><span class="ha-muted"><a href="#">Acme Logistics B.V.</a> · issued 10 Oct 2026</span></div>
+<dl class="ha-kv"><div><dt>Total</dt><dd class="ha-num">€&#8239;12,480.50</dd></div><div><dt>Due</dt><dd>24 Oct 2026</dd></div><div><dt>Lines</dt><dd class="ha-num">3</dd></div></dl>
+<div class="ha-row"><a class="ha-btn" href="#"><svg class="ha-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>Edit</a><button class="ha-btn ha-btn--ghost">History</button></div></div>
+<div class="ha-tabs" role="tablist" aria-label="Invoice sections"><button class="ha-tab" role="tab" aria-selected="true" aria-controls="t1" id="tb1" data-testid="tab-details">Details</button><button class="ha-tab" role="tab" aria-selected="false" tabindex="-1" data-testid="tab-lines">Lines <span class="ha-count">3</span></button><button class="ha-tab" role="tab" aria-selected="false" tabindex="-1" data-testid="tab-payments">Payments <span class="ha-count">0</span></button><button class="ha-tab" role="tab" aria-selected="false" tabindex="-1" data-testid="tab-activity">Activity</button></div>
+<div class="ha-card__body" role="tabpanel" id="t1" aria-labelledby="tb1" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px">
+<dl class="ha-dl"><dt>Customer</dt><dd><a href="#">Acme Logistics B.V.</a></dd><dt>Reference</dt><dd>PO-88412</dd><dt>Currency</dt><dd>EUR</dd><dt>ID</dt><dd class="ha-mono">7f3c9a2e-41b0-4c6d-9f8a-2d1e0b5c3a47</dd><dt>Notes</dt><dd><span class="ha-null">—</span></dd></dl>
+<div><h3 class="ha-h4" style="margin-block-end:12px">Activity</h3><ol class="ha-timeline"><li><strong class="ha-strong">Maria</strong> marked it paid<br><span class="ha-caption ha-muted">Today, 14:32</span></li><li><strong class="ha-strong">Bram</strong> changed the due date<br><span class="ha-caption ha-muted">8 Oct, 09:10</span></li><li>Created from the API<br><span class="ha-caption ha-muted">2 Oct, 16:45</span></li></ol></div></div>
+</article>
+<div class="ha-grid-2"><div class="ha-card" data-testid="related-payment"><div class="ha-card__head"><h3 class="ha-h4">Payments</h3></div><div class="ha-empty" style="padding:24px" data-testid="related-empty"><p>No payments recorded yet.</p><button class="ha-btn ha-btn--sm"><svg class="ha-icon ha-icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Record payment</button></div></div>
+<div class="ha-card" aria-busy="true" data-testid="related-bill"><div class="ha-card__head"><h3 class="ha-h4">Related bills</h3></div><div class="ha-card__body ha-stack" style="gap:12px"><span class="ha-skel" style="inline-size:80%"></span><span class="ha-skel" style="inline-size:60%"></span><span class="ha-skel" style="inline-size:70%"></span></div></div></div>
+
+</div>
+</body>
+</html>

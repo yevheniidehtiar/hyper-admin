@@ -1,0 +1,17 @@
+<!-- @dsCard group="Feedback" height=330 -->
+<!doctype html>
+<html>
+<head><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="../../tokens.css"><link rel="stylesheet" href="../bundle.css"><script>(function(){var t=new URLSearchParams(location.search).get("theme")||"light";document.documentElement.setAttribute("data-theme",t);var d=new URLSearchParams(location.search).get("dir");if(d)document.documentElement.setAttribute("dir",d);})();</script><meta charset="utf-8"><title>Toast — preview</title><style>body{margin:0;background:var(--ha-surface-base)} .pv{padding:16px;display:flex;flex-direction:column;gap:16px} .pv-l{font:500 12px/18px var(--font-sans);color:var(--ha-color-text-muted);margin:0 0 6px}</style></head>
+<body>
+<div class="ha-root pv">
+
+<div class="ha-toasts" role="region" aria-label="Notifications" aria-live="polite" data-testid="toasts">
+<div class="ha-toast" role="status" data-testid="toast-success"><span class="ha-toast__icon--success"><svg class="ha-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg></span><div><strong>Invoice saved</strong>INV-2026-0142 · auto-dismisses in 5 s<div class="ha-toast__timer"><span></span></div></div><button class="ha-btn ha-btn--icon ha-btn--ghost ha-btn--sm" aria-label="Dismiss"><svg class="ha-icon ha-icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div>
+<div class="ha-toast" role="status" data-testid="toast-undo"><span class="ha-toast__icon--success"><svg class="ha-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg></span><div><strong>3 contacts deleted</strong><div class="ha-row" style="margin-block-start:6px"><button class="ha-btn ha-btn--sm">Undo</button></div></div><button class="ha-btn ha-btn--icon ha-btn--ghost ha-btn--sm" aria-label="Dismiss"><svg class="ha-icon ha-icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div>
+<div class="ha-toast" role="alert" data-testid="toast-error"><span class="ha-toast__icon--danger"><svg class="ha-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg></span><div><strong>Could not save</strong>The server returned an error. Stays until dismissed.</div><button class="ha-btn ha-btn--icon ha-btn--ghost ha-btn--sm" aria-label="Dismiss"><svg class="ha-icon ha-icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div>
+<div class="ha-toast" role="alert" data-testid="toast-conflict"><span class="ha-toast__icon--warning"><svg class="ha-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></span><div><strong>Bram changed this invoice</strong>Your edit was not applied. <div class="ha-row" style="margin-block-start:6px"><button class="ha-btn ha-btn--sm ha-btn--primary">Review changes</button></div></div></div>
+</div>
+
+</div>
+</body>
+</html>

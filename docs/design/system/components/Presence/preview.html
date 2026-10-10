@@ -1,0 +1,18 @@
+<!-- @dsCard group="Realtime" height=300 -->
+<!doctype html>
+<html>
+<head><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="../../tokens.css"><link rel="stylesheet" href="../bundle.css"><script>(function(){var t=new URLSearchParams(location.search).get("theme")||"light";document.documentElement.setAttribute("data-theme",t);var d=new URLSearchParams(location.search).get("dir");if(d)document.documentElement.setAttribute("dir",d);})();</script><meta charset="utf-8"><title>Presence — preview</title><style>body{margin:0;background:var(--ha-surface-base)} .pv{padding:16px;display:flex;flex-direction:column;gap:16px} .pv-l{font:500 12px/18px var(--font-sans);color:var(--ha-color-text-muted);margin:0 0 6px}</style></head>
+<body>
+<div class="ha-root pv">
+
+<div class="ha-banner" role="alert" data-testid="connection-lost"><svg class="ha-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>Connection lost. Changes made by others will not appear until reconnected.<button class="ha-btn ha-btn--sm">Retry now</button></div>
+<div class="ha-row" style="gap:24px">
+<div><p class="pv-l">Who is on this record</p><div class="ha-avatars" role="group" aria-label="Also viewing: Maria (online), Bram (idle), Sofia (online)" data-testid="presence"><span class="ha-avatar" data-status="online" title="Maria · online">MV</span><span class="ha-avatar" data-status="idle" title="Bram · idle 6 min">BJ</span><span class="ha-avatar" data-status="online" title="Sofia · online">SO</span><span class="ha-avatar" style="background:var(--ha-surface-sunken);color:var(--ha-color-text-strong)" title="2 more">+2</span></div></div>
+<div><p class="pv-l">Connection status</p><div class="ha-row" style="gap:16px"><span class="ha-live" role="status" data-testid="connection-status">Live</span><span class="ha-live ha-live--reconnecting" role="status">Reconnecting…</span><span class="ha-live ha-live--offline" role="status">Offline</span></div></div>
+</div>
+<div class="ha-row"><p class="pv-l">Field being edited by someone else</p></div>
+<div class="ha-field" style="max-inline-size:360px;margin-block-start:-20px"><label class="ha-label" for="pz">Due date <span class="ha-pill ha-pill--new" style="margin-inline-start:6px">Bram is editing</span></label><input class="ha-input" id="pz" value="2026-10-31" style="border-color:var(--ha-color-accent);box-shadow:0 0 0 1px var(--ha-color-accent)"></div>
+
+</div>
+</body>
+</html>

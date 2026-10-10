@@ -1,0 +1,144 @@
+/* HyperAdmin — generated from tokens.json (docs preview only; the shipped CSS is src/hyperadmin/static/css/_tokens.css + _dark-mode.css) */
+:root, [data-theme="light"] {
+  --ha-surface-base: #F7F9FB;
+  --ha-surface-raised: #FFFFFF;
+  --ha-surface-sunken: #EEF2F6;
+  --ha-surface-overlay: #FFFFFF;
+  --ha-surface-hover: #F1F4F8;
+  --ha-surface-selected: #E6F6F4;
+  --ha-color-border: #D9DFE7;
+  --ha-color-border-strong: #7D8799;
+  --ha-color-text-strong: #121926;
+  --ha-color-text: #4B5565;
+  --ha-color-text-muted: #5D6A7E;
+  --ha-color-text-disabled: #98A2B3;
+  --ha-color-brand: #0D9488;
+  --ha-color-primary: #0F766E;
+  --ha-color-primary-hover: #115E59;
+  --ha-color-on-primary: #FFFFFF;
+  --ha-color-primary-text: #0F766E;
+  --ha-color-primary-soft: #F0FDFA;
+  --ha-color-accent: #6841EA;
+  --ha-color-on-accent: #FFFFFF;
+  --ha-color-accent-soft: #F1EDFE;
+  --ha-color-danger: #D92D20;
+  --ha-color-on-danger: #FFFFFF;
+  --ha-color-danger-text: #C8291D;
+  --ha-color-danger-soft: #FEF3F2;
+  --ha-color-success-text: #067647;
+  --ha-color-success-soft: #ECFDF3;
+  --ha-color-warning-text: #B54708;
+  --ha-color-warning-soft: #FFFAEB;
+  --ha-color-info-text: #026AA2;
+  --ha-color-info-soft: #F0F9FF;
+  --ha-color-focus-ring: var(--ha-color-brand);
+  --ha-color-scrim: rgba(11, 18, 32, 0.56);
+  --ha-chart-1: #0D9488;
+  --ha-chart-2: #4C2CB8;
+  --ha-chart-3: #C2620A;
+  --ha-chart-4: #1E4E8C;
+  --ha-chart-5: #D6479A;
+  --ha-chart-6: #475467;
+  --ha-chart-grid: #E3E8EF;
+  --ha-chart-axis: #5D6A7E;
+  --ha-shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
+  --ha-shadow-md: 0 4px 8px -2px rgba(16, 24, 40, 0.10), 0 2px 4px -2px rgba(16, 24, 40, 0.06);
+  --ha-shadow-lg: 0 20px 24px -4px rgba(16, 24, 40, 0.10), 0 8px 8px -4px rgba(16, 24, 40, 0.04);
+}
+[data-theme="dark"] {
+  --ha-surface-base: #0B1220;
+  --ha-surface-raised: #111A2B;
+  --ha-surface-sunken: #070D18;
+  --ha-surface-overlay: #1A2438;
+  --ha-surface-hover: #18233A;
+  --ha-surface-selected: #0F2A2C;
+  --ha-color-border: #26324A;
+  --ha-color-border-strong: #64738C;
+  --ha-color-text-strong: #F2F5F9;
+  --ha-color-text: #CDD5E0;
+  --ha-color-text-muted: #9AA4B2;
+  --ha-color-text-disabled: #4F5D75;
+  --ha-color-brand: #2DD4BF;
+  --ha-color-primary: #2DD4BF;
+  --ha-color-primary-hover: #5EEAD4;
+  --ha-color-on-primary: #0B1220;
+  --ha-color-primary-text: #5EEAD4;
+  --ha-color-primary-soft: #0E2E2E;
+  --ha-color-accent: #B4A3FF;
+  --ha-color-on-accent: #0B1220;
+  --ha-color-accent-soft: #2A2154;
+  --ha-color-danger: #F97066;
+  --ha-color-on-danger: #0B1220;
+  --ha-color-danger-text: #FDA29B;
+  --ha-color-danger-soft: #3A1416;
+  --ha-color-success-text: #75E0A7;
+  --ha-color-success-soft: #0B2E1F;
+  --ha-color-warning-text: #FEC84B;
+  --ha-color-warning-soft: #3A2606;
+  --ha-color-info-text: #7CD4FD;
+  --ha-color-info-soft: #0A2740;
+  --ha-color-focus-ring: var(--ha-color-brand);
+  --ha-color-scrim: rgba(0, 0, 0, 0.64);
+  --ha-chart-1: #2DD4BF;
+  --ha-chart-2: #9D85FF;
+  --ha-chart-3: #FDB022;
+  --ha-chart-4: #4F8FEA;
+  --ha-chart-5: #F9A8D4;
+  --ha-chart-6: #8592A6;
+  --ha-chart-grid: #1E293B;
+  --ha-chart-axis: #9AA4B2;
+  --ha-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --ha-shadow-md: 0 4px 8px -2px rgba(0, 0, 0, 0.5);
+  --ha-shadow-lg: 0 20px 24px -4px rgba(0, 0, 0, 0.6);
+}
+:root {
+  --ha-space-0-5: 2px;
+  --ha-space-1: 4px;
+  --ha-space-2: 8px;
+  --ha-space-3: 12px;
+  --ha-space-4: 16px;
+  --ha-space-5: 20px;
+  --ha-space-6: 24px;
+  --ha-space-8: 32px;
+  --ha-space-12: 48px;
+  --ha-space-16: 64px;
+  --ha-radius-sm: 4px;
+  --ha-radius-md: 6px;
+  --ha-radius-lg: 8px;
+  --ha-radius-xl: 12px;
+  --ha-radius-pill: 999px;
+  --ha-row-height: 44px;
+  --ha-row-height-compact: 32px;
+  --ha-control-height: 36px;
+  --ha-control-height-compact: 28px;
+  --ha-target-min: 24px;
+  --ha-target-touch: 44px;
+  --ha-icon-size: 20px;
+  --ha-navbar-height: 56px;
+  --ha-sidebar-width: 256px;
+  --ha-sidebar-width-collapsed: 64px;
+  --ha-content-max: 1440px;
+  --ha-bp-md: 768px;
+  --ha-bp-lg: 1024px;
+  --ha-bp-xl: 1280px;
+  --ha-z-sticky: 10;
+  --ha-z-nav: 30;
+  --ha-z-overlay: 50;
+  --ha-z-toast: 60;
+  --font-sans: Inter, "Noto Sans Arabic", "Noto Sans Hebrew", "Noto Sans Devanagari", "Noto Sans Thai", "Noto Sans SC", "Noto Sans JP", "Noto Sans KR", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@font-face { font-family: 'Inter'; src: url('../../../src/hyperadmin/static/fonts/InterVariable.woff2') format('woff2'); font-weight: 400 600; font-style: normal; font-display: swap; }
+@font-face { font-family: 'JetBrains Mono'; src: url('../../../src/hyperadmin/static/fonts/JetBrainsMonoVariable.woff2') format('woff2'); font-weight: 400 500; font-style: normal; font-display: swap; }
+.ha-display { font-family: var(--font-sans); font-size: 36px; line-height: 44px; font-weight: 600; letter-spacing: -0.02em; }
+.ha-h1 { font-family: var(--font-sans); font-size: 30px; line-height: 38px; font-weight: 600; letter-spacing: -0.015em; }
+.ha-h2 { font-family: var(--font-sans); font-size: 24px; line-height: 32px; font-weight: 600; letter-spacing: -0.01em; }
+.ha-h3 { font-family: var(--font-sans); font-size: 20px; line-height: 28px; font-weight: 600; }
+.ha-h4 { font-family: var(--font-sans); font-size: 16px; line-height: 24px; font-weight: 600; }
+.ha-body-lg { font-family: var(--font-sans); font-size: 16px; line-height: 24px; font-weight: 400; }
+.ha-body { font-family: var(--font-sans); font-size: 14px; line-height: 21px; font-weight: 400; }
+.ha-body-strong { font-family: var(--font-sans); font-size: 14px; line-height: 21px; font-weight: 600; }
+.ha-label { font-family: var(--font-sans); font-size: 13px; line-height: 20px; font-weight: 500; }
+.ha-caption { font-family: var(--font-sans); font-size: 12px; line-height: 18px; font-weight: 400; }
+.ha-mono { font-family: var(--font-mono); font-size: 13px; line-height: 20px; font-weight: 400; }
+.ha-mono-sm { font-family: var(--font-mono); font-size: 12px; line-height: 18px; font-weight: 400; }

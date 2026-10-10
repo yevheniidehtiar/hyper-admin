@@ -1,0 +1,26 @@
+<!-- @dsCard group="Auth" height=560 -->
+<!doctype html>
+<html>
+<head><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="../../tokens.css"><link rel="stylesheet" href="../bundle.css"><script>(function(){var t=new URLSearchParams(location.search).get("theme")||"light";document.documentElement.setAttribute("data-theme",t);var d=new URLSearchParams(location.search).get("dir");if(d)document.documentElement.setAttribute("dir",d);})();</script><meta charset="utf-8"><title>Login — preview</title><style>body{margin:0;background:var(--ha-surface-base)} .pv{padding:16px;display:flex;flex-direction:column;gap:16px} .pv-l{font:500 12px/18px var(--font-sans);color:var(--ha-color-text-muted);margin:0 0 6px}</style></head>
+<body>
+<div class="ha-root pv">
+
+<div class="ha-row" style="align-items:flex-start;gap:24px">
+<form class="ha-login" aria-labelledby="lg-h" data-testid="login-form">
+<img src="../../../../../src/hyperadmin/static/img/hyperadmin-mark.svg" alt="" width="40" height="40"><div><h1 class="ha-h2" id="lg-h">Sign in to ERP demo</h1><p class="ha-muted" style="margin:4px 0 0">Use your work account.</p></div>
+<button class="ha-btn" type="button" data-testid="sso-microsoft">Continue with Microsoft</button><button class="ha-btn" type="button" data-testid="sso-oidc">Continue with SSO</button>
+<div class="ha-divider">or</div>
+<div class="ha-alert ha-alert--danger" role="alert"><svg class="ha-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg><div><p style="color:inherit">Email or password is incorrect.</p></div></div>
+<div class="ha-field"><label class="ha-label" for="lg-e">Email</label><input class="ha-input" id="lg-e" type="email" autocomplete="username" value="maria@example.com"></div>
+<div class="ha-field"><label class="ha-label" for="lg-p">Password</label><input class="ha-input" id="lg-p" type="password" autocomplete="current-password" aria-invalid="true" value="xxxxxxxx"></div>
+<button class="ha-btn ha-btn--primary" type="submit">Sign in</button></form>
+<div class="ha-stack" style="flex:1;min-inline-size:280px;max-inline-size:400px">
+<form class="ha-login" aria-labelledby="mfa-h" data-testid="mfa-form"><h1 class="ha-h3" id="mfa-h">Enter your 6-digit code</h1><p class="ha-muted" style="margin:0">From your authenticator app.</p>
+<div class="ha-otp" role="group" aria-label="One-time code"><input class="ha-input" inputmode="numeric" maxlength="1" aria-label="Digit 1" value="4" autocomplete="one-time-code"><input class="ha-input" inputmode="numeric" maxlength="1" aria-label="Digit 2" value="8"><input class="ha-input" inputmode="numeric" maxlength="1" aria-label="Digit 3" value="1"><input class="ha-input" inputmode="numeric" maxlength="1" aria-label="Digit 4" value="5"><input class="ha-input" inputmode="numeric" maxlength="1" aria-label="Digit 5" value=" "><input class="ha-input" inputmode="numeric" maxlength="1" aria-label="Digit 6" value=" "></div>
+<button class="ha-btn ha-btn--primary" type="submit">Verify</button><a href="#" style="text-align:center">Use a recovery code</a></form>
+<div class="ha-login" data-testid="locked-out"><div class="ha-alert ha-alert--warning" role="alert"><svg class="ha-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><div><strong>Account locked</strong><p>Too many attempts. Try again in 14 minutes or ask an administrator.</p></div></div></div>
+</div></div>
+
+</div>
+</body>
+</html>

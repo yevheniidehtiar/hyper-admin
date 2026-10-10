@@ -1,0 +1,29 @@
+<!-- @dsCard group="Data" height=250 -->
+<!doctype html>
+<html>
+<head><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="../../tokens.css"><link rel="stylesheet" href="../bundle.css"><script>(function(){var t=new URLSearchParams(location.search).get("theme")||"light";document.documentElement.setAttribute("data-theme",t);var d=new URLSearchParams(location.search).get("dir");if(d)document.documentElement.setAttribute("dir",d);})();</script><meta charset="utf-8"><title>FilterBar — preview</title><style>body{margin:0;background:var(--ha-surface-base)} .pv{padding:16px;display:flex;flex-direction:column;gap:16px} .pv-l{font:500 12px/18px var(--font-sans);color:var(--ha-color-text-muted);margin:0 0 6px}</style></head>
+<body>
+<div class="ha-root pv">
+
+<form class="ha-filterbar" role="search" aria-label="Filter invoices" data-testid="filter-bar">
+<div class="ha-search"><svg class="ha-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input class="ha-input" type="search" name="q" placeholder="Search number, customer…" aria-label="Search invoices" value="acme"></div>
+<select class="ha-select" aria-label="Status" style="inline-size:auto"><option>Status: Overdue</option></select>
+<div class="ha-tokens" role="group" aria-label="Customer (any of)" style="flex:1 1 220px"><span class="ha-chip">Acme<button type="button" aria-label="Remove customer Acme"><svg class="ha-icon ha-icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></span><span class="ha-chip">Brabant Bakkerij<button type="button" aria-label="Remove customer Brabant Bakkerij"><svg class="ha-icon ha-icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></span><input aria-label="Add customer filter" placeholder="Customer…"></div>
+<span class="ha-range" role="group" aria-label="Amount range"><input class="ha-input ha-input--num" aria-label="Amount from" value="5000" aria-invalid="true" aria-describedby="range-err"><span class="ha-muted">–</span><input class="ha-input ha-input--num" aria-label="Amount to" value="1000" aria-invalid="true" aria-describedby="range-err"></span>
+<span class="ha-range" role="group" aria-label="Date range"><input class="ha-input" type="date" aria-label="From date" value="2026-09-01"><span class="ha-muted">–</span><input class="ha-input" type="date" aria-label="To date" value="2026-09-30"></span>
+<label class="ha-check"><input type="checkbox" checked>Has attachment</label>
+<button class="ha-btn ha-btn--primary" type="submit">Apply</button>
+</form>
+<p class="ha-errmsg" id="range-err"><svg class="ha-icon ha-icon--sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>“Amount from” must be less than “Amount to”.</p>
+<div class="ha-chips" aria-label="Applied filters" data-testid="applied-filters">
+<span class="ha-chip">Search: acme<button type="button" aria-label="Remove filter Search: acme"><svg class="ha-icon ha-icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></span>
+<span class="ha-chip">Status: Overdue<button type="button" aria-label="Remove filter Status: Overdue"><svg class="ha-icon ha-icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></span>
+<span class="ha-chip">Sep 1 – Sep 30, 2026<button type="button" aria-label="Remove date filter"><svg class="ha-icon ha-icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></span>
+<span class="ha-chip ha-chip--invalid">Amount: 5,000 – 1,000 (invalid)<button type="button" aria-label="Remove amount filter"><svg class="ha-icon ha-icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></span>
+<button class="ha-btn ha-btn--ghost ha-btn--sm" type="button" data-testid="filters-clear">Clear all</button>
+</div>
+<div dir="rtl" lang="ar" data-density="compact"><p class="pv-l">RTL · compact</p><form class="ha-filterbar" role="search" aria-label="تصفية الفواتير"><div class="ha-search"><svg class="ha-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input class="ha-input" type="search" aria-label="بحث" placeholder="بحث…"></div><select class="ha-select" aria-label="الحالة" style="inline-size:auto"><option>الحالة: متأخرة</option></select><button class="ha-btn ha-btn--primary" type="submit">تطبيق</button></form></div>
+
+</div>
+</body>
+</html>
