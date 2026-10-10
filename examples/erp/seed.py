@@ -16,7 +16,14 @@ from examples.erp.db import engine
 from examples.erp.purchases.models import Bill, BillItem, BillStatus
 from examples.erp.sales.models import Invoice, InvoiceItem, InvoiceStatus
 from hyperadmin.auth.backend import hash_password
-from hyperadmin.auth.models import Permission, User, UserPermission
+from hyperadmin.auth.models import (
+    Group,
+    GroupPermission,
+    Permission,
+    User,
+    UserGroup,
+    UserPermission,
+)
 from hyperadmin.loadtest import BulkSeeder
 from hyperadmin.loadtest.generators import build_plan
 from hyperadmin.management.commands.seed import _to_sync_url
@@ -24,8 +31,9 @@ from hyperadmin.management.commands.seed import _to_sync_url
 fake = Faker()
 logger = logging.getLogger("uvicorn")
 
-# Models a demo visitor may manage — never the hyperadmin_* users, groups or permissions.
-ERP_MODELS = (Account, JournalEntry, JournalLine, Contact, Bill, BillItem, Invoice, InvoiceItem)
+# Models a demo visitor may never manage: the built-in users, groups and permissions.
+# Everything else registered (every ERP model, including ones added later) is granted.
+AUTH_MODELS = (User, Group, Permission, UserGroup, UserPermission, GroupPermission)
 DEMO_USERNAME = "demo"
 DEMO_PASSWORD = "demo"  # noqa: S105 - public credentials of the hosted demo
 
@@ -230,11 +238,11 @@ async def seed_db():  # noqa: PLR0915
 async def seed_demo_user() -> None:
     """Create the public ``demo`` account of the hosted demo (idempotent).
 
-    It is not a superuser: it holds every permission on the ERP models and none on
-    the built-in auth models, so visitors can use the whole app but cannot change
+    It is not a superuser: it holds every synced permission except those on the
+    built-in auth models, so visitors can use the whole app but cannot change
     users, groups, permissions or passwords. Run after permissions are synced.
     """
-    model_names = {model.__name__.lower() for model in ERP_MODELS}
+    auth_names = {model.__name__.lower() for model in AUTH_MODELS}
     async with AsyncSession(engine, expire_on_commit=False) as session:
         existing = await session.execute(select(User).where(User.username == DEMO_USERNAME))
         if existing.first():
@@ -251,7 +259,7 @@ async def seed_demo_user() -> None:
         permissions = (
             (
                 await session.execute(
-                    select(Permission).where(Permission.content_type.in_(model_names))
+                    select(Permission).where(Permission.content_type.not_in(auth_names))
                 )
             )
             .scalars()
