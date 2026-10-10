@@ -130,6 +130,7 @@ reportAny = false  # Too much noise for now
 addopts = "--color=yes --doctest-modules --exitfirst --failed-first --verbosity=2 --junitxml=reports/pytest.xml --cov=src --cov-report=term-missing --cov-report=xml:reports/coverage.xml"
 testpaths = ["tests"]
 xfail_strict = true
+faulthandler_timeout = 300  # dump all thread stacks if a single test hangs (CI diagnosability)
 filterwarnings = "ignore:The `name` is not the first parameter anymore:DeprecationWarning"
 asyncio_mode = "auto"
 

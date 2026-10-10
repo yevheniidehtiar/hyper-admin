@@ -18,6 +18,7 @@ jobs:
   test:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     strategy:
       fail-fast: false
@@ -93,6 +94,7 @@ jobs:
   test-pr:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     strategy:
       fail-fast: false
