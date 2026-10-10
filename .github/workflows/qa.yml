@@ -20,7 +20,7 @@ jobs:
       - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
-      - run: uv sync --all-extras
+      - run: uv sync --locked --all-extras
       - name: Backward Compatibility Check
         run: |
           # Simple check to see if we can still import previous version if it exists

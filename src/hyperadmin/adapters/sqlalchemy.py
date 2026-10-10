@@ -185,6 +185,8 @@ class SQLAlchemyAdapter(BaseAdapter):
             return []
 
         target_inspector = inspect(target_model)
+        if target_inspector is None:  # Optional in SQLAlchemy < 2.0.2x type stubs
+            return []
         async with AsyncSession(self.engine) as session:
             query = select(target_model)
 
@@ -236,7 +238,7 @@ class SQLAlchemyAdapter(BaseAdapter):
             parent_pk: The primary key of the parent object to associate new rows with.
 
         Raises:
-            InlineRowNotOwned: Before any write, when a submitted ``_pk`` is not an
+            InlineRowNotOwnedError: Before any write, when a submitted ``_pk`` is not an
                 existing child of ``parent_pk``.
         """
         await self.ensure_inline_rows_owned(spec, rows, parent_pk)

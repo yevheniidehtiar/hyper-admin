@@ -12,7 +12,7 @@ updates:
       ci-dependencies:
         patterns:
           - "*"
-  - package-ecosystem: "pip"
+  - package-ecosystem: "uv"  # bumps pyproject.toml and the committed uv.lock together
     directory: "/"
     schedule:
       interval: "weekly"
@@ -20,6 +20,10 @@ updates:
       prefix: "chore"
       prefix-development: "build"
       include: scope
+    # Dev tooling lives in the `dev` extra, not [dependency-groups]. Dependabot's uv
+    # updater may classify every pyproject dependency as production
+    # (dependabot-core#13202); if no dev-bump PR appears after the first weekly run,
+    # drop this filter or move the dev extra to [dependency-groups].
     allow:
       - dependency-type: "development"
     versioning-strategy: "increase"

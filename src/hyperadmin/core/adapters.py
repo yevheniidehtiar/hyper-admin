@@ -21,7 +21,7 @@ if TYPE_CHECKING:
 QuerysetFilterResolver = Callable[[Any], "Callable[[Any], dict[str, Any]] | None"]
 
 
-class InlineRowNotOwned(LookupError):
+class InlineRowNotOwnedError(LookupError):
     """A submitted inline child pk is not an existing child of the parent being saved.
 
     Raised before any write so the view can answer 404 (IDOR / reparenting guard).
@@ -195,7 +195,7 @@ class BaseAdapter(ABC):
         rows: builtins.list[dict[str, Any]],
         parent_pk: Any,
     ) -> None:
-        """Raise :class:`InlineRowNotOwned` unless every submitted ``_pk`` belongs to ``parent_pk``.
+        """Raise :class:`InlineRowNotOwnedError` unless every ``_pk`` is a child of the parent.
 
         Must run before any write. A submitted child pk is never trusted on its
         own: it must be an existing child (``fk_field == parent_pk``) of the
@@ -207,7 +207,7 @@ class BaseAdapter(ABC):
         owned = await self.inline_child_pks(spec, parent_pk) if parent_pk is not None else set()
         foreign = submitted - owned
         if foreign:
-            raise InlineRowNotOwned(
+            raise InlineRowNotOwnedError(
                 f"Inline rows {sorted(map(str, foreign))} do not belong to this parent"
             )
 
