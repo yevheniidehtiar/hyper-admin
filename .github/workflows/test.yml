@@ -84,7 +84,7 @@ jobs:
         # Baselines must be rendered on the CI runner; the actual/diff PNGs are the
         # source for refreshing a drifted baseline (see tests/e2e/test_visual_regression.py).
         if: failure()
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: visual-diffs-py${{ matrix.python-version }}-${{ matrix.resolution }}
           path: tests/e2e/snapshots/**/*.*.png
