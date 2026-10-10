@@ -1,6 +1,7 @@
 import argparse
 import asyncio
 import logging
+import os
 import random
 from datetime import timedelta
 
@@ -15,13 +16,18 @@ from examples.erp.db import engine
 from examples.erp.purchases.models import Bill, BillItem, BillStatus
 from examples.erp.sales.models import Invoice, InvoiceItem, InvoiceStatus
 from hyperadmin.auth.backend import hash_password
-from hyperadmin.auth.models import User
+from hyperadmin.auth.models import Permission, User, UserPermission
 from hyperadmin.loadtest import BulkSeeder
 from hyperadmin.loadtest.generators import build_plan
 from hyperadmin.management.commands.seed import _to_sync_url
 
 fake = Faker()
 logger = logging.getLogger("uvicorn")
+
+# Models a demo visitor may manage — never the hyperadmin_* users, groups or permissions.
+ERP_MODELS = (Account, JournalEntry, JournalLine, Contact, Bill, BillItem, Invoice, InvoiceItem)
+DEMO_USERNAME = "demo"
+DEMO_PASSWORD = "demo"  # noqa: S105 - public credentials of the hosted demo
 
 
 async def seed_db():  # noqa: PLR0915
@@ -37,7 +43,8 @@ async def seed_db():  # noqa: PLR0915
         admin_user = User(
             username="admin",
             email="admin@example.com",
-            password_hash=hash_password("admin"),
+            # A hosted demo sets a secret password so visitors cannot take over the superuser.
+            password_hash=hash_password(os.environ.get("HYPERADMIN_ADMIN_PASSWORD", "admin")),
             is_superuser=True,
             first_name="Admin",
             last_name="ERP",
@@ -45,7 +52,7 @@ async def seed_db():  # noqa: PLR0915
         session.add(admin_user)
         await session.commit()
         await session.refresh(admin_user)
-        logger.info("  Created 1 superuser (admin / admin)")
+        logger.info("  Created 1 superuser (admin)")
 
         # 1. Accounts
         accounts = [
@@ -218,6 +225,44 @@ async def seed_db():  # noqa: PLR0915
 
         logger.info("  Created 800 bills  (%d with journal entries)", bill_journal_entries)
         logger.info("Seeding completed.")
+
+
+async def seed_demo_user() -> None:
+    """Create the public ``demo`` account of the hosted demo (idempotent).
+
+    It is not a superuser: it holds every permission on the ERP models and none on
+    the built-in auth models, so visitors can use the whole app but cannot change
+    users, groups, permissions or passwords. Run after permissions are synced.
+    """
+    model_names = {model.__name__.lower() for model in ERP_MODELS}
+    async with AsyncSession(engine, expire_on_commit=False) as session:
+        existing = await session.execute(select(User).where(User.username == DEMO_USERNAME))
+        if existing.first():
+            return
+        demo_user = User(
+            username=DEMO_USERNAME,
+            email="demo@example.com",
+            password_hash=hash_password(DEMO_PASSWORD),
+            first_name="Demo",
+            last_name="Visitor",
+        )
+        session.add(demo_user)
+        await session.flush()
+        permissions = (
+            (
+                await session.execute(
+                    select(Permission).where(Permission.content_type.in_(model_names))
+                )
+            )
+            .scalars()
+            .all()
+        )
+        session.add_all(
+            UserPermission(user_id=demo_user.id, permission_id=permission.id)
+            for permission in permissions
+        )
+        await session.commit()
+        logger.info("  Created demo user (demo / demo) with %d ERP permissions", len(permissions))
 
 
 async def bulk_seed_erp(

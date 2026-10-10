@@ -10,7 +10,7 @@
 <div class="ha-login-container">
     <div class="ha-login-card">
         <h1 class="ha-login-title">ERP Admin</h1>
-        <p class="ha-text-muted">Sign in with admin/admin</p>
+        <p class="ha-text-muted">Sign in with {{ login_hint[0] }} / {{ login_hint[1] }}</p>
 
         {%- if error -%}
         <div class="ha-alert ha-alert-error" data-testid="login-error">
@@ -27,7 +27,7 @@
                     name="username"
                     class="ha-input"
                     data-testid="login-username"
-                    value="admin"
+                    value="{{ login_hint[0] }}"
                     required
                     autofocus
                 >
@@ -40,7 +40,7 @@
                     name="password"
                     class="ha-input"
                     data-testid="login-password"
-                    value="admin"
+                    value="{{ login_hint[1] }}"
                     required
                 >
             </div>

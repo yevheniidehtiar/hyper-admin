@@ -12,6 +12,10 @@ from hyperadmin.auth.permissions import ModelPermissionChecker, PermissionSyncSe
 from hyperadmin.auth.session import SessionAuthBackend
 from hyperadmin.core.settings import HyperAdminSettings
 
+# Hosted public demo: seeds a limited ``demo`` account and shows its credentials on the
+# login page (the superuser password then comes from HYPERADMIN_ADMIN_PASSWORD).
+DEMO_MODE = os.environ.get("HYPERADMIN_DEMO") == "1"
+
 # Arbitrary app-wide key for pg_advisory_lock (any bigint unique to this app works).
 _STARTUP_LOCK_KEY = 0x48594552
 
@@ -45,9 +49,11 @@ async def lifespan(app: FastAPI):
         await admin._sync_permissions()
 
         # 3. Seed data
-        from examples.erp.seed import seed_db  # noqa: PLC0415
+        from examples.erp.seed import seed_db, seed_demo_user  # noqa: PLC0415
 
         await seed_db()
+        if DEMO_MODE:
+            await seed_demo_user()
     yield
 
 
@@ -91,6 +97,9 @@ admin = Admin(
     permission_registry=permission_registry,
 )
 
+# Credentials prefilled on the login page (examples/erp/templates/login.html).
+admin.templates.env.globals["login_hint"] = ("demo", "demo") if DEMO_MODE else ("admin", "admin")
+
 # Store admin on app state so custom views can access it (e.g. for templates)
 app.state.admin = admin
 
@@ -99,7 +108,7 @@ admin.mount(path="/admin")
 # Optional: Add custom report to the navigation menu
 assert "nav_items" in admin.templates.env.globals, "Call admin.mount() before adding nav items"
 admin.templates.env.globals["nav_items"].append(
-    {"name": "Profit & Loss Report", "url": "/reports/profit-loss", "icon": "ha-icon-chart"}
+    {"name": "Profit & Loss Report", "url": "/admin/reports/profit-loss", "icon": "ha-icon-chart"}
 )
 
 
