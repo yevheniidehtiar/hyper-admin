@@ -2,22 +2,13 @@ name: Demo
 permissions:
   contents: read
 
-# Hosted ERP demo on a Hugging Face Docker Space (see deploy/huggingface/).
-# Needs the secret HF_TOKEN (a fine-grained Hugging Face token with write access to this one
-# Space only) and the variable HF_SPACE (e.g. "your-hf-user/hyper-admin-demo"); without them
-# the job no-ops. Never add a pull_request trigger: PR code must not run with this token.
+# Nightly reset of the hosted ERP demo on Render (render.yaml): a redeploy starts the
+# service from freshly seeded data. Deploys on develop commits are done by Render itself.
+# Needs RENDER_DEPLOY_HOOK (the service's deploy hook URL, a secret of the "demo"
+# environment); without it the job no-ops. Never add a pull_request trigger.
 on:
-  push:
-    branches: [develop]
-    paths:
-      - "src/**"
-      - "examples/erp/**"
-      - "deploy/huggingface/**"
-      - "pyproject.toml"
-      - "uv.lock"
-      - ".github/workflows/demo.yml"
   schedule:
-    - cron: "0 3 * * *"  # nightly restart = fresh demo data
+    - cron: "0 3 * * *"
   workflow_dispatch:
 
 concurrency:
@@ -25,48 +16,17 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  deploy:
+  reset:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-    # Environment secrets can be limited to the develop branch (Settings -> Environments).
+    timeout-minutes: 5
     environment: demo
-    env:
-      HF_SPACE: ${{ vars.HF_SPACE }}
-      # Pinned: this package runs with the Hugging Face write token.
-      HF_HUB: huggingface_hub==2.2.0
     steps:
-      - name: Check configuration
-        id: config
+      - name: Trigger a Render redeploy
         env:
-          HAS_TOKEN: ${{ secrets.HF_TOKEN != '' }}
+          RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
         run: |
-          if [ "$HAS_TOKEN" = "true" ] && [ -n "$HF_SPACE" ]; then
-            echo "ready=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "::notice::HF_TOKEN secret or HF_SPACE variable not set; skipping the demo deploy."
+          if [ -z "$RENDER_DEPLOY_HOOK" ]; then
+            echo "::notice::RENDER_DEPLOY_HOOK not set; skipping the demo reset."
+            exit 0
           fi
-
-      - uses: actions/checkout@v7
-        if: steps.config.outputs.ready == 'true'
-
-      - uses: astral-sh/setup-uv@v7
-        if: steps.config.outputs.ready == 'true'
-        with:
-          python-version: "3.12"
-
-      # The token is exposed only to the two steps below, not to checkout or setup-uv.
-      - name: Deploy to the Space
-        if: steps.config.outputs.ready == 'true' && github.event_name != 'schedule'
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: >-
-          uv run --no-project --with "$HF_HUB"
-          python deploy/huggingface/deploy.py --space "$HF_SPACE" --revision "$GITHUB_SHA"
-
-      - name: Restart the Space (reset demo data)
-        if: steps.config.outputs.ready == 'true' && github.event_name == 'schedule'
-        env:
-          HF_TOKEN: ${{ secrets.HF_TOKEN }}
-        run: >-
-          uv run --no-project --with "$HF_HUB"
-          python deploy/huggingface/deploy.py --space "$HF_SPACE" --restart-only
+          curl --fail --silent --show-error --output /dev/null -X POST "$RENDER_DEPLOY_HOOK"

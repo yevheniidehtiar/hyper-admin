@@ -1,0 +1,28 @@
+# Render Blueprint for the hosted ERP demo (https://render.com/docs/blueprint-spec).
+# Connect the repository once in the Render dashboard (New -> Blueprint); Render then
+# rebuilds on every develop commit that touches the paths below.
+services:
+  - type: web
+    name: hyper-admin-demo
+    runtime: docker
+    plan: free
+    region: frankfurt
+    branch: develop
+    dockerfilePath: ./deploy/demo/Dockerfile
+    dockerContext: .
+    healthCheckPath: /admin/login
+    autoDeployTrigger: commit
+    buildFilter:
+      paths:
+        - src/**
+        - examples/__init__.py
+        - examples/erp/**
+        - deploy/demo/**
+        - pyproject.toml
+        - uv.lock
+    envVars:
+      - key: HYPERADMIN_SECRET_KEY
+        generateValue: true
+      # Superuser password nobody needs; visitors sign in as demo / demo.
+      - key: HYPERADMIN_ADMIN_PASSWORD
+        generateValue: true
