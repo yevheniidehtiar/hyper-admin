@@ -1,0 +1,61 @@
+name: Demo
+permissions:
+  contents: read
+
+# Hosted ERP demo on a Hugging Face Docker Space (see deploy/huggingface/).
+# Needs the repository secret HF_TOKEN (a Hugging Face write token) and the repository
+# variable HF_SPACE (e.g. "your-hf-user/hyper-admin-demo"); without them the jobs no-op.
+on:
+  push:
+    branches: [develop]
+    paths:
+      - "src/**"
+      - "examples/erp/**"
+      - "deploy/huggingface/**"
+      - "pyproject.toml"
+      - "uv.lock"
+      - ".github/workflows/demo.yml"
+  schedule:
+    - cron: "0 3 * * *"  # nightly restart = fresh demo data
+  workflow_dispatch:
+
+concurrency:
+  group: demo
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      HF_SPACE: ${{ vars.HF_SPACE }}
+    steps:
+      - name: Check configuration
+        id: config
+        run: |
+          if [ -n "$HF_TOKEN" ] && [ -n "$HF_SPACE" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::HF_TOKEN secret or HF_SPACE variable not set; skipping the demo deploy."
+          fi
+
+      - uses: actions/checkout@v7
+        if: steps.config.outputs.ready == 'true'
+
+      - uses: astral-sh/setup-uv@v7
+        if: steps.config.outputs.ready == 'true'
+        with:
+          python-version: "3.12"
+
+      - name: Deploy to the Space
+        if: steps.config.outputs.ready == 'true' && github.event_name != 'schedule'
+        run: >-
+          uv run --no-project --with huggingface_hub
+          python deploy/huggingface/deploy.py --space "$HF_SPACE" --revision "$GITHUB_SHA"
+
+      - name: Restart the Space (reset demo data)
+        if: steps.config.outputs.ready == 'true' && github.event_name == 'schedule'
+        run: >-
+          uv run --no-project --with huggingface_hub
+          python deploy/huggingface/deploy.py --space "$HF_SPACE" --restart-only
