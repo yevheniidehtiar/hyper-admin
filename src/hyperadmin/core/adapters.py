@@ -1,11 +1,18 @@
 from __future__ import annotations
 
+import types
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from contextvars import ContextVar
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any
+from datetime import datetime
+from typing import TYPE_CHECKING, Annotated, Any, Union, get_args, get_origin
+
+from pydantic import AwareDatetime, NaiveDatetime
+
+from hyperadmin.core.primary_key import DEFAULT_PK, PrimaryKeyInfo
+from hyperadmin.core.timezones import DateTimeKind
 
 if TYPE_CHECKING:
     import builtins
@@ -110,6 +117,24 @@ class ListEnvelope:
     meta: PaginationMeta
 
 
+def _annotation_datetime_kind(annotation: Any) -> DateTimeKind | None:
+    origin = get_origin(annotation)
+    if origin is Annotated:
+        return _annotation_datetime_kind(get_args(annotation)[0])
+    if origin is Union or origin is types.UnionType:
+        kinds: set[DateTimeKind | None]
+        kinds = {_annotation_datetime_kind(arg) for arg in get_args(annotation)}
+        kinds.discard(None)
+        return kinds.pop() if len(kinds) == 1 else None
+    if annotation is AwareDatetime:
+        return "aware"
+    if annotation is NaiveDatetime:
+        return "naive"
+    if isinstance(annotation, type) and issubclass(annotation, datetime):
+        return "naive"
+    return None
+
+
 class BaseAdapter(ABC):
     """Abstract base class for data adapters.
 
@@ -124,11 +149,26 @@ class BaseAdapter(ABC):
     """
 
     model: Any
+    #: Primary-key codec for ``model``. ORM adapters replace it with an introspected
+    #: value; third-party adapters inherit the historical ``int id`` default.
+    pk: PrimaryKeyInfo = DEFAULT_PK
 
     def __init__(self, model: Any, engine: Any) -> None:
         self.model = model
         self.engine = engine
         self._queryset_filter: QuerysetFilter | None = None
+
+    def datetime_kind(self, field: str) -> DateTimeKind | None:
+        """Return whether ``field`` stores timezone-aware or naive datetimes.
+
+        The default reads the pydantic annotation only: ``AwareDatetime`` is
+        ``"aware"``, any other datetime is ``"naive"`` and non-datetime or unknown
+        fields return ``None``. ORM adapters override this with column introspection.
+        """
+        model_fields = getattr(self.model, "model_fields", None)
+        if not isinstance(model_fields, dict) or field not in model_fields:
+            return None
+        return _annotation_datetime_kind(model_fields[field].annotation)
 
     def get_queryset(self, request: Request | None = None) -> dict[str, Any]:
         """Return additional equality filters merged into ``list()`` and ``get()`` queries.

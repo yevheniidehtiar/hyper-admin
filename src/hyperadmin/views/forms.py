@@ -13,6 +13,7 @@ from pydantic.fields import FieldInfo
 
 from hyperadmin.core.choices import ChoiceItem
 from hyperadmin.core.sensitive import effective_sensitive_field_names
+from hyperadmin.core.timezones import is_auto_now_factory
 from hyperadmin.i18n import gettext_lazy
 
 try:
@@ -391,9 +392,22 @@ class PydanticForm:
                 and ("server_default" in sa_column_kwargs or "onupdate" in sa_column_kwargs)
             ):
                 return True
-            if field.default_factory == datetime.now:
+            if is_auto_now_factory(field.default_factory):
                 return True
         return False
+
+    @property
+    def auto_now_field_names(self) -> frozenset[str]:
+        """Names of model fields hidden from the form because they stamp "now".
+
+        An update must not write these: validation would fill them from their
+        default factory and overwrite the stored timestamp.
+        """
+        return frozenset(
+            name
+            for name, field in self.model.model_fields.items()
+            if self._is_auto_now_field(field)
+        )
 
     def _build_all_fields(self) -> dict[str, FormField]:
         """Build all eligible form fields as a name->FormField mapping."""

@@ -13,6 +13,28 @@ if TYPE_CHECKING:
     from starlette.requests import Request
 
 
+class AdminAuthenticationRequired(Exception):
+    """Raised when an admin request has no authenticated principal.
+
+    The admin route class turns it into a login redirect (browser), a 401 with
+    ``HX-Redirect``/``HX-Refresh`` (HTMX) or a plain 401 (API).
+    """
+
+    def __init__(self, message: str = "Authentication required") -> None:
+        super().__init__(message)
+
+
+class AdminAccessDenied(Exception):
+    """Raised when an authenticated principal may not access the admin at all.
+
+    Model and object permission failures stay ``HTTPException(403)``; this is the
+    admin-wide ``can_access`` denial.
+    """
+
+    def __init__(self, message: str = "Admin access denied") -> None:
+        super().__init__(message)
+
+
 @runtime_checkable
 class AuthBackend(Protocol):
     """Authenticates users and manages login/logout sessions."""
@@ -71,5 +93,5 @@ class DefaultObjectPermissionChecker:
     :class:`PermissionChecker` enforcement is unaffected.
     """
 
-    async def has_object_permission(self, user: Any, obj: Any, action: str) -> bool:  # noqa: ARG002
+    async def has_object_permission(self, user: Any, obj: Any, action: str) -> bool:
         return True

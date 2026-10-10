@@ -1,6 +1,8 @@
 """Centralised configuration for HyperAdmin via pydantic-settings BaseSettings."""
 
+from functools import lru_cache
 from typing import Literal
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError, available_timezones
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -33,6 +35,12 @@ _DEFAULT_SUPPORTED_LOCALES = [
 ]
 
 ThemeLiteral = Literal["auto", "light", "dark"]
+
+
+@lru_cache(maxsize=1)
+def _available_timezones() -> frozenset[str]:
+    """Return the canonical IANA zone keys known on this host (cached)."""
+    return frozenset(available_timezones())
 
 
 class HyperAdminSettings(BaseSettings):
@@ -90,6 +98,8 @@ class HyperAdminSettings(BaseSettings):
     # ── Formatting ────────────────────────────────────────────────────────────
     date_format: str = "%Y-%m-%d"
     datetime_format: str = "%Y-%m-%d %H:%M:%S"
+    #: IANA zone used to enter and display timezone-aware datetimes.
+    timezone: str = "UTC"
 
     # ── Internationalization ──────────────────────────────────────────────────
     default_locale: str = "en"
@@ -101,6 +111,29 @@ class HyperAdminSettings(BaseSettings):
     def is_default_secret_key(self) -> bool:
         """Return ``True`` when ``secret_key`` has not been changed from the default."""
         return self.secret_key == _DEFAULT_SECRET_KEY
+
+    @property
+    def tzinfo(self) -> ZoneInfo:
+        """Return the configured display timezone as a ``ZoneInfo``."""
+        return ZoneInfo(self.timezone)
+
+    @field_validator("timezone")
+    @classmethod
+    def _validate_timezone(cls, value: str) -> str:
+        try:
+            ZoneInfo(value)
+        except (ZoneInfoNotFoundError, ValueError) as exc:
+            msg = f"Invalid timezone {value!r}. Must be an IANA zone name such as 'UTC'"
+            raise ValueError(msg) from exc
+        # A case-insensitive filesystem (macOS) resolves 'utc' too; Linux and the
+        # Windows tzdata package do not, so require the canonical spelling.
+        known = _available_timezones()
+        if known and value not in known:
+            canonical = next((key for key in known if key.lower() == value.lower()), None)
+            hint = f" Did you mean {canonical!r}?" if canonical else ""
+            msg = f"Invalid timezone {value!r}. Zone names are case-sensitive.{hint}"
+            raise ValueError(msg)
+        return value
 
     @field_validator("theme", mode="before")
     @classmethod

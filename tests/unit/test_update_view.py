@@ -1,17 +1,21 @@
 """Tests for the update view."""
 
+from datetime import datetime, timezone
+
 import anyio
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlmodel import Field, SQLModel
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from hyperadmin import Admin
 from hyperadmin.adapters.sqlmodel import SQLModelAdapter
 from hyperadmin.core.model import ModelAdmin
 from hyperadmin.core.registry import site
 from hyperadmin.core.settings import HyperAdminSettings
+from hyperadmin.core.timezones import utc_now
 
 
 class ProductTestUpdate(SQLModel, table=True):
@@ -149,3 +153,75 @@ def test_update_view_partial_update_preserves_missing_text_field(client: TestCli
 
     get_response = client.get("/admin/producttestupdate/1")
     assert "Old description" in get_response.text
+
+
+# ---------------------------------------------------------------------------
+# Auto-now timestamps survive an edit (review of st-v058-byoa-16)
+# ---------------------------------------------------------------------------
+
+_SEEDED_AT = datetime(2020, 1, 2, 3, 4, 5)  # noqa: DTZ001 - stored naive in SQLite
+
+
+class StampedNoteUpdate(SQLModel, table=True):
+    __tablename__ = "test_stamped_note_update"
+    id: int | None = Field(default=None, primary_key=True)
+    name: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    stamped_at: datetime = Field(default_factory=utc_now)
+
+
+class StampedNoteUpdateAdmin(ModelAdmin):
+    adapter_class = SQLModelAdapter
+
+
+@pytest.fixture
+def stamped_client():
+    app = FastAPI()
+    engine = create_async_engine("sqlite+aiosqlite:///:memory:")
+
+    async def setup_database():
+        async with engine.begin() as conn:
+            await conn.run_sync(SQLModel.metadata.create_all)
+        async with AsyncSession(engine) as session:
+            session.add(StampedNoteUpdate(name="Old", created_at=_SEEDED_AT, stamped_at=_SEEDED_AT))
+            await session.commit()
+
+    anyio.run(setup_database)
+
+    admin = Admin(app=app, engine=engine, settings=HyperAdminSettings(create_tables=False))
+    site.register(StampedNoteUpdate, StampedNoteUpdateAdmin)
+    admin.mount(path="/admin")
+    return TestClient(app), engine
+
+
+def test_editing_a_row_keeps_its_auto_now_timestamps(stamped_client):
+    """
+    Scenario: auto-now timestamps are not rewritten by an edit
+      Given a row whose created_at uses an auto-now default factory
+      And   the edit form hides that field
+      When  the row is edited via PUT
+      Then  the edited field changes and created_at keeps its stored value
+    """
+    client, engine = stamped_client
+
+    form = client.get("/admin/stampednoteupdate/1/edit")
+    assert form.status_code == 200
+    assert 'name="created_at"' not in form.text
+
+    response = client.put(
+        "/admin/stampednoteupdate/1",
+        data={"name": "New"},
+        headers={"HX-Request": "true"},
+        follow_redirects=False,
+    )
+    assert response.status_code == 200
+
+    async def load() -> StampedNoteUpdate | None:
+        async with AsyncSession(engine) as session:
+            return await session.get(StampedNoteUpdate, 1)
+
+    row = anyio.run(load)
+    assert row is not None
+    assert row.name == "New"
+    assert row.created_at == _SEEDED_AT
+    assert row.stamped_at == _SEEDED_AT
