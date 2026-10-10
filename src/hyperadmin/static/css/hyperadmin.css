@@ -4,14 +4,16 @@
  * Framework-independent CSS using design tokens (custom properties).
  * No build tooling required — this entry file imports all partials.
  *
- * Color palette: FastAPI teal (#05bfa4) + Pydantic coral (#f63d68)
- * See docs/design/UI-KIT-RFC.md for the full design system spec.
+ * Palette: HyperAdmin teal (#0d9488 brand, #0f766e actions) + "hyper" violet accent (#6841ea)
+ * Design system (tokens, components, logo): docs/design/system/README.md
+ * Token values mirror docs/design/system/tokens.json.
  *
  * Browser support: CSS @layer requires Chrome 99+, Firefox 97+, Safari 15.4+
  */
 
 @layer tokens, reset, layout, components, utilities, accessibility, responsive, rtl;
 
+@import "_fonts.css";
 @import "_tokens.css"        layer(tokens);
 @import "_dark-mode.css"     layer(tokens);
 @import "_reset.css"         layer(reset);

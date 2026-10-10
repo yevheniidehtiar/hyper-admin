@@ -1,0 +1,22 @@
+<!-- @dsCard group="Layout" height=420 -->
+<!doctype html>
+<html>
+<head><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="../../tokens.css"><link rel="stylesheet" href="../bundle.css"><script>(function(){var t=new URLSearchParams(location.search).get("theme")||"light";document.documentElement.setAttribute("data-theme",t);var d=new URLSearchParams(location.search).get("dir");if(d)document.documentElement.setAttribute("dir",d);})();</script><meta charset="utf-8"><title>Switchers — preview</title><style>body{margin:0;background:var(--ha-surface-base)} .pv{padding:16px;display:flex;flex-direction:column;gap:16px} .pv-l{font:500 12px/18px var(--font-sans);color:var(--ha-color-text-muted);margin:0 0 6px}</style></head>
+<body>
+<div class="ha-root pv">
+
+<div class="ha-row" style="align-items:flex-start;gap:24px">
+<div><p class="pv-l">Tenant picker (v0.5.3)</p><button class="ha-switch-btn" aria-haspopup="listbox" aria-expanded="true" data-testid="tenant-switcher"><span class="ha-tenant-dot">NE</span>Noordzee Energie<svg class="ha-icon ha-icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+<div class="ha-menu" style="margin-block-start:6px"><div class="ha-menu__search"><div class="ha-search"><svg class="ha-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input class="ha-input" placeholder="Find a tenant" aria-label="Find a tenant"></div></div><div role="listbox" aria-label="Tenants">
+<div role="option" aria-selected="true"><span class="ha-tenant-dot">NE</span>Noordzee Energie<span class="ha-tick"><svg class="ha-icon ha-icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span></div>
+<div role="option" aria-selected="false" class="is-active"><span class="ha-tenant-dot">BB</span>Brabant Bakkerij<span class="ha-tick"><svg class="ha-icon ha-icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span></div>
+<div role="option" aria-selected="false"><span class="ha-tenant-dot">AL</span>Acme Logistics<span class="ha-tick"><svg class="ha-icon ha-icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span></div></div></div></div>
+<div><p class="pv-l">Language and timezone</p><button class="ha-switch-btn" aria-haspopup="menu" aria-expanded="true" data-testid="locale-switcher"><svg class="ha-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>English · CEST<svg class="ha-icon ha-icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button>
+<div class="ha-menu" role="menu" style="margin-block-start:6px"><div class="ha-menu__label">Language</div>
+<div role="menuitemradio" aria-checked="true" lang="en">English<span class="ha-tick"><svg class="ha-icon ha-icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span></div><div role="menuitemradio" aria-checked="false" lang="uk">Українська<span class="ha-tick"><svg class="ha-icon ha-icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span></div><div role="menuitemradio" aria-checked="false" lang="nl">Nederlands<span class="ha-tick"><svg class="ha-icon ha-icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span></div><div role="menuitemradio" aria-checked="false" lang="ar" dir="rtl">العربية<span class="ha-tick"><svg class="ha-icon ha-icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span></div><div role="menuitemradio" aria-checked="false" lang="ja">日本語<span class="ha-tick"><svg class="ha-icon ha-icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span></div>
+<hr><div class="ha-menu__label">Timezone</div><div role="menuitemradio" aria-checked="true">Europe/Amsterdam <span class="ha-mono ha-muted" style="margin-inline-start:auto">+02:00</span></div></div></div>
+</div>
+
+</div>
+</body>
+</html>

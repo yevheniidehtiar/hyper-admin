@@ -1,0 +1,28 @@
+<!-- @dsCard group="Data" height=380 -->
+<!doctype html>
+<html>
+<head><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="../../tokens.css"><link rel="stylesheet" href="../bundle.css"><script>(function(){var t=new URLSearchParams(location.search).get("theme")||"light";document.documentElement.setAttribute("data-theme",t);var d=new URLSearchParams(location.search).get("dir");if(d)document.documentElement.setAttribute("dir",d);})();</script><meta charset="utf-8"><title>ColumnTypes — preview</title><style>body{margin:0;background:var(--ha-surface-base)} .pv{padding:16px;display:flex;flex-direction:column;gap:16px} .pv-l{font:500 12px/18px var(--font-sans);color:var(--ha-color-text-muted);margin:0 0 6px}</style></head>
+<body>
+<div class="ha-root pv">
+
+<div class="ha-table-wrap"><table class="ha-table" data-testid="column-types">
+<thead><tr><th scope="col">Type</th><th scope="col">Value</th><th scope="col">When empty (null)</th></tr></thead>
+<tbody>
+<tr><td>text</td><td class="ha-strong">Acme Logistics B.V.</td><td><span class="ha-null">—<span class="ha-sr-only">empty</span></span></td></tr>
+<tr><td>text, truncated</td><td><span class="ha-trunc" tabindex="0" title="Quarterly maintenance retainer for the Tilburg and Utrecht warehouses">Quarterly maintenance retainer for the Tilburg and Utrecht warehouses</span></td><td></td></tr>
+<tr><td>number</td><td class="ha-num">1,204</td><td class="ha-num"><span class="ha-null">—<span class="ha-sr-only">empty</span></span></td></tr>
+<tr><td>money</td><td class="ha-num">€&#8239;12,480.50</td><td></td></tr>
+<tr><td>money, negative</td><td class="ha-num" style="color:var(--ha-color-danger-text)">−€&#8239;310.00</td><td></td></tr>
+<tr><td>percent</td><td class="ha-num">21.0&#8239;%</td><td></td></tr>
+<tr><td>date</td><td class="ha-num"><time datetime="2026-10-10">10 Oct 2026</time></td><td></td></tr>
+<tr><td>datetime + tz</td><td class="ha-num"><time datetime="2026-10-10T14:32+02:00">10 Oct 2026, 14:32 <span class="ha-muted">CEST</span></time></td><td></td></tr>
+<tr><td>boolean</td><td><span class="ha-row" style="gap:16px"><span class="ha-row" style="gap:4px;color:var(--ha-color-success-text)"><svg class="ha-icon ha-icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>Yes</span></span><span class="ha-row ha-muted" style="gap:4px"><svg class="ha-icon ha-icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg><span>No</span></span></span></td><td><span class="ha-null">—<span class="ha-sr-only">empty</span></span></td></tr>
+<tr><td>status pill</td><td><span class="ha-row"><span class="ha-pill ha-pill--success">Paid</span><span class="ha-pill ha-pill--warning">Overdue</span><span class="ha-pill ha-pill--info">Draft</span><span class="ha-pill ha-pill--danger">Failed</span><span class="ha-pill">Void</span></span></td><td></td></tr>
+<tr><td>relation link</td><td><a href="#">Acme Logistics B.V.</a></td><td></td></tr>
+<tr><td>id / key</td><td><span class="ha-mono">7f3c9a2e-41b0…</span></td><td></td></tr>
+<tr><td>image</td><td><span class="ha-thumb" role="img" aria-label="Product photo"></span></td><td></td></tr>
+</tbody></table></div>
+
+</div>
+</body>
+</html>

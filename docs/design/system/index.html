@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HyperAdmin design system</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+  body { margin: 0; background: var(--ha-surface-base); color: var(--ha-color-text); font-family: var(--font-sans); font-size: 14px; line-height: 1.5; }
+  .g-top { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; padding: 12px 24px; background: var(--ha-surface-raised); border-bottom: 1px solid var(--ha-color-border); }
+  .g-top img { width: 24px; height: 24px; }
+  .g-top h1 { margin: 0; font-size: 16px; font-weight: 600; color: var(--ha-color-text-strong); }
+  .g-top .g-tools { margin-inline-start: auto; display: flex; gap: 8px; }
+  .g-top button { font: inherit; font-weight: 600; min-height: 32px; padding: 0 12px; border-radius: 6px; border: 1px solid var(--ha-color-border-strong); background: var(--ha-surface-raised); color: var(--ha-color-text-strong); cursor: pointer; }
+  .g-top button[aria-pressed="true"] { background: var(--ha-color-primary); border-color: var(--ha-color-primary); color: var(--ha-color-on-primary); }
+  .g-top button:focus-visible, .g-card a:focus-visible { outline: 2px solid var(--ha-color-focus-ring); outline-offset: 2px; }
+  main { max-width: 1040px; margin: 0 auto; padding: 24px 16px 64px; display: flex; flex-direction: column; gap: 24px; }
+  .g-card { background: var(--ha-surface-raised); border: 1px solid var(--ha-color-border); border-radius: 8px; overflow: hidden; }
+  .g-card header { display: flex; gap: 16px; align-items: baseline; padding: 12px 16px; border-bottom: 1px solid var(--ha-color-border); }
+  .g-card h2 { margin: 0; margin-inline-end: auto; font-size: 16px; font-weight: 600; color: var(--ha-color-text-strong); }
+  .g-top a { color: var(--ha-color-primary-text); font-weight: 500; }
+  .g-card a { color: var(--ha-color-primary-text); font-weight: 500; }
+  .g-card iframe { display: block; width: 100%; border: 0; }
+  .g-note { margin: 0; color: var(--ha-color-text-muted); }
+</style>
+</head>
+<body>
+<div class="g-top">
+  <img src="../../../src/hyperadmin/static/img/hyperadmin-mark.svg" alt="">
+  <h1>HyperAdmin design system</h1>
+  <a href="README.md">Brand book</a> <a href="tokens.json">tokens.json</a>
+  <div class="g-tools" role="group" aria-label="Preview options">
+    <button type="button" id="t-dark" aria-pressed="false">Dark</button>
+    <button type="button" id="t-rtl" aria-pressed="false">RTL</button>
+  </div>
+</div>
+<main>
+  <p class="g-note">Live previews of the component specs. The markup is the reference for the Jinja2 templates; the CSS is <code>components/bundle.css</code> on top of <code>tokens.css</code> (generated from <code>tokens.json</code>).</p>
+  <section class="g-card" id="Cover">
+    <header><h2>Cover</h2><a href="components/Cover/preview.html" target="_blank" rel="noopener">open</a></header>
+    <iframe title="Cover preview" loading="lazy" src="components/Cover/preview.html" style="height:300px"></iframe>
+  </section>
+  <section class="g-card" id="Alert">
+    <header><h2>Alert</h2><a href="components/Alert/README.md">guidelines</a><a href="components/Alert/preview.html" target="_blank" rel="noopener">open</a></header>
+    <iframe title="Alert preview" loading="lazy" src="components/Alert/preview.html" style="height:450px"></iframe>
+  </section>
+  <section class="g-card" id="AppShell">
+    <header><h2>AppShell</h2><a href="components/AppShell/README.md">guidelines</a><a href="components/AppShell/preview.html" target="_blank" rel="noopener">open</a></header>
+    <iframe title="AppShell preview" loading="lazy" src="components/AppShell/preview.html" style="height:1220px"></iframe>
+  </section>
+  <section class="g-card" id="Button">
+    <header><h2>Button</h2><a href="components/Button/README.md">guidelines</a><a href="components/Button/preview.html" target="_blank" rel="noopener">open</a></header>
+    <iframe title="Button preview" loading="lazy" src="components/Button/preview.html" style="height:350px"></iframe>
+  </section>
+  <section class="g-card" id="Chart">
+    <header><h2>Chart</h2><a href="components/Chart/README.md">guidelines</a><a href="components/Chart/preview.html" target="_blank" rel="noopener">open</a></header>
+    <iframe title="Chart preview" loading="lazy" src="components/Chart/preview.html" style="height:880px"></iframe>
+  </section>
+  <section class="g-card" id="ColumnTypes">
+    <header><h2>ColumnTypes</h2><a href="components/ColumnTypes/README.md">guidelines</a><a href="components/ColumnTypes/preview.html" target="_blank" rel="noopener">open</a></header>
+    <iframe title="ColumnTypes preview" loading="lazy" src="components/ColumnTypes/preview.html" style="height:500px"></iframe>
+  </section>
+  <section class="g-card" id="DataTable">
+    <header><h2>DataTable</h2><a href="components/DataTable/README.md">guidelines</a><a href="components/DataTable/preview.html" target="_blank" rel="noopener">open</a></header>
+    <iframe title="DataTable preview" loading="lazy" src="components/DataTable/preview.html" style="height:760px"></iframe>
+  </section>
+  <section class="g-card" id="DetailPanel">
+    <header><h2>DetailPanel</h2><a href="components/DetailPanel/README.md">guidelines</a><a href="components/DetailPanel/preview.html" target="_blank" rel="noopener">open</a></header>
+    <iframe title="DetailPanel preview" loading="lazy" src="components/DetailPanel/preview.html" style="height:680px"></iframe>
+  </section>
+  <section class="g-card" id="Dialog">
+    <header><h2>Dialog</h2><a href="components/Dialog/README.md">guidelines</a><a href="components/Dialog/preview.html" target="_blank" rel="noopener">open</a></header>
+    <iframe title="Dialog preview" loading="lazy" src="components/Dialog/preview.html" style="height:1020px"></iframe>
+  </section>
+  <section class="g-card" id="EmptyState">
+    <header><h2>EmptyState</h2><a href="components/EmptyState/README.md">guidelines</a><a href="components/EmptyState/preview.html" target="_blank" rel="noopener">open</a></header>
+    <iframe title="EmptyState preview" loading="lazy" src="components/EmptyState/preview.html" style="height:640px"></iframe>
+  </section>
+  <section class="g-card" id="FilterBar">
+    <header><h2>FilterBar</h2><a href="components/FilterBar/README.md">guidelines</a><a href="components/FilterBar/preview.html" target="_blank" rel="noopener">open</a></header>
+    <iframe title="FilterBar preview" loading="lazy" src="components/FilterBar/preview.html" style="height:370px"></iframe>
+  </section>
+  <section class="g-card" id="FormField">
+    <header><h2>FormField</h2><a href="components/FormField/README.md">guidelines</a><a href="components/FormField/preview.html" target="_blank" rel="noopener">open</a></header>
+    <iframe title="FormField preview" loading="lazy" src="components/FormField/preview.html" style="height:880px"></iframe>
+  </section>
+  <section class="g-card" id="Formset">
+    <header><h2>Formset</h2><a href="components/Formset/README.md">guidelines</a><a href="components/Formset/preview.html" target="_blank" rel="noopener">open</a></header>
+    <iframe title="Formset preview" loading="lazy" src="components/Formset/preview.html" style="height:640px"></iframe>
+  </section>
+  <section class="g-card" id="Login">
+    <header><h2>Login</h2><a href="components/Login/README.md">guidelines</a><a href="components/Login/preview.html" target="_blank" rel="noopener">open</a></header>
+    <iframe title="Login preview" loading="lazy" src="components/Login/preview.html" style="height:680px"></iframe>
+  </section>
+  <section class="g-card" id="Pagination">
+    <header><h2>Pagination</h2><a href="components/Pagination/README.md">guidelines</a><a href="components/Pagination/preview.html" target="_blank" rel="noopener">open</a></header>
+    <iframe title="Pagination preview" loading="lazy" src="components/Pagination/preview.html" style="height:380px"></iframe>
+  </section>
+  <section class="g-card" id="Presence">
+    <header><h2>Presence</h2><a href="components/Presence/README.md">guidelines</a><a href="components/Presence/preview.html" target="_blank" rel="noopener">open</a></header>
+    <iframe title="Presence preview" loading="lazy" src="components/Presence/preview.html" style="height:420px"></iframe>
+  </section>
+  <section class="g-card" id="StatCard">
+    <header><h2>StatCard</h2><a href="components/StatCard/README.md">guidelines</a><a href="components/StatCard/preview.html" target="_blank" rel="noopener">open</a></header>
+    <iframe title="StatCard preview" loading="lazy" src="components/StatCard/preview.html" style="height:450px"></iframe>
+  </section>
+  <section class="g-card" id="Switchers">
+    <header><h2>Switchers</h2><a href="components/Switchers/README.md">guidelines</a><a href="components/Switchers/preview.html" target="_blank" rel="noopener">open</a></header>
+    <iframe title="Switchers preview" loading="lazy" src="components/Switchers/preview.html" style="height:540px"></iframe>
+  </section>
+  <section class="g-card" id="Toast">
+    <header><h2>Toast</h2><a href="components/Toast/README.md">guidelines</a><a href="components/Toast/preview.html" target="_blank" rel="noopener">open</a></header>
+    <iframe title="Toast preview" loading="lazy" src="components/Toast/preview.html" style="height:450px"></iframe>
+  </section>
+</main>
+<script>
+(function () {
+  var dark = false, rtl = false;
+  function apply() {
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    document.getElementById('t-dark').setAttribute('aria-pressed', String(dark));
+    document.getElementById('t-rtl').setAttribute('aria-pressed', String(rtl));
+    document.querySelectorAll('.g-card iframe').forEach(function (f) {
+      var base = f.getAttribute('src').split('?')[0];
+      f.setAttribute('src', base + '?theme=' + (dark ? 'dark' : 'light') + (rtl ? '&dir=rtl' : ''));
+    });
+  }
+  document.getElementById('t-dark').addEventListener('click', function () { dark = !dark; apply(); });
+  document.getElementById('t-rtl').addEventListener('click', function () { rtl = !rtl; apply(); });
+})();
+</script>
+</body>
+</html>

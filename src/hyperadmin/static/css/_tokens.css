@@ -1,50 +1,70 @@
 /* ==========================================================================
-   Design Tokens
+   Design Tokens — light theme (dark values: _dark-mode.css)
+
+   Source of truth: docs/design/system/tokens.json (HyperAdmin design system).
+   Every value below mirrors that file; contrast ratios are listed there per
+   token. Older token names are kept as aliases so existing templates, partials
+   and host-app overrides keep working.
    ========================================================================== */
 
 :root {
-  /* ---- Primary palette (FastAPI teal) ---- */
-  --ha-color-primary-50: #effefa;
-  --ha-color-primary-100: #c8fef4;
-  --ha-color-primary-200: #90fde9;
-  --ha-color-primary-300: #52f5d8;
-  --ha-color-primary-400: #1edcbe;
-  --ha-color-primary-500: #05bfa4;
-  --ha-color-primary-600: #009a86;
-  --ha-color-primary-700: #007b6d;
-  --ha-color-primary-800: #006159;
-  --ha-color-primary-900: #00504a;
+  /* ---- Primary palette (HyperAdmin teal) ----
+     Steps follow how the partials use them: 50 = tint behind teal text,
+     400 = brand mark / focus ring, 500 = action fill (white label 5.47:1),
+     600 = action hover, 700/800 = teal text and its hover. */
+  --ha-color-primary-50: #f0fdfa;
+  --ha-color-primary-100: #ccfbf1;
+  --ha-color-primary-200: #99f6e4;
+  --ha-color-primary-300: #5eead4;
+  --ha-color-primary-400: #0d9488;
+  --ha-color-primary-500: #0f766e;
+  --ha-color-primary-600: #0e6a62;
+  --ha-color-primary-700: #115e59;
+  --ha-color-primary-800: #134e4a;
+  --ha-color-primary-900: #0b3b38;
 
-  /* Semantic primary aliases */
-  --ha-color-primary: var(--ha-color-primary-500);
-  --ha-color-primary-hover: var(--ha-color-primary-600);
-  --ha-color-primary-light: var(--ha-color-primary-50);
-  --ha-color-primary-text: var(--ha-color-primary-700);
+  /* Semantic primary */
+  --ha-color-brand: #0d9488;            /* logo tile, focus ring, active-nav bar, chart 1; not a text colour */
+  --ha-color-primary: #0f766e;          /* primary button fill */
+  --ha-color-primary-hover: #115e59;
+  --ha-color-on-primary: #ffffff;       /* 5.47:1 on primary */
+  --ha-color-primary-light: #f0fdfa;
+  --ha-color-primary-soft: var(--ha-color-primary-light);
+  --ha-color-primary-text: #0f766e;     /* links and teal text: 5.19:1 on surface-base */
 
-  /* ---- Accent palette (Pydantic coral-pink) ---- */
-  /* Reserved for Tier 2 components -- see UI-KIT-RFC Section 3.3 */
-  --ha-color-accent-50: #fff1f3;
-  --ha-color-accent-100: #ffe0e6;
-  --ha-color-accent-400: #ff6488;
-  --ha-color-accent-500: #f63d68;
-  --ha-color-accent-600: #e31b54;
-  --ha-color-accent-700: #c01048;
+  /* ---- Accent palette ("hyper" violet; replaces the Pydantic coral) ----
+     Rare: one accent CTA per screen, "New" tags, someone-else-is-editing. */
+  --ha-color-accent-50: #f1edfe;
+  --ha-color-accent-100: #e4dcfd;
+  --ha-color-accent-400: #8e6ff2;
+  --ha-color-accent-500: #6841ea;
+  --ha-color-accent-600: #5a35d6;
+  --ha-color-accent-700: #4c2cb8;
+  --ha-color-accent: #6841ea;           /* 5.94:1 on white */
+  --ha-color-on-accent: #ffffff;
+  --ha-color-accent-soft: #f1edfe;
 
-  /* ---- Semantic colors ---- */
+  /* ---- Status colours ----
+     *-text on its *-light (= *-soft) tint holds 4.5:1; status is never colour alone. */
   --ha-color-success: #12b76a;
   --ha-color-success-light: #ecfdf3;
   --ha-color-success-text: #067647;
   --ha-color-warning: #f79009;
   --ha-color-warning-light: #fffaeb;
   --ha-color-warning-text: #b54708;
-  --ha-color-danger: #f04438;
+  --ha-color-danger: #d92d20;           /* danger button fill, white label 4.83:1 */
   --ha-color-danger-hover: #b42318;
+  --ha-color-on-danger: #ffffff;
   --ha-color-danger-light: #fef3f2;
-  --ha-color-danger-text: #b42318;
+  --ha-color-danger-text: #c8291d;      /* 5.10:1 on danger-light */
   --ha-color-info: #0ba5ec;
   --ha-color-info-light: #f0f9ff;
   --ha-color-info-text: #026aa2;
   --ha-color-info-border: #0ba5ec;
+  --ha-color-success-soft: var(--ha-color-success-light);
+  --ha-color-warning-soft: var(--ha-color-warning-light);
+  --ha-color-danger-soft: var(--ha-color-danger-light);
+  --ha-color-info-soft: var(--ha-color-info-light);
 
   /* ---- Neutral scale (cool gray, blue undertone) ---- */
   --ha-color-neutral-0: #ffffff;
@@ -61,22 +81,52 @@
   --ha-color-neutral-900: #101828;
   --ha-color-neutral-950: #0c111d;
 
-  /* ---- Semantic text & surface tokens ---- */
-  --ha-color-text: var(--ha-color-neutral-600);
-  --ha-color-text-muted: var(--ha-color-neutral-500);
-  --ha-color-text-strong: var(--ha-color-neutral-900);
-  --ha-color-bg: var(--ha-color-neutral-50);
-  --ha-color-bg-light: var(--ha-color-neutral-25);
-  --ha-color-surface: var(--ha-color-neutral-0);
-  --ha-color-border: var(--ha-color-neutral-300);
-  --ha-color-border-light: var(--ha-color-neutral-200);
-  --ha-color-link: var(--ha-color-primary-700);
-  --ha-color-link-hover: var(--ha-color-primary-800);
+  /* ---- Text ---- */
+  --ha-color-text-strong: #121926;      /* headings, record titles, totals */
+  --ha-color-text: #4b5565;             /* body and cells: 7.14:1 on surface-base */
+  --ha-color-text-muted: #5d6a7e;       /* help text, headers, metadata: 5.20:1 on surface-base */
+  --ha-color-text-disabled: #98a2b3;    /* disabled labels only (WCAG-exempt) */
 
-  /* ---- Surface & elevation ---- */
-  --ha-surface-base: var(--ha-color-neutral-50);
-  --ha-surface-raised: var(--ha-color-neutral-0);
-  --ha-surface-sunken: var(--ha-color-neutral-100);
+  /* ---- Surfaces ---- */
+  --ha-surface-base: #f7f9fb;           /* page */
+  --ha-surface-raised: #ffffff;         /* tables, cards, inputs, navbar */
+  --ha-surface-sunken: #eef2f6;         /* table header, filter bar, skeletons */
+  --ha-surface-overlay: #ffffff;        /* dialogs, menus, toasts (with shadow-lg) */
+  --ha-surface-hover: #f1f4f8;
+  --ha-surface-selected: #e6f6f4;
+
+  /* ---- Lines ---- */
+  --ha-color-border-light: #d9dfe7;     /* hairlines: rows, cards, rules */
+  --ha-color-border-strong: #7d8799;    /* control edges: 3.43:1 on surface-base */
+  --ha-color-border: var(--ha-color-border-strong);  /* used by inputs, buttons, pagination */
+  --ha-color-focus-ring: var(--ha-color-brand);       /* 2px outline, 2px offset */
+  --ha-color-scrim: rgba(11, 18, 32, 0.56);
+
+  /* ---- Legacy aliases (kept for templates and host overrides) ---- */
+  --ha-color-bg: var(--ha-surface-base);
+  --ha-color-bg-light: #fcfcfd;
+  --ha-color-surface: var(--ha-surface-raised);
+  --ha-color-link: var(--ha-color-primary-text);
+  --ha-color-link-hover: var(--ha-color-primary-hover);
+  /* Names some partials reference without a definition until now */
+  --ha-color-bg-subtle: var(--ha-surface-sunken);
+  --ha-color-muted: var(--ha-color-text-muted);
+  --ha-color-fg-muted: var(--ha-color-text-muted);
+  --ha-color-success-bg: var(--ha-color-success-light);
+  --ha-color-danger-bg: var(--ha-color-danger-light);
+  --ha-color-danger-subtle: var(--ha-color-danger-light);
+
+  /* ---- Charts (server-rendered SVG) ----
+     Steps alternate lighter/darker so neighbours differ in lightness (>= 1.5:1);
+     each holds 3:1 on surface-raised. */
+  --ha-chart-1: #0d9488;
+  --ha-chart-2: #4c2cb8;
+  --ha-chart-3: #c2620a;
+  --ha-chart-4: #1e4e8c;
+  --ha-chart-5: #d6479a;
+  --ha-chart-6: #475467;
+  --ha-chart-grid: #e3e8ef;
+  --ha-chart-axis: #5d6a7e;
 
   /* ---- Spacing (4px base) ---- */
   --ha-space-0: 0;
@@ -93,9 +143,11 @@
   --ha-space-12: 3rem;
   --ha-space-16: 4rem;
 
-  /* ---- Typography ---- */
-  --ha-font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --ha-font-mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace;
+  /* ---- Typography ----
+     Inter and JetBrains Mono are self-hosted (static/fonts, _fonts.css).
+     Other scripts fall through to Noto, then system UI. */
+  --ha-font-family: Inter, "Noto Sans Arabic", "Noto Sans Hebrew", "Noto Sans Devanagari", "Noto Sans Thai", "Noto Sans SC", "Noto Sans JP", "Noto Sans KR", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --ha-font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --ha-font-size-xs: 0.75rem;
   --ha-font-size-sm: 0.875rem;
   --ha-font-size-base: 1rem;
@@ -104,11 +156,11 @@
   --ha-font-size-2xl: 1.5rem;
   --ha-font-size-3xl: 1.875rem;
   --ha-font-size-4xl: 2.25rem;
-  --ha-line-height: 1.5;
+  --ha-line-height: 1.5;                /* never below 1.5 for body: Thai and Devanagari marks */
   --ha-line-height-tight: 1.25;
   --ha-line-height-relaxed: 1.75;
 
-  /* Font weights */
+  /* Font weights (the self-hosted Inter carries 400–600) */
   --ha-font-normal: 400;
   --ha-font-medium: 500;
   --ha-font-semibold: 600;
@@ -123,28 +175,49 @@
   --ha-radius-xl: 0.75rem;
   --ha-radius-2xl: 1rem;
   --ha-radius-full: 9999px;
+  --ha-radius-pill: var(--ha-radius-full);
   --ha-border-width: 1px;
 
   /* ---- Shadows ---- */
   --ha-shadow-xs: 0 1px 2px rgba(16, 24, 40, 0.05);
+  --ha-shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.06);
   --ha-shadow: 0 1px 3px rgba(16, 24, 40, 0.1), 0 1px 2px rgba(16, 24, 40, 0.06);
   --ha-shadow-md: 0 4px 8px -2px rgba(16, 24, 40, 0.1), 0 2px 4px -2px rgba(16, 24, 40, 0.06);
   --ha-shadow-lg: 0 12px 16px -4px rgba(16, 24, 40, 0.08), 0 4px 6px -2px rgba(16, 24, 40, 0.03);
-  --ha-shadow-xl: 0 20px 24px -4px rgba(16, 24, 40, 0.08), 0 8px 8px -4px rgba(16, 24, 40, 0.03);
-  --ha-shadow-focus: 0 0 0 4px rgba(5, 191, 164, 0.24);
-  --ha-shadow-focus-error: 0 0 0 4px rgba(240, 68, 56, 0.24);
+  --ha-shadow-xl: 0 20px 24px -4px rgba(16, 24, 40, 0.1), 0 8px 8px -4px rgba(16, 24, 40, 0.04);
+  --ha-shadow-focus: 0 0 0 4px rgba(13, 148, 136, 0.24);
+  --ha-shadow-focus-error: 0 0 0 4px rgba(217, 45, 32, 0.24);
 
-  /* ---- Transitions ---- */
+  /* ---- Transitions (100–250ms, only to explain a change) ---- */
   --ha-transition: 150ms ease-in-out;
   --ha-duration-fast: 100ms;
   --ha-duration-normal: 150ms;
   --ha-duration-slow: 250ms;
   --ha-ease-default: cubic-bezier(0.4, 0, 0.2, 1);
 
+  /* ---- Sizes and density ----
+     Comfortable is the default; compact swaps the *-compact values in.
+     Under (pointer: coarse) controls grow to the touch target. */
+  --ha-row-height: 2.75rem;
+  --ha-row-height-compact: 2rem;
+  --ha-control-height: 2.25rem;
+  --ha-control-height-compact: 1.75rem;
+  --ha-target-min: 1.5rem;
+  --ha-target-touch: 2.75rem;
+  --ha-icon-size: 1.25rem;
+
   /* ---- Layout ---- */
   --ha-sidebar-width: 16rem;
   --ha-sidebar-width-tablet: 12rem;
+  --ha-sidebar-width-collapsed: 4rem;
   --ha-navbar-height: 3.5rem;
+  --ha-content-max: 90rem;
+
+  /* ---- Layers ---- */
+  --ha-z-sticky: 10;
+  --ha-z-nav: 30;
+  --ha-z-overlay: 50;
+  --ha-z-toast: 60;
 
   /* ---- Breakpoints ---- */
   --ha-bp-sm: 640px;
