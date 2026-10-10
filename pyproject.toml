@@ -1,5 +1,5 @@
 [build-system]  # https://docs.astral.sh/uv/concepts/projects/config/#build-systems
-requires = ["hatchling>=1.27.0"]
+requires = ["hatchling>=1.32.4"]
 build-backend = "hatchling.build"
 
 [project]  # https://packaging.python.org/en/latest/specifications/pyproject-toml/
@@ -47,44 +47,44 @@ Issues = "https://github.com/yevheniidehtiar/hyper-admin/issues"
 
 [project.optional-dependencies]
 dev = [
-  "cffi>=2.0.0",
-  "commitizen>=4.13.9",
-  "coverage[toml]>=7.13.5",
-  "matplotlib>=3.10.8",
-  "mypy>=1.19.1",
-  "nodeenv>=1.10.0",
-  "pip-audit>=2.10.0",
-  "pip-licenses>=5.5.1",
+  "cffi>=2.1.1",
+  "commitizen>=4.19.1",
+  "coverage[toml]>=7.16.2",
+  "matplotlib>=3.10.9",
+  "mypy>=2.4.0",
+  "nodeenv>=1.11.0",
+  "pip-audit>=2.10.1",
+  "pip-licenses>=5.5.5",
   "httpx>=0.23.0",
-  "playwright>=1.58.0",
-  "poethepoet>=0.42.1",
-  "pre-commit>=4.5.1",
-  "pytest>=9.0.3",
-  "pytest-cov>=7.0.0",
-  "pytest-playwright>=0.7.2",
-  "pytest-mock>=3.15.1",
+  "playwright>=1.63.0",
+  "poethepoet>=0.48.0",
+  "pre-commit>=4.6.2",
+  "pytest>=9.1.1",
+  "pytest-cov>=7.1.0",
+  "pytest-playwright>=0.9.0",
+  "pytest-mock>=3.16.0",
   "aiosqlite>=0.22.1",
-  "basedpyright>=1.30.1",
-  "pytest-xdist>=3.6.1",
-  "pyzmq>=27.1.0",
-  "ruff==0.15.8",
+  "basedpyright>=1.40.2",
+  "pytest-xdist>=3.8.0",
+  "pyzmq>=27.2.0",
+  "ruff==0.16.10",
   # Docs site (Zensical requires Python >= 3.11; docs are built on 3.13 in CI).
   "zensical>=0.0.69; python_version >= '3.11'",
   "mkdocstrings-python>=2.0.9",
   # Cap MkDocs below 2.0: mkdocstrings and mkdocs-autorefs still import the MkDocs
   # plugin API (mkdocs.plugins/config/exceptions) under Zensical, which 2.0 removes.
   "mkdocs>=1.6.1,<2.0",
-  "mdx-include>=1.4.1",
+  "mdx-include>=1.4.2",
   "griffe-typingdoc>=0.3.1",
   "pyyaml>=6.0.3",
-  "setuptools>=83.0.0",
+  "setuptools>=84.0.0",
   "numpy>=2.4.3; python_version >= '3.12'",
 ]
 loadtest = [
-  "locust>=2.29",
+  "locust>=2.46.0",
   "flask>=3.1.3",  # locust floor pulls flask 2.2.5 (PYSEC-2026-2151) under lowest-direct
-  "rich>=14.0",
-  "asyncpg>=0.30",  # 0.29 has no CPython 3.13 wheels and fails to build from source
+  "rich>=15.0.0",
+  "asyncpg>=0.32.0",  # 0.29 has no CPython 3.13 wheels and fails to build from source
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -390,6 +390,6 @@ echo "==> All checks passed across the compatibility matrix."
 
 [dependency-groups]
 dev = [
-    "faker>=40.11.0",
+    "faker>=40.41.0",
 ]
 
