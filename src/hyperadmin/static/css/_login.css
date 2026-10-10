@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Login Page
+   Login page
    ========================================================================== */
 
 .ha-login-container {
@@ -7,33 +7,46 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  padding: var(--ha-space-3);
+  padding: var(--ha-space-4);
+  background-color: var(--ha-surface-base);
 }
 
 .ha-login-card {
   width: 100%;
-  max-width: 24rem;
-  padding: var(--ha-space-5);
+  max-width: 400px;
+  padding: var(--ha-space-6);
   background-color: var(--ha-surface-raised);
   border: var(--ha-border-width) solid var(--ha-color-border-light);
   border-radius: var(--ha-radius-xl);
-  box-shadow: var(--ha-shadow-lg);
+  box-shadow: var(--ha-shadow-md);
 }
 
 @media (min-width: 768px) {
-  .ha-login-container {
-    padding: var(--ha-space-4);
-  }
-
   .ha-login-card {
     padding: var(--ha-space-8);
   }
 }
 
+.ha-login-mark {
+  display: block;
+  width: 40px;
+  height: 40px;
+  margin-bottom: var(--ha-space-4);
+}
+
 .ha-login-title {
   font-size: var(--ha-font-size-2xl);
-  font-weight: var(--ha-font-extrabold);
-  color: var(--ha-color-primary-700);
+  line-height: 32px;
+  font-weight: var(--ha-font-semibold);
+  letter-spacing: -0.01em;
+  color: var(--ha-color-text-strong);
   margin: 0 0 var(--ha-space-1);
-  letter-spacing: -0.025em;
+}
+
+.ha-login-card > .ha-text-muted {
+  margin: 0 0 var(--ha-space-6);
+}
+
+.ha-login-card .ha-btn {
+  margin-top: var(--ha-space-2);
 }

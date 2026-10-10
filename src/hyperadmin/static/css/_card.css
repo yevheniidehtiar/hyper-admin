@@ -6,7 +6,81 @@
   background-color: var(--ha-surface-raised);
   border: var(--ha-border-width) solid var(--ha-color-border-light);
   border-radius: var(--ha-radius-lg);
-  padding: var(--ha-space-6);
+  padding: var(--ha-pad-card);
   margin-bottom: var(--ha-space-6);
-  box-shadow: var(--ha-shadow-xs);
+  box-shadow: var(--ha-shadow-sm);
+}
+
+.ha-card-header,
+.ha-card__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ha-space-3);
+  margin: calc(-1 * var(--ha-pad-card)) calc(-1 * var(--ha-pad-card)) var(--ha-pad-card);
+  padding: var(--ha-space-4) var(--ha-pad-card);
+  border-block-end: var(--ha-border-width) solid var(--ha-color-border-light);
+}
+
+.ha-card-title {
+  font-size: var(--ha-font-size-base);
+  line-height: 24px;
+  font-weight: var(--ha-font-semibold);
+  color: var(--ha-color-text-strong);
+  margin: 0;
+}
+
+.ha-card-body {
+  padding: 0;
+}
+
+.ha-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: var(--ha-space-4);
+}
+
+.ha-list {
+  margin: 0;
+  padding-inline-start: var(--ha-space-5);
+}
+
+.ha-list li + li {
+  margin-top: var(--ha-space-2);
+}
+
+/* ==========================================================================
+   Empty and error states
+   ========================================================================== */
+
+.ha-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--ha-space-3);
+  padding: var(--ha-space-12) var(--ha-space-6);
+}
+
+.ha-empty-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--ha-radius-lg);
+  background-color: var(--ha-surface-sunken);
+  color: var(--ha-color-text-muted);
+}
+
+.ha-empty-text {
+  margin: 0;
+  max-width: 44ch;
+  color: var(--ha-color-text-muted);
+}
+
+.ha-error-code {
+  margin: 0;
+  color: var(--ha-color-text-muted);
 }

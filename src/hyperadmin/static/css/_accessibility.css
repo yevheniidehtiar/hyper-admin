@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Accessibility — Screen-reader-only utility
+   Accessibility: screen-reader-only utility
    ========================================================================== */
 
 .ha-sr-only {
@@ -9,13 +9,13 @@
   padding: 0;
   margin: -1px;
   overflow: hidden;
-  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
   white-space: nowrap;
   border-width: 0;
 }
 
 /* ==========================================================================
-   Accessibility — Skip Link
+   Accessibility: skip link
    ========================================================================== */
 
 .ha-skip-link {
@@ -26,12 +26,12 @@
   height: 1px;
   overflow: hidden;
   z-index: 100;
-  padding: var(--ha-space-2) var(--ha-space-4);
-  background-color: var(--ha-color-primary-500);
-  color: #ffffff;
-  font-weight: var(--ha-font-bold);
+  padding: 0 var(--ha-space-4);
+  background-color: var(--ha-color-primary);
+  color: var(--ha-color-on-primary);
+  font-weight: var(--ha-font-semibold);
   text-decoration: none;
-  border-radius: var(--ha-radius);
+  border-radius: var(--ha-radius-md);
   box-shadow: var(--ha-shadow-lg);
 }
 
@@ -46,28 +46,23 @@
   display: inline-flex;
   align-items: center;
   overflow: visible;
-  outline: 2px solid var(--ha-color-primary-200);
-  outline-offset: 2px;
 }
+
+/* The focus ring itself lives in _reset.css (an early layer), so components
+   such as inputs can draw it at offset 0. */
 
 /* ==========================================================================
-   Accessibility -- Focus Visible
-   ========================================================================== */
-
-:focus-visible {
-  outline: 2px solid var(--ha-color-primary-500);
-  outline-offset: 2px;
-}
-
-:focus:not(:focus-visible) {
-  outline: none;
-}
-
-/* ==========================================================================
-   Accessibility -- Touch Targets
+   Accessibility: touch targets
+   Under a coarse pointer rows and controls grow to 44px, whatever the density.
    ========================================================================== */
 
 @media (pointer: coarse) {
+  :root,
+  [data-density] {
+    --ha-row-h: var(--ha-target-touch);
+    --ha-ctl-h: var(--ha-target-touch);
+  }
+
   .ha-btn,
   .ha-action-link,
   .ha-action-delete,
@@ -87,13 +82,11 @@
   .ha-sidebar-close {
     min-height: 44px;
     min-width: 44px;
-    display: inline-flex;
-    align-items: center;
   }
 }
 
 /* ==========================================================================
-   Accessibility -- Reduced Motion
+   Accessibility: reduced motion
    ========================================================================== */
 
 @media (prefers-reduced-motion: reduce) {
@@ -108,11 +101,23 @@
 }
 
 /* ==========================================================================
-   Accessibility -- High Contrast
+   Accessibility: more contrast, forced colours
    ========================================================================== */
 
 @media (prefers-contrast: more) {
   :root {
-    --ha-color-border: var(--ha-color-neutral-700);
+    --ha-color-border-light: var(--ha-color-border-strong);
+    --ha-color-text-muted: var(--ha-color-text);
+  }
+}
+
+@media (forced-colors: active) {
+  .ha-btn,
+  .ha-sidebar-link[aria-current="page"] {
+    border: 1px solid CanvasText;
+  }
+
+  :focus-visible {
+    outline-color: Highlight;
   }
 }

@@ -1,18 +1,21 @@
 /* ==========================================================================
-   Pagination
+   Pagination (the table's footer)
    ========================================================================== */
 
 .ha-pagination {
-  padding: var(--ha-space-3) var(--ha-space-4);
+  padding: var(--ha-space-2) var(--ha-space-3);
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  border-top: var(--ha-border-width) solid var(--ha-color-border-light);
+  gap: var(--ha-space-3);
+  border-block-start: var(--ha-border-width) solid var(--ha-color-border-light);
 }
 
 .ha-pagination-info {
-  font-size: var(--ha-font-size-sm);
+  font-size: 0.8125rem;
   color: var(--ha-color-text-muted);
+  font-variant-numeric: tabular-nums;
 }
 
 .ha-pagination-controls {
@@ -22,64 +25,54 @@
 }
 
 .ha-pagination-btn {
-  padding: var(--ha-space-1-5) var(--ha-space-3);
-  border: var(--ha-border-width) solid var(--ha-color-border);
-  border-radius: var(--ha-radius);
-  color: var(--ha-color-text);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ha-space-1);
+  min-height: var(--ha-ctl-h);
+  padding: 0 var(--ha-space-2);
+  color: var(--ha-color-text-strong);
   text-decoration: none;
-  font-size: var(--ha-font-size-sm);
   font-weight: var(--ha-font-medium);
-  background-color: var(--ha-color-surface);
-  transition: all var(--ha-transition);
+  border-radius: var(--ha-radius-md);
 }
 
 .ha-pagination-btn:hover {
-  background-color: var(--ha-surface-sunken);
-  border-color: var(--ha-color-border);
+  background-color: var(--ha-surface-hover);
 }
 
 .ha-pagination-page {
-  padding: var(--ha-space-1-5) var(--ha-space-3);
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--ha-ctl-h);
+  padding: 0 var(--ha-space-2);
   color: var(--ha-color-text);
-  font-size: var(--ha-font-size-sm);
-  font-weight: var(--ha-font-semibold);
+  font-variant-numeric: tabular-nums;
 }
 
 /* ==========================================================================
-   Mobile (< 768px) — stack pagination vertically with centered controls
+   Mobile (< 768px): stacked, centred, touch-size controls
    ========================================================================== */
 
 @media (max-width: 767px) {
   .ha-pagination {
     flex-direction: column;
-    align-items: center;
-    gap: var(--ha-space-3);
-    padding: var(--ha-space-4);
+    gap: var(--ha-space-2);
+    padding: var(--ha-space-3) var(--ha-space-4);
   }
 
   .ha-pagination-info {
     text-align: center;
-    word-wrap: break-word;
+    overflow-wrap: anywhere;
   }
 
   .ha-pagination-controls {
-    gap: var(--ha-space-2);
     flex-wrap: wrap;
     justify-content: center;
   }
 
-  .ha-pagination-btn {
-    min-height: 44px;
-    padding: var(--ha-space-2) var(--ha-space-4);
-    font-size: var(--ha-font-size-base);
-    display: inline-flex;
-    align-items: center;
-  }
-
+  .ha-pagination-btn,
   .ha-pagination-page {
     min-height: 44px;
-    display: inline-flex;
-    align-items: center;
-    font-size: var(--ha-font-size-base);
+    padding: 0 var(--ha-space-3);
   }
 }

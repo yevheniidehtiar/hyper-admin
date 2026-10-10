@@ -68,7 +68,7 @@ def test_authenticated_user_views_protected_model(page: Page, auth_base_url: str
 
     # Then the list view for User is rendered
     expect(page).to_have_url(f"{auth_base_url}/admin/user")
-    expect(page.get_by_role("heading", name="UserList")).to_be_visible()
+    expect(page.get_by_role("heading", name="User List")).to_be_visible()
 
 
 def test_auth_models_in_sidebar(page: Page, auth_base_url: str) -> None:

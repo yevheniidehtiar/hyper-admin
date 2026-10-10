@@ -3,6 +3,7 @@
       - group: FieldsetGroup instance (name, fields, collapsed, description, slug)
       - form: PydanticForm instance (for layout_css_class)
 -#}
+{%- from "components/_icons.html" import icon -%}
 {%- if group.name -%}
 <fieldset class="ha-fieldset" data-testid="fieldset-{{ group.slug }}"
     x-data="{ open: {{ 'false' if group.collapsed else 'true' }} }">
@@ -12,7 +13,7 @@
                 data-testid="fieldset-toggle-{{ group.slug }}"
                 @click="open = !open"
                 :aria-expanded="open">
-            <span x-text="open ? '▾' : '▸'" class="ha-fieldset-arrow"></span>
+            <span class="ha-fieldset-arrow" :class="open && 'is-open'">{{ icon('chevron-right') }}</span>
             {{ group.name }}
         </button>
     </legend>

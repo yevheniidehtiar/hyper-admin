@@ -1,47 +1,72 @@
 /* ==========================================================================
-   Filter Bar
+   Filter bar (sunken strip above the table)
    ========================================================================== */
 
 .ha-filter-bar {
-  padding: var(--ha-space-4);
-  margin-bottom: var(--ha-space-4);
-  background-color: var(--ha-surface-raised);
-  border: var(--ha-border-width) solid var(--ha-color-border-light);
+  padding: var(--ha-space-2) var(--ha-space-3);
+  margin-bottom: var(--ha-space-3);
+  background-color: var(--ha-surface-sunken);
+  border: 0;
   border-radius: var(--ha-radius-lg);
+  box-shadow: none;
 }
 
 .ha-filter-container {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--ha-space-4);
+  gap: var(--ha-space-3);
   align-items: flex-end;
+  padding-block: var(--ha-space-2);
 }
 
 .ha-filter-group {
   margin-bottom: 0;
+  min-width: 10rem;
 }
 
 .ha-filter-clear {
+  display: flex;
+  align-items: center;
+  min-height: var(--ha-ctl-h);
   margin-bottom: 0;
 }
 
 .ha-filter-toggle {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: var(--ha-space-2);
-  margin-bottom: var(--ha-space-4);
+  min-height: var(--ha-ctl-h);
+  padding: 0 var(--ha-space-2);
+  font: inherit;
   font-weight: var(--ha-font-semibold);
-  font-size: var(--ha-font-size-sm);
   color: var(--ha-color-text-strong);
   cursor: pointer;
   background: none;
   border: none;
-  padding: var(--ha-space-1) 0;
-  transition: color var(--ha-transition);
+  border-radius: var(--ha-radius-md);
 }
 
 .ha-filter-toggle:hover {
-  color: var(--ha-color-primary-700);
+  background-color: var(--ha-surface-hover);
+}
+
+.ha-filter-toggle .ha-icon {
+  color: var(--ha-color-text-muted);
+}
+
+.ha-filter-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: var(--ha-radius-pill);
+  background-color: var(--ha-color-primary-soft);
+  color: var(--ha-color-primary-text);
+  font-size: var(--ha-font-size-xs);
+  font-weight: var(--ha-font-semibold);
+  font-variant-numeric: tabular-nums;
 }
 
 .ha-filter-content {
@@ -52,19 +77,19 @@
   display: none;
 }
 
-.ha-filter-toggle .ha-icon {
-  transition: transform 0.2s var(--ha-ease-default);
+.ha-filter-chevron {
+  display: inline-flex;
+  transition: transform 150ms var(--ha-ease-default);
 }
 
 /* ==========================================================================
-   Mobile (< 768px) — stack filter controls full-width
+   Mobile (< 768px): filter controls stack full width
    ========================================================================== */
 
 @media (max-width: 767px) {
   .ha-filter-container {
     flex-direction: column;
     align-items: stretch;
-    gap: var(--ha-space-3);
   }
 
   .ha-filter-group {
@@ -73,7 +98,7 @@
 
   .ha-filter-clear {
     width: 100%;
-    text-align: center;
+    justify-content: center;
   }
 
   .ha-filter-toggle {

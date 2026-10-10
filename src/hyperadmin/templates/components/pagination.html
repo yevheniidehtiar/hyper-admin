@@ -1,3 +1,4 @@
+{%- from "components/_icons.html" import icon -%}
 <nav aria-label="{{ _('Pagination') }}">
 <div class="ha-pagination">
     <div class="ha-pagination-info" data-testid="pagination-info">
@@ -14,7 +15,7 @@
            hx-swap="outerHTML"
            class="ha-pagination-btn"
            data-testid="pagination-prev">
-            {{ _("Previous") }}
+            {{ icon('chevron-left', 'ha-icon-sm ha-icon--mirror') }}{{ _("Previous") }}
         </a>
         {%- endif -%}
 
@@ -29,7 +30,7 @@
            hx-swap="outerHTML"
            class="ha-pagination-btn"
            data-testid="pagination-next">
-            {{ _("Next") }}
+            {{ _("Next") }}{{ icon('chevron-right', 'ha-icon-sm ha-icon--mirror') }}
         </a>
         {%- endif -%}
     </div>

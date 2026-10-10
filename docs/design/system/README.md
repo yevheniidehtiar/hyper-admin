@@ -124,10 +124,11 @@ Override both themes, keep each pair at its stated contrast, and leave the neutr
 | Design system | Repository |
 |---|---|
 | `tokens.json` (source of truth) | `src/hyperadmin/static/css/_tokens.css` (light) and `_dark-mode.css` (dark), value for value |
-| `components/bundle.css`, `components/*/preview.html` | reference markup and CSS for the partials and Jinja2 templates; not shipped yet |
-| fonts | `src/hyperadmin/static/fonts/` (WOFF2 + OFL licences), loaded by `_fonts.css` |
-| logo, favicon | `src/hyperadmin/static/img/` |
-| icons | `src/hyperadmin/static/icons/` |
+| `components/bundle.css`, `components/*/preview.html` | the reference; ported into the shipped partials (`_buttons.css`, `_table.css`, `_forms.css`, `_navbar.css`, `_sidebar.css`, …) under their existing class names (`.ha-btn-primary`, `.ha-table-cell`, `.ha-sidebar-link`, …), so forked host templates keep working. `.ha-btn--primary` and the other button modifiers are aliases |
+| fonts | `src/hyperadmin/static/fonts/` (WOFF2 + OFL licences), loaded by `_fonts.css`; Inter is preloaded by `_base.html` |
+| logo, favicon | `src/hyperadmin/static/img/`; the navbar and login show the mark next to `site_title` |
+| icons | `src/hyperadmin/static/icons/`, inlined by the `icon(name)` macro in `templates/components/_icons.html` (generated: `uv run python scripts/generate_icon_macro.py`). A `ModelAdmin.icon` or nav item `icon` that names one of them renders the Lucide icon |
+| HTMX, Alpine.js | vendored at exact versions in `src/hyperadmin/static/js/vendor/` (no CDN request) |
 
 Name mapping, where the shipped CSS keeps an older name:
 
@@ -143,12 +144,12 @@ Name mapping, where the shipped CSS keeps an older name:
 
 - Theme: the app sets `.ha-theme-dark` / `.ha-theme-light` on `<html>` (and `data-theme` works too); "auto" follows `prefers-color-scheme` in `_dark-mode.css`. `bundle.css` keys its few theme-specific rules off `[data-theme="dark"]`; when it is ported, add `.ha-theme-dark` to those selectors.
 - Open the previews in a browser: `docs/design/system/index.html` (no server needed; `?theme=dark` and `?dir=rtl` work on each preview).
-- Changing a value: edit `tokens.json`, mirror it in `_tokens.css` / `_dark-mode.css`, regenerate `tokens.css` here, and refresh the visual baselines (`RESPONSIVE_SNAPSHOTS_UPDATE=1 uv run pytest tests/e2e/test_visual_regression.py`).
+- Changing a value: edit `tokens.json`, mirror it in `_tokens.css` / `_dark-mode.css`, regenerate `tokens.css` here, and refresh the visual baselines. Render them on Linux, as CI does, for example in `mcr.microsoft.com/playwright/python:v<playwright version>-noble` with `RESPONSIVE_SNAPSHOTS_UPDATE=1 uv run pytest tests/e2e/test_visual_regression.py tests/e2e/test_i18n.py`; macOS renders differ by more than the threshold.
+- Cascade layers: the focus ring and the base `.ha-icon` rule sit in the `reset` layer on purpose, so a component (an input, an icon inside a row action) can adjust them. Later layers win whatever the specificity.
 
 ## Implementing the rest
 
-- The table's card layout is a container query on `.ha-table-wrap` (`container: ha-table / inline-size`), so a table in a narrow panel or dialog also turns into cards; the shell's sidebar drawer stays a viewport media query at `ha-bp-md`.
-- Component styles map onto the existing partials (`_table.css`, `_forms.css`, `_buttons.css`, …); `components/bundle.css` here is the reference for all of them.
-- `_base.html` still links Inter from Google Fonts and loads HTMX and Alpine.js from unpkg (Alpine as `3.x.x`). Drop the Google Fonts `<link>` (the self-hosted Inter is already declared in `_fonts.css`) and vendor HTMX and Alpine.js into `static/` at exact versions.
-- First load stays under 150 KB of CSS, fonts and JS: split each font into a Latin and a Cyrillic+Greek file with `unicode-range`, so a Latin-script page downloads only the Latin halves, and preload only Inter.
-- The token values changed the look of every page: refresh the visual baselines in `tests/e2e/snapshots/responsive/` (list, create, detail, login at 375, 768, 1024px) and `tests/e2e/snapshots/i18n/`.
+- The table's card layout is still a viewport media query at `ha-bp-md`. Moving it to a container query on the table wrapper (`container: ha-table / inline-size`) lets a table in a narrow panel or dialog turn into cards too.
+- Components the templates do not emit yet: status pills (enum columns still print `Status.PAID`), stat cards, charts, dialogs (deletes still use `hx-confirm`), breadcrumbs, presence avatars, the density switch and the collapsed sidebar. Their CSS is in `components/bundle.css`.
+- First load stays under 150 KB of CSS, fonts and JS: split each font into a Latin and a Cyrillic+Greek file with `unicode-range`, so a Latin-script page downloads only the Latin halves.
+- Copy still to bring to sentence case: "Create New Invoice" and "Invoice List" should read "Add invoice" and "Invoices"; that changes translation message IDs, so it goes with a catalogue update.

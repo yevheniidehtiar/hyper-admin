@@ -3,48 +3,64 @@
    ========================================================================== */
 
 .ha-search-group {
-  margin-bottom: var(--ha-space-4);
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--ha-space-3);
+  margin-bottom: var(--ha-space-3);
+}
+
+.ha-search-field {
+  position: relative;
+  flex: 1 1 240px;
+  max-width: 28rem;
+}
+
+.ha-search-field > .ha-icon {
+  position: absolute;
+  inset-inline-start: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ha-color-text-muted);
+  pointer-events: none;
 }
 
 .ha-search-input {
   width: 100%;
-  padding: var(--ha-space-2) var(--ha-space-3);
-  border: var(--ha-border-width) solid var(--ha-color-border);
-  border-radius: var(--ha-radius);
-  font-size: var(--ha-font-size-sm);
-  font-family: var(--ha-font-family);
-  color: var(--ha-color-text);
-  background-color: var(--ha-color-surface);
-  transition: border-color var(--ha-transition), box-shadow var(--ha-transition);
+  min-height: var(--ha-ctl-h);
+  padding: 0 var(--ha-space-3);
+  padding-inline-start: 36px;
+  border: var(--ha-border-width) solid var(--ha-color-border-strong);
+  border-radius: var(--ha-radius-md);
+  font: inherit;
+  color: var(--ha-color-text-strong);
+  background-color: var(--ha-surface-raised);
 }
 
 .ha-search-input::placeholder {
-  color: var(--ha-color-neutral-400);
+  color: var(--ha-color-text-muted);
 }
 
-.ha-search-input:focus {
-  outline: none;
-  border-color: var(--ha-color-primary-500);
-  box-shadow: var(--ha-shadow-focus);
+.ha-search-input:focus-visible {
+  outline-offset: 0;
+  border-color: var(--ha-color-focus-ring);
 }
 
 .ha-search-indicator {
-  font-size: var(--ha-font-size-sm);
+  font-size: 0.8125rem;
   color: var(--ha-color-text-muted);
 }
 
 /* ==========================================================================
-   Mobile (< 768px) — full-width search with touch-friendly height
-
-   The base .ha-search-input already has width: 100% so it takes the
-   container width on mobile; here we just bump font-size to 1rem
-   (matching the form input rule in C2-B — prevents iOS Safari auto-zoom)
-   and increase padding to meet the 44px touch target.
+   Mobile (< 768px): full width, 16px text (no iOS zoom), 44px target
    ========================================================================== */
 
 @media (max-width: 767px) {
+  .ha-search-field {
+    max-width: none;
+  }
+
   .ha-search-input {
-    padding: var(--ha-space-3);
     font-size: 1rem;
     min-height: 44px;
   }

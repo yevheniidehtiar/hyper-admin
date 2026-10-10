@@ -3,6 +3,7 @@
       - inline: InlineFormset instance
       - model_name: parent model name (lowercase)
 -#}
+{%- from "components/_icons.html" import icon -%}
 <div class="ha-inline-formset" data-testid="inline-{{ inline.prefix }}">
     <h3 class="ha-inline-title">{{ inline.title }}</h3>
     <table class="ha-inline-table">
@@ -27,7 +28,7 @@
             hx-get="{{ inline.add_row_url }}?index={{ inline.rows|length }}"
             hx-target="#inline-{{ inline.prefix }}-body"
             hx-swap="beforeend">
-        + Add {{ inline.spec.model.__name__ }}
+        {{ icon('plus', 'ha-icon-sm') }}Add {{ inline.spec.model.__name__ }}
     </button>
     {%- endif -%}
 </div>

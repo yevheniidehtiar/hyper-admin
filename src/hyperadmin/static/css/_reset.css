@@ -1,5 +1,8 @@
 /* ==========================================================================
    Base / Reset
+   14px is the base for tables and forms; line height never drops below 1.5
+   (Thai and Devanagari marks need it). Inter's character variants: cv11
+   (single-storey a off), ss01 (open digits) keep figures easy to scan.
    ========================================================================== */
 
 *,
@@ -11,10 +14,35 @@
 body {
   margin: 0;
   font-family: var(--ha-font-family);
-  font-size: var(--ha-font-size-base);
+  font-size: var(--ha-font-size-sm);
   line-height: var(--ha-line-height);
   color: var(--ha-color-text);
-  background-color: var(--ha-color-bg);
+  background-color: var(--ha-surface-base);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "cv11", "ss01";
+}
+
+/* One focus ring everywhere: 2px brand teal, 2px offset. In this early layer
+   so components can adjust it (inputs draw it at offset 0, _forms.css). */
+:focus-visible {
+  outline: 2px solid var(--ha-color-focus-ring);
+  outline-offset: 2px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Lucide icons, inline SVG (components/_icons.html): 20px, 1.5px stroke,
+   the text colour. */
+.ha-icon {
+  width: var(--ha-icon-size);
+  height: var(--ha-icon-size);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
 }

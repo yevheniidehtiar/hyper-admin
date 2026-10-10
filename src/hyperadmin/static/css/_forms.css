@@ -1,82 +1,133 @@
 /* ==========================================================================
    Forms
+   Controls sit on the raised surface with a 3:1 edge (border-strong); focus
+   recolours the edge and draws the ring at offset 0; an invalid control
+   gets a 2px danger edge plus a message that says how to fix it.
    ========================================================================== */
 
 .ha-form-group {
   margin-bottom: var(--ha-space-5);
+  min-width: 0;
 }
 
 .ha-label {
   display: block;
-  font-size: var(--ha-font-size-sm);
-  font-weight: var(--ha-font-semibold);
+  font-size: 0.8125rem;
+  line-height: 20px;
+  font-weight: var(--ha-font-medium);
   color: var(--ha-color-text-strong);
-  margin-bottom: var(--ha-space-1-5);
+  margin-bottom: var(--ha-space-1);
 }
 
 .ha-required {
-  color: var(--ha-color-danger);
+  color: var(--ha-color-danger-text);
   margin-inline-start: var(--ha-space-0-5);
 }
 
-.ha-input {
+.ha-input,
+.ha-select,
+.ha-textarea {
   display: block;
   width: 100%;
-  padding: var(--ha-space-2) var(--ha-space-3);
-  font-size: var(--ha-font-size-sm);
-  font-family: var(--ha-font-family);
-  color: var(--ha-color-text);
-  background-color: var(--ha-color-surface);
-  border: var(--ha-border-width) solid var(--ha-color-border);
-  border-radius: var(--ha-radius);
-  transition: border-color var(--ha-transition), box-shadow var(--ha-transition);
+  min-height: var(--ha-ctl-h);
+  padding: 0 var(--ha-space-3);
+  font: inherit;
+  color: var(--ha-color-text-strong);
+  background-color: var(--ha-surface-raised);
+  border: var(--ha-border-width) solid var(--ha-color-border-strong);
+  border-radius: var(--ha-radius-md);
 }
 
-.ha-input::placeholder {
-  color: var(--ha-color-neutral-400);
+.ha-textarea {
+  padding-block: var(--ha-space-2);
+  min-height: 84px;
+  resize: vertical;
 }
 
-.ha-input:focus {
-  outline: none;
-  border-color: var(--ha-color-primary-500);
-  box-shadow: var(--ha-shadow-focus);
+.ha-input::placeholder,
+.ha-textarea::placeholder {
+  color: var(--ha-color-text-muted);
 }
 
-.ha-input:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+.ha-input:focus-visible,
+.ha-select:focus-visible,
+.ha-textarea:focus-visible {
+  outline-offset: 0;
+  border-color: var(--ha-color-focus-ring);
+}
+
+.ha-input[aria-invalid="true"],
+.ha-select[aria-invalid="true"],
+.ha-textarea[aria-invalid="true"] {
+  border-color: var(--ha-color-danger-text);
+  border-width: 2px;
+}
+
+.ha-input:disabled,
+.ha-select:disabled,
+.ha-textarea:disabled {
   background-color: var(--ha-surface-sunken);
-}
-
-.ha-select {
-  display: block;
-  width: 100%;
-  padding: var(--ha-space-2) var(--ha-space-3);
-  font-size: var(--ha-font-size-sm);
-  font-family: var(--ha-font-family);
-  color: var(--ha-color-text);
-  background-color: var(--ha-color-surface);
-  border: var(--ha-border-width) solid var(--ha-color-border);
-  border-radius: var(--ha-radius);
-  transition: border-color var(--ha-transition), box-shadow var(--ha-transition);
-}
-
-.ha-select:focus {
-  outline: none;
-  border-color: var(--ha-color-primary-500);
-  box-shadow: var(--ha-shadow-focus);
-}
-
-.ha-select:disabled {
-  opacity: 0.5;
+  color: var(--ha-color-text-disabled);
+  border-color: var(--ha-color-border-light);
   cursor: not-allowed;
-  background-color: var(--ha-surface-sunken);
+}
+
+.ha-input[readonly] {
+  background-color: transparent;
+  border-style: dashed;
+  border-color: var(--ha-color-border-light);
+  color: var(--ha-color-text);
+}
+
+input[type="number"].ha-input {
+  font-variant-numeric: tabular-nums;
+}
+
+input[type="file"].ha-input {
+  padding-block: var(--ha-space-1);
+}
+
+/* Own chevron instead of the native arrow: Lucide chevron-down at 16px,
+   12px from the end edge. The data-URI ink is text-muted per theme (a
+   background image cannot read a custom property). */
+.ha-select:not([multiple]) {
+  appearance: none;
+  padding-inline-end: calc(var(--ha-space-3) + 16px + var(--ha-space-2));
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235D6A7E' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-size: 16px;
+  background-position: right var(--ha-space-3) center;
+}
+
+[dir="rtl"] .ha-select:not([multiple]) {
+  background-position: left var(--ha-space-3) center;
+}
+
+.ha-theme-dark .ha-select:not([multiple]),
+[data-theme="dark"] .ha-select:not([multiple]) {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239AA4B2' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not(.ha-theme-light):not([data-theme="light"]) .ha-select:not([multiple]) {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%239AA4B2' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  }
+}
+
+@media (forced-colors: active) {
+  .ha-select:not([multiple]) {
+    appearance: auto;
+    background-image: none;
+    padding-inline-end: var(--ha-space-3);
+  }
 }
 
 /* Multi-select variants */
+.ha-select[multiple],
 .ha-select--multi,
 .ha-multiselect {
   min-height: 6rem;
+  padding-block: var(--ha-space-1);
 }
 
 /* Semantic hooks for relation and lazy-loading selects */
@@ -84,84 +135,61 @@
 .ha-select--lazy {}
 .ha-select--dependent {}
 
-.ha-textarea {
-  display: block;
-  width: 100%;
-  padding: var(--ha-space-2) var(--ha-space-3);
-  font-size: var(--ha-font-size-sm);
-  font-family: var(--ha-font-family);
-  color: var(--ha-color-text);
-  background-color: var(--ha-color-surface);
-  border: var(--ha-border-width) solid var(--ha-color-border);
-  border-radius: var(--ha-radius);
-  resize: vertical;
-  min-height: 5rem;
-  transition: border-color var(--ha-transition), box-shadow var(--ha-transition);
-}
-
-.ha-textarea:focus {
-  outline: none;
-  border-color: var(--ha-color-primary-500);
-  box-shadow: var(--ha-shadow-focus);
-}
-
 .ha-checkbox-label {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  cursor: pointer;
   gap: var(--ha-space-2);
+  min-height: var(--ha-target-min);
+  cursor: pointer;
 }
 
 .ha-checkbox {
-  width: 1rem;
-  height: 1rem;
-  accent-color: var(--ha-color-primary-500);
-  border-radius: var(--ha-radius-sm);
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--ha-color-primary);
   cursor: pointer;
 }
 
 .ha-checkbox-text {
-  font-size: var(--ha-font-size-sm);
   font-weight: var(--ha-font-medium);
-  color: var(--ha-color-text);
+  color: var(--ha-color-text-strong);
 }
 
 .ha-help-text {
-  margin-top: var(--ha-space-1-5);
+  margin: var(--ha-space-1) 0 0;
   font-size: var(--ha-font-size-xs);
+  line-height: 18px;
   color: var(--ha-color-text-muted);
-  line-height: var(--ha-line-height-relaxed);
 }
 
 .ha-field-errors {
   list-style: none;
-  margin: var(--ha-space-1-5) 0 0;
+  margin: var(--ha-space-1) 0 0;
   padding: 0;
   font-size: var(--ha-font-size-xs);
-  color: var(--ha-color-danger);
+  line-height: 18px;
+  font-weight: var(--ha-font-medium);
+  color: var(--ha-color-danger-text);
 }
 
-/* Detail view -- read-only field value */
+/* Detail view: read-only field value */
 .ha-field-value {
-  padding: var(--ha-space-2) var(--ha-space-3);
-  border: var(--ha-border-width) solid var(--ha-color-border-light);
-  border-radius: var(--ha-radius);
-  background-color: var(--ha-surface-sunken);
-  color: var(--ha-color-text);
+  color: var(--ha-color-text-strong);
+  overflow-wrap: anywhere;
 }
 
 /* ==========================================================================
-   Mobile (< 768px) — touch-friendly inputs
+   Mobile (< 768px): touch-friendly inputs
 
-   - Larger padding so input height meets 44px (WCAG 2.1 AA touch target)
-   - font-size: 1rem (16px) prevents iOS Safari auto-zoom on focus
+   44px controls (WCAG 2.2 target size) and 16px text, which keeps iOS
+   Safari from zooming on focus.
    ========================================================================== */
 
 @media (max-width: 767px) {
   .ha-input,
   .ha-select,
   .ha-textarea {
-    padding: var(--ha-space-3);
     font-size: 1rem;
     min-height: 44px;
   }
@@ -177,6 +205,57 @@
 
   .ha-checkbox-label {
     min-height: 44px;
-    padding: var(--ha-space-1) 0;
+  }
+}
+
+/* ==========================================================================
+   Detail view: label | value definition list
+   ========================================================================== */
+
+.ha-dl {
+  display: grid;
+  grid-template-columns: minmax(120px, 220px) 1fr;
+  margin: calc(-1 * var(--ha-space-3)) 0;
+}
+
+.ha-dl dt,
+.ha-dl dd {
+  margin: 0;
+  padding: var(--ha-space-3) 0;
+  border-block-end: var(--ha-border-width) solid var(--ha-color-border-light);
+}
+
+.ha-dl dt:last-of-type,
+.ha-dl dd:last-of-type {
+  border-block-end: 0;
+}
+
+.ha-dl dt {
+  padding-inline-end: var(--ha-space-4);
+  font-size: 0.8125rem;
+  line-height: 21px;
+  font-weight: var(--ha-font-medium);
+  color: var(--ha-color-text-muted);
+}
+
+.ha-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ha-space-1);
+  font-weight: var(--ha-font-medium);
+}
+
+@media (max-width: 767px) {
+  .ha-dl {
+    grid-template-columns: 1fr;
+  }
+
+  .ha-dl dt {
+    padding-block-end: 0;
+    border-block-end: 0;
+  }
+
+  .ha-dl dd {
+    padding-block-start: var(--ha-space-1);
   }
 }

@@ -1,23 +1,43 @@
 /* ==========================================================================
-   Page Headers
+   Page headers and type scale
+   ha-h1 page title · ha-h2 record summary · ha-h3 panel and dialog titles ·
+   ha-h4 card titles. Weights stop at 600; no uppercase anywhere.
    ========================================================================== */
 
-.ha-page-title {
-  font-size: var(--ha-font-size-2xl);
-  font-weight: var(--ha-font-bold);
-  color: var(--ha-color-text-strong);
-  margin: 0 0 var(--ha-space-6);
-  line-height: var(--ha-line-height-tight);
-  letter-spacing: -0.025em;
-}
-
-.ha-section-title {
-  font-size: var(--ha-font-size-xl);
-  font-weight: var(--ha-font-bold);
+.ha-page-title,
+.ha-h1 {
+  font-size: var(--ha-font-size-3xl);
+  line-height: 38px;
+  font-weight: var(--ha-font-semibold);
+  letter-spacing: -0.015em;
   color: var(--ha-color-text-strong);
   margin: 0 0 var(--ha-space-5);
-  line-height: var(--ha-line-height-tight);
-  letter-spacing: -0.015em;
+}
+
+.ha-section-title,
+.ha-h2 {
+  font-size: var(--ha-font-size-2xl);
+  line-height: 32px;
+  font-weight: var(--ha-font-semibold);
+  letter-spacing: -0.01em;
+  color: var(--ha-color-text-strong);
+  margin: 0 0 var(--ha-space-5);
+}
+
+.ha-h3 {
+  font-size: var(--ha-font-size-xl);
+  line-height: 28px;
+  font-weight: var(--ha-font-semibold);
+  color: var(--ha-color-text-strong);
+  margin: 0;
+}
+
+.ha-h4 {
+  font-size: var(--ha-font-size-base);
+  line-height: 24px;
+  font-weight: var(--ha-font-semibold);
+  color: var(--ha-color-text-strong);
+  margin: 0;
 }
 
 .ha-text-muted {
@@ -25,11 +45,49 @@
 }
 
 /* ==========================================================================
-   Responsive page header (heading + action bar)
+   Breadcrumbs
+   ========================================================================== */
 
-   Mobile (< 768px): heading and action bar stack vertically; the primary
-   action button spans full width for an easy tap target.
-   Desktop (>= 768px): heading and action bar sit side-by-side.
+.ha-crumbs ol {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ha-space-1);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 0.8125rem;
+  color: var(--ha-color-text-muted);
+}
+
+.ha-crumbs li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ha-space-1);
+}
+
+.ha-crumbs a {
+  color: var(--ha-color-text-muted);
+  text-decoration: none;
+  text-underline-offset: 2px;
+}
+
+.ha-crumbs a:hover {
+  color: var(--ha-color-primary-text);
+  text-decoration: underline;
+}
+
+.ha-crumbs [aria-current="page"] {
+  color: var(--ha-color-text-strong);
+  font-weight: var(--ha-font-medium);
+}
+
+/* ==========================================================================
+   Responsive page header (title + action bar)
+
+   Mobile (< 768px): title and actions stack; the primary action spans the
+   full width for an easy tap target.
+   Desktop (>= 768px): title and actions sit side by side.
    ========================================================================== */
 
 .ha-page-header {
@@ -37,13 +95,14 @@
   flex-direction: column;
   align-items: flex-start;
   gap: var(--ha-space-3);
-  margin-bottom: var(--ha-space-5);
+  margin-block: var(--ha-space-2) var(--ha-space-5);
 }
 
 .ha-page-header > .ha-section-title,
 .ha-page-header > .ha-page-title {
   margin: 0;
   flex: 1 1 auto;
+  min-width: 0;
 }
 
 .ha-page-header-actions {
@@ -54,6 +113,12 @@
 }
 
 @media (max-width: 767px) {
+  .ha-page-title,
+  .ha-h1 {
+    font-size: var(--ha-font-size-2xl);
+    line-height: 32px;
+  }
+
   .ha-page-header-action-primary {
     width: 100%;
     min-height: 44px;
@@ -64,7 +129,7 @@
 @media (min-width: 768px) {
   .ha-page-header {
     flex-direction: row;
-    align-items: center;
+    align-items: flex-end;
     justify-content: space-between;
   }
 

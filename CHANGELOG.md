@@ -24,6 +24,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
     `_fonts.css`); logo, favicon and the Lucide icon subset are in
     `static/img` and `static/icons`.
   - Component specs with live previews: open `docs/design/system/index.html`.
+- **The admin UI now uses the design system.**
+  - Every CSS partial is ported to the new look (navbar, sidebar with the
+    active-item indicator, buttons, table, filter bar, forms, alerts,
+    toasts, login, error page) under the existing class names, so forked
+    templates keep working. No uppercase labels, 14px base, density tokens,
+    one focus ring, 44px targets on touch.
+  - The navbar and login page show the HyperAdmin mark next to `site_title`;
+    the favicon is the mark.
+  - Lucide icons through a new `icon(name)` Jinja macro
+    (`components/_icons.html`): row actions, sort arrows, pagination,
+    search, filters, theme toggle, toasts. A `ModelAdmin.icon` that names a
+    Lucide icon renders it in the sidebar.
+  - The detail view is a label/value list; list headings read
+    "Invoice List" (they rendered as "InvoiceList").
+  - No third-party requests: Google Fonts is gone (Inter is self-hosted and
+    preloaded), HTMX 1.9.10 and Alpine.js 3.17.4 are vendored in
+    `static/js/vendor/` instead of loaded from unpkg.
+  - Visual baselines refreshed (rendered on Linux, like CI).
 
 ### Security
 - **Authorization and row scoping on every item handler** (st-v058-byoa-10).

@@ -1,3 +1,4 @@
+{%- from "components/_icons.html" import icon -%}
 <div id="model-list" class="ha-table-wrapper">
     <table class="ha-table" data-testid="list-table" aria-label="{% trans model_name=model_name %}{{ model_name }} list{% endtrans %}">
         <thead>
@@ -20,11 +21,12 @@
                     {%- endif -%}
                 {%- endfor -%}
                 <td class="ha-table-cell ha-table-cell-center" data-label="{{ _('Actions') }}">
+                    <div class="ha-row-actions">
                     {%- if can_detail is not defined or can_detail -%}
-                    <a href="{{- url_for(model_name|lower ~ '-detail', item_id=item.id) -}}" class="ha-action-link" data-testid="row-view-link">{{ _("View") }}</a>
+                    <a href="{{- url_for(model_name|lower ~ '-detail', item_id=item.id) -}}" class="ha-action-link" data-testid="row-view-link">{{ icon('eye') }}{{ _("View") }}</a>
                     {%- endif -%}
                     {%- if can_edit is not defined or can_edit -%}
-                    <a href="{{- url_for(model_name|lower ~ '-update-form', item_id=item.id) -}}" class="ha-action-link" data-testid="row-edit-link">{{ _("Edit") }}</a>
+                    <a href="{{- url_for(model_name|lower ~ '-update-form', item_id=item.id) -}}" class="ha-action-link" data-testid="row-edit-link">{{ icon('pencil') }}{{ _("Edit") }}</a>
                     {%- endif -%}
                     {%- if can_delete is not defined or can_delete -%}
                     <button hx-delete="{{- url_for(model_name|lower ~ '-delete', item_id=item.id) -}}"
@@ -33,9 +35,10 @@
                             hx-swap="outerHTML"
                             class="ha-action-delete"
                             data-testid="row-delete-btn">
-                        {{ _("Delete") }}
+                        {{- icon('trash-2') }}{{ _("Delete") -}}
                     </button>
                     {%- endif -%}
+                    </div>
                 </td>
             </tr>
             {%- endfor -%}

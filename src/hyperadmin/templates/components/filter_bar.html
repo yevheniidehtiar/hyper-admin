@@ -1,14 +1,15 @@
+{%- from "components/_icons.html" import icon -%}
 {%- if filter_metadata -%}
-<div class="ha-card ha-filter-bar" data-testid="filter-bar" x-data="{ filtersOpen: {{ 'true' if active_filters else 'false' }} }">
+<div class="ha-filter-bar" data-testid="filter-bar" x-data="{ filtersOpen: {{ 'true' if active_filters else 'false' }} }">
     <button type="button"
             class="ha-filter-toggle"
             @click="filtersOpen = !filtersOpen"
             aria-controls="filter-content"
             :aria-expanded="filtersOpen">
-        <svg class="ha-icon ha-icon-sm" :class="filtersOpen ? 'ha-rotate--180' : 'ha-rotate--0'" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M19 9l-7 7-7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+        {{ icon('filter', 'ha-icon-sm') }}
         {{ _("Filters") }}
+        {%- if active_filters %}<span class="ha-filter-count">{{ active_filters|length }}</span>{% endif %}
+        <span class="ha-filter-chevron" :class="filtersOpen ? 'ha-rotate--180' : 'ha-rotate--0'">{{ icon('chevron-down', 'ha-icon-sm') }}</span>
     </button>
 
     <div id="filter-content" class="ha-filter-content" x-show="filtersOpen" x-cloak>
