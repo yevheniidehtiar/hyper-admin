@@ -534,7 +534,7 @@ def test_annotation_resolver_coerces_declarative_models() -> None:
 
     assert parsed.conditions == [
         FilterCondition("quantity", "exact", 3),
-        FilterCondition("created_at", "gte", datetime(2026, 7, 1)),  # noqa: DTZ001
+        FilterCondition("created_at", "gte", datetime(2026, 7, 1)),
     ]
     assert set(parsed.errors) == {"customer_id"}
 

@@ -121,7 +121,7 @@ def test_utc_now_is_aware_utc() -> None:
         datetime.utcnow,
         utc_now,
         functools.partial(datetime.now, UTC),
-        lambda: datetime.utcnow(),
+        lambda: datetime.utcnow(),  # noqa: PLW0108 — the lambda wrapper is the case under test
     ],
 )
 def test_known_now_factories_are_auto_now(factory: object) -> None:
@@ -183,7 +183,7 @@ def test_parse_strips_whitespace_and_keeps_seconds() -> None:
 
 @pytest.mark.parametrize("raw", ["", "yesterday", "2026-13-01T00:00"])
 def test_parse_rejects_invalid_input(raw: str) -> None:
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError):  # noqa: PT011 — message comes from stdlib fromisoformat
         parse_datetime_input(raw, kind="naive", tz=UTC)
 
 

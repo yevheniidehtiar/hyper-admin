@@ -196,6 +196,8 @@ fixable = ["ALL"]
   "ARG001",   # unused function arguments (fixtures)
   "ARG002",   # unused method arguments (fixtures)
   "ARG005",   # unused lambda arguments (mock factories)
+  "DTZ001",   # naive datetimes are deliberate inputs to the timezone handling under test
+  "DTZ003",   # utcnow() is a deliberate auto-now factory input under test
   "E402",     # module-level import not at top (test setup)
   "N811",     # constant imported under a non-constant alias (avoids name clash)
   "PLC0415",  # import outside top-level (lazy imports in fixtures)
