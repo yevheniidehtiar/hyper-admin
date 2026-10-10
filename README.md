@@ -27,6 +27,8 @@
 
   <sub><strong>Alpha</strong> — under active development; APIs may change between releases.</sub>
 
+  <p><a href="https://hyper-admin-demo.onrender.com/admin/"><strong>▶ Try the live demo</strong></a> — sign in with <code>demo</code> / <code>demo</code></p>
+
   <br/><br/>
   <img src="docs/assets/demo/list.png" alt="HyperAdmin list view" width="820"/>
 </div>
