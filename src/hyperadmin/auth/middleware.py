@@ -33,10 +33,17 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
     # like EventSource cannot follow a redirect into a login form.
     API_PREFIXES = ("/realtime/",)
 
-    def __init__(self, app: Any, auth_backend: Any, admin_prefix: str = "/admin") -> None:
+    def __init__(
+        self,
+        app: Any,
+        auth_backend: Any,
+        admin_prefix: str = "/admin",
+        permission_checker: Any = None,
+    ) -> None:
         super().__init__(app)
         self.auth_backend = auth_backend
         self.admin_prefix = admin_prefix.rstrip("/")
+        self.permission_checker = permission_checker
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
         path = request.url.path
@@ -86,7 +93,17 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
         # somehow lingers alongside a full session (e.g. cookie tampering),
         # the marker is meaningless and we ignore it; full auth wins.
         request.state.user = user
+        request.state.user_permissions = await self._user_permissions(user)
         return await call_next(request)
+
+    async def _user_permissions(self, user: Any) -> frozenset[str] | None:
+        """Load the user's permission codenames once per request (the sidebar reads them).
+
+        ``None`` means unrestricted: no permission checker, or a superuser.
+        """
+        if self.permission_checker is None or getattr(user, "is_superuser", False):
+            return None
+        return frozenset(await self.permission_checker.get_user_permissions(user))
 
 
 def _has_partial_auth(request: Request) -> bool:
