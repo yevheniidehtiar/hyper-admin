@@ -139,4 +139,13 @@ def test_sqlalchemy_floor_on_python_313_is_importable() -> None:
     assert py313
     for req in py313:
         assert not req.specifier.contains("2.0.30"), str(req)
-        assert req.specifier.contains("2.0.31"), str(req)
+
+
+def test_sqlalchemy_floor_stops_aiosqlite_worker_threads() -> None:
+    """aiosqlite>=0.22 workers are non-daemon; SQLAlchemy < 2.0.46 hangs the process on exit."""
+    sqlalchemy = [r for r in _runtime_requirements() if r.name.lower() == "sqlalchemy"]
+
+    assert sqlalchemy
+    for req in sqlalchemy:
+        assert not req.specifier.contains("2.0.45"), str(req)
+        assert req.specifier.contains("2.0.46"), str(req)
