@@ -3,8 +3,9 @@ permissions:
   contents: read
 
 # Hosted ERP demo on a Hugging Face Docker Space (see deploy/huggingface/).
-# Needs the repository secret HF_TOKEN (a Hugging Face write token) and the repository
-# variable HF_SPACE (e.g. "your-hf-user/hyper-admin-demo"); without them the jobs no-op.
+# Needs the secret HF_TOKEN (a fine-grained Hugging Face token with write access to this one
+# Space only) and the variable HF_SPACE (e.g. "your-hf-user/hyper-admin-demo"); without them
+# the job no-ops. Never add a pull_request trigger: PR code must not run with this token.
 on:
   push:
     branches: [develop]
@@ -27,14 +28,19 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # Environment secrets can be limited to the develop branch (Settings -> Environments).
+    environment: demo
     env:
-      HF_TOKEN: ${{ secrets.HF_TOKEN }}
       HF_SPACE: ${{ vars.HF_SPACE }}
+      # Pinned: this package runs with the Hugging Face write token.
+      HF_HUB: huggingface_hub==2.2.0
     steps:
       - name: Check configuration
         id: config
+        env:
+          HAS_TOKEN: ${{ secrets.HF_TOKEN != '' }}
         run: |
-          if [ -n "$HF_TOKEN" ] && [ -n "$HF_SPACE" ]; then
+          if [ "$HAS_TOKEN" = "true" ] && [ -n "$HF_SPACE" ]; then
             echo "ready=true" >> "$GITHUB_OUTPUT"
           else
             echo "::notice::HF_TOKEN secret or HF_SPACE variable not set; skipping the demo deploy."
@@ -48,14 +54,19 @@ jobs:
         with:
           python-version: "3.12"
 
+      # The token is exposed only to the two steps below, not to checkout or setup-uv.
       - name: Deploy to the Space
         if: steps.config.outputs.ready == 'true' && github.event_name != 'schedule'
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: >-
-          uv run --no-project --with huggingface_hub
+          uv run --no-project --with "$HF_HUB"
           python deploy/huggingface/deploy.py --space "$HF_SPACE" --revision "$GITHUB_SHA"
 
       - name: Restart the Space (reset demo data)
         if: steps.config.outputs.ready == 'true' && github.event_name == 'schedule'
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: >-
-          uv run --no-project --with huggingface_hub
+          uv run --no-project --with "$HF_HUB"
           python deploy/huggingface/deploy.py --space "$HF_SPACE" --restart-only
