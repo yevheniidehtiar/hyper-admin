@@ -54,7 +54,7 @@ def _to_sync_url(url: str) -> str:
 
 
 @app.command()
-def seed(  # noqa: PLR0913 - each option is a distinct CLI flag
+def seed(  # noqa: PLR0913, PLR0917 - each option is a distinct CLI flag
     count: Annotated[int, typer.Option("--count", help="Total target rows across the plan.")],
     database_url: Annotated[
         str | None,

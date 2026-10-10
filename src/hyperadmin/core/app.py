@@ -42,7 +42,7 @@ class Admin:
         admin.mount("/admin")
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0917 - public signature; keyword-only would break callers
         self,
         app: FastAPI,
         engine: Any = None,
