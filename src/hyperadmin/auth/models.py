@@ -27,8 +27,8 @@ class User(SQLModel, table=True):
     # is wired end-to-end — see docs/specs/object-permissions-mfa.md (Track B).
     mfa_enabled: bool = Field(default=False)
     mfa_method: str | None = Field(default=None, max_length=32)
-    created_at: datetime = Field(default_factory=utc_now, sa_type=UTCNaiveDateTime())
-    updated_at: datetime | None = Field(default=None, sa_type=UTCNaiveDateTime())
+    created_at: datetime = Field(default_factory=utc_now, sa_type=UTCNaiveDateTime)
+    updated_at: datetime | None = Field(default=None, sa_type=UTCNaiveDateTime)
 
     user_groups: list["UserGroup"] = Relationship(
         back_populates="user",
@@ -60,7 +60,7 @@ class Group(SQLModel, table=True):
     name: str = Field(index=True, max_length=80, unique=True)
     description: str | None = Field(default=None, max_length=255)
     is_active: bool = Field(default=True)
-    created_at: datetime = Field(default_factory=utc_now, sa_type=UTCNaiveDateTime())
+    created_at: datetime = Field(default_factory=utc_now, sa_type=UTCNaiveDateTime)
 
     user_groups: list["UserGroup"] = Relationship(
         back_populates="group",
@@ -90,7 +90,7 @@ class Permission(SQLModel, table=True):
     codename: str = Field(index=True, max_length=100, unique=True)
     name: str = Field(max_length=200)
     content_type: str | None = Field(default=None, max_length=100)
-    created_at: datetime = Field(default_factory=utc_now, sa_type=UTCNaiveDateTime())
+    created_at: datetime = Field(default_factory=utc_now, sa_type=UTCNaiveDateTime)
 
     user_permissions: list["UserPermission"] = Relationship(
         back_populates="permission",
