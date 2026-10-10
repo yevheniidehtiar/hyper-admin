@@ -24,7 +24,7 @@ _PATH_CONVERTORS: dict[PkKind, str] = {"int": "int", "uuid": "uuid"}
 _CUSTOM_CONVERTOR = "hyperadmin_pk"
 
 
-class InvalidPrimaryKey(ValueError):
+class InvalidPrimaryKey(ValueError):  # noqa: N818 — public name fixed by the BYOA SDD
     """Raised when a raw value cannot be parsed into a model's primary key."""
 
 

@@ -5,6 +5,7 @@ from sqlmodel import SQLModel
 from typer.testing import CliRunner
 
 import hyperadmin.auth.models  # noqa: F401 - registers hyperadmin_* tables on metadata
+from hyperadmin.management.commands import seed as seed_cli
 from hyperadmin.management.commands.seed import _to_sync_url, app
 
 runner = CliRunner()
@@ -14,11 +15,36 @@ class TestUrlConversion:
     def test_aiosqlite_to_sqlite(self):
         assert _to_sync_url("sqlite+aiosqlite:///erp.db") == "sqlite:///erp.db"
 
-    def test_asyncpg_to_psycopg2(self):
+    def test_asyncpg_to_psycopg2(self, monkeypatch):
+        monkeypatch.setattr(seed_cli, "_sync_postgres_driver", lambda: "postgresql+psycopg2")
         assert _to_sync_url("postgresql+asyncpg://u@h/db") == "postgresql+psycopg2://u@h/db"
 
-    def test_sync_url_passthrough(self):
+    def test_sync_url_passthrough(self, monkeypatch):
+        monkeypatch.setattr(seed_cli, "_sync_postgres_driver", lambda: "postgresql+psycopg2")
         assert _to_sync_url("postgresql://u@h/db") == "postgresql://u@h/db"
+
+    def test_postgres_urls_use_psycopg3_without_psycopg2(self, monkeypatch):
+        """
+        Scenario: seed a PostgreSQL URL when only psycopg 3 is installed
+          Given psycopg2 is not installed and psycopg 3 is
+          When  a postgresql:// or postgresql+asyncpg:// URL is converted
+          Then  both use the postgresql+psycopg driver
+        """
+        monkeypatch.setattr(seed_cli, "_sync_postgres_driver", lambda: "postgresql+psycopg")
+        assert _to_sync_url("postgresql://u@h/db") == "postgresql+psycopg://u@h/db"
+        assert _to_sync_url("postgresql+asyncpg://u@h/db") == "postgresql+psycopg://u@h/db"
+
+    def test_driver_prefers_psycopg2_when_installed(self, monkeypatch):
+        monkeypatch.setattr(seed_cli, "find_spec", lambda name: object())
+        assert seed_cli._sync_postgres_driver() == "postgresql+psycopg2"
+
+    def test_driver_falls_back_to_psycopg3(self, monkeypatch):
+        monkeypatch.setattr(
+            seed_cli,
+            "find_spec",
+            lambda name: None if name == "psycopg2" else object(),
+        )
+        assert seed_cli._sync_postgres_driver() == "postgresql+psycopg"
 
 
 class TestErrorPaths:

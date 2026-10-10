@@ -12,7 +12,6 @@ from typing import TYPE_CHECKING, Annotated, Any, Union, get_args, get_origin
 from pydantic import AwareDatetime, NaiveDatetime
 
 from hyperadmin.core.primary_key import DEFAULT_PK, PrimaryKeyInfo
-from hyperadmin.core.timezones import DateTimeKind
 
 if TYPE_CHECKING:
     import builtins
@@ -21,6 +20,7 @@ if TYPE_CHECKING:
 
     from hyperadmin.core.choices import ChoiceItem
     from hyperadmin.core.inlines import InlineModelSpec
+    from hyperadmin.core.timezones import DateTimeKind
 
     QuerysetFilter = Callable[["Request | None"], dict[str, Any]]
 

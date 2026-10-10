@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from starlette.requests import Request
 
 
-class AdminAuthenticationRequired(Exception):
+class AdminAuthenticationRequired(Exception):  # noqa: N818 — public name fixed by the BYOA SDD
     """Raised when an admin request has no authenticated principal.
 
     The admin route class turns it into a login redirect (browser), a 401 with
@@ -24,7 +24,7 @@ class AdminAuthenticationRequired(Exception):
         super().__init__(message)
 
 
-class AdminAccessDenied(Exception):
+class AdminAccessDenied(Exception):  # noqa: N818 — public name fixed by the BYOA SDD
     """Raised when an authenticated principal may not access the admin at all.
 
     Model and object permission failures stay ``HTTPException(403)``; this is the
@@ -93,5 +93,5 @@ class DefaultObjectPermissionChecker:
     :class:`PermissionChecker` enforcement is unaffected.
     """
 
-    async def has_object_permission(self, user: Any, obj: Any, action: str) -> bool:
+    async def has_object_permission(self, user: Any, obj: Any, action: str) -> bool:  # noqa: ARG002
         return True

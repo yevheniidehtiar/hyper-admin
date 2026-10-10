@@ -22,6 +22,7 @@ from __future__ import annotations
 
 import io
 import os
+import re
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -29,7 +30,7 @@ import pytest
 from PIL import Image, ImageChops
 
 if TYPE_CHECKING:
-    from playwright.sync_api import Page
+    from playwright.sync_api import Locator, Page
 
 SNAPSHOT_DIR = Path(__file__).parent / "snapshots" / "responsive"
 SNAPSHOT_DIR.mkdir(parents=True, exist_ok=True)
@@ -52,6 +53,10 @@ VIEWPORTS = {
     "1024px": {"width": 1024, "height": 768},
 }
 
+# Seeded rows carry their insertion time (``2026-10-10 08:46:01.028746``), which
+# changes on every run; such cells are masked so the baseline only pins layout.
+TIMESTAMP_TEXT = re.compile(r"^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}")
+
 
 def _route(view: str) -> str:
     """Path under demo_base_url for each baseline view."""
@@ -62,16 +67,19 @@ def _route(view: str) -> str:
     }[view]
 
 
-def _capture_or_compare(page: Page, view: str, viewport_name: str) -> None:
+def _capture_or_compare(
+    page: Page, view: str, viewport_name: str, mask: list[Locator] | None = None
+) -> None:
     """Take a full-page screenshot and either write the baseline or diff it.
 
     On baseline write, the PNG is left in the working tree so the user can
     `git add` it. On comparison, the test fails when more than
     ``MAX_DIFFERING_FRACTION`` of pixels differ by more than
-    ``PIXEL_DIFF_THRESHOLD`` per channel.
+    ``PIXEL_DIFF_THRESHOLD`` per channel. ``mask`` locators are painted over
+    with a solid box before capture (run-dependent content such as timestamps).
     """
     snapshot_path = SNAPSHOT_DIR / f"{view}-{viewport_name}.png"
-    actual_bytes = page.screenshot(full_page=True)
+    actual_bytes = page.screenshot(full_page=True, mask=mask or [])
 
     if UPDATE_BASELINES or not snapshot_path.exists():
         snapshot_path.write_bytes(actual_bytes)
@@ -137,7 +145,7 @@ def test_list_view_baseline(page: Page, demo_base_url: str, viewport_name: str) 
     page.set_viewport_size(VIEWPORTS[viewport_name])
     page.goto(demo_base_url + _route("list"))
     page.wait_for_load_state("networkidle")
-    _capture_or_compare(page, "list", viewport_name)
+    _capture_or_compare(page, "list", viewport_name, mask=[page.get_by_text(TIMESTAMP_TEXT)])
 
 
 # ---------------------------------------------------------------------------

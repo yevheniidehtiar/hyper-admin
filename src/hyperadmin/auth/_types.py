@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import DateTime
-from sqlalchemy.engine import Dialect
 from sqlalchemy.types import TypeDecorator
 
 from hyperadmin.core.timezones import utc_now
+
+if TYPE_CHECKING:
+    from sqlalchemy.engine import Dialect
 
 # ``utc_now`` is re-exported so ``auth/models.py`` depends on ``core/`` only through
 # this module.
@@ -37,12 +39,12 @@ class UTCNaiveDateTime(TypeDecorator[datetime]):
     def python_type(self) -> type[datetime]:
         return datetime
 
-    def process_bind_param(self, value: datetime | None, dialect: Dialect) -> datetime | None:
+    def process_bind_param(self, value: datetime | None, dialect: Dialect) -> datetime | None:  # noqa: ARG002
         if value is None or value.tzinfo is None:
             return value
         return value.astimezone(timezone.utc).replace(tzinfo=None)
 
-    def process_result_value(self, value: Any | None, dialect: Dialect) -> datetime | None:
+    def process_result_value(self, value: Any | None, dialect: Dialect) -> datetime | None:  # noqa: ARG002
         if value is None:
             return None
         if value.tzinfo is None:

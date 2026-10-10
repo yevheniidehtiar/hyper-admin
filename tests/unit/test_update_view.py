@@ -159,7 +159,7 @@ def test_update_view_partial_update_preserves_missing_text_field(client: TestCli
 # Auto-now timestamps survive an edit (review of st-v058-byoa-16)
 # ---------------------------------------------------------------------------
 
-_SEEDED_AT = datetime(2020, 1, 2, 3, 4, 5)  # noqa: DTZ001 - stored naive in SQLite
+_SEEDED_AT = datetime(2020, 1, 2, 3, 4, 5)
 
 
 class StampedNoteUpdate(SQLModel, table=True):

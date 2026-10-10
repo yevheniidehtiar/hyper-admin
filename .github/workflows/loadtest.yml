@@ -125,6 +125,10 @@ jobs:
             --stats loadtest_stats.csv \
             --baseline examples/erp/loadtest/baselines/nightly-postgres.json
 
+      - name: Show app logs
+        if: failure()
+        run: docker compose -f docker-compose.loadtest.yml logs --no-color --tail 300 app
+
       - name: Tear down
         if: always()
         run: docker compose -f docker-compose.loadtest.yml down -v

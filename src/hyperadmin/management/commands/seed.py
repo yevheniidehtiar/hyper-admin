@@ -6,6 +6,7 @@ chosen plan's per-table ratios. See ``docs/specs/synthetic-data-generator.md`` f
 
 from __future__ import annotations
 
+from importlib.util import find_spec
 from pathlib import Path
 from typing import Annotated
 
@@ -23,16 +24,32 @@ app = typer.Typer(help="Bulk synthetic-data seeding for load testing.")
 # sync equivalents so a single --database-url works whether it came from app config or env.
 _ASYNC_TO_SYNC = {
     "sqlite+aiosqlite": "sqlite",
-    "postgresql+asyncpg": "postgresql+psycopg2",
     "postgresql+psycopg_async": "postgresql+psycopg",
     "mysql+aiomysql": "mysql+pymysql",
 }
+
+
+def _sync_postgres_driver() -> str:
+    """Prefer psycopg2 (SQLAlchemy's default); use psycopg 3 when only it is installed.
+
+    The ``loadtest`` extra ships psycopg 3, so ``postgresql://`` and ``+asyncpg`` URLs work
+    without psycopg2.
+    """
+    if find_spec("psycopg2") is None and find_spec("psycopg"):
+        return "postgresql+psycopg"
+    return "postgresql+psycopg2"
 
 
 def _to_sync_url(url: str) -> str:
     for async_prefix, sync_prefix in _ASYNC_TO_SYNC.items():
         if url.startswith(async_prefix):
             return sync_prefix + url[len(async_prefix) :]
+    for postgres_prefix in ("postgresql+asyncpg://", "postgresql://"):
+        if url.startswith(postgres_prefix):
+            driver = _sync_postgres_driver()
+            if postgres_prefix == "postgresql://" and driver == "postgresql+psycopg2":
+                return url  # SQLAlchemy's default dialect is already psycopg2
+            return f"{driver}://{url[len(postgres_prefix) :]}"
     return url
 
 

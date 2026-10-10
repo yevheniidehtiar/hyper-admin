@@ -6,8 +6,9 @@ before its children so the FK pool is populated when a child table starts:
     accounts → contacts → invoices → invoice_items → bills → bill_items
                                               journal_entries → journal_lines
 
-Enum columns are stored as their string *values* (``"Asset"``, ``"Draft"`` …) — the same form
-SQLModel persists — so reflected Core inserts accept them directly. ``Faker`` is imported
+Enum columns are stored as their member *names* (``"ASSET"``, ``"TO_PAY"`` …) — the same form
+SQLAlchemy's ``Enum`` type persists (and the labels of the PostgreSQL enum type it creates) —
+so reflected Core inserts accept them and the ORM reads the rows back. ``Faker`` is imported
 lazily inside :func:`build_erp_plan` so importing :mod:`hyperadmin.loadtest` never requires it.
 """
 
@@ -17,10 +18,10 @@ from datetime import timedelta
 
 from hyperadmin.loadtest.plan import SeedPlan, TablePlan
 
-# Enum value pools (the persisted string form, not the member names).
-_ACCOUNT_TYPES = ("Asset", "Liability", "Equity", "Revenue", "Expense")
-_INVOICE_STATUSES = ("Draft", "Sent", "Paid", "Cancelled")
-_BILL_STATUSES = ("Draft", "To Pay", "Paid")
+# Enum pools in the persisted form: member names, not the ``.value`` strings.
+_ACCOUNT_TYPES = ("ASSET", "LIABILITY", "EQUITY", "REVENUE", "EXPENSE")
+_INVOICE_STATUSES = ("DRAFT", "SENT", "PAID", "CANCELLED")
+_BILL_STATUSES = ("DRAFT", "TO_PAY", "PAID")
 
 # Probability a journal line is a debit (vs a credit) — a coin flip keeps the ledger balanced.
 _DEBIT_PROBABILITY = 0.5
@@ -58,7 +59,7 @@ def build_erp_plan(*, seed: int = 42) -> SeedPlan:
             "name": fake.company(),
             "email": f"contact{seq}@{fake.domain_name()}",
             "phone": fake.phone_number()[:20],
-            "contact_type": rng.choice(("Customer", "Supplier", "Both")),
+            "contact_type": rng.choice(("CUSTOMER", "SUPPLIER", "BOTH")),
         }
 
     def invoices(pool, rng, seq):
