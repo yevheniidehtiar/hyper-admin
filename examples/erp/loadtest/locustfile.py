@@ -10,8 +10,9 @@ Two user classes model the traffic mix from epic #247:
 * ``WriteUser`` — create (5%), update (3%), delete (2%)
 
 All URL/weight/payload logic lives in :mod:`examples.erp.loadtest.endpoints` (locust-free and
-unit-tested). Detail/update/delete on a random id may legitimately 404 — those are treated as
-successes so the error rate reflects real failures, not "row not found".
+unit-tested). Detail/update/delete on a random id may legitimately 404 (and a delete of a
+still-referenced contact 409) — those are treated as successes so the error rate reflects real
+failures, not "row not found".
 """
 
 from __future__ import annotations
@@ -26,6 +27,8 @@ from examples.erp.loadtest.auth_mixin import HyperAdminAuthMixin
 # Status codes that mean "the request was handled" for each verb.
 _READ_OK = (200, 404)
 _WRITE_OK = (200, 201, 302, 404)
+# A contact still referenced by invoices/bills cannot be deleted — the admin answers 409.
+_DELETE_OK = (*_WRITE_OK, 409)
 
 
 class ReadUser(HyperAdminAuthMixin, HttpUser):
@@ -126,7 +129,7 @@ class WriteUser(HyperAdminAuthMixin, HttpUser):
             name=f"DELETE {ep.model_path(ep.WRITE_MODEL)}/[id] [delete]",
             catch_response=True,
         ) as resp:
-            self._accept(resp, _WRITE_OK)
+            self._accept(resp, _DELETE_OK)
 
     @staticmethod
     def _accept(response, allowed) -> None:

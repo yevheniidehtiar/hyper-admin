@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy import text
 
 from examples.erp.db import engine
 from examples.erp.reports.views import router as reports_router
@@ -11,19 +12,42 @@ from hyperadmin.auth.permissions import ModelPermissionChecker, PermissionSyncSe
 from hyperadmin.auth.session import SessionAuthBackend
 from hyperadmin.core.settings import HyperAdminSettings
 
+# Arbitrary app-wide key for pg_advisory_lock (any bigint unique to this app works).
+_STARTUP_LOCK_KEY = 0x48594552
+
+
+@asynccontextmanager
+async def _startup_lock():
+    """Serialise schema creation and seeding across uvicorn workers.
+
+    With ``--workers N`` every worker runs the lifespan at once; on PostgreSQL the
+    concurrent ``CREATE TYPE``/``CREATE TABLE`` statements and seed inserts collide.
+    SQLite runs single-process here, so no lock is taken.
+    """
+    if engine.dialect.name != "postgresql":
+        yield
+        return
+    async with engine.connect() as conn:
+        await conn.execute(text("SELECT pg_advisory_lock(:key)"), {"key": _STARTUP_LOCK_KEY})
+        try:
+            yield
+        finally:
+            await conn.execute(text("SELECT pg_advisory_unlock(:key)"), {"key": _STARTUP_LOCK_KEY})
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # 1. Create tables
-    await admin._create_db_and_tables()
+    async with _startup_lock():
+        # 1. Create tables
+        await admin._create_db_and_tables()
 
-    # 2. Sync permissions (required for auth)
-    await admin._sync_permissions()
+        # 2. Sync permissions (required for auth)
+        await admin._sync_permissions()
 
-    # 3. Seed data
-    from examples.erp.seed import seed_db  # noqa: PLC0415
+        # 3. Seed data
+        from examples.erp.seed import seed_db  # noqa: PLC0415
 
-    await seed_db()
+        await seed_db()
     yield
 
 

@@ -58,6 +58,43 @@ class TestErpPlan:
             row = table.row_factory(pool, rng, 1)
             assert set(row) == set(table.columns), table.name
 
+    def test_enum_columns_use_persisted_member_names(self):
+        """
+        Scenario: bulk-seeded enum values are readable by the ORM
+          Given the examples/erp models, whose enum columns persist member names
+          When  the ERP plan generates rows
+          Then  every enum value is one of the column's labels (e.g. "ASSET", not "Asset")
+        """
+        # Importing the model modules registers the erp_* tables on SQLModel.metadata.
+        import examples.erp.accounting.models
+        import examples.erp.contacts.models
+        import examples.erp.purchases.models
+        import examples.erp.sales.models  # noqa: F401
+        from sqlalchemy import Enum
+        from sqlmodel import SQLModel
+
+        plan = build_erp_plan(seed=11)
+        rng = random.Random(11)  # noqa: S311 - test RNG
+        pool = FKPool(rng=rng)
+        for parent in (
+            "erp_contacts",
+            "erp_invoices",
+            "erp_bills",
+            "erp_journal_entries",
+            "erp_accounts",
+        ):
+            pool.extend(parent, range(1, 50))
+        checked = 0
+        for table in plan.tables:
+            columns = SQLModel.metadata.tables[table.name].columns
+            for index in range(1, 30):
+                row = table.row_factory(pool, rng, index)
+                for name, value in row.items():
+                    if isinstance(columns[name].type, Enum):
+                        assert value in columns[name].type.enums, (table.name, name, value)
+                        checked += 1
+        assert checked
+
 
 class TestAuthPlan:
     def test_auth_plan_has_users_and_groups(self):
