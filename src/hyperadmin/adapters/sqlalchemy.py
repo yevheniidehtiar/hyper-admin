@@ -236,7 +236,7 @@ class SQLAlchemyAdapter(BaseAdapter):
             parent_pk: The primary key of the parent object to associate new rows with.
 
         Raises:
-            InlineRowNotOwned: Before any write, when a submitted ``_pk`` is not an
+            InlineRowNotOwnedError: Before any write, when a submitted ``_pk`` is not an
                 existing child of ``parent_pk``.
         """
         await self.ensure_inline_rows_owned(spec, rows, parent_pk)

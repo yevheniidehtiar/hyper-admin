@@ -24,7 +24,7 @@ from starlette.datastructures import UploadFile as StarletteUpload
 from hyperadmin.adapters import SQLAlchemyAdapter, SQLModelAdapter
 from hyperadmin.core.actions import ActionDef
 from hyperadmin.core.adapters import (
-    InlineRowNotOwned,
+    InlineRowNotOwnedError,
     queryset_scope,
     scoped_queryset_filters,
 )
@@ -450,6 +450,33 @@ class DynamicModelView:
                 result.add(name)
         return result
 
+    def _parse_list_filters(self, request: Request) -> tuple[dict[str, str], dict[str, Any]]:
+        """Parse ``filter_<field>`` query params into (active, to_apply) dicts.
+
+        Only whitelisted (list_filter), non-sensitive model fields are honoured;
+        anything else is ignored so the URL cannot become an equality oracle on
+        arbitrary columns.
+        """
+        allowed_filters = self._filterable_fields()
+        active_filters: dict[str, str] = {}
+        filters_to_apply: dict[str, Any] = {}
+        for key, value in request.query_params.items():
+            if not (key.startswith("filter_") and value):
+                continue
+            field_name = key[7:]
+            if field_name not in allowed_filters:
+                logger.debug("Ignoring filter on non-whitelisted field %r", field_name)
+                continue
+            active_filters[field_name] = value
+
+            # Type conversion for bool
+            ann = self.model.model_fields[field_name].annotation
+            if ann is bool or (get_origin(ann) is Union and bool in get_args(ann)):
+                filters_to_apply[field_name] = value.lower() == "true"
+            else:
+                filters_to_apply[field_name] = value
+        return active_filters, filters_to_apply
+
     @_request_scoped
     async def list_view(
         self,
@@ -463,26 +490,7 @@ class DynamicModelView:
         """Renders the list view for the model with pagination, sorting, and filtering."""
         await self._check_permission(request, "view")
 
-        # Parse filters from query params. Only whitelisted (list_filter),
-        # non-sensitive model fields are honoured; anything else is ignored so
-        # the URL cannot become an equality oracle on arbitrary columns.
-        allowed_filters = self._filterable_fields()
-        active_filters: dict[str, str] = {}
-        filters_to_apply: dict[str, Any] = {}
-        for key, value in request.query_params.items():
-            if key.startswith("filter_") and value:
-                field_name = key[7:]
-                if field_name not in allowed_filters:
-                    logger.debug("Ignoring filter on non-whitelisted field %r", field_name)
-                    continue
-                active_filters[field_name] = value
-
-                # Type conversion for bool
-                ann = self.model.model_fields[field_name].annotation
-                if ann is bool or (get_origin(ann) is Union and bool in get_args(ann)):
-                    filters_to_apply[field_name] = value.lower() == "true"
-                else:
-                    filters_to_apply[field_name] = value
+        active_filters, filters_to_apply = self._parse_list_filters(request)
 
         # sort_by is whitelisted against the sortable displayed columns. An
         # unknown or sensitive value falls back to the default sort.
@@ -846,6 +854,28 @@ class DynamicModelView:
                     uploads[field.name] = val
         return uploads
 
+    def _validate_inline_formsets(
+        self, form_data: Any
+    ) -> tuple[list[InlineFormset], list[tuple[InlineFormset, list[dict]]], bool]:
+        """Build each inline formset and validate its submitted rows.
+
+        Returns the formsets, the (formset, valid rows) pairs to persist, and
+        whether any row failed validation.
+        """
+        inline_formsets: list[InlineFormset] = []
+        inline_valid_data: list[tuple[InlineFormset, list[dict]]] = []
+        has_inline_errors = False
+        for spec in getattr(self.options, "inlines", []):
+            formset = InlineFormset(spec=spec)
+            rows_data = formset.extract_submitted_data(form_data)
+            valid_rows, row_errors = formset.validate_rows(rows_data)
+            if row_errors:
+                has_inline_errors = True
+                formset.rebuild_from_submitted(form_data)
+            inline_formsets.append(formset)
+            inline_valid_data.append((formset, valid_rows))
+        return inline_formsets, inline_valid_data, has_inline_errors
+
     @_request_scoped
     async def create_view(self, request: Request):
         """Handles form submission for creating a new item."""
@@ -874,19 +904,9 @@ class DynamicModelView:
         form.bind(data)
         instance, errs = form.validate(data)
 
-        # Build inline formsets and extract/validate their data
-        inline_formsets: list[InlineFormset] = []
-        inline_valid_data: list[tuple[InlineFormset, list[dict]]] = []
-        has_inline_errors = False
-        for spec in getattr(self.options, "inlines", []):
-            formset = InlineFormset(spec=spec)
-            rows_data = formset.extract_submitted_data(form_data)
-            valid_rows, row_errors = formset.validate_rows(rows_data)
-            if row_errors:
-                has_inline_errors = True
-                formset.rebuild_from_submitted(form_data)
-            inline_formsets.append(formset)
-            inline_valid_data.append((formset, valid_rows))
+        inline_formsets, inline_valid_data, has_inline_errors = self._validate_inline_formsets(
+            form_data
+        )
 
         if errs or has_inline_errors:
             legacy_errs = {k: v[0] for k, v in errs.items() if v} if errs else {}
@@ -1130,11 +1150,11 @@ class DynamicModelView:
         parent_pk: int,
     ) -> None:
         """Persist validated inline rows — create, update, or delete as needed."""
-        for formset, rows in inline_valid_data:
-            try:
+        try:
+            for formset, rows in inline_valid_data:
                 await self.adapter.save_inline_rows(formset.spec, rows, parent_pk)
-            except InlineRowNotOwned as exc:
-                raise HTTPException(status_code=404, detail="Inline row not found") from exc
+        except InlineRowNotOwnedError as exc:
+            raise HTTPException(status_code=404, detail="Inline row not found") from exc
 
     async def _keep_stored_inline_secrets(
         self, formset: InlineFormset, rows: list[dict[str, Any]], parent_pk: Any
@@ -1217,7 +1237,7 @@ class DynamicModelView:
         for formset, rows in inline_valid_data:
             try:
                 await self.adapter.ensure_inline_rows_owned(formset.spec, rows, parent_pk)
-            except InlineRowNotOwned as exc:
+            except InlineRowNotOwnedError as exc:
                 raise HTTPException(status_code=404, detail="Inline row not found") from exc
             if not self._is_registered(formset.spec.model):
                 # An unregistered inline model has no permission rows that could
