@@ -1,3 +1,4 @@
+{%- from "components/_icons.html" import icon -%}
 <nav class="ha-navbar" aria-label="{{ _('Main navigation') }}">
     <div class="ha-navbar-inner">
         <button type="button"
@@ -7,11 +8,12 @@
                 aria-controls="sidebar"
                 aria-label="{{ _('Toggle navigation menu') }}"
                 data-testid="sidebar-toggle">
-            <svg class="ha-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-            </svg>
+            {{ icon('menu') }}
         </button>
-        <a href="{{ admin_prefix }}/" class="ha-navbar-brand">HyperAdmin</a>
+        <a href="{{ admin_prefix }}/" class="ha-navbar-brand" data-testid="navbar-brand">
+            <img class="ha-navbar-brand-mark" src="{{ url_for('static', path='/img/hyperadmin-mark.svg') }}" alt="" width="24" height="24">
+            <span class="ha-navbar-brand-text">{{ site_title | default('HyperAdmin') }}</span>
+        </a>
         <div class="ha-navbar-actions">
         {% if realtime_enabled %}
         <span class="ha-rt-dot is-disconnected"
@@ -23,6 +25,7 @@
         {% if supported_locales and supported_locales|length > 1 %}
         <form class="ha-locale-switcher" method="post" action="{{ admin_prefix }}/locale">
             <label class="ha-sr-only" for="locale-switcher">{{ _("Language") }}</label>
+            {{ icon('globe') }}
             <select id="locale-switcher"
                     name="locale"
                     class="ha-locale-select"
@@ -40,38 +43,27 @@
                 onclick="haToggleTheme()"
                 aria-label="{{ _('Toggle dark mode') }}"
                 data-testid="theme-toggle">
-            <svg class="ha-icon-sun" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m8.66-13.66l-.71.71M4.05 19.95l-.71.71M21 12h-1M4 12H3m16.66 7.66l-.71-.71M4.05 4.05l-.71-.71M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
-            </svg>
-            <svg class="ha-icon-moon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.005 9.005 0 0012 21a9.005 9.005 0 008.354-5.646z"/>
-            </svg>
+            {{ icon('sun', 'ha-icon-sun') }}
+            {{ icon('moon', 'ha-icon-moon') }}
         </button>
         <div x-data="{ open: false }" class="ha-navbar-user">
             {% if auth_enabled and request.state.user %}
+            {%- set username = request.state.user.username -%}
             <button @click="open = !open" @keydown.escape="open = false" class="ha-navbar-user-btn" aria-haspopup="true" :aria-expanded="open">
-                <svg class="ha-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                </svg>
-                <span data-testid="current-user">{{ request.state.user.username }}</span>
-                <svg class="ha-icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                </svg>
+                <span class="ha-avatar" aria-hidden="true">{{ username[:1] | upper }}</span>
+                <span class="ha-navbar-user-name" data-testid="current-user">{{ username }}</span>
+                {{ icon('chevron-down', 'ha-icon-sm ha-navbar-user-btn-chevron') }}
             </button>
             <div x-show="open" @click.away="open = false" @keydown.escape="open = false" x-cloak class="ha-dropdown" role="menu">
                 <form method="post" action="{{ admin_prefix }}/logout">
-                    <button type="submit" class="ha-dropdown-item" data-testid="logout-btn" role="menuitem">{{ _("Logout") }}</button>
+                    <button type="submit" class="ha-dropdown-item" data-testid="logout-btn" role="menuitem">{{ icon('log-out') }}{{ _("Logout") }}</button>
                 </form>
             </div>
             {% else %}
             <button @click="open = !open" @keydown.escape="open = false" class="ha-navbar-user-btn" aria-haspopup="true" :aria-expanded="open">
-                <svg class="ha-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                </svg>
-                <span>{{ _("Admin") }}</span>
-                <svg class="ha-icon-sm" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                </svg>
+                <span class="ha-avatar" aria-hidden="true">A</span>
+                <span class="ha-navbar-user-name">{{ _("Admin") }}</span>
+                {{ icon('chevron-down', 'ha-icon-sm ha-navbar-user-btn-chevron') }}
             </button>
             <div x-show="open" @click.away="open = false" @keydown.escape="open = false" x-cloak class="ha-dropdown" role="menu">
                 <a href="#" class="ha-dropdown-item" role="menuitem">{{ _("Profile") }}</a>

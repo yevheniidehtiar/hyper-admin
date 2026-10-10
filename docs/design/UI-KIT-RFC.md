@@ -5,6 +5,8 @@
 **Created:** 2026-03-27
 **Palette preview:** [`docs/design/palette-preview.html`](palette-preview.html) — open in any browser
 
+> **Superseded in part (2026-10-10):** the colour system (section 3), typography and logo are replaced by the HyperAdmin design system in [`docs/design/system/`](system/README.md). The FastAPI teal and Pydantic coral palette below, and `palette-preview.html`, are kept for history. Principles and the component/token architecture in this RFC still apply.
+
 ---
 
 ## 1. Problem Statement

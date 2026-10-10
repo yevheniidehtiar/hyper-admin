@@ -1,4 +1,7 @@
+{%- from "components/_icons.html" import icon -%}
 <div class="ha-search-group">
+    <div class="ha-search-field">
+    {{ icon('search') }}
     <input type="search"
            name="search"
            value="{{- search_query -}}"
@@ -11,5 +14,6 @@
            hx-target="#model-list"
            hx-swap="outerHTML"
            hx-indicator="#search-indicator">
+    </div>
     <span id="search-indicator" class="htmx-indicator ha-search-indicator">{{ _("Searching...") }}</span>
 </div>

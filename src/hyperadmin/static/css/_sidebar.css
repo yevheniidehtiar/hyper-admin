@@ -1,29 +1,33 @@
 /* ==========================================================================
    Sidebar
+   Quiet chrome on the page surface; the active item gets the teal tint and
+   the 3px brand indicator, the only coloured edge in the system.
    ========================================================================== */
 
 .ha-sidebar {
   display: none;
   width: var(--ha-sidebar-width);
-  background-color: var(--ha-color-surface);
+  background-color: var(--ha-surface-base);
   border-inline-end: var(--ha-border-width) solid var(--ha-color-border-light);
   min-height: calc(100vh - var(--ha-navbar-height));
   flex-shrink: 0;
 }
 
 .ha-sidebar-inner {
-  padding: var(--ha-space-6) var(--ha-space-4);
+  width: 100%;
+  padding: var(--ha-space-3) var(--ha-space-2);
   position: sticky;
   top: var(--ha-navbar-height);
+  max-height: calc(100vh - var(--ha-navbar-height));
+  overflow-y: auto;
 }
 
 .ha-sidebar-title {
   font-size: var(--ha-font-size-xs);
+  line-height: 18px;
   font-weight: var(--ha-font-semibold);
   color: var(--ha-color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin: 0 0 var(--ha-space-3);
+  margin: 0 0 var(--ha-space-1);
   padding: 0 var(--ha-space-3);
 }
 
@@ -33,42 +37,61 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--ha-space-0-5);
+  gap: 2px;
 }
 
 .ha-sidebar-link {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: var(--ha-space-2);
-  padding: var(--ha-space-2) var(--ha-space-3);
+  gap: var(--ha-space-3);
+  min-height: 36px;
+  padding: var(--ha-space-1) var(--ha-space-3);
   color: var(--ha-color-text);
   text-decoration: none;
-  border-radius: var(--ha-radius);
-  font-size: var(--ha-font-size-sm);
+  border-radius: var(--ha-radius-md);
   font-weight: var(--ha-font-medium);
-  transition: all var(--ha-transition);
+  transition: background-color var(--ha-transition);
+}
+
+.ha-sidebar-link .ha-icon {
+  color: var(--ha-color-text-muted);
 }
 
 .ha-sidebar-link:hover {
-  background-color: var(--ha-color-primary-50);
-  color: var(--ha-color-primary-700);
+  background-color: var(--ha-surface-hover);
+  color: var(--ha-color-text-strong);
 }
 
 .ha-sidebar-link[aria-current="page"] {
-  background-color: var(--ha-color-primary-50);
-  color: var(--ha-color-primary-700);
+  background-color: var(--ha-color-primary-soft);
+  color: var(--ha-color-primary-text);
   font-weight: var(--ha-font-semibold);
 }
 
+.ha-sidebar-link[aria-current="page"] .ha-icon {
+  color: currentColor;
+}
+
+.ha-sidebar-link[aria-current="page"]::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: calc(-1 * var(--ha-space-2));
+  inset-block: 6px;
+  width: 3px;
+  border-radius: var(--ha-radius-pill);
+  background-color: var(--ha-color-brand);
+}
+
 /* ==========================================================================
-   Sidebar header (mobile-only — close button visible only on mobile)
+   Sidebar header (the close button shows on mobile only)
    ========================================================================== */
 
 .ha-sidebar-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: var(--ha-space-3);
+  margin-bottom: var(--ha-space-1);
 }
 
 .ha-sidebar-close {
@@ -78,29 +101,23 @@
   min-width: 44px;
   min-height: 44px;
   padding: 0;
-  color: var(--ha-color-text);
+  color: var(--ha-color-text-muted);
   background: none;
   border: var(--ha-border-width) solid transparent;
-  border-radius: var(--ha-radius);
+  border-radius: var(--ha-radius-md);
   cursor: pointer;
-  transition: all var(--ha-transition);
 }
 
 .ha-sidebar-close:hover {
-  background-color: var(--ha-surface-sunken);
+  background-color: var(--ha-surface-hover);
   color: var(--ha-color-text-strong);
 }
 
-.ha-sidebar-close:focus-visible {
-  outline: none;
-  box-shadow: var(--ha-shadow-focus);
-}
-
 /* ==========================================================================
-   Mobile overlay mode (< 768px)
+   Mobile drawer (< 768px)
 
-   Sidebar lives in DOM as an off-screen fixed panel; toggling
-   .ha-sidebar-mobile-open via Alpine slides it in.
+   The sidebar lives in the DOM as an off-screen fixed panel; toggling
+   .ha-sidebar-mobile-open via Alpine slides it in over the scrim.
    ========================================================================== */
 
 @media (max-width: 767px) {
@@ -110,15 +127,14 @@
     position: fixed;
     top: 0;
     inset-inline-start: 0;
-    width: 85%;
-    max-width: 20rem;
+    width: min(85vw, 20rem);
     height: 100vh;
-    background-color: var(--ha-color-surface);
+    background-color: var(--ha-surface-overlay);
     border-inline-end: var(--ha-border-width) solid var(--ha-color-border-light);
     box-shadow: var(--ha-shadow-xl);
-    z-index: 40;
+    z-index: var(--ha-z-overlay);
     transform: translateX(-100%);
-    transition: transform var(--ha-duration-slow) var(--ha-ease-default);
+    transition: transform 200ms ease-out;
     overflow-y: auto;
   }
 
@@ -130,20 +146,17 @@
     display: inline-flex;
   }
 
-  /* Sidebar inner content does not need sticky positioning when full-height. */
   .ha-sidebar-inner {
     position: static;
-    padding: var(--ha-space-4);
+    max-height: none;
+    padding: var(--ha-space-3) var(--ha-space-2);
   }
 
-  /* Larger touch targets for nav links in overlay mode. */
+  /* Touch-size nav links in the drawer. */
   .ha-sidebar-link {
     min-height: 44px;
-    padding: var(--ha-space-3);
-    font-size: var(--ha-font-size-base);
   }
 
-  /* Honor user's motion preference: skip the slide animation. */
   @media (prefers-reduced-motion: reduce) {
     .ha-sidebar {
       transition: none;
@@ -152,14 +165,14 @@
 }
 
 /* ==========================================================================
-   Backdrop — visible only on mobile when sidebar is open
+   Scrim behind the open drawer (mobile only)
    ========================================================================== */
 
 .ha-sidebar-backdrop {
   position: fixed;
   inset: 0;
-  background-color: rgba(16, 24, 40, 0.5);
-  z-index: 39;
+  background-color: var(--ha-color-scrim);
+  z-index: calc(var(--ha-z-overlay) - 1);
 }
 
 @media (min-width: 768px) {

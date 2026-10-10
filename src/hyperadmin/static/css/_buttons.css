@@ -1,5 +1,9 @@
 /* ==========================================================================
    Buttons
+   Secondary (outlined, raised) is the default look. Primary is the one
+   main action of a page; danger only confirms a destructive flow; accent
+   (violet) at most once per screen.
+   Design-system names (.ha-btn--primary …) are aliases of the shipped ones.
    ========================================================================== */
 
 .ha-btn {
@@ -7,73 +11,126 @@
   align-items: center;
   justify-content: center;
   gap: var(--ha-space-2);
-  padding: var(--ha-space-2) var(--ha-space-4);
+  min-height: var(--ha-ctl-h);
+  max-width: 100%;
+  padding: 0 var(--ha-space-3);
+  font-family: inherit;
   font-size: var(--ha-font-size-sm);
   font-weight: var(--ha-font-semibold);
-  font-family: var(--ha-font-family);
+  line-height: var(--ha-line-height-tight);
   text-align: center;
   text-decoration: none;
-  border: var(--ha-border-width) solid transparent;
-  border-radius: var(--ha-radius);
+  color: var(--ha-color-text-strong);
+  background-color: var(--ha-surface-raised);
+  border: var(--ha-border-width) solid var(--ha-color-border-strong);
+  border-radius: var(--ha-radius-md);
   cursor: pointer;
-  transition: all var(--ha-transition);
-  line-height: var(--ha-line-height-tight);
+  transition: background-color 120ms, border-color 120ms;
 }
 
-.ha-btn:focus-visible {
-  outline: 2px solid var(--ha-color-primary-500);
-  outline-offset: 2px;
+.ha-btn:hover {
+  background-color: var(--ha-surface-hover);
 }
 
 .ha-btn:active {
-  transform: scale(0.98);
+  background-color: var(--ha-surface-sunken);
 }
 
-.ha-btn-primary {
-  background-color: var(--ha-color-primary-500);
-  color: #ffffff;
-  border-color: var(--ha-color-primary-500);
+.ha-btn-primary,
+.ha-btn--primary {
+  background-color: var(--ha-color-primary);
+  border-color: var(--ha-color-primary);
+  color: var(--ha-color-on-primary);
 }
 
-.ha-btn-primary:hover {
-  background-color: var(--ha-color-primary-600);
-  border-color: var(--ha-color-primary-600);
+.ha-btn-primary:hover,
+.ha-btn--primary:hover {
+  background-color: var(--ha-color-primary-hover);
+  border-color: var(--ha-color-primary-hover);
 }
 
-.ha-btn-danger {
+.ha-btn-primary:active,
+.ha-btn--primary:active {
+  background-color: var(--ha-color-primary-hover);
+  box-shadow: inset 0 2px 0 rgba(0, 0, 0, 0.18);
+}
+
+.ha-btn-accent,
+.ha-btn--accent {
+  background-color: var(--ha-color-accent);
+  border-color: var(--ha-color-accent);
+  color: var(--ha-color-on-accent);
+}
+
+.ha-btn-danger,
+.ha-btn--danger {
   background-color: var(--ha-color-danger);
-  color: #ffffff;
   border-color: var(--ha-color-danger);
+  color: var(--ha-color-on-danger);
 }
 
-.ha-btn-danger:hover {
-  background-color: var(--ha-color-danger-hover);
-  border-color: var(--ha-color-danger-hover);
+.ha-btn-accent:hover,
+.ha-btn--accent:hover,
+.ha-btn-danger:hover,
+.ha-btn--danger:hover {
+  box-shadow: inset 0 0 0 99px rgba(0, 0, 0, 0.12);
 }
 
-/* Secondary (outline) button */
-.ha-btn-secondary {
-  background-color: var(--ha-color-surface);
-  color: var(--ha-color-text);
-  border-color: var(--ha-color-border);
+.ha-btn-accent:hover,
+.ha-btn--accent:hover {
+  background-color: var(--ha-color-accent);
 }
 
-.ha-btn-secondary:hover {
-  background-color: var(--ha-surface-sunken);
+.ha-btn-danger:hover,
+.ha-btn--danger:hover {
+  background-color: var(--ha-color-danger);
 }
 
-/* Action button (detail view actions) */
+/* Secondary and action buttons are the default look. */
+.ha-btn-secondary,
 .ha-btn-action {
-  background-color: var(--ha-color-surface);
-  color: var(--ha-color-text);
-  border-color: var(--ha-color-border);
+  background-color: var(--ha-surface-raised);
+  color: var(--ha-color-text-strong);
+  border-color: var(--ha-color-border-strong);
 }
 
+.ha-btn-secondary:hover,
 .ha-btn-action:hover {
-  background-color: var(--ha-surface-sunken);
+  background-color: var(--ha-surface-hover);
 }
 
-/* Action buttons container */
+.ha-btn-ghost,
+.ha-btn--ghost {
+  background: none;
+  color: var(--ha-color-primary-text);
+  border-color: transparent;
+}
+
+.ha-btn-ghost:hover,
+.ha-btn--ghost:hover {
+  background-color: var(--ha-surface-hover);
+}
+
+.ha-btn--icon {
+  padding: 0;
+  width: var(--ha-ctl-h);
+  min-width: var(--ha-target-min);
+}
+
+.ha-btn[disabled],
+.ha-btn[aria-disabled="true"] {
+  background-color: var(--ha-surface-sunken);
+  border-color: var(--ha-color-border-light);
+  color: var(--ha-color-text-disabled);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.ha-btn[aria-busy="true"] {
+  cursor: progress;
+}
+
+/* Action buttons container (detail view) */
 .ha-action-buttons {
   display: flex;
   flex-wrap: wrap;
@@ -87,39 +144,32 @@
   }
 }
 
-/* Ghost button */
-.ha-btn-ghost {
-  background: none;
-  color: var(--ha-color-text);
-  border-color: transparent;
-}
-
-.ha-btn-ghost:hover {
-  background-color: var(--ha-surface-sunken);
-}
-
 /* Text-styled link button */
 .ha-btn-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--ha-target-min);
   background: none;
-  color: var(--ha-color-primary-700);
-  font-weight: var(--ha-font-semibold);
-  font-size: var(--ha-font-size-sm);
+  color: var(--ha-color-primary-text);
+  font: inherit;
+  font-weight: var(--ha-font-medium);
   padding: 0;
   border: none;
   cursor: pointer;
   text-decoration: none;
-  transition: color var(--ha-transition);
+  text-underline-offset: 2px;
 }
 
 .ha-btn-link:hover {
-  color: var(--ha-color-primary-500);
+  text-decoration: underline;
 }
 
 /* Small button */
-.ha-btn-sm {
-  padding: var(--ha-space-1) var(--ha-space-3);
-  font-size: var(--ha-font-size-xs);
-  font-weight: var(--ha-font-semibold);
+.ha-btn-sm,
+.ha-btn--sm {
+  min-height: var(--ha-control-height-compact);
+  padding: 0 var(--ha-space-2);
+  font-size: 0.8125rem;
 }
 
 /* Full-width button */
@@ -128,30 +178,52 @@
   width: 100%;
 }
 
+.ha-spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: var(--ha-radius-pill);
+  border: 2px solid currentColor;
+  border-inline-end-color: transparent;
+  animation: ha-spin 700ms linear infinite;
+  flex: none;
+}
+
+@keyframes ha-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* ==========================================================================
-   Form Actions Bar (Create / Update page footer)
+   Form actions bar (create / update footer)
+   Primary action first, then cancel as a quiet link.
    ========================================================================== */
 
 .ha-form-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-  margin-top: var(--ha-space-6);
-  padding-top: var(--ha-space-4);
-  border-top: var(--ha-border-width) solid var(--ha-color-border-light);
+  gap: var(--ha-space-2);
+  margin-top: var(--ha-space-5);
+}
+
+/* create.html / update.html nest a second .ha-form-actions inside the layout's one */
+.ha-form-actions .ha-form-actions {
+  margin: 0;
 }
 
 .ha-cancel-link {
-  font-size: var(--ha-font-size-sm);
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--ha-ctl-h);
   font-weight: var(--ha-font-semibold);
   color: var(--ha-color-text-muted);
   text-decoration: none;
-  padding: var(--ha-space-2) var(--ha-space-4);
-  border-radius: var(--ha-radius);
-  transition: all var(--ha-transition);
+  padding: 0 var(--ha-space-3);
+  border-radius: var(--ha-radius-md);
 }
 
 .ha-cancel-link:hover {
-  color: var(--ha-color-text);
-  background-color: var(--ha-surface-sunken);
+  color: var(--ha-color-text-strong);
+  background-color: var(--ha-surface-hover);
 }

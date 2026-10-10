@@ -1,80 +1,133 @@
 /* ==========================================================================
-   Alerts / Messages
+   Alerts and messages
+   The status *-text colour on its *-soft tint, a hairline in the same ink,
+   and always a title or icon: status is never colour alone.
    ========================================================================== */
 
 .ha-alert {
+  display: flex;
+  gap: var(--ha-space-3);
+  align-items: flex-start;
   padding: var(--ha-space-3) var(--ha-space-4);
-  border: var(--ha-border-width) solid;
+  border: var(--ha-border-width) solid currentColor;
   border-radius: var(--ha-radius-lg);
   margin-bottom: var(--ha-space-4);
-  font-size: var(--ha-font-size-sm);
   line-height: var(--ha-line-height);
 }
 
+.ha-alert > .ha-icon {
+  margin-top: 1px;
+}
+
+.ha-alert-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.ha-alert-body p,
+.ha-alert-body span {
+  margin: 0;
+  color: var(--ha-color-text);
+}
+
 .ha-alert-info {
-  background-color: var(--ha-color-info-light);
-  border-color: var(--ha-color-info);
+  background-color: var(--ha-color-info-soft);
   color: var(--ha-color-info-text);
 }
 
 .ha-alert-success {
-  background-color: var(--ha-color-success-light);
-  border-color: var(--ha-color-success);
+  background-color: var(--ha-color-success-soft);
   color: var(--ha-color-success-text);
 }
 
 .ha-alert-warning {
-  background-color: var(--ha-color-warning-light);
-  border-color: var(--ha-color-warning);
+  background-color: var(--ha-color-warning-soft);
   color: var(--ha-color-warning-text);
 }
 
 .ha-alert-error {
-  background-color: var(--ha-color-danger-light);
-  border-color: var(--ha-color-danger);
+  background-color: var(--ha-color-danger-soft);
   color: var(--ha-color-danger-text);
 }
 
 .ha-alert-title {
+  display: block;
   font-weight: var(--ha-font-semibold);
 }
 
-/* Toast container (fixed top-right) */
+/* ==========================================================================
+   Toasts: overlay surface, coloured icon, top end corner
+   ========================================================================== */
+
 .ha-toast-container {
   position: fixed;
   top: var(--ha-space-4);
   inset-inline-end: var(--ha-space-4);
-  width: 100%;
-  max-width: 22rem;
-  z-index: 60;
+  width: min(calc(100% - 2 * var(--ha-space-4)), 380px);
+  z-index: var(--ha-z-toast);
   display: flex;
   flex-direction: column;
-  gap: var(--ha-space-3);
+  gap: var(--ha-space-2);
 }
 
 .ha-toast {
   position: relative;
+  display: flex;
+  gap: var(--ha-space-3);
+  align-items: flex-start;
   padding: var(--ha-space-3) var(--ha-space-4);
+  padding-inline-end: var(--ha-space-10);
+  background-color: var(--ha-surface-overlay);
+  color: var(--ha-color-text);
+  border: var(--ha-border-width) solid var(--ha-color-border-light);
   border-radius: var(--ha-radius-lg);
-  border: var(--ha-border-width) solid;
-  box-shadow: var(--ha-shadow-lg);
-  background-color: var(--ha-color-surface);
+  box-shadow: var(--ha-shadow-xl);
+}
+
+.ha-toast .ha-alert-title {
+  color: var(--ha-color-text-strong);
+}
+
+.ha-toast-body {
+  flex: 1;
+  min-width: 0;
+}
+
+/* The status lives in the icon; the toast itself stays on the overlay surface. */
+.ha-toast.ha-alert-success > .ha-icon {
+  color: var(--ha-color-success-text);
+}
+
+.ha-toast.ha-alert-error > .ha-icon {
+  color: var(--ha-color-danger-text);
+}
+
+.ha-toast.ha-alert-warning > .ha-icon {
+  color: var(--ha-color-warning-text);
+}
+
+.ha-toast.ha-alert-info > .ha-icon {
+  color: var(--ha-color-info-text);
 }
 
 .ha-toast-close {
   position: absolute;
   top: var(--ha-space-2);
   inset-inline-end: var(--ha-space-2);
-  padding: var(--ha-space-1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
   background: none;
   border: none;
-  border-radius: var(--ha-radius-sm);
+  border-radius: var(--ha-radius-md);
   cursor: pointer;
-  color: inherit;
-  opacity: 0.5;
-  transition: opacity var(--ha-transition);
+  color: var(--ha-color-text-muted);
 }
 
 .ha-toast-close:hover {
-  opacity: 1;
+  background-color: var(--ha-surface-hover);
+  color: var(--ha-color-text-strong);
 }

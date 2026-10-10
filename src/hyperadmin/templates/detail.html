@@ -1,25 +1,26 @@
 {%- extends "detail_layout.html" -%}
+{%- from "components/_icons.html" import icon -%}
 
 {%- block detail_title -%}{{ item_name }}{%- endblock -%}
 
 {%- block detail_fields -%}
     <div class="ha-card">
+        <dl class="ha-dl">
         {%- for key, value in item.items() -%}
-        <div class="ha-form-group">
-            <label class="ha-label">
+            <dt>
                 {{- field_labels[key] if field_labels is defined and key in field_labels else key.replace('_', ' ').title() -}}
-            </label>
-            <div class="ha-field-value">
+            </dt>
+            <dd class="ha-field-value">
                 {%- if file_fields is defined and key in file_fields and value -%}
                     <a href="/uploads/{{ value }}" target="_blank" class="ha-file-link" data-testid="{{ key }}-download">{{ value }}</a>
                 {%- elif value is not none -%}
                     {{- value -}}
                 {%- else -%}
-                    &mdash;
+                    <span class="ha-text-muted">&mdash;</span>
                 {%- endif -%}
-            </div>
-        </div>
+            </dd>
         {%- endfor -%}
+        </dl>
     </div>
     {%- if actions -%}
     <div class="ha-action-buttons" data-testid="action-buttons">
@@ -33,5 +34,5 @@
         {%- endfor -%}
     </div>
     {%- endif -%}
-    <a href="../" class="ha-text-link">{{ _("Back to list") }}</a>
+    <a href="../" class="ha-text-link ha-back-link">{{ icon('chevron-left', 'ha-icon-sm ha-icon--mirror') }}{{ _("Back to list") }}</a>
 {%- endblock -%}

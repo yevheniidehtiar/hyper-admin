@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+- **HyperAdmin design system: brand palette, fonts and tokens** (docs/design/system).
+  - New palette: HyperAdmin teal (`#0d9488` brand, `#0f766e` actions) and a
+    violet "hyper" accent replace the borrowed FastAPI teal and Pydantic coral.
+    Every text pair meets WCAG 2.2 AA in light and dark; ratios are listed per
+    token in `docs/design/system/tokens.json`.
+  - `_tokens.css` / `_dark-mode.css` carry the new values. All existing token
+    names still work; new tokens add surfaces (overlay, hover, selected),
+    `--ha-color-border-strong`, `--ha-color-focus-ring`, on-colours, chart
+    colours, density sizes and z-index layers. Six names that partials used
+    without a definition (`--ha-color-bg-subtle`, `--ha-color-muted`,
+    `--ha-color-fg-muted`, `--ha-color-success-bg`, `--ha-color-danger-bg`,
+    `--ha-color-danger-subtle`) are now defined.
+  - Inter and JetBrains Mono are self-hosted as WOFF2 (`static/fonts`,
+    `_fonts.css`); logo, favicon and the Lucide icon subset are in
+    `static/img` and `static/icons`.
+  - Component specs with live previews: open `docs/design/system/index.html`.
+- **The admin UI now uses the design system.**
+  - Every CSS partial is ported to the new look (navbar, sidebar with the
+    active-item indicator, buttons, table, filter bar, forms, alerts,
+    toasts, login, error page) under the existing class names, so forked
+    templates keep working. No uppercase labels, 14px base, density tokens,
+    one focus ring, 44px targets on touch.
+  - The navbar and login page show the HyperAdmin mark next to `site_title`;
+    the favicon is the mark.
+  - Lucide icons through a new `icon(name)` Jinja macro
+    (`components/_icons.html`): row actions, sort arrows, pagination,
+    search, filters, theme toggle, toasts. A `ModelAdmin.icon` that names a
+    Lucide icon renders it in the sidebar.
+  - The detail view is a label/value list; list headings read
+    "Invoice List" (they rendered as "InvoiceList").
+  - No third-party requests: Google Fonts is gone (Inter is self-hosted and
+    preloaded), HTMX 1.9.10 and Alpine.js 3.17.4 are vendored in
+    `static/js/vendor/` instead of loaded from unpkg.
+  - Visual baselines refreshed (rendered on Linux, like CI).
+
 ### Security
 - **Authorization and row scoping on every item handler** (st-v058-byoa-10).
   - Inline cell edit/save, inline add-row, update form, file delete/upload and

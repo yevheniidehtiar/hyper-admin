@@ -1,0 +1,49 @@
+<!-- @dsCard height=288 -->
+<!doctype html>
+<html>
+<head><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="../../tokens.css"><link rel="stylesheet" href="../bundle.css"><script>(function(){var t=new URLSearchParams(location.search).get("theme")||"light";document.documentElement.setAttribute("data-theme",t);var d=new URLSearchParams(location.search).get("dir");if(d)document.documentElement.setAttribute("dir",d);})();</script><meta charset="utf-8"><title>HyperAdmin — cover</title>
+<style>
+  html, body { margin: 0; background: var(--ha-surface-base); }
+  .cv { position: relative; inline-size: 960px; block-size: 288px; overflow: hidden; background: var(--ha-surface-base); font-family: var(--font-sans); }
+  .cv svg { position: absolute; inset: 0; }
+  .brand { fill: var(--ha-color-brand); }
+  .ink { fill: var(--ha-color-text-strong); }
+  .acc { fill: var(--ha-color-accent); }
+  .slate { fill: var(--ha-color-border-strong); }
+  .row { fill: var(--ha-surface-raised); }
+  .r-lg { rx: var(--ha-radius-lg); }
+  .r-md { rx: var(--ha-radius-md); }
+  .r-sm { rx: var(--ha-radius-sm); }
+  .txt { position: absolute; inset-inline-start: 40px; inset-block-end: 40px; max-inline-size: 440px; }
+  .name { margin: 0; font-size: 72px; line-height: 0.95; font-weight: 600; letter-spacing: -0.03em; color: var(--ha-color-text-strong); }
+  .tag { margin: 16px 0 0; font-size: 14px; line-height: 21px; color: var(--ha-color-text-muted); }
+</style></head>
+<body>
+<div class="cv">
+<svg viewBox="0 0 960 288" width="960" height="288" aria-hidden="true">
+  <!--
+    blocks: ha-color-brand 288x208 (radius-lg) · ha-color-text-strong 176x120 · ha-color-accent 72x64 (radius-md) · ha-color-border-strong 96x168; a brand 120x80 and an ink 152x80 foot row (radius-md); all multiples of ha-space-2 (8px)
+    arrangement: one tall teal slab bleeding off the top with satellites stacked to the right, ink and slate bleeding off the top and right edges, like a table's header and side panel
+    pattern: "geometric, modular, dense UI" -> table-row tiles cut by ha-radius-sm, some merged two-wide like the logo's full-width row, knocked out of the teal slab in ha-surface-raised; it is the H-from-rows mark spread into a grid
+    scales: pitch 56px tiles x 16px rows, gap ha-space-2 (8px), inset ha-space-6 (24px); radii ha-radius-sm, ha-radius-md, ha-radius-lg
+  -->
+  <rect class="brand r-lg" x="488" y="-16" width="288" height="224"/>
+  <!-- table-row tiles inside the teal slab: 4 columns of 56, gap 8, rows of 16, gap 8 -->
+  <g class="row">
+    <rect class="r-sm" x="512" y="32" width="120" height="16"/><rect class="r-sm" x="640" y="32" width="56" height="16"/><rect class="r-sm" x="704" y="32" width="48" height="16"/>
+    <rect class="r-sm" x="512" y="56" width="56" height="16"/><rect class="r-sm" x="704" y="56" width="48" height="16"/>
+    <rect class="r-sm" x="512" y="80" width="240" height="16"/>
+    <rect class="r-sm" x="512" y="104" width="56" height="16"/><rect class="r-sm" x="704" y="104" width="48" height="16"/>
+    <rect class="r-sm" x="512" y="128" width="56" height="16"/><rect class="r-sm" x="576" y="128" width="120" height="16"/><rect class="r-sm" x="704" y="128" width="48" height="16"/>
+    <rect class="r-sm" x="512" y="152" width="184" height="16"/><rect class="r-sm" x="704" y="152" width="48" height="16"/>
+  </g>
+  <rect class="ink r-lg" x="792" y="-16" width="184" height="136"/>
+  <rect class="acc r-md" x="792" y="136" width="72" height="64"/>
+  <rect class="slate r-lg" x="880" y="136" width="96" height="168"/>
+  <rect class="brand r-md" x="488" y="224" width="120" height="80"/>
+  <rect class="ink r-md" x="624" y="224" width="152" height="80"/>
+</svg>
+<div class="txt"><h1 class="name">HyperAdmin</h1><p class="tag">The admin you add to an existing FastAPI app in ten minutes, without it taking over.</p></div>
+</div>
+</body>
+</html>

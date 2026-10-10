@@ -1,3 +1,4 @@
+{%- from "components/_icons.html" import icon, icon_paths -%}
 <aside id="sidebar"
        class="ha-sidebar"
        :class="{ 'ha-sidebar-mobile-open': sidebarOpen }"
@@ -15,9 +16,7 @@
                     @click="sidebarOpen = false"
                     aria-label="{{ _('Close navigation menu') }}"
                     data-testid="sidebar-close">
-                <svg class="ha-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
+                {{ icon('x') }}
             </button>
         </div>
         <nav aria-label="{{ _('Sidebar') }}">
@@ -32,10 +31,13 @@
                    class="ha-sidebar-link"
                    @click="sidebarOpen = false"{% if request.url.path == admin_prefix ~ item.url %}
                    aria-current="page"{% endif %}>
-                    {%- if item.icon -%}
+                    {#- icon = a Lucide name from static/icons, or any icon-font class (legacy) -#}
+                    {%- if item.icon and item.icon in icon_paths -%}
+                    {{ icon(item.icon) }}
+                    {%- elif item.icon -%}
                     <i class="{{ item.icon }}" aria-hidden="true"></i>
                     {%- endif -%}
-                    {{ item.name }}
+                    <span>{{ item.name }}</span>
                 </a>
             </li>
             {%- endif -%}

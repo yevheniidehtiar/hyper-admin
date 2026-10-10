@@ -1,0 +1,22 @@
+<!-- @dsCard group="Feedback" height=900 subtitle="Shown inline here; in the app it is a native &lt;dialog&gt; opened with showModal(), focus-trapped, Esc closes." -->
+<!doctype html>
+<html>
+<head><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="../../tokens.css"><link rel="stylesheet" href="../bundle.css"><script>(function(){var t=new URLSearchParams(location.search).get("theme")||"light";document.documentElement.setAttribute("data-theme",t);var d=new URLSearchParams(location.search).get("dir");if(d)document.documentElement.setAttribute("dir",d);})();</script><meta charset="utf-8"><title>Dialog — preview</title><style>body{margin:0;background:var(--ha-surface-base)} .pv{padding:16px;display:flex;flex-direction:column;gap:16px} .pv-l{font:500 12px/18px var(--font-sans);color:var(--ha-color-text-muted);margin:0 0 6px}</style></head>
+<body>
+<div class="ha-root pv">
+
+<div class="ha-dialog" role="alertdialog" aria-modal="true" aria-labelledby="d1t" aria-describedby="d1d" data-testid="dialog-confirm-delete" style="position:static">
+<div class="ha-dialog__head"><span class="ha-dialog__glyph ha-dialog__glyph--danger"><svg class="ha-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg></span><div><h2 class="ha-h3" id="d1t">Delete 3 invoices?</h2><p id="d1d" style="margin:4px 0 0">INV-0139, INV-0140 and INV-0141 and their 7 lines will be deleted. This cannot be undone.</p></div></div>
+<div class="ha-dialog__foot"><button class="ha-btn" autofocus>Cancel</button><button class="ha-btn ha-btn--danger">Delete 3 invoices</button></div></div>
+<div class="ha-dialog" role="dialog" aria-modal="true" aria-labelledby="d2t" data-testid="dialog-conflict" style="position:static">
+<div class="ha-dialog__head"><span class="ha-dialog__glyph ha-dialog__glyph--warning"><svg class="ha-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></span><div><h2 class="ha-h3" id="d2t">Someone else changed this invoice</h2><p style="margin:4px 0 0">Bram saved a newer version 2 minutes ago, while you were editing.</p></div></div>
+<div class="ha-dialog__body"><table class="ha-diff" aria-label="Conflicting fields"><thead><tr><th scope="col">Field</th><th scope="col">Yours</th><th scope="col">Bram's</th></tr></thead><tbody><tr><th scope="row">Due date</th><td>24 Oct 2026</td><td class="ha-strong">31 Oct 2026</td></tr><tr><th scope="row">Amount</th><td class="ha-num">€&#8239;1,120.00</td><td class="ha-num ha-strong">€&#8239;1,180.00</td></tr></tbody></table></div>
+<div class="ha-dialog__foot"><button class="ha-btn">Keep editing</button><button class="ha-btn">Overwrite with mine</button><button class="ha-btn ha-btn--primary">Load Bram's version</button></div></div>
+<div class="ha-dialog" role="dialog" aria-modal="true" aria-labelledby="d3t" data-testid="dialog-create-account" style="position:static;inline-size:min(100%,640px)">
+<div class="ha-dialog__head"><div><h2 class="ha-h3" id="d3t">Add account</h2><p class="ha-muted" style="margin:4px 0 0">Opened from the Account field; saving selects it there.</p></div><button class="ha-btn ha-btn--icon ha-btn--ghost" style="margin-inline-start:auto" aria-label="Close"><svg class="ha-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div>
+<div class="ha-dialog__body"><div class="ha-grid-2"><div class="ha-field"><label class="ha-label" for="pa1">Code<span class="ha-req" aria-hidden="true">*</span></label><input class="ha-input ha-mono" id="pa1" required value="8010"></div><div class="ha-field"><label class="ha-label" for="pa2">Name<span class="ha-req" aria-hidden="true">*</span></label><input class="ha-input" id="pa2" required value="Revenue — licences"></div></div></div>
+<div class="ha-dialog__foot"><button class="ha-btn">Cancel</button><button class="ha-btn ha-btn--primary">Save and select</button></div></div>
+
+</div>
+</body>
+</html>

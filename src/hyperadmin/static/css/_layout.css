@@ -2,13 +2,30 @@
    Layout
    ========================================================================== */
 
+/* Density: comfortable by default; data-density="compact" on <html> or any
+   container swaps in the compact row and control heights. Under a coarse
+   pointer (_accessibility.css) both grow to the touch target. */
+:root {
+  --ha-row-h: var(--ha-row-height);
+  --ha-ctl-h: var(--ha-control-height);
+  --ha-pad-card: var(--ha-space-6);
+  --ha-cell-px: var(--ha-space-3);
+}
+
+[data-density="compact"] {
+  --ha-row-h: var(--ha-row-height-compact);
+  --ha-ctl-h: var(--ha-control-height-compact);
+  --ha-pad-card: var(--ha-space-4);
+  --ha-cell-px: var(--ha-space-2);
+}
+
 .ha-page {
-  background-color: var(--ha-color-bg);
+  background-color: var(--ha-surface-base);
   min-height: 100vh;
 }
 
 .ha-container {
-  max-width: 1280px;
+  max-width: none;
   margin-inline: auto;
   padding: 0;
 }
@@ -29,10 +46,11 @@
   padding: var(--ha-space-4);
   background-color: var(--ha-surface-base);
   min-width: 0;
+  max-width: var(--ha-content-max);
 }
 
 .ha-list-toolbar {
-  margin-bottom: var(--ha-space-4);
+  margin-bottom: 0;
 }
 
 .ha-detail-container {

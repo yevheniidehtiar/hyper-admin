@@ -1,19 +1,18 @@
 /* ==========================================================================
    Navbar
+   Raised surface, one hairline below it, no shadow: borders separate,
+   shadows only say "floating".
    ========================================================================== */
 
 .ha-navbar {
-  background-color: var(--ha-color-surface);
-  border-bottom: var(--ha-border-width) solid var(--ha-color-border-light);
-  box-shadow: var(--ha-shadow-xs);
+  background-color: var(--ha-surface-raised);
+  border-block-end: var(--ha-border-width) solid var(--ha-color-border-light);
   position: sticky;
   top: 0;
-  z-index: 30;
+  z-index: var(--ha-z-nav);
 }
 
 .ha-navbar-inner {
-  max-width: 1280px;
-  margin: 0 auto;
   padding: 0 var(--ha-space-3);
   display: flex;
   justify-content: space-between;
@@ -24,33 +23,44 @@
 
 @media (min-width: 768px) {
   .ha-navbar-inner {
-    padding: 0 var(--ha-space-6);
+    padding: 0 var(--ha-space-4);
     gap: var(--ha-space-3);
   }
 }
 
+/* The mark plus the host's site_title: the admin speaks for the host app. */
 .ha-navbar-brand {
-  font-size: var(--ha-font-size-lg);
-  font-weight: var(--ha-font-extrabold);
-  color: var(--ha-color-primary-700);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ha-space-2);
+  font-size: var(--ha-font-size-base);
+  font-weight: var(--ha-font-semibold);
+  color: var(--ha-color-text-strong);
   text-decoration: none;
-  letter-spacing: -0.025em;
-  transition: color var(--ha-transition);
   margin-inline-end: auto;
-  min-width: 0;
+  min-width: 24px;
   overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
+  border-radius: var(--ha-radius-md);
 }
 
-@media (min-width: 768px) {
-  .ha-navbar-brand {
-    font-size: var(--ha-font-size-xl);
-  }
+.ha-navbar-brand-mark {
+  width: 24px;
+  height: 24px;
+  flex: none;
+}
+
+.ha-navbar-brand-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ha-navbar-brand:hover {
+  color: var(--ha-color-text-strong);
 }
 
 /* ==========================================================================
-   Sidebar toggle (hamburger) — visible on mobile only
+   Icon buttons in the navbar: sidebar toggle (mobile only), theme toggle
    ========================================================================== */
 
 .ha-sidebar-toggle {
@@ -59,24 +69,18 @@
   justify-content: center;
   min-width: 44px;
   min-height: 44px;
-  margin-inline-end: var(--ha-space-2);
   padding: 0;
-  color: var(--ha-color-text);
+  color: var(--ha-color-text-muted);
   background: none;
   border: var(--ha-border-width) solid transparent;
-  border-radius: var(--ha-radius);
+  border-radius: var(--ha-radius-md);
   cursor: pointer;
-  transition: all var(--ha-transition);
+  transition: background-color var(--ha-transition), color var(--ha-transition);
 }
 
 .ha-sidebar-toggle:hover {
-  background-color: var(--ha-surface-sunken);
+  background-color: var(--ha-surface-hover);
   color: var(--ha-color-text-strong);
-}
-
-.ha-sidebar-toggle:focus-visible {
-  outline: none;
-  box-shadow: var(--ha-shadow-focus);
 }
 
 @media (min-width: 768px) {
@@ -85,15 +89,15 @@
   }
 }
 
-.ha-navbar-brand:hover {
-  color: var(--ha-color-primary-500);
-}
-
 .ha-navbar-actions {
   display: flex;
   align-items: center;
-  gap: var(--ha-space-2);
+  gap: var(--ha-space-1);
 }
+
+/* ==========================================================================
+   User menu
+   ========================================================================== */
 
 .ha-navbar-user {
   position: relative;
@@ -104,35 +108,52 @@
   align-items: center;
   gap: var(--ha-space-2);
   min-height: 44px;
-  color: var(--ha-color-text-muted);
+  color: var(--ha-color-text-strong);
   background: none;
   border: var(--ha-border-width) solid transparent;
-  border-radius: var(--ha-radius-full);
+  border-radius: var(--ha-radius-md);
   cursor: pointer;
-  font-size: var(--ha-font-size-sm);
+  font: inherit;
   font-weight: var(--ha-font-medium);
-  padding: var(--ha-space-1-5) var(--ha-space-3);
-  transition: all var(--ha-transition);
+  padding: 0 var(--ha-space-2);
+  transition: background-color var(--ha-transition);
   flex-shrink: 0;
 }
 
-/* Hide the username label on very small screens — icon + chevron remain.
-   The dropdown still labels the user clearly; this keeps the navbar from
-   overflowing at 320px. */
-@media (max-width: 374px) {
-  .ha-navbar-user-btn span:not(.ha-navbar-user-btn-chevron) {
+.ha-navbar-user-btn:hover {
+  background-color: var(--ha-surface-hover);
+}
+
+.ha-navbar-user-btn-chevron {
+  color: var(--ha-color-text-muted);
+}
+
+/* Initials in a soft-violet circle (the accent marks people). */
+.ha-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--ha-radius-pill);
+  background-color: var(--ha-color-accent-soft);
+  color: var(--ha-color-accent);
+  font-size: var(--ha-font-size-xs);
+  font-weight: var(--ha-font-semibold);
+  flex: none;
+}
+
+/* Small screens keep the navbar on one line: the username label and the
+   locale globe go; the avatar, chevron and select remain. */
+@media (max-width: 479px) {
+  .ha-navbar-user-btn .ha-navbar-user-name,
+  .ha-locale-switcher > .ha-icon {
     display: none;
   }
 }
 
-.ha-navbar-user-btn:hover {
-  color: var(--ha-color-text);
-  background-color: var(--ha-surface-sunken);
-  border-color: var(--ha-color-border-light);
-}
-
 /* ==========================================================================
-   Dropdown
+   Dropdown (menu surface)
    ========================================================================== */
 
 [x-cloak] {
@@ -143,13 +164,13 @@
   position: absolute;
   inset-inline-end: 0;
   margin-top: var(--ha-space-1);
-  width: 12rem;
-  background-color: var(--ha-color-surface);
+  min-width: 12rem;
+  background-color: var(--ha-surface-overlay);
   border: var(--ha-border-width) solid var(--ha-color-border-light);
   border-radius: var(--ha-radius-lg);
-  box-shadow: var(--ha-shadow-lg);
-  padding: var(--ha-space-1) 0;
-  z-index: 10;
+  box-shadow: var(--ha-shadow-md);
+  padding: var(--ha-space-1);
+  z-index: var(--ha-z-overlay);
 }
 
 /* Fallback: show on hover if Alpine is slow or disabled */
@@ -158,27 +179,29 @@
 }
 
 .ha-dropdown-item {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: var(--ha-space-3);
   width: 100%;
+  min-height: 36px;
   text-align: start;
-  padding: var(--ha-space-2) var(--ha-space-4);
-  font-size: var(--ha-font-size-sm);
+  padding: 0 var(--ha-space-3);
+  font: inherit;
   font-weight: var(--ha-font-medium);
-  color: var(--ha-color-text);
+  color: var(--ha-color-text-strong);
   text-decoration: none;
   background: none;
   border: none;
+  border-radius: var(--ha-radius-md);
   cursor: pointer;
-  font-family: inherit;
-  border-radius: var(--ha-radius-sm);
-  margin: 0 var(--ha-space-1);
-  width: calc(100% - var(--ha-space-2));
-  transition: all var(--ha-transition);
 }
 
 .ha-dropdown-item:hover {
-  background-color: var(--ha-color-primary-50);
-  color: var(--ha-color-primary-700);
+  background-color: var(--ha-surface-hover);
+}
+
+.ha-dropdown-item .ha-icon {
+  color: var(--ha-color-text-muted);
 }
 
 /* ==========================================================================
@@ -188,29 +211,22 @@
 .ha-locale-switcher {
   display: inline-flex;
   align-items: center;
+  gap: var(--ha-space-1);
+  color: var(--ha-color-text-muted);
 }
 
 .ha-locale-select {
-  font-size: var(--ha-font-size-sm);
-  color: var(--ha-color-text-muted);
+  font: inherit;
+  font-weight: var(--ha-font-medium);
+  color: var(--ha-color-text-strong);
   background-color: transparent;
   border: var(--ha-border-width) solid var(--ha-color-border-light);
-  border-radius: var(--ha-radius);
-  padding: var(--ha-space-1) var(--ha-space-2);
+  border-radius: var(--ha-radius-md);
+  padding: 0 var(--ha-space-2);
   cursor: pointer;
-  transition: all var(--ha-transition);
-  /* ensure a minimum tap target on touch devices */
-  min-height: 36px;
+  min-height: var(--ha-ctl-h);
 }
 
 .ha-locale-select:hover {
-  border-color: var(--ha-color-border);
-  color: var(--ha-color-text);
+  background-color: var(--ha-surface-hover);
 }
-
-.ha-locale-select:focus-visible {
-  outline: none;
-  box-shadow: var(--ha-shadow-focus);
-}
-
-/* Hide label text from flow but keep it for screen readers (uses ha-sr-only) */

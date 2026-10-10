@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Form Layouts — Column Grids
+   Form layouts: column grids
    ========================================================================== */
 
 .ha-form-grid-2 {
@@ -14,14 +14,15 @@
    ========================================================================== */
 
 .ha-fieldset {
+  min-width: 0;
   border: var(--ha-border-width) solid var(--ha-color-border-light);
   border-radius: var(--ha-radius-lg);
-  padding: var(--ha-space-4);
-  margin-bottom: var(--ha-space-4);
+  padding: 0 var(--ha-space-4) var(--ha-space-2);
+  margin: 0 0 var(--ha-space-4);
 }
 
 .ha-fieldset-legend {
-  padding: 0;
+  padding: 0 var(--ha-space-1);
 }
 
 .ha-fieldset-toggle {
@@ -29,27 +30,42 @@
   align-items: center;
   gap: var(--ha-space-2);
   min-height: 44px;
-  font-weight: 600;
-  font-size: var(--ha-font-size-base);
+  font: inherit;
+  font-weight: var(--ha-font-semibold);
   color: var(--ha-color-text-strong);
   background: none;
   border: none;
+  border-radius: var(--ha-radius-md);
   cursor: pointer;
-  padding: var(--ha-space-1) 0;
-  width: 100%;
+  padding: 0 var(--ha-space-1);
   text-align: start;
 }
 
 .ha-fieldset-toggle:hover {
-  color: var(--ha-color-primary);
+  color: var(--ha-color-primary-text);
 }
 
 .ha-fieldset-arrow {
-  font-size: var(--ha-font-size-sm);
+  display: inline-flex;
+  color: var(--ha-color-text-muted);
+}
+
+.ha-fieldset-arrow .ha-icon {
+  width: 16px;
+  height: 16px;
+  transition: transform 150ms var(--ha-ease-default);
+}
+
+.ha-fieldset-arrow.is-open .ha-icon {
+  transform: rotate(90deg);
+}
+
+[dir="rtl"] .ha-fieldset-arrow:not(.is-open) .ha-icon {
+  transform: scaleX(-1);
 }
 
 .ha-fieldset-description {
-  font-size: var(--ha-font-size-sm);
+  font-size: 0.8125rem;
   color: var(--ha-color-text-muted);
-  margin: var(--ha-space-2) 0 var(--ha-space-4);
+  margin: 0 0 var(--ha-space-4);
 }

@@ -1,28 +1,32 @@
-/* Real-time connection status dot rendered in the navbar. */
+/* Real-time connection status dot in the navbar. Shape as well as colour
+   tells the state: a filled dot (live), a ring (reconnecting), a square
+   (offline). The title and the live region carry the words. */
 
 .ha-rt-dot {
   display: inline-block;
-  width: 0.625rem;
-  height: 0.625rem;
-  margin-inline-end: 0.5rem;
-  border-radius: 50%;
-  background: var(--ha-color-muted, #9ca3af);
+  width: 10px;
+  height: 10px;
+  margin-inline-end: var(--ha-space-2);
+  border-radius: var(--ha-radius-pill);
+  background: var(--ha-color-text-muted);
   vertical-align: middle;
-  transition: background-color 0.2s ease-in-out;
+  transition: background-color 200ms ease-in-out;
 }
 
 .ha-rt-dot.is-connected {
-  background: var(--ha-color-success, #22c55e);
-  box-shadow: 0 0 0 0.25rem rgba(34, 197, 94, 0.15);
+  background: var(--ha-color-success-text);
+  box-shadow: 0 0 0 3px var(--ha-color-success-soft);
 }
 
 .ha-rt-dot.is-reconnecting {
-  background: var(--ha-color-warning, #eab308);
+  background: transparent;
+  border: 2px solid var(--ha-color-warning-text);
   animation: ha-rt-pulse 1.2s ease-in-out infinite;
 }
 
 .ha-rt-dot.is-disconnected {
-  background: var(--ha-color-danger, #ef4444);
+  background: var(--ha-color-danger-text);
+  border-radius: 2px;
 }
 
 @keyframes ha-rt-pulse {

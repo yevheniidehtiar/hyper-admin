@@ -5,7 +5,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}HyperAdmin{% endblock %}</title>
+    <title>{% block title %}{{ site_title | default('HyperAdmin') }}{% endblock %}</title>
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', path='/img/hyperadmin-favicon.svg') }}">
+    <link rel="preload" href="{{ url_for('static', path='/fonts/InterVariable.woff2') }}" as="font" type="font/woff2" crossorigin>
     <script>
       // Theme initialisation — runs before CSS to prevent flash of wrong theme.
       (function() {
@@ -22,10 +24,8 @@
         // 'auto' leaves no class — media query handles it
       })();
     </script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    {#- Vendored at exact versions (static/js/vendor): no CDN request from inside someone's admin. -#}
+    <script src="{{ url_for('static', path='/js/vendor/htmx-1.9.10.min.js') }}"></script>
     <script>
       // Allow HTMX to process 422 (Unprocessable Entity) responses by forcing a swap
       // and treating the response as a normal (non-error) update. This is the
@@ -55,8 +55,8 @@
         }
       });
     </script>
-    <script src="https://unpkg.com/@alpinejs/focus@3.x.x/dist/cdn.min.js" defer></script>
-    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script src="{{ url_for('static', path='/js/vendor/alpinejs-focus-3.17.4.min.js') }}" defer></script>
+    <script src="{{ url_for('static', path='/js/vendor/alpinejs-3.17.4.min.js') }}" defer></script>
     <link rel="stylesheet" href="{{ url_for('static', path='/css/hyperadmin.css') }}">
     {% if realtime_enabled %}
     <script src="{{ url_for('static', path='/js/realtime-status.js') }}" defer></script>
