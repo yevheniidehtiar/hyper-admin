@@ -60,6 +60,17 @@ jobs:
       - name: E2E Test package
         run: uv run poe test:e2e
 
+      - name: Upload visual regression diffs
+        # Baselines must be rendered on the CI runner; the actual/diff PNGs are the
+        # source for refreshing a drifted baseline (see tests/e2e/test_visual_regression.py).
+        if: failure()
+        uses: actions/upload-artifact@v5
+        with:
+          name: visual-diffs-py${{ matrix.python-version }}-${{ matrix.resolution }}
+          path: tests/e2e/snapshots/**/*.*.png
+          if-no-files-found: ignore
+          retention-days: 7
+
   test-pr:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
