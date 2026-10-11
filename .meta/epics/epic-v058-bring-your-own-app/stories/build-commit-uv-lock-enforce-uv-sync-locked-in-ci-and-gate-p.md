@@ -2,7 +2,7 @@
 type: story
 id: st-v058-byoa-12
 title: "build: commit uv.lock, enforce uv sync --locked in CI and gate PRs to master/develop"
-status: todo
+status: done
 priority: high
 assignee: null
 labels:
@@ -14,7 +14,7 @@ estimate: null
 epic_ref:
   id: ep-v058-byoa-01
 created_at: 2026-09-28T00:00:00Z
-updated_at: 2026-09-28T00:00:00Z
+updated_at: 2026-10-11T00:00:00Z
 ---
 
 ## Summary
