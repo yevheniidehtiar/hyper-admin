@@ -18,6 +18,16 @@ from sqlmodel import SQLModel
 
 if TYPE_CHECKING:
     from hyperadmin.auth.backend import hash_password
+    from hyperadmin.auth.bridge import (
+        BridgeDefaultPermissionChecker,
+        CallablePermissionChecker,
+        ExternalAuth,
+        TokenCookie,
+        build_admin_dependency,
+        default_can_access,
+        default_display_name,
+        default_user_key,
+    )
     from hyperadmin.auth.models import (
         Group,
         GroupPermission,
@@ -30,6 +40,7 @@ if TYPE_CHECKING:
 _logger = logging.getLogger("hyperadmin")
 
 _MODELS_MODULE = "hyperadmin.auth.models"
+_BRIDGE_MODULE = "hyperadmin.auth.bridge"
 _TABLE_PREFIX = "hyperadmin_"
 _LAZY_EXPORTS: dict[str, str] = {
     "Group": _MODELS_MODULE,
@@ -39,15 +50,31 @@ _LAZY_EXPORTS: dict[str, str] = {
     "UserGroup": _MODELS_MODULE,
     "UserPermission": _MODELS_MODULE,
     "hash_password": "hyperadmin.auth.backend",
+    "ExternalAuth": _BRIDGE_MODULE,
+    "TokenCookie": _BRIDGE_MODULE,
+    "CallablePermissionChecker": _BRIDGE_MODULE,
+    "BridgeDefaultPermissionChecker": _BRIDGE_MODULE,
+    "build_admin_dependency": _BRIDGE_MODULE,
+    "default_can_access": _BRIDGE_MODULE,
+    "default_display_name": _BRIDGE_MODULE,
+    "default_user_key": _BRIDGE_MODULE,
 }
 
 __all__ = [
+    "BridgeDefaultPermissionChecker",
+    "CallablePermissionChecker",
+    "ExternalAuth",
     "Group",
     "GroupPermission",
     "Permission",
+    "TokenCookie",
     "User",
     "UserGroup",
     "UserPermission",
+    "build_admin_dependency",
+    "default_can_access",
+    "default_display_name",
+    "default_user_key",
     "hash_password",
     "metadata",
 ]
