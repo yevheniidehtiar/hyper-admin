@@ -10,6 +10,7 @@ actual column metadata, rather than from the pydantic annotation alone.
 from __future__ import annotations
 
 import types
+from datetime import datetime as _datetime
 from typing import TYPE_CHECKING, Any, Union, get_args, get_origin
 
 from pydantic import AwareDatetime, NaiveDatetime
@@ -124,10 +125,33 @@ def _annotation_aware_or_naive(annotation: Any) -> DateTimeKind | None:
     return None
 
 
-def datetime_kind(model: Any, field: str) -> DateTimeKind:
+def _is_datetime_annotation(annotation: Any) -> bool:
+    """Return True if the (unwrapped) annotation is a datetime type or pydantic marker."""
+    ann = _unwrap_optional(annotation)
+    if ann is AwareDatetime or ann is NaiveDatetime:
+        return True
+    return isinstance(ann, type) and issubclass(ann, _datetime)
+
+
+def _is_datetime_column_type(column_type: Any) -> bool:
+    """Return True if ``column_type`` is a ``DateTime`` or wraps one via ``TypeDecorator``."""
+    if isinstance(column_type, DateTime):
+        return True
+    if _SQLModelUTCDateTime is not None and isinstance(column_type, _SQLModelUTCDateTime):
+        return True
+    if getattr(column_type, "hyperadmin_tz_aware", False):
+        return True
+    if isinstance(column_type, TypeDecorator) and isinstance(column_type.impl, DateTime):
+        return True
+    return False
+
+
+def datetime_kind(model: Any, field: str) -> DateTimeKind | None:
     """Return whether ``field`` stores timezone-aware or naive datetimes.
 
-    The first matching rule wins:
+    Matches :meth:`~hyperadmin.core.adapters.BaseAdapter.datetime_kind`'s contract:
+    a non-datetime or unknown field returns ``None``. For an actual datetime field,
+    the first matching rule wins:
       1. The pydantic annotation is ``AwareDatetime`` or ``NaiveDatetime``.
       2. The column type has ``hyperadmin_tz_aware = True``.
       3. The column type is sqlmodel's ``UTCDateTime`` (only when importable).
@@ -135,7 +159,8 @@ def datetime_kind(model: Any, field: str) -> DateTimeKind:
          :class:`~sqlalchemy.types.TypeDecorator` whose ``impl.timezone`` is true.
       5. Otherwise ``"naive"``.
     """
-    annotation_kind = _annotation_aware_or_naive(_model_field_annotation(model, field))
+    annotation = _model_field_annotation(model, field)
+    annotation_kind = _annotation_aware_or_naive(annotation)
     if annotation_kind is not None:
         return annotation_kind
 
@@ -154,4 +179,7 @@ def datetime_kind(model: Any, field: str) -> DateTimeKind:
     if isinstance(column_type, TypeDecorator) and getattr(column_type.impl, "timezone", False):
         return "aware"
 
-    return "naive"
+    if _is_datetime_annotation(annotation) or _is_datetime_column_type(column_type):
+        return "naive"
+
+    return None

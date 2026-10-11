@@ -108,8 +108,11 @@ def test_hyperadmin_tz_aware_type_decorator_wins_over_naive_impl() -> None:
     assert column.type.impl.timezone is False
 
 
-def test_unknown_field_returns_naive() -> None:
-    assert datetime_kind(NaiveDateTimeColumnModel, "id") == "naive"
+def test_non_datetime_column_returns_none() -> None:
+    """A real, non-datetime column ('id') returns None, matching BaseAdapter's
+    contract (see test_base_adapter_datetime_kind in test_primary_key.py) rather
+    than falling through to 'naive'."""
+    assert datetime_kind(NaiveDateTimeColumnModel, "id") is None
 
 
 # ---------------------------------------------------------------------------
@@ -129,7 +132,21 @@ def test_sqlmodel_adapter_datetime_kind_unknown_field_returns_none() -> None:
     assert adapter.datetime_kind("does_not_exist") is None
 
 
+def test_sqlmodel_adapter_datetime_kind_non_datetime_column_returns_none() -> None:
+    """Matches BaseAdapter's contract: a non-datetime column is None, not 'naive'."""
+    adapter = SQLModelAdapter(NaiveDateTimeColumnModel, engine=None)
+
+    assert adapter.datetime_kind("id") is None
+
+
 def test_sqlalchemy_adapter_datetime_kind_uses_column_introspection() -> None:
     adapter = SQLAlchemyAdapter(AwareDateTimeColumnModel, engine=None)
 
     assert adapter.datetime_kind("stamped_at") == "aware"
+
+
+def test_sqlalchemy_adapter_datetime_kind_non_datetime_column_returns_none() -> None:
+    """Matches BaseAdapter's contract: a non-datetime column is None, not 'naive'."""
+    adapter = SQLAlchemyAdapter(AwareDateTimeColumnModel, engine=None)
+
+    assert adapter.datetime_kind("id") is None
