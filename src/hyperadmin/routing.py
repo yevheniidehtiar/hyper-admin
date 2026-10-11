@@ -268,6 +268,14 @@ class HyperAdminRouter:
         timezone: The admin's configured display timezone (``settings.tzinfo``),
             registered as the ``ha_display``/``ha_datetime_input`` fallback
             (BYOA SDD A.9). Defaults to UTC.
+        datetime_format: The admin's configured ``settings.datetime_format``,
+            registered as the ``ha_display`` format string (BYOA SDD A.7).
+
+    The timezone and datetime format reach the view layer by living on the
+    shared Jinja environment (as the ``hyperadmin_timezone`` /
+    ``hyperadmin_datetime_format`` globals ``register_template_filters``
+    sets), not as a constructor argument the view classes read — every view
+    renders through this one environment, so there is nothing else to wire.
     """
 
     def __init__(
@@ -277,15 +285,19 @@ class HyperAdminRouter:
         permission_checker: Any = None,
         storage: Any = None,
         timezone: tzinfo | None = None,
+        datetime_format: str = "%Y-%m-%d %H:%M:%S",
     ):
         self.engine = engine
         self.permission_checker = permission_checker
         self.storage = storage
-        self.timezone = timezone or dt_timezone.utc
         # Enable global whitespace trimming
         templates.env.trim_blocks = True
         templates.env.lstrip_blocks = True
-        register_template_filters(templates.env, default_timezone=self.timezone)
+        register_template_filters(
+            templates.env,
+            default_timezone=timezone or dt_timezone.utc,
+            datetime_format=datetime_format,
+        )
         self.templates = templates
         self.routers: list[APIRouter] = []
 

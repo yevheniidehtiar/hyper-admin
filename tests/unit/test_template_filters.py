@@ -144,3 +144,34 @@ def test_ha_datetime_input_uses_the_resolved_timezone() -> None:
     rendered = _render("{{ value|ha_datetime_input }}", request=request, value=value)
 
     assert rendered == "2026-01-01T09:00:00"
+
+
+def test_ha_display_uses_the_registered_datetime_format() -> None:
+    """``ha_display`` formats with the ``datetime_format`` passed to
+    ``register_template_filters`` (``Admin``'s ``settings.datetime_format``),
+    not a hardcoded string.
+    """
+    value = datetime(2026, 1, 1, 0, 0, tzinfo=UTC)
+    request = _request(None)
+    env = Environment()
+    register_template_filters(env, datetime_format="%d/%m/%Y %H:%M")
+
+    rendered = env.from_string("{{ value|ha_display }}").render(request=request, value=value)
+
+    assert "01/01/2026 00:00" in rendered
+
+
+def test_resolve_tz_falls_back_to_default_on_invalid_zone_name() -> None:
+    """
+    Scenario: invalid per-request zone name falls back to the default
+      Given request.state.hyperadmin_timezone='Not/AZone'
+      When  ha_display(aware dt) runs
+      Then  the default timezone is used instead of raising
+    """
+    value = datetime(2026, 1, 1, 0, 0, tzinfo=UTC)
+    request = _request("Not/AZone")
+    env = _env(default_timezone=TOKYO)
+
+    rendered = env.from_string("{{ value|ha_display }}").render(request=request, value=value)
+
+    assert "2026-01-01 09:00:00" in rendered

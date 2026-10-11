@@ -196,6 +196,7 @@ class Admin:
             permission_checker=self.permission_checker if self.auth_backend else None,
             storage=self.storage,
             timezone=self.settings.tzinfo,
+            datetime_format=self.settings.datetime_format,
         )
         admin_router.generate_routes()
         routers = admin_router.get_routers()
