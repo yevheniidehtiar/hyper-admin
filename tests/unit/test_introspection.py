@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import uuid as uuid_lib
 from datetime import datetime
 from enum import Enum
 
@@ -41,6 +42,12 @@ class MinimalModel(SQLModel, table=True):
     __tablename__ = "test_minimal"
 
     id: int | None = Field(default=None, primary_key=True)
+
+
+class UuidOnlyModel(SQLModel, table=True):
+    __tablename__ = "test_uuid_only"
+
+    uuid: uuid_lib.UUID = Field(default_factory=uuid_lib.uuid4, primary_key=True)
 
 
 class NumericOnlyModel(SQLModel, table=True):
@@ -141,6 +148,17 @@ class TestInferListDisplay:
     def test_id_is_first(self) -> None:
         result = infer_list_display(MixedFieldModel)
         assert result[0] == "id"
+
+    def test_uuid_pk_model_falls_back_to_its_own_pk_name(self) -> None:
+        """
+        Scenario: list_display fallback
+          Given a model with UUID pk 'uuid'
+          When  infer_list_display falls back
+          Then  ['uuid', '__str__'] is returned
+        """
+        result = infer_list_display(UuidOnlyModel)
+
+        assert result == ["uuid", "__str__"]
 
 
 # ── infer_search_fields ───────────────────────────────────────────────

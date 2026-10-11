@@ -146,12 +146,20 @@ def _field_priority(name: str, fm: FieldMeta) -> int:
     return 5
 
 
+def _pk_field_name(meta: Mapping[str, FieldMeta]) -> str:
+    """Return the primary-key attribute name from ``meta``, defaulting to ``"id"``."""
+    for name, fm in meta.items():
+        if fm.is_pk:
+            return name
+    return "id"
+
+
 def infer_list_display(
     model: type[SQLModel], sensitive_overrides: Mapping[str, bool] | None = None
 ) -> list[str]:
     """Infer 3-5 fields for list view display via heuristics.
 
-    Priority: id > name/title > email > created_at > status/enum > other short fields.
+    Priority: pk > name/title > email > created_at > status/enum > other short fields.
     Long text fields (Text type, bio, description) and sensitive fields are excluded.
     Cap at 5 fields.
     """
@@ -159,6 +167,7 @@ def infer_list_display(
     if not meta:
         return ["id", "__str__"]
 
+    pk_attr = _pk_field_name(meta)
     sensitive = sensitive_field_names(model, sensitive_overrides)
     candidates = [
         (name, fm)
@@ -169,8 +178,8 @@ def infer_list_display(
 
     result = [name for name, _ in candidates[:5]]
 
-    if not result or result == ["id"]:
-        return ["id", "__str__"]
+    if not result or result == [pk_attr]:
+        return [pk_attr, "__str__"]
 
     return result
 
