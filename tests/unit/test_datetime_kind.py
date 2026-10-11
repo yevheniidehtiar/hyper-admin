@@ -7,12 +7,16 @@ from datetime import datetime
 import pytest
 from pydantic import NaiveDatetime
 from sqlalchemy import DateTime
+from sqlalchemy.ext.asyncio import create_async_engine
 from sqlmodel import Column, Field, SQLModel
 
 from hyperadmin.adapters.introspection import datetime_kind
 from hyperadmin.adapters.sqlalchemy import SQLAlchemyAdapter
 from hyperadmin.adapters.sqlmodel import SQLModelAdapter
 from hyperadmin.auth._types import UTCNaiveDateTime
+
+# Adapters need an engine or a session factory (SDD C.3); creating one opens no connection.
+_ENGINE = create_async_engine("sqlite+aiosqlite://")
 
 try:
     from sqlmodel.sql.sqltypes import UTCDateTime
@@ -121,32 +125,32 @@ def test_non_datetime_column_returns_none() -> None:
 
 
 def test_sqlmodel_adapter_datetime_kind_uses_column_introspection() -> None:
-    adapter = SQLModelAdapter(NaiveDateTimeColumnModel, engine=None)
+    adapter = SQLModelAdapter(NaiveDateTimeColumnModel, engine=_ENGINE)
 
     assert adapter.datetime_kind("stamped_at") == "naive"
 
 
 def test_sqlmodel_adapter_datetime_kind_unknown_field_returns_none() -> None:
-    adapter = SQLModelAdapter(NaiveDateTimeColumnModel, engine=None)
+    adapter = SQLModelAdapter(NaiveDateTimeColumnModel, engine=_ENGINE)
 
     assert adapter.datetime_kind("does_not_exist") is None
 
 
 def test_sqlmodel_adapter_datetime_kind_non_datetime_column_returns_none() -> None:
     """Matches BaseAdapter's contract: a non-datetime column is None, not 'naive'."""
-    adapter = SQLModelAdapter(NaiveDateTimeColumnModel, engine=None)
+    adapter = SQLModelAdapter(NaiveDateTimeColumnModel, engine=_ENGINE)
 
     assert adapter.datetime_kind("id") is None
 
 
 def test_sqlalchemy_adapter_datetime_kind_uses_column_introspection() -> None:
-    adapter = SQLAlchemyAdapter(AwareDateTimeColumnModel, engine=None)
+    adapter = SQLAlchemyAdapter(AwareDateTimeColumnModel, engine=_ENGINE)
 
     assert adapter.datetime_kind("stamped_at") == "aware"
 
 
 def test_sqlalchemy_adapter_datetime_kind_non_datetime_column_returns_none() -> None:
     """Matches BaseAdapter's contract: a non-datetime column is None, not 'naive'."""
-    adapter = SQLAlchemyAdapter(AwareDateTimeColumnModel, engine=None)
+    adapter = SQLAlchemyAdapter(AwareDateTimeColumnModel, engine=_ENGINE)
 
     assert adapter.datetime_kind("id") is None
