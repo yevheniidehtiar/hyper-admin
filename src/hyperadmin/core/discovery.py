@@ -9,6 +9,21 @@ from hyperadmin.core.display import get_display_name
 logger = logging.getLogger(__name__)
 
 
+def _pk_choices(items: list[Any], pk: Any) -> list[dict[str, str]]:
+    """Build ``{"value", "label"}`` filter choices keyed by each item's encoded pk."""
+    choices = []
+    for item in items:
+        pk_value = pk.value_of(item)
+        if pk_value is None:
+            # Skip rows without a usable pk value instead of letting to_str()
+            # raise (uuid) or coerce to the literal string "None" (int/str).
+            continue
+        choices.append(
+            {"value": pk.to_str(pk_value), "label": get_display_name(item, pk_attr=pk.attr)}
+        )
+    return choices
+
+
 async def build_filter_metadata(
     model: Any, field_names: list[str], adapter: Any
 ) -> list[dict[str, Any]]:
@@ -85,21 +100,7 @@ async def build_filter_metadata(
                     target_adapter_cls = adapter_registry.find_adapter_for_model(target_model)
                     target_adapter = target_adapter_cls(target_model, adapter.engine)
                     related_items, _ = await target_adapter.list(page_size=1000)
-                    target_pk = target_adapter.pk
-                    choices = []
-                    for item in related_items:
-                        pk_value = target_pk.value_of(item)
-                        if pk_value is None:
-                            # Skip rows without a usable pk value instead of
-                            # letting to_str() raise (uuid) or coerce to the
-                            # literal string "None" (int/str).
-                            continue
-                        choices.append(
-                            {
-                                "value": target_pk.to_str(pk_value),
-                                "label": get_display_name(item, pk_attr=target_pk.attr),
-                            }
-                        )
+                    choices = _pk_choices(related_items, target_adapter.pk)
                     metadata.append(
                         {
                             "name": field_name,
