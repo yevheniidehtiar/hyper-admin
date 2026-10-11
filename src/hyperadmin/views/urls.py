@@ -24,12 +24,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from jinja2 import pass_context
-from starlette.datastructures import URL
 from starlette.routing import NoMatchFound
 
 if TYPE_CHECKING:
     from jinja2 import Environment
     from jinja2.runtime import Context
+    from starlette.datastructures import URL
     from starlette.requests import Request
 
 #: Key under ``request.scope`` that carries the admin's own routing data
