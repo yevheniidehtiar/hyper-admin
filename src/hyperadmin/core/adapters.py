@@ -7,7 +7,7 @@ from contextlib import AbstractAsyncContextManager, contextmanager
 from contextvars import ContextVar
 from dataclasses import dataclass
 from datetime import datetime
-from typing import TYPE_CHECKING, Annotated, Any, Union, get_args, get_origin
+from typing import TYPE_CHECKING, Annotated, Any, Protocol, Union, cast, get_args, get_origin
 
 from pydantic import AwareDatetime, NaiveDatetime
 
@@ -24,13 +24,67 @@ if TYPE_CHECKING:
 
     QuerysetFilter = Callable[["Request | None"], dict[str, Any]]
 
+
+class AsyncSessionLike(Protocol):
+    """Structural shape of the session object a ``session_factory`` yields.
+
+    Lists only the methods HyperAdmin's adapters and auth services actually
+    call. A ``Protocol`` describes the shape without importing a concrete ORM
+    session class, so ``core/`` stays free of ORM code while ``SessionFactory``
+    still type-checks what a session must support.
+    """
+
+    async def execute(self, statement: Any, *args: Any, **kwargs: Any) -> Any: ...
+    async def get(self, entity: Any, ident: Any, **kwargs: Any) -> Any: ...
+    def add(self, instance: Any) -> None: ...
+    def add_all(self, instances: Any) -> None: ...
+    async def commit(self) -> None: ...
+    async def refresh(self, instance: Any, *args: Any, **kwargs: Any) -> None: ...
+    async def delete(self, instance: Any) -> None: ...
+
+
 #: A zero-argument callable returning an async context manager that yields a
 #: session (``async_sessionmaker(engine)`` already satisfies this). Typing only
 #: — ``core/`` never imports an ORM session class to define it.
-SessionFactory = Callable[[], AbstractAsyncContextManager[Any]]
+SessionFactory = Callable[[], AbstractAsyncContextManager[AsyncSessionLike]]
 
 #: Resolves the row-scoping callable for a model class inside a request scope.
 QuerysetFilterResolver = Callable[[Any], "Callable[[Any], dict[str, Any]] | None"]
+
+
+def require_engine_or_session_factory(cls_name: str, engine: Any, session_factory: Any) -> None:
+    """Raise ``ValueError`` unless at least one of ``engine`` / ``session_factory`` is set.
+
+    Shared by every class that accepts this seam (``BaseAdapter``,
+    ``SessionAuthBackend``, ``PermissionSyncService``, ``ModelPermissionChecker``)
+    so the condition and message can never drift between them.
+    """
+    if engine is None and session_factory is None:
+        msg = (
+            f"{cls_name} requires either engine= (an async SQLAlchemy engine) or "
+            "session_factory= (e.g. async_sessionmaker(engine))."
+        )
+        raise ValueError(msg)
+
+
+def open_session(
+    engine: Any, session_factory: SessionFactory | None
+) -> AbstractAsyncContextManager[AsyncSessionLike]:
+    """Open a session from whichever of ``engine`` / ``session_factory`` was given.
+
+    Prefers ``session_factory`` (the host's own session maker) when set, so a
+    host-managed engine, connection pool and transaction scope are respected.
+    Falls back to opening a plain ``AsyncSession`` on ``engine`` for the
+    legacy, engine-only construction path. Shared by ``BaseAdapter._session``
+    and the auth services' ``_session`` methods.
+    """
+    if session_factory is not None:
+        return session_factory()
+    from sqlalchemy.ext.asyncio import AsyncSession  # noqa: PLC0415
+
+    # AsyncSession satisfies AsyncSessionLike structurally; mypy's generic
+    # AbstractAsyncContextManager check needs the hint spelled out explicitly.
+    return cast("AbstractAsyncContextManager[AsyncSessionLike]", AsyncSession(engine))
 
 
 class InlineRowNotOwnedError(LookupError):
@@ -161,18 +215,13 @@ class BaseAdapter(ABC):
     def __init__(
         self, model: Any, engine: Any = None, *, session_factory: SessionFactory | None = None
     ) -> None:
-        if engine is None and session_factory is None:
-            msg = (
-                f"{type(self).__name__} requires either engine= (an async SQLAlchemy "
-                "engine) or session_factory= (e.g. async_sessionmaker(engine))."
-            )
-            raise ValueError(msg)
+        require_engine_or_session_factory(type(self).__name__, engine, session_factory)
         self.model = model
         self.engine = engine
         self.session_factory = session_factory
         self._queryset_filter: QuerysetFilter | None = None
 
-    def _session(self) -> AbstractAsyncContextManager[Any]:
+    def _session(self) -> AbstractAsyncContextManager[AsyncSessionLike]:
         """Open a session from whichever of ``engine`` / ``session_factory`` was given.
 
         Prefers ``session_factory`` (the host's own session maker) when set, so a
@@ -180,11 +229,7 @@ class BaseAdapter(ABC):
         Falls back to opening a plain ``AsyncSession`` on ``engine`` for the legacy,
         engine-only construction path.
         """
-        if self.session_factory is not None:
-            return self.session_factory()
-        from sqlalchemy.ext.asyncio import AsyncSession  # noqa: PLC0415
-
-        return AsyncSession(self.engine)
+        return open_session(self.engine, self.session_factory)
 
     def for_model(self, model: Any) -> BaseAdapter:
         """Return a new adapter of this same class for ``model``.
@@ -194,8 +239,16 @@ class BaseAdapter(ABC):
         / related-model adapters instead of reaching for a concrete adapter class
         and ``self.engine`` directly (which breaks a ``session_factory=``-only
         admin).
+
+        ``session_factory`` is forwarded only when set, so a third-party
+        ``BaseAdapter`` subclass that still uses the pre-0.5.8, engine-only
+        ``__init__(self, model, engine)`` signature keeps working unchanged
+        (it never sees an unexpected ``session_factory`` keyword).
         """
-        return type(self)(model, engine=self.engine, session_factory=self.session_factory)
+        kwargs: dict[str, Any] = {"engine": self.engine}
+        if self.session_factory is not None:
+            kwargs["session_factory"] = self.session_factory
+        return type(self)(model, **kwargs)
 
     def datetime_kind(self, field: str) -> DateTimeKind | None:
         """Return whether ``field`` stores timezone-aware or naive datetimes.

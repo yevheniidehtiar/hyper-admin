@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from fastapi import APIRouter, FastAPI
 from fastapi.staticfiles import StaticFiles
@@ -17,6 +17,9 @@ from hyperadmin.discover import discover_admin_modules
 from hyperadmin.realtime import ConnectionRegistry, RealtimeSettings
 from hyperadmin.realtime.sse import make_sse_handler
 from hyperadmin.realtime.ws import make_ws_handler
+
+if TYPE_CHECKING:
+    from hyperadmin.core.adapters import SessionFactory
 
 logger = logging.getLogger("hyperadmin")
 
@@ -53,7 +56,8 @@ class Admin:
         storage: Any = None,
         otp_service: Any = None,
         realtime: RealtimeSettings | None = None,
-        session_factory: Any = None,
+        *,
+        session_factory: "SessionFactory | None" = None,
     ) -> None:
         """Initialise HyperAdmin and attach it to a FastAPI application.
 
