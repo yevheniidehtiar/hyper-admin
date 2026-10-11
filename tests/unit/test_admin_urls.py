@@ -15,6 +15,7 @@ from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 from jinja2 import Environment
 from starlette.routing import NoMatchFound
+from starlette.staticfiles import StaticFiles
 
 from hyperadmin.views.urls import admin_base_path, admin_url_for, install_namespaced_url_for
 
@@ -41,6 +42,12 @@ def test_spike_namespaced_name_resolves_and_plain_name_does_not() -> None:
     the plain 'user-list' raises NoMatchFound. If this fails on an
     upgraded fastapi/starlette, admin_url_for's fallback story breaks and
     must be re-escalated before anything else here is trusted.
+
+    Also pins the nested-Mount case (``static``) that st-v058-byoa-35 will
+    depend on when ``/static`` moves under the admin prefix: a Mount is
+    named differently from a plain route (no ``name=`` kwarg on the path
+    operation) and takes a ``path`` param, so it is pinned separately from
+    the plain APIRoute above.
     """
     app = FastAPI()
     sub = FastAPI()
@@ -54,8 +61,14 @@ def test_spike_namespaced_name_resolves_and_plain_name_does_not() -> None:
             captured["plain_raised"] = False
         except NoMatchFound:
             captured["plain_raised"] = True
+        captured["static_namespaced"] = str(request.url_for("hyperadmin:static", path="css/x.css"))
+        # admin_url_for needs the namespace on scope to prefer the namespaced
+        # name, exactly as the plain-route case above needs it for user-list.
+        request.scope["hyperadmin"] = {"namespace": "hyperadmin"}
+        captured["static_via_helper"] = str(admin_url_for(request, "static", path="css/x.css"))
         return {}
 
+    sub.mount("/static", StaticFiles(directory=".", check_dir=False), name="static")
     app.mount("/admin", sub, name="hyperadmin")
 
     response = TestClient(app).get("/admin/user")
@@ -63,6 +76,8 @@ def test_spike_namespaced_name_resolves_and_plain_name_does_not() -> None:
     assert response.status_code == 200
     assert captured["namespaced"].endswith("/admin/user")
     assert captured["plain_raised"] is True
+    assert captured["static_namespaced"].endswith("/admin/static/css/x.css")
+    assert captured["static_via_helper"].endswith("/admin/static/css/x.css")
 
 
 # ---------------------------------------------------------------------------
@@ -149,6 +164,38 @@ def test_admin_url_for_falls_back_to_plain_name_outside_a_namespace() -> None:
 
     assert response.status_code == 200
     assert captured["url"].endswith("/reports")
+
+
+def test_admin_url_for_resolves_a_route_whose_path_param_is_named_name() -> None:
+    """``name`` and ``request`` are positional-only on ``admin_url_for``
+    (matching Starlette's own ``url_for``), so a route with a path param
+    literally called ``name`` goes through ``**path_params`` instead of
+    colliding with the function's own ``name`` parameter — both calling
+    ``admin_url_for`` directly and through the installed Jinja ``url_for``.
+    """
+    app = FastAPI()
+
+    @app.get("/tags/{name}", name="tag")
+    async def tag_detail(name: str) -> dict[str, str]:
+        return {"name": name}
+
+    env = Environment()
+    install_namespaced_url_for(env)
+    template = env.from_string("{{ url_for('tag', name='x') }}")
+
+    captured: dict[str, Any] = {}
+
+    @app.middleware("http")
+    async def _capture(request: Request, call_next: Any) -> Any:
+        captured["direct"] = str(admin_url_for(request, "tag", name="x"))
+        captured["via_jinja"] = template.render(request=request)
+        return await call_next(request)
+
+    response = TestClient(app).get("/tags/x")
+
+    assert response.status_code == 200
+    assert captured["direct"].endswith("/tags/x")
+    assert captured["via_jinja"].endswith("/tags/x")
 
 
 def test_admin_url_for_raises_when_neither_name_resolves() -> None:

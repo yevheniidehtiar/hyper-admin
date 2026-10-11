@@ -117,4 +117,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
     (`is_secret: bool`, `token_count: int`).
 
 ### Added
+- **`hyperadmin.views.urls.admin_url_for` / `admin_base_path`, and a
+  namespace-aware Jinja `url_for` override** (st-v058-byoa-34).
+  `admin_url_for` prefers an admin route's namespaced name when
+  `request.scope["hyperadmin"]["namespace"]` is set, falling back to the
+  plain name so host routes keep resolving; `Admin` installs it as the
+  template env's `url_for` global, replacing Starlette's own. Both helpers
+  are currently no-ops until the isolated sub-app mount (st-v058-byoa-35)
+  starts setting `scope["hyperadmin"]`.
 - Initial project scaffold

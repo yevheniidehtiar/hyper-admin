@@ -48,13 +48,19 @@ def _namespace(request: Request) -> str | None:
     return None
 
 
-def admin_url_for(request: Request, name: str, **path_params: Any) -> URL:
+def admin_url_for(request: Request, name: str, /, **path_params: Any) -> URL:
     """Resolve ``name`` to a URL, preferring the admin's own namespaced route.
 
     Tries ``f"{namespace}:{name}"`` when ``request.scope["hyperadmin"]``
     carries a namespace, then falls back to the plain ``name`` — which
     resolves an un-namespaced admin route (legacy "router" mount mode) and
     any host route exactly as ``request.url_for`` would.
+
+    ``request`` and ``name`` are positional-only (matching Starlette's own
+    ``url_for``, and the SDD's pinned signature) so a route with a path
+    param literally named ``name`` or ``request`` resolves through
+    ``**path_params`` instead of colliding with this function's own
+    parameters.
     """
     namespace = _namespace(request)
     if namespace:
