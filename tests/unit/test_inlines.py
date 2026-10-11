@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+import uuid as uuid_lib
 from unittest.mock import MagicMock
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from hyperadmin.core.inlines import InlineModelSpec
 from hyperadmin.core.options import AdminOptions
@@ -82,7 +83,7 @@ class TestInlineModelSpec:
         """
 
         class UuidChildModel(BaseModel):
-            uuid: int | None = None
+            uuid: uuid_lib.UUID = Field(default_factory=uuid_lib.uuid4)
             parent_id: int | None = None
             description: str = ""
 
