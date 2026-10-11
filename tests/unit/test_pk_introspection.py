@@ -5,12 +5,16 @@ from __future__ import annotations
 import uuid
 
 from sqlalchemy import Column, Integer
+from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlmodel import Field, SQLModel
 
 from hyperadmin.adapters.introspection import introspect_primary_key
 from hyperadmin.adapters.sqlalchemy import SQLAlchemyAdapter
 from hyperadmin.adapters.sqlmodel import SQLModelAdapter
+
+# Adapters need an engine or a session factory (SDD C.3); creating one opens no connection.
+_ENGINE = create_async_engine("sqlite+aiosqlite://")
 
 # ---------------------------------------------------------------------------
 # Story scenarios (st-v058-byoa-15)
@@ -143,14 +147,14 @@ def test_python_type_falls_back_to_column_type_without_pydantic_annotation() -> 
 
 
 def test_sqlmodel_adapter_sets_pk_from_introspection() -> None:
-    adapter = SQLModelAdapter(UuidModel, engine=None)
+    adapter = SQLModelAdapter(UuidModel, engine=_ENGINE)
 
     assert adapter.pk.attr == "id"
     assert adapter.pk.kind == "uuid"
 
 
 def test_sqlalchemy_adapter_sets_pk_from_introspection() -> None:
-    adapter = SQLAlchemyAdapter(IntAutoModel, engine=None)
+    adapter = SQLAlchemyAdapter(IntAutoModel, engine=_ENGINE)
 
     assert adapter.pk.attr == "id"
     assert adapter.pk.kind == "int"
