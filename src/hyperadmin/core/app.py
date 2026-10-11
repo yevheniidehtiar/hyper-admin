@@ -189,6 +189,7 @@ class Admin:
             templates=self.templates,
             permission_checker=self.permission_checker if self.auth_backend else None,
             storage=self.storage,
+            timezone=self.settings.tzinfo,
         )
         admin_router.generate_routes()
         routers = admin_router.get_routers()

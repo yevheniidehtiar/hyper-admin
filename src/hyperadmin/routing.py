@@ -1,5 +1,7 @@
 """This module will contain the dynamic routing engine for HyperAdmin."""
 
+from datetime import timezone as dt_timezone
+from datetime import tzinfo
 from typing import Any
 
 from fastapi import APIRouter, Request
@@ -13,6 +15,7 @@ from hyperadmin.core.introspection import infer_list_display, infer_list_filter,
 from hyperadmin.core.options import AdminOptions
 from hyperadmin.views.dynamic import DynamicModelView
 from hyperadmin.views.error_pages import admin_route_class
+from hyperadmin.views.template_filters import register_template_filters
 
 
 def _extract_column_names(raw: list[Any] | None, model: type | None = None) -> list[str] | None:
@@ -262,6 +265,9 @@ class HyperAdminRouter:
     Args:
         engine: The async SQLAlchemy engine passed to every adapter.
         templates: The shared ``Jinja2Templates`` instance used across all views.
+        timezone: The admin's configured display timezone (``settings.tzinfo``),
+            registered as the ``ha_display``/``ha_datetime_input`` fallback
+            (BYOA SDD A.9). Defaults to UTC.
     """
 
     def __init__(
@@ -270,13 +276,16 @@ class HyperAdminRouter:
         templates: Jinja2Templates,
         permission_checker: Any = None,
         storage: Any = None,
+        timezone: tzinfo | None = None,
     ):
         self.engine = engine
         self.permission_checker = permission_checker
         self.storage = storage
+        self.timezone = timezone or dt_timezone.utc
         # Enable global whitespace trimming
         templates.env.trim_blocks = True
         templates.env.lstrip_blocks = True
+        register_template_filters(templates.env, default_timezone=self.timezone)
         self.templates = templates
         self.routers: list[APIRouter] = []
 
