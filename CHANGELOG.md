@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- **Primary-key and datetime-kind introspection for ORM adapters** (st-v058-byoa-15).
+  - `SQLModelAdapter` and `SQLAlchemyAdapter` now set `self.pk` to a
+    `PrimaryKeyInfo` built from real mapper introspection (int/UUID/str,
+    generated vs. natural, remapped `sa_column` attributes, composite keys)
+    instead of the historical `int id` default.
+  - Both adapters override `datetime_kind(field)` to inspect the mapped
+    column (pydantic `AwareDatetime`/`NaiveDatetime` annotation,
+    `hyperadmin_tz_aware`, sqlmodel `UTCDateTime`, `DateTime(timezone=True)`)
+    rather than the annotation alone, still returning `None` for a
+    non-datetime or unknown field per `BaseAdapter`'s contract.
+
 ### Changed
 - **HyperAdmin design system: brand palette, fonts and tokens** (docs/design/system).
   - New palette: HyperAdmin teal (`#0d9488` brand, `#0f766e` actions) and a
