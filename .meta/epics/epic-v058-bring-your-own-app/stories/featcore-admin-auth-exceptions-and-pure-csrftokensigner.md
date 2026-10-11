@@ -2,7 +2,7 @@
 type: story
 id: st-v058-byoa-18
 title: "feat(core): admin auth exceptions and pure CsrfTokenSigner"
-status: todo
+status: done
 priority: high
 assignee: null
 labels:
@@ -14,7 +14,7 @@ estimate: null
 epic_ref:
   id: ep-v058-byoa-01
 created_at: 2026-09-28T00:00:00Z
-updated_at: 2026-09-28T00:00:00Z
+updated_at: 2026-10-11T00:00:00Z
 ---
 
 ## Summary
