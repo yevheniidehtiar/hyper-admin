@@ -7,7 +7,7 @@ from datetime import datetime
 from enum import Enum
 
 import pytest
-from sqlmodel import Field, SQLModel
+from sqlmodel import Column, Field, Integer, SQLModel
 
 from hyperadmin.core.introspection import (
     FieldMeta,
@@ -82,6 +82,23 @@ class CategoryModel(SQLModel, table=True):
     name: str = Field(min_length=1)
 
 
+class RemappedPkModel(SQLModel, table=True):
+    """A pk mapped under an attribute name that differs from the column name."""
+
+    __tablename__ = "test_remapped_pk"
+
+    id_: int | None = Field(default=None, sa_column=Column("id", Integer, primary_key=True))
+    name: str = ""
+
+
+class RemappedPkOnlyModel(SQLModel, table=True):
+    """A single-field model (pk only) whose pk is remapped, mirroring UuidOnlyModel."""
+
+    __tablename__ = "test_remapped_pk_only"
+
+    id_: int | None = Field(default=None, sa_column=Column("id", Integer, primary_key=True))
+
+
 # ── get_field_metadata ─────────────────────────────────────────────────
 
 
@@ -115,6 +132,19 @@ class TestGetFieldMetadata:
         meta = get_field_metadata(MixedFieldModel)
         expected = {"id", "name", "email", "is_active", "status", "category_id", "created_at"}
         assert set(meta.keys()) == expected
+
+    def test_remapped_pk_is_keyed_by_the_mapped_attribute(self) -> None:
+        """
+        Scenario: remapped pk column
+          Given a pk mapped under attribute 'id_' via sa_column=Column("id", ...)
+          When  get_field_metadata runs
+          Then  the result is keyed by 'id_', not the column name 'id'
+        """
+        meta = get_field_metadata(RemappedPkModel)
+
+        assert "id_" in meta
+        assert "id" not in meta
+        assert meta["id_"].is_pk is True
 
 
 # ── infer_list_display ─────────────────────────────────────────────────
@@ -159,6 +189,17 @@ class TestInferListDisplay:
         result = infer_list_display(UuidOnlyModel)
 
         assert result == ["uuid", "__str__"]
+
+    def test_remapped_pk_model_falls_back_to_its_mapped_attribute_name(self) -> None:
+        """
+        Scenario: list_display fallback for a remapped pk
+          Given a single-field model with pk mapped under attribute 'id_' (column 'id')
+          When  infer_list_display falls back
+          Then  ['id_', '__str__'] is returned, not ['id', '__str__']
+        """
+        result = infer_list_display(RemappedPkOnlyModel)
+
+        assert result == ["id_", "__str__"]
 
 
 # ── infer_search_fields ───────────────────────────────────────────────

@@ -20,6 +20,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
     non-datetime or unknown field per `BaseAdapter`'s contract.
 
 ### Changed
+- **Primary-key-aware display, FK filter choices and list_display fallback**
+  (st-v058-byoa-23). `get_display_name`, `InlineModelSpec.get_display_fields`,
+  `infer_list_display`'s fallback and the FK filter-choice builder in
+  `core/discovery.py` now resolve the model's actual primary-key attribute
+  (via the introspected `pk`/`FieldMeta.is_pk`) instead of hard-coding `"id"`.
 - **HyperAdmin design system: brand palette, fonts and tokens** (docs/design/system).
   - New palette: HyperAdmin teal (`#0d9488` brand, `#0f766e` actions) and a
     violet "hyper" accent replace the borrowed FastAPI teal and Pydantic coral.

@@ -64,3 +64,26 @@ async def test_fk_filter_choice_values_are_uuid_strings(engine) -> None:
     # The value is the canonical (lowercase, hyphenated) UUID string, not repr(UUID).
     assert isinstance(fk_filter["choices"][0]["value"], str)
     uuid.UUID(fk_filter["choices"][0]["value"])  # does not raise
+
+
+@pytest.mark.anyio
+async def test_fk_filter_skips_items_with_no_usable_pk_value(engine, monkeypatch) -> None:
+    """
+    Scenario: FK filter choices skip rows without a usable pk value
+      Given a related item whose pk attribute is None
+      When  filter metadata is built
+      Then  that item is skipped, not turned into a "None" choice or a raise
+    """
+    category = DiscoveryCategory(id=uuid.uuid4(), name="Widgets")
+    orphan = DiscoveryCategory(id=uuid.uuid4(), name="Orphan")
+    orphan.id = None  # type: ignore[assignment]  # simulate a row with no usable pk value
+
+    async def fake_list(self, *args, **kwargs):
+        return [category, orphan], 2
+
+    monkeypatch.setattr(SQLModelAdapter, "list", fake_list)
+
+    product_adapter = SQLModelAdapter(DiscoveryProduct, engine)
+    metadata = await build_filter_metadata(DiscoveryProduct, ["category_id"], product_adapter)
+
+    assert metadata[0]["choices"] == [{"value": str(category.id), "label": "Widgets"}]

@@ -59,7 +59,10 @@ def get_field_metadata(model: type[SQLModel]) -> dict[str, FieldMeta]:
     result: dict[str, FieldMeta] = {}
 
     for col in mapper.columns:
-        name = col.key
+        # The mapped attribute key, not ``col.key`` (the Column object's own key,
+        # which is the column/db name and can differ, e.g. a remapped
+        # ``sa_column=Column("id", ...)`` field mapped under attribute ``id_``).
+        name = mapper.get_property_by_column(col).key
         ann = _get_python_type(model, name)
 
         is_pk = col.primary_key

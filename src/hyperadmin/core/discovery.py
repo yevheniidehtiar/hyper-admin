@@ -86,18 +86,26 @@ async def build_filter_metadata(
                     target_adapter = target_adapter_cls(target_model, adapter.engine)
                     related_items, _ = await target_adapter.list(page_size=1000)
                     target_pk = target_adapter.pk
+                    choices = []
+                    for item in related_items:
+                        pk_value = target_pk.value_of(item)
+                        if pk_value is None:
+                            # Skip rows without a usable pk value instead of
+                            # letting to_str() raise (uuid) or coerce to the
+                            # literal string "None" (int/str).
+                            continue
+                        choices.append(
+                            {
+                                "value": target_pk.to_str(pk_value),
+                                "label": get_display_name(item, pk_attr=target_pk.attr),
+                            }
+                        )
                     metadata.append(
                         {
                             "name": field_name,
                             "label": label,
                             "type": "fk",
-                            "choices": [
-                                {
-                                    "value": target_pk.to_str(target_pk.value_of(item)),
-                                    "label": get_display_name(item, pk_attr=target_pk.attr),
-                                }
-                                for item in related_items
-                            ],
+                            "choices": choices,
                         }
                     )
                 except Exception:
