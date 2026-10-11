@@ -8,6 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **`session_factory=` seam for bring-your-own-app hosts** (st-v058-byoa-21,
+  SDD `docs/specs/bring-your-own-app.md` section C.3). A host that manages its
+  own engine, connection pool and transaction scope can now pass a session
+  factory instead of an engine:
+  - `Admin(app, session_factory=async_sessionmaker(engine))` (keyword-only,
+    alongside or instead of `engine=`).
+  - `BaseAdapter(model, session_factory=...)` / `BaseAdapter.for_model(model)`
+    — every built-in inline, FK-choices and row-scoped-FK adapter construction
+    goes through `for_model`, so a `session_factory=`-only admin never needs
+    an `engine`.
+  - `SessionAuthBackend`, `PermissionSyncService` and `ModelPermissionChecker`
+    gain the same `session_factory=` keyword and a `_session()` method.
+  - New typing alias `hyperadmin.core.adapters.SessionFactory` and `Protocol`
+    `AsyncSessionLike` describing the session shape a factory must yield.
+
 - **Primary-key and datetime-kind introspection for ORM adapters** (st-v058-byoa-15).
   - `SQLModelAdapter` and `SQLAlchemyAdapter` now set `self.pk` to a
     `PrimaryKeyInfo` built from real mapper introspection (int/UUID/str,
@@ -20,6 +35,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
     non-datetime or unknown field per `BaseAdapter`'s contract.
 
 ### Changed
+- Constructing a `BaseAdapter` subclass, `SessionAuthBackend`,
+  `PermissionSyncService` or `ModelPermissionChecker` with **neither**
+  `engine=` **nor** `session_factory=` now raises `ValueError` (previously an
+  engine-only `None` silently produced a broken, unusable instance).
 - **Primary-key-aware display, FK filter choices and list_display fallback**
   (st-v058-byoa-23). `get_display_name`, `InlineModelSpec.get_display_fields`,
   `infer_list_display`'s fallback and the FK filter-choice builder in

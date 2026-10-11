@@ -1210,16 +1210,15 @@ class DynamicModelView:
         crafted POST/PUT could still submit their key. Only targets with active
         row scoping need the lookup; the database FK constraint covers the rest.
         """
-        from hyperadmin.adapters.registry import adapter_registry  # noqa: PLC0415
-
         errors: dict[str, str] = {}
         for name, target in self._many_to_one_targets().items():
             value = data.get(name)
             if value in (None, "") or not scoped_queryset_filters(target):
                 continue
-            target_adapter = adapter_registry.find_adapter_for_model(target)(
-                target, self.adapter.engine
-            )
+            # Via for_model(), not a bare adapter_registry lookup + self.adapter.engine:
+            # a session_factory=-only admin has no engine, and the bare construction
+            # would raise ValueError (SDD C.3).
+            target_adapter = self.adapter.for_model(target)
             if await target_adapter.get(pk=value) is None:
                 errors[name] = "Select a valid choice."
         return errors

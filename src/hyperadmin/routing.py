@@ -2,7 +2,7 @@
 
 from datetime import timezone as dt_timezone
 from datetime import tzinfo
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from fastapi import APIRouter, Request
 from fastapi.routing import APIRoute
@@ -16,6 +16,9 @@ from hyperadmin.core.options import AdminOptions
 from hyperadmin.views.dynamic import DynamicModelView
 from hyperadmin.views.error_pages import admin_route_class
 from hyperadmin.views.template_filters import register_template_filters
+
+if TYPE_CHECKING:
+    from hyperadmin.core.adapters import SessionFactory
 
 
 def _extract_column_names(raw: list[Any] | None, model: type | None = None) -> list[str] | None:
@@ -63,12 +66,19 @@ def create_admin_router(  # noqa: PLR0913, PLR0917
     storage: Any = None,
     admin_lookup: Any = None,
     route_class: type[APIRoute] = APIRoute,
-    session_factory: Any = None,
+    session_factory: "SessionFactory | None" = None,
 ) -> APIRouter:
     """Creates an APIRouter for a given model with the specified admin options."""
     router = APIRouter(route_class=route_class)
+    # session_factory is forwarded only when set, so a third-party adapter_class
+    # that still uses the pre-0.5.8, engine-only __init__(self, model, engine)
+    # signature keeps working under an engine-only Admin (it never sees an
+    # unexpected session_factory keyword).
+    adapter_kwargs: dict[str, Any] = {"engine": engine}
+    if session_factory is not None:
+        adapter_kwargs["session_factory"] = session_factory
     view = DynamicModelView(
-        adapter=admin_instance.adapter_class(model, engine=engine, session_factory=session_factory),
+        adapter=admin_instance.adapter_class(model, **adapter_kwargs),
         options=options,
         templates=templates,
         app_label=admin_class.app_label,
@@ -289,7 +299,7 @@ class HyperAdminRouter:
         storage: Any = None,
         timezone: tzinfo | None = None,
         datetime_format: str = "%Y-%m-%d %H:%M:%S",
-        session_factory: Any = None,
+        session_factory: "SessionFactory | None" = None,
     ):
         self.engine = engine
         self.permission_checker = permission_checker

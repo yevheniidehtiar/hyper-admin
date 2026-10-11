@@ -12,13 +12,14 @@ from sqlmodel import select
 
 from hyperadmin.auth.backend import verify_password
 from hyperadmin.auth.models import User
+from hyperadmin.core.adapters import open_session, require_engine_or_session_factory
 
 if TYPE_CHECKING:
     from contextlib import AbstractAsyncContextManager
 
     from sqlalchemy.ext.asyncio import AsyncEngine
 
-    from hyperadmin.core.adapters import SessionFactory
+    from hyperadmin.core.adapters import AsyncSessionLike, SessionFactory
 
 
 class SessionAuthBackend:
@@ -27,22 +28,13 @@ class SessionAuthBackend:
     def __init__(
         self, engine: AsyncEngine | None = None, *, session_factory: SessionFactory | None = None
     ) -> None:
-        if engine is None and session_factory is None:
-            msg = (
-                "SessionAuthBackend requires either engine= (an async SQLAlchemy "
-                "engine) or session_factory= (e.g. async_sessionmaker(engine))."
-            )
-            raise ValueError(msg)
+        require_engine_or_session_factory("SessionAuthBackend", engine, session_factory)
         self.engine = engine
         self.session_factory = session_factory
 
-    def _session(self) -> AbstractAsyncContextManager[Any]:
+    def _session(self) -> AbstractAsyncContextManager[AsyncSessionLike]:
         """Open a session from whichever of ``engine`` / ``session_factory`` was given."""
-        if self.session_factory is not None:
-            return self.session_factory()
-        from sqlalchemy.ext.asyncio import AsyncSession  # noqa: PLC0415
-
-        return AsyncSession(self.engine)
+        return open_session(self.engine, self.session_factory)
 
     async def authenticate(self, username: str, password: str) -> User | None:
         """Return the user if credentials are valid, else ``None``."""
