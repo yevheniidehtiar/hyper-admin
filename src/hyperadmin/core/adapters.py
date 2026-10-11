@@ -3,7 +3,7 @@ from __future__ import annotations
 import types
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterator
-from contextlib import contextmanager
+from contextlib import AbstractAsyncContextManager, contextmanager
 from contextvars import ContextVar
 from dataclasses import dataclass
 from datetime import datetime
@@ -23,6 +23,11 @@ if TYPE_CHECKING:
     from hyperadmin.core.timezones import DateTimeKind
 
     QuerysetFilter = Callable[["Request | None"], dict[str, Any]]
+
+#: A zero-argument callable returning an async context manager that yields a
+#: session (``async_sessionmaker(engine)`` already satisfies this). Typing only
+#: — ``core/`` never imports an ORM session class to define it.
+SessionFactory = Callable[[], AbstractAsyncContextManager[Any]]
 
 #: Resolves the row-scoping callable for a model class inside a request scope.
 QuerysetFilterResolver = Callable[[Any], "Callable[[Any], dict[str, Any]] | None"]
@@ -153,10 +158,44 @@ class BaseAdapter(ABC):
     #: value; third-party adapters inherit the historical ``int id`` default.
     pk: PrimaryKeyInfo = DEFAULT_PK
 
-    def __init__(self, model: Any, engine: Any) -> None:
+    def __init__(
+        self, model: Any, engine: Any = None, *, session_factory: SessionFactory | None = None
+    ) -> None:
+        if engine is None and session_factory is None:
+            msg = (
+                f"{type(self).__name__} requires either engine= (an async SQLAlchemy "
+                "engine) or session_factory= (e.g. async_sessionmaker(engine))."
+            )
+            raise ValueError(msg)
         self.model = model
         self.engine = engine
+        self.session_factory = session_factory
         self._queryset_filter: QuerysetFilter | None = None
+
+    def _session(self) -> AbstractAsyncContextManager[Any]:
+        """Open a session from whichever of ``engine`` / ``session_factory`` was given.
+
+        Prefers ``session_factory`` (the host's own session maker) when set, so a
+        host-managed engine, connection pool and transaction scope are respected.
+        Falls back to opening a plain ``AsyncSession`` on ``engine`` for the legacy,
+        engine-only construction path.
+        """
+        if self.session_factory is not None:
+            return self.session_factory()
+        from sqlalchemy.ext.asyncio import AsyncSession  # noqa: PLC0415
+
+        return AsyncSession(self.engine)
+
+    def for_model(self, model: Any) -> BaseAdapter:
+        """Return a new adapter of this same class for ``model``.
+
+        Carries over this adapter's ``engine`` and ``session_factory`` so the new
+        adapter shares the same database connection seam — used to construct inline
+        / related-model adapters instead of reaching for a concrete adapter class
+        and ``self.engine`` directly (which breaks a ``session_factory=``-only
+        admin).
+        """
+        return type(self)(model, engine=self.engine, session_factory=self.session_factory)
 
     def datetime_kind(self, field: str) -> DateTimeKind | None:
         """Return whether ``field`` stores timezone-aware or naive datetimes.

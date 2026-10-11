@@ -91,14 +91,11 @@ async def build_filter_metadata(
                     target_model = target_rel.mapper.class_
 
             if target_model:
-                from hyperadmin.adapters.registry import adapter_registry  # noqa: PLC0415
-
                 try:
-                    # NOTE: known debt (st-v058-byoa-23 review) — core/ builds a concrete
-                    # adapter directly instead of going through adapter.for_model(), which
-                    # does not exist yet (lands in st-v058-byoa-21). Do not deepen this.
-                    target_adapter_cls = adapter_registry.find_adapter_for_model(target_model)
-                    target_adapter = target_adapter_cls(target_model, adapter.engine)
+                    # Shares ``adapter``'s engine or session_factory (C.3) rather than
+                    # constructing a fresh adapter from ``adapter.engine`` directly,
+                    # which would break a session_factory=-only admin.
+                    target_adapter = adapter.for_model(target_model)
                     related_items, _ = await target_adapter.list(page_size=1000)
                     choices = _pk_choices(related_items, target_adapter.pk)
                     metadata.append(

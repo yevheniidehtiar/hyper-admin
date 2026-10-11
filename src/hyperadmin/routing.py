@@ -63,11 +63,12 @@ def create_admin_router(  # noqa: PLR0913, PLR0917
     storage: Any = None,
     admin_lookup: Any = None,
     route_class: type[APIRoute] = APIRoute,
+    session_factory: Any = None,
 ) -> APIRouter:
     """Creates an APIRouter for a given model with the specified admin options."""
     router = APIRouter(route_class=route_class)
     view = DynamicModelView(
-        adapter=admin_instance.adapter_class(model, engine=engine),
+        adapter=admin_instance.adapter_class(model, engine=engine, session_factory=session_factory),
         options=options,
         templates=templates,
         app_label=admin_class.app_label,
@@ -270,6 +271,8 @@ class HyperAdminRouter:
             (BYOA SDD A.9). Defaults to UTC.
         datetime_format: The admin's configured ``settings.datetime_format``,
             registered as the ``ha_display`` format string (BYOA SDD A.7).
+        session_factory: A host-provided session factory forwarded to every
+            adapter alongside (or instead of) ``engine``.
 
     The timezone and datetime format reach the view layer by living on the
     shared Jinja environment (as the ``hyperadmin_timezone`` /
@@ -286,10 +289,12 @@ class HyperAdminRouter:
         storage: Any = None,
         timezone: tzinfo | None = None,
         datetime_format: str = "%Y-%m-%d %H:%M:%S",
+        session_factory: Any = None,
     ):
         self.engine = engine
         self.permission_checker = permission_checker
         self.storage = storage
+        self.session_factory = session_factory
         # Enable global whitespace trimming
         templates.env.trim_blocks = True
         templates.env.lstrip_blocks = True
@@ -365,6 +370,7 @@ class HyperAdminRouter:
                 storage=self.storage,
                 admin_lookup=admin_instances.get,
                 route_class=route_class,
+                session_factory=self.session_factory,
             )
             self.routers.append(router)
 

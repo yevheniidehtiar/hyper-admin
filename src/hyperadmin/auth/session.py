@@ -6,24 +6,47 @@ Starlette's ``SessionMiddleware``-backed cookie sessions.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlmodel import select
 
 from hyperadmin.auth.backend import verify_password
 from hyperadmin.auth.models import User
 
+if TYPE_CHECKING:
+    from contextlib import AbstractAsyncContextManager
+
+    from sqlalchemy.ext.asyncio import AsyncEngine
+
+    from hyperadmin.core.adapters import SessionFactory
+
 
 class SessionAuthBackend:
-    """Cookie-session authentication backed by an async SQLAlchemy engine."""
+    """Cookie-session authentication backed by an async engine or session factory."""
 
-    def __init__(self, engine: AsyncEngine) -> None:
+    def __init__(
+        self, engine: AsyncEngine | None = None, *, session_factory: SessionFactory | None = None
+    ) -> None:
+        if engine is None and session_factory is None:
+            msg = (
+                "SessionAuthBackend requires either engine= (an async SQLAlchemy "
+                "engine) or session_factory= (e.g. async_sessionmaker(engine))."
+            )
+            raise ValueError(msg)
         self.engine = engine
+        self.session_factory = session_factory
+
+    def _session(self) -> AbstractAsyncContextManager[Any]:
+        """Open a session from whichever of ``engine`` / ``session_factory`` was given."""
+        if self.session_factory is not None:
+            return self.session_factory()
+        from sqlalchemy.ext.asyncio import AsyncSession  # noqa: PLC0415
+
+        return AsyncSession(self.engine)
 
     async def authenticate(self, username: str, password: str) -> User | None:
         """Return the user if credentials are valid, else ``None``."""
-        async with AsyncSession(self.engine) as session:
+        async with self._session() as session:
             stmt = select(User).where(User.username == username)
             user = (await session.execute(stmt)).scalar_one_or_none()
             if user is None:
@@ -47,6 +70,6 @@ class SessionAuthBackend:
         user_id = request.session.get("user_id")
         if user_id is None:
             return None
-        async with AsyncSession(self.engine) as session:
+        async with self._session() as session:
             stmt = select(User).where(User.id == user_id)
             return (await session.execute(stmt)).scalar_one_or_none()

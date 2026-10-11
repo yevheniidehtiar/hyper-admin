@@ -2,7 +2,7 @@ import builtins
 from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import and_, func, or_, select
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.inspection import inspect
 from sqlalchemy.orm import selectinload
 from sqlmodel import SQLModel
@@ -10,7 +10,7 @@ from sqlmodel import SQLModel
 from hyperadmin.adapters._search import detect_search_columns
 from hyperadmin.adapters.introspection import datetime_kind as _introspect_datetime_kind
 from hyperadmin.adapters.introspection import introspect_primary_key
-from hyperadmin.core.adapters import BaseAdapter, scoped_queryset_filters
+from hyperadmin.core.adapters import BaseAdapter, SessionFactory, scoped_queryset_filters
 from hyperadmin.core.choices import ChoiceItem
 from hyperadmin.core.display import get_display_name
 from hyperadmin.core.inlines import InlineModelSpec
@@ -23,8 +23,14 @@ _MAX_CHOICES_LIMIT = 200
 
 
 class SQLAlchemyAdapter(BaseAdapter):
-    def __init__(self, model: type[SQLModel], engine: AsyncEngine) -> None:
-        super().__init__(model=model, engine=engine)
+    def __init__(
+        self,
+        model: type[SQLModel],
+        engine: AsyncEngine | None = None,
+        *,
+        session_factory: SessionFactory | None = None,
+    ) -> None:
+        super().__init__(model=model, engine=engine, session_factory=session_factory)
         self.inspector = inspect(model)
         if self.inspector is None:
             raise ValueError("Could not inspect model. Is it a valid SQLAlchemy model?")
@@ -49,7 +55,7 @@ class SQLAlchemyAdapter(BaseAdapter):
         predicate so excluded rows resolve to ``None`` (not raised).
         """
         queryset_filters = self._resolve_queryset_filters()
-        async with AsyncSession(self.engine) as session:
+        async with self._session() as session:
             if not queryset_filters:
                 return await session.get(self.model, pk)
             assert self.inspector is not None  # noqa: S101 — validated in __init__
@@ -109,7 +115,7 @@ class SQLAlchemyAdapter(BaseAdapter):
 
         paginated_items_query = items_query.offset((page - 1) * page_size).limit(page_size)
 
-        async with AsyncSession(self.engine) as session:
+        async with self._session() as session:
             total_count_result = await session.execute(count_query)
             total_count = total_count_result.scalar_one()
 
@@ -120,14 +126,14 @@ class SQLAlchemyAdapter(BaseAdapter):
 
     async def create(self, data: dict[str, Any]) -> Any:
         db_obj = self.model.model_validate(data)
-        async with AsyncSession(self.engine) as session:
+        async with self._session() as session:
             session.add(db_obj)
             await session.commit()
             await session.refresh(db_obj)
         return db_obj
 
     async def update(self, pk: Any, data: dict[str, Any]) -> Any:
-        async with AsyncSession(self.engine) as session:
+        async with self._session() as session:
             db_obj = await session.get(self.model, pk)
             if db_obj:
                 for key, value in data.items():
@@ -138,7 +144,7 @@ class SQLAlchemyAdapter(BaseAdapter):
             return db_obj
 
     async def delete(self, pk: Any) -> None:
-        async with AsyncSession(self.engine) as session:
+        async with self._session() as session:
             db_obj = await session.get(self.model, pk)
             if db_obj:
                 await session.delete(db_obj)
@@ -148,7 +154,7 @@ class SQLAlchemyAdapter(BaseAdapter):
         if not self.inspector or not hasattr(self.model, field):
             return []
         queryset_filters = self._resolve_queryset_filters()
-        async with AsyncSession(self.engine) as session:
+        async with self._session() as session:
             query = (
                 select(self.model)
                 .where(self.inspector.primary_key[0] == pk)
@@ -205,7 +211,7 @@ class SQLAlchemyAdapter(BaseAdapter):
         target_inspector = inspect(target_model)
         if target_inspector is None:  # Optional in SQLAlchemy < 2.0.2x type stubs
             return []
-        async with AsyncSession(self.engine) as session:
+        async with self._session() as session:
             query = select(target_model)
 
             if q:
@@ -260,7 +266,7 @@ class SQLAlchemyAdapter(BaseAdapter):
                 existing child of ``parent_pk``.
         """
         await self.ensure_inline_rows_owned(spec, rows, parent_pk)
-        inline_adapter = SQLAlchemyAdapter(spec.model, self.engine)
+        inline_adapter = self.for_model(spec.model)
         pk_attrs = {col.key for col in inspect(spec.model).primary_key}
         for row in rows:
             row_pk = row.get("_pk")
@@ -282,7 +288,7 @@ class SQLAlchemyAdapter(BaseAdapter):
     async def inline_child_pks(self, spec: InlineModelSpec, parent_pk: Any) -> set[Any]:
         """Return the primary keys of ``spec.model`` rows owned by ``parent_pk``."""
         pk_col = inspect(spec.model).primary_key[0]
-        async with AsyncSession(self.engine) as session:
+        async with self._session() as session:
             result = await session.execute(
                 select(pk_col).where(getattr(spec.model, spec.fk_field) == parent_pk)
             )
