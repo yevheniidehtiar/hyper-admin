@@ -141,9 +141,7 @@ def _is_datetime_column_type(column_type: Any) -> bool:
         return True
     if getattr(column_type, "hyperadmin_tz_aware", False):
         return True
-    if isinstance(column_type, TypeDecorator) and isinstance(column_type.impl, DateTime):
-        return True
-    return False
+    return isinstance(column_type, TypeDecorator) and isinstance(column_type.impl, DateTime)
 
 
 def datetime_kind(model: Any, field: str) -> DateTimeKind | None:
