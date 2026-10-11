@@ -62,8 +62,9 @@ def test_concrete_adapter_must_implement_all_methods():
         async def save_inline_rows(self, spec: Any, rows: builtins.list, parent_pk: Any) -> None:
             pass
 
-    # This should not raise an error
-    ConcreteAdapter(model=None, engine=None)
+    # This should not raise an error. A non-``None`` engine is required since
+    # BaseAdapter.__init__ now rejects engine=None, session_factory=None (SDD C.3).
+    ConcreteAdapter(model=None, engine=object())
 
 
 def test_incomplete_adapter_raises_error():

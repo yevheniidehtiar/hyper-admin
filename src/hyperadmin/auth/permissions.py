@@ -5,9 +5,8 @@ Implements ``PermissionChecker`` and ``PermissionRegistry`` protocols.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 from sqlmodel import select
 
 from hyperadmin.auth.models import (
@@ -19,7 +18,31 @@ from hyperadmin.auth.models import (
     UserPermission,
 )
 
+if TYPE_CHECKING:
+    from contextlib import AbstractAsyncContextManager
+
+    from sqlalchemy.ext.asyncio import AsyncEngine
+
+    from hyperadmin.core.adapters import SessionFactory
+
 _ACTIONS = ("view", "add", "change", "delete")
+
+
+def _require_engine_or_session_factory(cls_name: str, engine: Any, session_factory: Any) -> None:
+    if engine is None and session_factory is None:
+        msg = (
+            f"{cls_name} requires either engine= (an async SQLAlchemy engine) or "
+            "session_factory= (e.g. async_sessionmaker(engine))."
+        )
+        raise ValueError(msg)
+
+
+def _open_session(engine: Any, session_factory: Any) -> AbstractAsyncContextManager[Any]:
+    if session_factory is not None:
+        return session_factory()
+    from sqlalchemy.ext.asyncio import AsyncSession  # noqa: PLC0415
+
+    return AsyncSession(engine)
 
 
 def generate_default_permissions(model_name: str) -> list[tuple[str, str]]:
@@ -31,8 +54,16 @@ def generate_default_permissions(model_name: str) -> list[tuple[str, str]]:
 class PermissionSyncService:
     """Syncs auto-generated and custom permissions to the database on startup."""
 
-    def __init__(self, engine: AsyncEngine) -> None:
+    def __init__(
+        self, engine: AsyncEngine | None = None, *, session_factory: SessionFactory | None = None
+    ) -> None:
+        _require_engine_or_session_factory("PermissionSyncService", engine, session_factory)
         self.engine = engine
+        self.session_factory = session_factory
+
+    def _session(self) -> AbstractAsyncContextManager[Any]:
+        """Open a session from whichever of ``engine`` / ``session_factory`` was given."""
+        return _open_session(self.engine, self.session_factory)
 
     async def sync_permissions(self, registered_models: list[Any]) -> None:
         """Create missing permissions for all registered models.
@@ -40,7 +71,7 @@ class PermissionSyncService:
         Args:
             registered_models: List of ``(model_name, admin_class)`` tuples.
         """
-        async with AsyncSession(self.engine) as session:
+        async with self._session() as session:
             existing = (await session.execute(select(Permission.codename))).scalars().all()
             existing_set = set(existing)
 
@@ -71,8 +102,16 @@ class PermissionSyncService:
 class ModelPermissionChecker:
     """Checks user permissions via direct grants and group inheritance."""
 
-    def __init__(self, engine: AsyncEngine) -> None:
+    def __init__(
+        self, engine: AsyncEngine | None = None, *, session_factory: SessionFactory | None = None
+    ) -> None:
+        _require_engine_or_session_factory("ModelPermissionChecker", engine, session_factory)
         self.engine = engine
+        self.session_factory = session_factory
+
+    def _session(self) -> AbstractAsyncContextManager[Any]:
+        """Open a session from whichever of ``engine`` / ``session_factory`` was given."""
+        return _open_session(self.engine, self.session_factory)
 
     async def has_permission(self, user: User, codename: str) -> bool:
         """Return ``True`` if the user holds the given permission."""
@@ -83,7 +122,7 @@ class ModelPermissionChecker:
 
     async def get_user_permissions(self, user: User) -> set[str]:
         """Return the union of direct + group-inherited permission codenames."""
-        async with AsyncSession(self.engine) as session:
+        async with self._session() as session:
             # Direct permissions
             stmt = (
                 select(Permission.codename)

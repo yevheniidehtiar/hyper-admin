@@ -2,14 +2,14 @@ import builtins
 from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import func, inspect, or_
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.orm import selectinload
 from sqlmodel import SQLModel, select
 
 from hyperadmin.adapters._search import detect_search_columns
 from hyperadmin.adapters.introspection import datetime_kind as _introspect_datetime_kind
 from hyperadmin.adapters.introspection import introspect_primary_key
-from hyperadmin.core.adapters import BaseAdapter, scoped_queryset_filters
+from hyperadmin.core.adapters import BaseAdapter, SessionFactory, scoped_queryset_filters
 from hyperadmin.core.choices import ChoiceItem
 from hyperadmin.core.display import get_display_name
 from hyperadmin.core.inlines import InlineModelSpec
@@ -26,8 +26,14 @@ class SQLModelAdapter(BaseAdapter):
     Data adapter for SQLModel.
     """
 
-    def __init__(self, model: type[SQLModel], engine: AsyncEngine):
-        super().__init__(model, engine)
+    def __init__(
+        self,
+        model: type[SQLModel],
+        engine: AsyncEngine | None = None,
+        *,
+        session_factory: SessionFactory | None = None,
+    ):
+        super().__init__(model, engine, session_factory=session_factory)
         self.inspector = inspect(model)
         self.pk = introspect_primary_key(model)
 
@@ -57,7 +63,7 @@ class SQLModelAdapter(BaseAdapter):
             The retrieved object, or None if not found.
         """
         queryset_filters = self._resolve_queryset_filters()
-        async with AsyncSession(self.engine) as session:
+        async with self._session() as session:
             mapper = inspect(self.model)
             options = [selectinload(getattr(self.model, rel.key)) for rel in mapper.relationships]
             query = select(self.model).where(self.model.id == pk).options(*options)
@@ -83,7 +89,7 @@ class SQLModelAdapter(BaseAdapter):
         included in the count query, keeping pagination math consistent.
         """
         queryset_filters = self._resolve_queryset_filters()
-        async with AsyncSession(self.engine) as session:
+        async with self._session() as session:
             query = select(self.model)
 
             # Eagerly load all relationships to avoid DetachedInstanceError
@@ -148,7 +154,7 @@ class SQLModelAdapter(BaseAdapter):
         Returns:
             The created object.
         """
-        async with AsyncSession(self.engine) as session:
+        async with self._session() as session:
             db_obj = self.model(**data)
             session.add(db_obj)
             await session.commit()
@@ -166,7 +172,7 @@ class SQLModelAdapter(BaseAdapter):
         Returns:
             The updated object.
         """
-        async with AsyncSession(self.engine) as session:
+        async with self._session() as session:
             db_obj = await session.get(self.model, pk)
             if db_obj:
                 for key, value in data.items():
@@ -183,7 +189,7 @@ class SQLModelAdapter(BaseAdapter):
         Args:
             pk: The primary key of the object to delete.
         """
-        async with AsyncSession(self.engine) as session:
+        async with self._session() as session:
             db_obj = await session.get(self.model, pk)
             if db_obj:
                 await session.delete(db_obj)
@@ -201,7 +207,7 @@ class SQLModelAdapter(BaseAdapter):
             A list of related objects.
         """
         queryset_filters = self._resolve_queryset_filters()
-        async with AsyncSession(self.engine) as session:
+        async with self._session() as session:
             query = (
                 select(self.model)
                 .where(self.model.id == pk)
@@ -250,7 +256,7 @@ class SQLModelAdapter(BaseAdapter):
             return []
 
         target_inspector = inspect(target_model)
-        async with AsyncSession(self.engine) as session:
+        async with self._session() as session:
             query = select(target_model)
 
             if q:
@@ -294,8 +300,9 @@ class SQLModelAdapter(BaseAdapter):
     ) -> None:
         """Persist validated inline rows — create, update, or delete as needed.
 
-        A fresh ``SQLModelAdapter`` is constructed for the inline model using
-        this adapter's engine so all operations share the same database connection.
+        A fresh ``SQLModelAdapter`` is constructed for the inline model via
+        :meth:`for_model`, so it shares this adapter's ``engine`` or
+        ``session_factory``.
 
         Args:
             spec: The ``InlineModelSpec`` describing the related model and FK field.
@@ -308,7 +315,7 @@ class SQLModelAdapter(BaseAdapter):
                 existing child of ``parent_pk``.
         """
         await self.ensure_inline_rows_owned(spec, rows, parent_pk)
-        inline_adapter = SQLModelAdapter(spec.model, self.engine)
+        inline_adapter = self.for_model(spec.model)
         pk_attrs = {col.key for col in inspect(spec.model).primary_key}
         for row in rows:
             row_pk = row.get("_pk")
@@ -330,7 +337,7 @@ class SQLModelAdapter(BaseAdapter):
     async def inline_child_pks(self, spec: InlineModelSpec, parent_pk: Any) -> set[Any]:
         """Return the primary keys of ``spec.model`` rows owned by ``parent_pk``."""
         pk_col = inspect(spec.model).primary_key[0]
-        async with AsyncSession(self.engine) as session:
+        async with self._session() as session:
             result = await session.execute(
                 select(pk_col).where(getattr(spec.model, spec.fk_field) == parent_pk)
             )

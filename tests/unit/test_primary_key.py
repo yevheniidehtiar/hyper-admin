@@ -66,7 +66,7 @@ def test_third_party_adapter_gets_the_default_pk() -> None:
       When  pk is read
       Then  DEFAULT_PK with attr 'id' and type int is returned
     """
-    adapter = _ThirdPartyAdapter(object(), engine=None)
+    adapter = _ThirdPartyAdapter(object(), engine=object())
 
     assert adapter.pk is DEFAULT_PK
     assert adapter.pk.attr == "id"
@@ -236,12 +236,12 @@ class _ThirdPartyAdapter(BaseAdapter):
     ],
 )
 def test_base_adapter_datetime_kind(field: str, expected: str | None) -> None:
-    adapter = _ThirdPartyAdapter(_Model, engine=None)
+    adapter = _ThirdPartyAdapter(_Model, engine=object())
 
     assert adapter.datetime_kind(field) == expected
 
 
 def test_base_adapter_datetime_kind_without_model_fields() -> None:
-    adapter = _ThirdPartyAdapter(object, engine=None)
+    adapter = _ThirdPartyAdapter(object, engine=object())
 
     assert adapter.datetime_kind("created") is None

@@ -13,7 +13,6 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from typing import TYPE_CHECKING, Any, Final
 
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 from starlette.responses import RedirectResponse
 
@@ -27,8 +26,9 @@ from hyperadmin.i18n import gettext as _
 
 if TYPE_CHECKING:
     from fastapi.templating import Jinja2Templates
-    from sqlalchemy.ext.asyncio import AsyncEngine
     from starlette.requests import Request
+
+    from hyperadmin.core.adapters import SessionFactory
 
 
 async def login_view(
@@ -138,8 +138,8 @@ def _read_partial_auth(request: Request) -> dict[str, Any] | None:
     return raw
 
 
-async def _load_partial_user(engine: AsyncEngine, user_id: int) -> User | None:
-    async with AsyncSession(engine) as session:
+async def _load_partial_user(session_factory: SessionFactory, user_id: int) -> User | None:
+    async with session_factory() as session:
         stmt = select(User).where(User.id == user_id)
         return (await session.execute(stmt)).scalar_one_or_none()
 
@@ -225,7 +225,7 @@ async def mfa_verify_view(
     if partial is None:
         return RedirectResponse(url=f"{admin_prefix}/login", status_code=302)
 
-    user = await _load_partial_user(auth_backend.engine, partial["user_id"])
+    user = await _load_partial_user(auth_backend._session, partial["user_id"])
     if user is None:
         # User was deleted between password and MFA — drop them back to login.
         request.session.pop(PARTIAL_AUTH_SESSION_KEY, None)
@@ -289,7 +289,7 @@ async def mfa_resend_view(
     if partial is None:
         return RedirectResponse(url=f"{admin_prefix}/login", status_code=302)
 
-    user = await _load_partial_user(auth_backend.engine, partial["user_id"])
+    user = await _load_partial_user(auth_backend._session, partial["user_id"])
     if user is None:
         request.session.pop(PARTIAL_AUTH_SESSION_KEY, None)
         return RedirectResponse(url=f"{admin_prefix}/login", status_code=302)
@@ -374,10 +374,10 @@ def _current_user(request: Request) -> User | None:
 
 
 async def _persist_mfa_state(
-    engine: AsyncEngine, user_id: int, *, enabled: bool, method: str | None
+    session_factory: SessionFactory, user_id: int, *, enabled: bool, method: str | None
 ) -> User | None:
     """Update ``mfa_enabled`` / ``mfa_method`` for ``user_id`` and return the row."""
-    async with AsyncSession(engine) as session:
+    async with session_factory() as session:
         stmt = select(User).where(User.id == user_id)
         user = (await session.execute(stmt)).scalar_one_or_none()
         if user is None:
@@ -473,7 +473,7 @@ async def mfa_enable_view(
 
     # Successful verify — flip the flag in the DB, clear the flow marker,
     # then render the settings page reflecting the new state.
-    updated = await _persist_mfa_state(auth_backend.engine, user.id, enabled=True, method="email")
+    updated = await _persist_mfa_state(auth_backend._session, user.id, enabled=True, method="email")
     request.session.pop(MFA_SETTINGS_FLOW_KEY, None)
     return _settings_response(
         request,
@@ -539,7 +539,7 @@ async def mfa_disable_view(
             error=_("Invalid code."),
         )
 
-    updated = await _persist_mfa_state(auth_backend.engine, user.id, enabled=False, method=None)
+    updated = await _persist_mfa_state(auth_backend._session, user.id, enabled=False, method=None)
     request.session.pop(MFA_SETTINGS_FLOW_KEY, None)
     return _settings_response(
         request,

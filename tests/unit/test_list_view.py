@@ -122,7 +122,7 @@ def mock_templates():
 @pytest.fixture
 def view_instance(mock_templates):
     """Create a DynamicModelView instance with mock dependencies."""
-    adapter = MockAdapter(SampleModel, None)
+    adapter = MockAdapter(SampleModel, object())
     options = AdminOptions()
     view = DynamicModelView(
         adapter=adapter, options=options, templates=mock_templates, app_label="test"
@@ -134,7 +134,7 @@ def view_instance(mock_templates):
 
 async def test_list_view_custom_column_list(mock_templates, mock_request, anyio_backend):
     """Test list view with explicit column_list."""
-    adapter = MockAdapter(SampleModel, None)
+    adapter = MockAdapter(SampleModel, object())
     options = AdminOptions()
     view = DynamicModelView(
         adapter=adapter,

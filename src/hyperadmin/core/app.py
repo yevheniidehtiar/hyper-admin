@@ -53,13 +53,15 @@ class Admin:
         storage: Any = None,
         otp_service: Any = None,
         realtime: RealtimeSettings | None = None,
+        session_factory: Any = None,
     ) -> None:
         """Initialise HyperAdmin and attach it to a FastAPI application.
 
         Args:
             app: The FastAPI application instance to attach the admin to.
-            engine: An async SQLAlchemy engine. When ``None`` (demo mode), one
-                is built lazily from ``settings.database_url`` by
+            engine: An async SQLAlchemy engine. When both ``engine`` and
+                ``session_factory`` are ``None`` (demo mode), an engine is built
+                lazily from ``settings.database_url`` by
                 ``hyperadmin.db.get_default_engine``.
             settings: A ``HyperAdminSettings`` instance. When ``None``, one is
                 auto-instantiated (reads ``HYPERADMIN_*`` env vars and ``.env``).
@@ -77,11 +79,18 @@ class Admin:
                 no SSE / WebSocket endpoints are registered and the status
                 widget is not injected — fully backward compatible. See
                 ``docs/specs/realtime-connection-foundation.md``.
+            session_factory: A host-provided session factory (e.g.
+                ``async_sessionmaker(engine)``), forwarded to every adapter and
+                auth service instead of ``engine``. Bring-your-own-app hosts
+                that manage their own engine and session lifecycle pass this
+                instead of ``engine=``. See SDD C.3.
         """
         self.settings = settings or HyperAdminSettings()
         self.app = app
         self.router = APIRouter()
-        self.engine = engine if engine is not None else self._default_engine()
+        demo_mode = engine is None and session_factory is None
+        self.engine = engine if not demo_mode else self._default_engine()
+        self.session_factory = session_factory
         self.auth_backend = auth_backend
         self.permission_checker = permission_checker
         self.permission_registry = permission_registry
@@ -114,7 +123,7 @@ class Admin:
         if os.path.exists(static_dir):
             app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
-        if self._should_create_tables(demo_mode=engine is None):
+        if self._should_create_tables(demo_mode=demo_mode):
 
             @app.on_event("startup")
             async def startup_event() -> None:
@@ -181,10 +190,16 @@ class Admin:
         return get_default_engine(self.settings)
 
     async def _create_db_and_tables(self) -> None:
-        """Creates the database and all tables using the configured engine."""
-        from hyperadmin.db import create_tables
+        """Creates the database and all tables using the configured engine.
 
-        await create_tables(self.engine)
+        In ``session_factory=``-only mode (no ``engine=``), the bind is taken
+        from the factory itself via ``db.resolve_bind``, which raises a clear
+        error when the factory carries no async engine (SDD C.3).
+        """
+        from hyperadmin.db import create_tables, resolve_bind
+
+        bind = self.engine if self.engine is not None else resolve_bind(self.session_factory)
+        await create_tables(bind)
 
     def _register_views(self) -> None:
         """Registers the views from the site registry."""
@@ -197,6 +212,7 @@ class Admin:
             storage=self.storage,
             timezone=self.settings.tzinfo,
             datetime_format=self.settings.datetime_format,
+            session_factory=self.session_factory,
         )
         admin_router.generate_routes()
         routers = admin_router.get_routers()
