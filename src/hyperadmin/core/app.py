@@ -103,6 +103,12 @@ class Admin:
         from hyperadmin.i18n import install_jinja_i18n
 
         install_jinja_i18n(self.templates.env)
+        # Namespace-aware url_for (C.1): falls back to today's plain-name
+        # resolution until mount() wires scope["hyperadmin"]["namespace"]
+        # (isolated sub-app mount, st-v058-byoa-35), so this is a no-op today.
+        from hyperadmin.views.urls import install_namespaced_url_for
+
+        install_namespaced_url_for(self.templates.env)
 
         static_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")
         if os.path.exists(static_dir):
