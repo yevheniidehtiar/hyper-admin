@@ -27,6 +27,7 @@ from typing import TYPE_CHECKING, Any, TypeAlias, TypeVar
 from fastapi import Depends, Request
 
 from hyperadmin.core.auth import AdminAccessDenied, AdminAuthenticationRequired
+from hyperadmin.core.display import get_display_name
 
 if TYPE_CHECKING:
     from starlette.websockets import WebSocket
@@ -35,9 +36,12 @@ if TYPE_CHECKING:
 
 _T = TypeVar("_T")
 
-#: A value, or an awaitable resolving to one — every bridge callable below
-#: (``get_user``, ``can_access``, ``has_permission``, ``display_name``, ...)
-#: may be a plain sync function or an ``async def``.
+#: A value, or an awaitable resolving to one — ``get_user``, ``can_access``,
+#: ``has_permission`` and ``TokenCookie.token_endpoint`` may each be a plain
+#: sync function or an ``async def``. ``display_name`` and ``user_key`` are
+#: called without awaiting (:func:`build_admin_dependency`), so they must stay
+#: sync: an async ``display_name`` would leave an unawaited coroutine in
+#: ``request.state.user_display``.
 MaybeAwaitable: TypeAlias = _T | Awaitable[_T]
 
 __all__ = [
@@ -76,18 +80,36 @@ def default_can_access(user: Any) -> bool:
 def default_display_name(user: Any) -> str:
     """Return the first of ``user.username``, ``.email`` or ``.name`` that is truthy.
 
-    Falls back to ``str(user)`` when none of the three attributes are set.
+    Falls back to :func:`hyperadmin.core.display.get_display_name`, never to
+    plain ``str(user)``: a pydantic/SQLModel host user whose ``__str__`` is
+    not overridden prints every field, secrets included (hashed passwords,
+    API tokens, MFA secrets), and the result here is stored on
+    ``request.state.user_display`` for the navbar and log lines.
     """
     for attr in ("username", "email", "name"):
         value = getattr(user, attr, None)
         if value:
             return str(value)
-    return str(user)
+    return get_display_name(user)
 
 
 def default_user_key(user: Any) -> Hashable:
-    """Return ``user.id`` — the value ``request.state.user_key`` is set to."""
-    return getattr(user, "id", None)
+    """Return ``user.id`` — the value ``request.state.user_key`` is set to.
+
+    Raises:
+        TypeError: when ``user`` has no ``id`` attribute. A silent ``None``
+            would make every such user share the same
+            ``request.state.user_key``, merging per-user keyed state
+            (presence, audit, rate limits) across users. A host whose user
+            model has no ``id`` should pass ``ExternalAuth(user_key=...)``.
+    """
+    try:
+        return user.id
+    except AttributeError:
+        raise TypeError(
+            f"{type(user).__name__} has no 'id' attribute for user_key; "
+            "pass ExternalAuth(user_key=...) for a host user keyed differently."
+        ) from None
 
 
 @dataclass(frozen=True, slots=True, kw_only=True)
@@ -153,7 +175,17 @@ class CallablePermissionChecker:
         return bool(await _maybe_await(self._fn(user, codename)))
 
     async def get_user_permissions(self, user: Any) -> set[str]:  # noqa: ARG002
-        """Not derivable from a single ``has_permission`` callable; always empty."""
+        """Not derivable from a single ``has_permission`` callable; always empty.
+
+        Warning:
+            This empty set is not "no permissions" — it is "cannot enumerate
+            them". A wiring story that fills ``request.state.user_permissions``
+            from this method would hide every model from a superuser's
+            sidebar (see ``_sidebar.html``, which treats an empty set as
+            "show nothing"). In bridge mode, ``request.state.user_permissions``
+            must stay unset; permission checks must go through
+            ``has_permission`` instead.
+        """
         return set()
 
 
@@ -166,23 +198,58 @@ class BridgeDefaultPermissionChecker:
     stops a non-superuser staff user from granting themselves a superuser flag
     (SDD section B.3, item 3; Owner decision 3).
 
+    That protection holds by default, but ``allow_full_access=True`` (Owner
+    decision 3's documented opt-in) grants every codename, including
+    ``change_<hostuser>``, to anyone who passed ``can_access`` — which
+    reopens the same privilege-escalation path unless ``protected_model`` is
+    also passed.
+
     Args:
         allow_full_access: Mirrors ``ExternalAuth.allow_full_access``. When
             ``True``, every permission is granted to any user who already
             passed ``can_access`` — not just superusers.
+        protected_model: The host user model's lowercased class name (e.g.
+            ``"user"``). When set, a non-superuser is denied ``change_*`` and
+            ``delete_*`` on this model even under ``allow_full_access`` — this
+            is the guard that stops a staff user from granting themselves
+            ``is_superuser`` through the admin. The checker has no way to
+            know the host user model on its own, so a host that passes
+            ``allow_full_access=True`` should also pass ``protected_model``
+            (typically wired in by ``Admin.__init__`` from its own knowledge
+            of the host user model).
     """
 
-    __slots__ = ("_allow_full_access",)
+    __slots__ = ("_allow_full_access", "_protected_model")
 
-    def __init__(self, *, allow_full_access: bool = False) -> None:
+    def __init__(
+        self,
+        *,
+        allow_full_access: bool = False,
+        protected_model: str | None = None,
+    ) -> None:
         self._allow_full_access = allow_full_access
+        self._protected_model = protected_model.lower() if protected_model else None
 
     async def has_permission(self, user: Any, codename: str) -> bool:
+        if not getattr(user, "is_superuser", False) and self._protected_model is not None:
+            for prefix in ("change_", "delete_"):
+                if codename.lower() == f"{prefix}{self._protected_model}":
+                    return False
         if self._allow_full_access or getattr(user, "is_superuser", False):
             return True
         return codename.startswith("view_")
 
     async def get_user_permissions(self, user: Any) -> set[str]:  # noqa: ARG002
+        """Not derivable from the fail-safe policy; always empty.
+
+        Warning:
+            Same caveat as :meth:`CallablePermissionChecker.get_user_permissions`:
+            this empty set must never be assigned to
+            ``request.state.user_permissions`` — it would hide every model
+            from a superuser's sidebar, which treats an empty set as "show
+            nothing" (see ``_sidebar.html``). Permission checks in bridge mode
+            must go through :meth:`has_permission`.
+        """
         return set()
 
 

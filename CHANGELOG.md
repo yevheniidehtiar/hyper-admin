@@ -43,6 +43,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
     `static/js/vendor/` instead of loaded from unpkg.
   - Visual baselines refreshed (rendered on Linux, like CI).
 
+### Added
+- **Bring-your-own-auth bridge primitives** (st-v058-byoa-25, docs/specs/bring-your-own-app.md
+  section B.3). `hyperadmin.auth` now lazily exports `ExternalAuth`, `TokenCookie`,
+  `CallablePermissionChecker`, `BridgeDefaultPermissionChecker`, `build_admin_dependency`
+  and the `default_can_access` / `default_display_name` / `default_user_key` policies, for a
+  host FastAPI app to plug its own authentication and permission model into HyperAdmin
+  without the built-in `hyperadmin_*` user/group/permission tables. Without
+  `ExternalAuth.has_permission`, the fail-safe default grants a superuser everything and
+  every other user view-only access; `allow_full_access=True` opts a host into full access
+  for everyone who passes `can_access`, and `BridgeDefaultPermissionChecker.protected_model`
+  lets a host still deny `change_*`/`delete_*` on its own user model under that opt-in.
+  `Admin(auth=...)` wiring these primitives into routes and views follows in a later story —
+  nothing in this change is browser-observable yet.
+
 ### Security
 - **Authorization and row scoping on every item handler** (st-v058-byoa-10).
   - Inline cell edit/save, inline add-row, update form, file delete/upload and
