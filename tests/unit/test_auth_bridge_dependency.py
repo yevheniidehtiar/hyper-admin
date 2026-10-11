@@ -126,7 +126,15 @@ def test_dependency_overrides_are_honoured() -> None:
 
 
 def test_host_dependency_reading_request_app_state_works() -> None:
-    """Host dependencies that read ``request.app.state`` resolve normally (SDD B.1)."""
+    """
+    Scenario: host dependency reads request.app.state
+      Given the host get_user dependency reads request.app.state
+      When  the admin dependency resolves through FastAPI's own DI
+      Then  the host dependency sees the same request.app.state
+
+    Host dependencies that read ``request.app.state`` resolve normally
+    (SDD B.1).
+    """
 
     def get_user(request: Request) -> _HostUser:
         return request.app.state.configured_user
@@ -142,7 +150,14 @@ def test_host_dependency_reading_request_app_state_works() -> None:
 
 
 def test_async_can_access_is_awaited() -> None:
-    """A host ``can_access`` may be an ``async def`` (sync/async normalisation)."""
+    """
+    Scenario: async can_access is awaited
+      Given auth.can_access is an async def returning False
+      When  the admin dependency resolves
+      Then  the awaited False result raises AdminAccessDenied
+
+    A host ``can_access`` may be an ``async def`` (sync/async normalisation).
+    """
 
     async def can_access(user: _HostUser) -> bool:
         return bool(user.is_superuser)

@@ -62,6 +62,12 @@ class TestCallablePermissionChecker:
         assert await checker.has_permission(_HostUser(), "delete_order") is False
 
     async def test_callable_checker_satisfies_the_permission_checker_protocol(self) -> None:
+        """
+        Scenario: callable checker satisfies PermissionChecker
+          Given a CallablePermissionChecker
+          When  it is checked against the PermissionChecker protocol
+          Then  it is recognised as one, with an empty get_user_permissions
+        """
         checker = CallablePermissionChecker(lambda user, codename: True)
 
         assert isinstance(checker, PermissionChecker)
@@ -80,30 +86,90 @@ class TestDefaultCanAccess:
         assert default_can_access(_HostUser(is_staff=False, is_superuser=False)) is False
 
     def test_default_can_access_admits_staff_or_superuser(self) -> None:
+        """
+        Scenario: default can_access admits staff or superuser
+          Given a host user with is_staff or is_superuser truthy
+          When  default_can_access runs
+          Then  True is returned
+        """
         assert default_can_access(_HostUser(is_staff=True)) is True
         assert default_can_access(_HostUser(is_superuser=True)) is True
 
 
 class TestDefaultDisplayName:
     def test_prefers_username_then_email_then_name(self) -> None:
+        """
+        Scenario: default display name prefers username, then email, then name
+          Given a host user with username, email or name set
+          When  default_display_name runs
+          Then  the first of username/email/name that is truthy is returned
+        """
         assert default_display_name(_HostUser(username="alice")) == "alice"
         assert default_display_name(_HostUser(email="alice@example.com")) == "alice@example.com"
         assert default_display_name(_HostUser(name="Alice")) == "Alice"
 
-    def test_falls_back_to_str_of_the_user(self) -> None:
+    def test_falls_back_to_str_of_the_user_when_str_is_overridden(self) -> None:
+        """
+        Scenario: default display name falls back to str() for an overridden __str__
+          Given a host user with none of username/email/name, but an overridden __str__
+          When  default_display_name runs
+          Then  str(user) is returned
+        """
+
         class _Anon:
             def __str__(self) -> str:
                 return "anon-user"
 
         assert default_display_name(_Anon()) == "anon-user"
 
+    def test_never_calls_str_on_an_unoverridden_pydantic_model(self) -> None:
+        """
+        Scenario: default display name never leaks a pydantic model's fields
+          Given a pydantic host user with no username/email/name and no __str__ override
+          When  default_display_name runs
+          Then  the result is a safe "ClassName (pk)" label, never str(user)
+
+        pydantic's default ``__str__`` prints every field, secrets included
+        (hashed passwords, API tokens, MFA secrets). ``request.state.user_display``
+        is destined for the navbar and log lines, so it must never contain that.
+        """
+        from pydantic import BaseModel
+
+        class _PydanticHostUser(BaseModel):
+            id: int
+            hashed_password: str
+
+        user = _PydanticHostUser(id=7, hashed_password="super-secret")
+
+        result = default_display_name(user)
+
+        assert "super-secret" not in result
+        assert result == "_PydanticHostUser (7)"
+
 
 class TestDefaultUserKey:
     def test_returns_the_users_id_attribute(self) -> None:
+        """
+        Scenario: default user_key returns the id attribute
+          Given a host user with an id
+          When  default_user_key runs
+          Then  that id is returned
+        """
         assert default_user_key(_HostUser(id=42)) == 42
 
-    def test_returns_none_without_an_id_attribute(self) -> None:
-        assert default_user_key(_HostUser()) is None
+    def test_raises_type_error_without_an_id_attribute(self) -> None:
+        """
+        Scenario: default user_key rejects a user with no id
+          Given a host user with no id attribute
+          When  default_user_key runs
+          Then  a TypeError is raised instead of silently returning None
+
+        A silent ``None`` would make every such user share the same
+        ``request.state.user_key``, merging per-user keyed state (presence,
+        audit, rate limits) across users.
+        """
+        with pytest.raises(TypeError, match="user_key"):
+            default_user_key(_HostUser())
 
 
 class TestBridgeDefaultPermissionChecker:
@@ -147,7 +213,59 @@ class TestBridgeDefaultPermissionChecker:
 
         assert await checker.has_permission(staff, "delete_order") is True
 
+    async def test_allow_full_access_still_denies_change_on_the_protected_model(self) -> None:
+        """
+        Scenario: allow_full_access never lets a non-superuser escalate via the host user model
+          Given BridgeDefaultPermissionChecker(allow_full_access=True, protected_model="user")
+          When  has_permission is awaited for a non-superuser on change_user/delete_user
+          Then  False is returned, even though allow_full_access grants every other codename
+
+        Without this guard, a staff user granted ``allow_full_access`` could
+        edit their own ``is_superuser`` flag through the host user model (SDD
+        section B.3, item 3; Owner decision 3). The checker cannot name the
+        host user model on its own, so a host that enables
+        ``allow_full_access`` must pass ``protected_model`` for this guard to
+        apply.
+        """
+        checker = BridgeDefaultPermissionChecker(allow_full_access=True, protected_model="user")
+        staff = _HostUser(is_superuser=False)
+
+        assert await checker.has_permission(staff, "change_user") is False
+        assert await checker.has_permission(staff, "delete_user") is False
+        # Every other model, and view_* on the protected model, still works.
+        assert await checker.has_permission(staff, "delete_order") is True
+        assert await checker.has_permission(staff, "view_user") is True
+
+    async def test_allow_full_access_protected_model_match_is_case_insensitive(self) -> None:
+        """
+        Scenario: protected_model matching ignores codename case
+          Given BridgeDefaultPermissionChecker(allow_full_access=True, protected_model="User")
+          When  has_permission is awaited for a non-superuser on change_user
+          Then  False is returned regardless of the casing used for either value
+        """
+        checker = BridgeDefaultPermissionChecker(allow_full_access=True, protected_model="User")
+        staff = _HostUser(is_superuser=False)
+
+        assert await checker.has_permission(staff, "change_User") is False
+
+    async def test_superuser_bypasses_the_protected_model_guard(self) -> None:
+        """
+        Scenario: a superuser is unaffected by protected_model
+          Given BridgeDefaultPermissionChecker(protected_model="user")
+          When  has_permission is awaited for a superuser on change_user
+          Then  True is returned
+        """
+        checker = BridgeDefaultPermissionChecker(protected_model="user")
+
+        assert await checker.has_permission(_HostUser(is_superuser=True), "change_user") is True
+
     async def test_satisfies_the_permission_checker_protocol(self) -> None:
+        """
+        Scenario: default checker satisfies PermissionChecker
+          Given a BridgeDefaultPermissionChecker
+          When  it is checked against the PermissionChecker protocol
+          Then  it is recognised as one, with an empty get_user_permissions
+        """
         checker = BridgeDefaultPermissionChecker()
 
         assert isinstance(checker, PermissionChecker)
@@ -156,6 +274,13 @@ class TestBridgeDefaultPermissionChecker:
 
 class TestExternalAuthDefaults:
     def test_only_get_user_is_required(self) -> None:
+        """
+        Scenario: ExternalAuth needs only get_user
+          Given ExternalAuth is constructed with only get_user
+          When  its other fields are read
+          Then  every other field holds its documented fail-safe default
+        """
+
         def get_user() -> None:
             return None
 
@@ -186,6 +311,12 @@ class TestExternalAuthDefaults:
 
 class TestTokenCookieDefaults:
     def test_defaults(self) -> None:
+        """
+        Scenario: TokenCookie defaults
+          Given TokenCookie is constructed with no arguments
+          When  its fields are read
+          Then  every field holds its documented default
+        """
         cookie = TokenCookie()
 
         assert cookie.name == "hyperadmin_token"
