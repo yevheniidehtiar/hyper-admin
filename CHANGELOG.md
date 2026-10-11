@@ -131,6 +131,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
     (`is_secret: bool`, `token_count: int`).
 
 ### Added
+- **`ha_pk`, `ha_dom_token`, `ha_datetime_input`, `ha_display` template filters**
+  (st-v058-byoa-33). `ha_pk` reads a row's primary key from a dict or model
+  instance; `ha_dom_token` turns any key into a DOM-id/`data-testid`-safe
+  token; `ha_datetime_input`/`ha_display` localise datetimes to the admin's
+  configured `timezone` (overridable per request via
+  `request.state.hyperadmin_timezone`) and format display with the
+  existing `datetime_format` setting, which now actually drives `ha_display`.
 - **`hyperadmin.views.urls.admin_url_for` / `admin_base_path`, and a
   namespace-aware Jinja `url_for` override** (st-v058-byoa-34).
   `admin_url_for` prefers an admin route's namespaced name when

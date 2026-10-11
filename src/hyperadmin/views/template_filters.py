@@ -18,13 +18,14 @@ It takes no HTTP or ORM imports, so it stays usable outside a request.
 
 from __future__ import annotations
 
+import logging
 import re
 from collections.abc import Mapping
 from datetime import datetime, tzinfo
 from datetime import timezone as dt_timezone
 from hashlib import blake2b
 from typing import TYPE_CHECKING, Any
-from zoneinfo import ZoneInfo
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from jinja2 import pass_context
 from markupsafe import Markup
@@ -35,12 +36,18 @@ if TYPE_CHECKING:
     from jinja2 import Environment
     from jinja2.runtime import Context
 
+logger = logging.getLogger(__name__)
+
 #: Jinja global name used to carry the admin's configured display timezone
 #: into :func:`resolve_tz` when no per-request override is set.
 TIMEZONE_GLOBAL = "hyperadmin_timezone"
 
+#: Jinja global name used to carry the admin's configured ``datetime_format``
+#: (``Admin``'s ``settings.datetime_format``) into :func:`ha_display`.
+DATETIME_FORMAT_GLOBAL = "hyperadmin_datetime_format"
+
 _DOM_TOKEN_RE = re.compile(r"[A-Za-z0-9_.:-]+")
-_DISPLAY_FORMAT = "%Y-%m-%d %H:%M:%S"
+_DEFAULT_DISPLAY_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 
 def ha_pk(item: Any, pk_attr: str = "id") -> Any:
@@ -78,13 +85,30 @@ def resolve_tz(ctx: Context) -> tzinfo:
     falls back to the timezone :func:`register_template_filters` registered
     as the ``hyperadmin_timezone`` Jinja global (``Admin``'s
     ``settings.timezone``). Defaults to UTC if neither is set.
+
+    A per-request override that names an unknown or malformed IANA zone
+    (a stale user-profile value, for example) is logged and ignored rather
+    than raised — it falls back to the registered default — so one bad
+    value cannot turn every ``ha_display``/``ha_datetime_input`` render into
+    a 500.
     """
     request = ctx.get("request")
-    override = getattr(getattr(request, "state", None), "hyperadmin_timezone", None)
-    if override:
-        return ZoneInfo(override) if isinstance(override, str) else override
     default = ctx.get(TIMEZONE_GLOBAL, dt_timezone.utc)
-    return default if isinstance(default, tzinfo) else dt_timezone.utc
+    default = default if isinstance(default, tzinfo) else dt_timezone.utc
+    override = getattr(getattr(request, "state", None), "hyperadmin_timezone", None)
+    if not override:
+        return default
+    if not isinstance(override, str):
+        return override
+    try:
+        return ZoneInfo(override)
+    except (ZoneInfoNotFoundError, ValueError):
+        logger.warning(
+            "Ignoring invalid request.state.hyperadmin_timezone %r; falling back to %s",
+            override,
+            default,
+        )
+        return default
 
 
 @pass_context
@@ -99,27 +123,37 @@ def ha_display(ctx: Context, value: Any) -> Any:
 
     The ``datetime`` attribute carries the UTC instant (machine-readable and
     diff-stable); the element text is the value localised to the resolved
-    timezone. Naive datetimes and every other value pass through unchanged.
+    timezone and formatted with the ``hyperadmin_datetime_format`` Jinja
+    global :func:`register_template_filters` registers (``Admin``'s
+    ``settings.datetime_format``). Naive datetimes and every other value
+    pass through unchanged.
     """
     if isinstance(value, datetime) and value.tzinfo is not None:
         tz = resolve_tz(ctx)
+        fmt = ctx.get(DATETIME_FORMAT_GLOBAL, _DEFAULT_DISPLAY_FORMAT)
         utc_iso = value.astimezone(dt_timezone.utc).isoformat()
-        local_text = to_display(value, tz, _DISPLAY_FORMAT)
+        local_text = to_display(value, tz, fmt)
         return Markup('<time datetime="{}">{}</time>').format(utc_iso, local_text)
     return value
 
 
 def register_template_filters(
-    env: Environment, *, default_timezone: tzinfo = dt_timezone.utc
+    env: Environment,
+    *,
+    default_timezone: tzinfo = dt_timezone.utc,
+    datetime_format: str = _DEFAULT_DISPLAY_FORMAT,
 ) -> None:
-    """Register the ``ha_*`` filters on ``env`` and the default display timezone.
+    """Register the ``ha_*`` filters on ``env`` and their display defaults.
 
     ``default_timezone`` becomes the ``hyperadmin_timezone`` Jinja global that
     :func:`resolve_tz` falls back to when a request sets no per-request
-    override. Called once by ``HyperAdminRouter`` with ``Admin``'s
-    ``settings.tzinfo``.
+    override. ``datetime_format`` becomes the ``hyperadmin_datetime_format``
+    Jinja global that :func:`ha_display` formats with. Called once by
+    ``HyperAdminRouter`` with ``Admin``'s ``settings.tzinfo`` and
+    ``settings.datetime_format``.
     """
     env.globals[TIMEZONE_GLOBAL] = default_timezone
+    env.globals[DATETIME_FORMAT_GLOBAL] = datetime_format
     env.filters["ha_pk"] = ha_pk
     env.filters["ha_dom_token"] = ha_dom_token
     env.filters["ha_datetime_input"] = ha_datetime_input
