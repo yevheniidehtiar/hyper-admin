@@ -45,13 +45,13 @@ class InlineModelSpec:
         """Return the lowercase model class name."""
         return getattr(self.model, "__name__", str(self.model)).lower()
 
-    def get_display_fields(self) -> list[str]:
+    def get_display_fields(self, *, pk_attr: str = "id") -> list[str]:
         """Return the list of field names to show in each inline row.
 
-        If ``fields`` is empty, introspects the model and returns all
-        fields except ``id`` and the FK field.
+        If ``fields`` is empty, introspects the model and returns all fields
+        except ``pk_attr`` (default ``"id"``) and the FK field.
         """
         if self.fields:
             return self.fields
         model_fields = getattr(self.model, "model_fields", {})
-        return [name for name in model_fields if name not in ("id", self.fk_field)]
+        return [name for name in model_fields if name not in (pk_attr, self.fk_field)]

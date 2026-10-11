@@ -30,7 +30,7 @@ def get_field_label(field_name: str) -> str:
     return label.replace("_", " ").title()
 
 
-def get_display_name(instance: Any) -> str:
+def get_display_name(instance: Any, *, pk_attr: str = "id") -> str:
     """
     Returns a user-friendly string representation of a model instance.
 
@@ -38,7 +38,8 @@ def get_display_name(instance: Any) -> str:
     1. If the model has overridden __str__ from SQLModel/BaseModel, use it.
     2. Otherwise, look for common descriptive attributes: name, title, label, username, email,
        skipping any that are sensitive (see :mod:`hyperadmin.core.sensitive`).
-    3. Fallback to "ModelName (PK)" if PK is available.
+    3. Fallback to "ModelName (PK)", reading ``pk_attr`` (default ``"id"``, for
+       models with a non-standard primary-key attribute).
     4. Final fallback to "ModelName object".
 
     The default ``__str__`` of SQLModel / Pydantic prints every field, secrets
@@ -71,7 +72,7 @@ def get_display_name(instance: Any) -> str:
                 return str(val)
 
     # Fallback to PK
-    pk = getattr(instance, "id", None)
+    pk = getattr(instance, pk_attr, None)
     if pk is not None:
         return f"{cls.__name__} ({pk})"
 

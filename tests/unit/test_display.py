@@ -64,6 +64,27 @@ def test_get_display_name_empty_attribute_fallback():
     assert get_display_name(user) == "UserWithEmptyName (1)"
 
 
+# ---------------------------------------------------------------------------
+# Story scenario (st-v058-byoa-23)
+# ---------------------------------------------------------------------------
+
+
+def test_get_display_name_falls_back_to_a_non_id_pk():
+    """
+    Scenario: display name falls back to the pk
+      Given a model with pk 'code' and no name attribute
+      When  get_display_name(pk_attr='code') runs
+      Then  'Country (NL)' is returned
+    """
+
+    class Country(SQLModel):
+        code: str = Field(primary_key=True)
+
+    country = Country(code="NL")
+
+    assert get_display_name(country, pk_attr="code") == "Country (NL)"
+
+
 # ── get_field_label ────────────────────────────────────────────────────
 
 

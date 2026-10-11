@@ -73,6 +73,27 @@ class TestInlineModelSpec:
         assert "id" not in fields
         assert "parent_id" not in fields
 
+    def test_get_display_fields_excludes_a_non_id_pk(self) -> None:
+        """
+        Scenario: inline display excludes pk
+          Given an inline model with pk 'uuid'
+          When  get_display_fields(pk_attr='uuid') runs
+          Then  'uuid' is excluded
+        """
+
+        class UuidChildModel(BaseModel):
+            uuid: int | None = None
+            parent_id: int | None = None
+            description: str = ""
+
+        spec = InlineModelSpec(model=UuidChildModel, fk_field="parent_id")
+
+        fields = spec.get_display_fields(pk_attr="uuid")
+
+        assert "uuid" not in fields
+        assert "parent_id" not in fields
+        assert "description" in fields
+
 
 # ---------------------------------------------------------------------------
 # AdminOptions.inlines

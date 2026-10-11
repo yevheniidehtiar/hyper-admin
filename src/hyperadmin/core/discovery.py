@@ -79,9 +79,13 @@ async def build_filter_metadata(
                 from hyperadmin.adapters.registry import adapter_registry  # noqa: PLC0415
 
                 try:
+                    # NOTE: known debt (st-v058-byoa-23 review) — core/ builds a concrete
+                    # adapter directly instead of going through adapter.for_model(), which
+                    # does not exist yet (lands in st-v058-byoa-21). Do not deepen this.
                     target_adapter_cls = adapter_registry.find_adapter_for_model(target_model)
                     target_adapter = target_adapter_cls(target_model, adapter.engine)
                     related_items, _ = await target_adapter.list(page_size=1000)
+                    target_pk = target_adapter.pk
                     metadata.append(
                         {
                             "name": field_name,
@@ -89,8 +93,8 @@ async def build_filter_metadata(
                             "type": "fk",
                             "choices": [
                                 {
-                                    "value": str(getattr(item, "id", "")),
-                                    "label": get_display_name(item),
+                                    "value": target_pk.to_str(target_pk.value_of(item)),
+                                    "label": get_display_name(item, pk_attr=target_pk.attr),
                                 }
                                 for item in related_items
                             ],
