@@ -1,5 +1,5 @@
 import builtins
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import func, inspect, or_
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
@@ -7,11 +7,16 @@ from sqlalchemy.orm import selectinload
 from sqlmodel import SQLModel, select
 
 from hyperadmin.adapters._search import detect_search_columns
+from hyperadmin.adapters.introspection import datetime_kind as _introspect_datetime_kind
+from hyperadmin.adapters.introspection import introspect_primary_key
 from hyperadmin.core.adapters import BaseAdapter, scoped_queryset_filters
 from hyperadmin.core.choices import ChoiceItem
 from hyperadmin.core.display import get_display_name
 from hyperadmin.core.inlines import InlineModelSpec
 from hyperadmin.core.sensitive import effective_sensitive_field_names
+
+if TYPE_CHECKING:
+    from hyperadmin.core.timezones import DateTimeKind
 
 _MAX_CHOICES_LIMIT = 200
 
@@ -24,6 +29,19 @@ class SQLModelAdapter(BaseAdapter):
     def __init__(self, model: type[SQLModel], engine: AsyncEngine):
         super().__init__(model, engine)
         self.inspector = inspect(model)
+        self.pk = introspect_primary_key(model)
+
+    def datetime_kind(self, field: str) -> "DateTimeKind | None":
+        """Return the column-introspected datetime kind for ``field``.
+
+        Overrides :meth:`BaseAdapter.datetime_kind` (annotation-only) with the
+        full rule set in :func:`hyperadmin.adapters.introspection.datetime_kind`,
+        which also inspects the mapped column type.
+        """
+        try:
+            return _introspect_datetime_kind(self.model, field)
+        except KeyError:
+            return None
 
     async def get(self, pk: Any) -> Any:
         """
