@@ -2,7 +2,7 @@
 type: story
 id: hscJiAdjrTEU
 title: "feat(realtime): PubSubBackend protocol + InMemoryPubSub implementation"
-status: todo
+status: in_review
 priority: medium
 assignee: null
 labels:
