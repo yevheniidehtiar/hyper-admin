@@ -1,10 +1,11 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlmodel import Field, Relationship, SQLModel
 
 from hyperadmin.adapters.sqlalchemy import SQLAlchemyAdapter
+from hyperadmin.core.inlines import InlineModelSpec
 
 
 # Test Models
@@ -249,3 +250,76 @@ async def test_get_related_attribute_error(engine):
         pk = team.id
     related = await team_adapter.get_related(pk=pk, field="non_existent_field")
     assert related == []
+
+
+async def _team_with_heroes(engine, *names: str) -> tuple[int, list[int]]:
+    async with AsyncSession(engine, expire_on_commit=False) as session:
+        team = Team(name="Avengers", headquarters="Tower")
+        session.add(team)
+        await session.commit()
+        heroes = [Hero(name=n, secret_name=f"{n} secret", team_id=team.id) for n in names]
+        session.add_all(heroes)
+        await session.commit()
+        return team.id, [hero.id for hero in heroes]
+
+
+@pytest.mark.anyio
+async def test_get_choices_through_a_session_factory(engine):
+    """
+    Scenario: relation choices come from the host's session factory
+      Given a SQLAlchemyAdapter built with session_factory= only
+      When  get_choices("team") is called
+      Then  the related teams are returned as choices
+    """
+    await _team_with_heroes(engine)
+    adapter = SQLAlchemyAdapter(model=Hero, session_factory=async_sessionmaker(engine))
+
+    choices = await adapter.get_choices("team")
+
+    assert [c["label"] for c in choices] == ["Avengers"]
+
+
+@pytest.mark.anyio
+async def test_save_inline_rows_creates_updates_and_deletes(engine):
+    """
+    Scenario: inline rows are written through the factory-built child adapter
+      Given a team with heroes Thor and Loki
+      When  rows update Thor, delete Loki and add Hulk
+      Then  the team owns Thor (renamed) and Hulk only
+    """
+    # SQLite may hand Loki's freed id to Hulk, so assert on names, not ids.
+    team_id, (thor_id, loki_id) = await _team_with_heroes(engine, "Thor", "Loki")
+    adapter = SQLAlchemyAdapter(model=Team, session_factory=async_sessionmaker(engine))
+    spec = InlineModelSpec(model=Hero, fk_field="team_id")
+
+    await adapter.save_inline_rows(
+        spec,
+        [
+            {"_pk": thor_id, "name": "Thor Odinson", "secret_name": "Donald Blake"},
+            {"_pk": loki_id, "_delete": True},
+            {"name": "Hulk", "secret_name": "Bruce Banner"},
+        ],
+        parent_pk=team_id,
+    )
+
+    owned = await adapter.inline_child_pks(spec, team_id)
+    async with AsyncSession(engine) as session:
+        names = sorted([(await session.get(Hero, pk)).name for pk in owned])
+    assert names == ["Hulk", "Thor Odinson"]
+
+
+@pytest.mark.anyio
+async def test_inline_child_pks_returns_only_the_parents_rows(engine):
+    """
+    Scenario: ownership lookup is scoped to the parent
+      Given two teams with their own heroes
+      When  inline_child_pks is called for the first team
+      Then  only that team's hero pks are returned
+    """
+    team_id, hero_ids = await _team_with_heroes(engine, "Thor", "Loki")
+    await _team_with_heroes(engine, "Hulk")
+    adapter = SQLAlchemyAdapter(model=Team, session_factory=async_sessionmaker(engine))
+
+    pks = await adapter.inline_child_pks(InlineModelSpec(model=Hero, fk_field="team_id"), team_id)
+
+    assert pks == set(hero_ids)

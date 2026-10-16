@@ -106,6 +106,8 @@ show_missing = true
 skip_covered = true
 exclude_lines = [
     "raise NotImplementedError",
+    # Imports for type checkers only: never executed at runtime.
+    "if TYPE_CHECKING:",
 ]
 
 [tool.coverage.xml]  # https://coverage.readthedocs.io/en/latest/config.html#xml
