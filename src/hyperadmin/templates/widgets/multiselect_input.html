@@ -7,7 +7,7 @@
             class="ha-select ha-select--multi ha-multiselect" {# -#}
             data-testid="{{- field.name -}}-select">
         {%- for choice in widget.choices -%}
-            <option value="{{- choice.value -}}" {%- if choice.selected -%} selected{%- endif -%}>{{- choice.label -}}</option>
+            <option value="{{- choice.value -}}" {%- if choice.selected or field.is_selected(choice.value) -%} selected{%- endif -%}>{{- choice.label -}}</option>
         {%- endfor -%}
     </select>
 {%- endcall -%}

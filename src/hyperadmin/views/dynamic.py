@@ -52,6 +52,7 @@ from hyperadmin.views.forms import (
     PydanticForm,
     RelationMultiSelectWidget,
     RelationSelectWidget,
+    field_is_required,
 )
 from hyperadmin.views.htmx import HtmxTemplateResponse
 
@@ -1034,6 +1035,7 @@ class DynamicModelView:
             "request": request,
             "model_name": self.model.__name__,
             "item": item,
+            "item_name": get_display_name(item),
             "form": form,
             "values": values or initial_values,
             "errors": errors or {},
@@ -1928,7 +1930,7 @@ class DynamicModelView:
                     {
                         "name": name,
                         "label": info.title or name.replace("_", " ").capitalize(),
-                        "required": info.is_required,
+                        "required": field_is_required(info),
                         "input_type": "number" if info.annotation is int else "text",
                         "errors": (errors or {}).get(name, []),
                     }

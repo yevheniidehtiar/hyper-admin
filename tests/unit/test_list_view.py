@@ -396,3 +396,4 @@ async def test_filter_metadata_builder_enum(view_instance, anyio_backend):
     assert len(metadata[0]["choices"]) == 2
     assert metadata[0]["choices"][0]["value"] == "red"
     assert metadata[0]["choices"][1]["value"] == "blue"
+    assert [c["label"] for c in metadata[0]["choices"]] == ["Red", "Blue"]

@@ -6,11 +6,11 @@
             data-testid="{{- field.name -}}-select">
         {%- if widget.choices is defined and widget.choices -%}
             {%- for choice in widget.choices -%}
-                <option value="{{- choice.value -}}" {%- if choice.selected -%} selected{%- endif -%}>{{- choice.label -}}</option>
+                <option value="{{- choice.value -}}" {%- if choice.selected or field.is_selected(choice.value) -%} selected{%- endif -%}>{{- choice.label -}}</option>
             {%- endfor -%}
         {%- else -%}
             {%- for choice in field.model_field.annotation -%}
-                <option value="{{- choice.value -}}" {%- if choice == field.value -%} selected{%- endif -%}>{{- choice.name -}}</option>
+                <option value="{{- choice.value -}}" {%- if field.is_selected(choice.value) -%} selected{%- endif -%}>{{- choice.name -}}</option>
             {%- endfor -%}
         {%- endif -%}
     </select>

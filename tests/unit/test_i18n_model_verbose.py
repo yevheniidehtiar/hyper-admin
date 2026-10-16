@@ -252,6 +252,29 @@ class TestVerboseNameBackwardCompat:
         result = WidgetAdmin.get_verbose_name_plural(_FakeModel)
         assert str(result) == "Widgets"
 
+    def test_default_verbose_name_plural_pluralises_the_model_name(self) -> None:
+        """Without verbose names, a CamelCase model name becomes a readable plural."""
+        from hyperadmin.core.model import ModelAdmin
+
+        class JournalEntry:
+            pass
+
+        class JournalEntryAdmin(ModelAdmin):
+            pass
+
+        assert JournalEntryAdmin.get_verbose_name_plural(JournalEntry) == "Journal entries"
+
+    def test_default_verbose_name_plural_pluralises_a_plain_verbose_name(self) -> None:
+        from hyperadmin.core.model import ModelAdmin
+
+        class _FakeModel:
+            __name__ = "Address"
+
+        class AddressAdmin(ModelAdmin):
+            verbose_name = "Address"
+
+        assert AddressAdmin.get_verbose_name_plural(_FakeModel) == "Addresses"
+
     def test_default_verbose_name_plural_lazy_plus_s(self) -> None:
         """Lazy verbose_name + 's' produces a string-like value == '<msgid>s'."""
         from hyperadmin import gettext_lazy

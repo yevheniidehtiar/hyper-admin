@@ -17,7 +17,7 @@
                     {%- if list_editable and field in list_editable and field != 'id' -%}
                         {%- include "components/inline_cell.html" -%}
                     {%- else -%}
-                        <td class="ha-table-cell" data-label="{{ cell_label }}">{{- item[field] -}}</td>
+                        <td class="ha-table-cell" data-label="{{ cell_label }}">{%- if item[field] is none -%}<span class="ha-text-muted">&mdash;</span>{%- else -%}{{- item[field]|ha_display -}}{%- endif -%}</td>
                     {%- endif -%}
                 {%- endfor -%}
                 <td class="ha-table-cell ha-table-cell-center" data-label="{{ _('Actions') }}">

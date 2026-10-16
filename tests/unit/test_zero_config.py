@@ -147,4 +147,4 @@ class TestZeroConfig:
 
         nav_items = admin.templates.env.globals.get("nav_items", [])
         nav_names = {item["name"] for item in nav_items}
-        assert any("ZCProduct" in n or "Zcproduct" in n for n in nav_names)
+        assert "ZC products" in nav_names

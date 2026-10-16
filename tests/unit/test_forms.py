@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from enum import Enum
 from typing import Any
 
 from markupsafe import Markup
@@ -15,9 +16,11 @@ from hyperadmin.views.forms import (
     PydanticForm,
     RelationMultiSelectWidget,
     RelationSelectWidget,
+    SelectInput,
     SelectWidget,
     Textarea,
     TextInput,
+    field_is_required,
     hybrid_to_python,
     hybrid_to_storage,
 )
@@ -270,8 +273,7 @@ def test_pick_widget_enum_auto_detects_select_widget():
     assert isinstance(widget, SelectWidget)
     assert len(widget.choices) == 2
     labels = {c["label"] for c in widget.choices}
-    assert "RED" in labels
-    assert "BLUE" in labels
+    assert labels == {"Red", "Blue"}
 
 
 def test_pick_widget_enum_multiple_detects_multiselect_widget():
@@ -408,3 +410,92 @@ def test_pydantic_form_keeps_named_datetime_factory_editable():
     form = PydanticForm(model=Scheduled)
 
     assert [f.name for f in form.fields] == ["publish_at"]
+
+
+# ---------------------------------------------------------------------------
+# Required flag, option pre-selection and optional empty values
+# ---------------------------------------------------------------------------
+
+
+class _Kind(str, Enum):
+    CUSTOMER = "Customer"
+    SUPPLIER = "Supplier"
+
+
+class _Contact(BaseModel):
+    name: str
+    email: str | None = None
+    notes: str = ""
+    kind: _Kind = _Kind.CUSTOMER
+
+
+def test_optional_pydantic_fields_are_not_marked_required() -> None:
+    """
+    Scenario: optional fields carry no required asterisk
+      Given a model with a required name and optional email/notes/kind
+      When  the form fields are built
+      Then  only name is required
+    """
+    form = PydanticForm(model=_Contact)
+
+    required = {f.name: f.required for f in form.fields}
+
+    assert required == {"name": True, "email": False, "notes": False, "kind": False}
+
+
+def test_field_is_required_accepts_a_plain_boolean_stand_in() -> None:
+    assert field_is_required(MockFieldInfo(is_required=True)) is True
+    assert field_is_required(object()) is False
+
+
+def test_select_preselects_the_stored_enum_member() -> None:
+    """
+    Scenario: edit form shows the stored choice
+      Given a contact whose kind is SUPPLIER
+      When  the kind select is rendered for editing
+      Then  the "Supplier" option is selected, not the first option
+    """
+    field = FormField(
+        name="kind",
+        model_field=_Contact.model_fields["kind"],
+        widget=SelectInput(),
+        value=_Kind.SUPPLIER,
+    )
+
+    assert field.is_selected("Supplier") is True
+    assert field.is_selected("Customer") is False
+
+
+def test_is_selected_matches_submitted_strings_and_multi_values() -> None:
+    """
+    Scenario: re-rendered and multi-select values stay selected
+      Given a field holding a submitted string, a list of members, or nothing
+      When  is_selected is asked about each option value
+      Then  only the held values match
+    """
+    widget = SelectInput()
+    model_field = _Contact.model_fields["kind"]
+    submitted = FormField(name="kind", model_field=model_field, widget=widget, value="Supplier")
+    multi = FormField(name="kind", model_field=model_field, widget=widget, value=list(_Kind))
+    empty = FormField(name="kind", model_field=model_field, widget=widget)
+
+    assert submitted.is_selected("Supplier") and not submitted.is_selected("Customer")
+    assert multi.is_selected("Customer") and multi.is_selected("Supplier")
+    assert empty.is_selected("Customer") is False
+
+
+def test_empty_optional_values_become_none_only_when_the_type_allows_it() -> None:
+    """
+    Scenario: blank optional inputs are stored sensibly
+      Given an optional "email: str | None" and an optional "notes: str = ''"
+      When  the form is submitted with both left blank
+      Then  email is saved as None and notes keeps the empty string
+    """
+    form = PydanticForm(model=_Contact)
+
+    instance, errors = form.validate({"name": "Acme", "email": "", "notes": "", "kind": "Customer"})
+
+    assert errors == {}
+    assert instance is not None
+    assert instance.email is None
+    assert instance.notes == ""

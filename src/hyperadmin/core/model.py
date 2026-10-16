@@ -5,6 +5,7 @@ import sys
 from typing import TYPE_CHECKING, Any, Union
 
 from hyperadmin.core.adapters import BaseAdapter
+from hyperadmin.core.display import humanize_class_name, pluralize
 
 if sys.version_info >= (3, 11):
     from typing import Self
@@ -111,7 +112,7 @@ class ModelAdmin:
     verbose_name: VerboseNameType | None = None
 
     #: Human-readable plural name for the model.
-    #: Defaults to ``verbose_name + "s"`` when ``None``.
+    #: Defaults to the pluralised verbose name (see :meth:`get_verbose_name_plural`).
     verbose_name_plural: VerboseNameType | None = None
 
     def __init__(self, model: Any) -> None:
@@ -157,13 +158,19 @@ class ModelAdmin:
     def get_verbose_name_plural(cls, model: Any) -> VerboseNameType:
         """Return the plural verbose name, lazily evaluated.
 
-        Uses :attr:`verbose_name_plural` when set; otherwise appends
-        ``"s"`` to :meth:`get_verbose_name`.  The return value is *not*
-        coerced to ``str`` so lazy proxies remain lazy.
+        Uses :attr:`verbose_name_plural` when set. Otherwise a plain-string
+        :attr:`verbose_name` is pluralised by the regular English rules
+        (``"Address"`` -> ``"Addresses"``), and with no ``verbose_name`` the
+        model's CamelCase name is split first (``JournalEntry`` ->
+        ``"Journal entries"``). A lazy ``verbose_name`` gets ``"s"`` appended so
+        it stays lazy; the return value is *not* coerced to ``str``.
         """
         if cls.verbose_name_plural is not None:
             return cls.verbose_name_plural
+        if cls.verbose_name is None:
+            return pluralize(humanize_class_name(model.__name__))
+        if isinstance(cls.verbose_name, str):
+            return pluralize(cls.verbose_name)
         # Concatenation with a plain string keeps LazyProxy objects lazy
         # because babel.support.LazyProxy.__add__ returns another proxy.
-        singular = cls.get_verbose_name(model)
-        return singular + "s"  # type: ignore[operator]
+        return cls.verbose_name + "s"  # type: ignore[operator]
