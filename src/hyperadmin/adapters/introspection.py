@@ -17,7 +17,6 @@ from typing import TYPE_CHECKING, Any, Union, get_args, get_origin
 from pydantic import AwareDatetime, NaiveDatetime
 from pydantic_core import PydanticUndefined
 from sqlalchemy import DateTime
-from sqlalchemy import Uuid as _UuidColumnType
 from sqlalchemy.inspection import inspect as sa_inspect
 from sqlalchemy.types import TypeDecorator
 
@@ -207,8 +206,8 @@ def coerce_cascade_filter_value(mapper: Any, attr: str, raw: Any) -> Any:
 
     A dependent-select cascade filter (``get_choices(..., <fk>=<raw>)``) forwards
     a plain string. Binding that string straight to a UUID column fails inside
-    the DBAPI driver (:class:`~sqlalchemy.types.Uuid`'s bind processor expects a
-    :class:`uuid.UUID` instance), so it is parsed first. Any other column type,
+    the DBAPI driver (a UUID column's bind processor expects a :class:`uuid.UUID`
+    instance), so it is parsed first. Any other column type,
     or a value that is not a ``str``, is returned unchanged.
 
     General-purpose cascade-value coercion (enums, dates, decimals, ...) is
@@ -230,6 +229,9 @@ def coerce_cascade_filter_value(mapper: Any, attr: str, raw: Any) -> Any:
     """
     if not isinstance(raw, str) or attr not in mapper.columns:
         return raw
-    if not isinstance(mapper.columns[attr].type, _UuidColumnType):
+    # Resolve through the field's Python type rather than the column class:
+    # older SQLModel releases map ``uuid.UUID`` to their own ``GUID``
+    # TypeDecorator, not SQLAlchemy's ``Uuid``.
+    if _resolve_python_type(mapper.class_, attr, mapper.columns[attr]) is not uuid.UUID:
         return raw
     return uuid.UUID(raw)
