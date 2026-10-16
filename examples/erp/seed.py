@@ -8,7 +8,7 @@ from io import BytesIO
 
 from faker import Faker
 from PIL import Image
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import SQLModel, select
 
@@ -384,13 +384,22 @@ async def _seed_field_showcase(session: AsyncSession, suppliers: list[Contact]) 
             priority=plan["priority"],
             tags=plan["tags"],
             launched_at=plan["launched_at"],
-            manual_file=manual_name,
-            photo=photo_name,
             category_id=sub.category_id,
             subcategory_id=sub.id,
             supplier_id=supplier.id if supplier else None,
         )
         session.add(item)
+        await session.flush()
+        # The files are already in storage, so store their names with a plain UPDATE.
+        # Assigning a name string through the FileType/ImageType columns only works on
+        # newer fastapi-storages; the oldest supported release expects an upload object.
+        await session.execute(
+            text(
+                f"UPDATE {FieldShowcase.__tablename__} "  # noqa: S608 - fixed table name
+                "SET manual_file = :manual, photo = :photo WHERE id = :id"
+            ),
+            {"manual": manual_name, "photo": photo_name, "id": item.id},
+        )
     await session.commit()
 
 
