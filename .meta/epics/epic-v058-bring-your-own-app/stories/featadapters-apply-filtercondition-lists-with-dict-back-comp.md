@@ -2,7 +2,7 @@
 type: story
 id: st-v058-byoa-24
 title: "feat(adapters): apply FilterCondition lists with dict back-compat"
-status: todo
+status: in-review
 priority: high
 assignee: null
 labels:
@@ -14,7 +14,7 @@ estimate: null
 epic_ref:
   id: ep-v058-byoa-01
 created_at: 2026-09-28T00:00:00Z
-updated_at: 2026-09-28T00:00:00Z
+updated_at: 2026-10-17T00:00:00Z
 ---
 
 ## Summary
@@ -61,6 +61,13 @@ Scenario: isnull condition applies
 
 - Adds `adapters/introspection.coerce_column_value` (moved from `-15`) and applies it to the choices cascade values.
 - Range operators (`gte`, `lte`, `in`, `isnull`) are deferral candidates under Owner decision 8. If they are deferred, ship `exact` only and keep the `op` field.
+
+## Review amendments (2026-10-17)
+
+- `BaseAdapter.list_as_envelope`'s `filters` parameter and docstring now match `BaseAdapter.list`'s widened `Mapping[str, Any] | Sequence[FilterCondition] | None` contract.
+- `docs/api/adapters.md` now documents that `filters` is a legacy dict or a `Sequence[FilterCondition]`, and points custom adapters at `normalize_filters`.
+- `core/filtering.coerce_filter_value`'s `int` path now bound-checks to the signed 64-bit range, so an out-of-range cascade-filter value (e.g. `get_choices(..., fk="9"*25)`) raises `FilterValueError` instead of overflowing a DBAPI bind later (`OverflowError`, uncaught by `get_choices`'s `except ValueError`).
+- Added `core/filtering.MAX_IN_VALUES` (100): `parse_filter_params` now rejects an oversized `__in` list as a field error, and `adapters/_filter_clause.build_clause` defensively rejects an oversized `in` `FilterCondition` built directly, before either reaches a driver-level parameter limit.
 
 ## Blocked by
 

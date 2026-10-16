@@ -13,6 +13,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from hyperadmin.core.filtering import MAX_IN_VALUES
+
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
@@ -30,6 +32,13 @@ def build_clause(model: Any, condition: FilterCondition) -> ColumnElement[bool]:
 
     Returns:
         A clause suitable for ``Select.where()``.
+
+    Raises:
+        ValueError: When an ``in`` condition carries more than
+            ``MAX_IN_VALUES`` values. ``parse_filter_params`` already caps
+            query-string input to this limit; this guards library callers
+            that build a :class:`FilterCondition` directly, so they get a
+            clear error instead of a driver-level failure.
     """
     column = getattr(model, condition.field)
     op = condition.op
@@ -40,6 +49,9 @@ def build_clause(model: Any, condition: FilterCondition) -> ColumnElement[bool]:
     if op == "lte":
         return column <= condition.value
     if op == "in":
+        if len(condition.value) > MAX_IN_VALUES:
+            msg = f"Too many values for {condition.field} (max {MAX_IN_VALUES})"
+            raise ValueError(msg)
         return column.in_(condition.value)
     # op == "isnull" — FilterCondition.__post_init__ guarantees one of the five
     # FilterOp values, so this is the only case left.

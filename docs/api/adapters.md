@@ -42,6 +42,12 @@ class MyAdapter(BaseAdapter):
         ...
 ```
 
+`filters` is either a legacy `{column: value}` equality dict or a
+`Sequence[FilterCondition]` (`hyperadmin.core.filtering`). Call
+`hyperadmin.core.filtering.normalize_filters(filters)` to always get
+`list[FilterCondition]` (ops: exact/gte/lte/in/isnull) before building your
+query.
+
 Register it with the adapter registry so HyperAdmin can discover it automatically:
 
 ```python

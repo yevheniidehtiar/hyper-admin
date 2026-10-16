@@ -39,6 +39,11 @@ FilterOp = Literal["exact", "gte", "lte", "in", "isnull"]
 FILTER_OPS: frozenset[str] = frozenset({"exact", "gte", "lte", "in", "isnull"})
 FILTER_PARAM_PREFIX = "filter_"
 _OP_SEPARATOR = "__"
+# Caps a membership list (query-string ``__in`` or a direct FilterCondition):
+# past this, SQLAlchemy would emit one bound parameter per value, and a
+# driver-level limit (SQLite: 999-32766 depending on build; PostgreSQL:
+# 65535) turns into an unhandled 500 rather than a clear, whitelisted error.
+MAX_IN_VALUES = 100
 _DATE_ONLY = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 _TRUE = frozenset({"true", "1", "yes", "on"})
 _FALSE = frozenset({"false", "0", "no", "off"})
@@ -140,6 +145,21 @@ def _coerce_datetime(raw: str, field_name: str | None) -> datetime:
         raise _invalid(raw, "date/time", field_name) from exc
 
 
+# Signed 64-bit range: wider than any real column, but it rejects a value that
+# parses fine in Python's arbitrary-precision ``int`` yet overflows a DBAPI
+# driver's bind (e.g. SQLite raises ``OverflowError``, not a ``ValueError``
+# subclass, when binding an out-of-range integer) before it ever reaches SQL.
+_INT64_MIN = -(2**63)
+_INT64_MAX = 2**63 - 1
+
+
+def _coerce_int(text: str) -> int:
+    value = int(text)
+    if not _INT64_MIN <= value <= _INT64_MAX:
+        raise ValueError("out of range")
+    return value
+
+
 def coerce_filter_value(annotation: Any, raw: str, *, field: str | None = None) -> Any:
     """Coerce a raw query-string value to ``annotation``.
 
@@ -147,13 +167,16 @@ def coerce_filter_value(annotation: Any, raw: str, *, field: str | None = None) 
     ``datetime`` and ``str`` (``Optional`` and ``Annotated`` are unwrapped). Other
     annotations return ``raw`` unchanged.
 
+    An ``int`` value outside the signed 64-bit range raises ``FilterValueError``
+    rather than overflowing a DBAPI driver's bind later.
+
     Raises:
         FilterValueError: When ``raw`` does not parse; ``field`` names the field.
     """
     target = _unwrap(annotation)
     text = raw.strip()
     simple: dict[Any, tuple[Callable[[str], Any], str]] = {
-        int: (int, "whole number"),
+        int: (_coerce_int, "whole number"),
         float: (float, "number"),
         uuid.UUID: (uuid.UUID, "UUID"),
         date: (date.fromisoformat, "date"),
@@ -258,6 +281,9 @@ class _FieldContext:
         if op == "isnull":
             return [FilterCondition(self.name, op, _coerce_bool(raws[0].strip(), self.name))]
         if op == "in":
+            if len(raws) > MAX_IN_VALUES:
+                msg = f"Too many values for {self.name} (max {MAX_IN_VALUES})"
+                raise FilterValueError(msg, field=self.name)
             return [FilterCondition(self.name, op, tuple(self.coerce(raw) for raw in raws))]
         raw = raws[0].strip()
         if self.is_datetime and _DATE_ONLY.match(raw) and op in ("exact", "lte"):

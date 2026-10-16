@@ -22,10 +22,11 @@ from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 from sqlalchemy.inspection import inspect as sa_inspect
 from sqlmodel import Field, Relationship, SQLModel
 
+from hyperadmin.adapters._filter_clause import build_clause
 from hyperadmin.adapters.introspection import coerce_column_value
 from hyperadmin.adapters.sqlalchemy import SQLAlchemyAdapter
 from hyperadmin.adapters.sqlmodel import SQLModelAdapter
-from hyperadmin.core.filtering import FilterCondition, FilterValueError
+from hyperadmin.core.filtering import MAX_IN_VALUES, FilterCondition, FilterValueError
 
 AdapterClass = type[SQLModelAdapter] | type[SQLAlchemyAdapter]
 
@@ -316,6 +317,98 @@ async def test_choices_cascade_filter_coerces_bool_value(
     choices = await adapter.get_choices("products", is_active="false")
 
     assert {c["label"] for c in choices} == {"Widget C"}
+
+
+# ---------------------------------------------------------------------------
+# Security review: out-of-range int cascade filter must not raise
+# OverflowError past coerce_column_value's ValueError handling
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.anyio
+async def test_choices_cascade_filter_rejects_out_of_range_int_as_no_rows(
+    engine: AsyncEngine, products: list[Any], adapter_class: AdapterClass
+) -> None:
+    """
+    Scenario: an out-of-range int cascade filter value matches no row
+      Given a cascade filter quantity='9' * 25 (parses as a Python int, but
+        overflows a DBAPI bind on an int column)
+      When  get_choices runs on the warehouse's products relation
+      Then  an empty list is returned rather than raising
+
+    Before the bound check, ``coerce_column_value`` would return the raw,
+    oversized ``int`` unchanged (``int()`` has no range limit), and binding
+    it would raise ``OverflowError`` -- not a ``ValueError`` subclass -- past
+    ``get_choices``'s ``except ValueError`` to the caller as an unhandled 500.
+    """
+    adapter = adapter_class(FilterWarehouse, engine)
+
+    choices = await adapter.get_choices("products", quantity="9" * 25)
+
+    assert choices == []
+
+
+def test_coerce_column_value_rejects_out_of_range_int() -> None:
+    """
+    Scenario: an out-of-range int cascade value raises FilterValueError
+      Given attr='quantity' (an int column) and a 25-digit raw string
+      When  coerce_column_value runs
+      Then  FilterValueError (a ValueError subclass) is raised
+    """
+    mapper = sa_inspect(FilterProduct)
+
+    with pytest.raises(FilterValueError):
+        coerce_column_value(mapper, "quantity", "9" * 25)
+
+
+# ---------------------------------------------------------------------------
+# Security review: an oversized "in" membership list must not reach the
+# driver as thousands of bound parameters
+# ---------------------------------------------------------------------------
+
+
+def test_build_clause_rejects_oversized_in_list() -> None:
+    """
+    Scenario: build_clause rejects an oversized "in" condition
+      Given a FilterCondition("quantity", "in", <MAX_IN_VALUES + 1 values>)
+      When  build_clause runs
+      Then  ValueError is raised rather than emitting one bound parameter
+        per value
+
+    ``parse_filter_params`` already caps query-string ``__in`` input to
+    ``MAX_IN_VALUES``; this guards a library caller that builds a
+    ``FilterCondition`` directly, so they get a clear error instead of a
+    driver-level failure (SQLite's "too many SQL variables",
+    PostgreSQL's parameter limit).
+    """
+    condition = FilterCondition("quantity", "in", tuple(range(MAX_IN_VALUES + 1)))
+
+    with pytest.raises(ValueError, match="Too many values"):
+        build_clause(FilterProduct, condition)
+
+
+def test_build_clause_accepts_in_list_at_the_cap() -> None:
+    condition = FilterCondition("quantity", "in", tuple(range(MAX_IN_VALUES)))
+
+    build_clause(FilterProduct, condition)  # does not raise
+
+
+@pytest.mark.anyio
+async def test_list_rejects_oversized_in_condition(
+    engine: AsyncEngine, products: list[Any], adapter_class: AdapterClass
+) -> None:
+    """
+    Scenario: list() rejects an oversized "in" condition built directly
+      Given filters=[FilterCondition("quantity", "in", <MAX_IN_VALUES + 1 values>)]
+      When  adapter.list() runs
+      Then  ValueError is raised
+    """
+    adapter = adapter_class(FilterProduct, engine)
+
+    with pytest.raises(ValueError, match="Too many values"):
+        await adapter.list(
+            filters=[FilterCondition("quantity", "in", tuple(range(MAX_IN_VALUES + 1)))]
+        )
 
 
 # ---------------------------------------------------------------------------
