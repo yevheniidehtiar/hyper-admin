@@ -102,3 +102,7 @@ messages.pot
 # uv lock file is committed (reproducible installs; CI runs uv sync --locked)
 !uv.lock
 
+
+# Visual-regression failure artefacts
+tests/e2e/snapshots/**/*.actual.png
+tests/e2e/snapshots/**/*.diff.png
