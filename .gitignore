@@ -1,6 +1,6 @@
 # Coverage.py
 htmlcov/
-reports/
+/reports/
 
 # Copier
 *.rej
