@@ -8,12 +8,13 @@ from sqlalchemy.orm import selectinload
 from sqlmodel import SQLModel
 
 from hyperadmin.adapters._search import detect_search_columns
+from hyperadmin.adapters.introspection import coerce_cascade_filter_value, introspect_primary_key
 from hyperadmin.adapters.introspection import datetime_kind as _introspect_datetime_kind
-from hyperadmin.adapters.introspection import introspect_primary_key
 from hyperadmin.core.adapters import BaseAdapter, SessionFactory, scoped_queryset_filters
 from hyperadmin.core.choices import ChoiceItem
 from hyperadmin.core.display import get_display_name
 from hyperadmin.core.inlines import InlineModelSpec
+from hyperadmin.core.primary_key import InvalidPrimaryKey
 from hyperadmin.core.sensitive import effective_sensitive_field_names
 
 if TYPE_CHECKING:
@@ -52,15 +53,22 @@ class SQLAlchemyAdapter(BaseAdapter):
         """Retrieve an object by primary key, applying any ``get_queryset`` filters.
 
         Filters returned by :meth:`get_queryset` are ANDed with the primary-key
-        predicate so excluded rows resolve to ``None`` (not raised).
+        predicate so excluded rows resolve to ``None`` (not raised). ``pk`` that
+        does not parse as this model's key type also resolves to ``None``.
+
+        Raises:
+            NotImplementedError: For a composite primary key.
         """
+        try:
+            parsed_pk = self.pk.parse(pk)
+        except InvalidPrimaryKey:
+            return None
         queryset_filters = self._resolve_queryset_filters()
         async with self._session() as session:
             if not queryset_filters:
-                return await session.get(self.model, pk)
-            assert self.inspector is not None  # noqa: S101 — validated in __init__
-            pk_col = self.inspector.primary_key[0]
-            conditions = [pk_col == pk]
+                return await session.get(self.model, parsed_pk)
+            pk_col = getattr(self.model, self.pk.attr)
+            conditions = [pk_col == parsed_pk]
             for key, value in queryset_filters.items():
                 conditions.append(getattr(self.model, key) == value)
             query = select(self.model).where(and_(*conditions))
@@ -133,8 +141,19 @@ class SQLAlchemyAdapter(BaseAdapter):
         return db_obj
 
     async def update(self, pk: Any, data: dict[str, Any]) -> Any:
+        """Update an existing object.
+
+        Primary-key attributes in ``data`` are dropped before assignment, so the
+        key is always immutable through this method.
+
+        Raises:
+            InvalidPrimaryKey: If ``pk`` does not parse as this model's key type.
+            NotImplementedError: For a composite primary key.
+        """
+        parsed_pk = self.pk.parse(pk)
+        data = {key: value for key, value in data.items() if key not in self.pk.attrs}
         async with self._session() as session:
-            db_obj = await session.get(self.model, pk)
+            db_obj = await session.get(self.model, parsed_pk)
             if db_obj:
                 for key, value in data.items():
                     setattr(db_obj, key, value)
@@ -144,20 +163,39 @@ class SQLAlchemyAdapter(BaseAdapter):
             return db_obj
 
     async def delete(self, pk: Any) -> None:
+        """Delete an object by primary key.
+
+        Raises:
+            InvalidPrimaryKey: If ``pk`` does not parse as this model's key type.
+            NotImplementedError: For a composite primary key.
+        """
+        parsed_pk = self.pk.parse(pk)
         async with self._session() as session:
-            db_obj = await session.get(self.model, pk)
+            db_obj = await session.get(self.model, parsed_pk)
             if db_obj:
                 await session.delete(db_obj)
                 await session.commit()
 
     async def get_related(self, pk: Any, field: str) -> builtins.list[Any]:
+        """Retrieve related objects for a given object and field.
+
+        Returns ``[]`` if not found, or if ``pk`` does not parse as this
+        model's key type.
+
+        Raises:
+            NotImplementedError: For a composite primary key.
+        """
         if not self.inspector or not hasattr(self.model, field):
+            return []
+        try:
+            parsed_pk = self.pk.parse(pk)
+        except InvalidPrimaryKey:
             return []
         queryset_filters = self._resolve_queryset_filters()
         async with self._session() as session:
             query = (
                 select(self.model)
-                .where(self.inspector.primary_key[0] == pk)
+                .where(getattr(self.model, self.pk.attr) == parsed_pk)
                 .options(selectinload(getattr(self.model, field)))
             )
             for key, value in queryset_filters.items():
@@ -211,6 +249,7 @@ class SQLAlchemyAdapter(BaseAdapter):
         target_inspector = inspect(target_model)
         if target_inspector is None:  # Optional in SQLAlchemy < 2.0.2x type stubs
             return []
+        target_pk = introspect_primary_key(target_model)
         async with self._session() as session:
             query = select(target_model)
 
@@ -231,7 +270,8 @@ class SQLAlchemyAdapter(BaseAdapter):
             target_sensitive = effective_sensitive_field_names(target_model)
             for key, value in filters.items():
                 if hasattr(target_model, key) and key not in target_sensitive:
-                    query = query.where(getattr(target_model, key) == value)
+                    coerced = coerce_cascade_filter_value(target_inspector, key, value)
+                    query = query.where(getattr(target_model, key) == coerced)
 
             query = query.offset(offset).limit(limit)
             result = await session.execute(query)
@@ -239,7 +279,9 @@ class SQLAlchemyAdapter(BaseAdapter):
 
         return [
             ChoiceItem(
-                value=str(getattr(item, "id", "")),
+                # The target's own key codec, not a hardcoded "id": canonical for
+                # any key kind (UUIDs become lowercase, hyphenated strings).
+                value=target_pk.to_str(target_pk.value_of(item)),
                 # Never str(item): SQLModel's default __str__ prints every column.
                 label=get_display_name(item),
                 selected=False,
@@ -267,17 +309,15 @@ class SQLAlchemyAdapter(BaseAdapter):
         """
         await self.ensure_inline_rows_owned(spec, rows, parent_pk)
         inline_adapter = self.for_model(spec.model)
-        pk_attrs = {col.key for col in inspect(spec.model).primary_key}
         for row in rows:
             row_pk = row.get("_pk")
             if row.get("_delete") and row_pk is not None:
                 await inline_adapter.delete(pk=row_pk)
             elif row_pk is not None:
-                # Keys are immutable and the row stays attached to its parent.
+                # Keys are immutable and the row stays attached to its parent;
+                # inline_adapter.update() drops any pk attrs from row_data itself.
                 row_data = {
-                    k: v
-                    for k, v in row.items()
-                    if k not in ("_pk", "_delete", spec.fk_field) and k not in pk_attrs
+                    k: v for k, v in row.items() if k not in ("_pk", "_delete", spec.fk_field)
                 }
                 await inline_adapter.update(pk=row_pk, data=row_data)
             elif not row.get("_delete"):

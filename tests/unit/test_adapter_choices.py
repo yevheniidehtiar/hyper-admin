@@ -148,6 +148,20 @@ async def test_get_choices_cascading_filter(engine: AsyncEngine, populated_db: N
 
 
 @pytest.mark.anyio
+async def test_get_choices_string_filter_on_non_uuid_column_passes_through(
+    engine: AsyncEngine, populated_db: None
+) -> None:
+    """A plain ``str`` cascade filter on a non-UUID column is used unchanged."""
+    from hyperadmin.adapters.sqlmodel import SQLModelAdapter
+
+    adapter = SQLModelAdapter(ChoiceCountry, engine)
+    choices = await adapter.get_choices("cities", name="London")
+
+    assert len(choices) == 1
+    assert choices[0]["label"] == "London"
+
+
+@pytest.mark.anyio
 async def test_get_choices_limit_exceeds_max_raises(engine: AsyncEngine) -> None:
     from hyperadmin.adapters.sqlmodel import SQLModelAdapter
 

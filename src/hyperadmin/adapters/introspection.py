@@ -10,12 +10,14 @@ actual column metadata, rather than from the pydantic annotation alone.
 from __future__ import annotations
 
 import types
+import uuid
 from datetime import datetime as _datetime
 from typing import TYPE_CHECKING, Any, Union, get_args, get_origin
 
 from pydantic import AwareDatetime, NaiveDatetime
 from pydantic_core import PydanticUndefined
 from sqlalchemy import DateTime
+from sqlalchemy import Uuid as _UuidColumnType
 from sqlalchemy.inspection import inspect as sa_inspect
 from sqlalchemy.types import TypeDecorator
 
@@ -85,6 +87,14 @@ def _is_generated(
     return _has_non_none_default(model, attr)
 
 
+#: Per-model-class cache for :func:`introspect_primary_key`. Keyed on the class
+#: itself (a plain dict, not ``functools.lru_cache``: basedpyright misreads
+#: ``lru_cache``'s ``Hashable``-typed stub against a ``type[SQLModel]`` argument,
+#: because ``SQLModel`` sets ``__hash__ = None`` on *instances*). Model classes
+#: are static for the app's lifetime, so this never needs eviction.
+_PK_CACHE: dict[type, PrimaryKeyInfo] = {}
+
+
 def introspect_primary_key(model: Any) -> PrimaryKeyInfo:
     """Build a :class:`PrimaryKeyInfo` for ``model`` from mapper introspection.
 
@@ -92,7 +102,14 @@ def introspect_primary_key(model: Any) -> PrimaryKeyInfo:
     necessarily the column name, e.g. ``sa_column=Column("id")`` mapped under
     attribute ``id_``), the Python type, whether the key is generated, and
     whether it is composite.
+
+    Cached per model class (an immutable, static fact of the mapping), so
+    adapters built for the same target repeatedly — e.g. ``get_choices``'
+    per-request ``target_pk`` — pay mapper introspection once.
     """
+    cached = _PK_CACHE.get(model)
+    if cached is not None:
+        return cached
     mapper = sa_inspect(model)
     pk_columns = mapper.primary_key
     attrs = tuple(mapper.get_property_by_column(col).key for col in pk_columns)
@@ -101,13 +118,15 @@ def introspect_primary_key(model: Any) -> PrimaryKeyInfo:
     column = pk_columns[0]
     python_type = _resolve_python_type(model, attr, column)
     generated = _is_generated(model, attr, column, python_type, composite=composite)
-    return PrimaryKeyInfo(
+    pk = PrimaryKeyInfo(
         attr=attr,
         python_type=python_type,
         generated=generated,
         composite=composite,
         attrs=attrs,
     )
+    _PK_CACHE[model] = pk
+    return pk
 
 
 def _annotation_aware_or_naive(annotation: Any) -> DateTimeKind | None:
@@ -181,3 +200,28 @@ def datetime_kind(model: Any, field: str) -> DateTimeKind | None:
         return "naive"
 
     return None
+
+
+def coerce_cascade_filter_value(mapper: Any, attr: str, raw: Any) -> Any:
+    """Coerce a raw ``str`` cascade-filter value for a UUID-typed column.
+
+    A dependent-select cascade filter (``get_choices(..., <fk>=<raw>)``) forwards
+    a plain string. Binding that string straight to a UUID column fails inside
+    the DBAPI driver (:class:`~sqlalchemy.types.Uuid`'s bind processor expects a
+    :class:`uuid.UUID` instance), so it is parsed first. Any other column type,
+    or a value that is not a ``str``, is returned unchanged.
+
+    General-purpose cascade-value coercion (enums, dates, decimals, ...) is
+    added in story ``st-v058-byoa-24`` via ``core.filtering.coerce_filter_value``;
+    this is the narrow fix for the one case that raises rather than mismatches.
+
+    Args:
+        mapper: The target model's SQLAlchemy mapper (``sa_inspect(target_model)``).
+        attr: The mapped attribute name being filtered on.
+        raw: The raw filter value.
+    """
+    if not isinstance(raw, str) or attr not in mapper.columns:
+        return raw
+    if not isinstance(mapper.columns[attr].type, _UuidColumnType):
+        return raw
+    return uuid.UUID(raw)
