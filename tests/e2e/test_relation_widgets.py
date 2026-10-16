@@ -39,7 +39,7 @@ def test_city_create_form_submit_redirects_to_detail(page: Page, demo_base_url: 
     """Submitting the create form with a selected country redirects to the city detail page."""
     page.goto(demo_base_url + "/admin/city/create")
 
-    page.get_by_label("Name*").fill("Bristol")
+    page.get_by_label("Name").fill("Bristol")
 
     country_select = page.get_by_role("combobox", name=re.compile(r"country", re.IGNORECASE))
     # Select United Kingdom
