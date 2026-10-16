@@ -20,7 +20,16 @@ from sqlalchemy.ext.asyncio import create_async_engine
 import hyperadmin.auth as auth_module
 from hyperadmin.db import create_tables
 
-app = typer.Typer(help="Create HyperAdmin's database tables without starting the app.")
+app = typer.Typer(
+    help="Create HyperAdmin's database tables without starting the app.",
+    # The database URL (with its password) lives in every frame between here and
+    # the driver's connect() call. Typer/Rich's pretty tracebacks print frame
+    # locals when this is True — the default on every Typer release before
+    # 0.17 — so a connection failure would otherwise dump the password to the
+    # terminal / CI log. Keep this explicit rather than relying on the
+    # installed Typer's own default.
+    pretty_exceptions_show_locals=False,
+)
 
 
 async def _init_db(database_url: str, *, all_tables: bool) -> None:
@@ -52,12 +61,16 @@ def init_db(
     ] = False,
 ) -> None:
     """Create database tables for ``--database-url`` (``hyperadmin_*`` only by default)."""
-    asyncio.run(_init_db(database_url, all_tables=all_tables))
+    try:
+        asyncio.run(_init_db(database_url, all_tables=all_tables))
+    except Exception as exc:
+        # Never let a connection/DDL failure fall through to Typer's traceback
+        # renderer: str(exc) is driver-level ("Connect call failed ...") and
+        # does not include the URL, unlike the frames pretty_exceptions_show_locals
+        # would have printed.
+        typer.echo(f"init-db failed: {exc}", err=True)
+        raise typer.Exit(1) from exc
     if all_tables:
         typer.echo("Created every SQLModel table.")
     else:
         typer.echo("Created hyperadmin_* tables.")
-
-
-if __name__ == "__main__":
-    app()

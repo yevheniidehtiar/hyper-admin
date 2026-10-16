@@ -5,6 +5,7 @@ Spec: ``docs/specs/bring-your-own-app.md`` section C.2.
 
 from __future__ import annotations
 
+import pytest
 from sqlalchemy import create_engine, inspect
 from typer.testing import CliRunner
 
@@ -78,3 +79,24 @@ def test_init_db_reports_which_tables_were_created(tmp_path) -> None:
         app, ["init-db", "--database-url", f"sqlite+aiosqlite:///{tmp_path / 'msg2.db'}", "--all"]
     )
     assert "every" in all_tables.stdout.lower()
+
+
+def test_init_db_connection_failure_never_leaks_the_password() -> None:
+    """
+    Scenario: a connection failure never prints the database password
+      Given a --database-url with a password, pointing at an unreachable host
+      When  hyperadmin init-db --database-url URL runs
+      Then  the command exits 1 with a clear error, and the password never
+        appears in the output — not in the error message, and not in a
+        pretty-exception traceback with frame locals (Typer's default on
+        every release before 0.17, inside this project's typer>=0.12 floor)
+    """
+    pytest.importorskip("asyncpg")
+    password = "S3cretPW"
+    db_url = f"postgresql+asyncpg://admin:{password}@127.0.0.1:1/db"
+
+    result = runner.invoke(app, ["init-db", "--database-url", db_url])
+
+    assert result.exit_code == 1
+    assert password not in result.output
+    assert "init-db failed" in result.output

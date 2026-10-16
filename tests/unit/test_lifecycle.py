@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from contextlib import asynccontextmanager
 from typing import Any
 from unittest.mock import AsyncMock
 
@@ -23,7 +24,7 @@ from hyperadmin.auth.models import Permission
 from hyperadmin.auth.permissions import ModelPermissionChecker, PermissionSyncService
 from hyperadmin.auth.session import SessionAuthBackend
 from hyperadmin.core.app import Admin
-from hyperadmin.core.lifecycle import Lifecycle, StartupGuardMiddleware
+from hyperadmin.core.lifecycle import Lifecycle, StartupGuardMiddleware, StartupUnavailableError
 from hyperadmin.core.model import ModelAdmin
 from hyperadmin.core.registry import site
 from hyperadmin.core.settings import HyperAdminSettings
@@ -376,6 +377,226 @@ async def test_guard_middleware_is_a_cheap_no_op_once_started() -> None:
     sync_permissions.assert_awaited_once()
 
 
+@pytest.mark.anyio
+async def test_guard_middleware_matches_every_path_when_mounted_at_root() -> None:
+    """
+    Scenario: admin_prefix="/" matches every path, not just a literal "/"
+      Given StartupGuardMiddleware(admin_prefix="/") (the admin mounted at
+        the host's root)
+      When  a request for /anything comes through
+      Then  ensure_started() is called
+    """
+    lifecycle, create_tables, sync_permissions, _drain = _make_lifecycle(realtime_enabled=False)
+    inner = _FakeASGIApp()
+    middleware = StartupGuardMiddleware(inner, lifecycle=lifecycle, admin_prefix="/")
+
+    await middleware({"type": "http", "path": "/anything", "root_path": ""}, None, None)
+
+    create_tables.assert_awaited_once()
+    sync_permissions.assert_awaited_once()
+    assert len(inner.calls) == 1
+
+
+@pytest.mark.anyio
+async def test_guard_middleware_does_not_match_overlapping_prefix() -> None:
+    """
+    Scenario: a host route that merely starts with admin_prefix is not matched
+      Given StartupGuardMiddleware(admin_prefix="/admin")
+      When  a request for /administrator comes through
+      Then  ensure_started() is never called — matching is on whole path
+        segments, not a raw string prefix
+    """
+    lifecycle, create_tables, sync_permissions, _drain = _make_lifecycle(realtime_enabled=False)
+    inner = _FakeASGIApp()
+    middleware = StartupGuardMiddleware(inner, lifecycle=lifecycle, admin_prefix="/admin")
+
+    await middleware({"type": "http", "path": "/administrator", "root_path": ""}, None, None)
+
+    create_tables.assert_not_called()
+    sync_permissions.assert_not_called()
+    assert len(inner.calls) == 1
+
+
+@pytest.mark.anyio
+async def test_guard_middleware_matches_when_host_app_is_itself_mounted() -> None:
+    """
+    Scenario: the guard still matches when the host app is mounted under its own prefix
+      Given StartupGuardMiddleware(admin_prefix="/admin") composed under a host
+        mounted at "/api" (so ASGI sets scope["root_path"]="/api" and
+        scope["path"]="/api/admin/")
+      When  a request for /api/admin/ comes through
+      Then  ensure_started() is called — route-path matching strips the
+        mount's root_path first
+    """
+    lifecycle, create_tables, sync_permissions, _drain = _make_lifecycle(realtime_enabled=False)
+    inner = _FakeASGIApp()
+    middleware = StartupGuardMiddleware(inner, lifecycle=lifecycle, admin_prefix="/admin")
+
+    await middleware({"type": "http", "path": "/api/admin/", "root_path": "/api"}, None, None)
+
+    create_tables.assert_awaited_once()
+    sync_permissions.assert_awaited_once()
+    assert len(inner.calls) == 1
+
+
+@pytest.mark.anyio
+async def test_guard_middleware_triggers_for_websocket_scopes() -> None:
+    """
+    Scenario: a websocket scope under the admin prefix also triggers the guard
+      Given StartupGuardMiddleware(admin_prefix="/admin")
+      When  a websocket connection to /admin/realtime/ws comes through
+      Then  ensure_started() is called
+    """
+    lifecycle, create_tables, sync_permissions, _drain = _make_lifecycle(realtime_enabled=False)
+    inner = _FakeASGIApp()
+    middleware = StartupGuardMiddleware(inner, lifecycle=lifecycle, admin_prefix="/admin")
+
+    await middleware(
+        {"type": "websocket", "path": "/admin/realtime/ws", "root_path": ""}, None, None
+    )
+
+    create_tables.assert_awaited_once()
+    sync_permissions.assert_awaited_once()
+    assert len(inner.calls) == 1
+
+
+@pytest.mark.anyio
+async def test_guard_middleware_sends_503_on_http_startup_failure() -> None:
+    """
+    Scenario: an http request gets a 503, not a propagated exception, on failure
+      Given create_tables raises
+      When  an http request under the admin prefix comes through the guard
+      Then  the inner app is never reached and a 503 with Retry-After is sent
+    """
+    lifecycle, create_tables, _sync_permissions, _drain = _make_lifecycle(realtime_enabled=False)
+    create_tables.side_effect = RuntimeError("db is down")
+    inner = _FakeASGIApp()
+    middleware = StartupGuardMiddleware(inner, lifecycle=lifecycle, admin_prefix="/admin")
+    sent: list[dict[str, Any]] = []
+
+    async def send(message: dict[str, Any]) -> None:
+        sent.append(message)
+
+    await middleware({"type": "http", "path": "/admin/", "root_path": ""}, None, send)
+
+    assert len(inner.calls) == 0
+    assert sent[0]["type"] == "http.response.start"
+    assert sent[0]["status"] == 503
+    headers = dict(sent[0]["headers"])
+    assert headers[b"retry-after"] == b"30"
+    assert sent[1]["type"] == "http.response.body"
+
+
+@pytest.mark.anyio
+async def test_guard_middleware_propagates_on_websocket_startup_failure() -> None:
+    """
+    Scenario: a websocket connection sees the raised exception, not a 503
+      Given create_tables raises
+      When  a websocket scope under the admin prefix comes through the guard
+      Then  the original exception propagates (there is no HTTP response to
+        send on a websocket scope) and the inner app is never reached
+    """
+    lifecycle, create_tables, _sync_permissions, _drain = _make_lifecycle(realtime_enabled=False)
+    create_tables.side_effect = RuntimeError("db is down")
+    inner = _FakeASGIApp()
+    middleware = StartupGuardMiddleware(inner, lifecycle=lifecycle, admin_prefix="/admin")
+
+    with pytest.raises(RuntimeError, match="db is down"):
+        await middleware(
+            {"type": "websocket", "path": "/admin/realtime/ws", "root_path": ""}, None, None
+        )
+
+    assert len(inner.calls) == 0
+
+
+@pytest.mark.anyio
+async def test_guard_retries_are_suppressed_within_the_backoff_window() -> None:
+    """
+    Scenario: repeated guard failures within the backoff window run the work once
+      Given create_tables always raises
+      When  ensure_started() is called several times in a row (sequentially
+        and concurrently) within the backoff window
+      Then  create_tables is awaited only once — later calls raise
+        StartupUnavailableError without re-running it
+    """
+    lifecycle, create_tables, _sync_permissions, _drain = _make_lifecycle(
+        realtime_enabled=False, retry_backoff_seconds=30.0
+    )
+    create_tables.side_effect = RuntimeError("db is down")
+
+    with pytest.raises(RuntimeError, match="db is down"):
+        await lifecycle.ensure_started()
+
+    with pytest.raises(StartupUnavailableError):
+        await lifecycle.ensure_started()
+
+    results = await asyncio.gather(
+        *(lifecycle.ensure_started() for _ in range(5)),
+        return_exceptions=True,
+    )
+    assert all(isinstance(r, StartupUnavailableError) for r in results)
+    create_tables.assert_awaited_once()
+
+
+@pytest.mark.anyio
+async def test_guard_logs_full_traceback_only_for_the_first_failure(
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    """
+    Scenario: only the first failure after a backoff window logs a full traceback
+      Given create_tables always raises and the backoff window is 0s (so the
+        very next call retries immediately instead of being suppressed)
+      When  ensure_started() fails, then fails again once the window has elapsed
+      Then  the first failure is logged with logger.exception (ERROR + traceback)
+        and the second is logged as a plain ERROR message with no traceback —
+        both attempts actually ran create_tables
+    """
+    lifecycle, create_tables, _sync_permissions, _drain = _make_lifecycle(
+        realtime_enabled=False, retry_backoff_seconds=0.0
+    )
+    create_tables.side_effect = RuntimeError("db is down")
+
+    with (
+        caplog.at_level(logging.ERROR, logger="hyperadmin"),
+        pytest.raises(RuntimeError),
+    ):
+        await lifecycle.ensure_started()
+
+    with (
+        caplog.at_level(logging.ERROR, logger="hyperadmin"),
+        pytest.raises(RuntimeError),
+    ):
+        await lifecycle.ensure_started()
+
+    tracebacks = [r for r in caplog.records if r.exc_info]
+    assert len(tracebacks) == 1
+    repeats = [r for r in caplog.records if "failed again" in r.getMessage()]
+    assert len(repeats) == 1
+    assert not repeats[0].exc_info
+    assert create_tables.await_count == 2
+
+
+@pytest.mark.anyio
+async def test_explicit_startup_bypasses_the_backoff_window() -> None:
+    """
+    Scenario: the explicit startup() path never observes the backoff window
+      Given a guard failure just opened the backoff window
+      When  startup() (the explicit path) is called immediately after
+      Then  it retries right away (raises the real error, not
+        StartupUnavailableError) rather than being suppressed
+    """
+    lifecycle, create_tables, _sync_permissions, _drain = _make_lifecycle(realtime_enabled=False)
+    create_tables.side_effect = RuntimeError("db is down")
+
+    with pytest.raises(RuntimeError, match="db is down"):
+        await lifecycle.ensure_started()
+
+    with pytest.raises(RuntimeError, match="db is down"):
+        await lifecycle.startup()
+
+    assert create_tables.await_count == 2
+
+
 # ---------------------------------------------------------------------------
 # Admin lifecycle API — integration
 # ---------------------------------------------------------------------------
@@ -444,19 +665,28 @@ async def test_demo_mode_still_works_zero_config(tmp_path) -> None:
 async def test_permission_sync_runs_under_a_host_lifespan(tmp_path) -> None:
     """
     Scenario: permission sync runs under a host lifespan
-      Given a host app created with its own lifespan (not composing
+      Given a host app with its OWN lifespan= (which does not compose
         admin.lifespan()) and built-in auth
-      When  the first request hits /admin/
-      Then  the permission table contains rows for the registered model
-        (synced by the first-request safety net, not the host's lifespan)
+      When  two requests hit /admin/login
+      Then  the permission sync runs exactly once (not on every request, and
+        not skipped because a host lifespan was present) and the permission
+        table contains rows for the registered model — both synced by the
+        first-request safety net, not the host's lifespan
     """
+
     # Given
+    @asynccontextmanager
+    async def host_lifespan(_app: FastAPI):
+        yield
+
     db_path = tmp_path / "authz.db"
     engine = create_async_engine(f"sqlite+aiosqlite:///{db_path}")
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
 
-    app = FastAPI()  # no lifespan= composed — the guard is the only mechanism
+    # A host lifespan IS composed here — admin.lifespan() is not part of it —
+    # so the guard, not the host's lifespan, must be what runs the sync.
+    app = FastAPI(lifespan=host_lifespan)
     site.register(LifecycleWidget, admin_class=type("WidgetAdmin", (ModelAdmin,), {}))
     admin = Admin(
         app,
@@ -468,12 +698,18 @@ async def test_permission_sync_runs_under_a_host_lifespan(tmp_path) -> None:
     )
     admin.mount("/admin")
 
+    real_sync_permissions = admin._sync_permissions
+    sync_mock = AsyncMock(side_effect=real_sync_permissions)
+    admin._lifecycle._sync_permissions = sync_mock
+
     # When
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         await client.get("/admin/login")
+        await client.get("/admin/login")
 
     # Then
+    assert sync_mock.await_count == 1
     async with engine.connect() as conn:
         result = await conn.execute(
             select(Permission.codename).where(Permission.codename == "view_lifecyclewidget")
