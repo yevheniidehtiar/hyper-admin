@@ -7,12 +7,13 @@ from sqlalchemy.orm import selectinload
 from sqlmodel import SQLModel, select
 
 from hyperadmin.adapters._search import detect_search_columns
+from hyperadmin.adapters.introspection import coerce_cascade_filter_value, introspect_primary_key
 from hyperadmin.adapters.introspection import datetime_kind as _introspect_datetime_kind
-from hyperadmin.adapters.introspection import introspect_primary_key
 from hyperadmin.core.adapters import BaseAdapter, SessionFactory, scoped_queryset_filters
 from hyperadmin.core.choices import ChoiceItem
 from hyperadmin.core.display import get_display_name
 from hyperadmin.core.inlines import InlineModelSpec
+from hyperadmin.core.primary_key import InvalidPrimaryKey
 from hyperadmin.core.sensitive import effective_sensitive_field_names
 
 if TYPE_CHECKING:
@@ -60,13 +61,25 @@ class SQLModelAdapter(BaseAdapter):
             pk: The primary key of the object to retrieve.
 
         Returns:
-            The retrieved object, or None if not found.
+            The retrieved object, or ``None`` if not found, or if ``pk`` does not
+            parse as this model's key type.
+
+        Raises:
+            NotImplementedError: For a composite primary key.
         """
+        try:
+            parsed_pk = self.pk.parse(pk)
+        except InvalidPrimaryKey:
+            return None
         queryset_filters = self._resolve_queryset_filters()
         async with self._session() as session:
             mapper = inspect(self.model)
             options = [selectinload(getattr(self.model, rel.key)) for rel in mapper.relationships]
-            query = select(self.model).where(self.model.id == pk).options(*options)
+            query = (
+                select(self.model)
+                .where(getattr(self.model, self.pk.attr) == parsed_pk)
+                .options(*options)
+            )
             for key, value in queryset_filters.items():
                 query = query.where(getattr(self.model, key) == value)
             result = await session.execute(query)
@@ -165,15 +178,24 @@ class SQLModelAdapter(BaseAdapter):
         """
         Updates an existing object.
 
+        Primary-key attributes in ``data`` are dropped before assignment, so the
+        key is always immutable through this method.
+
         Args:
             pk: The primary key of the object to update.
             data: A dictionary of data to update the object with.
 
         Returns:
             The updated object.
+
+        Raises:
+            InvalidPrimaryKey: If ``pk`` does not parse as this model's key type.
+            NotImplementedError: For a composite primary key.
         """
+        parsed_pk = self.pk.parse(pk)
+        data = {key: value for key, value in data.items() if key not in self.pk.attrs}
         async with self._session() as session:
-            db_obj = await session.get(self.model, pk)
+            db_obj = await session.get(self.model, parsed_pk)
             if db_obj:
                 for key, value in data.items():
                     setattr(db_obj, key, value)
@@ -188,9 +210,14 @@ class SQLModelAdapter(BaseAdapter):
 
         Args:
             pk: The primary key of the object to delete.
+
+        Raises:
+            InvalidPrimaryKey: If ``pk`` does not parse as this model's key type.
+            NotImplementedError: For a composite primary key.
         """
+        parsed_pk = self.pk.parse(pk)
         async with self._session() as session:
-            db_obj = await session.get(self.model, pk)
+            db_obj = await session.get(self.model, parsed_pk)
             if db_obj:
                 await session.delete(db_obj)
                 await session.commit()
@@ -204,13 +231,21 @@ class SQLModelAdapter(BaseAdapter):
             field: The name of the related field.
 
         Returns:
-            A list of related objects.
+            A list of related objects, or ``[]`` if not found, or if ``pk`` does
+            not parse as this model's key type.
+
+        Raises:
+            NotImplementedError: For a composite primary key.
         """
+        try:
+            parsed_pk = self.pk.parse(pk)
+        except InvalidPrimaryKey:
+            return []
         queryset_filters = self._resolve_queryset_filters()
         async with self._session() as session:
             query = (
                 select(self.model)
-                .where(self.model.id == pk)
+                .where(getattr(self.model, self.pk.attr) == parsed_pk)
                 .options(selectinload(getattr(self.model, field)))
             )
             for key, value in queryset_filters.items():
@@ -256,6 +291,7 @@ class SQLModelAdapter(BaseAdapter):
             return []
 
         target_inspector = inspect(target_model)
+        target_pk = introspect_primary_key(target_model)
         async with self._session() as session:
             query = select(target_model)
 
@@ -276,7 +312,8 @@ class SQLModelAdapter(BaseAdapter):
             target_sensitive = effective_sensitive_field_names(target_model)
             for key, value in filters.items():
                 if hasattr(target_model, key) and key not in target_sensitive:
-                    query = query.where(getattr(target_model, key) == value)
+                    coerced = coerce_cascade_filter_value(target_inspector, key, value)
+                    query = query.where(getattr(target_model, key) == coerced)
 
             query = query.offset(offset).limit(limit)
             result = await session.execute(query)
@@ -284,7 +321,9 @@ class SQLModelAdapter(BaseAdapter):
 
         return [
             ChoiceItem(
-                value=str(getattr(item, "id", "")),
+                # The target's own key codec, not a hardcoded "id": canonical for
+                # any key kind (UUIDs become lowercase, hyphenated strings).
+                value=target_pk.to_str(target_pk.value_of(item)),
                 # Never str(item): SQLModel's default __str__ prints every column.
                 label=get_display_name(item),
                 selected=False,
@@ -316,17 +355,15 @@ class SQLModelAdapter(BaseAdapter):
         """
         await self.ensure_inline_rows_owned(spec, rows, parent_pk)
         inline_adapter = self.for_model(spec.model)
-        pk_attrs = {col.key for col in inspect(spec.model).primary_key}
         for row in rows:
             row_pk = row.get("_pk")
             if row.get("_delete") and row_pk is not None:
                 await inline_adapter.delete(pk=row_pk)
             elif row_pk is not None:
-                # Keys are immutable and the row stays attached to its parent.
+                # Keys are immutable and the row stays attached to its parent;
+                # inline_adapter.update() drops any pk attrs from row_data itself.
                 row_data = {
-                    k: v
-                    for k, v in row.items()
-                    if k not in ("_pk", "_delete", spec.fk_field) and k not in pk_attrs
+                    k: v for k, v in row.items() if k not in ("_pk", "_delete", spec.fk_field)
                 }
                 await inline_adapter.update(pk=row_pk, data=row_data)
             elif not row.get("_delete"):
