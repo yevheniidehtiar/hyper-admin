@@ -51,6 +51,7 @@ dev = [
   "cffi>=2.1.1",
   "commitizen>=4.19.1",
   "coverage[toml]>=7.16.2",
+  "diff-cover>=10.6.0",  # `poe test:cov-diff`: 100% coverage of changed lines
   "matplotlib>=3.10.9",
   "mypy>=2.4.0",
   "nodeenv>=1.11.0",
@@ -106,6 +107,8 @@ show_missing = true
 skip_covered = true
 exclude_lines = [
     "raise NotImplementedError",
+    # Imports for type checkers only: never executed at runtime.
+    "if TYPE_CHECKING:",
 ]
 
 [tool.coverage.xml]  # https://coverage.readthedocs.io/en/latest/config.html#xml
@@ -329,6 +332,13 @@ type = "simple"
   sequence = [
     { cmd = "pytest -vv -q tests/unit" },
   ]
+  [tool.poe.tasks."test:cov-diff"]
+  help = "Unit tests, then fail unless every changed line vs origin/develop is covered (100% patch)"
+  sequence = [
+    { cmd = "pytest -q tests/unit" },
+    { cmd = "diff-cover reports/coverage.xml --compare-branch=origin/develop --fail-under=100" },
+  ]
+
   [tool.poe.tasks."test:e2e"]
   help = "Run end-to-end tests with Playwright"
   sequence = [
