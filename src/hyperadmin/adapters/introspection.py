@@ -219,6 +219,14 @@ def coerce_cascade_filter_value(mapper: Any, attr: str, raw: Any) -> Any:
         mapper: The target model's SQLAlchemy mapper (``sa_inspect(target_model)``).
         attr: The mapped attribute name being filtered on.
         raw: The raw filter value.
+
+    Raises:
+        ValueError: If ``raw`` is a ``str`` that is not a valid UUID for a
+            UUID-typed column (e.g. ``''`` — what a dependent select sends
+            while its parent is still blank — or a garbage value). Callers
+            that forward unvalidated query-string input (``get_choices``)
+            must catch this and treat it as "matches no row" rather than
+            letting it become an unhandled 500.
     """
     if not isinstance(raw, str) or attr not in mapper.columns:
         return raw

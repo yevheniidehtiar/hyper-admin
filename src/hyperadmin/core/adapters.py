@@ -11,7 +11,7 @@ from typing import TYPE_CHECKING, Annotated, Any, Protocol, Union, cast, get_arg
 
 from pydantic import AwareDatetime, NaiveDatetime
 
-from hyperadmin.core.primary_key import DEFAULT_PK, PrimaryKeyInfo
+from hyperadmin.core.primary_key import DEFAULT_PK, InvalidPrimaryKey, PrimaryKeyInfo
 
 if TYPE_CHECKING:
     import builtins
@@ -92,6 +92,11 @@ class InlineRowNotOwnedError(LookupError):
 
     Raised before any write so the view can answer 404 (IDOR / reparenting guard).
     """
+
+
+#: Sentinel marking a submitted inline ``_pk`` that failed to parse against the
+#: child model's primary-key codec — see ``BaseAdapter.ensure_inline_rows_owned``.
+_FOREIGN = object()
 
 
 @dataclass(frozen=True)
@@ -331,13 +336,35 @@ class BaseAdapter(ABC):
 
         Must run before any write. A submitted child pk is never trusted on its
         own: it must be an existing child (``fk_field == parent_pk``) of the
-        parent being saved. Adapters provide the lookup via :meth:`inline_child_pks`.
+        parent being saved. Adapters provide the lookup via :meth:`inline_child_pks`,
+        which returns DB-typed keys (e.g. ``uuid.UUID`` for a UUID-keyed child).
+
+        A submitted ``_pk`` is a form value — a plain ``str`` or ``int`` from
+        ``views/forms.py``'s ``_parse_inline_pk``, or whatever a direct adapter
+        caller passes. It is parsed through the *child* model's own primary-key
+        codec (not the parent's) before comparing against ``owned``, so a
+        UUID-keyed child's submitted ``str(uuid)`` compares equal to the
+        ``uuid.UUID`` instances ``inline_child_pks`` returns, instead of every
+        row with an existing ``_pk`` being rejected as foreign.
         """
-        submitted = {row["_pk"] for row in rows if row.get("_pk") is not None}
-        if not submitted:
+        submitted_raw = [row["_pk"] for row in rows if row.get("_pk") is not None]
+        if not submitted_raw:
             return
+        child_pk = self.for_model(spec.model).pk
+
+        def _parse_or_foreign(raw: Any) -> tuple[Any, Any]:
+            # Cannot possibly be a real child key — reject it as foreign
+            # rather than letting the parse error bubble up as a 500.
+            try:
+                return (child_pk.parse(raw), _FOREIGN)
+            except InvalidPrimaryKey:
+                return (_FOREIGN, raw)
+
+        parsed_or_foreign = [_parse_or_foreign(raw) for raw in submitted_raw]
+        submitted = {parsed for parsed, _ in parsed_or_foreign if parsed is not _FOREIGN}
+        foreign = {raw for _, raw in parsed_or_foreign if raw is not _FOREIGN}
         owned = await self.inline_child_pks(spec, parent_pk) if parent_pk is not None else set()
-        foreign = submitted - owned
+        foreign |= submitted - owned
         if foreign:
             raise InlineRowNotOwnedError(
                 f"Inline rows {sorted(map(str, foreign))} do not belong to this parent"

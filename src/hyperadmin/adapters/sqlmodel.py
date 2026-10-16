@@ -312,7 +312,13 @@ class SQLModelAdapter(BaseAdapter):
             target_sensitive = effective_sensitive_field_names(target_model)
             for key, value in filters.items():
                 if hasattr(target_model, key) and key not in target_sensitive:
-                    coerced = coerce_cascade_filter_value(target_inspector, key, value)
+                    try:
+                        coerced = coerce_cascade_filter_value(target_inspector, key, value)
+                    except ValueError:
+                        # An unparseable cascade value (e.g. '' or 'garbage' for a
+                        # UUID FK) matches no row rather than raising a 500 — '' is
+                        # what a dependent select sends while its parent is blank.
+                        return []
                     query = query.where(getattr(target_model, key) == coerced)
 
             query = query.offset(offset).limit(limit)
