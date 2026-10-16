@@ -44,7 +44,10 @@ if TYPE_CHECKING:
 # Snapshot helpers  (mirror of test_visual_regression.py)
 # ---------------------------------------------------------------------------
 
+# Baselines are per platform (see test_visual_regression.py): macOS uses ``darwin/``.
 SNAPSHOT_DIR = Path(__file__).parent / "snapshots" / "i18n"
+if sys.platform == "darwin":
+    SNAPSHOT_DIR /= "darwin"
 SNAPSHOT_DIR.mkdir(parents=True, exist_ok=True)
 
 UPDATE_BASELINES = os.environ.get("RESPONSIVE_SNAPSHOTS_UPDATE") == "1"

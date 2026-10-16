@@ -2,13 +2,18 @@
 
 Captures full-page screenshots of four key views (list, create, detail, login)
 at three breakpoints (375, 768, 1024) and compares against committed baseline
-PNGs in ``tests/e2e/snapshots/responsive/``.
+PNGs in ``tests/e2e/snapshots/responsive/`` (Linux, what CI compares against)
+or ``tests/e2e/snapshots/responsive/darwin/`` (macOS, local runs and pre-push).
 
 To regenerate baselines after an intentional visual change::
 
     RESPONSIVE_SNAPSHOTS_UPDATE=1 uv run pytest tests/e2e/test_visual_regression.py
     git add tests/e2e/snapshots/responsive/
     git commit -m "test(e2e): refresh responsive visual baselines"
+
+Run it on macOS to refresh ``darwin/``, and inside the
+``mcr.microsoft.com/playwright/python`` image (``--platform linux/amd64``) to
+refresh the Linux baselines.
 
 The diff metric is the percentage of image pixels that differ from the baseline
 by more than 30/255 in any channel. Up to 1% of the image may differ before a
@@ -23,6 +28,7 @@ from __future__ import annotations
 import io
 import os
 import re
+import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -32,7 +38,11 @@ from PIL import Image, ImageChops
 if TYPE_CHECKING:
     from playwright.sync_api import Locator, Page
 
+# Font rasterisation differs between operating systems by more than the diff
+# tolerance, so baselines are kept per platform: macOS runs use ``darwin/``.
 SNAPSHOT_DIR = Path(__file__).parent / "snapshots" / "responsive"
+if sys.platform == "darwin":
+    SNAPSHOT_DIR /= "darwin"
 SNAPSHOT_DIR.mkdir(parents=True, exist_ok=True)
 
 UPDATE_BASELINES = os.environ.get("RESPONSIVE_SNAPSHOTS_UPDATE") == "1"
