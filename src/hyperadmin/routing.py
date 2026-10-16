@@ -45,14 +45,25 @@ class HyperAdminPkConvertor(Convertor[str]):
     def to_string(self, value: Any) -> str:
         """Percent-encode ``value`` for use in a URL path segment.
 
-        Raises:
-            ValueError: ``value`` stringifies to ``""`` or contains ``"/"``.
+        ``to_string`` runs once per row inside ``components/table.html`` (one
+        ``url_for`` call per action link). An exception raised here aborts the
+        *entire* list page render for *every* row, not just the row whose key
+        is malformed — so a single bad natural key stored earlier (``""``, a
+        value containing ``"/"``, ...) would turn into a persistent 500 on
+        every future visit to that model's list page, for every admin user.
+        This was reported and verified against this behaviour when it used to
+        raise on an empty string or a ``"/"`` (BYOA SDD A.5 Decision Log).
+
+        So instead of rejecting those values, this always stringifies and
+        percent-encodes: ``/`` becomes ``%2F`` because it is not in ``safe``,
+        and ``""`` stays ``""``. Either produces a link that is a dead 404 on
+        its own row — never one that crashes the page. ``None`` is handled
+        the same way (stringifying to the literal ``"None"``), rather than
+        raising, for the same reason: a view or template passing a ``None``
+        key is exactly the kind of single-row mistake this must not let take
+        the whole list page down with it.
         """
-        str_value = str(value)
-        if not str_value or "/" in str_value:
-            msg = f"Invalid primary key for URL path segment: {value!r}"
-            raise ValueError(msg)
-        return quote(str_value, safe="-._~!$&'()*+,;=:@")
+        return quote(str(value), safe="-._~!$&'()*+,;=:@")
 
 
 if "hyperadmin_pk" not in CONVERTOR_TYPES:
