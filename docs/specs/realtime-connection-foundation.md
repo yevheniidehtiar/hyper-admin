@@ -232,6 +232,30 @@ Backward compatible — no migration required. The new `realtime` kwarg is optio
 
 When the PubSub stories (#302–#305) land, `realtime/ws.py` will get a small diff to subscribe to `pubsub_backend.subscribe(channel)` and forward messages — the public surface stays the same.
 
+## PubSub Backend Protocol
+
+`hyperadmin.realtime.PubSubBackend` (#302 / #303) is the fan-out contract every backend implements. Messages are opaque `bytes`; serialisation belongs to the event layer.
+
+| Method | Contract |
+|--------|----------|
+| `async publish(channel, message)` | Deliver `message` to every current subscriber of `channel`. Never blocks on slow subscribers. |
+| `subscribe(channel)` | Async context manager yielding an async iterator of messages. Registered on enter; leaving the block (normally, by exception or task cancellation) unsubscribes. |
+| `async close()` | Idempotent. Ends every active iteration; further `publish` / `subscribe` raise `RuntimeError`. |
+
+```python
+from hyperadmin.realtime import InMemoryPubSub
+
+pubsub = InMemoryPubSub(max_queue_size=100)
+
+async with pubsub.subscribe("crud:article") as messages:
+    async for payload in messages:
+        ...
+
+await pubsub.publish("crud:article", b'{"op": "update", "pk": 1}')
+```
+
+`InMemoryPubSub` is the zero-config, single-process backend: one bounded `asyncio.Queue` per subscriber. **Overflow policy:** when a subscriber's queue is full, its oldest pending message is dropped, so a slow consumer never blocks the publisher or other subscribers. Multi-worker deployments use `RedisPubSub` (#304 / #305), which implements the same protocol.
+
 ## Open Questions
 
 - [x] SSE + WS or pick one? → **Both** (user decision 2026-05-05).

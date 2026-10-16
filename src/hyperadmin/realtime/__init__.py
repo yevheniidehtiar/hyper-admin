@@ -11,6 +11,13 @@ Subscribing to events / fan-out lives in the PubSub stories (see
 """
 
 from hyperadmin.realtime.config import RealtimeSettings
+from hyperadmin.realtime.pubsub import InMemoryPubSub, PubSubBackend
 from hyperadmin.realtime.registry import ConnectionRegistry, RealtimeConnection
 
-__all__ = ["ConnectionRegistry", "RealtimeConnection", "RealtimeSettings"]
+__all__ = [
+    "ConnectionRegistry",
+    "InMemoryPubSub",
+    "PubSubBackend",
+    "RealtimeConnection",
+    "RealtimeSettings",
+]
