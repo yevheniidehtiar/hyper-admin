@@ -2,7 +2,7 @@
 type: story
 id: st-v058-byoa-26
 title: "feat(core): lifecycle with opt-in create_tables, startup/shutdown/lifespan, first-request guard and init-db CLI"
-status: todo
+status: in-review
 priority: high
 assignee: null
 labels:
@@ -14,7 +14,7 @@ estimate: null
 epic_ref:
   id: ep-v058-byoa-01
 created_at: 2026-09-28T00:00:00Z
-updated_at: 2026-09-28T00:00:00Z
+updated_at: 2026-10-17T00:00:00Z
 ---
 
 ## Summary
