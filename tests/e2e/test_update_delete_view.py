@@ -13,7 +13,7 @@ def test_edit_link_navigates_to_update_form(page: Page, demo_base_url: str) -> N
 
     expect(page).to_have_url(re.compile(r"/edit$"))
     expect(page.get_by_test_id("model-form")).to_be_visible()
-    expect(page.get_by_label("Name*")).not_to_be_empty()
+    expect(page.get_by_label("Name")).not_to_be_empty()
 
 
 def test_update_form_submits_successfully(page: Page, demo_base_url: str) -> None:
@@ -23,7 +23,7 @@ def test_update_form_submits_successfully(page: Page, demo_base_url: str) -> Non
     page.get_by_test_id("list-row").first.get_by_test_id("row-edit-link").click()
     expect(page.get_by_test_id("model-form")).to_be_visible()
 
-    page.get_by_label("Name*").fill("Alice Updated")
+    page.get_by_label("Name").fill("Alice Updated")
     page.get_by_role("button", name="Update").click()
 
     expect(page).to_have_url(re.compile(r"/admin/user$"))
@@ -37,7 +37,7 @@ def test_update_form_shows_validation_errors(page: Page, demo_base_url: str) -> 
     page.get_by_test_id("list-row").first.get_by_test_id("row-edit-link").click()
     expect(page.get_by_test_id("model-form")).to_be_visible()
 
-    page.get_by_label("Name*").fill("")
+    page.get_by_label("Name").fill("")
     page.get_by_role("button", name="Update").click()
 
     expect(page.get_by_test_id("name-errors")).to_be_visible()
