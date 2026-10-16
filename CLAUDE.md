@@ -35,6 +35,7 @@ poe lint              # Run all linters (pre-commit hooks: ruff, mypy, commitize
 poe test              # Run all tests (unit + e2e)
 poe test:unit         # Unit tests only (pytest with coverage)
 poe test:e2e          # E2E tests with Playwright
+poe test:cov-diff     # Unit tests + 100% coverage of lines changed vs origin/develop (required before push)
 poe deps:bump         # Bump deps and verify across compatibility matrix
 poe docs:serve        # Serve docs locally on port 8080 (Zensical, ephemeral Python 3.13 env)
 poe docs:build        # Build documentation site into site/ (zensical build --clean)
