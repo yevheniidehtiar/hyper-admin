@@ -2,7 +2,7 @@
 type: story
 id: st-v054-olap-01
 title: "feat(reports): aggregates, crosstab, time-bucketing core"
-status: todo
+status: in-review
 priority: high
 assignee: null
 labels:
@@ -15,7 +15,7 @@ estimate: null
 epic_ref:
   id: ep-v054-olap-01
 created_at: 2026-05-11T00:00:00Z
-updated_at: 2026-05-11T00:00:00Z
+updated_at: 2026-10-17T00:00:00Z
 ---
 
 ## Summary
@@ -56,13 +56,13 @@ Scenario: auto bucketing picks quarter for 365-day range
 
 ## Acceptance Criteria
 
-- [ ] Six aggregates implemented; each has a per-dialect SQL stub
-- [ ] `ReportView.run()` executes the grouped query and returns a flat result set
-- [ ] Pivot builder handles missing cells (None / zero per aggregate convention)
-- [ ] `TimeBucket("...", period="auto")` resolver matches SDD thresholds
-- [ ] Public exports from `hyperadmin.reports`
-- [ ] Unit tests cover all three scenarios + per-aggregate SQL
-- [ ] `poe lint` and `poe test:unit` pass
+- [x] Six aggregates implemented; each has a per-dialect SQL stub
+- [x] `ReportView.run()` executes the grouped query and returns a flat result set
+- [x] Pivot builder handles missing cells (None / zero per aggregate convention)
+- [x] `TimeBucket("...", period="auto")` resolver matches SDD thresholds
+- [x] Public exports from `hyperadmin.reports`
+- [x] Unit tests cover all three scenarios + per-aggregate SQL
+- [x] `poe lint` and `poe test:unit` pass
 
 ## Blocked by
 

@@ -3,11 +3,11 @@
 | Field | Value |
 |---|---|
 | Author | Claude Code |
-| Status | Draft |
+| Status | Approved |
 | Issue | TBD |
 | Milestone | v0.5.4 — Reporting & Charts |
 | Created | 2026-05-11 |
-| Last updated | 2026-05-11 |
+| Last updated | 2026-10-17 |
 
 ---
 
@@ -194,9 +194,9 @@ affected since the milestone has not yet shipped.
 
 ## Open Questions
 
-- [ ] Should reports be served under `/admin/reports/` (sibling of model routes) or `/admin/<model>/reports/` (nested)? Proposal: top-level — a report can span multiple models in v0.5.4+ (a `FactTableSource`) so nesting under one model is wrong.
-- [ ] Should `Many2One` aggregate render the related row's display or its pk? Proposal: display, falling back to pk if no display available.
-- [ ] Should XLSX export include a "Filters used" cover sheet for audit? Proposal: yes — small, helpful for downstream audit trails.
+- [x] Should reports be served under `/admin/reports/` (sibling of model routes) or `/admin/<model>/reports/` (nested)? Proposal: top-level — a report can span multiple models in v0.5.4+ (a `FactTableSource`) so nesting under one model is wrong.
+- [x] Should `Many2One` aggregate render the related row's display or its pk? Proposal: display, falling back to pk if no display available.
+- [x] Should XLSX export include a "Filters used" cover sheet for audit? Proposal: yes — small, helpful for downstream audit trails.
 
 ## Decision Log
 
@@ -206,4 +206,9 @@ affected since the milestone has not yet shipped.
 | Pivot in memory after a single grouped query | Predictable, portable across adapters; avoids DB-specific PIVOT syntax | DB-side `PIVOT` (SQL Server) / `crosstab` (Postgres) — non-portable |
 | Cache seam at the `ReportView` level | Drop-in fact table swap, no calling-code change | Plumb caching into every aggregate (more surface, less win) |
 | CSV + XLSX in v0.5.4 | Both are required by the H14 acceptance check | CSV-only (fails the check); JSON-only (consumer-side conversion burden) |
-| Auto bucketing rule: range ≤ 31d → day, ≤ 90d → week, ≤ 366d → month, ≤ 1100d → quarter, else year | Matches operator expectations; predictable | Always month (loses fidelity for short ranges); operator-must-pick (breaks "auto" promise) |
+| Auto bucketing rule: inclusive range ≤ 31d → day, ≤ 92d → week, ≤ 186d → month, ≤ 1100d → quarter, else year | Keeps the grid to roughly ≤ 13 columns; predictable. Revised during implementation (2026-10-17): the draft's "≤ 366d → month" contradicted this SDD's own scenario (a 2025-01-01 .. 2025-12-31 range must bucket by quarter) | Always month (loses fidelity for short ranges); operator-must-pick (breaks "auto" promise); the draft ≤ 90d / ≤ 366d cut-offs |
+| Reports served at top-level `/admin/reports/{slug}/` (Open Question 1, resolved 2026-10-17) | A report can span several models via `FactTableSource`, so nesting under one model is wrong | Nested `/admin/<model>/reports/` |
+| `Many2One` renders the related row's display, falling back to the raw pk (Open Question 2, resolved 2026-10-17) | Operators read names, not ids; the fallback keeps the cell meaningful when the target is unmapped or the row is gone | Always pk (unreadable); hide unresolved cells (silently loses data) |
+| XLSX export includes a "Filters used" cover sheet (Open Question 3, resolved 2026-10-17) | Small, and gives downstream audit trails the exact filter context | No cover sheet; filters in the file name only |
+| `ReportView.run()` takes the caller's `AsyncSession` or session factory | Keeps `reports/` independent of `hyperadmin.db` defaults and of adapters; works with any session-factory seam | Import the module-level engine/session (couples to the default DB wiring) |
+| Aggregate SQL is the executed SQL: `Aggregate.sql(dialect)` text is inlined into the grouped query; bucket formats are inlined literals | One source of truth per dialect; PostgreSQL rejects `GROUP BY` when SELECT and GROUP BY carry different bound parameters | SQLAlchemy `func.*` with bound format strings (breaks on PostgreSQL) |
