@@ -50,7 +50,7 @@ populated bookkeeping app: contacts, sales, purchases, accounting, and reports.
 
 ## Screenshot tour
 
-The screenshots below are the project's real end-to-end test baselines — exactly what
+The screenshots below are taken from the ERP demo above, unedited. They show exactly what
 the framework renders.
 
 ### Login
@@ -64,6 +64,10 @@ Session-based authentication out of the box.
 Sortable, searchable, paginated tables generated from your models — no boilerplate.
 
 ![HyperAdmin list view](assets/demo/list.png)
+
+Dark mode follows the operating system, or the toggle in the navbar.
+
+![HyperAdmin list view in dark mode](assets/demo/list-dark.png)
 
 ### Detail view
 
