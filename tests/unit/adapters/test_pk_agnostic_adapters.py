@@ -17,6 +17,7 @@ from sqlmodel import Field, Relationship, SQLModel
 
 from hyperadmin.adapters.sqlalchemy import SQLAlchemyAdapter
 from hyperadmin.adapters.sqlmodel import SQLModelAdapter
+from hyperadmin.core.adapters import InlineRowNotOwnedError
 from hyperadmin.core.inlines import InlineModelSpec
 
 AdapterClass = type[SQLModelAdapter] | type[SQLAlchemyAdapter]
@@ -251,3 +252,116 @@ async def test_pk_zero_inline_delete(engine: AsyncEngine, adapter_class: Adapter
 
     remaining = await widget_adapter.inline_child_pks(spec, widget.id)
     assert remaining == set()
+
+
+# ---------------------------------------------------------------------------
+# Scenario: malformed UUID cascade filter returns no choices (review fix)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("bad_value", ["", "garbage"])
+@pytest.mark.anyio
+async def test_malformed_uuid_cascade_filter_returns_empty_choices(
+    engine: AsyncEngine, city: Any, adapter_class: AdapterClass, bad_value: str
+) -> None:
+    """
+    Scenario: malformed UUID cascade filter returns no choices
+      Given a UUID-keyed cascade filter (country_id)
+      When  get_choices runs with an unparseable value ('' or 'garbage')
+      Then  an empty choice list is returned instead of raising ValueError
+
+    A dependent select sends '' while its parent select is still blank; an
+    arbitrary 'garbage' query param is the hostile-input case. Before the fix,
+    ``coerce_cascade_filter_value`` let ``uuid.UUID(raw)``'s ``ValueError``
+    escape, turning ``GET /{model}/choices/cities?country_id=`` into a 500.
+    """
+    adapter = adapter_class(PkCountry, engine)
+
+    choices = await adapter.get_choices("cities", country_id=bad_value)
+
+    assert choices == []
+
+
+# ---------------------------------------------------------------------------
+# Scenario: UUID-keyed inline child is recognized as owned (review fix)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.anyio
+async def test_uuid_keyed_inline_child_update_is_owned(
+    engine: AsyncEngine, country: Any, city: Any, adapter_class: AdapterClass
+) -> None:
+    """
+    Scenario: UUID-keyed inline child update is recognized as owned
+      Given a UUID-keyed child row already owned by the parent
+      When  save_inline_rows submits an update with the child's string pk
+      Then  the row updates without InlineRowNotOwnedError
+
+    Before the fix, ``ensure_inline_rows_owned`` compared the submitted ``str``
+    pk against the ``uuid.UUID`` instances ``inline_child_pks`` returns, so the
+    sets never intersected and every update of an existing UUID-keyed inline
+    child raised ``InlineRowNotOwnedError`` (404) — a save that touches no
+    inline rows at all would never hit this, only one that edits an existing
+    one.
+    """
+    country_adapter = adapter_class(PkCountry, engine)
+    spec = InlineModelSpec(model=PkCity, fk_field="country_id")
+
+    await country_adapter.save_inline_rows(
+        spec,
+        [{"_pk": str(city.id), "name": "Greater London"}],
+        parent_pk=country.id,
+    )
+
+    city_adapter = adapter_class(PkCity, engine)
+    updated = await city_adapter.get(city.id)
+    assert updated is not None
+    assert updated.name == "Greater London"
+
+
+@pytest.mark.anyio
+async def test_uuid_keyed_inline_child_delete_is_owned(
+    engine: AsyncEngine, country: Any, city: Any, adapter_class: AdapterClass
+) -> None:
+    """
+    Scenario: UUID-keyed inline child delete is recognized as owned
+      Given a UUID-keyed child row already owned by the parent
+      When  save_inline_rows submits a delete with the child's string pk
+      Then  the row is deleted without InlineRowNotOwnedError
+    """
+    country_adapter = adapter_class(PkCountry, engine)
+    spec = InlineModelSpec(model=PkCity, fk_field="country_id")
+
+    await country_adapter.save_inline_rows(
+        spec,
+        [{"_pk": str(city.id), "_delete": True}],
+        parent_pk=country.id,
+    )
+
+    remaining = await country_adapter.inline_child_pks(spec, country.id)
+    assert remaining == set()
+
+
+@pytest.mark.anyio
+async def test_unparseable_inline_pk_is_rejected_as_foreign(
+    engine: AsyncEngine, country: Any, city: Any, adapter_class: AdapterClass
+) -> None:
+    """
+    Scenario: unparseable inline pk is rejected as foreign
+      Given a UUID-keyed inline child model
+      When  save_inline_rows submits a non-UUID string as _pk
+      Then  InlineRowNotOwnedError is raised (fails closed, not a 500)
+
+    An unparseable submitted key can never be a real child row, so the fix
+    treats the ``InvalidPrimaryKey`` from the child's pk codec as "foreign"
+    instead of letting it propagate as an unhandled error.
+    """
+    country_adapter = adapter_class(PkCountry, engine)
+    spec = InlineModelSpec(model=PkCity, fk_field="country_id")
+
+    with pytest.raises(InlineRowNotOwnedError):
+        await country_adapter.save_inline_rows(
+            spec,
+            [{"_pk": "not-a-uuid", "name": "Nowhere"}],
+            parent_pk=country.id,
+        )
