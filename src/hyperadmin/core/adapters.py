@@ -558,7 +558,7 @@ class JsonApiAdapter(BaseAdapter, ABC):
         page: int = 1,
         page_size: int = 10,
         search: str | None = None,
-        filters: dict[str, Any] | None = None,
+        filters: Mapping[str, Any] | Sequence[FilterCondition] | None = None,
         order_by: str | None = None,
     ) -> ListEnvelope:
         """Return a paginated list wrapped in a ``ListEnvelope``.
@@ -570,7 +570,11 @@ class JsonApiAdapter(BaseAdapter, ABC):
             page: The page number for pagination.
             page_size: The number of items per page.
             search: A search query to filter the results.
-            filters: A dictionary of filters to apply to the query.
+            filters: Either the legacy ``{column: value}`` equality mapping, or a
+                ``Sequence[FilterCondition]`` (``core/filtering.py``) carrying
+                ``exact``/``gte``/``lte``/``in``/``isnull`` predicates.
+                Implementations resolve either form through
+                :func:`hyperadmin.core.filtering.normalize_filters`.
             order_by: The field to order the results by.
 
         Returns:

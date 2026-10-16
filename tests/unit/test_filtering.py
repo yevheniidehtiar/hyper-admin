@@ -18,6 +18,7 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from hyperadmin.core import FilterCondition, FilterValueError
 from hyperadmin.core.filtering import (
+    MAX_IN_VALUES,
     ParsedFilters,
     coerce_filter_value,
     normalize_filters,
@@ -194,6 +195,34 @@ def test_coerce_filter_value_rejects_bad_input(annotation: Any, raw: str) -> Non
 def test_filter_value_error_is_a_value_error() -> None:
     assert issubclass(FilterValueError, ValueError)
     assert FilterValueError("bad", field=None).field is None
+
+
+# ---------------------------------------------------------------------------
+# Out-of-range integers (security review of st-v058-byoa-24)
+# ---------------------------------------------------------------------------
+
+
+def test_integer_value_out_of_range_is_rejected() -> None:
+    """
+    Scenario: an out-of-range integer value is rejected
+      Given annotation int
+      When  raw is a 25-digit number (outside the signed 64-bit range)
+      Then  FilterValueError is raised rather than overflowing later at bind time
+
+    Python's ``int()`` parses arbitrary-precision values with no error, but a
+    DBAPI driver (e.g. SQLite) raises ``OverflowError`` -- not a ``ValueError``
+    subclass -- when binding one out of range, which callers that only catch
+    ``ValueError`` (``get_choices``) cannot handle.
+    """
+    with pytest.raises(FilterValueError) as excinfo:
+        coerce_filter_value(int, "9" * 25, field="country_id")
+
+    assert excinfo.value.field == "country_id"
+
+
+def test_integer_value_at_the_signed_64_bit_bounds_is_accepted() -> None:
+    assert coerce_filter_value(int, str(-(2**63))) == -(2**63)
+    assert coerce_filter_value(int, str(2**63 - 1)) == 2**63 - 1
 
 
 # ---------------------------------------------------------------------------
@@ -447,6 +476,35 @@ def test_in_operator_with_only_separators_is_skipped() -> None:
     parsed = parse_filter_params(Order, {"filter_quantity__in": " , "}, ["quantity"])
 
     assert parsed == ParsedFilters()
+
+
+def test_in_operator_caps_list_size() -> None:
+    """
+    Scenario: an oversized membership list is rejected
+      Given filter_quantity__in with MAX_IN_VALUES + 1 comma-separated values
+      When  parse_filter_params runs
+      Then  no condition is produced and the field records a "too many values" error
+
+    Without a cap, SQLAlchemy emits one bound parameter per value and a
+    driver-level limit (SQLite ~999-32766, PostgreSQL 65535) turns an
+    attacker-controlled list into an unhandled 500 instead of a clear error.
+    """
+    raw = ",".join(str(n) for n in range(MAX_IN_VALUES + 1))
+
+    parsed = parse_filter_params(Order, {"filter_quantity__in": raw}, ["quantity"])
+
+    assert parsed.conditions == []
+    assert "quantity" in parsed.errors
+    assert "Too many values" in parsed.errors["quantity"]
+
+
+def test_in_operator_at_the_cap_is_accepted() -> None:
+    raw = ",".join(str(n) for n in range(MAX_IN_VALUES))
+
+    parsed = parse_filter_params(Order, {"filter_quantity__in": raw}, ["quantity"])
+
+    assert parsed.conditions == [FilterCondition("quantity", "in", tuple(range(MAX_IN_VALUES)))]
+    assert parsed.errors == {}
 
 
 # ---------------------------------------------------------------------------
