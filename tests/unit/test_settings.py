@@ -20,7 +20,7 @@ class TestDefaults:
         assert settings.auto_discover is False
         assert settings.discover_apps == []
         assert settings.template_dirs == []
-        assert settings.create_tables is True
+        assert settings.create_tables is False
         assert settings.theme == "auto"
         assert settings.items_per_page == 20
         assert settings.date_format == "%Y-%m-%d"
@@ -91,9 +91,10 @@ class TestEnvVarLoading:
         assert settings.items_per_page == 50
 
     def test_create_tables_from_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
-        monkeypatch.setenv("HYPERADMIN_CREATE_TABLES", "false")
+        """``create_tables`` defaults to False (SDD C.2); the env var still overrides it."""
+        monkeypatch.setenv("HYPERADMIN_CREATE_TABLES", "true")
         settings = HyperAdminSettings()
-        assert settings.create_tables is False
+        assert settings.create_tables is True
 
     def test_discover_apps_from_env_json(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("HYPERADMIN_DISCOVER_APPS", '["myapp", "otherapp"]')

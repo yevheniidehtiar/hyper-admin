@@ -61,23 +61,29 @@ def test_admin_no_discover_when_empty(mock_fastapi_app: MagicMock) -> None:
 
 
 # ---------------------------------------------------------------------------
-# create_tables
+# create_tables / startup() (SDD C.2: on_event is gone — startup() is the
+# mechanism now, called directly or through the first-request safety net)
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.anyio
 async def test_admin_create_tables(mock_fastapi_app: MagicMock) -> None:
+    """
+    Scenario: admin.startup() creates tables when explicitly opted in
+      Given Admin(engine=..., create_tables=True)
+      When  admin.startup() runs
+      Then  CREATE TABLE is executed on the configured engine
+    """
     mock_engine = MagicMock()
     mock_conn = AsyncMock()
     mock_engine.begin.return_value.__aenter__.return_value = mock_conn
     settings = HyperAdminSettings(create_tables=True)
-    Admin(app=mock_fastapi_app, engine=mock_engine, settings=settings)
+    admin = Admin(app=mock_fastapi_app, engine=mock_engine, settings=settings)
 
-    mock_fastapi_app.on_event.assert_called_once_with("startup")
-    decorator = mock_fastapi_app.on_event.return_value
-    decorator.assert_called_once()
-    startup_handler = decorator.call_args[0][0]
-    await startup_handler()
+    mock_fastapi_app.on_event.assert_not_called()
+    assert admin._auto_create_tables is True
+
+    await admin.startup()
 
     mock_engine.begin.assert_called_once()
     mock_conn.run_sync.assert_called_once_with(SQLModel.metadata.create_all)
@@ -85,10 +91,21 @@ async def test_admin_create_tables(mock_fastapi_app: MagicMock) -> None:
 
 @pytest.mark.anyio
 async def test_admin_no_create_tables_when_disabled(mock_fastapi_app: MagicMock) -> None:
+    """
+    Scenario: admin.startup() never creates tables when not opted in
+      Given Admin(create_tables=False) with a mock engine
+      When  admin.startup() runs
+      Then  no CREATE TABLE statement is executed
+    """
+    mock_engine = MagicMock()
     settings = HyperAdminSettings(create_tables=False)
-    Admin(app=mock_fastapi_app, settings=settings)
+    admin = Admin(app=mock_fastapi_app, engine=mock_engine, settings=settings)
 
-    mock_fastapi_app.on_event.assert_not_called()
+    assert admin._auto_create_tables is False
+
+    await admin.startup()
+
+    mock_engine.begin.assert_not_called()
 
 
 # ---------------------------------------------------------------------------

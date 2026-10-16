@@ -12,6 +12,7 @@ from hyperadmin.core.introspection import (
     infer_list_filter,
     infer_search_fields,
 )
+from hyperadmin.core.lifecycle import Lifecycle, StartupGuardMiddleware
 from hyperadmin.core.settings import HyperAdminSettings
 from hyperadmin.discover import discover_admin_modules
 from hyperadmin.realtime import ConnectionRegistry, RealtimeSettings
@@ -19,7 +20,10 @@ from hyperadmin.realtime.sse import make_sse_handler
 from hyperadmin.realtime.ws import make_ws_handler
 
 if TYPE_CHECKING:
+    from contextlib import AbstractAsyncContextManager
+
     from hyperadmin.core.adapters import SessionFactory
+    from hyperadmin.db import TableScope
 
 logger = logging.getLogger("hyperadmin")
 
@@ -127,11 +131,15 @@ class Admin:
         if os.path.exists(static_dir):
             app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
-        if self._should_create_tables(demo_mode=demo_mode):
-
-            @app.on_event("startup")
-            async def startup_event() -> None:
-                await self._create_db_and_tables()
+        # Opt-in auto-create decision is made once, here, from the settings this
+        # Admin was built with — never re-evaluated on every startup() call.
+        self._auto_create_tables = self._should_create_tables(demo_mode=demo_mode)
+        self._lifecycle = Lifecycle(
+            create_tables=self._create_tables_if_opted_in,
+            sync_permissions=self._sync_permissions,
+            drain=self._drain_realtime,
+            realtime_enabled=realtime is not None,
+        )
 
         if self.settings.discover_apps:
             discover_admin_modules(self.settings.discover_apps)
@@ -165,20 +173,29 @@ class Admin:
     # ── Internal helpers ───────────────────────────────────────────────────
 
     def _should_create_tables(self, *, demo_mode: bool) -> bool:
-        """Whether to run ``create_all`` at startup.
+        """Whether ``startup()`` auto-creates tables (SDD C.2).
 
-        Demo mode (no ``engine=``) builds its engine from ``settings.database_url``,
-        which may be the host's own database (``HYPERADMIN_DATABASE_URL``). DDL then
-        runs only for SQLite or when ``create_tables`` was set explicitly, so a host
-        database is never altered behind its migrations' back (SDD C.2, Goal 4).
+        ``create_tables`` defaults to ``False``, so a host ``engine=`` or
+        ``session_factory=`` never gets DDL run against it unless the host opts in
+        explicitly. Demo mode (no ``engine=``, no ``session_factory=``) builds its
+        engine from ``settings.database_url``, which may be the host's own database
+        (``HYPERADMIN_DATABASE_URL``); there, tables are still auto-created when that
+        URL is SQLite — so zero-config ``Admin(app).mount("/admin")`` keeps working —
+        but never for any other URL, so a host database is never altered behind its
+        migrations' back (Goal 4). An explicit ``create_tables=`` (either value)
+        always wins over the demo-mode default.
         """
-        if not self.settings.create_tables:
+        if "create_tables" in self.settings.model_fields_set:
+            return self.settings.create_tables
+        if not demo_mode:
             return False
-        if not demo_mode or "create_tables" in self.settings.model_fields_set:
-            return True
         from hyperadmin.db import is_sqlite_url
 
         if is_sqlite_url(self.settings.database_url):
+            logger.warning(
+                "HyperAdmin demo mode: database_url is SQLite, so tables are created "
+                "automatically at startup. Set create_tables=False to disable this."
+            )
             return True
         logger.warning(
             "HyperAdmin demo mode: database_url is not SQLite, so no tables are created "
@@ -199,11 +216,83 @@ class Admin:
         In ``session_factory=``-only mode (no ``engine=``), the bind is taken
         from the factory itself via ``db.resolve_bind``, which raises a clear
         error when the factory carries no async engine (SDD C.3).
+
+        Kept as a private alias for one release — the ERP example calls it
+        directly from its own host lifespan (SDD C.2 review amendments).
         """
         from hyperadmin.db import create_tables, resolve_bind
 
         bind = self.engine if self.engine is not None else resolve_bind(self.session_factory)
         await create_tables(bind)
+
+    async def _create_tables_if_opted_in(self) -> None:
+        """``Lifecycle``'s ``create_tables`` callable: respects the opt-in decision.
+
+        ``self._auto_create_tables`` is computed once, in ``__init__``, from the
+        settings this ``Admin`` was built with (SDD C.2) — never re-evaluated here.
+        """
+        if self._auto_create_tables:
+            await self._create_db_and_tables()
+
+    async def _drain_realtime(self) -> None:
+        """``Lifecycle``'s ``drain`` callable: a no-op when realtime is disabled."""
+        if self._realtime_registry is not None:
+            await self._realtime_registry.drain()
+
+    # ── Public lifecycle API (SDD C.2) ─────────────────────────────────────
+
+    async def startup(self) -> None:
+        """Create tables (if opted in), then sync permissions. Idempotent.
+
+        Call this directly, or compose :meth:`lifespan` into the host's own
+        ``lifespan=`` — either way it only runs once. When neither is done,
+        the first admin request runs it instead, as a safety net (``mount()``
+        installs :class:`~hyperadmin.core.lifecycle.StartupGuardMiddleware`).
+        """
+        await self._lifecycle.startup()
+
+    async def shutdown(self) -> None:
+        """Drain realtime (SSE/WebSocket) connections.
+
+        Unlike :meth:`startup`, this has **no** safety net: it only runs when
+        the host calls it directly or composes :meth:`lifespan`.
+        """
+        await self._lifecycle.shutdown()
+
+    def lifespan(self) -> "AbstractAsyncContextManager[None]":
+        """Async context manager the host composes into its own ``lifespan=``.
+
+        Example::
+
+            @asynccontextmanager
+            async def lifespan(app: FastAPI):
+                async with admin.lifespan():
+                    yield
+
+
+            app = FastAPI(lifespan=lifespan)
+        """
+        return self._lifecycle.lifespan()
+
+    async def create_tables(self, scope: "TableScope" = "all") -> None:
+        """Create database tables directly, independent of ``settings.create_tables``.
+
+        Args:
+            scope: ``"hyperadmin"`` creates only the built-in ``hyperadmin_*``
+                tables (what ``hyperadmin init-db`` does by default);
+                ``"all"`` creates every table on ``SQLModel.metadata``,
+                matching ``settings.create_tables=True``'s behaviour.
+        """
+        from hyperadmin.db import create_tables as db_create_tables
+        from hyperadmin.db import resolve_bind
+
+        bind = self.engine if self.engine is not None else resolve_bind(self.session_factory)
+        tables = None
+        if scope == "hyperadmin":
+            import hyperadmin.auth as auth_module
+
+            tables = list(auth_module.metadata().tables.values())
+        await db_create_tables(bind, tables=tables)
 
     def _register_views(self) -> None:
         """Registers the views from the site registry."""
@@ -321,8 +410,13 @@ class Admin:
     def _register_realtime_routes(self, path: str) -> None:
         """Register the SSE GET route and WebSocket route under the admin prefix.
 
-        Both endpoints share a single ``ConnectionRegistry`` so the lifespan
-        shutdown hook can drain every open connection in one pass.
+        Both endpoints share a single ``ConnectionRegistry`` so ``shutdown()``
+        (``Admin.shutdown()`` / ``Lifecycle.shutdown()``) can drain every open
+        connection in one pass. There is no ``on_event("shutdown")`` hook here
+        any more (SDD C.2): it only ever drained when the host did NOT pass
+        its own ``lifespan=``, which is backwards — draining matters most
+        for hosts that DO manage their own lifespan. Compose ``admin.lifespan()``
+        (or call ``admin.shutdown()`` yourself) to drain on shutdown.
         """
         if self.realtime is None or self._realtime_registry is None:
             return
@@ -343,10 +437,6 @@ class Admin:
             ws_handler,
             name="admin-realtime-ws",
         )
-
-        @self.app.on_event("shutdown")
-        async def _drain_realtime() -> None:
-            await registry.drain()
 
         if settings.enable_test_endpoints:
             from hyperadmin.realtime._debug import (
@@ -537,9 +627,6 @@ class Admin:
 
         self.templates.env.globals["rtl_locales"] = RTL_LOCALES
 
-        if self.auth_backend:
-            self.router.on_startup.append(self._sync_permissions)
-
         self.app.include_router(self.router, prefix=path, tags=["HyperAdmin"])
 
         # LocaleMiddleware runs whether or not auth is configured. It must be
@@ -549,3 +636,13 @@ class Admin:
 
         if self.auth_backend:
             self._add_auth_middleware(path)
+
+        # Added last so it is outermost (SDD C.2): the safety net must run before
+        # Session/Auth/Locale, so a permission sync it triggers is visible to this
+        # same request's own permission checks. One mechanism now, not two — there
+        # is no more ``router.on_startup`` append here (Starlette silently ignores
+        # on_startup/on_shutdown handlers once a host passes its own ``lifespan=``,
+        # and a mounted sub-app never receives lifespan events at all).
+        self.app.add_middleware(
+            StartupGuardMiddleware, lifecycle=self._lifecycle, admin_prefix=path
+        )

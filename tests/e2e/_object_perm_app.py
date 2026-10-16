@@ -238,15 +238,17 @@ admin = Admin(
 admin.mount(path="/admin")
 
 
-# Startup ordering:
+# Startup ordering (SDD C.2 — ``Admin.mount()`` no longer queues anything on
+# ``router.on_startup`` itself; that mechanism is removed in favour of the
+# explicit ``admin.startup()``/``lifespan()`` and the first-request safety
+# net):
 # 1. Create tables (so PermissionSyncService can write to hyperadmin_permissions).
-# 2. ``_sync_permissions`` (queued by ``Admin.mount`` and copied to
-#    ``app.router.on_startup`` by ``include_router``) — creates the
-#    order_*/document_* Permission rows.
+# 2. ``admin._sync_permissions`` (the kept-for-one-release private alias) —
+#    creates the order_*/document_* Permission rows.
 # 3. ``_seed`` — seeds users, orders, documents, and bob's permission grants.
 #
-# Registering on ``app.router.on_startup`` directly preserves ordering
-# relative to the ``include_router``-copied hook.
+# No ``lifespan=`` is passed to ``FastAPI()`` above, so these still run via
+# Starlette's legacy ``on_startup`` handling.
 
 
 async def _create_tables() -> None:
@@ -255,4 +257,5 @@ async def _create_tables() -> None:
 
 
 app.router.on_startup.insert(0, _create_tables)
+app.router.on_startup.append(admin._sync_permissions)
 app.router.on_startup.append(_seed)
