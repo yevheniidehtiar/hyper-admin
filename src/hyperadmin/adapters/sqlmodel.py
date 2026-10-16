@@ -1,4 +1,5 @@
 import builtins
+from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import func, inspect, or_
@@ -6,12 +7,14 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.orm import selectinload
 from sqlmodel import SQLModel, select
 
+from hyperadmin.adapters._filter_clause import build_clauses
 from hyperadmin.adapters._search import detect_search_columns
-from hyperadmin.adapters.introspection import coerce_cascade_filter_value, introspect_primary_key
+from hyperadmin.adapters.introspection import coerce_column_value, introspect_primary_key
 from hyperadmin.adapters.introspection import datetime_kind as _introspect_datetime_kind
 from hyperadmin.core.adapters import BaseAdapter, SessionFactory, scoped_queryset_filters
 from hyperadmin.core.choices import ChoiceItem
 from hyperadmin.core.display import get_display_name
+from hyperadmin.core.filtering import FilterCondition, normalize_filters
 from hyperadmin.core.inlines import InlineModelSpec
 from hyperadmin.core.primary_key import InvalidPrimaryKey
 from hyperadmin.core.sensitive import effective_sensitive_field_names
@@ -90,7 +93,7 @@ class SQLModelAdapter(BaseAdapter):
         page: int = 1,
         page_size: int = 10,
         search: str | None = None,
-        filters: dict[str, Any] | None = None,
+        filters: Mapping[str, Any] | Sequence[FilterCondition] | None = None,
         order_by: str | None = None,
         search_fields: list[str] | None = None,
     ) -> tuple[list[Any], int]:
@@ -100,6 +103,12 @@ class SQLModelAdapter(BaseAdapter):
         Filters returned by :meth:`get_queryset` are applied **before** any
         view-layer ``filters`` so they cannot be bypassed. The same predicates are
         included in the count query, keeping pagination math consistent.
+
+        ``filters`` accepts either the legacy ``{column: value}`` equality
+        mapping or a ``Sequence[FilterCondition]``; both are resolved through
+        :func:`hyperadmin.core.filtering.normalize_filters` and compiled to
+        clauses via :mod:`hyperadmin.adapters._filter_clause`, shared with
+        :class:`~hyperadmin.adapters.sqlalchemy.SQLAlchemyAdapter`.
         """
         queryset_filters = self._resolve_queryset_filters()
         async with self._session() as session:
@@ -114,10 +123,11 @@ class SQLModelAdapter(BaseAdapter):
             for key, value in queryset_filters.items():
                 query = query.where(getattr(self.model, key) == value)
 
-            # Apply filtering
-            if filters:
-                for key, value in filters.items():
-                    query = query.where(getattr(self.model, key) == value)
+            # Apply filtering: a legacy dict or a Sequence[FilterCondition],
+            # normalized to typed conditions and compiled to clauses shared
+            # with SQLAlchemyAdapter.
+            for clause in build_clauses(self.model, normalize_filters(filters)):
+                query = query.where(clause)
 
             # Apply searching using configured search_fields
             if search:
@@ -313,7 +323,7 @@ class SQLModelAdapter(BaseAdapter):
             for key, value in filters.items():
                 if hasattr(target_model, key) and key not in target_sensitive:
                     try:
-                        coerced = coerce_cascade_filter_value(target_inspector, key, value)
+                        coerced = coerce_column_value(target_inspector, key, value)
                     except ValueError:
                         # An unparseable cascade value (e.g. '' or 'garbage' for a
                         # UUID FK) matches no row rather than raising a 500 — '' is

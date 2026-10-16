@@ -272,8 +272,9 @@ async def test_malformed_uuid_cascade_filter_returns_empty_choices(
 
     A dependent select sends '' while its parent select is still blank; an
     arbitrary 'garbage' query param is the hostile-input case. Before the fix,
-    ``coerce_cascade_filter_value`` let ``uuid.UUID(raw)``'s ``ValueError``
-    escape, turning ``GET /{model}/choices/cities?country_id=`` into a 500.
+    ``coerce_column_value`` (then ``coerce_cascade_filter_value``) let
+    ``uuid.UUID(raw)``'s ``ValueError`` escape, turning
+    ``GET /{model}/choices/cities?country_id=`` into a 500.
     """
     adapter = adapter_class(PkCountry, engine)
 

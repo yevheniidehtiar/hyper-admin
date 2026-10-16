@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import types
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import AbstractAsyncContextManager, contextmanager
 from contextvars import ContextVar
 from dataclasses import dataclass
@@ -19,6 +19,7 @@ if TYPE_CHECKING:
     from starlette.requests import Request
 
     from hyperadmin.core.choices import ChoiceItem
+    from hyperadmin.core.filtering import FilterCondition
     from hyperadmin.core.inlines import InlineModelSpec
     from hyperadmin.core.timezones import DateTimeKind
 
@@ -397,7 +398,7 @@ class BaseAdapter(ABC):
         page: int = 1,
         page_size: int = 10,
         search: str | None = None,
-        filters: dict[str, Any] | None = None,
+        filters: Mapping[str, Any] | Sequence[FilterCondition] | None = None,
         order_by: str | None = None,
         search_fields: builtins.list[str] | None = None,
     ) -> tuple[builtins.list[Any], int]:
@@ -408,7 +409,11 @@ class BaseAdapter(ABC):
             page: The page number for pagination.
             page_size: The number of items per page.
             search: A search query to filter the results.
-            filters: A dictionary of filters to apply to the query.
+            filters: Either the legacy ``{column: value}`` equality mapping, or a
+                ``Sequence[FilterCondition]`` (``core/filtering.py``) carrying
+                ``exact``/``gte``/``lte``/``in``/``isnull`` predicates.
+                Implementations resolve either form through
+                :func:`hyperadmin.core.filtering.normalize_filters`.
             order_by: The field to order the results by.
 
         Returns:

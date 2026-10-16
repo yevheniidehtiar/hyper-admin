@@ -1,4 +1,5 @@
 import builtins
+from collections.abc import Mapping, Sequence
 from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import and_, func, or_, select
@@ -7,12 +8,14 @@ from sqlalchemy.inspection import inspect
 from sqlalchemy.orm import selectinload
 from sqlmodel import SQLModel
 
+from hyperadmin.adapters._filter_clause import build_clauses
 from hyperadmin.adapters._search import detect_search_columns
-from hyperadmin.adapters.introspection import coerce_cascade_filter_value, introspect_primary_key
+from hyperadmin.adapters.introspection import coerce_column_value, introspect_primary_key
 from hyperadmin.adapters.introspection import datetime_kind as _introspect_datetime_kind
 from hyperadmin.core.adapters import BaseAdapter, SessionFactory, scoped_queryset_filters
 from hyperadmin.core.choices import ChoiceItem
 from hyperadmin.core.display import get_display_name
+from hyperadmin.core.filtering import FilterCondition, normalize_filters
 from hyperadmin.core.inlines import InlineModelSpec
 from hyperadmin.core.primary_key import InvalidPrimaryKey
 from hyperadmin.core.sensitive import effective_sensitive_field_names
@@ -80,17 +83,23 @@ class SQLAlchemyAdapter(BaseAdapter):
         page: int = 1,
         page_size: int = 10,
         search: str | None = None,
-        filters: dict[str, Any] | None = None,
+        filters: Mapping[str, Any] | Sequence[FilterCondition] | None = None,
         order_by: str | None = None,
         search_fields: list[str] | None = None,
     ) -> tuple[list[Any], int]:
+        """Retrieve a paginated, filtered, searched and ordered list of objects.
+
+        ``filters`` accepts either the legacy ``{column: value}`` equality
+        mapping or a ``Sequence[FilterCondition]``; both are resolved through
+        :func:`hyperadmin.core.filtering.normalize_filters` and compiled to
+        clauses via :mod:`hyperadmin.adapters._filter_clause`, shared with
+        :class:`~hyperadmin.adapters.sqlmodel.SQLModelAdapter`.
+        """
         queryset_filters = self._resolve_queryset_filters()
         where_conditions = [
             getattr(self.model, key) == value for key, value in queryset_filters.items()
         ]
-        if filters:
-            for key, value in filters.items():
-                where_conditions.append(getattr(self.model, key) == value)
+        where_conditions.extend(build_clauses(self.model, normalize_filters(filters)))
 
         if search and self.inspector:
             # An explicit empty list disables search; None falls back to detection.
@@ -271,7 +280,7 @@ class SQLAlchemyAdapter(BaseAdapter):
             for key, value in filters.items():
                 if hasattr(target_model, key) and key not in target_sensitive:
                     try:
-                        coerced = coerce_cascade_filter_value(target_inspector, key, value)
+                        coerced = coerce_column_value(target_inspector, key, value)
                     except ValueError:
                         # An unparseable cascade value (e.g. '' or 'garbage' for a
                         # UUID FK) matches no row rather than raising a 500 — '' is
