@@ -1,13 +1,16 @@
 """This module will contain the dynamic routing engine for HyperAdmin."""
 
+import logging
 from datetime import timezone as dt_timezone
 from datetime import tzinfo
 from typing import TYPE_CHECKING, Any
+from urllib.parse import quote
 
 from fastapi import APIRouter, Request
 from fastapi.routing import APIRoute
 from fastapi.templating import Jinja2Templates
 from sqlmodel import SQLModel
+from starlette.convertors import CONVERTOR_TYPES, Convertor, register_url_convertor
 
 from hyperadmin.core.actions import ActionDef, collect_actions
 from hyperadmin.core.display import get_field_label
@@ -19,6 +22,41 @@ from hyperadmin.views.template_filters import register_template_filters
 
 if TYPE_CHECKING:
     from hyperadmin.core.adapters import SessionFactory
+
+logger = logging.getLogger(__name__)
+
+
+class HyperAdminPkConvertor(Convertor[str]):
+    """Starlette path convertor for natural (non-int, non-UUID) primary keys.
+
+    Registered once, at import time, as ``hyperadmin_pk`` (BYOA SDD A.5). Its
+    regex is permissive — like Starlette's built-in ``str`` convertor — but
+    unlike that convertor, ``to_string`` percent-encodes the value, so a key
+    containing reserved URL characters (a space, a ``?``, ...) still round-trips
+    through ``url_for``.
+    """
+
+    regex = "[^/]+"
+
+    def convert(self, value: str) -> str:
+        """Return the path segment unchanged; it arrives already percent-decoded."""
+        return value
+
+    def to_string(self, value: Any) -> str:
+        """Percent-encode ``value`` for use in a URL path segment.
+
+        Raises:
+            ValueError: ``value`` stringifies to ``""`` or contains ``"/"``.
+        """
+        str_value = str(value)
+        if not str_value or "/" in str_value:
+            msg = f"Invalid primary key for URL path segment: {value!r}"
+            raise ValueError(msg)
+        return quote(str_value, safe="-._~!$&'()*+,;=:@")
+
+
+if "hyperadmin_pk" not in CONVERTOR_TYPES:
+    register_url_convertor("hyperadmin_pk", HyperAdminPkConvertor())
 
 
 def _extract_column_names(raw: list[Any] | None, model: type | None = None) -> list[str] | None:
@@ -49,7 +87,7 @@ def _extract_column_names(raw: list[Any] | None, model: type | None = None) -> l
     return names
 
 
-def create_admin_router(  # noqa: PLR0913, PLR0917
+def create_admin_router(  # noqa: PLR0912, PLR0913, PLR0917
     model: type[SQLModel],
     admin_class: Any,
     admin_instance: Any,
@@ -77,8 +115,33 @@ def create_admin_router(  # noqa: PLR0913, PLR0917
     adapter_kwargs: dict[str, Any] = {"engine": engine}
     if session_factory is not None:
         adapter_kwargs["session_factory"] = session_factory
+    adapter = admin_instance.adapter_class(model, **adapter_kwargs)
+    pk = adapter.pk
+
+    # Composite keys (BYOA SDD A.5 point 4): item-scoped routes are never
+    # registered, because the adapter's get/update/delete raise
+    # NotImplementedError for them (A.3). Forcing these options off — rather
+    # than only skipping route registration below — also stops
+    # `components/table.html` from calling `url_for` on a route that was
+    # never registered, which would otherwise fail the list page with a 500
+    # (NoMatchFound).
+    if pk.composite:
+        logger.warning("%s has a composite primary key; registering list-only", model.__name__)
+        options = options.model_copy(
+            update={
+                "can_detail": False,
+                "can_edit": False,
+                "can_delete": False,
+                "can_create": False,
+                "list_editable": [],
+                "inlines": [],
+            }
+        )
+        actions = []
+        storage = None
+
     view = DynamicModelView(
-        adapter=admin_instance.adapter_class(model, **adapter_kwargs),
+        adapter=adapter,
         options=options,
         templates=templates,
         app_label=admin_class.app_label,
@@ -96,6 +159,19 @@ def create_admin_router(  # noqa: PLR0913, PLR0917
     model_name = model.__name__.lower()
 
     prefix = f"/{model_name}"
+    # Int keys keep `{item_id:int}` byte-for-byte; UUID keys use Starlette's
+    # built-in `uuid` convertor, so a malformed UUID never matches the route
+    # and 404s before any view runs; every other key kind uses the
+    # `hyperadmin_pk` convertor registered above.
+    item_segment = f"{{item_id:{pk.path_convertor}}}"
+
+    # --- Literal (fixed-segment) routes, registered first --------------
+    #
+    # Starlette uses the first full match, so for a non-int, non-UUID key
+    # (whose convertor matches any non-slash segment) these fixed words must
+    # be registered *before* the `/{item_id}` routes below, or a request for
+    # e.g. `/{model}/create-popup` would be swallowed by `/{model}/{item_id}`
+    # with `item_id="create-popup"` (BYOA SDD A.5 point 3).
 
     if options.can_list:
         router.add_api_route(
@@ -118,49 +194,11 @@ def create_admin_router(  # noqa: PLR0913, PLR0917
             methods=["GET"],
             name=f"{model_name}-create-form",
         )
-
-    if options.can_detail:
         router.add_api_route(
-            f"{prefix}/{{item_id:int}}",
-            view.detail_view,
-            methods=["GET"],
-            name=f"{model_name}-detail",
-        )
-
-    if options.can_edit:
-        router.add_api_route(
-            f"{prefix}/{{item_id:int}}",
-            view.update_view,
-            methods=["PUT"],
-            name=f"{model_name}-update",
-        )
-        router.add_api_route(
-            f"{prefix}/{{item_id:int}}/edit",
-            view.update_form_view,
-            methods=["GET"],
-            name=f"{model_name}-update-form",
-        )
-
-        if options.list_editable:
-            router.add_api_route(
-                f"{prefix}/{{item_id:int}}/inline/{{field:str}}",
-                view.inline_edit_form_view,
-                methods=["GET"],
-                name=f"{model_name}-inline-edit-form",
-            )
-            router.add_api_route(
-                f"{prefix}/{{item_id:int}}/inline/{{field:str}}",
-                view.inline_save_view,
-                methods=["POST"],
-                name=f"{model_name}-inline-save",
-            )
-
-    if options.can_delete:
-        router.add_api_route(
-            f"{prefix}/{{item_id:int}}",
-            view.delete_action,
-            methods=["DELETE"],
-            name=f"{model_name}-delete",
+            f"{prefix}/create-popup",
+            view.create_popup_view,
+            methods=["GET", "POST"],
+            name=f"{model_name}-create-popup",
         )
 
     router.add_api_route(
@@ -170,14 +208,6 @@ def create_admin_router(  # noqa: PLR0913, PLR0917
         name=f"{model_name}-choices",
     )
 
-    if options.can_create:
-        router.add_api_route(
-            f"{prefix}/create-popup",
-            view.create_popup_view,
-            methods=["GET", "POST"],
-            name=f"{model_name}-create-popup",
-        )
-
     if options.inlines:
         router.add_api_route(
             f"{prefix}/inline/{{inline_prefix}}/add-row",
@@ -186,26 +216,19 @@ def create_admin_router(  # noqa: PLR0913, PLR0917
             name=f"{model_name}-inline-add-row",
         )
 
-    if actions:
+    if actions and any(a.bulk for a in actions):
         router.add_api_route(
-            f"{prefix}/{{item_id:int}}/action/{{action_name}}",
-            view.run_action,
+            f"{prefix}/actions/{{action_name}}/bulk",
+            view.run_bulk_action,
             methods=["POST"],
-            name=f"{model_name}-action",
+            name=f"{model_name}-bulk-action",
         )
-        if any(a.bulk for a in actions):
-            router.add_api_route(
-                f"{prefix}/actions/{{action_name}}/bulk",
-                view.run_bulk_action,
-                methods=["POST"],
-                name=f"{model_name}-bulk-action",
-            )
-            router.add_api_route(
-                f"{prefix}/actions/{{action_name}}/bulk/confirm",
-                view.confirm_bulk_action,
-                methods=["POST"],
-                name=f"{model_name}-bulk-action-confirm",
-            )
+        router.add_api_route(
+            f"{prefix}/actions/{{action_name}}/bulk/confirm",
+            view.confirm_bulk_action,
+            methods=["POST"],
+            name=f"{model_name}-bulk-action-confirm",
+        )
 
     if storage:
         router.add_api_route(
@@ -214,8 +237,64 @@ def create_admin_router(  # noqa: PLR0913, PLR0917
             methods=["POST"],
             name=f"{model_name}-upload",
         )
+
+    # --- Item-scoped (`/{item_id}`) routes, registered last -------------
+
+    if options.can_detail:
         router.add_api_route(
-            f"{prefix}/{{item_id:int}}/file/{{field_name}}",
+            f"{prefix}/{item_segment}",
+            view.detail_view,
+            methods=["GET"],
+            name=f"{model_name}-detail",
+        )
+
+    if options.can_edit:
+        router.add_api_route(
+            f"{prefix}/{item_segment}",
+            view.update_view,
+            methods=["PUT"],
+            name=f"{model_name}-update",
+        )
+        router.add_api_route(
+            f"{prefix}/{item_segment}/edit",
+            view.update_form_view,
+            methods=["GET"],
+            name=f"{model_name}-update-form",
+        )
+
+        if options.list_editable:
+            router.add_api_route(
+                f"{prefix}/{item_segment}/inline/{{field:str}}",
+                view.inline_edit_form_view,
+                methods=["GET"],
+                name=f"{model_name}-inline-edit-form",
+            )
+            router.add_api_route(
+                f"{prefix}/{item_segment}/inline/{{field:str}}",
+                view.inline_save_view,
+                methods=["POST"],
+                name=f"{model_name}-inline-save",
+            )
+
+    if options.can_delete:
+        router.add_api_route(
+            f"{prefix}/{item_segment}",
+            view.delete_action,
+            methods=["DELETE"],
+            name=f"{model_name}-delete",
+        )
+
+    if actions:
+        router.add_api_route(
+            f"{prefix}/{item_segment}/action/{{action_name}}",
+            view.run_action,
+            methods=["POST"],
+            name=f"{model_name}-action",
+        )
+
+    if storage:
+        router.add_api_route(
+            f"{prefix}/{item_segment}/file/{{field_name}}",
             view.delete_file_view,
             methods=["DELETE"],
             name=f"{model_name}-delete-file",
