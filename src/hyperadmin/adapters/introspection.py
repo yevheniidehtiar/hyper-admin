@@ -10,7 +10,6 @@ actual column metadata, rather than from the pydantic annotation alone.
 from __future__ import annotations
 
 import types
-import uuid
 from datetime import datetime as _datetime
 from typing import TYPE_CHECKING, Any, Union, get_args, get_origin
 
@@ -20,6 +19,7 @@ from sqlalchemy import DateTime
 from sqlalchemy.inspection import inspect as sa_inspect
 from sqlalchemy.types import TypeDecorator
 
+from hyperadmin.core.filtering import coerce_filter_value
 from hyperadmin.core.primary_key import PrimaryKeyInfo
 
 if TYPE_CHECKING:
@@ -201,18 +201,19 @@ def datetime_kind(model: Any, field: str) -> DateTimeKind | None:
     return None
 
 
-def coerce_cascade_filter_value(mapper: Any, attr: str, raw: Any) -> Any:
-    """Coerce a raw ``str`` cascade-filter value for a UUID-typed column.
+def coerce_column_value(mapper: Any, attr: str, raw: Any) -> Any:
+    """Coerce a raw ``str`` cascade-filter value to its column's Python type.
 
     A dependent-select cascade filter (``get_choices(..., <fk>=<raw>)``) forwards
-    a plain string. Binding that string straight to a UUID column fails inside
-    the DBAPI driver (a UUID column's bind processor expects a :class:`uuid.UUID`
-    instance), so it is parsed first. Any other column type,
-    or a value that is not a ``str``, is returned unchanged.
-
-    General-purpose cascade-value coercion (enums, dates, decimals, ...) is
-    added in story ``st-v058-byoa-24`` via ``core.filtering.coerce_filter_value``;
-    this is the narrow fix for the one case that raises rather than mismatches.
+    a plain string for every key. Binding that string straight to a typed column
+    (a UUID column's bind processor expects a :class:`uuid.UUID` instance; an
+    ``Enum`` column a member; and so on) either fails inside the DBAPI driver or,
+    worse, silently matches no row on some backends. So the value is coerced
+    first, through :func:`hyperadmin.core.filtering.coerce_filter_value` — the
+    same bool/int/float/Decimal/UUID/Enum/date/datetime coercion ``core/filtering``
+    applies to view-layer filter query parameters. A ``str``-typed column, any
+    other column type the resolved Python type is not one of those, or a value
+    that is not a ``str`` to begin with, is returned unchanged.
 
     Args:
         mapper: The target model's SQLAlchemy mapper (``sa_inspect(target_model)``).
@@ -220,11 +221,12 @@ def coerce_cascade_filter_value(mapper: Any, attr: str, raw: Any) -> Any:
         raw: The raw filter value.
 
     Raises:
-        ValueError: If ``raw`` is a ``str`` that is not a valid UUID for a
-            UUID-typed column (e.g. ``''`` — what a dependent select sends
-            while its parent is still blank — or a garbage value). Callers
-            that forward unvalidated query-string input (``get_choices``)
-            must catch this and treat it as "matches no row" rather than
+        FilterValueError: If ``raw`` is a ``str`` that does not coerce to the
+            column's Python type (e.g. ``''`` or ``'garbage'`` for a UUID
+            column — ``''`` is what a dependent select sends while its parent
+            is still blank). It is a :class:`ValueError` subclass; callers
+            that forward unvalidated query-string input (``get_choices``) must
+            catch ``ValueError`` and treat it as "matches no row" rather than
             letting it become an unhandled 500.
     """
     if not isinstance(raw, str) or attr not in mapper.columns:
@@ -232,6 +234,5 @@ def coerce_cascade_filter_value(mapper: Any, attr: str, raw: Any) -> Any:
     # Resolve through the field's Python type rather than the column class:
     # older SQLModel releases map ``uuid.UUID`` to their own ``GUID``
     # TypeDecorator, not SQLAlchemy's ``Uuid``.
-    if _resolve_python_type(mapper.class_, attr, mapper.columns[attr]) is not uuid.UUID:
-        return raw
-    return uuid.UUID(raw)
+    python_type = _resolve_python_type(mapper.class_, attr, mapper.columns[attr])
+    return coerce_filter_value(python_type, raw, field=attr)
