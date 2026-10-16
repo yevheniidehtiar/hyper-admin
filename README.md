@@ -1,9 +1,12 @@
 <div align="center">
   <a href="https://yevheniidehtiar.github.io/hyper-admin/" target="_blank">
-    <img src="https://yevheniidehtiar.github.io/hyper-admin/assets/logo.svg" alt="HyperAdmin Logo" width="140"/>
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="src/hyperadmin/static/img/hyperadmin-wordmark-dark.svg">
+      <img src="src/hyperadmin/static/img/hyperadmin-wordmark.svg" alt="HyperAdmin" width="330"/>
+    </picture>
   </a>
-  <h1>HyperAdmin</h1>
-  <p><strong>The Django-admin experience for FastAPI — generated straight from your Pydantic models.</strong></p>
+  <p><strong>The Django-admin experience for FastAPI — generated straight from your Pydantic models.</strong><br/>
+  Add it to the FastAPI app you already have in about ten minutes, without it taking over.</p>
 
   <p>
     <a href="https://github.com/yevheniidehtiar/hyper-admin/actions/workflows/ci.yml">
@@ -27,10 +30,14 @@
 
   <sub><strong>Alpha</strong> — under active development; APIs may change between releases.</sub>
 
-  <p><a href="https://hyper-admin-demo.onrender.com/admin/"><strong>▶ Try the live demo</strong></a> — sign in with <code>demo</code> / <code>demo</code></p>
+  <p><a href="https://hyper-admin-demo.onrender.com/admin/"><strong>▶ Try the live demo</strong></a> — sign in with <code>demo</code> / <code>demo</code><br/>
+  <sub>Free hosting: the first visit after a quiet spell takes about a minute to wake up. The data resets every night.</sub></p>
 
-  <br/><br/>
-  <img src="docs/assets/demo/list.png" alt="HyperAdmin list view" width="820"/>
+  <br/>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/demo/list-dark.png">
+    <img src="docs/assets/demo/list.png" alt="HyperAdmin invoice list in the ERP demo" width="820"/>
+  </picture>
 </div>
 
 ---
@@ -86,14 +93,14 @@ site.register(Product)
 admin.mount("/admin")        # full CRUD admin now live at /admin
 ```
 
-Prefer to click around first? **[Open the demo in Codespaces](https://codespaces.new/yevheniidehtiar/hyper-admin?devcontainer_path=.devcontainer%2Fdevcontainer.json)** or browse the [screenshot tour](https://yevheniidehtiar.github.io/hyper-admin/demo/).
+Prefer to click around first? **[Try the live demo](https://hyper-admin-demo.onrender.com/admin/)** (`demo` / `demo`), [open it in Codespaces](https://codespaces.new/yevheniidehtiar/hyper-admin?devcontainer_path=.devcontainer%2Fdevcontainer.json), or browse the [screenshot tour](https://yevheniidehtiar.github.io/hyper-admin/demo/).
 
 ## Resource map
 
 | | |
 |---|---|
 | 📖 **Documentation** | <https://yevheniidehtiar.github.io/hyper-admin/> |
-| ▶️ **Live demo & tour** | [docs › Live Demo](https://yevheniidehtiar.github.io/hyper-admin/demo/) · [Open in Codespaces](https://codespaces.new/yevheniidehtiar/hyper-admin?devcontainer_path=.devcontainer%2Fdevcontainer.json) |
+| ▶️ **Live demo & tour** | [hyper-admin-demo.onrender.com](https://hyper-admin-demo.onrender.com/admin/) (`demo` / `demo`) · [docs › Live Demo](https://yevheniidehtiar.github.io/hyper-admin/demo/) · [Open in Codespaces](https://codespaces.new/yevheniidehtiar/hyper-admin?devcontainer_path=.devcontainer%2Fdevcontainer.json) |
 | 🚀 **Getting started** | [docs › Getting Started](https://yevheniidehtiar.github.io/hyper-admin/getting-started/) |
 | 🧩 **Example app (ERP)** | [`examples/erp/`](examples/erp) · [docs › ERP](https://yevheniidehtiar.github.io/hyper-admin/examples/erp/) |
 | 🗺️ **Roadmap** | [docs › Roadmap](https://yevheniidehtiar.github.io/hyper-admin/roadmap/) · [`ROADMAP.md`](ROADMAP.md) |
