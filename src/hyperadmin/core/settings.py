@@ -79,7 +79,12 @@ class HyperAdminSettings(BaseSettings):
 
     # ── Runtime behaviour ─────────────────────────────────────────────────────
     debug: bool = False
-    create_tables: bool = True
+    #: Defaults to ``False`` (SDD C.2): a host engine or session_factory never gets DDL
+    #: run against it unless requested. Demo mode (no engine=, no session_factory=) is
+    #: the one exception — it still auto-creates tables when database_url is SQLite, so
+    #: zero-config ``Admin(app).mount("/admin")`` keeps working. Set this to ``True`` to
+    #: keep the old "always create every table at startup" behaviour.
+    create_tables: bool = False
 
     # ── Discovery ─────────────────────────────────────────────────────────────
     auto_discover: bool = False

@@ -9,7 +9,7 @@ than in ``core/``.
 from __future__ import annotations
 
 import warnings
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine, create_async_engine
@@ -24,6 +24,11 @@ if TYPE_CHECKING:
     from hyperadmin.core.settings import HyperAdminSettings
 
 sqlite_url = "sqlite+aiosqlite:///:memory:"
+
+#: ``"hyperadmin"`` creates only the built-in ``hyperadmin_*`` tables; ``"all"`` creates
+#: every table registered on ``SQLModel.metadata`` (the host's own models too). Used by
+#: ``Admin.create_tables(scope=)`` and the ``hyperadmin init-db`` CLI (SDD C.2).
+TableScope = Literal["hyperadmin", "all"]
 
 _default_engines: dict[str, AsyncEngine] = {}
 

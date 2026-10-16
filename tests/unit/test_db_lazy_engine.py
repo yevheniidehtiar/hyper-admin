@@ -6,6 +6,7 @@ import subprocess
 import sys
 import textwrap
 import warnings
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi import FastAPI
@@ -225,19 +226,18 @@ def test_db_module_does_not_import_core_at_module_level() -> None:
 _HOST_DB_URL = "postgresql+asyncpg://u:p@localhost/app"
 
 
-def _demo_admin(monkeypatch, **settings_kwargs: object) -> FastAPI:
+def _demo_admin(monkeypatch, **settings_kwargs: object) -> Admin:
     monkeypatch.setattr(db, "get_default_engine", lambda _settings=None: object())
     app = FastAPI()
-    Admin(app, settings=HyperAdminSettings(**settings_kwargs))  # type: ignore[arg-type]
-    return app
+    return Admin(app, settings=HyperAdminSettings(**settings_kwargs))  # type: ignore[arg-type]
 
 
 def test_demo_mode_with_a_non_sqlite_url_runs_no_ddl(monkeypatch, caplog) -> None:
     """Scenario: demo mode never runs DDL against a host database (SDD C.2, Goal 4)."""
     with caplog.at_level("WARNING", logger="hyperadmin"):
-        app = _demo_admin(monkeypatch, database_url=_HOST_DB_URL)
+        admin = _demo_admin(monkeypatch, database_url=_HOST_DB_URL)
 
-    assert app.router.on_startup == []
+    assert admin._auto_create_tables is False
     assert any(
         "HyperAdmin demo mode" in r.getMessage() and "create_tables=True" in r.getMessage()
         for r in caplog.records
@@ -245,17 +245,45 @@ def test_demo_mode_with_a_non_sqlite_url_runs_no_ddl(monkeypatch, caplog) -> Non
 
 
 def test_demo_mode_with_a_non_sqlite_url_honours_explicit_create_tables(monkeypatch) -> None:
-    app = _demo_admin(monkeypatch, database_url=_HOST_DB_URL, create_tables=True)
-    assert len(app.router.on_startup) == 1
+    """Scenario: an explicit create_tables=True wins over the demo-mode default."""
+    admin = _demo_admin(monkeypatch, database_url=_HOST_DB_URL, create_tables=True)
+    assert admin._auto_create_tables is True
 
 
-def test_demo_mode_with_sqlite_still_creates_tables(monkeypatch) -> None:
-    app = _demo_admin(monkeypatch)
-    assert len(app.router.on_startup) == 1
+def test_demo_mode_with_sqlite_still_creates_tables(monkeypatch, caplog) -> None:
+    """Scenario: demo mode still works zero-config (SQLite auto-creates tables)."""
+    with caplog.at_level("WARNING", logger="hyperadmin"):
+        admin = _demo_admin(monkeypatch)
+
+    assert admin._auto_create_tables is True
+    assert any("HyperAdmin demo mode" in r.getMessage() for r in caplog.records)
+
+
+def test_demo_mode_with_sqlite_explicit_false_does_not_create_tables(monkeypatch) -> None:
+    """Scenario: an explicit create_tables=False wins over the demo-mode default too."""
+    admin = _demo_admin(monkeypatch, create_tables=False)
+    assert admin._auto_create_tables is False
 
 
 def test_explicit_engine_keeps_create_tables_default(monkeypatch) -> None:
+    """Scenario: tables are not created by default (SDD C.2) — a host engine with
+    default settings never gets DDL run against it, even when database_url
+    happens to point elsewhere."""
     app = FastAPI()
     engine = create_async_engine("sqlite+aiosqlite:///:memory:")
-    Admin(app, engine=engine, settings=HyperAdminSettings(database_url=_HOST_DB_URL))
-    assert len(app.router.on_startup) == 1
+    admin = Admin(app, engine=engine, settings=HyperAdminSettings(database_url=_HOST_DB_URL))
+    assert admin._auto_create_tables is False
+
+
+@pytest.mark.anyio
+async def test_admin_startup_creates_tables_for_demo_mode_sqlite(monkeypatch) -> None:
+    """Scenario: demo mode still works zero-config — startup() actually creates tables."""
+    monkeypatch.setattr(db, "get_default_engine", lambda _settings=None: object())
+    app = FastAPI()
+    admin = Admin(app, settings=HyperAdminSettings())
+    assert admin._auto_create_tables is True
+
+    with patch.object(db, "create_tables", new=AsyncMock()) as mock_create:
+        await admin.startup()
+
+    mock_create.assert_called_once()
