@@ -7,7 +7,7 @@
 | Issue | _TBD. Tracked in `.meta/epics/epic-v058-bring-your-own-app/`_ |
 | Milestone | v0.5.8 — Bring Your Own App (dogfood-1) |
 | Created | 2026-09-28 |
-| Last updated | 2026-10-08 |
+| Last updated | 2026-10-16 |
 
 **Rules applied:** the Rippletide hook returned none. This SDD follows CONSTITUTION.md §1 (`core/` holds contracts with no ORM or HTTP code), §2 (dependencies point inward), §3 (banned file names), §4 (public API is additive and opt-in), §5 (new features go in new modules) and §6 (each runtime dependency is justified). It also follows `.claude/rules/sdd-conventions.md`, `bdd-conventions.md` (one behaviour per scenario) and `planning-playbook.md` (stories ordered bottom-up), plus the E2E selector convention in CLAUDE.md (`data-testid` tokens stay unchanged for int keys).
 
@@ -308,12 +308,12 @@ Third-party adapters keep working without changes.
 1. On import, register a URL converter named `hyperadmin_pk`, only if it is not already registered.
    - Its regex is `[^/]+`.
    - `convert` returns the value unchanged.
-   - `to_string` percent-encodes with `quote(str(v), safe="-._~!$&'()*+,;=:@")` and rejects `""` and any value containing `/`.
+   - `to_string` always stringifies and percent-encodes with `quote(str(v), safe="-._~!$&'()*+,;=:@")`; it never raises, including for `None`, `""` or a value containing `/` (`/` becomes `%2F`). `to_string` runs once per row inside `components/table.html` — an exception raised there aborts the *entire* list page for every row, not just the row with the bad key, which was verified to turn a single malformed stored natural key into a persistent 500 on that model's list page for every admin user (see Decision Log). A malformed or empty key instead produces a link that 404s on its own row.
    - Starlette's `str` converter does no quoting, which is why a custom converter is needed.
 2. Each model's item segment is `{item_id:<pk.path_convertor>}`:
    - **int keys** keep `{item_id:int}` byte-for-byte;
    - **UUID keys** use Starlette's `uuid` converter, so a malformed UUID never matches the route and returns 404 before any view runs.
-3. **Every fixed-literal route is registered before the `/{item_id}` routes.** These are create, create-popup, choices, inline add-row, bulk, bulk-confirm and upload. Starlette uses the first full match, so for `str` keys these words become reserved segments on GET. This is documented.
+3. **Every fixed-literal route is registered before the `/{item_id}` routes.** These are `create`, `create-popup`, `choices/{field_name}`, `inline/{inline_prefix}/add-row`, `actions/{action_name}/bulk`, `actions/{action_name}/bulk/confirm` and `upload/{field_name}`. Starlette uses the first full match, so for a non-int, non-UUID key, the literal first segments `create`, `create-popup`, `choices`, `inline`, `actions` and `upload` become reserved words: a natural key equal to one of them is unreachable via `GET /{model}/{key}` (it instead matches the literal route). `.` and `..` are not reachable either, but as a browser/URL-normalisation effect, not a route collision. Reserved words are not rejected at write time by this story (BYOA SDD A.6 — form-level natural-key validation on create — is not yet implemented); until then this is a known, accepted limitation, not a privilege or data-isolation issue, since every route reachable under either name is still permission-checked on its own.
 4. **Composite keys** get only the list and choices routes, and log `WARNING … composite primary key; registering list-only`. Registration also forces `can_detail`, `can_edit`, `can_delete` and `can_create` to `False`, empties `list_editable` and `inlines`, and removes all actions. Otherwise `components/table.html:22-39` would call `url_for` on routes that were never registered, and the list page would fail with a 500 (`NoMatchFound`).
 5. The `item_id` parameter name does not change.
 6. The router takes `route_class=` (see pillar B).
@@ -1774,6 +1774,7 @@ These are lower-stakes than the Owner decisions. Each has a proposed answer that
 | Files served per record and field, with unique stored names | Model, object and tenant permissions apply to downloads. Names cannot be guessed, and one record cannot overwrite another's file | `{prefix}/uploads/{path}` behind auth only (any admin reads any file); `StaticFiles` inside the sub-app (no header control); signed URLs (more moving parts) |
 | First release versioned `0.5.0a1` on PyPI | Honest pre-release that dogfooding can install; decoupled from roadmap labels | `0.1.0` (misleading); wait for 1.0 (blocks dogfooding) |
 | `DeclarativeBase` adapter deferred | Keeps the milestone focused on SQLModel hosts, which the dogfood apps are | Include it (doubles the adapter test matrix) |
+| `HyperAdminPkConvertor.to_string` never raises (st-v058-byoa-28 review fix) | A security review on the first implementation (which raised `ValueError` for `""`/`"/"`, per the original A.5 text) reproduced: seed a str-pk row with `/` in its key → the list page 500s on every subsequent visit, for every admin user, because `to_string` runs once per row inside `components/table.html` and one raise aborts the whole render. Stringify-and-encode unconditionally instead, including for `None`; a bad key now 404s on its own dead link rather than crashing the page | Raise only on `None` (keeps an inconsistent exception for a value a view/template can pass by the very same kind of per-row-rendering mistake — reintroduces the same crash class for the pk-attribute-name gap A.6 will close); reject `""`/`"/"` at write time only (deferred — no form plumbing yet validates a natural key on create; tracked for A.6) |
 
 ---
 

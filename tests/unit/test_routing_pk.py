@@ -19,6 +19,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlmodel import Field, SQLModel
+from starlette.routing import Match
 
 from hyperadmin import Admin
 from hyperadmin.core.model import ModelAdmin
@@ -212,14 +213,52 @@ def test_hyperadmin_pk_convertor_round_trips_special_characters():
     assert convertor.convert(unquote(encoded)) == raw
 
 
-def test_hyperadmin_pk_convertor_rejects_empty_and_slash_values():
+def test_hyperadmin_pk_convertor_round_trips_special_characters_through_the_route():
+    """
+    Scenario: special characters round-trip through the registered route
+      Given a str-pk model's registered '{item_id:hyperadmin_pk}' detail route
+      When  the url built by url_path_for('a b?c') is matched against that route
+      Then  it is a full match with item_id == 'a b?c'
+
+    Covers route resolution, not just the convertor in isolation: a regression
+    in the route regex (e.g. narrowing `[^/]+`) would not be caught by
+    `test_hyperadmin_pk_convertor_round_trips_special_characters` above, since
+    that test never dispatches through a registered route.
+    """
+    router = _build_router(StrPkWidget)
+    detail = next(r for r in router.routes if r.name == "strpkwidget-detail")
+
+    url = router.url_path_for("strpkwidget-detail", item_id="a b?c")
+    match, child_scope = detail.matches(
+        {"type": "http", "path": unquote(str(url)), "method": "GET", "root_path": ""}
+    )
+
+    assert match is Match.FULL
+    assert child_scope["path_params"]["item_id"] == "a b?c"
+
+
+def test_hyperadmin_pk_convertor_never_raises_from_to_string():
+    """
+    Scenario: to_string never raises, so one bad stored key cannot crash a whole list page
+      Given a primary key value that is None, empty, or contains '/'
+      When  to_string(value) runs
+      Then  it returns a string instead of raising
+
+    `to_string` runs once per row inside `components/table.html`: a single
+    `url_for` call that raised there would abort rendering every row on the
+    page, not just the one with the bad key (verified: seeding a str-pk row
+    with '/' in its key 500'd every future visit to that model's list page,
+    for every admin user, when this used to raise — BYOA SDD A.5 Decision
+    Log). So every value below must round-trip to *some* string — a 404 on
+    its own dead link is an acceptable outcome; a 500 on the whole page is
+    not.
+    """
     convertor = HyperAdminPkConvertor()
 
-    with pytest.raises(ValueError, match="Invalid primary key"):
-        convertor.to_string("")
-
-    with pytest.raises(ValueError, match="Invalid primary key"):
-        convertor.to_string("a/b")
+    assert convertor.to_string("") == ""
+    assert convertor.to_string("a/b") == quote("a/b", safe="-._~!$&'()*+,;=:@")
+    assert "/" not in convertor.to_string("a/b")
+    assert convertor.to_string(None) == "None"
 
 
 def test_str_pk_detail_url_is_percent_encoded_for_special_characters():
@@ -307,6 +346,15 @@ def test_composite_pk_list_page_returns_200_with_no_row_links():
 
     assert response.status_code == 200
     assert 'data-testid="list-table"' in response.text
+    # The seeded row must actually reach the rendered table: without this,
+    # the test above would still pass if the seed never reached the list
+    # query (a different in-memory connection, or a swallowed list error
+    # leaving an empty table) — proving no row links exist for an empty
+    # table proves nothing about the review-amendment scenario.
+    assert 'data-testid="list-row"' in response.text
+    # list_display=["a", "b"]; assert the seeded composite-key values render.
+    assert ">1<" in response.text
+    assert ">2<" in response.text
     assert 'data-testid="row-view-link"' not in response.text
     assert 'data-testid="row-edit-link"' not in response.text
     assert 'data-testid="row-delete-btn"' not in response.text
