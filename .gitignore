@@ -75,6 +75,9 @@ site/
 *.sqlite3
 *.db
 
+# Local file-upload storage created by running examples/simple or examples/erp
+/uploads/
+
 # Claude Code
 .claude/settings.local.json
 .claude/agent-memory/

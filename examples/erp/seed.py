@@ -3,9 +3,11 @@ import asyncio
 import logging
 import os
 import random
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
+from io import BytesIO
 
 from faker import Faker
+from PIL import Image
 from sqlalchemy import create_engine
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import SQLModel, select
@@ -15,6 +17,14 @@ from examples.erp.contacts.models import Contact, ContactType
 from examples.erp.db import engine
 from examples.erp.purchases.models import Bill, BillItem, BillStatus
 from examples.erp.sales.models import Invoice, InvoiceItem, InvoiceStatus
+from examples.erp.showcase.models import (
+    FieldShowcase,
+    Priority,
+    ProductTag,
+    ShowcaseCategory,
+    ShowcaseSubcategory,
+    showcase_storage,
+)
 from hyperadmin.auth.backend import hash_password
 from hyperadmin.auth.models import (
     Group,
@@ -232,7 +242,156 @@ async def seed_db():  # noqa: PLR0915
                 bill_journal_entries += 1
 
         logger.info("  Created 800 bills  (%d with journal entries)", bill_journal_entries)
+
+        # 5. Field showcase (fixed, deterministic rows — demonstrates every widget)
+        await _seed_field_showcase(session, suppliers)
+        logger.info("  Created field showcase categories, subcategories and items")
+
         logger.info("Seeding completed.")
+
+
+def _sample_png_bytes(color: tuple[int, int, int]) -> bytes:
+    """A tiny, Pillow-valid PNG generated in-memory (never committed as a binary file)."""
+    buf = BytesIO()
+    Image.new("RGB", (64, 64), color=color).save(buf, format="PNG")
+    return buf.getvalue()
+
+
+async def _seed_field_showcase(session: AsyncSession, suppliers: list[Contact]) -> None:
+    """Seed the widget-showcase models with fixed (non-random) data.
+
+    Deliberately not Faker-driven: these rows exist to let a demo visitor see
+    every widget populated and readable, so fixed, descriptive values are
+    more useful here than random ones.
+    """
+    categories = {
+        name: ShowcaseCategory(name=name) for name in ("Electronics", "Apparel", "Home & Garden")
+    }
+    session.add_all(categories.values())
+    await session.commit()
+    for cat in categories.values():
+        await session.refresh(cat)
+
+    subcategory_plan = {
+        "Electronics": ["Laptops", "Phones"],
+        "Apparel": ["Shirts", "Shoes"],
+        "Home & Garden": ["Furniture", "Tools"],
+    }
+    subcategories: dict[str, ShowcaseSubcategory] = {}
+    for cat_name, sub_names in subcategory_plan.items():
+        for sub_name in sub_names:
+            sub = ShowcaseSubcategory(name=sub_name, category_id=categories[cat_name].id)
+            session.add(sub)
+            subcategories[sub_name] = sub
+    await session.commit()
+    for sub in subcategories.values():
+        await session.refresh(sub)
+
+    items_plan = [
+        {
+            "name": 'Ultraslim Laptop 14"',
+            "description": "A thin-and-light laptop with a 14-inch display and all-day battery.",
+            "quantity_in_stock": 42,
+            "unit_price": 1299.00,
+            "is_active": True,
+            "priority": Priority.HIGH,
+            "tags": [ProductTag.NEW, ProductTag.FEATURED],
+            "launched_at": datetime(2026, 1, 15, 9, 0, tzinfo=timezone.utc),
+            "subcategory": "Laptops",
+            "color": (66, 135, 245),
+        },
+        {
+            "name": "Flagship Phone X",
+            "description": "Our flagship phone with a triple camera and 5G.",
+            "quantity_in_stock": 120,
+            "unit_price": 899.00,
+            "is_active": True,
+            "priority": Priority.URGENT,
+            "tags": [ProductTag.FEATURED, ProductTag.LIMITED],
+            "launched_at": datetime(2026, 3, 1, 10, 30, tzinfo=timezone.utc),
+            "subcategory": "Phones",
+            "color": (245, 101, 66),
+        },
+        {
+            "name": "Classic Crew Shirt",
+            "description": "100% cotton crew-neck shirt, available in six colors.",
+            "quantity_in_stock": 300,
+            "unit_price": 24.99,
+            "is_active": True,
+            "priority": Priority.LOW,
+            "tags": [ProductTag.ON_SALE],
+            "launched_at": datetime(2025, 6, 1, 8, 0, tzinfo=timezone.utc),
+            "subcategory": "Shirts",
+            "color": (66, 245, 155),
+        },
+        {
+            "name": "Trail Running Shoes",
+            "description": "Lightweight trail running shoes with reinforced toe caps.",
+            "quantity_in_stock": 75,
+            "unit_price": 129.50,
+            "is_active": True,
+            "priority": Priority.MEDIUM,
+            "tags": [ProductTag.NEW],
+            "launched_at": datetime(2026, 5, 20, 12, 0, tzinfo=timezone.utc),
+            "subcategory": "Shoes",
+            "color": (245, 221, 66),
+        },
+        {
+            "name": "Oak Dining Table",
+            "description": "Solid oak dining table, seats six.",
+            "quantity_in_stock": 8,
+            "unit_price": 749.00,
+            "is_active": False,
+            "priority": Priority.LOW,
+            "tags": [ProductTag.DISCONTINUED],
+            "launched_at": datetime(2023, 9, 10, 14, 0, tzinfo=timezone.utc),
+            "subcategory": "Furniture",
+            "color": (160, 110, 66),
+        },
+        {
+            "name": "Cordless Drill Set",
+            "description": "18V cordless drill with two batteries and a carry case.",
+            "quantity_in_stock": 54,
+            "unit_price": 89.00,
+            "is_active": True,
+            "priority": Priority.MEDIUM,
+            "tags": [ProductTag.FEATURED, ProductTag.ON_SALE],
+            "launched_at": datetime(2026, 2, 11, 16, 45, tzinfo=timezone.utc),
+            "subcategory": "Tools",
+            "color": (120, 120, 245),
+        },
+    ]
+
+    for i, plan in enumerate(items_plan):
+        slug = plan["subcategory"].lower().replace(" ", "-")
+        photo_name = f"showcase-{slug}.png"
+        manual_name = f"showcase-{slug}-manual.txt"
+        showcase_storage.write(file=BytesIO(_sample_png_bytes(plan["color"])), name=photo_name)
+        showcase_storage.write(
+            file=BytesIO(
+                f"Specification sheet for {plan['name']}.\nGenerated by examples/erp/seed.py.\n".encode()
+            ),
+            name=manual_name,
+        )
+        sub = subcategories[plan["subcategory"]]
+        supplier = suppliers[i % len(suppliers)] if suppliers else None
+        item = FieldShowcase(
+            name=plan["name"],
+            description=plan["description"],
+            quantity_in_stock=plan["quantity_in_stock"],
+            unit_price=plan["unit_price"],
+            is_active=plan["is_active"],
+            priority=plan["priority"],
+            tags=plan["tags"],
+            launched_at=plan["launched_at"],
+            manual_file=manual_name,
+            photo=photo_name,
+            category_id=sub.category_id,
+            subcategory_id=sub.id,
+            supplier_id=supplier.id if supplier else None,
+        )
+        session.add(item)
+    await session.commit()
 
 
 async def seed_demo_user() -> None:
