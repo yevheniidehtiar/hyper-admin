@@ -7,6 +7,7 @@ from sqlalchemy import text
 
 from examples.erp.db import engine
 from examples.erp.reports.views import router as reports_router
+from examples.erp.showcase.models import showcase_storage
 from hyperadmin import Admin
 from hyperadmin.auth.permissions import ModelPermissionChecker, PermissionSyncService
 from hyperadmin.auth.session import SessionAuthBackend
@@ -82,6 +83,7 @@ settings = HyperAdminSettings(
         "examples.erp.sales",
         "examples.erp.purchases",
         "examples.erp.accounting",
+        "examples.erp.showcase",
         "hyperadmin.auth",
     ],
     template_dirs=[template_dir],
@@ -95,6 +97,7 @@ admin = Admin(
     auth_backend=auth_backend,
     permission_checker=permission_checker,
     permission_registry=permission_registry,
+    storage=showcase_storage,
 )
 
 # Credentials prefilled on the login page (examples/erp/templates/login.html).
