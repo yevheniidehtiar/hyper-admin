@@ -1,0 +1,20 @@
+{#-
+    Bar chart: one bar per x label at 60 % of its band, each focusable with its value
+    in aria-label, and the value printed above the bar when it fits.
+
+        {%- from "components/charts/bar.html" import bar_chart -%}
+        {{ bar_chart(chart) }}   {# chart: hyperadmin.widgets.BarChart #}
+-#}
+{%- from "components/charts/_svg.html" import chart_svg, axes -%}
+
+{%- macro bar_chart(chart) -%}
+{%- call chart_svg(chart) -%}
+{{ axes(chart) }}
+{%- for bar in chart.bars -%}
+<rect class="{{ bar.rect.cls }}" x="{{ bar.rect.x }}" y="{{ bar.rect.y }}" width="{{ bar.rect.width }}" height="{{ bar.rect.height }}" rx="3" tabindex="0" role="img" aria-label="{{ bar.label }}"/>
+{%- if bar.value_label -%}
+<text class="val" x="{{ bar.value_label.x }}" y="{{ bar.value_label.y }}" text-anchor="middle" aria-hidden="true">{{ bar.value_label.text }}</text>
+{%- endif -%}
+{%- endfor -%}
+{%- endcall -%}
+{%- endmacro -%}

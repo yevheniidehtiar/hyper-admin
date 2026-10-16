@@ -1,0 +1,29 @@
+{#-
+    Shared SVG scaffolding for the x/y chart macros (line, bar, stacked bar).
+
+    The plot always holds focusable points or bars, so the SVG is role="group" with
+    aria-labelledby/aria-describedby: role="img" would hide those points from screen
+    readers. Geometry comes precomputed from hyperadmin.widgets.charts.
+-#}
+
+{%- macro chart_svg(chart) -%}
+<svg class="ha-chart" viewBox="0 0 {{ chart.width }} {{ chart.height }}" role="group" aria-labelledby="{{ chart.title_id }}"
+    {%- if chart.desc %} aria-describedby="{{ chart.desc_id }}"{% endif %} data-testid="chart-{{ chart.key }}">
+<title id="{{ chart.title_id }}">{{ chart.title }}</title>
+{%- if chart.desc %}<desc id="{{ chart.desc_id }}">{{ chart.desc }}</desc>{% endif -%}
+{{ caller() }}
+</svg>
+{%- endmacro -%}
+
+{%- macro axes(chart) -%}
+{%- for tick in chart.y_ticks -%}
+<line class="grid" x1="{{ chart.left }}" x2="{{ chart.right }}" y1="{{ tick.y }}" y2="{{ tick.y }}"/>
+<text x="{{ chart.tick_x }}" y="{{ tick.text_y }}" text-anchor="end">{{ tick.label }}</text>
+{%- endfor -%}
+<line class="axis" x1="{{ chart.left }}" x2="{{ chart.right }}" y1="{{ chart.zero_y }}" y2="{{ chart.zero_y }}"/>
+{%- for label in chart.x_labels -%}
+<text x="{{ label.x }}" y="{{ chart.label_y }}" text-anchor="middle">
+    {%- if label.truncated %}<title>{{ label.full }}</title>{% endif -%}
+    <tspan>{{ label.text }}</tspan></text>
+{%- endfor -%}
+{%- endmacro -%}

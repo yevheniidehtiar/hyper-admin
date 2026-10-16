@@ -1,0 +1,29 @@
+{#-
+    Line chart: one 2px path per series (series 2 dashed), end-of-line labels when they
+    fit, and one focusable hit area per x position with its point and tooltip.
+
+        {%- from "components/charts/line.html" import line_chart -%}
+        {{ line_chart(chart) }}   {# chart: hyperadmin.widgets.LineChart #}
+-#}
+{%- from "components/charts/_svg.html" import chart_svg, axes -%}
+
+{%- macro line_chart(chart) -%}
+{%- call chart_svg(chart) -%}
+{{ axes(chart) }}
+{%- for path in chart.paths -%}
+<path class="line {{ path.cls }}" d="{{ path.d }}"{% if path.dashed %} stroke-dasharray="6 4"{% endif %}/>
+{%- endfor -%}
+{%- for label in chart.end_labels -%}
+<text class="lbl {{ label.cls }}" x="{{ label.x }}" y="{{ label.y }}" text-anchor="end">{{ label.text }}</text>
+{%- endfor -%}
+{%- for hover in chart.hovers -%}
+<g><rect class="pt-hit" x="{{ hover.x }}" y="{{ chart.top }}" width="{{ hover.width }}" height="{{ chart.plot_height }}" tabindex="0" role="img" aria-label="{{ hover.label }}"/>
+<circle class="pt {{ hover.marker.cls }}" cx="{{ hover.marker.cx }}" cy="{{ hover.marker.cy }}" r="4"/>
+<g class="tip"><rect x="{{ hover.tip.x }}" y="{{ hover.tip.y }}" width="{{ hover.tip.width }}" height="{{ hover.tip.height }}" rx="6"/>
+{%- for y, key, value in hover.tip.rows -%}
+<text x="{{ hover.tip.text_x }}" y="{{ y }}"><tspan class="k">{{ key }}</tspan>{{ value }}</text>
+{%- endfor -%}
+</g></g>
+{%- endfor -%}
+{%- endcall -%}
+{%- endmacro -%}

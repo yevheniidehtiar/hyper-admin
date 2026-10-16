@@ -1,0 +1,20 @@
+{#-
+    Sparkline for stat cards: a bare trend line with the last point marked. Decorative
+    (aria-hidden) unless a title is given, because the stat's number and delta already
+    say it; with a title it is role="img".
+
+        {%- from "components/charts/sparkline.html" import sparkline -%}
+        {{ sparkline(chart) }}   {# chart: hyperadmin.widgets.Sparkline #}
+-#}
+
+{%- macro sparkline(chart) -%}
+<svg class="ha-chart ha-spark" viewBox="0 0 {{ chart.width }} {{ chart.height }}" preserveAspectRatio="none"
+    {%- if chart.title %} role="img" aria-label="{{ chart.title }}"{% else %} aria-hidden="true"{% endif %}
+    {%- if chart.key %} data-testid="chart-{{ chart.key }}"{% endif %}>
+{%- if chart.title %}<title>{{ chart.title }}</title>{% endif -%}
+{%- if chart.end -%}
+<path class="line s1" d="{{ chart.d }}" vector-effect="non-scaling-stroke"/>
+<circle class="f1" cx="{{ chart.end[0] }}" cy="{{ chart.end[1] }}" r="3"/>
+{%- endif -%}
+</svg>
+{%- endmacro -%}

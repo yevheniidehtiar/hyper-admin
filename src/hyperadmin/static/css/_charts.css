@@ -1,0 +1,124 @@
+/* ==========================================================================
+   Charts
+   Server-rendered SVG line, bar, stacked-bar and sparkline charts in a chart
+   frame (docs/design/system/components/Chart). Colours come only from the
+   ha-chart-* tokens, so the dark theme and consumer overrides need no change here.
+   ========================================================================== */
+
+/* The plot never mirrors: text-anchor and time run left-to-right in RTL pages too. */
+.ha-chart {
+  display: block;
+  inline-size: 100%;
+  block-size: auto;
+  overflow: visible;
+  font-family: var(--ha-font-family);
+  direction: ltr;
+}
+
+.ha-chart .grid { stroke: var(--ha-chart-grid); stroke-width: 1; }
+.ha-chart .axis { stroke: var(--ha-chart-axis); stroke-width: 1; }
+.ha-chart text { fill: var(--ha-chart-axis); font-size: 12px; font-variant-numeric: tabular-nums; }
+.ha-chart .val { fill: var(--ha-color-text-strong); font-weight: 600; }
+.ha-chart .line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+
+.ha-chart .s1 { stroke: var(--ha-chart-1); color: var(--ha-chart-1); }
+.ha-chart .s2 { stroke: var(--ha-chart-2); color: var(--ha-chart-2); }
+.ha-chart .s3 { stroke: var(--ha-chart-3); }
+.ha-chart .s4 { stroke: var(--ha-chart-4); }
+.ha-chart .s5 { stroke: var(--ha-chart-5); }
+.ha-chart .s6 { stroke: var(--ha-chart-6); }
+.ha-chart .f1 { fill: var(--ha-chart-1); }
+.ha-chart .f2 { fill: var(--ha-chart-2); }
+.ha-chart .f3 { fill: var(--ha-chart-3); }
+.ha-chart .f4 { fill: var(--ha-chart-4); }
+.ha-chart .f5 { fill: var(--ha-chart-5); }
+.ha-chart .f6 { fill: var(--ha-chart-6); }
+.ha-chart .sep { stroke: var(--ha-surface-raised); stroke-width: 1; }
+
+/* Tooltip points: show on hover, keyboard focus and tap (focus). */
+.ha-chart .pt { fill: var(--ha-surface-raised); stroke-width: 2; opacity: 0; }
+.ha-chart .pt-hit { fill: transparent; cursor: pointer; }
+.ha-chart .pt-hit:focus { outline: none; }
+.ha-chart .pt-hit:focus-visible { outline: 2px solid var(--ha-color-brand); outline-offset: -2px; }
+.ha-chart .pt-hit:focus + .pt,
+.ha-chart .pt-hit:hover + .pt,
+.ha-chart .pt[data-active] { opacity: 1; }
+.ha-chart .tip { opacity: 0; pointer-events: none; }
+.ha-chart g:focus-within > .tip,
+.ha-chart g:hover > .tip,
+.ha-chart .tip[data-active] { opacity: 1; }
+.ha-chart .tip rect { fill: var(--ha-surface-overlay); stroke: var(--ha-color-border); }
+.ha-chart .tip text { fill: var(--ha-color-text-strong); font-weight: 600; }
+.ha-chart .tip .k { fill: var(--ha-color-text-muted); font-weight: 400; }
+
+/* End-of-line labels; chart-1 is 3.74:1, too light for 12px text, so it uses primary-text. */
+.ha-chart .lbl { font-weight: 600; }
+.ha-chart .lbl.s1 { fill: var(--ha-color-primary-text); stroke: none; }
+.ha-chart .lbl.s2 { fill: var(--ha-chart-2); stroke: none; }
+
+.ha-chart rect[tabindex]:focus-visible { outline: 2px solid var(--ha-color-brand); outline-offset: 2px; }
+
+.ha-spark { inline-size: 100%; block-size: 40px; display: block; }
+
+/* Loading placeholder: the skeleton keeps the chart's aspect ratio through its viewBox. */
+.ha-skel {
+  display: block;
+  border-radius: var(--ha-radius-sm);
+  background: var(--ha-surface-sunken);
+  animation: ha-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes ha-pulse { 50% { opacity: 0.5; } }
+
+/* Frame tools: period switch and legend on the end side of the card head. */
+.ha-chartframe__tools { display: flex; flex-wrap: wrap; gap: var(--ha-space-2); align-items: center; }
+
+.ha-seg { display: inline-flex; padding: 2px; border-radius: var(--ha-radius-md); background: var(--ha-surface-sunken); }
+.ha-seg > a,
+.ha-seg > button {
+  display: inline-flex;
+  align-items: center;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ha-color-text-muted);
+  text-decoration: none;
+  min-block-size: 28px;
+  padding: 0 var(--ha-space-3);
+  border-radius: var(--ha-radius-sm);
+  cursor: pointer;
+}
+.ha-seg > [aria-pressed="true"] {
+  background: var(--ha-surface-raised);
+  color: var(--ha-color-text-strong);
+  box-shadow: var(--ha-shadow-sm);
+}
+
+.ha-legend { display: flex; flex-wrap: wrap; gap: var(--ha-space-4); list-style: none; margin: 0; padding: 0; font-size: 13px; }
+.ha-legend li { display: inline-flex; align-items: center; gap: var(--ha-space-2); }
+.ha-legend i { inline-size: 12px; block-size: 12px; border-radius: 3px; display: inline-block; }
+.ha-legend .k1 { background: var(--ha-chart-1); }
+.ha-legend .k2 { background: var(--ha-chart-2); }
+.ha-legend .k3 { background: var(--ha-chart-3); }
+.ha-legend .k4 { background: var(--ha-chart-4); }
+.ha-legend .k5 { background: var(--ha-chart-5); }
+.ha-legend .k6 { background: var(--ha-chart-6); }
+.ha-legend__dash line { stroke: var(--ha-chart-2); stroke-width: 2; stroke-dasharray: 6 4; }
+
+/* "Show as table" fallback; the table reads left-to-right like the plot. */
+.ha-details summary {
+  cursor: pointer;
+  color: var(--ha-color-primary-text);
+  font-weight: 500;
+  font-size: 13px;
+  min-block-size: var(--ha-target-min);
+  display: inline-flex;
+  align-items: center;
+}
+.ha-chart-data .ha-table-wrapper { margin-block: var(--ha-space-2) 0; max-block-size: 320px; overflow: auto; }
+[dir="rtl"] .ha-chart-data { direction: ltr; }
+
+.ha-chart-error,
+.ha-chart-error .ha-empty-text { color: var(--ha-color-danger-text); }

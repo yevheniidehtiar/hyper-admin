@@ -1,0 +1,91 @@
+{#-
+    Chart frame: a card with the title, a muted caption (period, unit), the period switch
+    and legend on the end side, then the chart and its "Show as table" fallback. Also
+    renders the loading, no-data and error states in the same frame.
+
+        {%- from "components/charts/frame.html" import chart_frame -%}
+        {{ chart_frame(chart, caption="Last 12 months · EUR", periods=periods) }}
+        {{ chart_frame(chart, state="loading") }}
+        {{ chart_frame(chart, state="error", message=reason, retry_url=fragment_url) }}
+
+    chart: a LineChart, BarChart or StackedBarChart. periods: PeriodOption items; each is a
+    plain link (works without JavaScript) upgraded with hx-get to swap the frame in place.
+-#}
+{%- from "components/_icons.html" import icon -%}
+{%- from "components/charts/line.html" import line_chart -%}
+{%- from "components/charts/bar.html" import bar_chart -%}
+{%- from "components/charts/stacked_bar.html" import stacked_bar_chart -%}
+
+{%- macro chart_plot(chart) -%}
+{%- if chart.kind == "line" -%}{{ line_chart(chart) }}
+{%- elif chart.kind == "bar" -%}{{ bar_chart(chart) }}
+{%- else -%}{{ stacked_bar_chart(chart) }}
+{%- endif -%}
+{%- endmacro -%}
+
+{%- macro chart_table(chart) -%}
+<details class="ha-details ha-chart-data" data-testid="chart-data-table-{{ chart.key }}">
+<summary>{{ _("Show as table") }}</summary>
+<div class="ha-table-wrapper"><table class="ha-table">
+<thead><tr class="ha-table-header"><th class="ha-table-th" scope="col">{{ chart.x_title }}</th>
+{%- for s in chart.series %}<th class="ha-table-th ha-num" scope="col">{{ s.name }}</th>{% endfor -%}
+</tr></thead>
+<tbody class="ha-table-body">
+{%- for label, values in chart.table_rows -%}
+<tr class="ha-table-row"><th class="ha-table-cell" scope="row">{{ label }}</th>
+{%- for value in values %}<td class="ha-table-cell ha-num">{{ value }}</td>{% endfor -%}
+</tr>
+{%- endfor -%}
+</tbody></table></div>
+</details>
+{%- endmacro -%}
+
+{%- macro chart_legend(chart) -%}
+<ul class="ha-legend" aria-label="{{ _('Legend') }}">
+{%- for s in chart.series -%}
+<li>{% if chart.kind == "line" and loop.index == 2 -%}
+<svg class="ha-legend__dash" width="18" height="12" aria-hidden="true"><line x1="0" x2="18" y1="6" y2="6"/></svg>
+{%- else %}<i class="k{{ loop.index }}" aria-hidden="true"></i>{% endif %}{{ s.name }}</li>
+{%- endfor -%}
+</ul>
+{%- endmacro -%}
+
+{%- macro chart_frame(chart, caption="", periods=(), state="ready", message="", retry_url="") -%}
+<section class="ha-card ha-chartframe" aria-labelledby="chart-{{ chart.key }}-heading" data-testid="chart-frame"
+    {%- if state == "loading" %} aria-busy="true"{% endif %}>
+<div class="ha-card__head">
+<div><h3 class="ha-h4" id="chart-{{ chart.key }}-heading">{{ chart.title }}</h3>
+{%- if caption %}<span class="ha-caption ha-muted">{{ caption }}</span>{% endif %}</div>
+<div class="ha-chartframe__tools">
+{%- if periods -%}
+<div class="ha-seg" role="group" aria-label="{{ _('Period') }}">
+{%- for p in periods -%}
+<a href="{{ p.url }}" role="button" aria-pressed="{{ 'true' if p.active else 'false' }}" hx-get="{{ p.url }}" hx-target="closest section" hx-swap="outerHTML">{{ p.label }}</a>
+{%- endfor -%}
+</div>
+{%- endif -%}
+{%- if state == "ready" and chart.series | length > 1 and not chart.is_empty %}{{ chart_legend(chart) }}{% endif -%}
+</div>
+</div>
+<div class="ha-card-body">
+{%- if state == "loading" -%}
+<svg class="ha-chart ha-skel" viewBox="0 0 {{ chart.width }} {{ chart.height }}" aria-hidden="true"></svg>
+<span class="ha-sr-only">{{ _("Loading chart") }}</span>
+{%- elif state == "error" -%}
+<div class="ha-empty ha-chart-error" role="alert">
+<span class="ha-empty-glyph">{{ icon('circle-x') }}</span>
+<p class="ha-empty-text">{{ message or _("The chart could not be loaded.") }}</p>
+{%- if retry_url %}<button type="button" class="ha-btn ha-btn-sm" hx-get="{{ retry_url }}" hx-target="closest section" hx-swap="outerHTML">{{ _("Retry") }}</button>{% endif -%}
+</div>
+{%- elif chart.is_empty -%}
+<div class="ha-empty" data-testid="chart-empty">
+<span class="ha-empty-glyph">{{ icon('bar-chart-3') }}</span>
+<p class="ha-empty-text">{{ message or _("No data for this period.") }}</p>
+</div>
+{%- else -%}
+{{ chart_plot(chart) }}
+{{ chart_table(chart) }}
+{%- endif -%}
+</div>
+</section>
+{%- endmacro -%}

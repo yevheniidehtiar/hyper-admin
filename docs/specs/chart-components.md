@@ -3,92 +3,116 @@
 | Field | Value |
 |---|---|
 | Author | Claude Code |
-| Status | Draft |
+| Status | Approved (revised 2026-10-17: server-rendered SVG only, aligned with the design system) |
 | Issue | TBD |
 | Milestone | v0.5.4 — Reporting & Charts |
 | Created | 2026-05-11 |
-| Last updated | 2026-05-11 |
+| Last updated | 2026-10-17 |
 
 ---
 
+## Revision note (2026-10-17)
+
+The project owner decided: **no Chart.js, ever.** Charts are SVG generated on the backend and
+built from the design system (`docs/design/system/components/Chart/README.md` + `preview.html`,
+tokens in `docs/design/system/tokens.css`, component CSS in
+`docs/design/system/components/bundle.css`). Where this spec and the design system disagree, the
+**design system wins**. This revision therefore:
+
+- removes the Chart.js mode, the vendored UMD bundle, `Admin(chart_mode=...)` and the optional
+  interactive layer (the design system's "optional interactive layer" is dropped with it: tooltips,
+  focus and the period switch already work without client-side chart code);
+- aligns the primitives with the design system: **line, bar, stacked bar, sparkline** plus the
+  **chart frame**;
+- drops `PieChart`: the design system defines no pie or donut component, its palette and marks are
+  specified for x/y plots only, and part-to-whole comparisons read more accurately as a stacked
+  bar or a sorted bar chart. A pie can come back only after the design system defines one;
+- resolves the Open Questions (see the Decision Log);
+- cancels `featwidgets-chartjs-mode-and-vendor`.
+
 ## Problem
 
-The H15 upstream check requires a chart bound to the same OLAP dataset H14
-produces. HyperAdmin currently has no chart primitives. Consumers bolt on
-chart libraries inconsistently — some pull in Chart.js, others build SVG by
-hand, and dashboards diverge visually and behaviourally.
+The H15 upstream check requires a chart bound to the same OLAP dataset H14 produces. HyperAdmin
+has no chart primitives. Consumers bolt on chart libraries inconsistently, and dashboards diverge
+visually and behaviourally from the rest of the admin.
 
-We want a built-in surface that (a) keeps simple cases dependency-free
-(server-rendered SVG bar/line/stacked-bar/pie), (b) supports interactive
-charts via Chart.js when richer affordances are needed, and (c) binds
-declaratively to a `ReportView` from H14 so charts and tables share the same
-data path.
+We want a built-in surface that renders every chart as server-side SVG from the design system,
+needs no JavaScript to show a chart, and binds declaratively to a `ReportView` from H14 so charts
+and tables share the same data path.
 
 ## Goals
 
-- New module `src/hyperadmin/widgets/charts.py` with four SVG primitives:
-  `BarChart`, `LineChart`, `StackedBarChart`, `PieChart`.
-- A `Chart` widget that wraps a `ReportView` and renders either SVG (default,
-  no JS) or a Chart.js canvas (`mode="chartjs"`).
-- HTMX-loaded chart fragment so the same chart can appear standalone, inside
-  a detail panel (v0.5.6), or inside a future dashboard.
-- Accessibility: SVG charts carry `role="img"`, `<title>`, `<desc>`, and a
-  `<table>` data fallback collapsed under `<details>` for screen readers.
-- No new JavaScript build pipeline — Chart.js is loaded via the existing
-  vendored static asset slot (`templates/_base.html` already has a
-  `{% block extra_js %}`).
+- Module `src/hyperadmin/widgets/` with `charts.py`: `LineChart`, `BarChart`, `StackedBarChart`,
+  `Sparkline`, plus `Series` and `PeriodOption` value types.
+- The chart classes take **already-aggregated, already-thinned** series and compute all geometry
+  server-side: y scale and round ticks (zero always in the domain), x positions and bands, line
+  paths (gaps for missing values), bar and segment rectangles, tooltip boxes, end-of-line labels,
+  x-label thinning and truncation.
+- Jinja macros in `templates/components/charts/`: `frame.html`, `line.html`, `bar.html`,
+  `stacked_bar.html`, `sparkline.html` (+ shared `_svg.html`), following the design-system README.
+- Accessibility per the design system: `<title>` + `<desc>`; `role="group"` with
+  `aria-labelledby` / `aria-describedby` when the plot holds focusable points (line, bar, stacked
+  bar), `role="img"` (or `aria-hidden` when decorative) for the sparkline; one focusable hit area
+  per x position with every value in `aria-label`; tooltips on hover, keyboard focus and tap;
+  a `<details class="ha-details">` "Show as table" fallback after the SVG.
+- Loading (skeleton with `aria-busy`), no-data (empty state with the chart icon and the reason) and
+  error (danger text + Retry that re-requests the fragment) states in the same frame.
+- HTMX-loaded chart fragment so the same chart can appear standalone, inside a detail panel
+  (v0.5.6), or inside a future dashboard (route lands in `featviews-chart-fragment-route-and-e2e`).
 
 ## Non-Goals
 
-- A full dashboard composer. v0.5.4 ships chart primitives + per-report chart.
-  Composing several charts on one page is a thin consumer task (a Jinja
-  template iterating widgets).
-- Real-time / WebSocket-driven charts. Live updates land with the real-time
-  milestone (v0.6.0).
-- Custom theme system for charts. v0.5.4 uses the project's existing CSS
-  variables; full theme support is later.
-- Drill-down interactions (clicking a bar to filter the report). Deferred.
-- Map / geospatial charts. Out of scope.
+- Any client-side charting library or "interactive mode". No Chart.js, no vendored chart bundle.
+- Pie / donut charts (not in the design system; see the revision note).
+- Data aggregation or thinning inside the chart classes: the view (or `ReportView`) hands over
+  points ready to draw.
+- A full dashboard composer, real-time charts (v0.6.0), drill-down, map/geospatial charts.
 
 ## BDD Scenarios
 
 ```
-Scenario: SVG bar chart renders from a ReportView dataset
-  Given OrderRevenueReport with rows=[Group("sku")] values=[Sum("amount")]
-  And   a Chart(BarChart, report=OrderRevenueReport, mode="svg") widget
-  When  GET /admin/reports/orders-revenue/chart returns the widget fragment
-  Then  the body contains "<svg" with role="img" and aria-label "Orders revenue"
-  And   the bar count equals the distinct sku count
+Scenario: BarChart renders one bar per category
+  Given a dataset [(A, 10), (B, 20), (C, 30)]
+  When  the bar macro renders
+  Then  the SVG contains exactly three focusable <rect class="f1"> bars labelled "A: 10" … "C: 30"
 
-Scenario: Chart.js mode renders a canvas with a data payload
-  Given the same widget with mode="chartjs"
-  When  the fragment renders
-  Then  the body contains "<canvas data-testid=\"chart-orders-revenue\">"
-  And   the body contains a <script type="application/json" data-chart-data=\"orders-revenue\"> with the dataset
-
-Scenario: stacked bar chart renders one stack per column dimension
-  Given the report has cols=[Group("status")] values=[Sum("amount")]
-  And   the chart type is StackedBarChart
-  When  the chart renders
-  Then  the SVG has one <g class="stack"> per distinct status
-  And   each bar's total equals SUM(amount) for that sku across all statuses
-
-Scenario: chart fragment lazy-loads via HTMX in a host template
-  Given a panel template referencing the chart with hx-get and hx-trigger="revealed once"
-  When  the host page renders
-  Then  the GET /admin/reports/orders-revenue/chart is NOT issued at first paint
-  And   the GET fires only when the chart container scrolls into view
+Scenario: long category label is truncated with ellipsis
+  Given a category label "supercalifragilisticexpialidocious" (> 18 chars)
+  When  the chart renders at the default width
+  Then  the label's <tspan> ends with "…" and the full label is kept in the label's <title>
 
 Scenario: SVG chart includes accessible data table fallback
-  When  the SVG fragment renders
-  Then  the body contains a <details data-testid="chart-data-table-orders-revenue"> with a <table> of (label, value) rows
+  When  the chart frame renders
+  Then  the body contains <details data-testid="chart-data-table-{key}"> with one row per x label
   And   the table is in DOM order after the SVG so screen readers reach it
 
-Scenario: chart respects the report's filter context
-  Given the same chart and a CurrentPeriodDefault filter
+Scenario: a point's tooltip appears on keyboard focus
+  Given a line chart in a chart frame
+  When  the hit area for one month receives keyboard focus
+  Then  that month's tooltip is visible and the other tooltips stay hidden
+
+Scenario: stacked bar chart renders one stack per x label
+  Given a StackedBarChart with series Services, Licences, Other
+  When  the chart renders
+  Then  the SVG has one <g class="stack"> per x label, segments separated by a 1px surface line
+  And   each stack's hit area reads "Q1: Services 120, Licences 40, Other 20"
+
+Scenario: chart frame states
+  When  the frame renders with state="loading" | no data | state="error"
+  Then  it shows a skeleton with aria-busy | the empty state with the reason | danger text + Retry
+
+Scenario: SVG bar chart renders from a ReportView dataset            (chart-route item)
+  Given OrderRevenueReport with rows=[Group("sku")] values=[Sum("amount")]
+  When  GET /admin/reports/orders-revenue/chart returns the frame fragment
+  Then  the bar count equals the distinct sku count
+
+Scenario: chart fragment lazy-loads via HTMX in a host template       (chart-route item)
+  Given a panel template referencing the chart with hx-get and hx-trigger="revealed once"
+  Then  the GET fires only when the chart container scrolls into view
+
+Scenario: chart respects the report's filter context                  (chart-route item)
   When  the chart is requested with ?status=late
   Then  the rendered bars reflect only the filtered subset
-  And   the dataset shape matches GET /admin/reports/orders-revenue/?status=late
 ```
 
 ## Design
@@ -96,38 +120,61 @@ Scenario: chart respects the report's filter context
 ### Architecture
 
 ```
-widgets/charts.py            — NEW: BarChart, LineChart, StackedBarChart, PieChart, Chart wrapper
-templates/widgets/charts/    — bar.svg.html, line.svg.html, stacked_bar.svg.html, pie.svg.html, chartjs.html
-templates/widgets/chart_fallback.html  — accessible <details><table>
-views/dynamic.py             — minor: chart fragment route on each ReportView ("/chart")
-static/vendor/chart-js/      — vendored chart.umd.js (small footprint, only loaded when mode="chartjs")
+widgets/__init__.py            — public surface: LineChart, BarChart, StackedBarChart, Sparkline,
+                                 Series, PeriodOption, Chart (type alias of the framed kinds)
+widgets/charts.py              — chart classes: validation, scale, geometry
+widgets/_marks.py              — positioned marks (Tick, AxisLabel, LinePath, Rect, Tooltip, …)
+widgets/_scale.py              — nice_scale, tick values, number formatting, truncation
+templates/components/charts/   — frame.html, line.html, bar.html, stacked_bar.html,
+                                 sparkline.html, _svg.html (shared <svg>, axes)
+static/css/_charts.css         — ha-chart, ha-spark, ha-chartframe__tools, ha-seg, ha-legend,
+                                 ha-details, ha-skel (imported from hyperadmin.css)
+views/…                        — chart fragment route (later item, not in this change)
 ```
 
-The `Chart` wrapper is a small Python class consumed by Jinja:
+Chart colours come only from the existing tokens `--ha-chart-1` … `--ha-chart-6`,
+`--ha-chart-grid`, `--ha-chart-axis` (light + dark already in `_tokens.css` / `_dark-mode.css`,
+values from `docs/design/system/tokens.css`), so consumers retheme without forking templates.
 
 ```python
-class Chart:
-    def __init__(
-        self,
-        kind: type[BarChart | LineChart | StackedBarChart | PieChart],
-        *,
-        report: type[ReportView],
-        mode: Literal["svg", "chartjs"] = "svg",
-        title: str | None = None,
-        height: int = 280,
-    ): ...
+from hyperadmin.widgets import LineChart, PeriodOption, Series
 
-    def fragment_url(self) -> str: ...  # f"/admin/reports/{slug}/chart"
+chart = LineChart(
+    "revenue",                       # becomes data-testid="chart-revenue" and element ids
+    title="Revenue and costs, last 12 months",
+    desc="Revenue grew from €42k to €71k; costs rose more slowly.",   # one-sentence takeaway
+    labels=["Nov", "Dec", ...],      # x labels, already formatted for the locale
+    series=[Series("Revenue", [42, 45, ...]), Series("Costs", [30, 31, ...])],
+    x_title="Month",                 # first column of the table fallback
+    format_value=lambda v: f"€{v:g}k",
+    format_tick=lambda v: f"€{v:g}k",
+)
 ```
-
-In templates, an admin author writes:
 
 ```jinja
-{{ chart(BarChart, report=OrderRevenueReport, mode="chartjs") }}
+{%- from "components/charts/frame.html" import chart_frame -%}
+{{ chart_frame(chart, caption="Last 12 months · EUR", periods=[
+     PeriodOption("6M", url_6m), PeriodOption("12M", url_12m, active=True)]) }}
 ```
 
-…or, more typically, lets the report's auto-generated chart render via
-`{% include "widgets/charts/auto.html" %}` on the report detail page.
+Geometry rules (from the design-system preview, 800×240 design width; 44/16/12/28 px margins):
+
+| Element | Rule |
+|---|---|
+| Y scale | round steps (1, 2, 2.5, 5 × 10ⁿ), about four intervals, zero always included |
+| Line | 2px path per series, series 2 also dashed `6 4`; missing values break the line |
+| Line x labels | thinned to ≥ 96px apart, anchored at the last point |
+| End labels | at the line end when ≤ 2 series; moved below on collision; else the legend |
+| Bar | 60 % of the band, `rx=3`, focusable, value label above when it fits |
+| Stacked bar | segments `f1…f6`, 1px `ha-surface-raised` separator, one hit area per stack |
+| Tooltip | `<g>` with transparent hit rect (`tabindex=0`, full `aria-label`), point, `.tip` box that flips left near the end |
+| Sparkline | 200×40, min–max scaled, last point marked, decorative unless titled |
+| Labels | truncated to the room they get (max 18 chars) with "…", full text in `<title>` |
+| RTL | the frame mirrors; the plot and the table fallback stay `direction: ltr` |
+
+Validation: the key must be an identifier (`[A-Za-z0-9][A-Za-z0-9_-]*`); 1–6 series (the palette
+has six slots); each series has one value per label; `BarChart` takes exactly one series;
+`StackedBarChart` values must be ≥ 0.
 
 ### Data Model Changes
 
@@ -135,46 +182,54 @@ No DB changes.
 
 ### API / Protocol Changes
 
-- New chart-fragment route per `ReportView`:
-  `GET /admin/reports/{slug}/chart` → HTML fragment (SVG or Chart.js canvas).
-- `Chart` widget exported from `hyperadmin.widgets`.
-- Chart classes (`BarChart`, etc.) exported from `hyperadmin.widgets.charts`.
+- `hyperadmin.widgets` exports `LineChart`, `BarChart`, `StackedBarChart`, `Sparkline`, `Series`,
+  `PeriodOption`, `Chart`.
+- Chart fragment route `GET /admin/reports/{slug}/chart` → the frame HTML fragment (later item).
 
 ### Configuration Changes
 
-`Admin()` gains `chart_mode: Literal["svg", "chartjs"] = "svg"` as the default
-when a report's chart doesn't specify one. No env var.
+None. (`Admin(chart_mode=...)` is dropped.)
 
 ## Edge Cases & Error Handling
 
 | Case | Handling |
 |---|---|
-| Report returns empty dataset | SVG renders an axis frame with "No data" label; Chart.js canvas renders empty axes |
-| `PieChart` with negative values | values clamped to 0 with a warning logged once per chart per process |
-| `StackedBarChart` with `cols=[]` | falls back to plain `BarChart` (logs once) |
-| Long category labels in SVG | truncated mid-character with ellipsis at a configurable width (default 18 chars) |
-| Chart.js mode requested but static asset missing | server-rendered SVG fallback rendered; log at WARNING |
-| HTMX request lazy-load with `revealed once` | endpoint serves fragment only on visible trigger; no eager prefetch |
-| Filter querystring passed through | forwarded to the underlying `ReportView` request unchanged |
+| Every value missing / no labels | frame renders the no-data state with the view's reason |
+| Some values missing | line breaks at the gap; that x position has no hit area if all series miss it; table shows "—" |
+| Negative values | bars hang below the zero line, value label underneath; `StackedBarChart` rejects them |
+| All values equal (or zero) | the scale still spans one round step so the axis is drawable |
+| More than 6 series | `ValueError` — the design system has six categorical colours |
+| Long category labels | truncated to the room per label (≤ 18 chars) with "…", full text in `<title>` |
+| Narrow bars | value labels that do not fit the band are omitted (the hit area still reads the value) |
+| Query error / timeout | frame `state="error"` with the message and a Retry button re-requesting the fragment |
+| Slow query | frame `state="loading"`: skeleton with the chart's aspect ratio and `aria-busy` |
+| Untrusted labels / names | Jinja autoescape; no `|safe` on chart text |
 
 ## Migration & Backward Compatibility
 
-Additive. No existing surface changes. The `chart_mode` default is `svg`, so
-existing reports (none yet exist) and admins that don't use charts pay zero
-cost.
+Additive. No existing surface changes; nothing loads unless a template imports a chart macro.
 
 ## Open Questions
 
-- [ ] Vendor Chart.js (UMD bundle, ~70KB gzip) or load from a public CDN? Proposal: vendor — air-gapped deployments matter; one extra file in `static/`.
-- [ ] Should the SVG palette use CSS variables for colours (`--ha-chart-1` … `--ha-chart-7`) or hard-code? Proposal: CSS variables — consumers can override without forking templates.
-- [ ] Should the data-table fallback be on by default or opt-in? Proposal: on by default — accessibility wins over visual purity.
+All resolved — see the Decision Log.
+
+- [x] Vendor Chart.js or load it from a CDN? → Neither: no Chart.js at all (owner decision).
+- [x] CSS variables or hard-coded colours? → CSS variables, the design-system tokens
+      `--ha-chart-1` … `--ha-chart-6` (six slots, not seven) + `--ha-chart-grid` / `--ha-chart-axis`.
+- [x] Data-table fallback on by default or opt-in? → On by default, as the design system's
+      "Show as table" `<details>` after every framed chart.
 
 ## Decision Log
 
 | Decision | Rationale | Alternatives considered |
 |---|---|---|
-| Default to SVG, opt into Chart.js | No JS for the common case; interactivity available when needed | Chart.js for everything (bundle bloat); D3 (steeper API surface, build pipeline) |
-| Charts live under `widgets/` not `reports/` | They are presentation primitives reusable outside reports (e.g. a stat in a panel) | `reports/charts.py` (couples; can't reuse) |
-| Bind charts to a `ReportView` by class reference | Single source of truth — chart can't drift from the table | Bind to raw dataset / dict (fragile across changes) |
-| Vendor Chart.js (when mode="chartjs") | Predictable in air-gapped CI and on-prem | CDN (network dependency); custom canvas charts (too much work) |
-| Per-report `/chart` fragment route | Trivial HTMX integration; cacheable independently of the table | One mega route returning JSON consumed by browser JS (loses server-rendered SVG path) |
+| Server-rendered SVG only, no Chart.js | Owner decision: no client chart library; charts follow the design system and work without JavaScript | Chart.js opt-in mode (rejected 2026-10-17); D3 (build pipeline) |
+| Design system wins over this spec | Single visual source of truth for every component | Spec-local styling |
+| Primitives: line, bar, stacked bar, sparkline + frame | Exactly the set the design system defines | Pie chart (not in the design system; part-to-whole reads better as stacked / sorted bars) |
+| Geometry computed in Python, macros only print it | Testable without a browser; templates stay declarative | Arithmetic in Jinja (float drift, untestable) |
+| Charts take aggregated, thinned points | Aggregation belongs to `ReportView`; the chart stays a presentation primitive | Chart-side aggregation |
+| Palette via CSS variables, six slots | Matches the tokens; dark mode and consumer overrides for free | Hard-coded colours; a seventh colour |
+| Data-table fallback on by default | Accessibility over visual purity; design-system requirement | Opt-in |
+| Charts live under `widgets/`, not `reports/` | Reusable outside reports (stat-card sparkline, panels) | `reports/charts.py` |
+| Bind charts to a `ReportView` by class reference (route item) | Chart can't drift from the table | Raw dataset / dict |
+| Per-report `/chart` fragment route (route item) | Trivial HTMX integration; cacheable independently of the table | JSON endpoint + browser rendering |
