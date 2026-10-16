@@ -2,7 +2,7 @@
 type: story
 id: st-v058-byoa-26
 title: "feat(core): lifecycle with opt-in create_tables, startup/shutdown/lifespan, first-request guard and init-db CLI"
-status: in-review
+status: done
 priority: high
 assignee: null
 labels:

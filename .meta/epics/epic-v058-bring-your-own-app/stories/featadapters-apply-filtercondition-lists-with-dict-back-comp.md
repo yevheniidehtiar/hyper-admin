@@ -2,7 +2,7 @@
 type: story
 id: st-v058-byoa-24
 title: "feat(adapters): apply FilterCondition lists with dict back-compat"
-status: in-review
+status: done
 priority: high
 assignee: null
 labels:

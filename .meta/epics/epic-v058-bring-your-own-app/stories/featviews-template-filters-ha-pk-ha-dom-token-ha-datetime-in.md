@@ -2,7 +2,7 @@
 type: story
 id: st-v058-byoa-33
 title: "feat(views): template filters ha_pk/ha_dom_token/ha_datetime_input/ha_display and timezone plumbing"
-status: in-progress
+status: done
 priority: high
 assignee: null
 labels:
@@ -14,7 +14,7 @@ estimate: null
 epic_ref:
   id: ep-v058-byoa-01
 created_at: 2026-09-28T00:00:00Z
-updated_at: 2026-10-11T00:00:00Z
+updated_at: 2026-10-17T00:00:00Z
 ---
 
 ## Summary
