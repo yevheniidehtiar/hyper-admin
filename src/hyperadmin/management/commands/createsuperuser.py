@@ -6,7 +6,12 @@ from sqlmodel import Session, select
 
 from hyperadmin.auth import User, hash_password
 
-app = typer.Typer(help="Management commands for HyperAdmin.")
+app = typer.Typer(
+    help="Management commands for HyperAdmin.",
+    # Never print frame locals (--database-url, --password) in a pretty
+    # traceback. See initdb.py for the full rationale.
+    pretty_exceptions_show_locals=False,
+)
 
 MIN_PASSWORD_LENGTH = 8
 

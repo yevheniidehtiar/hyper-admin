@@ -26,7 +26,7 @@ admin.mount("/admin")
 | `app` | `FastAPI` | required | The FastAPI application instance |
 | `engine` | `AsyncEngine` | built-in SQLite | Async SQLAlchemy engine |
 | `discover_apps` | `list[str] \| None` | `None` | Module paths to auto-discover `admin.py` in |
-| `create_tables` | `bool` | `True` | Auto-create DB tables on startup |
+| `create_tables` | `bool` | `False` | Create every SQLModel table in `admin.startup()`. In demo mode (no `engine=`/`session_factory=`), tables are created automatically only for SQLite URLs. Otherwise use `admin.create_tables(scope=...)` or `hyperadmin init-db` |
 | `template_dirs` | `list[str] \| None` | `None` | Extra Jinja2 template search paths |
 
 ## API Reference

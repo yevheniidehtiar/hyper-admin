@@ -19,6 +19,12 @@ import logging
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Any
 
+# FastAPI itself imports ``get_route_path`` from here (not from
+# ``starlette.routing``, which only re-exports it without an ``__all__``
+# entry — basedpyright flags that re-export as private). See
+# starlette/routing.py and fastapi/routing.py for the same import.
+from starlette._utils import get_route_path
+
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator, Awaitable, Callable
 
@@ -30,6 +36,18 @@ _GUARD_REALTIME_WARNING = (
     "WebSocket connections will not be drained on a graceful shutdown. "
     "Compose admin.lifespan() into your host app's own lifespan to fix this."
 )
+
+_DEFAULT_RETRY_BACKOFF_SECONDS = 30.0
+
+
+class StartupUnavailableError(Exception):
+    """Raised by the safety net while a recent startup failure's backoff is active.
+
+    Distinguishes "startup is known to be broken, retry suppressed" from a
+    fresh failure, so :class:`StartupGuardMiddleware` can turn either into a
+    ``503`` without re-running (and re-logging) the failing work on every
+    request.
+    """
 
 
 class Lifecycle:
@@ -43,6 +61,17 @@ class Lifecycle:
     stays ``False`` so the next call retries — and, when it was reached
     through the safety net, the failure is logged (the caller still sees the
     exception; only the cheap re-run guarantee is "free" here).
+
+    A failure reached through the safety net additionally opens a backoff
+    window (``retry_backoff_seconds``, default 30s): further safety-net calls
+    inside that window raise :class:`StartupUnavailableError` without re-running
+    ``create_tables``/``sync_permissions`` or re-logging a full traceback.
+    Without this, a persistently failing startup (e.g. the host's DB is not
+    reachable yet) would otherwise re-attempt — and re-log — the same failing
+    DDL/permission-sync work on every single admin-prefixed request, by
+    anyone, unauthenticated, serialised through the lock. The explicit path
+    (:meth:`startup`) never observes this window — it always attempts and
+    raises immediately, so a host-driven retry is never silently suppressed.
     """
 
     def __init__(
@@ -52,6 +81,7 @@ class Lifecycle:
         sync_permissions: Callable[[], Awaitable[None]],
         drain: Callable[[], Awaitable[None]],
         realtime_enabled: bool,
+        retry_backoff_seconds: float = _DEFAULT_RETRY_BACKOFF_SECONDS,
     ) -> None:
         """Build a ``Lifecycle``.
 
@@ -66,18 +96,28 @@ class Lifecycle:
                 connections. A no-op when realtime is disabled.
             realtime_enabled: Whether realtime is configured — used only to
                 decide whether the safety-net warning applies.
+            retry_backoff_seconds: How long a safety-net call suppresses
+                retrying a startup that just failed. Never applies to the
+                explicit ``startup()`` path.
         """
         self._create_tables = create_tables
         self._sync_permissions = sync_permissions
         self._drain = drain
         self._realtime_enabled = realtime_enabled
+        self._retry_backoff_seconds = retry_backoff_seconds
         self._started = False
         self._lock = asyncio.Lock()
+        self._retry_at = 0.0
 
     @property
     def started(self) -> bool:
         """Whether ``startup()`` has completed successfully at least once."""
         return self._started
+
+    @property
+    def retry_backoff_seconds(self) -> float:
+        """Seconds a safety-net failure suppresses retrying startup for."""
+        return self._retry_backoff_seconds
 
     async def _run_startup(self, *, via_guard: bool) -> None:
         # The outer check reads through the ``started`` property rather than the
@@ -91,14 +131,29 @@ class Lifecycle:
         async with self._lock:
             if self._started:
                 return
+            now = asyncio.get_running_loop().time()
+            if via_guard and now < self._retry_at:
+                msg = "HyperAdmin startup failed recently; retry suppressed."
+                raise StartupUnavailableError(msg)
+            had_failed_before = self._retry_at > 0
             try:
                 await self._create_tables()
                 await self._sync_permissions()
             except Exception:
                 if via_guard:
-                    logger.exception(
-                        "HyperAdmin startup failed; the next admin request will retry."
-                    )
+                    if had_failed_before:
+                        # Already logged the full traceback for the first failure in
+                        # this backoff window — every repeat has the same cause, so
+                        # logging just the message keeps the log from flooding.
+                        logger.error(
+                            "HyperAdmin startup failed again; retry suppressed for %.0fs.",
+                            self._retry_backoff_seconds,
+                        )
+                    else:
+                        logger.exception(
+                            "HyperAdmin startup failed; the next admin request will retry."
+                        )
+                    self._retry_at = now + self._retry_backoff_seconds
                 raise
             self._started = True
             if via_guard and self._realtime_enabled:
@@ -143,14 +198,44 @@ class Lifecycle:
             await self.shutdown()
 
 
+async def _send_startup_unavailable(send: Any, *, retry_after: float) -> None:
+    """Send a plain ``503`` instead of letting a startup failure 500 the request.
+
+    Used only for ``http`` scopes — see :meth:`StartupGuardMiddleware.__call__`.
+    """
+    await send(
+        {
+            "type": "http.response.start",
+            "status": 503,
+            "headers": [
+                (b"content-type", b"text/plain; charset=utf-8"),
+                (b"retry-after", str(max(1, int(retry_after))).encode("ascii")),
+            ],
+        }
+    )
+    await send(
+        {
+            "type": "http.response.body",
+            "body": b"HyperAdmin startup failed; retry shortly.",
+        }
+    )
+
+
 class StartupGuardMiddleware:
     """Pure-ASGI safety net: calls ``lifecycle.ensure_started()`` once.
 
-    Only requests whose path starts with ``admin_prefix`` trigger the check;
-    every other host route passes straight through untouched. This is
-    intentionally plain ASGI rather than ``BaseHTTPMiddleware`` — it never
-    buffers or wraps the response, so streaming SSE/WebSocket connections are
-    unaffected.
+    Only requests whose *route path* (``http`` or ``websocket``) is
+    ``admin_prefix`` itself, or starts with ``admin_prefix + "/"``, trigger the
+    check; every other host route passes straight through untouched. Matching
+    is on whole path segments, via Starlette's ``get_route_path`` (which reads
+    ``scope["root_path"]`` too, so this still matches when the host app is
+    itself mounted, or served behind ``--root-path``) — a plain
+    ``path.startswith(admin_prefix)`` would wrongly match a host's own
+    ``/admin-api/...`` or ``/administration`` routes.
+
+    This is intentionally plain ASGI rather than ``BaseHTTPMiddleware`` — it
+    never buffers or wraps the response, so streaming SSE/WebSocket
+    connections are unaffected.
 
     Once ``lifecycle.started`` is ``True`` the check is a single attribute
     read, so the steady-state cost of this middleware is negligible.
@@ -161,11 +246,33 @@ class StartupGuardMiddleware:
         self._lifecycle = lifecycle
         self._admin_prefix = admin_prefix.rstrip("/") or "/"
 
+    def _matches_admin_prefix(self, scope: Any) -> bool:
+        prefix = self._admin_prefix
+        if prefix == "/":
+            return True
+        path = get_route_path(scope)
+        return path == prefix or path.startswith(prefix + "/")
+
     async def __call__(self, scope: Any, receive: Any, send: Any) -> None:
+        scope_type = scope.get("type")
         if (
-            scope["type"] == "http"
+            scope_type in ("http", "websocket")
             and not self._lifecycle.started
-            and scope.get("path", "").startswith(self._admin_prefix)
+            and self._matches_admin_prefix(scope)
         ):
-            await self._lifecycle.ensure_started()
+            try:
+                await self._lifecycle.ensure_started()
+            except Exception:
+                if scope_type == "http":
+                    # A websocket scope has no HTTP response to send — the raised
+                    # exception is left to propagate (the ASGI server rejects the
+                    # connection) rather than let a healthy-looking admin page
+                    # desync permission state. The lock's own backoff (see
+                    # Lifecycle._run_startup) already prevents this from flooding
+                    # the DB/log on repeat attempts, over either scope type.
+                    await _send_startup_unavailable(
+                        send, retry_after=self._lifecycle.retry_backoff_seconds
+                    )
+                    return
+                raise
         await self.app(scope, receive, send)
