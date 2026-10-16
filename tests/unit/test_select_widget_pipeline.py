@@ -116,7 +116,7 @@ def test_enum_field_yields_select_widget() -> None:
     assert isinstance(w, SelectWidget)
     assert len(w.choices) == 3
     assert w.choices[0]["value"] == "low"
-    assert w.choices[0]["label"] == "LOW"
+    assert w.choices[0]["label"] == "Low"
 
 
 # ---------------------------------------------------------------------------

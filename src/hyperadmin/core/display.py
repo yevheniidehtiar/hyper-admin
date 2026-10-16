@@ -1,3 +1,5 @@
+import re
+from enum import Enum
 from typing import Any
 
 from pydantic import BaseModel
@@ -6,6 +8,7 @@ from sqlmodel import SQLModel
 from hyperadmin.core.sensitive import effective_sensitive_field_names
 
 _FK_SUFFIXES = ("_id", "_pk", "_fk")
+_CAMEL_BOUNDARY = re.compile(r"(?<=[a-z0-9])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])")
 
 
 def get_field_label(field_name: str) -> str:
@@ -28,6 +31,76 @@ def get_field_label(field_name: str) -> str:
             label = label[: -len(suffix)]
             break
     return label.replace("_", " ").title()
+
+
+def humanize_class_name(name: str) -> str:
+    """Split a CamelCase class name into sentence-case words.
+
+    Examples:
+        >>> humanize_class_name("InvoiceItem")
+        'Invoice item'
+        >>> humanize_class_name("HTTPLogEntry")
+        'HTTP log entry'
+    """
+    first, *rest = _CAMEL_BOUNDARY.split(name)
+    return " ".join([first, *(w if w.isupper() else w.lower() for w in rest)])
+
+
+def pluralize(noun: str) -> str:
+    """Return the English plural of ``noun`` (its last word) by the regular rules.
+
+    Irregular nouns are out of scope: set ``verbose_name_plural`` for those.
+
+    Examples:
+        >>> [pluralize(n) for n in ("Item", "Address", "Box", "Journal entry", "Day")]
+        ['Items', 'Addresses', 'Boxes', 'Journal entries', 'Days']
+    """
+    lower = noun.lower()
+    if lower.endswith(("s", "x", "z", "ch", "sh")):
+        return noun + "es"
+    if len(noun) > 1 and lower.endswith("y") and lower[-2] not in "aeiou":
+        return noun[:-1] + "ies"
+    return noun + "s"
+
+
+def _humanize_token(token: str) -> str:
+    """``"to_pay"`` / ``"TO_PAY"`` / ``"to-pay"`` -> ``"To pay"``."""
+    words = token.replace("_", " ").replace("-", " ").split()
+    return " ".join(words).lower().capitalize()
+
+
+def get_enum_label(member: Enum) -> str:
+    """Return the human-readable label of an enum member.
+
+    ``str(member)`` prints ``ContactType.CUSTOMER`` for a ``(str, Enum)`` on
+    Python 3.11+, so it is never shown to users. The label is, in order:
+
+    1. a string ``label`` attribute on the member (Django-style choices);
+    2. the member's string value, as written when it has an uppercase letter
+       or a space (``"Customer"``, ``"In progress"``), humanised when it is a
+       lowercase slug (``"to_pay"`` -> ``"To pay"``);
+    3. the member's name, humanised (``VERY_HIGH`` -> ``"Very high"``).
+
+    Examples:
+        >>> class Kind(str, Enum):
+        ...     CUSTOMER = "Customer"
+        ...     TO_PAY = "to_pay"
+        >>> get_enum_label(Kind.CUSTOMER), get_enum_label(Kind.TO_PAY)
+        ('Customer', 'To pay')
+        >>> class Level(Enum):
+        ...     VERY_HIGH = 3
+        >>> get_enum_label(Level.VERY_HIGH)
+        'Very high'
+    """
+    label = getattr(member, "label", None)
+    if isinstance(label, str) and label:
+        return label
+    value = member.value
+    if isinstance(value, str) and value.strip():
+        if value != value.lower() or " " in value:
+            return value
+        return _humanize_token(value)
+    return _humanize_token(member.name)
 
 
 def get_display_name(instance: Any, *, pk_attr: str = "id") -> str:

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from enum import Enum
 from types import SimpleNamespace
 from zoneinfo import ZoneInfo
 
@@ -175,3 +176,45 @@ def test_resolve_tz_falls_back_to_default_on_invalid_zone_name() -> None:
     rendered = env.from_string("{{ value|ha_display }}").render(request=request, value=value)
 
     assert "2026-01-01 09:00:00" in rendered
+
+
+class _Tag(str, Enum):
+    CUSTOMER = "Customer"
+    SUPPLIER = "Supplier"
+
+
+def test_ha_display_renders_enum_members_by_label() -> None:
+    """
+    Scenario: an enum cell shows the member label
+      Given a list cell holding ContactType.CUSTOMER
+      When  ha_display renders it
+      Then  the cell reads "Customer", not "ContactType.CUSTOMER"
+    """
+    rendered = _render("{{ value|ha_display }}", request=_request(), value=_Tag.CUSTOMER)
+
+    assert rendered == "Customer"
+
+
+def test_ha_display_joins_a_list_of_enum_members() -> None:
+    """
+    Scenario: a list[Enum] cell shows comma-separated labels
+      Given a multi-select column holding [CUSTOMER, SUPPLIER]
+      When  ha_display renders it
+      Then  the cell reads "Customer, Supplier"
+    """
+    value = [_Tag.CUSTOMER, _Tag.SUPPLIER]
+
+    rendered = _render("{{ value|ha_display }}", request=_request(), value=value)
+
+    assert rendered == "Customer, Supplier"
+
+
+def test_ha_display_passes_through_non_enum_lists() -> None:
+    """
+    Scenario: other lists are left alone
+      Given an empty list and a list of plain strings
+      When  ha_display renders them
+      Then  each renders unchanged
+    """
+    assert _render("{{ value|ha_display }}", request=_request(), value=[]) == "[]"
+    assert _render("{{ value|ha_display }}", request=_request(), value=["a"]) == "['a']"

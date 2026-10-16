@@ -9,7 +9,8 @@ These are pk-agnostic and timezone-aware replacements for the historical
   a ``data-testid`` attribute.
 - ``ha_datetime_input`` and ``ha_display`` localise datetimes for, respectively,
   a ``datetime-local`` form input and read-only display, using the timezone
-  resolved by :func:`resolve_tz`.
+  resolved by :func:`resolve_tz`. ``ha_display`` also renders enum members by
+  their label.
 
 Registration is pure Jinja plumbing: :func:`register_template_filters` adds
 the filters (and the default display timezone) to a ``jinja2.Environment``.
@@ -23,6 +24,7 @@ import re
 from collections.abc import Mapping
 from datetime import datetime, tzinfo
 from datetime import timezone as dt_timezone
+from enum import Enum
 from hashlib import blake2b
 from typing import TYPE_CHECKING, Any
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
@@ -30,6 +32,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 from jinja2 import pass_context
 from markupsafe import Markup
 
+from hyperadmin.core.display import get_enum_label
 from hyperadmin.core.timezones import format_datetime_input, to_display
 
 if TYPE_CHECKING:
@@ -127,7 +130,19 @@ def ha_display(ctx: Context, value: Any) -> Any:
     global :func:`register_template_filters` registers (``Admin``'s
     ``settings.datetime_format``). Naive datetimes and every other value
     pass through unchanged.
+
+    Enum members render as their label (:func:`get_enum_label`), never as
+    ``ContactType.CUSTOMER``; a list, tuple or set of members (a
+    ``list[Enum]`` multi-select column) renders as comma-separated labels.
     """
+    if isinstance(value, Enum):
+        return get_enum_label(value)
+    if (
+        isinstance(value, list | tuple | set | frozenset)
+        and value
+        and all(isinstance(v, Enum) for v in value)
+    ):
+        return ", ".join(get_enum_label(v) for v in value)
     if isinstance(value, datetime) and value.tzinfo is not None:
         tz = resolve_tz(ctx)
         fmt = ctx.get(DATETIME_FORMAT_GLOBAL, _DEFAULT_DISPLAY_FORMAT)

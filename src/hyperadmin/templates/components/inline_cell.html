@@ -4,7 +4,7 @@
     id="cell-{{ model_name|lower }}-{{ item.id }}-{{ field }}"{% if cell_label is defined %}
     data-label="{{ cell_label }}"{% endif %}
     data-testid="cell-{{ field }}-{{ item.id }}">
-    <span class="ha-cell-value" data-testid="cell-value-{{ field }}-{{ item.id }}">{{- item[field] -}}</span>
+    <span class="ha-cell-value" data-testid="cell-value-{{ field }}-{{ item.id }}">{%- if item[field] is none -%}<span class="ha-text-muted">&mdash;</span>{%- else -%}{{- item[field]|ha_display -}}{%- endif -%}</span>
     <button type="button"
             class="ha-cell-edit"
             data-testid="cell-edit-{{ field }}-{{ item.id }}"

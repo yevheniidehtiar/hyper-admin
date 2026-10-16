@@ -12,6 +12,7 @@ from pydantic import BaseModel, ValidationError
 from pydantic.fields import FieldInfo
 
 from hyperadmin.core.choices import ChoiceItem
+from hyperadmin.core.display import get_enum_label
 from hyperadmin.core.sensitive import effective_sensitive_field_names
 from hyperadmin.core.timezones import is_auto_now_factory
 from hyperadmin.i18n import gettext_lazy
@@ -220,6 +221,26 @@ def hybrid_to_storage(value: list[str], storage: Literal["json", "csv"]) -> str:
     return ",".join(value)
 
 
+def field_is_required(field: Any) -> bool:
+    """Whether a pydantic ``FieldInfo`` is required.
+
+    ``FieldInfo.is_required`` is a method; ``bool()`` of the bound method is
+    always ``True``, which marked every optional field as required. Plain
+    ``is_required`` booleans (lightweight field stand-ins) are honoured too.
+    """
+    is_required = getattr(field, "is_required", False)
+    return bool(is_required() if callable(is_required) else is_required)
+
+
+def _accepts_none(field: Any) -> bool:
+    """Whether a field's annotation is optional (``X | None``), so ``""`` may become ``None``.
+
+    An optional field with a non-``None`` default (``notes: str = ""``) keeps
+    the empty string: ``None`` would fail validation.
+    """
+    return type(None) in get_args(getattr(field, "annotation", None))
+
+
 @dataclass(slots=True)
 class FormField:
     name: str
@@ -235,7 +256,21 @@ class FormField:
 
     @property
     def required(self) -> bool:
-        return bool(self.model_field.is_required)
+        return field_is_required(self.model_field)
+
+    def is_selected(self, choice_value: Any) -> bool:
+        """Whether ``choice_value`` is (one of) this field's current value(s).
+
+        Compares as text, so a stored enum member, a raw enum value and a
+        re-submitted form string all match their ``<option value>``.
+        """
+        if self.value is None:
+            return False
+        values = (
+            self.value if isinstance(self.value, list | tuple | set | frozenset) else [self.value]
+        )
+        current = {str(v.value if isinstance(v, Enum) else v) for v in values}
+        return str(choice_value) in current
 
     @property
     def help_text(self) -> str | None:
@@ -304,7 +339,7 @@ class PydanticForm:
         return [
             ChoiceItem(
                 value=member.value,
-                label=member.name,
+                label=get_enum_label(member),
                 selected=False,
             )
             for member in enum_cls
@@ -494,7 +529,7 @@ class PydanticForm:
     def validate(self, data: dict[str, Any]) -> tuple[BaseModel | None, dict[str, ErrorList]]:
         cleaned_data = data.copy()
         for f in self.fields:
-            if not f.required and cleaned_data.get(f.name) == "":
+            if not f.required and cleaned_data.get(f.name) == "" and _accepts_none(f.model_field):
                 cleaned_data[f.name] = None
 
         try:

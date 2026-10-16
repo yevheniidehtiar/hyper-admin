@@ -14,7 +14,7 @@
                 {%- if file_fields is defined and key in file_fields and value -%}
                     <a href="/uploads/{{ value }}" target="_blank" class="ha-file-link" data-testid="{{ key }}-download">{{ value }}</a>
                 {%- elif value is not none -%}
-                    {{- value -}}
+                    {{- value|ha_display -}}
                 {%- else -%}
                     <span class="ha-text-muted">&mdash;</span>
                 {%- endif -%}

@@ -4,7 +4,7 @@ from typing import Any, Union, get_args, get_origin
 
 from sqlalchemy import inspect as sa_inspect
 
-from hyperadmin.core.display import get_display_name
+from hyperadmin.core.display import get_display_name, get_enum_label
 
 logger = logging.getLogger(__name__)
 
@@ -71,7 +71,7 @@ async def build_filter_metadata(
                     "name": field_name,
                     "label": label,
                     "type": "enum",
-                    "choices": [{"value": m.value, "label": str(m)} for m in ann],
+                    "choices": [{"value": m.value, "label": get_enum_label(m)} for m in ann],
                 }
             )
         # FK / Relationship filter
