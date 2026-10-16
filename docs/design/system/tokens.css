@@ -123,6 +123,7 @@
   --ha-bp-xl: 1280px;
   --ha-z-sticky: 10;
   --ha-z-nav: 30;
+  --ha-z-popover: 40;
   --ha-z-overlay: 50;
   --ha-z-toast: 60;
   --font-sans: Inter, "Noto Sans Arabic", "Noto Sans Hebrew", "Noto Sans Devanagari", "Noto Sans Thai", "Noto Sans SC", "Noto Sans JP", "Noto Sans KR", system-ui, sans-serif;

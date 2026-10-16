@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **Design system Wave 1 building blocks** (`docs/design/system/components/`):
+  Menu, Combobox (async, single and multiple), Progress, Banner and Popover
+  / Tooltip, each with guidelines, every state in a live preview (light,
+  dark, RTL) and reference CSS in `components/bundle.css`. They are the shared
+  pieces for v0.5.5 bulk actions and autocomplete, v0.6.0a stale-record
+  notices, v0.5.3 tenant context, v0.5.4 exports and v0.8 AI provenance;
+  templates do not use them yet. New `--ha-z-popover` layer token and ten
+  Lucide icons (`ellipsis`, `download`, `upload`, `copy`, `mail`,
+  `refresh-cw`, `clock`, `circle-help`, `columns-3`, `sparkles`) available
+  through `icon(name)`.
+
 - **`session_factory=` seam for bring-your-own-app hosts** (st-v058-byoa-21,
   SDD `docs/specs/bring-your-own-app.md` section C.3). A host that manages its
   own engine, connection pool and transaction scope can now pass a session

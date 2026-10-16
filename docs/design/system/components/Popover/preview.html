@@ -1,0 +1,33 @@
+<!-- @dsCard group="Feedback" height=640 -->
+<!doctype html>
+<html>
+<head><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="../../tokens.css"><link rel="stylesheet" href="../bundle.css"><script>(function(){var t=new URLSearchParams(location.search).get("theme")||"light";document.documentElement.setAttribute("data-theme",t);var d=new URLSearchParams(location.search).get("dir");if(d)document.documentElement.setAttribute("dir",d);})();</script><meta charset="utf-8"><title>Popover — preview</title><style>body{margin:0;background:var(--ha-surface-base)} .pv{padding:16px;display:flex;flex-direction:column;gap:16px} .pv-l{font:500 12px/18px var(--font-sans);color:var(--ha-color-text-muted);margin:0 0 6px}</style></head>
+<body>
+<div class="ha-root pv">
+
+<div class="ha-row" style="align-items:flex-start;gap:56px;padding:56px 24px 8px">
+<div class="ha-stack" style="gap:12px"><span class="ha-tip"><button class="ha-btn ha-btn--icon" aria-label="Edit invoice INV-2026-0142"><svg class="ha-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button><span class="ha-tooltip is-open" aria-hidden="true">Edit invoice</span></span><p class="pv-l">Tooltip: visible label for an icon button</p></div>
+<div class="ha-stack" style="gap:12px"><span class="ha-tip"><button class="ha-btn" aria-disabled="true" aria-describedby="tip-r" style="background:var(--ha-surface-sunken);border-color:var(--ha-color-border);color:var(--ha-color-text-disabled);cursor:not-allowed"><svg class="ha-icon ha-icon--sm" viewBox="0 0 24 24" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>Send reminder</button><span class="ha-tooltip is-open" role="tooltip" id="tip-r">Only unpaid invoices can get a reminder</span></span><p class="pv-l">Disabled with a reason (aria-disabled stays focusable)</p></div>
+<div class="ha-stack" style="gap:12px"><span class="ha-tip"><span class="ha-trunc" tabindex="0" aria-label="Noordzee Energie Handel GmbH &amp; Co. KG" style="max-inline-size:18ch">Noordzee Energie Handel GmbH &amp; Co. KG</span><span class="ha-tooltip ha-tooltip--below is-open" aria-hidden="true">Noordzee Energie Handel GmbH &amp; Co. KG</span></span><div style="block-size:40px"></div><p class="pv-l">Truncated value, tooltip below</p></div>
+</div>
+<div class="ha-row" style="align-items:flex-start;gap:24px">
+<div><p class="pv-l">Help popover (focus moves in, Esc closes)</p><details class="ha-layer" open><summary class="ha-info-btn" aria-label="What is a journal entry?"><svg class="ha-icon ha-icon--sm" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg></summary>
+<div class="ha-popup ha-popup--static ha-popover" role="dialog" aria-labelledby="pp1">
+<div class="ha-popover__head"><h3 class="ha-popover__title" id="pp1">What is a journal entry?</h3><button class="ha-btn ha-btn--icon" aria-label="Close"><svg class="ha-icon ha-icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button></div>
+<p>A dated record of debits and credits. Entries lock when their period closes.</p><a href="#">Read the guide</a></div></details></div>
+<div><p class="pv-l">Presence details</p><details class="ha-layer" open><summary class="ha-avatar" data-status="online" aria-label="Bram Jansen, editing">BJ</summary>
+<div class="ha-popup ha-popup--static ha-popover" role="dialog" aria-labelledby="pp2">
+<div class="ha-popover__head"><h3 class="ha-popover__title" id="pp2">Bram Jansen</h3><span class="ha-live">Online</span></div>
+<dl class="ha-popover__meta"><dt>Editing</dt><dd>Due date</dd><dt>Since</dt><dd>14:30</dd></dl></div></details></div>
+<div><p class="pv-l">AI provenance (v0.8)</p><details class="ha-layer" open><summary class="ha-ai-label"><svg class="ha-icon ha-icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/><path d="M20 3v4"/><path d="M22 5h-4"/><path d="M4 17v2"/><path d="M5 18H3"/></svg>AI-generated</summary>
+<div class="ha-popup ha-popup--static ha-popover" role="dialog" aria-labelledby="pp3">
+<div class="ha-popover__head"><h3 class="ha-popover__title" id="pp3">Suggested category</h3></div>
+<p>Based on 14 similar invoices from this supplier. Check before saving.</p>
+<dl class="ha-popover__meta"><dt>Generated</dt><dd>Today, 14:32</dd><dt>Sources</dt><dd><a href="#">14 invoices</a></dd></dl>
+<div class="ha-popover__actions"><button class="ha-btn ha-btn--sm ha-btn--primary">Accept</button><button class="ha-btn ha-btn--sm">Discard</button></div></div></details></div>
+</div>
+<div dir="rtl" lang="ar" style="padding:44px 48px 0"><p class="pv-l">RTL</p><span class="ha-tip"><button class="ha-btn ha-btn--icon" aria-label="تعديل الفاتورة"><svg class="ha-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg></button><span class="ha-tooltip is-open" aria-hidden="true">تعديل الفاتورة</span></span></div>
+
+</div>
+</body>
+</html>

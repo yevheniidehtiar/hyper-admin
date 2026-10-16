@@ -216,6 +216,7 @@
   /* ---- Layers ---- */
   --ha-z-sticky: 10;
   --ha-z-nav: 30;
+  --ha-z-popover: 40;          /* menus, combobox lists, tooltips, popovers */
   --ha-z-overlay: 50;
   --ha-z-toast: 60;
 
