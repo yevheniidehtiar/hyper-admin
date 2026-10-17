@@ -69,7 +69,9 @@ _MAX_LIST_PAGE = 10**15
 
 # Missing-table messages from SQLite ("no such table"), PostgreSQL
 # ('relation "x" does not exist') and asyncpg ("UndefinedTableError").
-_MISSING_TABLE_RE = re.compile(r"no such table|does not exist|UndefinedTable", re.IGNORECASE)
+_MISSING_TABLE_RE = re.compile(
+    r'no such table|relation "[^"]+" does not exist|UndefinedTable', re.IGNORECASE
+)
 
 
 def _is_missing_table_error(exc: SQLAlchemyError) -> bool:
@@ -603,9 +605,13 @@ class DynamicModelView:
                 row["id"] = item.id
             rows.append(row)
 
-        # Get filter metadata if list_filter is configured
+        # Get filter metadata if list_filter is configured. Skipped when the
+        # list query failed: relation filters query the database again, and a
+        # second failure would turn the list-error banner into a bare 500.
         filter_metadata = (
-            await self._get_filter_metadata(request) if self.options.list_filter else []
+            await self._get_filter_metadata(request)
+            if self.options.list_filter and list_error is None
+            else []
         )
 
         context = {

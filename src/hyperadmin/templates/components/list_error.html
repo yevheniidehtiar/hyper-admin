@@ -4,7 +4,7 @@
 <div class="ha-alert ha-alert-error" data-testid="list-error" role="alert">
     <strong class="ha-alert-title">{{ _("The list could not be loaded because of a database error.") }}</strong>
     {%- if list_error.missing_table %}
-    <span>{{ _("The table for this model does not exist yet: run your migrations or `hyperadmin init-db`.") }}</span>
+    <span>{{ _("The table for this model does not exist yet: run your migrations or %(cmd)s.", cmd="<code>hyperadmin init-db</code>"|safe) }}</span>
     {%- else %}
     <span>{{ _("Check the server logs for details.") }}</span>
     {%- endif %}
