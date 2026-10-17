@@ -280,6 +280,103 @@ msgstr "Незмінна множина"
 msgid "Dictionary"
 msgstr "Словник"
 
+#: src/hyperadmin/i18n/validation_messages.py:137
+msgid "input is too short"
+msgstr "значення закоротке"
+
+#: src/hyperadmin/i18n/validation_messages.py:138
+msgid "unexpected extra characters at the end of the input"
+msgstr "зайві символи в кінці значення"
+
+#: src/hyperadmin/i18n/validation_messages.py:139
+msgid "invalid datetime separator, expected `T`, `t`, `_` or space"
+msgstr "некоректний роздільник дати й часу, очікується `T`, `t`, `_` або пробіл"
+
+#: src/hyperadmin/i18n/validation_messages.py:140
+msgid "invalid date separator, expected `-`"
+msgstr "некоректний роздільник дати, очікується `-`"
+
+#: src/hyperadmin/i18n/validation_messages.py:141
+msgid "invalid time separator, expected `:`"
+msgstr "некоректний роздільник часу, очікується `:`"
+
+#: src/hyperadmin/i18n/validation_messages.py:142
+msgid "invalid character in year"
+msgstr "некоректний символ у році"
+
+#: src/hyperadmin/i18n/validation_messages.py:143
+msgid "invalid character in month"
+msgstr "некоректний символ у місяці"
+
+#: src/hyperadmin/i18n/validation_messages.py:144
+msgid "invalid character in day"
+msgstr "некоректний символ у дні"
+
+#: src/hyperadmin/i18n/validation_messages.py:145
+msgid "invalid character in hour"
+msgstr "некоректний символ у годинах"
+
+#: src/hyperadmin/i18n/validation_messages.py:146
+msgid "invalid character in minute"
+msgstr "некоректний символ у хвилинах"
+
+#: src/hyperadmin/i18n/validation_messages.py:147
+msgid "invalid character in second"
+msgstr "некоректний символ у секундах"
+
+#: src/hyperadmin/i18n/validation_messages.py:148
+msgid "month value is outside expected range of 1-12"
+msgstr "місяць поза допустимим діапазоном 1-12"
+
+#: src/hyperadmin/i18n/validation_messages.py:149
+msgid "day value is outside expected range"
+msgstr "день поза допустимим діапазоном"
+
+#: src/hyperadmin/i18n/validation_messages.py:150
+msgid "hour value is outside expected range of 0-23"
+msgstr "година поза допустимим діапазоном 0-23"
+
+#: src/hyperadmin/i18n/validation_messages.py:151
+msgid "minute value is outside expected range of 0-59"
+msgstr "хвилини поза допустимим діапазоном 0-59"
+
+#: src/hyperadmin/i18n/validation_messages.py:152
+msgid "second value is outside expected range of 0-59"
+msgstr "секунди поза допустимим діапазоном 0-59"
+
+#: src/hyperadmin/i18n/validation_messages.py:153
+msgid "relative URL without a base"
+msgstr "відносна URL-адреса без бази"
+
+#: src/hyperadmin/i18n/validation_messages.py:154
+msgid "empty host"
+msgstr "порожній хост"
+
+#: src/hyperadmin/i18n/validation_messages.py:155
+msgid "invalid port number"
+msgstr "некоректний номер порту"
+
+#: src/hyperadmin/i18n/validation_messages.py:156
+msgid "invalid domain character"
+msgstr "некоректний символ у домені"
+
+#: src/hyperadmin/i18n/validation_messages.py:157
+msgid "invalid international domain name"
+msgstr "некоректне міжнародне доменне ім'я"
+
+#: src/hyperadmin/i18n/validation_messages.py:158
+msgid "invalid IPv4 address"
+msgstr "некоректна IPv4-адреса"
+
+#: src/hyperadmin/i18n/validation_messages.py:159
+msgid "invalid IPv6 address"
+msgstr "некоректна IPv6-адреса"
+
+#: src/hyperadmin/i18n/validation_messages.py:163
+#, python-format
+msgid "%(choices)s or %(last)s"
+msgstr "%(choices)s або %(last)s"
+
 #: src/hyperadmin/templates/_messages.html:6
 #, fuzzy
 msgid "Success!"
