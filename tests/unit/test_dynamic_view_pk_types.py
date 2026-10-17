@@ -249,6 +249,59 @@ def test_natural_pk_update_validates(engine):
     assert [(r.code, r.name) for r in stored] == [("abc", "after")]
 
 
+def _record_adapter_updates(view: DynamicModelView) -> list[tuple[Any, dict[str, Any]]]:
+    """Replace ``view.adapter.update`` with a recorder that does not filter pk attrs."""
+    calls: list[tuple[Any, dict[str, Any]]] = []
+
+    async def _update(pk: Any, data: dict[str, Any]) -> None:
+        calls.append((pk, dict(data)))
+
+    view.adapter.update = _update  # type: ignore[method-assign]
+    return calls
+
+
+def test_update_view_strips_uuid_pk_before_adapter_update(engine):
+    """
+    Scenario: update_view never hands the uuid pk to the adapter
+      Given a UUID row and an adapter whose update does not filter pk attributes
+      When  update_view saves a new name
+      Then  adapter.update receives the typed uuid.UUID pk
+      And   the data passed to adapter.update has no 'id' key
+    """
+    row = PkTypesUuidThing(name="before")
+    _seed(engine, row)
+    view, _templates = _view(engine, PkTypesUuidThing)
+    calls = _record_adapter_updates(view)
+
+    anyio.run(view.update_view, _request("PUT", {"name": "after"}), str(row.id))
+
+    ((pk, data),) = calls
+    assert isinstance(pk, uuid.UUID)
+    assert pk == row.id
+    assert "id" not in data
+    assert data["name"] == "after"
+
+
+def test_update_view_strips_natural_pk_before_adapter_update(engine):
+    """
+    Scenario: update_view never hands the natural pk to the adapter
+      Given a natural str pk row and an adapter whose update does not filter pk attributes
+      When  update_view saves a new name
+      Then  adapter.update receives the 'abc' pk
+      And   the data passed to adapter.update has no 'code' key
+    """
+    _seed(engine, PkTypesCodeThing(code="abc", name="before"))
+    view, _templates = _view(engine, PkTypesCodeThing)
+    calls = _record_adapter_updates(view)
+
+    anyio.run(view.update_view, _request("PUT", {"name": "after"}), "abc")
+
+    ((pk, data),) = calls
+    assert pk == "abc"
+    assert "code" not in data
+    assert data["name"] == "after"
+
+
 def test_uuid_create_redirect(engine):
     """
     Scenario: UUID create redirect
