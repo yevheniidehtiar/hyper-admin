@@ -50,6 +50,17 @@ To serve your own page inside the admin (behind its login), add a route to `admi
 `admin.mount("/")` always uses router mode, because a sub-application mounted at the root
 would shadow every host route.
 
+Links and redirects the admin builds (login, logout, MFA, `{{ admin_prefix }}` in templates) use
+the per-request admin path, so a host served under a `root_path` (for example `/api`) gets
+`/api/admin/...`.
+
+!!! warning "Uploads are still public in 0.5.8"
+    Uploaded files are still served by a `StaticFiles` mount at the host's `/uploads`, in both
+    mount modes, outside the admin's authentication. Anyone who knows a file name can fetch it.
+    Per-record file serving behind the admin's model and object permissions replaces this mount
+    in a follow-up story (st-v058-byoa-37). Until then, do not store confidential files through
+    an admin `storage=`, or put `/uploads` behind your own access control.
+
 ## API Reference
 
 ::: hyperadmin.core.app.Admin

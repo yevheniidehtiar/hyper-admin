@@ -130,9 +130,11 @@ def mfa_base_url(e2e_port: int) -> Iterator[str]:
     * ``alice / secret`` with ``mfa_enabled=True``
     * ``bob   / secret`` with ``mfa_enabled=False``
 
-    Exposes ``/_test/latest_code?email=...``, ``/_test/reset_otp_state``,
-    and ``/_test/backdate_session_otp`` for Playwright to drive the OTP
-    flow deterministically.
+    Exposes ``/_test/latest_code?email=...`` and ``/_test/reset_otp_state``
+    (wipes captured codes) on the host, and
+    ``/admin/mfa/_test/backdate_session_otp`` inside the admin sub-app (it
+    needs the admin session), for Playwright to drive the OTP flow
+    deterministically.
     """
     pytest.importorskip("uvicorn")
     requests = pytest.importorskip("requests")  # type: ignore[assignment]

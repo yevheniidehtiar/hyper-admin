@@ -17,7 +17,13 @@ from jinja2 import Environment
 from starlette.routing import NoMatchFound
 from starlette.staticfiles import StaticFiles
 
-from hyperadmin.views.urls import admin_base_path, admin_url_for, install_namespaced_url_for
+from hyperadmin.views.urls import (
+    admin_base_path,
+    admin_prefix_context,
+    admin_url_for,
+    install_namespaced_url_for,
+    request_admin_path,
+)
 
 
 def _app_with_sub(*, sub_name: str = "hyperadmin") -> tuple[FastAPI, FastAPI]:
@@ -270,3 +276,78 @@ def test_admin_base_path_treats_empty_namespace_as_router_mode(value: Any) -> No
     request = _request_with_scope(root_path="", hyperadmin={"namespace": value, "prefix": "/admin"})
 
     assert admin_base_path(request) == "/admin"
+
+
+# ---------------------------------------------------------------------------
+# request_admin_path / admin_prefix_context
+# ---------------------------------------------------------------------------
+
+
+def test_request_admin_path_uses_admin_base_path_for_a_mounted_request() -> None:
+    """
+    Scenario: a mounted admin request resolves its per-request admin path
+      Given a request tagged by the isolated mount under root_path "/api/admin"
+      When  request_admin_path is called with the static prefix "/admin"
+      Then  it returns "/api/admin"
+    """
+    # Given
+    request = _request_with_scope(root_path="/api/admin", hyperadmin={"namespace": "hyperadmin"})
+
+    # When
+    path = request_admin_path(request, "/admin")
+
+    # Then
+    assert path == "/api/admin"
+
+
+def test_request_admin_path_keeps_the_default_for_an_untagged_request() -> None:
+    """
+    Scenario: an untagged request keeps the static mount prefix
+      Given a request that no admin mount has tagged, under root_path "/api"
+      When  request_admin_path is called with the static prefix "/admin"
+      Then  it returns "/admin"
+    """
+    # Given
+    request = _request_with_scope(root_path="/api")
+
+    # When
+    path = request_admin_path(request, "/admin")
+
+    # Then
+    assert path == "/admin"
+
+
+def test_admin_prefix_context_exposes_the_per_request_admin_path() -> None:
+    """
+    Scenario: the template context processor exposes the per-request prefix
+      Given a router-mode request tagged with prefix "/admin" under root_path "/api"
+      When  admin_prefix_context is called
+      Then  it returns admin_prefix "/api/admin"
+    """
+    # Given
+    request = _request_with_scope(
+        root_path="/api", hyperadmin={"namespace": None, "prefix": "/admin"}
+    )
+
+    # When
+    context = admin_prefix_context(request)
+
+    # Then
+    assert context == {"admin_prefix": "/api/admin"}
+
+
+def test_admin_prefix_context_adds_nothing_for_an_untagged_request() -> None:
+    """
+    Scenario: an untagged request leaves the static admin_prefix global in charge
+      Given a request that no admin mount has tagged
+      When  admin_prefix_context is called
+      Then  it returns an empty mapping
+    """
+    # Given
+    request = _request_with_scope(root_path="/api")
+
+    # When
+    context = admin_prefix_context(request)
+
+    # Then
+    assert context == {}

@@ -330,20 +330,26 @@ class Admin:
         from starlette.requests import Request
 
         from hyperadmin.auth.views import login_view, logout_view
+        from hyperadmin.views.urls import request_admin_path
 
         admin_prefix = path.rstrip("/")
         templates = self.templates
         auth_backend = self.auth_backend
         otp_service = self.otp_service
 
+        # Redirects use the per-request admin path (SDD C.1), so they follow a
+        # host served under a root_path (e.g. "/api/admin/", not "/admin/").
         async def login_get(request: Request):
-            return await login_view(request, templates, auth_backend, admin_prefix, otp_service)
+            base = request_admin_path(request, admin_prefix)
+            return await login_view(request, templates, auth_backend, base, otp_service)
 
         async def login_post(request: Request):
-            return await login_view(request, templates, auth_backend, admin_prefix, otp_service)
+            base = request_admin_path(request, admin_prefix)
+            return await login_view(request, templates, auth_backend, base, otp_service)
 
         async def logout_post(request: Request):
-            return await logout_view(request, auth_backend, admin_prefix)
+            base = request_admin_path(request, admin_prefix)
+            return await logout_view(request, auth_backend, base)
 
         self.router.add_api_route("/login", login_get, methods=["GET"], name="admin-login")
         self.router.add_api_route("/login", login_post, methods=["POST"], name="admin-login-post")
@@ -370,36 +376,36 @@ class Admin:
             mfa_settings_view,
             mfa_verify_view,
         )
+        from hyperadmin.views.urls import request_admin_path
 
         templates = self.templates
         auth_backend = self.auth_backend
         otp_service = self.otp_service
 
+        # Redirects and template links use the per-request admin path (SDD C.1).
         async def challenge_get(request: Request):
-            return await mfa_challenge_view(request, templates, admin_prefix)
+            base = request_admin_path(request, admin_prefix)
+            return await mfa_challenge_view(request, templates, base)
 
         async def verify_post(request: Request):
-            return await mfa_verify_view(
-                request, templates, auth_backend, otp_service, admin_prefix
-            )
+            base = request_admin_path(request, admin_prefix)
+            return await mfa_verify_view(request, templates, auth_backend, otp_service, base)
 
         async def resend_post(request: Request):
-            return await mfa_resend_view(
-                request, templates, auth_backend, otp_service, admin_prefix
-            )
+            base = request_admin_path(request, admin_prefix)
+            return await mfa_resend_view(request, templates, auth_backend, otp_service, base)
 
         async def settings_get(request: Request):
-            return await mfa_settings_view(request, templates, admin_prefix)
+            base = request_admin_path(request, admin_prefix)
+            return await mfa_settings_view(request, templates, base)
 
         async def enable_post(request: Request):
-            return await mfa_enable_view(
-                request, templates, auth_backend, otp_service, admin_prefix
-            )
+            base = request_admin_path(request, admin_prefix)
+            return await mfa_enable_view(request, templates, auth_backend, otp_service, base)
 
         async def disable_post(request: Request):
-            return await mfa_disable_view(
-                request, templates, auth_backend, otp_service, admin_prefix
-            )
+            base = request_admin_path(request, admin_prefix)
+            return await mfa_disable_view(request, templates, auth_backend, otp_service, base)
 
         self.router.add_api_route(
             "/mfa/challenge", challenge_get, methods=["GET"], name="admin-mfa-challenge"
@@ -674,6 +680,12 @@ class Admin:
         self._register_realtime_routes()
         self._register_views()
         self.templates.env.globals["admin_prefix"] = admin_prefix
+        # Per-request override of the static global (SDD C.1): under a host
+        # root_path, "{{ admin_prefix }}/..." links must carry it too.
+        from hyperadmin.views.urls import admin_prefix_context
+
+        if admin_prefix_context not in self.templates.context_processors:
+            self.templates.context_processors.append(admin_prefix_context)
         self.templates.env.globals["auth_enabled"] = self.auth_backend is not None
         self.templates.env.globals["realtime_enabled"] = self.realtime is not None
         self.templates.env.globals["theme"] = self.settings.theme
