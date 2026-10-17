@@ -21,7 +21,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import AsyncIterator
 from contextlib import AbstractAsyncContextManager, asynccontextmanager
-from typing import Final, Protocol, runtime_checkable
+from typing import Final, Protocol, cast, runtime_checkable
 
 DEFAULT_MAX_QUEUE_SIZE: Final = 100
 
@@ -67,8 +67,7 @@ class _Subscription:
         if item is _CLOSED:
             self._done = True
             raise StopAsyncIteration
-        assert isinstance(item, bytes)
-        return item
+        return cast("bytes", item)
 
 
 class InMemoryPubSub:
