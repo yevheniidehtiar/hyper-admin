@@ -2,7 +2,7 @@
 type: story
 id: st-v058-byoa-43
 title: "fix(views): list_view logs and surfaces DB errors instead of swallowing them"
-status: todo
+status: in-review
 priority: high
 assignee: null
 labels:

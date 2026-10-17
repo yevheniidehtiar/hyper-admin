@@ -119,7 +119,8 @@ def test_db_error_surfaced(caplog: pytest.LogCaptureFixture) -> None:
     assert resp.status_code == 500
     banner = _banner(resp.text)
     assert "migrations" in banner
-    assert "hyperadmin init-db" in banner
+    assert "<code>hyperadmin init-db</code>" in banner
+    assert "`" not in banner
     # And an ERROR log with a traceback is emitted
     records = [r for r in caplog.records if r.levelno == logging.ERROR]
     assert records
@@ -167,6 +168,34 @@ def test_other_db_error_shows_banner_without_migration_hint(
     banner = _banner(resp.text)
     assert "init-db" not in banner
     assert "deadlock" not in banner  # raw driver text is never shown to the user
+
+
+def test_filter_metadata_is_not_queried_after_a_list_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """
+    Scenario: a failed list does not query the database again for filters
+      Given list_filter is configured and the database is unreachable
+      When  the list is opened
+      Then  the list-error banner is rendered instead of a bare 500
+      And   the filter metadata is not built
+    """
+    # Given list_filter is configured and the database is unreachable
+    client = _client()
+    monkeypatch.setattr(
+        SQLModelAdapter, "list", AsyncMock(side_effect=SQLAlchemyError("connection refused"))
+    )
+    metadata = AsyncMock(side_effect=SQLAlchemyError("connection refused"))
+    monkeypatch.setattr("hyperadmin.views.dynamic.build_filter_metadata", metadata)
+
+    # When the list is opened
+    resp = client.get("/admin/legadget")
+
+    # Then the list-error banner is rendered instead of a bare 500
+    assert resp.status_code == 500
+    assert "Check the server logs" in _banner(resp.text)
+    # And the filter metadata is not built
+    metadata.assert_not_called()
 
 
 def test_healthy_list_renders_no_banner() -> None:
@@ -231,6 +260,9 @@ def test_non_db_exception_propagates(monkeypatch: pytest.MonkeyPatch) -> None:
         ('relation "gadget" does not exist', True),
         ("UndefinedTableError: relation gadget", True),
         ("deadlock detected", False),
+        ('column "weight" does not exist', False),
+        ("function lower(integer) does not exist", False),
+        ('schema "tenant" does not exist', False),
     ],
 )
 def test_is_missing_table_error(message: str, expected: bool) -> None:
