@@ -9,6 +9,8 @@ fix, and ``AuthenticationMiddleware``'s ``login_url``.
 
 from __future__ import annotations
 
+import base64
+import json
 import logging
 import warnings
 from typing import TYPE_CHECKING, Any
@@ -23,6 +25,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from starlette.testclient import TestClient
 
 from hyperadmin.auth.backend import hash_password
+from hyperadmin.auth.middleware import AuthenticationMiddleware
 from hyperadmin.auth.models import User
 from hyperadmin.auth.session import SessionAuthBackend
 from hyperadmin.auth.session_middleware import AdminSessionMiddleware, rewrite_cookie_header
@@ -88,6 +91,13 @@ def _set_cookies(response: Any, name: str) -> list[str]:
         for value in response.headers.get_list("set-cookie")
         if value.startswith(f"{name}=")
     ]
+
+
+def _cookie_payload(cookie: str) -> dict[str, Any]:
+    """Decode the JSON payload of a signed Starlette session ``Set-Cookie``."""
+    signed = cookie.split(";", 1)[0].split("=", 1)[1]
+    data = signed.split(".", 1)[0]
+    return json.loads(base64.b64decode(data + "=" * (-len(data) % 4)))
 
 
 def _attributes(cookie: str) -> set[str]:
@@ -167,6 +177,12 @@ async def test_host_session_untouched(engine: AsyncEngine) -> None:
     assert dashboard.status_code == 200
     assert host_view.json() == {"cart": ["apple"]}
     assert host_cookie is not None
+    # The login response never rewrites the host cookie with admin data...
+    for cookie in _set_cookies(resp, "session"):
+        assert "user_id" not in _cookie_payload(cookie)
+    # ...and the browser's host cookie still decodes to the host's own data.
+    assert client.cookies.get("session") == host_cookie
+    assert _cookie_payload(f"session={host_cookie}") == {"cart": ["apple"]}
 
 
 async def test_testclient_login_over_plain_http(engine: AsyncEngine) -> None:
@@ -306,6 +322,117 @@ async def test_logout_expires_the_scoped_cookie(engine: AsyncEngine) -> None:
     assert "expires=thu, 01 jan 1970 00:00:00 gmt" in _attributes(cookie)
     # And
     assert after.headers["location"] == "/admin/login"
+
+
+async def test_static_asset_never_rescopes_the_session_cookie(engine: AsyncEngine) -> None:
+    """
+    Scenario: a static asset response keeps the cookie on the admin path
+      Given a logged-in user, built-in auth at /admin
+      When  the browser fetches a stylesheet under /admin/static/css/
+      Then  every hyperadmin_session Set-Cookie on that response has Path=/admin
+    """
+    # Given
+    app = FastAPI()
+    _admin(app, engine).mount("/admin")
+
+    async with _client(app) as client:
+        await _login(client)
+        # When
+        resp = await client.get("/admin/static/css/_accessibility.css")
+
+    # Then
+    assert resp.status_code == 200
+    for cookie in _set_cookies(resp, "hyperadmin_session"):
+        assert "path=/admin" in _attributes(cookie)
+
+
+async def test_cookie_path_resolved_before_inner_routing() -> None:
+    """
+    Scenario: inner routing cannot change the session cookie path
+      Given an AdminSessionMiddleware whose admin path is the scope root_path "/admin"
+      When  an inner mount extends root_path to "/admin/static" and writes the session
+      Then  the session Set-Cookie has Path=/admin
+    """
+    # Given
+    scope = _scope(root_path="/admin", path="/admin/static/x.css")
+    sent: list[Message] = []
+
+    async def app(scope: Scope, receive: Receive, send: Send) -> None:
+        scope["root_path"] += "/static"
+        scope["session"]["user_id"] = 1
+        await send({"type": "http.response.start", "status": 200, "headers": []})
+        await send({"type": "http.response.body", "body": b""})
+
+    async def send(message: Message) -> None:
+        sent.append(message)
+
+    middleware = AdminSessionMiddleware(
+        app, secret_key="k", admin_path=lambda request: request.scope["root_path"]
+    )
+
+    # When
+    await middleware(scope, _noop_receive, send)
+
+    # Then
+    cookie = dict(sent[0]["headers"])[b"set-cookie"].decode().lower()
+    assert "path=/admin" in _attributes(cookie)
+
+
+def _bare_auth_app(engine: AsyncEngine, *, isolated: bool) -> FastAPI:
+    """A host app with ``AuthenticationMiddleware`` added directly, no ``admin_path``."""
+    app = FastAPI()
+
+    @app.get("/admin/")
+    @app.get("/")
+    async def dashboard() -> dict[str, str]:
+        return {"ok": "yes"}
+
+    app.add_middleware(
+        AuthenticationMiddleware,
+        auth_backend=SessionAuthBackend(engine=engine),
+        admin_prefix="/admin",
+        isolated=isolated,
+    )
+    app.add_middleware(SessionMiddleware, secret_key="k")
+    return app
+
+
+async def test_auth_middleware_router_fallback_uses_admin_prefix(engine: AsyncEngine) -> None:
+    """
+    Scenario: without admin_path, router-mode redirects use the static prefix
+      Given AuthenticationMiddleware added directly with admin_prefix="/admin"
+      When  an anonymous GET reaches /admin/
+      Then  the response redirects to /admin/login
+    """
+    # Given
+    app = _bare_auth_app(engine, isolated=False)
+
+    async with _client(app) as client:
+        # When
+        resp = await client.get("/admin/", follow_redirects=False)
+
+    # Then
+    assert resp.status_code == 302
+    assert resp.headers["location"] == "/admin/login"
+
+
+async def test_auth_middleware_isolated_fallback_uses_root_path(engine: AsyncEngine) -> None:
+    """
+    Scenario: without admin_path, isolated redirects use the scope root_path
+      Given AuthenticationMiddleware added directly with isolated=True
+      When  an anonymous GET arrives under root_path "/sub"
+      Then  the response redirects to /sub/login
+    """
+    # Given
+    app = _bare_auth_app(engine, isolated=True)
+
+    async with _client(app, root_path="/sub") as client:
+        # When
+        resp = await client.get("/", follow_redirects=False)
+
+    # Then
+    assert resp.status_code == 302
+    assert resp.headers["location"] == "/sub/login"
 
 
 async def test_router_mode_keeps_legacy_cookie(engine: AsyncEngine) -> None:
@@ -601,6 +728,30 @@ async def test_websocket_scope_restores_host_session() -> None:
     assert seen == [{}]
     # And
     assert scope["session"] is host_session
+
+
+async def test_websocket_scope_with_admin_path_reaches_the_app() -> None:
+    """
+    Scenario: a websocket under a scoped admin cookie is not rejected
+      Given an AdminSessionMiddleware scoped to the per-request admin path
+      When  a websocket scope passes through it
+      Then  the app runs with the admin session
+    """
+    # Given
+    seen: list[Any] = []
+
+    async def app(scope: Scope, receive: Receive, send: Send) -> None:
+        seen.append(dict(scope["session"]))
+
+    middleware = AdminSessionMiddleware(
+        app, secret_key="k", admin_path=lambda request: request.scope["root_path"]
+    )
+
+    # When
+    await middleware(_scope(type="websocket", scheme="ws"), _noop_receive, _noop_send)
+
+    # Then
+    assert seen == [{}]
 
 
 async def test_scope_without_host_session_stays_without_one() -> None:

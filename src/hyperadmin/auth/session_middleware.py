@@ -118,6 +118,14 @@ class AdminSessionMiddleware:
             await self.app(scope, receive, send)
             return
 
+        # Resolve the cookie path now: inner routing (e.g. the sub-app's own
+        # ``/static`` mount) extends the shared ``scope["root_path"]`` before
+        # ``http.response.start`` arrives, which would scope a re-sent cookie
+        # to ``/admin/static`` and leave a copy that logout never expires.
+        # A websocket never sends ``http.response.start`` (and ``Request``
+        # rejects its scope), so it needs no path.
+        is_http = scope["type"] == "http"
+        cookie_path = self._cookie_path(scope) if is_http else "/"
         host_session = scope.get("session", _MISSING)
         # Never let the host's session leak into (or be mistaken for) the admin's.
         scope.pop("session", None)
@@ -130,29 +138,26 @@ class AdminSessionMiddleware:
 
         async def send_wrapper(message: Message) -> None:
             if message["type"] == "http.response.start":
-                self._scope_cookie(scope, message)
+                self._scope_cookie(scope, message, cookie_path)
                 # Restore before forwarding: an outer host SessionMiddleware
                 # serialises scope["session"] when it sees this message.
                 restore_host_session()
             await send(message)
 
-        if scope["type"] == "http":
+        if is_http:
             self._warn_if_behind_untrusted_tls_proxy(scope)
         try:
             await self._session(scope, receive, send_wrapper)
         finally:
             restore_host_session()
 
-    def _scope_cookie(self, scope: Scope, message: Message) -> None:
-        """Rewrite the admin session ``Set-Cookie`` with the admin path and ``Secure``."""
+    def _scope_cookie(self, scope: Scope, message: Message, path: str) -> None:
+        """Rewrite the admin session ``Set-Cookie`` with ``path`` and ``Secure``."""
         headers = message.get("headers", [])
-        path: str | None = None
         secure = resolve_cookie_secure(self._cookie_secure, scope.get("scheme", "http"))
         rewritten: list[tuple[bytes, bytes]] = []
         for name, value in headers:
             if name.lower() == b"set-cookie" and value.startswith(self._cookie_prefix):
-                if path is None:
-                    path = self._cookie_path(scope)
                 cookie = rewrite_cookie_header(value.decode("latin-1"), path=path, secure=secure)
                 value = cookie.encode("latin-1")  # noqa: PLW2901 - rebuilt header value
             rewritten.append((name, value))

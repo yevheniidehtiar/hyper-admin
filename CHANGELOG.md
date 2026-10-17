@@ -47,6 +47,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   Router mode keeps the legacy `session` cookie unless `session_cookie` is set.
   `AuthenticationMiddleware`'s login redirect uses the per-request admin path in
   router mode too.
+- **Security: `SessionAuthBackend` rotates the session on login and logout**
+  (st-v058-byoa-36). `login()` clears the session before storing `user_id`, and
+  `logout()` clears it entirely (it used to pop only `user_id`), so pre-login
+  state never survives a privilege change. In legacy router mode without a
+  `session_cookie` setting the admin shares the `session` cookie with the host,
+  so admin login/logout now also clear host keys in it; set `session_cookie`
+  to keep them apart.
 - **Security: the locale switcher no longer redirects off-site** (st-v058-byoa-36).
   `POST {prefix}/locale` follows the `Referer` only when it is a same-origin URL
   under the admin path, and otherwise redirects to the dashboard. Its cookie
