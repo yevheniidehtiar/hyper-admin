@@ -46,7 +46,8 @@ from sqlmodel import Field, Relationship, SQLModel
 
 from examples.erp.contacts.models import Contact
 
-#: Mounted at /uploads/ by Admin(storage=...) in examples/erp/main.py.
+#: Passed as Admin(storage=...) in examples/erp/main.py; files are served per
+#: record at /admin/{model}/{item_id}/file/{field}.
 showcase_storage = FileSystemStorage("uploads")
 
 

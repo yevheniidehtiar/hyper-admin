@@ -54,12 +54,11 @@ Links and redirects the admin builds (login, logout, MFA, `{{ admin_prefix }}` i
 the per-request admin path, so a host served under a `root_path` (for example `/api`) gets
 `/api/admin/...`.
 
-!!! warning "Uploads are still public in 0.5.8"
-    Uploaded files are still served by a `StaticFiles` mount at the host's `/uploads`, in both
-    mount modes, outside the admin's authentication. Anyone who knows a file name can fetch it.
-    Per-record file serving behind the admin's model and object permissions replaces this mount
-    in a follow-up story (st-v058-byoa-37). Until then, do not store confidential files through
-    an admin `storage=`, or put `/uploads` behind your own access control.
+Uploaded files are served per record under the admin prefix, at
+`{prefix}/{model}/{item_id}/file/{field}`, behind the admin's authentication, model and
+object permissions and `get_queryset` scoping. There is no public `/uploads` mount any more;
+`settings.public_uploads_path` restores one as a logged escape hatch (see
+[File Uploads](../guides/file-uploads.md)).
 
 ## API Reference
 

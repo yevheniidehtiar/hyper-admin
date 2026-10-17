@@ -60,14 +60,44 @@ storage = FileSystemStorage("uploads/")
 admin = Admin(app, storage=storage)
 ```
 
-The upload directory is created automatically and served at `/uploads/`
-via FastAPI's `StaticFiles`.
+The upload directory is created automatically. Every upload is stored
+under a unique name (`<uuid4 hex>-<sanitised name>`), so uploading a file with
+the same name as another record's file never overwrites it.
+
+### Serving files
+
+Files are not served by a public static mount. Each stored file is served
+per record and field, under the admin prefix:
+
+```
+GET /admin/{model}/{item_id}/file/{field}
+```
+
+The route:
+
+- requires the `view` permission on the model;
+- loads the record under the admin's `get_queryset` filter, then runs the
+  object-level `view` check;
+- returns 404 unless `field` is a (non-sensitive) file field holding a file
+  that exists inside the storage root;
+- sends `X-Content-Type-Options: nosniff` and `Content-Security-Policy: sandbox`;
+- sends `Content-Disposition: inline` only for PNG, JPEG, GIF and WebP, and
+  `attachment` for everything else, SVG included.
+
+The detail page links each file to this route.
+
+!!! warning "Legacy public mount"
+    Setting `public_uploads_path` (for example `"/uploads"`) mounts the storage
+    directory publicly at that host path again, outside the admin's
+    authentication. Anyone who knows a file name can then fetch it. HyperAdmin
+    logs a warning at startup when it is set.
 
 ### Settings
 
 | Setting | Default | Description |
 |---------|---------|-------------|
 | `upload_dir` | `"uploads"` | Default upload directory path |
+| `public_uploads_path` | `None` | Legacy escape hatch: also serve the storage directory publicly at this host path |
 
 Set via environment variable `HYPERADMIN_UPLOAD_DIR` or in settings:
 
