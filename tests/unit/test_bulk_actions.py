@@ -185,7 +185,8 @@ def test_bulk_handler_captures_generic_exception_as_failed(client: TestClient):
       Given handler raises RuntimeError("boom") for id=2
       When  POST .../bulk with ids=[1,2,3]
       Then  result rows are ok / failed / ok in order
-      And   the "failed" row carries detail "boom"
+      And   the "failed" row carries the generic detail "Action failed"
+      And   the raw exception text "boom" is not shown to the user
     """
     # Given
     _fail_ids.update({2})
@@ -200,7 +201,46 @@ def test_bulk_handler_captures_generic_exception_as_failed(client: TestClient):
     assert response.status_code == 200
     body = response.text
     assert "failed" in body
-    assert "boom" in body
+    assert "Action failed" in body
+    assert "boom" not in body
+
+
+def test_bulk_row_load_error_is_reported_generically(
+    client: TestClient, monkeypatch: pytest.MonkeyPatch
+):
+    """
+    Scenario: database error while loading a row does not leak SQL to the browser
+      Given the adapter raises an error embedding SQL and parameters for id=2
+      When  POST .../bulk with ids=[1,2,3]
+      Then  the row for id=2 is "failed" with the generic detail "Database error"
+      And   neither the SQL text nor the bound parameter value appears in the response
+      And   the handler still runs for ids 1 and 3
+    """
+    # Given
+    original_get = SQLModelAdapter.get
+
+    async def flaky_get(self: SQLModelAdapter, pk: Any) -> Any:
+        if pk == 2:
+            raise RuntimeError(
+                "[SQL: SELECT secret_col FROM test_bulk_widget] [parameters: (s3cr3t,)]"
+            )
+        return await original_get(self, pk)
+
+    monkeypatch.setattr(SQLModelAdapter, "get", flaky_get)
+
+    # When
+    response = client.post(
+        "/admin/bulkwidget/actions/archive/bulk",
+        data={"ids": ["1", "2", "3"]},
+    )
+
+    # Then
+    assert response.status_code == 200
+    body = response.text
+    assert "Database error" in body
+    assert "SELECT" not in body
+    assert "s3cr3t" not in body
+    assert sorted(item_id for item_id, _ in _calls) == [1, 3]
 
 
 # ---------------------------------------------------------------------------
