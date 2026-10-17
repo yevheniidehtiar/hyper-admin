@@ -2,7 +2,7 @@
 
     Context:
       - action: ActionDef (has .name, .label, .form)
-      - ids: list[int] — preserved as hidden inputs
+      - ids: list[Any] — typed primary keys, preserved as hidden inputs
       - fields: list[dict(name,label,required,input_type,errors)] — built from action.form
       - confirm_url: URL of the /bulk/confirm endpoint
 -#}

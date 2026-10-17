@@ -7,6 +7,8 @@ Mirrors the BDD scenarios in
 from __future__ import annotations
 
 import json
+import uuid
+from typing import Any
 
 import anyio
 import pytest
@@ -181,3 +183,78 @@ def test_popup_post_invokes_permission_check_with_add_codename(client: TestClien
 
     assert response.status_code == 200
     assert "add_supplier" in calls
+
+
+# ---------------------------------------------------------------------------
+# BDD: pk-type-agnostic popup payload (st-v058-byoa-30, BYOA SDD A.6)
+# ---------------------------------------------------------------------------
+
+
+class UuidSupplier(SQLModel, table=True):
+    __tablename__ = "test_popup_uuid_supplier"
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    name: str
+
+
+@pytest.fixture
+def uuid_client():
+    app = FastAPI()
+    engine = create_async_engine("sqlite+aiosqlite:///:memory:")
+
+    async def setup_database():
+        async with engine.begin() as conn:
+            await conn.run_sync(SQLModel.metadata.create_all)
+
+    anyio.run(setup_database)
+
+    admin = Admin(app=app, engine=engine, settings=HyperAdminSettings(create_tables=False))
+    site.register(UuidSupplier, SupplierAdmin)
+    admin.mount(path="/admin")
+    return TestClient(app)
+
+
+def _popup_event(response: Any) -> tuple[str, dict[str, Any]]:
+    trigger = response.headers.get("HX-Trigger")
+    assert trigger is not None
+    return trigger, json.loads(trigger)["hyperadminPopupCreated"]
+
+
+def test_uuid_popup_id(uuid_client: TestClient):
+    """
+    Scenario: UUID popup id
+      Given a popup create on a UUID model
+      When  it succeeds
+      Then  HX-Trigger id is a UUID string
+    """
+    # Given / When
+    response = uuid_client.post(
+        "/admin/uuidsupplier/create-popup",
+        data={"name": "Acme", "target": "supplier_id"},
+    )
+
+    # Then
+    assert response.status_code == 200
+    _, event = _popup_event(response)
+    assert isinstance(event["id"], str)
+    assert str(uuid.UUID(event["id"])) == event["id"]
+
+
+def test_int_popup_id(client: TestClient):
+    """
+    Scenario: int popup id
+      Given a popup create on an int model
+      When  it succeeds
+      Then  HX-Trigger id is a JSON number
+    """
+    # Given / When
+    response = client.post(
+        "/admin/supplier/create-popup",
+        data={"name": "Acme", "target": "supplier_id"},
+    )
+
+    # Then
+    assert response.status_code == 200
+    raw, event = _popup_event(response)
+    assert type(event["id"]) is int
+    # A JSON number, not a quoted string: the wire format is unchanged for int keys.
+    assert f'"id": {event["id"]}' in raw

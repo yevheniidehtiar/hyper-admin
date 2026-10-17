@@ -2,7 +2,7 @@
 type: story
 id: st-v058-byoa-30
 title: "refactor(views): bulk ids, single actions and popup payload are pk-type-agnostic"
-status: todo
+status: in-review
 priority: high
 assignee: null
 labels:
@@ -63,12 +63,12 @@ Scenario: typed action id
 
 ## Acceptance Criteria
 
-- [ ] UUID bulk
-- [ ] unparseable id dropped
-- [ ] UUID popup id
-- [ ] int popup id
-- [ ] typed action id
-- [ ] `poe lint` and `poe test:unit` pass
+- [x] UUID bulk
+- [x] unparseable id dropped
+- [x] UUID popup id
+- [x] int popup id
+- [x] typed action id
+- [x] `poe lint` and `poe test:unit` pass
 
 ## Blocked by
 
