@@ -54,7 +54,10 @@ def action(
     """Decorator that marks a :class:`~hyperadmin.core.model.ModelAdmin` method as a custom action.
 
     For single-record actions (``bulk=False``, default) the decorated method must
-    be ``async`` and accept ``(self, request, item_id)``.
+    be ``async`` and accept ``(self, request, item_id)``. ``item_id`` is the
+    row's typed primary key, parsed by the model's ``PrimaryKeyInfo``: an
+    ``int`` for int-id models, a :class:`uuid.UUID` for UUID keys, a ``str``
+    for natural keys. Bulk handlers receive the same typed key per row.
 
     For bulk actions (``bulk=True``) the handler must additionally accept a
     keyword-only ``params`` argument, which is the validated Pydantic instance

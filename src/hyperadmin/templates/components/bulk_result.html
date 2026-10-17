@@ -4,7 +4,7 @@
       - action: ActionDef
       - outcomes: list[BulkRowResult]
       - bulk_endpoint_url: URL of the /bulk endpoint (for "Retry failures")
-      - failed_ids: list[int] — non-"ok" outcome ids
+      - failed_ids: list[Any] — typed primary keys of non-"ok" outcomes
 -#}
 <section class="ha-bulk-result" data-testid="bulk-result">
   <h2 class="ha-bulk-result__title">{{ action.label }} — {{ _("Results") }}</h2>

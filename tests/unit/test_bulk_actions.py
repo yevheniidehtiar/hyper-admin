@@ -7,6 +7,9 @@ plus a small handful of dispatch tests for the surrounding plumbing.
 
 from __future__ import annotations
 
+import uuid
+from typing import Any
+
 import anyio
 import pytest
 from fastapi import FastAPI, HTTPException, Request
@@ -14,6 +17,7 @@ from fastapi.testclient import TestClient
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlmodel import Field, SQLModel
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from hyperadmin import Admin
 from hyperadmin.adapters.sqlmodel import SQLModelAdapter
@@ -368,3 +372,215 @@ def test_non_bulk_action_at_bulk_endpoint_returns_404(client: TestClient):
 
     response = client.post("/admin/bulkwidget/actions/single/bulk", data={"ids": ["1"]})
     assert response.status_code == 404
+
+
+# ---------------------------------------------------------------------------
+# BDD: pk-type-agnostic bulk ids and single actions (st-v058-byoa-30, BYOA SDD A.6)
+# ---------------------------------------------------------------------------
+
+
+class BulkUuidWidget(SQLModel, table=True):
+    __tablename__ = "test_bulk_uuid_widget"
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    name: str
+
+
+_uuid_calls: list[tuple[str, Any]] = []
+
+
+class BulkUuidWidgetAdmin(ModelAdmin):
+    adapter_class = SQLModelAdapter
+
+    @action(label="Archive", bulk=True)
+    async def archive(self, request: Request, item_id: Any, *, params=None) -> None:
+        _uuid_calls.append(("archive", item_id))
+
+    @action(label="Reassign", bulk=True, form=_ReassignParams)
+    async def reassign(self, request: Request, item_id: Any, *, params=None) -> None:
+        _uuid_calls.append(("reassign", item_id))
+
+    @action(label="Touch")
+    async def touch(self, request: Request, item_id: Any) -> None:
+        _uuid_calls.append(("touch", item_id))
+
+
+_UUID_A = uuid.UUID("11111111-1111-4111-8111-111111111111")
+_UUID_B = uuid.UUID("22222222-2222-4222-8222-222222222222")
+
+
+@pytest.fixture
+def uuid_client():
+    _uuid_calls.clear()
+    app = FastAPI()
+    engine = create_async_engine("sqlite+aiosqlite:///:memory:")
+
+    async def setup_database():
+        async with engine.begin() as conn:
+            await conn.run_sync(SQLModel.metadata.create_all)
+        async with AsyncSession(engine, expire_on_commit=False) as session:
+            session.add(BulkUuidWidget(id=_UUID_A, name="alpha"))
+            session.add(BulkUuidWidget(id=_UUID_B, name="beta"))
+            await session.commit()
+
+    anyio.run(setup_database)
+
+    admin = Admin(app=app, engine=engine, settings=HyperAdminSettings(create_tables=False))
+    site.register(BulkUuidWidget, BulkUuidWidgetAdmin)
+    admin.mount(path="/admin")
+    return TestClient(app)
+
+
+def test_uuid_bulk(uuid_client: TestClient):
+    """
+    Scenario: UUID bulk
+      Given two UUID ids posted to the bulk endpoint
+      When  the bulk action runs
+      Then  two outcomes with status ok are returned
+    """
+    # Given
+    ids = [str(_UUID_A), str(_UUID_B)]
+
+    # When
+    response = uuid_client.post("/admin/bulkuuidwidget/actions/archive/bulk", data={"ids": ids})
+
+    # Then
+    assert response.status_code == 200
+    body = response.text
+    assert body.count('data-testid="bulk-result-row"') == 2
+    for pk in ids:
+        assert f'data-testid="bulk-result-status-{pk}">ok<' in body
+    # The handler received typed uuid.UUID keys, not raw strings.
+    assert _uuid_calls == [("archive", _UUID_A), ("archive", _UUID_B)]
+
+
+def test_unparseable_id_dropped(uuid_client: TestClient):
+    """
+    Scenario: unparseable id dropped
+      Given an unparseable id in a bulk post
+      When  the bulk action runs
+      Then  it is dropped silently
+    """
+    # Given
+    ids = ["not-a-uuid", str(_UUID_A)]
+
+    # When
+    response = uuid_client.post("/admin/bulkuuidwidget/actions/archive/bulk", data={"ids": ids})
+
+    # Then
+    assert response.status_code == 200
+    body = response.text
+    assert body.count('data-testid="bulk-result-row"') == 1
+    assert "not-a-uuid" not in body
+    assert _uuid_calls == [("archive", _UUID_A)]
+
+
+def test_only_unparseable_ids_is_an_empty_selection(uuid_client: TestClient):
+    """
+    Scenario: a bulk post whose ids are all unparseable is an empty selection
+      Given only unparseable ids in a bulk post on a UUID model
+      When  the bulk action runs
+      Then  the response is 400 "Selection required"
+      And   the handler is not invoked
+    """
+    # Given / When
+    response = uuid_client.post(
+        "/admin/bulkuuidwidget/actions/archive/bulk", data={"ids": ["1", "nope"]}
+    )
+
+    # Then
+    assert response.status_code == 400
+    assert "Selection required" in response.text
+    assert _uuid_calls == []
+
+
+def test_uuid_ids_round_trip_through_the_bulk_param_form(uuid_client: TestClient):
+    """
+    Scenario: UUID ids survive the bulk param form round trip
+      Given a bulk action with a param form on a UUID model
+      When  the param form is rendered and then confirmed with the hidden ids
+      Then  the form preserves the canonical UUID strings
+      And   the handler runs once per row with a uuid.UUID key
+    """
+    # Given
+    ids = [str(_UUID_A), str(_UUID_B)]
+
+    # When
+    form_response = uuid_client.post(
+        "/admin/bulkuuidwidget/actions/reassign/bulk", data={"ids": ids}
+    )
+    confirm_response = uuid_client.post(
+        "/admin/bulkuuidwidget/actions/reassign/bulk/confirm",
+        data={"ids": ids, "operator": "7"},
+    )
+
+    # Then
+    assert form_response.status_code == 200
+    for pk in ids:
+        assert f'value="{pk}"' in form_response.text
+    assert confirm_response.status_code == 200
+    assert confirm_response.text.count('data-testid="bulk-result-row"') == 2
+    assert _uuid_calls == [("reassign", _UUID_A), ("reassign", _UUID_B)]
+
+
+def test_typed_action_id(uuid_client: TestClient):
+    """
+    Scenario: typed action id
+      Given a single action on a UUID row
+      When  it runs
+      Then  the handler receives a uuid.UUID item_id
+    """
+    # Given
+    url = f"/admin/bulkuuidwidget/{_UUID_A}/action/touch"
+
+    # When
+    response = uuid_client.post(url, follow_redirects=False)
+
+    # Then
+    assert response.status_code < 400
+    assert len(_uuid_calls) == 1
+    name, item_id = _uuid_calls[0]
+    assert name == "touch"
+    assert isinstance(item_id, uuid.UUID)
+    assert item_id == _UUID_A
+
+
+def test_int_action_id_stays_int():
+    """
+    Scenario: single actions on int-id models still receive an int
+      Given a single action on an int-id row
+      When  it runs
+      Then  the handler receives an int item_id
+    """
+    # Given
+    received: list[Any] = []
+
+    class _IntSingleAdmin(ModelAdmin):
+        adapter_class = SQLModelAdapter
+
+        @action(label="Touch")
+        async def touch(self, request: Request, item_id: Any) -> None:
+            received.append(item_id)
+
+    app = FastAPI()
+    engine = create_async_engine("sqlite+aiosqlite:///:memory:")
+
+    async def setup():
+        async with engine.begin() as conn:
+            await conn.run_sync(SQLModel.metadata.create_all)
+        async with AsyncSession(engine, expire_on_commit=False) as session:
+            session.add(BulkWidget(id=5, name="five"))
+            await session.commit()
+
+    anyio.run(setup)
+    admin = Admin(app=app, engine=engine, settings=HyperAdminSettings(create_tables=False))
+    site.register(BulkWidget, _IntSingleAdmin)
+    admin.mount(path="/admin")
+    int_client = TestClient(app)
+
+    # When
+    response = int_client.post("/admin/bulkwidget/5/action/touch", follow_redirects=False)
+
+    # Then
+    assert response.status_code < 400
+    assert received == [5]
+    assert type(received[0]) is int
