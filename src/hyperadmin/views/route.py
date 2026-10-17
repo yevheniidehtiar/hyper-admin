@@ -77,11 +77,9 @@ class RouteCsrfCheck(Protocol):
 
     async def verify(self, request: Request) -> Response | None:
         """Return a failure response to send instead of the handler's, or ``None``."""
-        ...
 
     def attach(self, request: Request, response: Response) -> None:
         """Attach the CSRF cookie to the handler's response."""
-        ...
 
 
 class _CsrfRejected(Exception):  # noqa: N818 - internal control flow, never escapes the route
@@ -138,7 +136,7 @@ def _is_api_path(request: Request, api_prefixes: Sequence[str]) -> bool:
     return relative.startswith(tuple(api_prefixes))
 
 
-def make_admin_route_class(
+def make_admin_route_class(  # noqa: PLR0913 - ExternalAuth settings; all but templates are keyword-only
     templates: Jinja2Templates | None = None,
     *,
     login_url: str | None = None,
@@ -147,6 +145,7 @@ def make_admin_route_class(
     token_scheme: str = "Bearer",  # noqa: S107 - an auth scheme name, not a secret
     api_prefixes: Sequence[str] = DEFAULT_API_PREFIXES,
     csrf: RouteCsrfCheck | None = None,
+    translate_auth_errors: bool = False,
 ) -> type[APIRoute]:
     """Build the ``HyperAdminRoute`` class for one admin.
 
@@ -164,9 +163,22 @@ def make_admin_route_class(
             bridged header carries.
         api_prefixes: Admin-relative path prefixes whose auth errors are a bare
             401/403.
-        csrf: The CSRF check, run after auth and before the handler.
+        csrf: The CSRF check, run after auth and before the handler. Required
+            when ``token_cookie`` is set.
+        translate_auth_errors: Map a 401/403 ``HTTPException`` raised while
+            dependencies are solved to the B.2 auth responses. Only
+            ``ExternalAuth`` mode turns this on: in built-in mode auth redirects
+            stay in ``AuthenticationMiddleware``, and a host app-level
+            dependency's own 401/403 (e.g. ``HTTPBasic``) must pass through.
+
+    Raises:
+        ValueError: ``token_cookie`` is set without a ``csrf`` check. A bridged
+            cookie is ambient credentials a cross-site form could ride.
     """
     api_prefixes = tuple(api_prefixes)
+    if token_cookie is not None and csrf is None:
+        msg = "token_cookie requires a csrf check: a bridged cookie is ambient credentials"
+        raise ValueError(msg)
 
     async def after_dependencies(request: Request) -> None:
         """Mark the end of dependency solving, then run the CSRF check (step 3)."""
@@ -239,7 +251,10 @@ def make_admin_route_class(
                 except AdminAccessDenied:
                     return access_denied(request)
                 except StarletteHTTPException as exc:
-                    if request.scope.get(_PHASE_KEY) == _PHASE_DEPENDENCIES:
+                    if (
+                        translate_auth_errors
+                        and request.scope.get(_PHASE_KEY) == _PHASE_DEPENDENCIES
+                    ):
                         if exc.status_code == 401:  # noqa: PLR2004
                             return authentication_required(request, bridged=bridged)
                         if exc.status_code == 403:  # noqa: PLR2004
