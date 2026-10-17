@@ -23,6 +23,8 @@ from hyperadmin.realtime.ws import make_ws_handler
 if TYPE_CHECKING:
     from contextlib import AbstractAsyncContextManager
 
+    from fastapi.routing import APIRoute
+
     from hyperadmin.core.adapters import SessionFactory
     from hyperadmin.db import TableScope
 
@@ -319,6 +321,7 @@ class Admin:
             datetime_format=self.settings.datetime_format,
             session_factory=self.session_factory,
             debug=self.settings.debug,
+            route_class=self.router.route_class,
         )
         admin_router.generate_routes()
         routers = admin_router.get_routers()
@@ -641,6 +644,12 @@ class Admin:
             return False
         return True
 
+    def _make_route_class(self) -> "type[APIRoute]":
+        """Build the ``HyperAdminRoute`` class shared by every admin router (SDD B.2)."""
+        from hyperadmin.views.route import make_admin_route_class
+
+        return make_admin_route_class(self.templates)
+
     def mount(self, path: str = "/admin") -> None:
         """Mount the admin interface on the host FastAPI application.
 
@@ -657,14 +666,14 @@ class Admin:
         ``mount_mode="router"`` (deprecated) and ``mount("/")`` keep the legacy
         ``include_router`` behaviour.
         """
-        from hyperadmin.views.error_pages import admin_route_class
-
         admin_prefix = path.rstrip("/")
         isolated = self._resolve_mount_mode(admin_prefix)
 
-        # Admin routes render 403/404/409 inside the admin layout for people (JSON stays
-        # for API callers). Set before any route is added to the admin router.
-        self.router.route_class = admin_route_class(self.templates)
+        # Every admin route uses HyperAdminRoute (SDD B.2): 403/404/409 render inside
+        # the admin layout for people (JSON stays for API callers), and it is the one
+        # place for the auth-error translation, token-cookie bridge and CSRF hook.
+        # Set before any route is added to the admin router.
+        self.router.route_class = self._make_route_class()
 
         if self.storage:
             self._mount_upload_storage()
