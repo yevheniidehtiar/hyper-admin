@@ -187,4 +187,4 @@ def test_detail_view_shows_filename(
     # And the filename is rendered as a download link
     download_link = page.get_by_test_id("attachment-download")
     expect(download_link).to_be_visible()
-    expect(download_link).to_contain_text("test_upload.txt")
+    expect(download_link).to_have_text("test_upload.txt")
