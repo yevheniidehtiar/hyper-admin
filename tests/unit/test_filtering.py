@@ -310,6 +310,26 @@ def test_in_operator_splits_and_repeats() -> None:
     assert parsed.active == {"quantity__in": "1,2,3"}
 
 
+def test_repeated_single_value_operator_keeps_last_value() -> None:
+    """
+    Scenario: repeated single-value filter keeps the last non-blank value
+      Given filter_note is repeated as 'a', 'b' and a blank value
+      When  parse_filter_params parses the parameters
+      Then  one exact condition on 'b' is produced
+      And   the active value is 'b'
+    """
+    # Given filter_note is repeated as 'a', 'b' and a blank value
+    params = [("filter_note", "a"), ("filter_note", "b"), ("filter_note", "  ")]
+
+    # When parse_filter_params parses the parameters
+    parsed = parse_filter_params(Order, params, ["note"])
+
+    # Then one exact condition on 'b' is produced
+    assert parsed.conditions == [FilterCondition("note", "exact", "b")]
+    # And the active value is 'b'
+    assert parsed.active == {"note": "b"}
+
+
 def test_in_operator_reads_multi_items() -> None:
     class _QueryParams:
         def multi_items(self) -> list[tuple[str, str]]:
