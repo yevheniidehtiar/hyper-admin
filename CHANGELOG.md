@@ -35,6 +35,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
     non-datetime or unknown field per `BaseAdapter`'s contract.
 
 ### Changed
+- **BREAKING: `Admin.mount()` mounts an isolated sub-application by default**
+  (st-v058-byoa-35, SDD `docs/specs/bring-your-own-app.md` section C.1).
+  `mount("/admin")` now builds a private FastAPI app (no OpenAPI/docs) and
+  attaches it with `app.mount("/admin", ..., name="hyperadmin")`. Two new
+  settings control it: `mount_mode` (`"isolated"` default, or `"router"`;
+  env `HYPERADMIN_MOUNT_MODE`) and `route_namespace` (default `"hyperadmin"`;
+  env `HYPERADMIN_ROUTE_NAMESPACE`). `mount("/")` always uses router mode.
+  What changes for an existing host, and how to migrate:
+  - HyperAdmin's static files move from `/static` to `{prefix}/static`
+    (e.g. `/admin/static`), and the realtime WebSocket from `/realtime/ws` to
+    `{prefix}/realtime/ws`. A host `/static` mount is no longer shadowed.
+  - Admin route names are namespaced: `request.url_for("user-list")` or
+    `app.url_path_for("user-list")` in host code now raises `NoMatchFound`.
+    Use `app.url_path_for("hyperadmin:user-list")`, or
+    `hyperadmin.views.urls.admin_url_for(request, "user-list")`, which tries
+    the namespaced name first. Admin templates need no change.
+  - The admin's session, authentication and locale middleware wrap admin
+    requests only. Host routes no longer see `request.session`, the admin
+    user or a `Content-Language` header. A host page that relies on the
+    admin login moves inside the admin: `admin.asgi_app.include_router(...)`
+    after `mount()` (as `examples/erp/main.py` does for its reports).
+  - Admin routes leave the host's `/openapi.json`.
+  - The sub-application shares the host's `dependency_overrides` and `state`.
+  - Admin redirects and `{{ admin_prefix }}` template links follow the
+    host's `root_path` (a host served at `/api` gets `/api/admin/...`).
+- **Fixed: the auth prefix check is segment-safe** (st-v058-byoa-35). With
+  auth at `/admin`, a host route such as `/administrator` is no longer
+  treated as an admin path and redirected to the admin login.
 - Constructing a `BaseAdapter` subclass, `SessionAuthBackend`,
   `PermissionSyncService` or `ModelPermissionChecker` with **neither**
   `engine=` **nor** `session_factory=` now raises `ValueError` (previously an
@@ -165,6 +193,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
     Opt it back in with `AdminOptions(sensitive_fields={"secret_name": False})`.
     The name heuristic does not apply to booleans, numbers or enums
     (`is_secret: bool`, `token_count: int`).
+- Known gap (st-v058-byoa-35): uploaded files are still served publicly from
+  the host's `/uploads` in both mount modes. Per-record file serving behind
+  the admin's permissions replaces it in st-v058-byoa-37.
+
+### Deprecated
+- `mount_mode="router"` (the legacy `include_router` mount, st-v058-byoa-35)
+  emits a `DeprecationWarning` and will be removed in 0.6. It keeps the old
+  behaviour: un-namespaced route names, `/static` at the host root, and admin
+  middleware on the host app.
 
 ### Added
 - **`ha_pk`, `ha_dom_token`, `ha_datetime_input`, `ha_display` template filters**

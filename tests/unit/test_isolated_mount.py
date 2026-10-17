@@ -637,3 +637,145 @@ async def test_admin_scope_middleware_ignores_lifespan_scopes() -> None:
 
     # Then
     assert seen == [{"type": "lifespan"}]
+
+
+# ---------------------------------------------------------------------------
+# Per-request admin path under a host root_path (SDD C.1, security review)
+# ---------------------------------------------------------------------------
+
+
+async def test_successful_login_redirect_follows_host_root_path(engine: AsyncEngine) -> None:
+    """
+    Scenario: a successful login redirects to the dashboard under the host root_path
+      Given a superuser, auth at /admin in isolated mode
+      And   the host is served under root_path="/api"
+      When  the user posts valid credentials to /api/admin/login
+      Then  the response redirects to /api/admin/
+    """
+    # Given
+    await _seed_superuser(engine)
+    app = FastAPI()
+    _auth_admin(app, engine).mount("/admin")
+
+    async with _client(app, root_path="/api") as client:
+        # When
+        resp = await client.post(
+            "/api/admin/login",
+            data={"username": "admin", "password": "password123"},
+            follow_redirects=False,
+        )
+
+    # Then
+    assert resp.status_code == 302
+    assert resp.headers["location"] == "/api/admin/"
+
+
+async def test_logout_redirect_follows_host_root_path(engine: AsyncEngine) -> None:
+    """
+    Scenario: logout redirects to the login page under the host root_path
+      Given a logged-in superuser, auth at /admin in isolated mode
+      And   the host is served under root_path="/api"
+      When  the user posts to /api/admin/logout
+      Then  the response redirects to /api/admin/login
+    """
+    # Given
+    await _seed_superuser(engine)
+    app = FastAPI()
+    _auth_admin(app, engine).mount("/admin")
+
+    async with _client(app, root_path="/api") as client:
+        await client.post("/api/admin/login", data={"username": "admin", "password": "password123"})
+        # When
+        resp = await client.post("/api/admin/logout", follow_redirects=False)
+
+    # Then
+    assert resp.status_code == 302
+    assert resp.headers["location"] == "/api/admin/login"
+
+
+async def test_template_links_follow_host_root_path(engine: AsyncEngine) -> None:
+    """
+    Scenario: admin template links use the per-request admin path
+      Given a superuser, auth at /admin in isolated mode
+      And   the host is served under root_path="/api"
+      When  the login page and the dashboard are rendered
+      Then  the login form posts to /api/admin/login
+      And   the navbar brand links to /api/admin/
+    """
+    # Given
+    await _seed_superuser(engine)
+    app = FastAPI()
+    _auth_admin(app, engine).mount("/admin")
+
+    async with _client(app, root_path="/api") as client:
+        # When
+        login_page = await client.get("/api/admin/login")
+        await client.post("/api/admin/login", data={"username": "admin", "password": "password123"})
+        dashboard = await client.get("/api/admin/")
+
+    # Then
+    assert 'action="/api/admin/login"' in login_page.text
+    assert 'href="/api/admin/"' in dashboard.text
+
+
+async def test_router_mode_login_redirect_follows_host_root_path(engine: AsyncEngine) -> None:
+    """
+    Scenario: a router-mode login redirects under the host root_path
+      Given a superuser, auth at /admin in router mode
+      And   the host is served under root_path="/api"
+      When  the user posts valid credentials to /api/admin/login
+      Then  the response redirects to /api/admin/
+    """
+    # Given
+    await _seed_superuser(engine)
+    app = FastAPI()
+    with pytest.warns(DeprecationWarning, match="mount_mode=.router."):
+        _auth_admin(app, engine, mount_mode="router").mount("/admin")
+
+    async with _client(app, root_path="/api") as client:
+        # When
+        resp = await client.post(
+            "/api/admin/login",
+            data={"username": "admin", "password": "password123"},
+            follow_redirects=False,
+        )
+
+    # Then
+    assert resp.status_code == 302
+    assert resp.headers["location"] == "/api/admin/"
+
+
+async def test_mfa_challenge_redirect_follows_host_root_path(engine: AsyncEngine) -> None:
+    """
+    Scenario: MFA routes build their URLs from the per-request admin path
+      Given auth with an OTP service at /admin in isolated mode
+      And   the host is served under root_path="/api"
+      When  an anonymous client requests /api/admin/mfa/challenge
+      Then  it is redirected to /api/admin/login
+    """
+    # Given
+    from hyperadmin.auth.otp import EmailOTPService
+
+    class _NullSender:
+        async def send(self, *args: Any, **kwargs: Any) -> None:
+            return None
+
+    app = FastAPI()
+    admin = Admin(
+        app,
+        engine=engine,
+        settings=_settings(),
+        auth_backend=SessionAuthBackend(engine=engine),
+        permission_checker=ModelPermissionChecker(engine=engine),
+        permission_registry=PermissionSyncService(engine=engine),
+        otp_service=EmailOTPService(email_sender=_NullSender()),
+    )
+    admin.mount("/admin")
+
+    async with _client(app, root_path="/api") as client:
+        # When
+        resp = await client.get("/api/admin/mfa/challenge", follow_redirects=False)
+
+    # Then
+    assert resp.status_code == 302
+    assert resp.headers["location"] == "/api/admin/login"

@@ -119,6 +119,32 @@ def admin_base_path(request: Request) -> str:
     return f"{root_path}{prefix}"
 
 
+def request_admin_path(request: Request, default: str) -> str:
+    """Return :func:`admin_base_path` for a mounted admin request, else ``default``.
+
+    Only requests tagged by :class:`AdminScopeMiddleware` (every request that
+    reaches a mounted admin) carry the routing data ``admin_base_path`` needs.
+    An untagged request — a view called directly, outside ``admin.mount()`` —
+    keeps the static mount prefix it was given.
+    """
+    if SCOPE_KEY not in request.scope:
+        return default
+    return admin_base_path(request)
+
+
+def admin_prefix_context(request: Request) -> dict[str, Any]:
+    """Jinja2Templates context processor exposing the per-request ``admin_prefix``.
+
+    Overrides the static ``admin_prefix`` template global with
+    :func:`admin_base_path` for mounted admin requests, so every
+    ``{{ admin_prefix }}/...`` link follows the host's ``root_path`` (SDD C.1).
+    Untagged requests add nothing, leaving the static global in charge.
+    """
+    if SCOPE_KEY not in request.scope:
+        return {}
+    return {"admin_prefix": admin_base_path(request)}
+
+
 class AdminScopeMiddleware:
     """Pure-ASGI middleware that records the admin's routing data on the scope.
 
