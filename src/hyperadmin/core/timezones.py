@@ -1,6 +1,7 @@
 """Timezone-aware datetime helpers for forms, filters and display.
 
-Pure helpers built on the stdlib ``zoneinfo`` and ``datetime`` only. Columns are
+Pure helpers built on the stdlib ``zoneinfo`` and ``datetime`` (plus pydantic's
+``AwareDatetime`` / ``NaiveDatetime`` annotation markers). Columns are
 either *aware* (values are stored as UTC instants) or *naive* (values are stored
 as wall-clock time). User input is entered in a display timezone and converted
 accordingly; aware values are shown back in that timezone.
@@ -9,8 +10,11 @@ accordingly; aware values are shown back in that timezone.
 from __future__ import annotations
 
 import functools
+import types
 from datetime import date, datetime, timezone, tzinfo
-from typing import Any, Literal
+from typing import Annotated, Any, Literal, Union, get_args, get_origin
+
+from pydantic import AwareDatetime, NaiveDatetime
 
 DateTimeKind = Literal["aware", "naive"]
 
@@ -48,6 +52,32 @@ def is_auto_now_factory(fn: Any) -> bool:
     if code is None or getattr(fn, "__name__", "") != "<lambda>":
         return False
     return bool(_NOW_NAMES.intersection(code.co_names))
+
+
+def annotation_datetime_kind(annotation: Any) -> DateTimeKind | None:
+    """Return the datetime kind a type annotation declares, or ``None``.
+
+    ``AwareDatetime`` is ``"aware"``; ``NaiveDatetime``, ``datetime`` and its
+    subclasses are ``"naive"``. ``Annotated[...]`` is unwrapped, and an optional
+    union (``typing.Optional`` or PEP 604 ``X | None``) resolves to its single
+    datetime member. Anything else, including a union of two different kinds,
+    is ``None``.
+    """
+    origin = get_origin(annotation)
+    if origin is Annotated:
+        return annotation_datetime_kind(get_args(annotation)[0])
+    if origin is Union or origin is types.UnionType:
+        kinds: set[DateTimeKind | None]
+        kinds = {annotation_datetime_kind(arg) for arg in get_args(annotation)}
+        kinds.discard(None)
+        return kinds.pop() if len(kinds) == 1 else None
+    if annotation is AwareDatetime:
+        return "aware"
+    if annotation is NaiveDatetime:
+        return "naive"
+    if isinstance(annotation, type) and issubclass(annotation, datetime):
+        return "naive"
+    return None
 
 
 def _fromisoformat(raw: str) -> datetime:
