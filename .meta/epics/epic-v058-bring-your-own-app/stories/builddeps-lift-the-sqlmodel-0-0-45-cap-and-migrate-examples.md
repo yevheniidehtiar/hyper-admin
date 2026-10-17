@@ -2,7 +2,7 @@
 type: story
 id: st-v058-byoa-48
 title: "build(deps): lift the sqlmodel<0.0.45 cap and migrate examples and fixtures to utc_now"
-status: todo
+status: in-review
 priority: high
 assignee: null
 labels:
@@ -14,7 +14,7 @@ estimate: null
 epic_ref:
   id: ep-v058-byoa-01
 created_at: 2026-09-28T00:00:00Z
-updated_at: 2026-09-28T00:00:00Z
+updated_at: 2026-10-17T00:00:00Z
 ---
 
 ## Summary
@@ -53,10 +53,10 @@ Scenario: createsuperuser on new sqlmodel
 
 ## Acceptance Criteria
 
-- [ ] lowest-direct green
-- [ ] highest green
-- [ ] createsuperuser on new sqlmodel
-- [ ] `poe lint` and `poe test:unit` pass (and `poe test:e2e`)
+- [x] lowest-direct green
+- [x] highest green
+- [x] createsuperuser on new sqlmodel
+- [x] `poe lint` and `poe test:unit` pass (and `poe test:e2e`)
 
 ## Blocked by
 
