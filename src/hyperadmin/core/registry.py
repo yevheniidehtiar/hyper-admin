@@ -4,6 +4,10 @@ from typing import Any
 from hyperadmin.adapters.registry import adapter_registry
 from hyperadmin.core.options import AdminOptions
 
+#: ``AdminOptions`` list fields a ``ModelAdmin`` subclass may also declare as
+#: plain class attributes.
+_CLASS_LEVEL_LIST_OPTIONS = ("list_display", "search_fields", "list_filter", "list_editable")
+
 
 class SiteRegistry:
     """A central, thread-safe registry for managing administrative models.
@@ -45,19 +49,24 @@ class SiteRegistry:
         if admin_class is None:
             from hyperadmin.core.model import ModelAdmin
 
-            admin_class = ModelAdmin
+            # A per-model subclass: register() sets ``options``/``app_label`` on the
+            # class, which must never leak onto the shared ModelAdmin base.
+            admin_class = type(f"{model.__name__}Admin", (ModelAdmin,), {})
 
         if options is None:
             options = getattr(admin_class, "options", None) or AdminOptions()
         assert options is not None  # noqa: S101 — narrow the type for downstream
 
-        # Allow ModelAdmin subclasses to declare class-level overrides that
-        # we merge into options. Today only ``list_editable`` uses this path;
-        # other options remain explicit constructor args. Explicit ``options``
-        # always wins over class-level defaults.
-        class_list_editable = getattr(admin_class, "list_editable", None)
-        if class_list_editable and not options.list_editable:
-            options = options.model_copy(update={"list_editable": list(class_list_editable)})
+        # ModelAdmin subclasses may declare list options as class attributes
+        # (``list_display = [...]``); they fill any option the explicit
+        # ``options`` left unset. Explicit ``options`` always wins.
+        class_level = {
+            name: list(value)
+            for name in _CLASS_LEVEL_LIST_OPTIONS
+            if (value := getattr(admin_class, name, None)) and not getattr(options, name)
+        }
+        if class_level:
+            options = options.model_copy(update=class_level)
 
         with self._lock:
             if model in self._registry:
