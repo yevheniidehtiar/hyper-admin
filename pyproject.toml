@@ -83,6 +83,9 @@ dev = [
   "setuptools>=84.0.0",
   "numpy>=2.4.3; python_version >= '3.12'",
 ]
+redis = [
+  "redis>=5.0.1",  # RedisPubSub (realtime/pubsub_redis.py); 5.0.1 adds the asyncio aclose() API
+]
 loadtest = [
   "locust>=2.46.0",
   "flask>=3.1.3",  # locust floor pulls flask 2.2.5 (PYSEC-2026-2151) under lowest-direct
