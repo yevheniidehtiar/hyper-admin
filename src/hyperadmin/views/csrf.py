@@ -33,7 +33,7 @@ primary control.
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any, Literal
+from typing import TYPE_CHECKING, Any
 from urllib.parse import urlsplit
 
 from jinja2 import pass_context
@@ -41,6 +41,7 @@ from markupsafe import Markup
 from starlette.responses import PlainTextResponse, Response
 
 from hyperadmin.core.csrf import CsrfTokenSigner, EffectiveCsrfMode
+from hyperadmin.core.settings import CookieSecure, resolve_cookie_secure
 from hyperadmin.views.urls import admin_base_path
 
 if TYPE_CHECKING:
@@ -137,7 +138,7 @@ class CsrfGuard:
         header_name: str = "X-CSRF-Token",
         field_name: str = "csrf_token",
         trusted_origins: Iterable[str] = (),
-        cookie_secure: bool | Literal["auto"] = "auto",
+        cookie_secure: CookieSecure = "auto",
     ) -> None:
         if mode not in {"enforce", "report"}:
             msg = f"CsrfGuard mode must be 'enforce' or 'report', not {mode!r}"
@@ -148,7 +149,7 @@ class CsrfGuard:
         self.header_name = header_name
         self.field_name = field_name
         self.trusted_origins = frozenset(_normalize_origin(o) for o in trusted_origins)
-        self.cookie_secure = cookie_secure
+        self.cookie_secure: CookieSecure = cookie_secure
 
     # ── Token lifecycle ────────────────────────────────────────────────────
 
@@ -171,11 +172,7 @@ class CsrfGuard:
         """Set the token cookie on ``response`` when this request issued one."""
         if not getattr(request.state, _ISSUED_FLAG, False):
             return
-        secure = (
-            request.url.scheme == "https"
-            if self.cookie_secure == "auto"
-            else self.cookie_secure is True
-        )
+        secure = resolve_cookie_secure(self.cookie_secure, request.url.scheme)
         response.set_cookie(
             self.cookie_name,
             request.state.csrf_token,

@@ -15,7 +15,7 @@ from typing import Any
 
 import anyio
 import pytest
-from fastapi import APIRouter, FastAPI, Request
+from fastapi import APIRouter, Depends, FastAPI, Request
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
 from sqlmodel import Field, SQLModel
@@ -110,9 +110,10 @@ def _admin_client(
     *,
     backend: Any = None,
     base_url: str = "http://testserver",
+    app: FastAPI | None = None,
     **settings: Any,
 ) -> TestClient:
-    app = FastAPI()
+    app = app or FastAPI()
     admin = Admin(
         app,
         engine=engine,
@@ -392,6 +393,55 @@ def test_enforce_mode_protects_an_admin_without_auth(engine: AsyncEngine) -> Non
 
     # Then
     assert response.status_code == 403
+
+
+def _host_login_guard() -> None:
+    """A host app-level dependency standing in for the host's own login check."""
+
+
+@pytest.mark.parametrize("mount_mode", ["router", "isolated"])
+def test_auto_mode_enforces_when_the_host_brings_its_own_auth(
+    engine: AsyncEngine, mount_mode: str
+) -> None:
+    """
+    Scenario: auto enforces CSRF for a host that guards its app with dependencies
+      Given Admin() with no auth_backend on a FastAPI(dependencies=[...]) host
+            and the default csrf_mode
+      When  POST /admin/order is sent without a token
+      Then  the response is 403 with X-HyperAdmin-CSRF: failed
+    """
+    # Given
+    app = FastAPI(dependencies=[Depends(_host_login_guard)])
+    client = _admin_client(engine, app=app, mount_mode=mount_mode)
+    client.get("/admin/csrforder")  # the browser holds a valid cookie
+
+    # When
+    response = client.post("/admin/csrforder", data={"name": "cross-site"})
+
+    # Then
+    assert response.status_code == 403
+    assert response.headers["X-HyperAdmin-CSRF"] == "failed"
+
+
+def test_cookie_secure_setting_marks_the_csrf_cookie_secure_over_http(
+    engine: AsyncEngine,
+) -> None:
+    """
+    Scenario: cookie_secure=True behind an untrusted TLS proxy
+      Given built-in auth and HyperAdminSettings(cookie_secure=True)
+      When  an admin page is opened over plain http
+      Then  the hyperadmin_csrf cookie is issued with Secure
+    """
+    # Given
+    client = _admin_client(engine, backend=_LoggedInBackend(), cookie_secure=True)
+
+    # When
+    response = client.get("/admin/csrforder")
+
+    # Then
+    cookie = response.headers["set-cookie"]
+    assert cookie.startswith("hyperadmin_csrf=")
+    assert "Secure" in cookie
 
 
 def test_startup_logs_the_effective_trusted_origins(

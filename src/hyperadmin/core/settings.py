@@ -38,6 +38,19 @@ _DEFAULT_SUPPORTED_LOCALES = [
 
 ThemeLiteral = Literal["auto", "light", "dark"]
 MountModeLiteral = Literal["isolated", "router"]
+#: ``cookie_secure`` setting values (SDD C.4).
+CookieSecure = Literal["auto"] | bool
+
+
+def resolve_cookie_secure(cookie_secure: CookieSecure, scheme: str) -> bool:
+    """Resolve ``cookie_secure`` for a request (SDD C.4).
+
+    ``"auto"`` marks a cookie ``Secure`` when the effective request scheme is
+    https; ``True``/``False`` force it either way.
+    """
+    if cookie_secure == "auto":
+        return scheme == "https"
+    return cookie_secure is True
 
 
 @lru_cache(maxsize=1)
@@ -86,6 +99,9 @@ class HyperAdminSettings(BaseSettings):
     csrf_field_name: str = Field(default="csrf_token", min_length=1)
     #: Extra origins (``"https://admin.example"``) the ``Origin`` check accepts.
     csrf_trusted_origins: list[str] = Field(default_factory=list)
+    #: ``Secure`` flag for admin cookies (SDD C.4): ``"auto"`` follows the effective
+    #: request scheme; set ``True`` behind a TLS proxy uvicorn does not trust.
+    cookie_secure: CookieSecure = "auto"
 
     # ── Database ─────────────────────────────────────────────────────────────
     database_url: str = _DEFAULT_DATABASE_URL

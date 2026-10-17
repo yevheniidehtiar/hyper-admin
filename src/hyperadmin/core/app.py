@@ -172,12 +172,18 @@ class Admin:
 
     @property
     def csrf_mode(self) -> "EffectiveCsrfMode":
-        """The effective CSRF mode: ``csrf_mode="auto"`` enforces when auth is on (SDD D.1)."""
+        """The effective CSRF mode: ``csrf_mode="auto"`` enforces when auth is on (SDD D.1).
+
+        "Auth is on" means an ``auth_backend`` or app-level ``dependencies`` on the
+        host app (the usual host login guard). Host auth middleware cannot be
+        detected; such hosts set ``csrf_mode="enforce"``.
+        """
         from hyperadmin.core.csrf import resolve_csrf_mode
 
-        return resolve_csrf_mode(
-            self.settings.csrf_mode, auth_enabled=self.auth_backend is not None
-        )
+        # getattr: a plain Starlette router (or a test double) has no ``dependencies``.
+        host_dependencies = getattr(getattr(self.app, "router", None), "dependencies", None)
+        auth_enabled = self.auth_backend is not None or bool(host_dependencies)
+        return resolve_csrf_mode(self.settings.csrf_mode, auth_enabled=auth_enabled)
 
     def _validate_secret_key(self) -> None:
         """Refuse the default ``secret_key`` when it signs anything that matters.
@@ -698,6 +704,7 @@ class Admin:
             header_name=settings.csrf_header_name,
             field_name=settings.csrf_field_name,
             trusted_origins=settings.csrf_trusted_origins,
+            cookie_secure=settings.cookie_secure,
         )
 
     def mount(self, path: str = "/admin") -> None:
