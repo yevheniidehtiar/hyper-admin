@@ -15,7 +15,7 @@ from hyperadmin.core.choices import ChoiceItem
 from hyperadmin.core.display import get_enum_label
 from hyperadmin.core.sensitive import effective_sensitive_field_names
 from hyperadmin.core.timezones import is_auto_now_factory
-from hyperadmin.i18n import gettext_lazy
+from hyperadmin.i18n import translate_error_lazy
 
 try:
     from hyperadmin.core.fields import classify_field as _classify_field
@@ -541,7 +541,7 @@ class PydanticForm:
             for error in e.errors():
                 loc = error["loc"][0]
                 key = str(loc)
-                errs.setdefault(key, []).append(gettext_lazy(error["msg"]))
+                errs.setdefault(key, []).append(translate_error_lazy(error))
             self.errors = errs
             for f in self.fields:
                 f.errors = errs.get(f.name)
@@ -770,7 +770,7 @@ class InlineFormset:
                 row_errors: dict[str, ErrorList] = {}
                 for error in e.errors():
                     loc = str(error["loc"][0])
-                    row_errors.setdefault(loc, []).append(gettext_lazy(error["msg"]))
+                    row_errors.setdefault(loc, []).append(translate_error_lazy(error))
                 errors[i] = row_errors
 
         self.errors = errors

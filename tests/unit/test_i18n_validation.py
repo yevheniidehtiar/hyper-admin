@@ -17,7 +17,7 @@ Scenario: flash message is a lazy string
 from __future__ import annotations
 
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import babel.support
 import pytest
@@ -39,7 +39,7 @@ if TYPE_CHECKING:
 # ---------------------------------------------------------------------------
 
 
-def _write_mo(target: Path, locale: str, msgs: dict[str, str]) -> None:
+def _write_mo(target: Path, locale: str, msgs: dict[Any, Any]) -> None:
     """Write a real Babel .mo file at *target* containing *msgs*."""
     from babel.messages.catalog import Catalog
     from babel.messages.mofile import write_mo
@@ -216,12 +216,18 @@ class TestValidationErrorsAreLazy:
         proxy = name_errors[0]
         msgid = str(proxy)  # English baseline
 
-        # Given a catalog that translates the Pydantic error msgid
+        # Given a catalog that translates the error-type msgid (st-v058-byoa-27:
+        # msgids carry %(ctx)s placeholders, not pydantic's interpolated text)
         translated = "El valor es demasiado corto"
         _write_mo(
             tmp_path / "es" / "LC_MESSAGES" / "messages.mo",
             locale="es",
-            msgs={msgid: translated},
+            msgs={
+                (
+                    "String should have at least %(min_length)s character",
+                    "String should have at least %(min_length)s characters",
+                ): (translated, translated)
+            },
         )
         monkeypatch.setattr(loader, "LOCALE_DIR", tmp_path)
         _clear_caches()
