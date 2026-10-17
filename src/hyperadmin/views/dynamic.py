@@ -34,6 +34,7 @@ from hyperadmin.core.discovery import build_filter_metadata
 from hyperadmin.core.display import get_display_name
 from hyperadmin.core.fields import classify_field
 from hyperadmin.core.options import AdminOptions
+from hyperadmin.core.primary_key import InvalidPrimaryKey, PrimaryKeyInfo
 from hyperadmin.core.registry import site
 from hyperadmin.core.sensitive import (
     is_sensitive,
@@ -138,12 +139,13 @@ class DynamicModelView:
     ):
         self.adapter = adapter
         self.model = adapter.model
+        self.pk: PrimaryKeyInfo = adapter.pk
         self.options = options
         self.templates = templates
         self.app_label = app_label
         self.form_include = form_include
         self.form_create_exclude = form_create_exclude or []
-        self.column_list = column_list or ["id", "__str__"]
+        self.column_list = column_list or [self.pk.attr, "__str__"]
         self.permission_checker = permission_checker
         self._model_name_lower = self.model.__name__.lower()
         self.actions: list[ActionDef] = actions or []
@@ -305,6 +307,13 @@ class DynamicModelView:
             for rel in inspector.relationships
         }
 
+    def _resolve_pk(self, item_id: Any) -> Any:
+        """Parse a raw ``item_id`` into this model's typed key, or raise 404."""
+        try:
+            return self.pk.parse(item_id)
+        except InvalidPrimaryKey as exc:
+            raise HTTPException(status_code=404, detail="Item not found") from exc
+
     async def _get_or_404(self, item_id: Any) -> Any:
         """Load ``item_id`` under the active queryset scope or raise 404."""
         item = await self.adapter.get(pk=item_id)
@@ -436,9 +445,9 @@ class DynamicModelView:
         }
 
     def _default_sort_field(self) -> str:
-        """The first non-sensitive model field (``id`` when there is none)."""
+        """The first non-sensitive model field (the pk attribute when there is none)."""
         model_fields = getattr(self.model, "model_fields", {})
-        return next((f for f in model_fields if f not in self._sensitive_fields), "id")
+        return next((f for f in model_fields if f not in self._sensitive_fields), self.pk.attr)
 
     def _get_file_fields(self) -> set[str]:
         """Return the set of field names backed by FileType/ImageType columns."""
@@ -562,7 +571,10 @@ class DynamicModelView:
                         # A related row: never its default __str__ (prints secrets).
                         val = get_display_name(val)
                     row[field] = val
-            row["id"] = getattr(item, "id", None)
+            row["_pk"] = self.pk.value_of(item)
+            # Custom templates still read ``item.id`` on int-id models.
+            if hasattr(item, "id"):
+                row["id"] = item.id
             rows.append(row)
 
         # Get filter metadata if list_filter is configured
@@ -572,6 +584,7 @@ class DynamicModelView:
 
         context = {
             "request": request,
+            "pk_attr": self.pk.attr,
             "model_name": self.model.__name__,
             "fields": display_fields,
             "field_labels": self.field_labels,
@@ -600,13 +613,11 @@ class DynamicModelView:
         return self.templates.TemplateResponse(request, template_name, context)
 
     @_request_scoped
-    async def detail_view(self, request: Request, item_id: int):
-        """
-        Renders the detail view for a single item.
-        Assumes the model has an 'id' field.
-        """
+    async def detail_view(self, request: Request, item_id: Any):
+        """Renders the detail view for a single item, keyed by the model's primary key."""
+        pk = self._resolve_pk(item_id)
         await self._check_permission(request, "view")
-        item = await self._get_or_404(item_id)
+        item = await self._get_or_404(pk)
 
         await self._check_object_permission(request, item, "view")
 
@@ -625,6 +636,7 @@ class DynamicModelView:
             "actions": self.actions,
             "model_name_lower": self._model_name_lower,
             "file_fields": file_fields,
+            "pk_attr": self.pk.attr,
         }
         template_name = self._get_template_name("detail")
         return self.templates.TemplateResponse(request, template_name, context)
@@ -787,6 +799,7 @@ class DynamicModelView:
 
         context = {
             "request": request,
+            "pk_attr": self.pk.attr,
             "model_name": self.model.__name__,
             "form": form,
             "values": values or {},
@@ -953,14 +966,13 @@ class DynamicModelView:
                 request, values=data, errors=field_errors, status_code=422
             )
 
-        # Save inline rows with the parent PK
-        parent_pk = getattr(new_item, "id", None)
-        if parent_pk:
+        # Save inline rows with the parent PK (``0`` and ``""`` are valid keys).
+        parent_pk = self.pk.value_of(new_item)
+        if parent_pk is not None:
             await self._save_inline_rows(inline_valid_data, parent_pk)
-
-        item_id = parent_pk
-        if item_id:
-            redirect_url = request.url_for(f"{self.model.__name__.lower()}-detail", item_id=item_id)
+            redirect_url = request.url_for(
+                f"{self.model.__name__.lower()}-detail", item_id=parent_pk
+            )
         else:
             redirect_url = request.url_for(f"{self.model.__name__.lower()}-list")
 
@@ -973,15 +985,16 @@ class DynamicModelView:
     async def update_form_view(
         self,
         request: Request,
-        item_id: int,
+        item_id: Any,
         values: dict | None = None,
         errors: dict | None = None,
         status_code: int = 200,
         inline_formsets: list[InlineFormset] | None = None,
     ):
         """Renders the update form, optionally pre-filled with submitted values and errors."""
+        pk = self._resolve_pk(item_id)
         await self._check_permission(request, "change")
-        item = await self._get_or_404(item_id)
+        item = await self._get_or_404(pk)
         await self._check_object_permission(request, item, "change")
 
         initial_func = getattr(item, "model_dump", None)
@@ -1026,13 +1039,14 @@ class DynamicModelView:
             existing_data: dict[str, list[Any]] = {}
             for spec in getattr(self.options, "inlines", []):
                 prefix = spec.model_name
-                related = await self.adapter.get_related(pk=item_id, field=spec.relationship_name)
+                related = await self.adapter.get_related(pk=pk, field=spec.relationship_name)
                 if related:
                     existing_data[prefix] = list(related)
             inline_formsets = self._build_inline_formsets(existing_data, request=request)
 
         context = {
             "request": request,
+            "pk_attr": self.pk.attr,
             "model_name": self.model.__name__,
             "item": item,
             "item_name": get_display_name(item),
@@ -1053,10 +1067,11 @@ class DynamicModelView:
         )
 
     @_request_scoped
-    async def update_view(self, request: Request, item_id: int):
+    async def update_view(self, request: Request, item_id: Any):
         """Handles form submission for updating an item."""
+        pk = self._resolve_pk(item_id)
         await self._check_permission(request, "change")
-        existing = await self._get_or_404(item_id)
+        existing = await self._get_or_404(pk)
         await self._check_object_permission(request, existing, "change")
         form_data = await request.form()
 
@@ -1076,6 +1091,9 @@ class DynamicModelView:
         data = self._extract_form_data(form_data, form)
         file_uploads = self._pop_file_uploads(data, form)
         self._keep_stored_secrets(data, existing)
+        # The pk is not an input on the edit form: a natural key must still
+        # validate, so it is seeded from the stored row (and dropped again below).
+        data.setdefault(self.pk.attr, self.pk.value_of(existing))
 
         form.bind(data)
         instance, errs = form.validate(data)
@@ -1087,8 +1105,8 @@ class DynamicModelView:
         for spec in getattr(self.options, "inlines", []):
             formset = InlineFormset(spec=spec)
             rows_data = formset.extract_submitted_data(form_data)
-            await self._keep_stored_inline_secrets(formset, rows_data, item_id)
-            valid_rows, row_errors = formset.validate_rows(rows_data, parent_pk=item_id)
+            await self._keep_stored_inline_secrets(formset, rows_data, pk)
+            valid_rows, row_errors = formset.validate_rows(rows_data, parent_pk=pk)
             if row_errors:
                 has_inline_errors = True
                 formset.rebuild_from_submitted(form_data)
@@ -1102,7 +1120,7 @@ class DynamicModelView:
                     formset.rebuild_from_submitted(form_data)
             return await self.update_form_view(
                 request,
-                item_id=item_id,
+                item_id=pk,
                 values=data,
                 errors=legacy_errs,
                 status_code=422,
@@ -1111,37 +1129,39 @@ class DynamicModelView:
 
         if not instance:
             return await self.update_form_view(
-                request, item_id=item_id, values=data, errors={}, status_code=422
+                request, item_id=pk, values=data, errors={}, status_code=422
             )
 
         # Ownership and inline-model permissions are checked before any write.
-        await self._authorize_inline_rows(request, inline_valid_data, parent_pk=item_id)
+        await self._authorize_inline_rows(request, inline_valid_data, parent_pk=pk)
 
         # References must point at rows the target admin's get_queryset exposes.
         hidden_refs = await self._hidden_reference_errors(instance.model_dump(exclude_none=True))
         if hidden_refs:
             return await self.update_form_view(
-                request, item_id=item_id, values=data, errors=hidden_refs, status_code=422
+                request, item_id=pk, values=data, errors=hidden_refs, status_code=422
             )
 
-        # exclude_none: id is not submitted by the form and must not overwrite the PK.
-        # Auto-now fields are not rendered; validation re-ran their default factory,
-        # so writing them would overwrite the stored timestamp on every edit.
+        # The pk is immutable: never write it, not even a default_factory value
+        # (a fresh uuid4) that validation filled in. Auto-now fields are not
+        # rendered; validation re-ran their default factory, so writing them
+        # would overwrite the stored timestamp on every edit.
         try:
             update_data = instance.model_dump(
                 exclude_none=True, exclude=set(form.auto_now_field_names)
             )
+            update_data.pop(self.pk.attr, None)
             update_data.update(file_uploads)
-            await self.adapter.update(pk=item_id, data=update_data)
+            await self.adapter.update(pk=pk, data=update_data)
         except IntegrityError as exc:
             logger.exception("IntegrityError during update")
             field_errors = _integrity_error_to_field_errors(exc)
             return await self.update_form_view(
-                request, item_id=item_id, values=data, errors=field_errors, status_code=422
+                request, item_id=pk, values=data, errors=field_errors, status_code=422
             )
 
         # Save inline rows
-        await self._save_inline_rows(inline_valid_data, item_id)
+        await self._save_inline_rows(inline_valid_data, pk)
 
         redirect_url = request.url_for(f"{self.model.__name__.lower()}-list")
 
@@ -1153,7 +1173,7 @@ class DynamicModelView:
     async def _save_inline_rows(
         self,
         inline_valid_data: list[tuple[InlineFormset, list[dict]]],
-        parent_pk: int,
+        parent_pk: Any,
     ) -> None:
         """Persist validated inline rows — create, update, or delete as needed."""
         try:
@@ -1177,10 +1197,14 @@ class DynamicModelView:
         if not sensitive or not existing_rows:
             return
         related = await self.adapter.get_related(pk=parent_pk, field=formset.spec.relationship_name)
-        by_pk = {getattr(child, "id", None): child for child in related or []}
+        child_pk = self.adapter.for_model(formset.spec.model).pk
+        by_pk = {child_pk.value_of(child): child for child in related or []}
         model_fields = getattr(formset.spec.model, "model_fields", {})
         for row in existing_rows:
-            child = by_pk.get(row["_pk"])
+            try:
+                child = by_pk.get(child_pk.parse(row["_pk"]))
+            except InvalidPrimaryKey:
+                child = None
             if child is None:
                 continue
             for name in sensitive:
@@ -1282,7 +1306,7 @@ class DynamicModelView:
 
         formset = InlineFormset(spec=spec)
         row = formset._build_row(index)
-        context = {"request": request, "row": row, "inline": formset}
+        context = {"request": request, "pk_attr": self.pk.attr, "row": row, "inline": formset}
         template = self.templates.get_template("components/inline_row.html")
         html = template.render(context)
         return Response(content=html, media_type="text/html")
@@ -1331,7 +1355,7 @@ class DynamicModelView:
         choices = await self.adapter.get_choices(
             field_name, q=q, limit=limit, offset=offset, **extra_filters
         )
-        context = {"request": request, "choices": choices}
+        context = {"request": request, "pk_attr": self.pk.attr, "choices": choices}
         template = self.templates.get_template("widgets/choices_options.html")
         html = template.render(context)
         return Response(content=html, media_type="text/html")
@@ -1440,12 +1464,13 @@ class DynamicModelView:
                 status_code=200,
             )
 
-        new_pk = getattr(new_item, "id", None)
+        new_pk = self.pk.value_of(new_item)
         label = self._resolve_relation_label(new_item, str(target))
         payload = {
             "hyperadminPopupCreated": {
                 "target": str(target),
-                "id": new_pk,
+                # int keys stay JSON numbers; UUIDs become their canonical string.
+                "id": None if new_pk is None else self.pk.to_json(new_pk),
                 "label": label,
             }
         }
@@ -1486,6 +1511,7 @@ class DynamicModelView:
                 fld.errors = norm.get(fld.name)
         context = {
             "request": request,
+            "pk_attr": self.pk.attr,
             "model_name": self.model.__name__,
             "form": form,
             "target": target,
@@ -1557,7 +1583,7 @@ class DynamicModelView:
     async def delete_file_view(
         self,
         request: Request,
-        item_id: int,
+        item_id: Any,
         field_name: str,
     ) -> Response:
         """Delete a file from storage and clear the field on the record.
@@ -1567,15 +1593,16 @@ class DynamicModelView:
         ``field_name`` must be a file field (404 otherwise), and the file is
         removed only when its path resolves inside the storage root.
         """
+        pk = self._resolve_pk(item_id)
         await self._check_permission(request, "change")
         if field_name not in self._get_file_fields():
             raise HTTPException(status_code=404, detail=f"Unknown file field: {field_name!r}")
-        item = await self._get_or_404(item_id)
+        item = await self._get_or_404(pk)
         await self._check_object_permission(request, item, "change")
         path = self._stored_file_path(getattr(item, field_name, None))
         if path is not None:
             self._remove_files([str(path)])
-        await self.adapter.update(pk=item_id, data={field_name: None})
+        await self.adapter.update(pk=pk, data={field_name: None})
         if "hx-request" in request.headers:
             return Response(
                 status_code=200,
@@ -1619,9 +1646,9 @@ class DynamicModelView:
     def _is_inline_editable(self, field: str) -> bool:
         """Return True if ``field`` is in the list_editable allow-list and on the schema.
 
-        The primary key (``id``) is never editable inline.
+        The primary key is never editable inline.
         """
-        if field == "id":
+        if field in self.pk.attrs:
             return False
         if field not in self.model.model_fields:
             return False
@@ -1631,7 +1658,7 @@ class DynamicModelView:
     async def inline_edit_form_view(
         self,
         request: Request,
-        item_id: int,
+        item_id: Any,
         field: str,
         cancel: int = Query(0),
     ):
@@ -1641,16 +1668,18 @@ class DynamicModelView:
         button in the editor to restore the read-only view without hitting
         a separate endpoint.
         """
+        pk = self._resolve_pk(item_id)
         await self._check_permission(request, "change")
         if not self._is_inline_editable(field):
             raise HTTPException(status_code=403, detail="Field not editable")
 
-        item = await self._get_or_404(item_id)
+        item = await self._get_or_404(pk)
         await self._check_object_permission(request, item, "change")
 
         if cancel:
             context = {
                 "request": request,
+                "pk_attr": self.pk.attr,
                 "model_name": self.model.__name__,
                 "item": item,
                 "field": field,
@@ -1667,6 +1696,7 @@ class DynamicModelView:
 
         context = {
             "request": request,
+            "pk_attr": self.pk.attr,
             "model_name": self.model.__name__,
             "item": item,
             "field": field,
@@ -1676,13 +1706,14 @@ class DynamicModelView:
         return self.templates.TemplateResponse(request, "components/inline_editor.html", context)
 
     @_request_scoped
-    async def inline_save_view(self, request: Request, item_id: int, field: str):
+    async def inline_save_view(self, request: Request, item_id: Any, field: str):
         """Validates and persists a single field for ``item_id``."""
+        pk = self._resolve_pk(item_id)
         await self._check_permission(request, "change")
         if not self._is_inline_editable(field):
             raise HTTPException(status_code=403, detail="Field not editable")
 
-        item = await self._get_or_404(item_id)
+        item = await self._get_or_404(pk)
         await self._check_object_permission(request, item, "change")
 
         form_data = await request.form()
@@ -1714,6 +1745,7 @@ class DynamicModelView:
                 error_form_field.errors = field_errors
             context = {
                 "request": request,
+                "pk_attr": self.pk.attr,
                 "model_name": self.model.__name__,
                 "item": item,
                 "field": field,
@@ -1732,6 +1764,7 @@ class DynamicModelView:
                 "components/inline_cell_error.html",
                 {
                     "request": request,
+                    "pk_attr": self.pk.attr,
                     "model_name": self.model.__name__,
                     "item": item,
                     "field": field,
@@ -1745,12 +1778,13 @@ class DynamicModelView:
         # Persist only the edited field — exclude_unset would also work, but
         # we know precisely what changed.
         new_value = getattr(instance, field)
-        await self.adapter.update(pk=item_id, data={field: new_value})
+        await self.adapter.update(pk=pk, data={field: new_value})
 
         # Re-fetch to get the canonical stored value (e.g. type coercion)
-        refreshed = await self.adapter.get(pk=item_id)
+        refreshed = await self.adapter.get(pk=pk)
         context = {
             "request": request,
+            "pk_attr": self.pk.attr,
             "model_name": self.model.__name__,
             "item": refreshed,
             "field": field,
@@ -1767,19 +1801,20 @@ class DynamicModelView:
         return response
 
     @_request_scoped
-    async def delete_action(self, request: Request, item_id: int):
+    async def delete_action(self, request: Request, item_id: Any):
         """Deletes an item."""
+        pk = self._resolve_pk(item_id)
         await self._check_permission(request, "delete")
-        item = await self._get_or_404(item_id)
+        item = await self._get_or_404(pk)
 
         await self._check_object_permission(request, item, "delete")
 
         file_paths = self._collect_file_paths(item)
         try:
-            await self.adapter.delete(pk=item_id)
+            await self.adapter.delete(pk=pk)
         except IntegrityError:
             # Still referenced by other rows (FK RESTRICT / NO ACTION); nothing was deleted.
-            logger.info("Delete of %s %s blocked by referencing rows", self.model.__name__, item_id)
+            logger.info("Delete of %s %s blocked by referencing rows", self.model.__name__, pk)
             raise HTTPException(
                 status_code=409,
                 detail=f"This {self.model.__name__} cannot be deleted: other records still "
@@ -1795,24 +1830,26 @@ class DynamicModelView:
         return RedirectResponse(url=redirect_url, status_code=303)
 
     @_request_scoped
-    async def run_action(self, request: Request, item_id: int, action_name: str) -> Response:
+    async def run_action(self, request: Request, item_id: Any, action_name: str) -> Response:
         """Dispatch a custom action registered via ``@action`` on the ModelAdmin.
 
         POST /{model_name}/{item_id}/action/{action_name}
 
         Returns an HTMX redirect to the model list on success, or delegates to the
         handler's return value when it returns a :class:`starlette.responses.Response`.
+        The handler receives the typed key (still an ``int`` for int-id models).
         """
+        pk = self._resolve_pk(item_id)
         action_def = self._action_map.get(action_name)
         if action_def is None:
             raise HTTPException(status_code=404, detail=f"Action '{action_name}' not found")
 
         await self._check_permission(request, f"action_{action_name}")
         # Load under the queryset scope (404 for hidden rows) and re-check per object.
-        item = await self._get_or_404(item_id)
+        item = await self._get_or_404(pk)
         await self._check_object_permission(request, item, f"action_{action_name}")
 
-        result = await action_def.handler(self._admin_instance, request, item_id)
+        result = await action_def.handler(self._admin_instance, request, pk)
 
         if isinstance(result, Response):
             return result
@@ -1830,19 +1867,19 @@ class DynamicModelView:
         return action_def
 
     @staticmethod
-    def _parse_ids(form: Any) -> list[int]:
-        """Parse the ``ids`` multi-valued form field into a list of ints.
+    def _parse_ids(form: Any, pk: PrimaryKeyInfo) -> list[Any]:
+        """Parse the ``ids`` multi-valued form field into typed keys via ``pk.parse``.
 
-        Silently drops entries that aren't parseable as integers — those would
-        not match any row anyway.
+        Silently drops entries that aren't valid keys — those would not match
+        any row anyway.
         """
         raw = form.getlist("ids") if hasattr(form, "getlist") else []
-        parsed: list[int] = []
+        parsed: list[Any] = []
         for value in raw:
-            # Per-value tolerance: silently skip any id that isn't an integer.
+            # Per-value tolerance: silently skip any id that isn't a valid key.
             try:
-                parsed.append(int(value))
-            except (TypeError, ValueError):  # noqa: PERF203
+                parsed.append(pk.parse(value))
+            except InvalidPrimaryKey:  # noqa: PERF203
                 continue
         return parsed
 
@@ -1850,7 +1887,7 @@ class DynamicModelView:
         self,
         request: Request,
         action_def: ActionDef,
-        ids: list[int],
+        ids: list[Any],
         params: Any | None,
     ) -> list[BulkRowResult]:
         """Run ``action_def.handler`` over ``ids`` with per-row outcome capture.
@@ -1904,6 +1941,7 @@ class DynamicModelView:
         """Render the per-row result page (or HTMX fragment)."""
         context = {
             "request": request,
+            "pk_attr": self.pk.attr,
             "action": action_def,
             "outcomes": outcomes,
             "model_name": self._model_name_lower,
@@ -1918,7 +1956,7 @@ class DynamicModelView:
         self,
         request: Request,
         action_def: ActionDef,
-        ids: list[int],
+        ids: list[Any],
         errors: dict[str, list[str]] | None = None,
     ) -> Response:
         """Render the Pydantic-derived parameter form before bulk execution."""
@@ -1937,6 +1975,7 @@ class DynamicModelView:
                 )
         context = {
             "request": request,
+            "pk_attr": self.pk.attr,
             "action": action_def,
             "ids": ids,
             "fields": fields,
@@ -1963,7 +2002,7 @@ class DynamicModelView:
         await self._check_permission(request, f"action_{action_name}")
 
         form = await request.form()
-        ids = self._parse_ids(form)
+        ids = self._parse_ids(form, self.pk)
 
         if action_def.requires_selection and not ids:
             raise HTTPException(status_code=400, detail="Selection required")
@@ -1989,7 +2028,7 @@ class DynamicModelView:
             )
 
         form = await request.form()
-        ids = self._parse_ids(form)
+        ids = self._parse_ids(form, self.pk)
 
         if action_def.requires_selection and not ids:
             raise HTTPException(status_code=400, detail="Selection required")
