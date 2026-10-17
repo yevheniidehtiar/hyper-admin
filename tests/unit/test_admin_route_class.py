@@ -11,8 +11,9 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
+import pytest
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPBasic, OAuth2PasswordBearer
 from fastapi.testclient import TestClient
 from starlette.responses import JSONResponse, PlainTextResponse, Response
 
@@ -96,7 +97,7 @@ def _client(
     if can_access is not None:
         auth_kwargs["can_access"] = can_access
     auth = ExternalAuth(**auth_kwargs)
-    route_class = make_admin_route_class(**(route_kwargs or {}))
+    route_class = make_admin_route_class(**{"translate_auth_errors": True, **(route_kwargs or {})})
     sub_app = FastAPI()
     sub_app.include_router(
         router or _admin_router(route_class),
@@ -107,8 +108,22 @@ def _client(
     return TestClient(host, follow_redirects=False)
 
 
-_LOGIN = {"login_url": "/login"}
-_COOKIE = {"login_url": "/login", "token_cookie": "hyperadmin_token"}
+class _AcceptingCsrf:
+    """A CSRF hook that accepts every request (the bridge requires one)."""
+
+    async def verify(self, request: Request) -> Response | None:
+        return None
+
+    def attach(self, request: Request, response: Response) -> None:
+        return None
+
+
+_LOGIN: dict[str, Any] = {"login_url": "/login"}
+_COOKIE: dict[str, Any] = {
+    "login_url": "/login",
+    "token_cookie": "hyperadmin_token",
+    "csrf": _AcceptingCsrf(),
+}
 
 
 # --- Scenarios ---------------------------------------------------------------
@@ -235,7 +250,9 @@ def test_token_cookie_uses_configured_scheme() -> None:
       When  GET /admin/ is requested
       Then  the handler sees Authorization: Token abc
     """
-    route_class = make_admin_route_class(token_cookie="tk", token_scheme="Token")
+    route_class = make_admin_route_class(
+        token_cookie="tk", token_scheme="Token", csrf=_AcceptingCsrf()
+    )
     router = APIRouter(route_class=route_class)
 
     @router.get("/")
@@ -255,7 +272,7 @@ def test_empty_or_unconfigured_token_cookie_is_not_bridged() -> None:
       When  GET /admin/ is requested
       Then  no Authorization header is added
     """
-    route_class = make_admin_route_class(token_cookie="tk")
+    route_class = make_admin_route_class(token_cookie="tk", csrf=_AcceptingCsrf())
     router = APIRouter(route_class=route_class)
 
     @router.get("/")
@@ -463,7 +480,7 @@ def test_view_401_is_not_a_login_redirect() -> None:
       When  a view raises HTTPException(401)
       Then  the response is FastAPI's own 401, not a redirect
     """
-    route_class = make_admin_route_class(login_url="/login")
+    route_class = make_admin_route_class(login_url="/login", translate_auth_errors=True)
     router = APIRouter(route_class=route_class)
 
     @router.get("/")
@@ -488,7 +505,7 @@ def test_router_mode_next_and_api_prefix_use_the_admin_path() -> None:
     auth = ExternalAuth(get_user=anonymous_user)
     host = FastAPI()
     host.include_router(
-        _admin_router(make_admin_route_class(login_url="/login")),
+        _admin_router(make_admin_route_class(login_url="/login", translate_auth_errors=True)),
         prefix="/admin",
         dependencies=[Depends(build_admin_dependency(auth))],
     )
@@ -501,6 +518,61 @@ def test_router_mode_next_and_api_prefix_use_the_admin_path() -> None:
     assert page.status_code == 303
     assert page.headers["location"] == "/login?next=%2Fadmin%2Forder%3Fx%3D1"
     assert api.status_code == 401
+
+
+# --- Built-in / legacy mode (no ExternalAuth) --------------------------------
+
+
+def test_host_app_level_basic_auth_401_passes_through_without_translation() -> None:
+    """
+    Scenario: a host app-level HTTPBasic 401 is not rewritten in built-in mode
+      Given the admin router uses make_admin_route_class() (no ExternalAuth)
+      And   the host app is FastAPI(dependencies=[Depends(HTTPBasic())])
+      When  an unauthenticated GET /admin/order is requested
+      Then  the response is FastAPI's own 401 with WWW-Authenticate: Basic
+    """
+    host = FastAPI(dependencies=[Depends(HTTPBasic())])
+    host.include_router(_admin_router(make_admin_route_class(login_url="/login")), prefix="/admin")
+    client = TestClient(host, follow_redirects=False)
+
+    response = client.get("/admin/order", headers={"Accept": "text/html"})
+
+    assert response.status_code == 401
+    assert response.headers["www-authenticate"] == "Basic"
+    assert response.json() == {"detail": "Not authenticated"}
+
+
+def test_host_app_level_403_guard_passes_through_without_translation() -> None:
+    """
+    Scenario: a host app-level 403 guard is not the can_access page in built-in mode
+      Given the admin router uses make_admin_route_class() (no ExternalAuth)
+      And   the host app has a dependency raising HTTPException(403)
+      When  GET /admin/order is requested
+      Then  the response is FastAPI's own 403 JSON
+    """
+
+    def api_key_guard() -> None:
+        raise HTTPException(status_code=403, detail="Bad API key")
+
+    host = FastAPI(dependencies=[Depends(api_key_guard)])
+    host.include_router(_admin_router(make_admin_route_class()), prefix="/admin")
+    client = TestClient(host, follow_redirects=False)
+
+    response = client.get("/admin/order")
+
+    assert response.status_code == 403
+    assert response.json() == {"detail": "Bad API key"}
+
+
+def test_token_cookie_without_csrf_is_rejected() -> None:
+    """
+    Scenario: the token-cookie bridge cannot be enabled without a CSRF check
+      Given token_cookie='hyperadmin_token' and no csrf check
+      When  make_admin_route_class is called
+      Then  a ValueError is raised
+    """
+    with pytest.raises(ValueError, match="token_cookie requires a csrf check"):
+        make_admin_route_class(token_cookie="hyperadmin_token")
 
 
 # --- CSRF hook (pipeline order, SDD B.2 steps 1-4) ----------------------------
@@ -618,7 +690,9 @@ def test_multipart_post_with_cookie_token_and_body_csrf_reaches_handler_intact()
     """
     csrf = _RecordingCsrf(read_form=True)
     router = APIRouter(
-        route_class=make_admin_route_class(token_cookie="hyperadmin_token", csrf=csrf)
+        route_class=make_admin_route_class(
+            token_cookie="hyperadmin_token", csrf=csrf, translate_auth_errors=True
+        )
     )
 
     @router.post("/order")
