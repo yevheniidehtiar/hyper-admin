@@ -1,5 +1,6 @@
 import logging
 import os
+import warnings
 from typing import TYPE_CHECKING, Any
 
 from fastapi import APIRouter, FastAPI
@@ -22,10 +23,15 @@ from hyperadmin.realtime.ws import make_ws_handler
 if TYPE_CHECKING:
     from contextlib import AbstractAsyncContextManager
 
+    from fastapi.routing import APIRoute
+
     from hyperadmin.core.adapters import SessionFactory
     from hyperadmin.db import TableScope
 
 logger = logging.getLogger("hyperadmin")
+
+#: HyperAdmin's own CSS, JS, fonts and icons, served under ``{prefix}/static``.
+_STATIC_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")
 
 
 class Admin:
@@ -120,16 +126,14 @@ class Admin:
         from hyperadmin.i18n import install_jinja_i18n
 
         install_jinja_i18n(self.templates.env)
-        # Namespace-aware url_for (C.1): falls back to today's plain-name
-        # resolution until mount() wires scope["hyperadmin"]["namespace"]
-        # (isolated sub-app mount, st-v058-byoa-35), so this is a no-op today.
+        # Namespace-aware url_for (C.1): tries "<namespace>:<name>" first when
+        # mount() has tagged the request scope (isolated mode), then the plain
+        # name (router mode, and host routes in either mode).
         from hyperadmin.views.urls import install_namespaced_url_for
 
         install_namespaced_url_for(self.templates.env)
 
-        static_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")
-        if os.path.exists(static_dir):
-            app.mount("/static", StaticFiles(directory=static_dir), name="static")
+        self._asgi_app: FastAPI | None = None
 
         # Opt-in auto-create decision is made once, here, from the settings this
         # Admin was built with — never re-evaluated on every startup() call.
@@ -150,6 +154,16 @@ class Admin:
     def theme(self) -> str:
         """Active theme from settings."""
         return self.settings.theme
+
+    @property
+    def asgi_app(self) -> FastAPI | None:
+        """The private admin sub-application, once ``mount()`` ran in isolated mode.
+
+        ``None`` before ``mount()``, and in (legacy) router mode, where admin
+        routes live directly on the host app. Hosts may add their own admin-side
+        routes to it; they then run behind the admin's middleware.
+        """
+        return self._asgi_app
 
     # ── Validation helpers ─────────────────────────────────────────────────
 
@@ -307,6 +321,7 @@ class Admin:
             datetime_format=self.settings.datetime_format,
             session_factory=self.session_factory,
             debug=self.settings.debug,
+            route_class=self.router.route_class,
         )
         admin_router.generate_routes()
         routers = admin_router.get_routers()
@@ -318,20 +333,26 @@ class Admin:
         from starlette.requests import Request
 
         from hyperadmin.auth.views import login_view, logout_view
+        from hyperadmin.views.urls import request_admin_path
 
         admin_prefix = path.rstrip("/")
         templates = self.templates
         auth_backend = self.auth_backend
         otp_service = self.otp_service
 
+        # Redirects use the per-request admin path (SDD C.1), so they follow a
+        # host served under a root_path (e.g. "/api/admin/", not "/admin/").
         async def login_get(request: Request):
-            return await login_view(request, templates, auth_backend, admin_prefix, otp_service)
+            base = request_admin_path(request, admin_prefix)
+            return await login_view(request, templates, auth_backend, base, otp_service)
 
         async def login_post(request: Request):
-            return await login_view(request, templates, auth_backend, admin_prefix, otp_service)
+            base = request_admin_path(request, admin_prefix)
+            return await login_view(request, templates, auth_backend, base, otp_service)
 
         async def logout_post(request: Request):
-            return await logout_view(request, auth_backend, admin_prefix)
+            base = request_admin_path(request, admin_prefix)
+            return await logout_view(request, auth_backend, base)
 
         self.router.add_api_route("/login", login_get, methods=["GET"], name="admin-login")
         self.router.add_api_route("/login", login_post, methods=["POST"], name="admin-login-post")
@@ -358,36 +379,36 @@ class Admin:
             mfa_settings_view,
             mfa_verify_view,
         )
+        from hyperadmin.views.urls import request_admin_path
 
         templates = self.templates
         auth_backend = self.auth_backend
         otp_service = self.otp_service
 
+        # Redirects and template links use the per-request admin path (SDD C.1).
         async def challenge_get(request: Request):
-            return await mfa_challenge_view(request, templates, admin_prefix)
+            base = request_admin_path(request, admin_prefix)
+            return await mfa_challenge_view(request, templates, base)
 
         async def verify_post(request: Request):
-            return await mfa_verify_view(
-                request, templates, auth_backend, otp_service, admin_prefix
-            )
+            base = request_admin_path(request, admin_prefix)
+            return await mfa_verify_view(request, templates, auth_backend, otp_service, base)
 
         async def resend_post(request: Request):
-            return await mfa_resend_view(
-                request, templates, auth_backend, otp_service, admin_prefix
-            )
+            base = request_admin_path(request, admin_prefix)
+            return await mfa_resend_view(request, templates, auth_backend, otp_service, base)
 
         async def settings_get(request: Request):
-            return await mfa_settings_view(request, templates, admin_prefix)
+            base = request_admin_path(request, admin_prefix)
+            return await mfa_settings_view(request, templates, base)
 
         async def enable_post(request: Request):
-            return await mfa_enable_view(
-                request, templates, auth_backend, otp_service, admin_prefix
-            )
+            base = request_admin_path(request, admin_prefix)
+            return await mfa_enable_view(request, templates, auth_backend, otp_service, base)
 
         async def disable_post(request: Request):
-            return await mfa_disable_view(
-                request, templates, auth_backend, otp_service, admin_prefix
-            )
+            base = request_admin_path(request, admin_prefix)
+            return await mfa_disable_view(request, templates, auth_backend, otp_service, base)
 
         self.router.add_api_route(
             "/mfa/challenge", challenge_get, methods=["GET"], name="admin-mfa-challenge"
@@ -408,8 +429,8 @@ class Admin:
             "/mfa/disable", disable_post, methods=["POST"], name="admin-mfa-disable"
         )
 
-    def _register_realtime_routes(self, path: str) -> None:
-        """Register the SSE GET route and WebSocket route under the admin prefix.
+    def _register_realtime_routes(self) -> None:
+        """Register the SSE GET route and WebSocket route on the admin router.
 
         Both endpoints share a single ``ConnectionRegistry`` so ``shutdown()``
         (``Admin.shutdown()`` / ``Lifecycle.shutdown()``) can drain every open
@@ -421,7 +442,6 @@ class Admin:
         """
         if self.realtime is None or self._realtime_registry is None:
             return
-        admin_prefix = path.rstrip("/")
         registry = self._realtime_registry
         settings = self.realtime
 
@@ -433,11 +453,9 @@ class Admin:
             name="admin-realtime-sse",
         )
         ws_handler = make_ws_handler(registry, settings, self.auth_backend)
-        self.app.router.add_websocket_route(
-            f"{admin_prefix}/realtime/ws",
-            ws_handler,
-            name="admin-realtime-ws",
-        )
+        # On the admin router, so it lands under the prefix in both mount modes
+        # (and inside the namespace in isolated mode).
+        self.router.add_websocket_route("/realtime/ws", ws_handler, name="admin-realtime-ws")
 
         if settings.enable_test_endpoints:
             from hyperadmin.realtime._debug import (
@@ -485,29 +503,35 @@ class Admin:
             name="admin-locale",
         )
 
-    def _add_auth_middleware(self, path: str) -> None:
-        """Add session and authentication middleware."""
+    def _add_auth_middleware(self, target: FastAPI, admin_prefix: str, *, isolated: bool) -> None:
+        """Add session and authentication middleware to ``target``.
+
+        ``target`` is the private sub-app in isolated mode, so neither the session
+        nor the auth check ever touches a host request; in router mode it is the
+        host app, and ``AuthenticationMiddleware`` matches ``admin_prefix`` on whole
+        path segments.
+        """
         from starlette.middleware.sessions import SessionMiddleware
 
         from hyperadmin.auth.middleware import AuthenticationMiddleware
 
-        admin_prefix = path.rstrip("/")
-        self.app.add_middleware(
+        target.add_middleware(
             AuthenticationMiddleware,
             auth_backend=self.auth_backend,
             admin_prefix=admin_prefix,
             permission_checker=self.permission_checker,
+            isolated=isolated,
         )
-        self.app.add_middleware(
+        target.add_middleware(
             SessionMiddleware,
             secret_key=self.settings.secret_key,
         )
 
-    def _add_locale_middleware(self) -> None:
-        """Add the locale-resolution middleware to the FastAPI app."""
+    def _add_locale_middleware(self, target: FastAPI) -> None:
+        """Add the locale-resolution middleware to ``target``."""
         from hyperadmin.i18n import LocaleMiddleware
 
-        self.app.add_middleware(LocaleMiddleware, settings=self.settings)
+        target.add_middleware(LocaleMiddleware, settings=self.settings)
 
     def _mount_upload_storage(self) -> None:
         """Mount the upload storage directory as a static-files endpoint."""
@@ -596,13 +620,60 @@ class Admin:
                 options=AdminOptions(can_create=False, can_delete=False),
             )
 
-    def mount(self, path: str) -> None:
-        """Mounts the admin interface on the FastAPI application."""
-        from hyperadmin.views.error_pages import admin_route_class
+    def _resolve_mount_mode(self, admin_prefix: str) -> bool:
+        """Return ``True`` for an isolated sub-app mount, ``False`` for router mode.
 
-        # Admin routes render 403/404/409 inside the admin layout for people (JSON stays
-        # for API callers). Set before any route is added to the admin router.
-        self.router.route_class = admin_route_class(self.templates)
+        Router mode is the deprecated legacy mode (SDD C.1). Mounting at the root
+        always uses it: a ``Mount("/")`` would shadow every host route.
+        """
+        if self.settings.mount_mode == "router":
+            warnings.warn(
+                "HyperAdmin mount_mode='router' is deprecated and will be removed in 0.6. "
+                "The default isolated mode mounts the admin as a private sub-application; "
+                "admin route names then resolve as "
+                f"'{self.settings.route_namespace}:<name>'.",
+                DeprecationWarning,
+                stacklevel=3,
+            )
+            return False
+        if not admin_prefix:
+            logger.warning(
+                "HyperAdmin mounted at '/': using router mode, because an isolated "
+                "sub-application mounted at the root would shadow every host route."
+            )
+            return False
+        return True
+
+    def _make_route_class(self) -> "type[APIRoute]":
+        """Build the ``HyperAdminRoute`` class shared by every admin router (SDD B.2)."""
+        from hyperadmin.views.route import make_admin_route_class
+
+        return make_admin_route_class(self.templates)
+
+    def mount(self, path: str = "/admin") -> None:
+        """Mount the admin interface on the host FastAPI application.
+
+        By default (``settings.mount_mode == "isolated"``) the admin is built as a
+        private ``FastAPI`` sub-application, without OpenAPI or docs, and attached
+        with ``app.mount(path, sub_app, name=settings.route_namespace)`` (SDD C.1):
+
+        - its middleware (locale, session, authentication, the startup guard)
+          wraps admin requests only;
+        - its static files and realtime WebSocket live under ``path``;
+        - its route names are namespaced, e.g. ``hyperadmin:user-list``;
+        - it shares the host's ``dependency_overrides`` and ``state``.
+
+        ``mount_mode="router"`` (deprecated) and ``mount("/")`` keep the legacy
+        ``include_router`` behaviour.
+        """
+        admin_prefix = path.rstrip("/")
+        isolated = self._resolve_mount_mode(admin_prefix)
+
+        # Every admin route uses HyperAdminRoute (SDD B.2): 403/404/409 render inside
+        # the admin layout for people (JSON stays for API callers), and it is the one
+        # place for the auth-error translation, token-cookie bridge and CSRF hook.
+        # Set before any route is added to the admin router.
+        self.router.route_class = self._make_route_class()
 
         if self.storage:
             self._mount_upload_storage()
@@ -615,9 +686,15 @@ class Admin:
             self._auto_register_models()
 
         self._register_locale_route(path)
-        self._register_realtime_routes(path)
+        self._register_realtime_routes()
         self._register_views()
-        self.templates.env.globals["admin_prefix"] = path.rstrip("/")
+        self.templates.env.globals["admin_prefix"] = admin_prefix
+        # Per-request override of the static global (SDD C.1): under a host
+        # root_path, "{{ admin_prefix }}/..." links must carry it too.
+        from hyperadmin.views.urls import admin_prefix_context
+
+        if admin_prefix_context not in self.templates.context_processors:
+            self.templates.context_processors.append(admin_prefix_context)
         self.templates.env.globals["auth_enabled"] = self.auth_backend is not None
         self.templates.env.globals["realtime_enabled"] = self.realtime is not None
         self.templates.env.globals["theme"] = self.settings.theme
@@ -628,16 +705,51 @@ class Admin:
 
         self.templates.env.globals["rtl_locales"] = RTL_LOCALES
 
-        self.app.include_router(self.router, prefix=path, tags=["HyperAdmin"])
+        if isolated:
+            self._mount_isolated(admin_prefix)
+        else:
+            self._mount_router(admin_prefix)
+
+    def _mount_isolated(self, admin_prefix: str) -> None:
+        """Build the private admin sub-app and attach it under ``admin_prefix`` (SDD C.1)."""
+        from hyperadmin.views.urls import AdminScopeMiddleware
+
+        sub_app = FastAPI(openapi_url=None, docs_url=None, redoc_url=None)
+        # Shared, not copied: host test overrides and dependencies that read
+        # request.app.state keep working under the admin prefix.
+        sub_app.dependency_overrides = self.app.dependency_overrides
+        sub_app.state = self.app.state
+        sub_app.mount("/static", StaticFiles(directory=_STATIC_DIR), name="static")
+        sub_app.include_router(self.router, tags=["HyperAdmin"])
+
+        # add_middleware prepends, so the last one added runs first:
+        # StartupGuard -> AdminScope -> Session -> Authentication -> Locale -> routes.
+        self._add_locale_middleware(sub_app)
+        if self.auth_backend:
+            self._add_auth_middleware(sub_app, admin_prefix, isolated=True)
+        sub_app.add_middleware(AdminScopeMiddleware, namespace=self.settings.route_namespace)
+        # Every sub-app request is an admin request, hence the "/" prefix.
+        sub_app.add_middleware(StartupGuardMiddleware, lifecycle=self._lifecycle, admin_prefix="/")
+
+        self.app.mount(admin_prefix, sub_app, name=self.settings.route_namespace)
+        self._asgi_app = sub_app
+
+    def _mount_router(self, admin_prefix: str) -> None:
+        """Legacy router mode: admin routes and middleware live on the host app."""
+        from hyperadmin.views.urls import AdminScopeMiddleware
+
+        self.app.mount("/static", StaticFiles(directory=_STATIC_DIR), name="static")
+        self.app.include_router(self.router, prefix=admin_prefix, tags=["HyperAdmin"])
 
         # LocaleMiddleware runs whether or not auth is configured. It must be
         # added before the auth middleware so the chain is
         # SessionMiddleware -> AuthenticationMiddleware -> LocaleMiddleware -> routes.
-        self._add_locale_middleware()
+        self._add_locale_middleware(self.app)
 
         if self.auth_backend:
-            self._add_auth_middleware(path)
+            self._add_auth_middleware(self.app, admin_prefix, isolated=False)
 
+        self.app.add_middleware(AdminScopeMiddleware, namespace=None, prefix=admin_prefix)
         # Added last so it is outermost (SDD C.2): the safety net must run before
         # Session/Auth/Locale, so a permission sync it triggers is visible to this
         # same request's own permission checks. One mechanism now, not two — there
@@ -645,5 +757,5 @@ class Admin:
         # on_startup/on_shutdown handlers once a host passes its own ``lifespan=``,
         # and a mounted sub-app never receives lifespan events at all).
         self.app.add_middleware(
-            StartupGuardMiddleware, lifecycle=self._lifecycle, admin_prefix=path
+            StartupGuardMiddleware, lifecycle=self._lifecycle, admin_prefix=admin_prefix
         )

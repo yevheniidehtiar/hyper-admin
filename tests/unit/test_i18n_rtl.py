@@ -21,7 +21,6 @@ Scenario: RTL_LOCALES constant is correct
 from __future__ import annotations
 
 import os
-from unittest.mock import MagicMock
 
 import pytest
 from fastapi import FastAPI
@@ -239,9 +238,9 @@ class TestAdminMountRTLGlobal:
     def test_rtl_locales_set_as_jinja_global(self) -> None:
         from hyperadmin.core.app import Admin
 
-        mock_app = MagicMock(spec=FastAPI)
+        app = FastAPI()
         settings = HyperAdminSettings(create_tables=False)
-        admin = Admin(app=mock_app, settings=settings)
+        admin = Admin(app=app, settings=settings)
         admin.mount("/admin")
 
         assert "rtl_locales" in admin.templates.env.globals

@@ -10,6 +10,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+# FastAPI itself imports ``get_route_path`` from here (see core/lifecycle.py).
+from starlette._utils import get_route_path
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import RedirectResponse, Response
 
@@ -39,21 +41,55 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
         auth_backend: Any,
         admin_prefix: str = "/admin",
         permission_checker: Any = None,
+        *,
+        isolated: bool = False,
     ) -> None:
+        """Build the middleware.
+
+        Args:
+            app: The downstream ASGI app.
+            auth_backend: The ``AuthBackend`` resolving the current user.
+            admin_prefix: The admin mount prefix (router mode only: used to tell
+                admin requests from host requests and to build redirect URLs).
+            permission_checker: Optional ``PermissionChecker`` for the sidebar.
+            isolated: ``True`` when installed on the admin's private sub-app
+                (SDD C.1): every request it sees is an admin request, and redirect
+                URLs are built from the sub-app's ``root_path``, which already
+                holds the full external admin path (host ``root_path`` included).
+        """
         super().__init__(app)
         self.auth_backend = auth_backend
         self.admin_prefix = admin_prefix.rstrip("/")
         self.permission_checker = permission_checker
+        self.isolated = isolated
+
+    def _relative_admin_path(self, request: Request) -> str | None:
+        """Return the path below the admin prefix, or ``None`` for a host request.
+
+        Router mode matches the prefix on a segment boundary, so a host's own
+        ``/administrator`` is not treated as an admin path.
+        """
+        path = get_route_path(request.scope)
+        if self.isolated:
+            return path
+        prefix = self.admin_prefix
+        if path == prefix or path.startswith(prefix + "/"):
+            return path[len(prefix) :]
+        return None
+
+    def _admin_path(self, request: Request) -> str:
+        """Return the external admin path that redirect URLs are built from."""
+        if self.isolated:
+            return request.scope.get("root_path", "")
+        return self.admin_prefix
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
-        path = request.url.path
-
         # Only enforce auth on admin routes
-        if not path.startswith(self.admin_prefix):
+        relative = self._relative_admin_path(request)
+        if relative is None:
             return await call_next(request)
 
         # Allow public paths (login page, static assets)
-        relative = path[len(self.admin_prefix) :]
         if any(
             relative == suffix or relative.startswith(suffix) for suffix in self.PUBLIC_SUFFIXES
         ):
@@ -84,9 +120,9 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
             if on_mfa_route:
                 return await call_next(request)
             if _has_partial_auth(request):
-                challenge_url = f"{self.admin_prefix}/mfa/challenge"
+                challenge_url = f"{self._admin_path(request)}/mfa/challenge"
                 return RedirectResponse(url=challenge_url, status_code=302)
-            login_url = f"{self.admin_prefix}/login"
+            login_url = f"{self._admin_path(request)}/login"
             return RedirectResponse(url=login_url, status_code=302)
 
         # Full-auth user — pass through. Defensive: if a partial-auth marker
