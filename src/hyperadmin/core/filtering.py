@@ -301,7 +301,7 @@ class _FieldContext:
 
 
 def _collect_raw_values(
-    params: Any, allowed_set: set[str]
+    params: Any, allowed_set: set[str], ops: frozenset[str]
 ) -> dict[tuple[str, FilterOp], list[str]]:
     grouped: dict[tuple[str, FilterOp], list[str]] = {}
     for key, value in _iter_params(params):
@@ -310,6 +310,9 @@ def _collect_raw_values(
         name, op = _split_key(key)
         if name not in allowed_set:
             logger.debug("Ignoring filter on non-whitelisted field %r", name)
+            continue
+        if op not in ops:
+            logger.debug("Ignoring filter with unsupported operator %r on %r", op, name)
             continue
         values = str(value).split(",") if op == "in" else [str(value)]
         grouped.setdefault((name, op), []).extend(v.strip() for v in values if v.strip())
@@ -324,6 +327,7 @@ def parse_filter_params(
     tz: tzinfo = timezone.utc,
     datetime_kind: DateTimeKindResolver | None = None,
     annotation_of: AnnotationResolver | None = None,
+    ops: Iterable[str] = FILTER_OPS,
 ) -> ParsedFilters:
     """Parse ``filter_*`` query parameters into typed conditions.
 
@@ -341,6 +345,10 @@ def parse_filter_params(
             adapter passes the mapped column's ``python_type``). ``None`` from the
             resolver falls back to ``model_fields``, then to ``str``. Needed for
             plain SQLAlchemy models, which have no ``model_fields``.
+        ops: Operators the caller accepts from the URL (default: all). A
+            parameter with any other operator is ignored, like a non-whitelisted
+            field. An exact date on a datetime field still expands to its
+            whole-day bounds.
 
     Returns:
         The conditions, the active raw values and per-field error messages. A
@@ -348,7 +356,7 @@ def parse_filter_params(
     """
     model_fields = getattr(model, "model_fields", None)
     result = ParsedFilters()
-    for (name, op), raws in _collect_raw_values(params, set(allowed)).items():
+    for (name, op), raws in _collect_raw_values(params, set(allowed), frozenset(ops)).items():
         if not raws:
             continue
         annotation = annotation_of(name) if annotation_of else None
