@@ -98,13 +98,14 @@ def resolve_tz(ctx: Context) -> tzinfo:
     return request_tz(ctx.get("request"), ctx.get(TIMEZONE_GLOBAL))
 
 
-def request_tz(request: Any, default: Any) -> tzinfo:
+def request_tz(request: Any, default: Any = None) -> tzinfo:
     """Resolve the display timezone for ``request`` outside a template render.
 
     Same rules as :func:`resolve_tz`: ``request.state.hyperadmin_timezone``
-    wins, then ``default`` (the registered ``hyperadmin_timezone`` global),
-    then UTC when ``default`` is not a ``tzinfo``. Views use it to localise
-    user input, such as date filters on aware columns.
+    wins (an invalid zone name is logged and ignored), then ``default`` (the
+    registered ``hyperadmin_timezone`` global / the admin's configured
+    timezone), then UTC when ``default`` is not a ``tzinfo``. Views use it to
+    localise user input: date filters on aware columns and datetime form fields.
     """
     default = default if isinstance(default, tzinfo) else dt_timezone.utc
     override = getattr(getattr(request, "state", None), "hyperadmin_timezone", None)

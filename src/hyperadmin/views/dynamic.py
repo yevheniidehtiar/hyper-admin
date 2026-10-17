@@ -351,6 +351,23 @@ class DynamicModelView:
         """``PydanticForm`` pk options: a natural (non-generated) key is an input on create only."""
         return {"pk_attr": self.pk.attr, "pk_editable": create and not self.pk.generated}
 
+    @staticmethod
+    def _stored_values(item: Any) -> dict[str, Any]:
+        """The stored field values of ``item`` (``model_dump()``, else ``__dict__``)."""
+        initial_func = getattr(item, "model_dump", None)
+        return cast(
+            "dict[str, Any]",
+            initial_func() if callable(initial_func) else dict(getattr(item, "__dict__", {})),
+        )
+
+    def _form_datetime_kwargs(self, request: Request) -> dict[str, Any]:
+        """``PydanticForm`` datetime options: the request's display timezone and column kinds."""
+        default_tz = self.templates.env.globals.get(TIMEZONE_GLOBAL)
+        return {
+            "timezone": request_tz(request, default_tz),
+            "datetime_kind": self.adapter.datetime_kind,
+        }
+
     def _inline_formset(self, spec: InlineModelSpec, **kwargs: Any) -> InlineFormset:
         """Build a formset that parses submitted child keys with the inline model's own codec."""
         return InlineFormset(spec=spec, pk=self.adapter.for_model(spec.model).pk, **kwargs)
@@ -963,6 +980,7 @@ class DynamicModelView:
             form_layout=getattr(self.options, "form_layout", None),
             form_fields=getattr(self.options, "form_fields", None) or None,
             **self._form_pk_kwargs(create=True),
+            **self._form_datetime_kwargs(request),
         )
         data = self._extract_form_data(form_data, form)
         file_uploads = self._pop_file_uploads(data, form)
@@ -1048,11 +1066,7 @@ class DynamicModelView:
         item = await self._get_or_404(pk)
         await self._check_object_permission(request, item, "change")
 
-        initial_func = getattr(item, "model_dump", None)
-        initial_values = cast(
-            "dict[str, Any]",
-            initial_func() if callable(initial_func) else getattr(item, "__dict__", {}),
-        )
+        initial_values = self._stored_values(item)
 
         # Override with re-submitted values on validation failure
         if values:
@@ -1136,10 +1150,13 @@ class DynamicModelView:
             widgets=relation_widgets,
             include=self.form_include,
             exclude=self._opaque_sensitive_fields or None,
+            # The stored values let an untouched datetime keep its exact value.
+            initial=self._without_sensitive(self._stored_values(existing)),
             fieldsets=getattr(self.options, "fieldsets", None) or None,
             form_layout=getattr(self.options, "form_layout", None),
             form_fields=getattr(self.options, "form_fields", None) or None,
             **self._form_pk_kwargs(create=False),
+            **self._form_datetime_kwargs(request),
         )
         data = self._extract_form_data(form_data, form)
         file_uploads = self._pop_file_uploads(data, form)
@@ -1490,6 +1507,7 @@ class DynamicModelView:
             form_layout=getattr(self.options, "form_layout", None),
             form_fields=getattr(self.options, "form_fields", None) or None,
             **self._form_pk_kwargs(create=True),
+            **self._form_datetime_kwargs(request),
         )
         data = self._extract_form_data(form_data, form)
         data.pop("target", None)
@@ -1787,7 +1805,12 @@ class DynamicModelView:
         merged = dict(current)
         merged[field] = raw_value
 
-        form = PydanticForm(self.model, pk_attr=self.pk.attr)
+        form = PydanticForm(
+            self.model,
+            initial=current,
+            pk_attr=self.pk.attr,
+            **self._form_datetime_kwargs(request),
+        )
         form_field = next((f for f in form.fields if f.name == field), None)
         if form_field is None:
             raise HTTPException(status_code=403, detail="Field not editable")
