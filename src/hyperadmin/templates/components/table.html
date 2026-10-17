@@ -1,5 +1,6 @@
 {%- from "components/_icons.html" import icon -%}
 <div id="model-list" class="ha-table-wrapper">
+    {%- include "components/list_error.html" -%}
     <table class="ha-table" data-testid="list-table" aria-label="{% trans model_name=model_name %}{{ model_name }} list{% endtrans %}">
         <thead>
             <tr class="ha-table-header">

@@ -8,12 +8,12 @@ from collections.abc import Awaitable, Callable, Generator
 from contextlib import contextmanager
 from http import HTTPStatus
 from pathlib import PurePosixPath
-from typing import TYPE_CHECKING, Any, TypeVar, Union, cast, get_args, get_origin
+from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from fastapi import HTTPException, Query, Request
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, ValidationError
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from starlette.responses import RedirectResponse, Response
 
 if TYPE_CHECKING:
@@ -33,6 +33,7 @@ from hyperadmin.core.choices import ChoiceItem, SelectFieldMeta
 from hyperadmin.core.discovery import build_filter_metadata
 from hyperadmin.core.display import get_display_name
 from hyperadmin.core.fields import classify_field
+from hyperadmin.core.filtering import FilterValueError, coerce_filter_value
 from hyperadmin.core.options import AdminOptions
 from hyperadmin.core.primary_key import InvalidPrimaryKey, PrimaryKeyInfo
 from hyperadmin.core.registry import site
@@ -60,6 +61,21 @@ from hyperadmin.views.htmx import HtmxTemplateResponse
 logger = logging.getLogger(__name__)
 
 _MAX_CHOICES_LIMIT = 200
+
+# Caps ``?page=`` so ``(page - 1) * page_size`` stays inside a signed 64-bit
+# OFFSET: a larger value overflows the DBAPI bind (SQLite raises a plain
+# ``OverflowError``) instead of just returning an empty page.
+_MAX_LIST_PAGE = 10**15
+
+# Missing-table messages from SQLite ("no such table"), PostgreSQL
+# ('relation "x" does not exist') and asyncpg ("UndefinedTableError").
+_MISSING_TABLE_RE = re.compile(r"no such table|does not exist|UndefinedTable", re.IGNORECASE)
+
+
+def _is_missing_table_error(exc: SQLAlchemyError) -> bool:
+    """Whether ``exc`` means the model's table has not been created yet."""
+    return bool(_MISSING_TABLE_RE.search(str(exc)))
+
 
 _HandlerT = TypeVar("_HandlerT", bound=Callable[..., Awaitable[Any]])
 
@@ -136,8 +152,12 @@ class DynamicModelView:
         field_labels: dict[str, str] | None = None,
         storage: Any = None,
         admin_lookup: Callable[[Any], Any] | None = None,
+        debug: bool = False,
     ):
         self.adapter = adapter
+        # ``settings.debug``: list_view re-raises database errors instead of
+        # rendering the list-error banner (BYOA SDD D.2).
+        self.debug = debug
         self.model = adapter.model
         self.pk: PrimaryKeyInfo = adapter.pk
         self.options = options
@@ -465,7 +485,9 @@ class DynamicModelView:
 
         Only whitelisted (list_filter), non-sensitive model fields are honoured;
         anything else is ignored so the URL cannot become an equality oracle on
-        arbitrary columns.
+        arbitrary columns. Values are coerced to the field's type first; one that
+        does not fit (``filter_age=abc``) is dropped, so user input never reaches
+        the database as a query that fails (BYOA SDD D.2).
         """
         allowed_filters = self._filterable_fields()
         active_filters: dict[str, str] = {}
@@ -478,13 +500,11 @@ class DynamicModelView:
                 logger.debug("Ignoring filter on non-whitelisted field %r", field_name)
                 continue
             active_filters[field_name] = value
-
-            # Type conversion for bool
             ann = self.model.model_fields[field_name].annotation
-            if ann is bool or (get_origin(ann) is Union and bool in get_args(ann)):
-                filters_to_apply[field_name] = value.lower() == "true"
-            else:
-                filters_to_apply[field_name] = value
+            try:
+                filters_to_apply[field_name] = coerce_filter_value(ann, value, field=field_name)
+            except FilterValueError:
+                logger.debug("Ignoring uncoercible filter value for %r", field_name)
         return active_filters, filters_to_apply
 
     @_request_scoped
@@ -513,6 +533,9 @@ class DynamicModelView:
 
         # Format order_by for adapter (use negative prefix for descending)
         order_by = f"-{sort_by}" if sort_direction == "desc" else sort_by
+        page = min(page, _MAX_LIST_PAGE)
+        is_htmx = bool(request.headers.get("hx-request"))
+        list_error: dict[str, bool] | None = None
 
         try:
             # The handler runs inside the request's queryset scope, so
@@ -540,8 +563,13 @@ class DynamicModelView:
                 "end_index": end_index,
             }
 
-        except Exception:
-            # Handle errors gracefully
+        except SQLAlchemyError as exc:
+            # Only database errors are handled here; user input is validated
+            # above, and any other exception is a bug that must propagate.
+            logger.exception("Listing %s failed", self.model.__name__)
+            if self.debug:
+                raise
+            list_error = {"missing_table": _is_missing_table_error(exc)}
             items = []
             pagination = {
                 "page": 1,
@@ -551,8 +579,6 @@ class DynamicModelView:
                 "start_index": 0,
                 "end_index": 0,
             }
-            # In a real application, you might want to log this error
-            # For now, we'll just show empty results
 
         # Convert items to row dicts using column_list
         display_fields = self.column_list
@@ -602,15 +628,17 @@ class DynamicModelView:
             "file_fields": file_fields,
             "options": self.options,
             "list_editable": list(self.options.list_editable or []),
+            "list_error": list_error,
         }
 
         # Use table template for HTMX requests, full layout for regular requests
-        template_name = (
-            "components/table.html"
-            if request.headers.get("hx-request")
-            else self._get_template_name("list")
+        template_name = "components/table.html" if is_htmx else self._get_template_name("list")
+        # A failed full page is a 500; an HTMX partial stays 200 so htmx swaps
+        # the banner in instead of discarding the response.
+        status_code = 500 if list_error is not None and not is_htmx else 200
+        return self.templates.TemplateResponse(
+            request, template_name, context, status_code=status_code
         )
-        return self.templates.TemplateResponse(request, template_name, context)
 
     @_request_scoped
     async def detail_view(self, request: Request, item_id: Any):

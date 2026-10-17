@@ -1,0 +1,12 @@
+{#- List-error banner (BYOA SDD D.2): the list query failed with a database
+    error. The raw driver message is logged, never shown. -#}
+{%- if list_error is defined and list_error -%}
+<div class="ha-alert ha-alert-error" data-testid="list-error" role="alert">
+    <strong class="ha-alert-title">{{ _("The list could not be loaded because of a database error.") }}</strong>
+    {%- if list_error.missing_table %}
+    <span>{{ _("The table for this model does not exist yet: run your migrations or `hyperadmin init-db`.") }}</span>
+    {%- else %}
+    <span>{{ _("Check the server logs for details.") }}</span>
+    {%- endif %}
+</div>
+{%- endif -%}
