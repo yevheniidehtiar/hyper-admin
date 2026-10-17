@@ -2,7 +2,7 @@
 type: story
 id: st-v058-byoa-31
 title: "refactor(forms): pk-aware PydanticForm and InlineFormset pk codec"
-status: todo
+status: in-review
 priority: high
 assignee: null
 labels:
