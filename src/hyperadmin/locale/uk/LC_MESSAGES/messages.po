@@ -7,105 +7,371 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-05-03 15:06+0200\n"
+"POT-Creation-Date: 2026-10-17 14:22+0200\n"
 "PO-Revision-Date: 2026-05-05 12:00+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: uk\n"
 "Language-Team: uk <LL@li.org>\n"
-"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
+"n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
+#: src/hyperadmin/auth/views.py:91
+msgid "Could not send verification code. Please try again."
+msgstr ""
 
-#: src/hyperadmin/templates/_messages.html:3
+#: src/hyperadmin/auth/views.py:248 src/hyperadmin/auth/views.py:256
+msgid "Code expired, please request a new one."
+msgstr ""
+
+#: src/hyperadmin/auth/views.py:271 src/hyperadmin/auth/views.py:471
+#: src/hyperadmin/auth/views.py:539
+msgid "Invalid code."
+msgstr ""
+
+#: src/hyperadmin/auth/views.py:304 src/hyperadmin/auth/views.py:443
+#: src/hyperadmin/auth/views.py:518
+msgid "Too many attempts, try again later."
+msgstr ""
+
+#: src/hyperadmin/auth/views.py:311
+msgid "A new code has been sent to your email."
+msgstr ""
+
+#: src/hyperadmin/auth/views.py:455
+msgid "No active MFA enable flow. Please try again."
+msgstr ""
+
+#: src/hyperadmin/auth/views.py:483
+msgid "Two-factor authentication enabled."
+msgstr ""
+
+#: src/hyperadmin/auth/views.py:528
+msgid "No active MFA disable flow. Please try again."
+msgstr ""
+
+#: src/hyperadmin/auth/views.py:549
+msgid "Two-factor authentication disabled."
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:42
+msgid "Field required"
+msgstr "Обов'язкове поле"
+
+#: src/hyperadmin/i18n/validation_messages.py:43
+msgid "Input should be a valid string"
+msgstr "Значення має бути коректним рядком"
+
+#: src/hyperadmin/i18n/validation_messages.py:44
+#, python-format
+msgid "String should match pattern '%(pattern)s'"
+msgstr "Рядок має відповідати шаблону '%(pattern)s'"
+
+#: src/hyperadmin/i18n/validation_messages.py:45
+#, python-format
+msgid "Input should be greater than %(gt)s"
+msgstr "Значення має бути більшим за %(gt)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:46
+#, python-format
+msgid "Input should be greater than or equal to %(ge)s"
+msgstr "Значення має бути більшим або рівним %(ge)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:47
+#, python-format
+msgid "Input should be less than %(lt)s"
+msgstr "Значення має бути меншим за %(lt)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:48
+#, python-format
+msgid "Input should be less than or equal to %(le)s"
+msgstr "Значення має бути меншим або рівним %(le)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:49
+#, python-format
+msgid "Input should be a multiple of %(multiple_of)s"
+msgstr "Значення має бути кратним %(multiple_of)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:50
+msgid "Input should be a valid integer"
+msgstr "Значення має бути коректним цілим числом"
+
+#: src/hyperadmin/i18n/validation_messages.py:52
+msgid "Input should be a valid integer, unable to parse string as an integer"
+msgstr ""
+"Значення має бути коректним цілим числом, не вдалося розпізнати рядок як "
+"ціле число"
+
+#: src/hyperadmin/i18n/validation_messages.py:55
+msgid "Input should be a valid integer, got a number with a fractional part"
+msgstr ""
+"Значення має бути коректним цілим числом, отримано число з дробовою "
+"частиною"
+
+#: src/hyperadmin/i18n/validation_messages.py:57
+msgid "Input should be a valid number"
+msgstr "Значення має бути коректним числом"
+
+#: src/hyperadmin/i18n/validation_messages.py:59
+msgid "Input should be a valid number, unable to parse string as a number"
+msgstr "Значення має бути коректним числом, не вдалося розпізнати рядок як число"
+
+#: src/hyperadmin/i18n/validation_messages.py:61
+msgid "Input should be a valid boolean"
+msgstr "Значення має бути коректним логічним значенням"
+
+#: src/hyperadmin/i18n/validation_messages.py:62
+msgid "Input should be a valid boolean, unable to interpret input"
+msgstr ""
+"Значення має бути коректним логічним значенням, не вдалося інтерпретувати"
+" введене"
+
+#: src/hyperadmin/i18n/validation_messages.py:63
+msgid "Input should be a valid decimal"
+msgstr "Значення має бути коректним десятковим числом"
+
+#: src/hyperadmin/i18n/validation_messages.py:65
+#, python-format
+msgid "Input should be a valid date in the format YYYY-MM-DD, %(error)s"
+msgstr "Значення має бути коректною датою у форматі РРРР-ММ-ДД, %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:68
+#, python-format
+msgid "Input should be a valid date or datetime, %(error)s"
+msgstr "Значення має бути коректною датою або датою з часом, %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:70
+#, python-format
+msgid "Input should be a valid datetime, %(error)s"
+msgstr "Значення має бути коректною датою з часом, %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:72
+#, python-format
+msgid "Input should be a valid datetime or date, %(error)s"
+msgstr "Значення має бути коректною датою з часом або датою, %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:74
+#, python-format
+msgid "Input should be in a valid time format, %(error)s"
+msgstr "Значення має бути у коректному форматі часу, %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:75
+#, python-format
+msgid "Input should be a valid UUID, %(error)s"
+msgstr "Значення має бути коректним UUID, %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:76
+#: src/hyperadmin/i18n/validation_messages.py:77
+#, python-format
+msgid "Input should be %(expected)s"
+msgstr "Значення має бути одним із: %(expected)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:78
+#, python-format
+msgid "Input should be a valid URL, %(error)s"
+msgstr "Значення має бути коректною URL-адресою, %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:79
+#, python-format
+msgid "Invalid JSON: %(error)s"
+msgstr "Некоректний JSON: %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:80
+#, python-format
+msgid "Value error, %(error)s"
+msgstr "Помилка значення, %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:81
+#, python-format
+msgid "Assertion failed, %(error)s"
+msgstr "Перевірка не пройшла, %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:87
+#, python-format
+msgid "String should have at least %(min_length)s character"
+msgid_plural "String should have at least %(min_length)s characters"
+msgstr[0] "Рядок має містити щонайменше %(min_length)s символ"
+msgstr[1] "Рядок має містити щонайменше %(min_length)s символи"
+msgstr[2] "Рядок має містити щонайменше %(min_length)s символів"
+
+#: src/hyperadmin/i18n/validation_messages.py:94
+#, python-format
+msgid "String should have at most %(max_length)s character"
+msgid_plural "String should have at most %(max_length)s characters"
+msgstr[0] "Рядок має містити щонайбільше %(max_length)s символ"
+msgstr[1] "Рядок має містити щонайбільше %(max_length)s символи"
+msgstr[2] "Рядок має містити щонайбільше %(max_length)s символів"
+
+#: src/hyperadmin/i18n/validation_messages.py:101
+#, python-format
+msgid ""
+"%(field_type)s should have at least %(min_length)s item after validation,"
+" not %(actual_length)s"
+msgid_plural ""
+"%(field_type)s should have at least %(min_length)s items after "
+"validation, not %(actual_length)s"
+msgstr[0] ""
+"%(field_type)s має містити щонайменше %(min_length)s елемент після "
+"валідації, а не %(actual_length)s"
+msgstr[1] ""
+"%(field_type)s має містити щонайменше %(min_length)s елементи після "
+"валідації, а не %(actual_length)s"
+msgstr[2] ""
+"%(field_type)s має містити щонайменше %(min_length)s елементів після "
+"валідації, а не %(actual_length)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:108
+#, python-format
+msgid ""
+"%(field_type)s should have at most %(max_length)s item after validation, "
+"not %(actual_length)s"
+msgid_plural ""
+"%(field_type)s should have at most %(max_length)s items after validation,"
+" not %(actual_length)s"
+msgstr[0] ""
+"%(field_type)s має містити щонайбільше %(max_length)s елемент після "
+"валідації, а не %(actual_length)s"
+msgstr[1] ""
+"%(field_type)s має містити щонайбільше %(max_length)s елементи після "
+"валідації, а не %(actual_length)s"
+msgstr[2] ""
+"%(field_type)s має містити щонайбільше %(max_length)s елементів після "
+"валідації, а не %(actual_length)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:117
+#, python-format
+msgid ""
+"%(field_type)s should have at most %(max_length)s item after validation, "
+"not more"
+msgid_plural ""
+"%(field_type)s should have at most %(max_length)s items after validation,"
+" not more"
+msgstr[0] ""
+"%(field_type)s має містити щонайбільше %(max_length)s елемент після "
+"валідації, а не більше"
+msgstr[1] ""
+"%(field_type)s має містити щонайбільше %(max_length)s елементи після "
+"валідації, а не більше"
+msgstr[2] ""
+"%(field_type)s має містити щонайбільше %(max_length)s елементів після "
+"валідації, а не більше"
+
+#: src/hyperadmin/i18n/validation_messages.py:123
+#: src/hyperadmin/templates/list_layout.html:8
+msgid "List"
+msgstr "Список"
+
+#: src/hyperadmin/i18n/validation_messages.py:124
+msgid "Tuple"
+msgstr "Кортеж"
+
+#: src/hyperadmin/i18n/validation_messages.py:125
+msgid "Set"
+msgstr "Множина"
+
+#: src/hyperadmin/i18n/validation_messages.py:126
+msgid "Frozenset"
+msgstr "Незмінна множина"
+
+#: src/hyperadmin/i18n/validation_messages.py:127
+msgid "Dictionary"
+msgstr "Словник"
+
+#: src/hyperadmin/templates/_messages.html:6
 #, fuzzy
 msgid "Success!"
 msgstr "Успіх!"
 
-#: src/hyperadmin/templates/_messages.html:4
+#: src/hyperadmin/templates/_messages.html:7
 #, fuzzy
 msgid "Your action was successful."
 msgstr "Вашу дію виконано успішно."
 
-#: src/hyperadmin/templates/_messages.html:5
-#: src/hyperadmin/templates/_messages.html:6
+#: src/hyperadmin/templates/_messages.html:9
+#: src/hyperadmin/templates/components/error_toast.html:17
 #, fuzzy
 msgid "Close"
 msgstr "Закрити"
 
-#: src/hyperadmin/templates/_navbar.html:1
+#: src/hyperadmin/templates/_navbar.html:2
 #, fuzzy
 msgid "Main navigation"
 msgstr "Головна навігація"
 
-#: src/hyperadmin/templates/_navbar.html:8
+#: src/hyperadmin/templates/_navbar.html:9
 #, fuzzy
 msgid "Toggle navigation menu"
 msgstr "Перемкнути меню навігації"
 
-#: src/hyperadmin/templates/_navbar.html:18
+#: src/hyperadmin/templates/_navbar.html:23
+msgid "Real-time connection status"
+msgstr ""
+
+#: src/hyperadmin/templates/_navbar.html:27
 #, fuzzy
 msgid "Language"
 msgstr "Мова"
 
-#: src/hyperadmin/templates/_navbar.html:22
+#: src/hyperadmin/templates/_navbar.html:32
 #, fuzzy
 msgid "Select language"
 msgstr "Вибрати мову"
 
-#: src/hyperadmin/templates/_navbar.html:34
+#: src/hyperadmin/templates/_navbar.html:44
 #, fuzzy
 msgid "Toggle dark mode"
 msgstr "Перемкнути темний режим"
 
-#: src/hyperadmin/templates/_navbar.html:56
+#: src/hyperadmin/templates/_navbar.html:59
 #, fuzzy
 msgid "Logout"
 msgstr "Вийти"
 
-#: src/hyperadmin/templates/_navbar.html:64
+#: src/hyperadmin/templates/_navbar.html:65
 #, fuzzy
 msgid "Admin"
 msgstr "Адміністрування"
 
-#: src/hyperadmin/templates/_navbar.html:70
+#: src/hyperadmin/templates/_navbar.html:69
 #, fuzzy
 msgid "Profile"
 msgstr "Профіль"
 
-#: src/hyperadmin/templates/_navbar.html:71
+#: src/hyperadmin/templates/_navbar.html:70
 #, fuzzy
 msgid "Settings"
 msgstr "Налаштування"
 
-#: src/hyperadmin/templates/_sidebar.html:5
+#: src/hyperadmin/templates/_sidebar.html:6
 #, fuzzy
 msgid "Model navigation"
 msgstr "Навігація моделями"
 
-#: src/hyperadmin/templates/_sidebar.html:12
+#: src/hyperadmin/templates/_sidebar.html:13
 #, fuzzy
 msgid "Menu"
 msgstr "Меню"
 
-#: src/hyperadmin/templates/_sidebar.html:16
+#: src/hyperadmin/templates/_sidebar.html:17
 #, fuzzy
 msgid "Close navigation menu"
 msgstr "Закрити меню навігації"
 
-#: src/hyperadmin/templates/_sidebar.html:23
+#: src/hyperadmin/templates/_sidebar.html:22
 #, fuzzy
 msgid "Sidebar"
 msgstr "Бічна панель"
 
 #: src/hyperadmin/templates/create.html:4
-#, python-format, fuzzy
+#, fuzzy, python-format
 msgid "Create %(model_name)s"
 msgstr "Створити %(model_name)s"
 
 #: src/hyperadmin/templates/create.html:36
+#: src/hyperadmin/templates/widgets/popup_form.html:16
 #, fuzzy
 msgid "Create"
 msgstr "Створити"
@@ -116,33 +382,57 @@ msgstr "Створити"
 msgid "Cancel"
 msgstr "Скасувати"
 
-#: src/hyperadmin/templates/detail.html:30
-#, python-format, fuzzy
+#: src/hyperadmin/templates/detail.html:31
+#, fuzzy, python-format
 msgid "Run action '%(label)s'?"
 msgstr "Виконати дію «%(label)s»?"
 
-#: src/hyperadmin/templates/detail.html:36
+#: src/hyperadmin/templates/detail.html:37
 #, fuzzy
 msgid "Back to list"
 msgstr "Назад до списку"
 
+#: src/hyperadmin/templates/error.html:5
+msgid "You don't have access to this page"
+msgstr ""
+
+#: src/hyperadmin/templates/error.html:6
+msgid "Page not found"
+msgstr ""
+
+#: src/hyperadmin/templates/error.html:7
+msgid "This action can't be completed"
+msgstr ""
+
+#: src/hyperadmin/templates/error.html:10
+#: src/hyperadmin/templates/error.html:15
+#: src/hyperadmin/templates/error.html:16
+msgid "Error"
+msgstr ""
+
+#: src/hyperadmin/templates/error.html:18
+msgid ""
+"Your account doesn't have permission for this. Ask an administrator if "
+"you need it."
+msgstr ""
+
+#: src/hyperadmin/templates/error.html:22
+msgid "Back to dashboard"
+msgstr ""
+
 #: src/hyperadmin/templates/form_layout.html:12
+#: src/hyperadmin/templates/widgets/popup_form.html:41
 #, fuzzy
 msgid "Save"
 msgstr "Зберегти"
 
-#: src/hyperadmin/templates/list_layout.html:3
-#, python-format, fuzzy
+#: src/hyperadmin/templates/list_layout.html:4
+#, fuzzy, python-format
 msgid "%(model_name)s List | HyperAdmin"
 msgstr "Список %(model_name)s | HyperAdmin"
 
-#: src/hyperadmin/templates/list_layout.html:7
-#, fuzzy
-msgid "List"
-msgstr "Список"
-
-#: src/hyperadmin/templates/list_layout.html:11
-#, python-format, fuzzy
+#: src/hyperadmin/templates/list_layout.html:12
+#, fuzzy, python-format
 msgid "Create New %(model_name)s"
 msgstr "Створити новий %(model_name)s"
 
@@ -151,28 +441,28 @@ msgstr "Створити новий %(model_name)s"
 msgid "Login"
 msgstr "Вхід"
 
-#: src/hyperadmin/templates/login.html:13
+#: src/hyperadmin/templates/login.html:14
 #, fuzzy
 msgid "Sign in to your account"
 msgstr "Увійдіть у свій обліковий запис"
 
-#: src/hyperadmin/templates/login.html:23
+#: src/hyperadmin/templates/login.html:24
 #, fuzzy
 msgid "Username"
 msgstr "Ім'я користувача"
 
-#: src/hyperadmin/templates/login.html:35
+#: src/hyperadmin/templates/login.html:36
 #, fuzzy
 msgid "Password"
 msgstr "Пароль"
 
-#: src/hyperadmin/templates/login.html:46
+#: src/hyperadmin/templates/login.html:47
 #, fuzzy
 msgid "Sign in"
 msgstr "Увійти"
 
 #: src/hyperadmin/templates/update.html:4
-#, python-format, fuzzy
+#, fuzzy, python-format
 msgid "Update %(item_name)s"
 msgstr "Оновити %(item_name)s"
 
@@ -181,94 +471,208 @@ msgstr "Оновити %(item_name)s"
 msgid "Update"
 msgstr "Оновити"
 
-#: src/hyperadmin/templates/components/filter_bar.html:11
+#: src/hyperadmin/templates/auth/mfa_challenge.html:3
+msgid "MFA Challenge"
+msgstr ""
+
+#: src/hyperadmin/templates/auth/mfa_challenge.html:12
+msgid "Two-factor verification"
+msgstr ""
+
+#: src/hyperadmin/templates/auth/mfa_challenge.html:14
+msgid "Enter the 6-digit code we sent to your email."
+msgstr ""
+
+#: src/hyperadmin/templates/auth/mfa_challenge.html:35
+#: src/hyperadmin/templates/auth/mfa_settings.html:52
+msgid "Verification code"
+msgstr ""
+
+#: src/hyperadmin/templates/auth/mfa_challenge.html:53
+msgid "Verify"
+msgstr ""
+
+#: src/hyperadmin/templates/auth/mfa_challenge.html:59
+msgid "Your code has expired."
+msgstr ""
+
+#: src/hyperadmin/templates/auth/mfa_challenge.html:69
+msgid "Resend code"
+msgstr ""
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:3
+#: src/hyperadmin/templates/auth/mfa_settings.html:9
+msgid "Two-factor authentication"
+msgstr ""
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:13
+msgid "Status:"
+msgstr ""
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:16
+msgid "Enabled"
+msgstr ""
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:20
+msgid "Disabled"
+msgstr ""
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:48
+msgid "Enter the 6-digit code we sent to your email to confirm."
+msgstr ""
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:72
+msgid "Confirm and enable"
+msgstr ""
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:74
+msgid "Confirm and disable"
+msgstr ""
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:88
+msgid "Disable two-factor authentication"
+msgstr ""
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:101
+msgid "Enable two-factor authentication"
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_form.html:13
+msgid "This action will run on"
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_form.html:14
+msgid "selected row(s)"
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_form.html:41
+msgid "Run"
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_result.html:10
+msgid "Results"
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_result.html:14
+msgid "ID"
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_result.html:14
+msgid "Status"
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_result.html:14
+msgid "Detail"
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_result.html:35
+msgid "Retry failures"
+msgstr ""
+
+#: src/hyperadmin/templates/components/error_toast.html:8
+msgid "Permission denied"
+msgstr ""
+
+#: src/hyperadmin/templates/components/error_toast.html:9
+msgid "Not found"
+msgstr ""
+
+#: src/hyperadmin/templates/components/error_toast.html:10
+msgid "Action refused"
+msgstr ""
+
+#: src/hyperadmin/templates/components/error_toast.html:13
+msgid "Your account doesn't have permission for this."
+msgstr ""
+
+#: src/hyperadmin/templates/components/filter_bar.html:10
 #, fuzzy
 msgid "Filters"
 msgstr "Фільтри"
 
-#: src/hyperadmin/templates/components/filter_bar.html:27
+#: src/hyperadmin/templates/components/filter_bar.html:28
 #, fuzzy
 msgid "Any"
 msgstr "Будь-який"
 
-#: src/hyperadmin/templates/components/filter_bar.html:43
+#: src/hyperadmin/templates/components/filter_bar.html:44
 #, fuzzy
 msgid "Clear all filters"
 msgstr "Очистити всі фільтри"
 
-#: src/hyperadmin/templates/components/inline_row.html:31
-#: src/hyperadmin/templates/components/table.html:8
-#: src/hyperadmin/templates/components/table.html:18
+#: src/hyperadmin/templates/components/inline_row.html:32
+#: src/hyperadmin/templates/components/table.html:9
+#: src/hyperadmin/templates/components/table.html:23
 #, fuzzy
 msgid "Actions"
 msgstr "Дії"
 
-#: src/hyperadmin/templates/components/inline_row.html:36
+#: src/hyperadmin/templates/components/inline_row.html:40
 #, fuzzy
 msgid "Remove"
 msgstr "Видалити"
 
-#: src/hyperadmin/templates/components/pagination.html:1
+#: src/hyperadmin/templates/components/pagination.html:2
 #, fuzzy
 msgid "Pagination"
 msgstr "Пагінація"
 
-#: src/hyperadmin/templates/components/pagination.html:4
-#, python-format, fuzzy
+#: src/hyperadmin/templates/components/pagination.html:5
+#, fuzzy, python-format
 msgid "Showing %(start)s to %(end)s of %(total)s results"
 msgstr "Показано від %(start)s до %(end)s з %(total)s результатів"
 
-#: src/hyperadmin/templates/components/pagination.html:17
+#: src/hyperadmin/templates/components/pagination.html:18
 #, fuzzy
 msgid "Previous"
 msgstr "Попередня"
 
-#: src/hyperadmin/templates/components/pagination.html:22
-#, python-format, fuzzy
+#: src/hyperadmin/templates/components/pagination.html:23
+#, fuzzy, python-format
 msgid "Page %(page)s of %(total_pages)s"
 msgstr "Сторінка %(page)s з %(total_pages)s"
 
-#: src/hyperadmin/templates/components/pagination.html:32
+#: src/hyperadmin/templates/components/pagination.html:33
 #, fuzzy
 msgid "Next"
 msgstr "Наступна"
 
-#: src/hyperadmin/templates/components/search_input.html:5
+#: src/hyperadmin/templates/components/search_input.html:8
 #, fuzzy
 msgid "Search..."
 msgstr "Пошук..."
 
-#: src/hyperadmin/templates/components/search_input.html:8
+#: src/hyperadmin/templates/components/search_input.html:11
 #, fuzzy
 msgid "Search"
 msgstr "Пошук"
 
-#: src/hyperadmin/templates/components/search_input.html:14
+#: src/hyperadmin/templates/components/search_input.html:18
 #, fuzzy
 msgid "Searching..."
 msgstr "Пошук..."
 
-#: src/hyperadmin/templates/components/table.html:2
-#, python-format, fuzzy
+#: src/hyperadmin/templates/components/table.html:3
+#, fuzzy, python-format
 msgid "%(model_name)s list"
 msgstr "Список %(model_name)s"
 
-#: src/hyperadmin/templates/components/table.html:20
+#: src/hyperadmin/templates/components/table.html:26
 #, fuzzy
 msgid "View"
 msgstr "Переглянути"
 
-#: src/hyperadmin/templates/components/table.html:23
+#: src/hyperadmin/templates/components/table.html:29
 #, fuzzy
 msgid "Edit"
 msgstr "Редагувати"
 
-#: src/hyperadmin/templates/components/table.html:27
+#: src/hyperadmin/templates/components/table.html:33
 #, fuzzy
 msgid "Are you sure you want to delete this item?"
 msgstr "Ви впевнені, що хочете видалити цей елемент?"
 
-#: src/hyperadmin/templates/components/table.html:32
+#: src/hyperadmin/templates/components/table.html:38
 #, fuzzy
 msgid "Delete"
 msgstr "Видалити"
@@ -287,3 +691,4 @@ msgstr "Елемент успішно створено"
 #, fuzzy
 msgid "Item updated successfully"
 msgstr "Елемент успішно оновлено"
+

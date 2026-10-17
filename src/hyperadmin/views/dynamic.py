@@ -47,6 +47,7 @@ from hyperadmin.core.sensitive import (
 )
 from hyperadmin.core.storage_paths import resolve_storage_path, storage_root
 from hyperadmin.discover import app_label_var
+from hyperadmin.i18n import translate_error
 from hyperadmin.views.forms import (
     CheckboxInput,
     FileInputWidget,
@@ -2177,7 +2178,7 @@ class DynamicModelView:
             for err in exc.errors():
                 loc = err.get("loc") or ("__all__",)
                 field = str(loc[0])
-                errors.setdefault(field, []).append(str(err.get("msg", "invalid")))
+                errors.setdefault(field, []).append(translate_error(err))
             return self._render_bulk_form(request, action_def, ids, errors=errors)
 
         outcomes = await self._execute_bulk(request, action_def, ids, params=params)

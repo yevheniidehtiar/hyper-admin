@@ -23,7 +23,7 @@ from hyperadmin.core.timezones import (
     is_auto_now_factory,
     parse_datetime_input,
 )
-from hyperadmin.i18n import gettext_lazy
+from hyperadmin.i18n import gettext_lazy, translate_error_lazy
 
 try:
     from hyperadmin.core.fields import classify_field as _classify_field
@@ -642,7 +642,7 @@ class PydanticForm:
             for error in e.errors():
                 loc = error["loc"][0]
                 key = str(loc)
-                errs.setdefault(key, []).append(gettext_lazy(error["msg"]))
+                errs.setdefault(key, []).append(translate_error_lazy(error))
         # A datetime the form could not parse replaces pydantic's message for it.
         errs.update(datetime_errors)
         self.errors = errs
@@ -887,7 +887,7 @@ class InlineFormset:
                 row_errors: dict[str, ErrorList] = {}
                 for error in e.errors():
                     loc = str(error["loc"][0])
-                    row_errors.setdefault(loc, []).append(gettext_lazy(error["msg"]))
+                    row_errors.setdefault(loc, []).append(translate_error_lazy(error))
                 errors[i] = row_errors
 
         self.errors = errors
