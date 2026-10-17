@@ -116,6 +116,7 @@ def create_admin_router(  # noqa: PLR0912, PLR0913, PLR0917
     admin_lookup: Any = None,
     route_class: type[APIRoute] = APIRoute,
     session_factory: "SessionFactory | None" = None,
+    debug: bool = False,
 ) -> APIRouter:
     """Creates an APIRouter for a given model with the specified admin options."""
     router = APIRouter(route_class=route_class)
@@ -166,6 +167,7 @@ def create_admin_router(  # noqa: PLR0912, PLR0913, PLR0917
         field_labels=field_labels,
         storage=storage,
         admin_lookup=admin_lookup,
+        debug=debug,
     )
     model_name = model.__name__.lower()
 
@@ -373,6 +375,8 @@ class HyperAdminRouter:
             registered as the ``ha_display`` format string (BYOA SDD A.7).
         session_factory: A host-provided session factory forwarded to every
             adapter alongside (or instead of) ``engine``.
+        debug: The admin's ``settings.debug``. List views re-raise database
+            errors instead of rendering the list-error banner (BYOA SDD D.2).
 
     The timezone and datetime format reach the view layer by living on the
     shared Jinja environment (as the ``hyperadmin_timezone`` /
@@ -381,7 +385,7 @@ class HyperAdminRouter:
     renders through this one environment, so there is nothing else to wire.
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         engine: Any,
         templates: Jinja2Templates,
@@ -390,8 +394,11 @@ class HyperAdminRouter:
         timezone: tzinfo | None = None,
         datetime_format: str = "%Y-%m-%d %H:%M:%S",
         session_factory: "SessionFactory | None" = None,
+        *,
+        debug: bool = False,
     ):
         self.engine = engine
+        self.debug = debug
         self.permission_checker = permission_checker
         self.storage = storage
         self.session_factory = session_factory
@@ -471,6 +478,7 @@ class HyperAdminRouter:
                 admin_lookup=admin_instances.get,
                 route_class=route_class,
                 session_factory=self.session_factory,
+                debug=self.debug,
             )
             self.routers.append(router)
 

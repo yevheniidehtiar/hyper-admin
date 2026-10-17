@@ -306,6 +306,7 @@ class Admin:
             timezone=self.settings.tzinfo,
             datetime_format=self.settings.datetime_format,
             session_factory=self.session_factory,
+            debug=self.settings.debug,
         )
         admin_router.generate_routes()
         routers = admin_router.get_routers()

@@ -6,6 +6,7 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 from fastapi import Request
 from fastapi.templating import Jinja2Templates
+from sqlalchemy.exc import SQLAlchemyError
 from sqlmodel import Field, SQLModel
 
 from hyperadmin.core.adapters import BaseAdapter
@@ -280,7 +281,7 @@ async def test_list_view_default_sort_column(
 async def test_list_view_error_handling(view_instance, mock_request, mock_templates, anyio_backend):
     """Test error handling when adapter fails."""
     # Mock adapter to raise an exception
-    view_instance.adapter.list = AsyncMock(side_effect=Exception("Database error"))
+    view_instance.adapter.list = AsyncMock(side_effect=SQLAlchemyError("Database error"))
 
     await view_instance.list_view(
         request=mock_request, page=1, page_size=10, search="", sort_by=None, sort_direction="asc"

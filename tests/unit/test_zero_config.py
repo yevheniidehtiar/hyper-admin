@@ -121,11 +121,17 @@ class TestZeroConfig:
         settings = HyperAdminSettings(auto_discover=True, create_tables=False)
         admin = Admin(app, engine=engine, settings=settings)
         admin.mount("/admin")
+        # A missing table is now surfaced as a list-error 500 (st-v058-byoa-43),
+        # so the table must exist for the list to respond 200.
+        async with engine.begin() as conn:
+            await conn.run_sync(SQLModel.metadata.create_all, tables=[ZCCategory.__table__])
+            await conn.run_sync(SQLModel.metadata.create_all, tables=[ZCProduct.__table__])
 
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             resp = await client.get("/admin/zcproduct")
             assert resp.status_code == 200
+            assert 'data-testid="list-error"' not in resp.text
 
     @pytest.mark.anyio
     async def test_dashboard_responds(self, engine) -> None:
