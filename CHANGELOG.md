@@ -8,6 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **Translated pydantic validation messages** (#531, st-v058-byoa-27, SDD
+  `docs/specs/bring-your-own-app.md` section D.4). New
+  `hyperadmin.i18n.translate_error(err)` maps a pydantic error's `type` (about
+  30 types: `missing`, string length/pattern, numeric bounds, `multiple_of`,
+  the `*_parsing` errors, `enum`/`literal_error`, collection length,
+  `url_parsing`, `json_invalid`, `value_error`, `assertion_error`) to a gettext
+  msgid with `%(ctx)s` placeholders and plural forms; unmapped types fall back
+  to `gettext(err["msg"])`. Form, inline-row and bulk-action-form errors now use
+  it, so they render in the active locale (`translate_error_lazy` keeps form
+  errors re-translatable at render time). English output is unchanged. Ships
+  Ukrainian translations, including the "or" joining `enum`/`literal_error`
+  choices and pydantic-core's fixed date/time/URL parser details (`input is
+  too short`, `relative URL without a base`, ...); interpolated details such as
+  UUID's `invalid length: found 3` stay in English. `poe i18n:extract` now also collects
+  `gettext_noop` / `ngettext_noop` markers.
 - **`session_factory=` seam for bring-your-own-app hosts** (st-v058-byoa-21,
   SDD `docs/specs/bring-your-own-app.md` section C.3). A host that manages its
   own engine, connection pool and transaction scope can now pass a session

@@ -12,6 +12,8 @@ Provides:
 - :func:`gettext_lazy` -- lazy proxy used for class-body model metadata.
 - :func:`install_jinja_i18n` -- wire ``jinja2.ext.i18n`` + the gettext
   callables onto a Jinja environment.
+- :func:`translate_error` -- translate one pydantic ``ValidationError``
+  error by its type (``translate_error_lazy`` for render-time translation).
 """
 
 from __future__ import annotations
@@ -28,6 +30,7 @@ from hyperadmin.i18n.loader import (
     set_current_translations,
 )
 from hyperadmin.i18n.middleware import RTL_LOCALES, LocaleMiddleware, negotiate_locale
+from hyperadmin.i18n.validation_messages import translate_error, translate_error_lazy
 
 __all__ = [
     "RTL_LOCALES",
@@ -42,4 +45,6 @@ __all__ = [
     "pgettext",
     "reset_current_translations",
     "set_current_translations",
+    "translate_error",
+    "translate_error_lazy",
 ]
