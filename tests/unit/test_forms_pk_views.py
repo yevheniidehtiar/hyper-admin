@@ -215,6 +215,7 @@ def test_inline_invalid_pk_is_a_row_error(engine):
       Given an order with a UUID-keyed inline line
       When  the order is saved with '-pk' = 'not-a-uuid'
       Then  the response is 422 and no line is written
+      And   the row shows an 'Invalid primary key.' error message
     """
     order, line = _order_with_line(engine)
     client = _mount(engine, FpkOrder, options=AdminOptions(inlines=[_LINES]))
@@ -227,6 +228,8 @@ def test_inline_invalid_pk_is_a_row_error(engine):
 
     assert response.status_code == 422
     assert [(r.id, r.sku) for r in _all(engine, FpkLine)] == [(line.id, "old")]
+    assert 'data-testid="fpkline-0-pk-errors"' in response.text
+    assert "Invalid primary key." in response.text
 
 
 def test_inline_foreign_uuid_pk_is_still_rejected(engine):

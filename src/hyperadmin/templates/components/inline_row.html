@@ -33,6 +33,11 @@
         {%- if row.has_errors -%}
         <span hidden aria-hidden="true" data-testid="inline-{{ inline.prefix }}-row-{{ row.index }}-error"></span>
         {%- endif -%}
+        {%- if row.pk_errors -%}
+        <ul class="ha-field-errors" aria-live="polite" data-testid="{{ inline.prefix }}-{{ row.index }}-pk-errors">
+            {%- for e in row.pk_errors -%}<li>{{ e }}</li>{%- endfor -%}
+        </ul>
+        {%- endif -%}
         <button type="button"
                 class="ha-btn ha-btn-danger ha-btn-sm ha-inline-remove-btn"
                 data-testid="inline-{{ inline.prefix }}-remove-{{ row.index }}"
