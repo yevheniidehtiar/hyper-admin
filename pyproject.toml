@@ -364,7 +364,7 @@ type = "simple"
 
   [tool.poe.tasks."i18n:extract"]
   help = "Extract translatable strings from src/hyperadmin to messages.pot"
-  cmd = "pybabel extract -F babel.cfg -o messages.pot ."
+  cmd = "pybabel extract -F babel.cfg -k gettext_noop -k ngettext_noop:1,2 -o messages.pot ."
 
   [tool.poe.tasks."i18n:compile"]
   help = "Compile .po files to .mo for runtime use"
