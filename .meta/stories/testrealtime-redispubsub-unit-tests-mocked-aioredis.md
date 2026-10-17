@@ -2,7 +2,7 @@
 type: story
 id: TKeRz1E0Nw8B
 title: "test(realtime): RedisPubSub unit tests (mocked aioredis)"
-status: todo
+status: in-review
 priority: medium
 assignee: null
 labels:
@@ -18,7 +18,7 @@ github:
   last_sync_hash: sha256:a3c31cf9ac14770d32f1bdfa27094662eeb227e94d0b046735288642384f45d3
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-03-29T06:58:01Z
-updated_at: 2026-09-28T00:00:00Z
+updated_at: 2026-10-17T00:00:00Z
 ---
 
 ## Context

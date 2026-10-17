@@ -2,7 +2,7 @@
 type: story
 id: v4wIz4uDwDKp
 title: "feat(realtime): RedisPubSub implementation + [redis] optional extra"
-status: todo
+status: in-review
 priority: medium
 assignee: null
 labels:
@@ -19,7 +19,7 @@ github:
   last_sync_hash: sha256:03d534f3e7c577ab75013d6d23e8a62dad13c7eef73e2a536d91a07abbcd9355
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-03-29T06:58:10Z
-updated_at: 2026-09-28T00:00:00Z
+updated_at: 2026-10-17T00:00:00Z
 ---
 
 ## Context

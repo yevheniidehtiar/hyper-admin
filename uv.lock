@@ -1,5 +1,5 @@
 version = 1
-revision = 3
+revision = 5
 requires-python = ">=3.10, <4.0"
 resolution-markers = [
     "python_full_version >= '3.15'",
@@ -2436,6 +2436,9 @@ loadtest = [
     { name = "psycopg", extra = ["binary"] },
     { name = "rich" },
 ]
+redis = [
+    { name = "redis" },
+]
 
 [package.dev-dependencies]
 dev = [
@@ -2489,6 +2492,7 @@ requires-dist = [
     { name = "python-multipart", specifier = ">=0.0.26" },
     { name = "pyyaml", marker = "extra == 'dev'", specifier = ">=6.0.3" },
     { name = "pyzmq", marker = "extra == 'dev'", specifier = ">=27.2.0" },
+    { name = "redis", marker = "extra == 'redis'", specifier = ">=5.0.1" },
     { name = "rich", marker = "extra == 'loadtest'", specifier = ">=15.0.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = "==0.16.10" },
     { name = "setuptools", marker = "extra == 'dev'", specifier = ">=84.0.0" },
@@ -2500,7 +2504,7 @@ requires-dist = [
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'dev'", specifier = ">=0.20.0" },
     { name = "zensical", marker = "python_full_version >= '3.11' and extra == 'dev'", specifier = ">=0.0.69" },
 ]
-provides-extras = ["dev", "loadtest"]
+provides-extras = ["dev", "redis", "loadtest"]
 
 [package.metadata.requires-dev]
 dev = [{ name = "faker", specifier = ">=40.41.0" }]
@@ -4958,6 +4962,18 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/53/3e/abe47d91d5340b77b003baf96fdf8966c946eb4c5a704a844b5d03e6e578/rcslice-1.1.0.tar.gz", hash = "sha256:a2ce70a60690eb63e52b722e046b334c3aaec5e900b28578f529878782ee5c6e", size = 4414, upload-time = "2018-09-27T12:44:06.601Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/aa/96/7935186fba032312eb8a75e6503440b0e6de76c901421f791408e4debd93/rcslice-1.1.0-py3-none-any.whl", hash = "sha256:1b12fc0c0ca452e8a9fd2b56ac008162f19e250906a4290a7e7a98be3200c2a6", size = 5180, upload-time = "2018-09-27T12:44:05.197Z" },
+]
+
+[[package]]
+name = "redis"
+version = "8.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "async-timeout", marker = "python_full_version < '3.11.3'" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/a8/99/604f0b666d4c616d891cf77ebb9db6bb21601344c051aebf1b72b9ff915f/redis-8.1.0.tar.gz", hash = "sha256:6e1a19beef9225c83efd689c7e6b7da2d5215b1f42cd13b7fc3714d0a09c7b25", size = 5254356, upload-time = "2026-07-30T08:51:00.269Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/66/9d/c5731f6e3608663d4d3656fd8d3aecee8b509c3082818f5a13eae925baea/redis-8.1.0-py3-none-any.whl", hash = "sha256:a4fe1aac3d3b3cc791d4b3d5931c5a956045dc951ee74d1c913ee3ac4d2ee9fb", size = 560618, upload-time = "2026-07-30T08:50:58.497Z" },
 ]
 
 [[package]]
