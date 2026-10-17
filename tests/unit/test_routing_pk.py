@@ -265,7 +265,7 @@ def test_str_pk_detail_url_is_percent_encoded_for_special_characters():
     """The generated detail route for a str-pk model percent-encodes url_for() output."""
     _client, app, _engine = _mount(StrPkWidget)
 
-    url = app.url_path_for("strpkwidget-detail", item_id="a b?c")
+    url = app.url_path_for("hyperadmin:strpkwidget-detail", item_id="a b?c")
 
     assert "%20" in str(url)
     assert "%3F" in str(url)

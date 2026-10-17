@@ -327,13 +327,18 @@ class TestExpiredCodeIsRejectedDistinctly:
         backend = SessionAuthBackend(engine=async_engine)
         sender = _CapturingSender()
         otp_service = EmailOTPService(email_sender=sender)
-        Admin(
+        admin = Admin(
             app,
             engine=async_engine,
             settings=HyperAdminSettings(create_tables=False, secret_key="test-secret-c3c-exp"),
             auth_backend=backend,
             otp_service=otp_service,
-        ).mount("/admin")
+        )
+        admin.mount("/admin")
+        # The admin session lives only inside the isolated admin sub-app, so the
+        # session-poking helper is registered there, under the MFA paths a
+        # partial-auth user may reach.
+        assert admin.asgi_app is not None
 
         async def _backdate(request: Request) -> Response:
             entry = request.session.get(OTP_SESSION_KEY)
@@ -344,7 +349,7 @@ class TestExpiredCodeIsRejectedDistinctly:
             request.session[OTP_SESSION_KEY] = entry
             return Response(status_code=204)
 
-        app.router.add_route("/_test/backdate-otp", _backdate, methods=["POST"])
+        admin.asgi_app.router.add_route("/mfa/_test/backdate-otp", _backdate, methods=["POST"])
 
         transport = ASGITransport(app=app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
@@ -358,7 +363,7 @@ class TestExpiredCodeIsRejectedDistinctly:
             issued_code = sender.calls[0][1]
 
             # And we artificially backdate the OTP entry past its TTL
-            backdate_resp = await client.post("/_test/backdate-otp")
+            backdate_resp = await client.post("/admin/mfa/_test/backdate-otp")
             assert backdate_resp.status_code == 204
 
             # When she submits the (now expired) code

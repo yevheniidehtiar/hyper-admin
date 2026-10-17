@@ -62,6 +62,7 @@ from hyperadmin.views.forms import (
 )
 from hyperadmin.views.htmx import HtmxTemplateResponse
 from hyperadmin.views.template_filters import TIMEZONE_GLOBAL, request_tz
+from hyperadmin.views.urls import admin_url_for
 
 logger = logging.getLogger(__name__)
 
@@ -707,7 +708,9 @@ class DynamicModelView:
             if request is not None:
                 route_name = f"{self._model_name_lower}-inline-add-row"
                 try:
-                    add_row_url = str(request.url_for(route_name, inline_prefix=spec.model_name))
+                    add_row_url = str(
+                        admin_url_for(request, route_name, inline_prefix=spec.model_name)
+                    )
                 except Exception:
                     add_row_url = ""
             formset = self._inline_formset(spec, add_row_url=add_row_url)
@@ -1018,11 +1021,11 @@ class DynamicModelView:
         parent_pk = self.pk.value_of(new_item)
         if parent_pk is not None:
             await self._save_inline_rows(inline_valid_data, parent_pk)
-            redirect_url = request.url_for(
-                f"{self.model.__name__.lower()}-detail", item_id=parent_pk
+            redirect_url = admin_url_for(
+                request, f"{self.model.__name__.lower()}-detail", item_id=parent_pk
             )
         else:
-            redirect_url = request.url_for(f"{self.model.__name__.lower()}-list")
+            redirect_url = admin_url_for(request, f"{self.model.__name__.lower()}-list")
 
         if "hx-request" in request.headers:
             return Response(status_code=200, headers={"HX-Redirect": str(redirect_url)})
@@ -1213,7 +1216,7 @@ class DynamicModelView:
         # Save inline rows
         await self._save_inline_rows(inline_valid_data, pk)
 
-        redirect_url = request.url_for(f"{self.model.__name__.lower()}-list")
+        redirect_url = admin_url_for(request, f"{self.model.__name__.lower()}-list")
 
         if "hx-request" in request.headers:
             return Response(status_code=200, headers={"HX-Redirect": str(redirect_url)})
@@ -1569,7 +1572,7 @@ class DynamicModelView:
             "target": target,
             "values": values or {},
             "errors": errors or {},
-            "post_url": request.url_for(f"{self._model_name_lower}-create-popup"),
+            "post_url": admin_url_for(request, f"{self._model_name_lower}-create-popup"),
         }
         return self.templates.TemplateResponse(
             request,
@@ -1879,7 +1882,7 @@ class DynamicModelView:
             ) from None
         self._remove_files(file_paths)
 
-        redirect_url = request.url_for(f"{self.model.__name__.lower()}-list")
+        redirect_url = admin_url_for(request, f"{self.model.__name__.lower()}-list")
 
         if "hx-request" in request.headers:
             return Response(status_code=200, headers={"HX-Redirect": str(redirect_url)})
@@ -1911,7 +1914,7 @@ class DynamicModelView:
         if isinstance(result, Response):
             return result
 
-        redirect_url = request.url_for(f"{self._model_name_lower}-list")
+        redirect_url = admin_url_for(request, f"{self._model_name_lower}-list")
         if "hx-request" in request.headers:
             return Response(status_code=200, headers={"HX-Redirect": str(redirect_url)})
         return RedirectResponse(url=redirect_url, status_code=303)
@@ -2000,8 +2003,8 @@ class DynamicModelView:
             "action": action_def,
             "outcomes": outcomes,
             "model_name": self._model_name_lower,
-            "bulk_endpoint_url": request.url_for(
-                f"{self._model_name_lower}-bulk-action", action_name=action_def.name
+            "bulk_endpoint_url": admin_url_for(
+                request, f"{self._model_name_lower}-bulk-action", action_name=action_def.name
             ),
             "failed_ids": [o.id for o in outcomes if o.status != "ok"],
         }
@@ -2035,7 +2038,8 @@ class DynamicModelView:
             "ids": ids,
             "fields": fields,
             "model_name": self._model_name_lower,
-            "confirm_url": request.url_for(
+            "confirm_url": admin_url_for(
+                request,
                 f"{self._model_name_lower}-bulk-action-confirm",
                 action_name=action_def.name,
             ),
