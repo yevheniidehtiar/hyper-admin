@@ -129,6 +129,17 @@ def ha_datetime_input(ctx: Context, value: Any) -> str:
 
 
 @pass_context
+def ha_timezone_name(ctx: Context) -> str:
+    """Return the name of the resolved display timezone (a Jinja global).
+
+    An IANA zone renders as its key (``Europe/Amsterdam``) and UTC as ``UTC``.
+    The ``datetime_input`` widget shows it as a hint next to the input, so the
+    operator knows which zone a naive ``datetime-local`` value is entered in.
+    """
+    return str(resolve_tz(ctx))
+
+
+@pass_context
 def ha_display(ctx: Context, value: Any) -> Any:
     """Render an aware datetime as a ``<time>`` element; pass everything else through.
 
@@ -181,3 +192,4 @@ def register_template_filters(
     env.filters["ha_dom_token"] = ha_dom_token
     env.filters["ha_datetime_input"] = ha_datetime_input
     env.filters["ha_display"] = ha_display
+    env.globals["ha_timezone_name"] = ha_timezone_name

@@ -2030,7 +2030,7 @@ class DynamicModelView:
             "bulk_endpoint_url": request.url_for(
                 f"{self._model_name_lower}-bulk-action", action_name=action_def.name
             ),
-            "failed_ids": [o.id for o in outcomes if o.status != "ok"],
+            "failed_ids": [self.pk.to_str(o.id) for o in outcomes if o.status != "ok"],
         }
         return self.templates.TemplateResponse(request, "components/bulk_result.html", context)
 
@@ -2059,7 +2059,7 @@ class DynamicModelView:
             "request": request,
             "pk_attr": self.pk.attr,
             "action": action_def,
-            "ids": ids,
+            "ids": [self.pk.to_str(pk) for pk in ids],
             "fields": fields,
             "model_name": self._model_name_lower,
             "confirm_url": request.url_for(

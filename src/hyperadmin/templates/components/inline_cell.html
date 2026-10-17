@@ -1,21 +1,23 @@
 {# Inline-editable read-only cell. Replaced by inline_editor.html on edit. #}
 {%- from "components/_icons.html" import icon -%}
+{%- set item_pk = item|ha_pk(pk_attr|default('id')) -%}
+{%- set item_token = item_pk|ha_dom_token -%}
 <td class="ha-table-cell ha-cell-editable{%- if saved %} ha-cell-saved{%- endif -%}"
-    id="cell-{{ model_name|lower }}-{{ item.id }}-{{ field }}"{% if cell_label is defined %}
+    id="cell-{{ model_name|lower }}-{{ item_token }}-{{ field }}"{% if cell_label is defined %}
     data-label="{{ cell_label }}"{% endif %}
-    data-testid="cell-{{ field }}-{{ item.id }}">
-    <span class="ha-cell-value" data-testid="cell-value-{{ field }}-{{ item.id }}">{%- if item[field] is none -%}<span class="ha-text-muted">&mdash;</span>{%- else -%}{{- item[field]|ha_display -}}{%- endif -%}</span>
+    data-testid="cell-{{ field }}-{{ item_token }}">
+    <span class="ha-cell-value" data-testid="cell-value-{{ field }}-{{ item_token }}">{%- if item[field] is none -%}<span class="ha-text-muted">&mdash;</span>{%- else -%}{{- item[field]|ha_display -}}{%- endif -%}</span>
     <button type="button"
             class="ha-cell-edit"
-            data-testid="cell-edit-{{ field }}-{{ item.id }}"
-            aria-label="Edit {{ field }} for row {{ item.id }}"
-            hx-get="{{- url_for(model_name|lower ~ '-inline-edit-form', item_id=item.id, field=field) -}}"
+            data-testid="cell-edit-{{ field }}-{{ item_token }}"
+            aria-label="Edit {{ field }} for row {{ item_pk }}"
+            hx-get="{{- url_for(model_name|lower ~ '-inline-edit-form', item_id=item_pk, field=field) -}}"
             hx-target="closest td"
             hx-swap="outerHTML">
         {{ icon('pencil', 'ha-icon-sm') }}
         <span class="ha-visually-hidden">Edit</span>
     </button>
     {%- if saved -%}
-        <span class="ha-visually-hidden" data-testid="cell-saved-flag-{{ field }}-{{ item.id }}">saved</span>
+        <span class="ha-visually-hidden" data-testid="cell-saved-flag-{{ field }}-{{ item_token }}">saved</span>
     {%- endif -%}
 </td>
