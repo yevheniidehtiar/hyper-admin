@@ -33,7 +33,10 @@ from hyperadmin.core.choices import ChoiceItem, SelectFieldMeta
 from hyperadmin.core.discovery import build_filter_metadata
 from hyperadmin.core.display import get_display_name
 from hyperadmin.core.fields import classify_field
-from hyperadmin.core.filtering import FilterValueError, coerce_filter_value
+from hyperadmin.core.filtering import (
+    ParsedFilters,
+    parse_filter_params,
+)
 from hyperadmin.core.inlines import InlineModelSpec
 from hyperadmin.core.options import AdminOptions
 from hyperadmin.core.primary_key import InvalidPrimaryKey, PrimaryKeyInfo
@@ -58,6 +61,7 @@ from hyperadmin.views.forms import (
     field_is_required,
 )
 from hyperadmin.views.htmx import HtmxTemplateResponse
+from hyperadmin.views.template_filters import TIMEZONE_GLOBAL, request_tz
 
 logger = logging.getLogger(__name__)
 
@@ -67,6 +71,11 @@ _MAX_CHOICES_LIMIT = 200
 # OFFSET: a larger value overflows the DBAPI bind (SQLite raises a plain
 # ``OverflowError``) instead of just returning an empty page.
 _MAX_LIST_PAGE = 10**15
+
+# URL filter operators list_view accepts. Range operators (gte/lte/in/isnull)
+# are deferred to a follow-up milestone (BYOA SDD Owner decision 8); widening
+# this set is the only change list_view needs to accept them.
+_LIST_FILTER_OPS = frozenset({"exact"})
 
 # Missing-table messages from SQLite ("no such table"), PostgreSQL
 # ('relation "x" does not exist') and asyncpg ("UndefinedTableError").
@@ -491,32 +500,25 @@ class DynamicModelView:
                 result.add(name)
         return result
 
-    def _parse_list_filters(self, request: Request) -> tuple[dict[str, str], dict[str, Any]]:
-        """Parse ``filter_<field>`` query params into (active, to_apply) dicts.
+    def _parse_list_filters(self, request: Request) -> ParsedFilters:
+        """Parse ``filter_<field>`` query params into typed conditions (BYOA SDD D.3).
 
-        Only whitelisted (list_filter), non-sensitive model fields are honoured;
-        anything else is ignored so the URL cannot become an equality oracle on
-        arbitrary columns. Values are coerced to the field's type first; one that
-        does not fit (``filter_age=abc``) is dropped, so user input never reaches
-        the database as a query that fails (BYOA SDD D.2).
+        Only whitelisted (``list_filter``), non-sensitive model fields are
+        honoured; anything else is ignored so the URL cannot become an equality
+        oracle on arbitrary columns. Only the ``exact`` operator is accepted
+        (Owner decision 8 defers ranges). A value that does not fit the field's
+        type (``filter_age=abc``) drops its condition and is reported in
+        ``errors`` instead, so user input never reaches the database as a query
+        that fails. Dates on aware columns are local days in the display timezone.
         """
-        allowed_filters = self._filterable_fields()
-        active_filters: dict[str, str] = {}
-        filters_to_apply: dict[str, Any] = {}
-        for key, value in request.query_params.items():
-            if not (key.startswith("filter_") and value):
-                continue
-            field_name = key[7:]
-            if field_name not in allowed_filters:
-                logger.debug("Ignoring filter on non-whitelisted field %r", field_name)
-                continue
-            active_filters[field_name] = value
-            ann = self.model.model_fields[field_name].annotation
-            try:
-                filters_to_apply[field_name] = coerce_filter_value(ann, value, field=field_name)
-            except FilterValueError:
-                logger.debug("Ignoring uncoercible filter value for %r", field_name)
-        return active_filters, filters_to_apply
+        return parse_filter_params(
+            self.model,
+            request.query_params,
+            self._filterable_fields(),
+            tz=request_tz(request, self.templates.env.globals.get(TIMEZONE_GLOBAL)),
+            datetime_kind=self.adapter.datetime_kind,
+            ops=_LIST_FILTER_OPS,
+        )
 
     @_request_scoped
     async def list_view(
@@ -531,7 +533,7 @@ class DynamicModelView:
         """Renders the list view for the model with pagination, sorting, and filtering."""
         await self._check_permission(request, "view")
 
-        active_filters, filters_to_apply = self._parse_list_filters(request)
+        parsed_filters = self._parse_list_filters(request)
 
         # sort_by is whitelisted against the sortable displayed columns. An
         # unknown or sensitive value falls back to the default sort.
@@ -555,7 +557,7 @@ class DynamicModelView:
                 page=page,
                 page_size=page_size,
                 search=search or None,
-                filters=filters_to_apply,
+                filters=parsed_filters.conditions,
                 order_by=order_by,
                 search_fields=self.search_fields,
             )
@@ -635,7 +637,8 @@ class DynamicModelView:
             "sort_by": sort_by,
             "sort_direction": sort_direction,
             "filter_metadata": filter_metadata,
-            "active_filters": active_filters,
+            "active_filters": parsed_filters.active,
+            "filter_errors": parsed_filters.errors,
             "can_create": self.options.can_create,
             "can_edit": self.options.can_edit,
             "can_delete": self.options.can_delete,

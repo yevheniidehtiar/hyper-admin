@@ -10,6 +10,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlmodel import Field, SQLModel
 
 from hyperadmin.core.adapters import BaseAdapter
+from hyperadmin.core.filtering import FilterCondition
 from hyperadmin.core.options import AdminOptions
 from hyperadmin.views.dynamic import DynamicModelView
 
@@ -340,7 +341,7 @@ async def test_list_view_parameter_validation(
         page=2,
         page_size=5,
         search="test",
-        filters={},
+        filters=[],  # a FilterCondition list (BYOA SDD D.3)
         order_by="-name",  # Should be prefixed with - for desc
         search_fields=None,
     )
@@ -365,7 +366,10 @@ async def test_list_view_with_filters(view_instance, mock_request, mock_template
         page=1,
         page_size=10,
         search=None,
-        filters={"is_active": True, "color": "red"},
+        filters=[
+            FilterCondition("is_active", "exact", True),
+            FilterCondition("color", "exact", SampleEnum.RED),
+        ],
         order_by="id",
         search_fields=None,
     )
