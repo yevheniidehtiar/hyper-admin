@@ -205,3 +205,70 @@ def test_inline_formset_defaults_to_the_int_id_pk():
 
     assert formset.pk is DEFAULT_PK
     assert rows[0]["_pk"] == 42
+
+
+def test_inline_empty_pk_is_rejected_instead_of_creating_a_row():
+    """
+    Scenario: posted empty pk is not re-created
+      Given an inline row rendered with an empty natural str key (hidden '-pk' = '')
+      When  the form is submitted
+      Then  the row is rejected with a pk error instead of being treated as a new row
+    """
+    formset = _code_formset()
+
+    rows = formset.extract_submitted_data({"codeline-0-pk": "", "codeline-0-sku": "a"})
+    valid, errors = formset.validate_rows(rows, parent_pk=1)
+
+    assert rows[0]["_pk_invalid"] == ""
+    assert valid == []
+    assert "pk" in errors[0]
+
+
+def test_inline_empty_pk_on_a_delete_row_is_rejected_not_skipped():
+    """
+    Scenario: posted empty pk marked DELETE is not silently dropped
+      Given an inline row with an empty natural str key marked DELETE
+      When  the form is submitted
+      Then  the delete row is kept and rejected with a pk error
+    """
+    formset = _code_formset()
+
+    rows = formset.extract_submitted_data({"codeline-0-pk": "", "codeline-0-DELETE": "on"})
+    valid, errors = formset.validate_rows(rows)
+
+    assert rows == [{"_delete": True, "_pk_invalid": ""}]
+    assert valid == []
+    assert "pk" in errors[0]
+
+
+def test_inline_empty_pk_is_kept_on_the_rebuilt_row():
+    """
+    Scenario: posted empty pk survives a re-render
+      Given an inline row with an empty natural str key
+      When  the formset rebuilds rows from the submitted data
+      Then  the row keeps the empty key and carries a pk error
+    """
+    formset = _code_formset()
+
+    formset.rebuild_from_submitted({"codeline-0-pk": "", "codeline-0-sku": "a"})
+
+    row = formset.rows[0]
+    assert row.pk == ""
+    assert row.pk_errors
+
+
+def test_inline_new_row_without_pk_input_is_a_create():
+    """
+    Scenario: new row still creates
+      Given an extra inline row that posts no '-pk' input
+      When  the form is submitted
+      Then  the row carries no key and is treated as a create
+    """
+    formset = _code_formset()
+
+    rows = formset.extract_submitted_data({"codeline-0-sku": "a"})
+    formset.rebuild_from_submitted({"codeline-0-sku": "a"})
+
+    assert "_pk" not in rows[0]
+    assert "_pk_invalid" not in rows[0]
+    assert formset.rows[0].pk is None
