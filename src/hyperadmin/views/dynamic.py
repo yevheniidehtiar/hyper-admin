@@ -56,7 +56,7 @@ from hyperadmin.views.forms import (
     field_is_required,
 )
 from hyperadmin.views.htmx import HtmxTemplateResponse
-from hyperadmin.views.uploads import file_download_response, unique_upload_name
+from hyperadmin.views.uploads import download_name, file_download_response, unique_upload_name
 from hyperadmin.views.urls import admin_url_for
 
 logger = logging.getLogger(__name__)
@@ -671,6 +671,7 @@ class DynamicModelView:
             if val is not None:
                 item_data[fname] = val.name if hasattr(val, "name") else str(val)
 
+        file_urls = self._file_urls(request, item_id, item_data, file_fields)
         context = {
             "request": request,
             "item_name": get_display_name(item),
@@ -679,7 +680,8 @@ class DynamicModelView:
             "actions": self.actions,
             "model_name_lower": self._model_name_lower,
             "file_fields": file_fields,
-            "file_urls": self._file_urls(request, item_id, item_data, file_fields),
+            "file_urls": file_urls,
+            "file_labels": {name: download_name(item_data[name]) for name in file_urls},
             "pk_attr": self.pk.attr,
         }
         template_name = self._get_template_name("detail")

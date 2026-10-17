@@ -253,6 +253,7 @@ def test_svg_is_downloaded_as_an_attachment() -> None:
       When  GET /admin/srvdocument/1/file/doc is requested
       Then  Content-Disposition is attachment
       And   nosniff and a sandbox CSP are set
+      And   the browser is told not to store the file
     """
     # Given
     name = _store("x.svg", b"<svg onload='alert(1)'/>")
@@ -266,6 +267,7 @@ def test_svg_is_downloaded_as_an_attachment() -> None:
     assert resp.headers["content-disposition"].startswith("attachment")
     assert resp.headers["x-content-type-options"] == "nosniff"
     assert resp.headers["content-security-policy"] == "sandbox"
+    assert resp.headers["cache-control"] == "private, no-store"
     assert not resp.headers["content-type"].startswith("image/svg")
     assert resp.content == b"<svg onload='alert(1)'/>"
 
@@ -277,6 +279,7 @@ def test_allow_listed_raster_image_is_served_inline() -> None:
       When  GET /admin/srvdocument/1/file/doc is requested
       Then  Content-Disposition is inline with an image/png type
       And   nosniff is still set
+      And   the browser is told not to store the file
     """
     # Given
     name = _store("photo.PNG", b"\x89PNG")
@@ -290,6 +293,7 @@ def test_allow_listed_raster_image_is_served_inline() -> None:
     assert resp.headers["content-disposition"].startswith("inline")
     assert resp.headers["content-type"] == "image/png"
     assert resp.headers["x-content-type-options"] == "nosniff"
+    assert resp.headers["cache-control"] == "private, no-store"
 
 
 def test_stored_name_outside_the_storage_root_is_rejected() -> None:
@@ -516,6 +520,28 @@ def test_detail_page_links_to_the_per_record_route() -> None:
     assert resp.status_code == 200
     assert 'href="http://testserver/admin/srvdocument/1/file/doc"' in resp.text
     assert "/uploads/" not in resp.text
+
+
+def test_detail_page_link_text_hides_the_unique_upload_prefix() -> None:
+    """
+    Scenario: download link shows the original file name
+      Given a document whose stored file name carries a unique upload prefix
+      When  its detail page is rendered
+      Then  the download link text is the original file name
+      And   the prefixed stored name is not shown
+    """
+    # Given
+    stored = f"{'ab' * 16}-report.pdf"
+    name = _store(stored, b"x")
+    client, _ = _client({1: name})
+
+    # When
+    resp = client.get("/admin/srvdocument/1")
+
+    # Then
+    assert resp.status_code == 200
+    assert 'data-testid="doc-download">report.pdf</a>' in resp.text
+    assert stored not in resp.text
 
 
 def test_detail_page_without_storage_shows_the_name_without_a_link() -> None:
