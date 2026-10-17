@@ -7,6 +7,8 @@ from sqlalchemy import Column
 from sqlalchemy.orm import Mapped
 from sqlmodel import Field, Relationship, SQLModel
 
+from hyperadmin.core import utc_now
+
 upload_storage = FileSystemStorage("uploads/")
 
 
@@ -28,7 +30,7 @@ class User(SQLModel, table=True):
     is_active: bool = True
     rating: float = 0.0
     user_type: UserType = Field(default=UserType.STANDARD, nullable=False)
-    created_at: datetime | None = Field(default_factory=datetime.now)
+    created_at: datetime | None = Field(default_factory=utc_now)
 
 
 class Product(SQLModel, table=True):
@@ -38,7 +40,7 @@ class Product(SQLModel, table=True):
     price: float = Field(gt=0)
     is_available: bool = True
     category: ProductCategory = Field(default=ProductCategory.ELECTRONICS, nullable=False)
-    release_date: datetime | None = Field(default_factory=datetime.now)
+    release_date: datetime | None = Field(default_factory=utc_now)
     manual: str | None = Field(
         default=None,
         sa_column=Column(FileType(storage=upload_storage)),

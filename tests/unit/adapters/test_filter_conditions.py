@@ -13,7 +13,7 @@ Every ``list()`` scenario runs against both adapters.
 
 import enum
 import uuid
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from decimal import Decimal
 from typing import Any
 
@@ -118,7 +118,7 @@ async def products(engine: AsyncEngine, warehouse: Any) -> list[Any]:
             "quantity": 4,
             "category": Category.GADGET,
             "is_active": False,
-            "deleted_at": datetime(2024, 1, 1),
+            "deleted_at": datetime(2024, 1, 1, tzinfo=timezone.utc),
             "warehouse_id": warehouse.id,
         },
         {

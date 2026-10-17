@@ -149,3 +149,20 @@ def test_sqlalchemy_floor_stops_aiosqlite_worker_threads() -> None:
     for req in sqlalchemy:
         assert not req.specifier.contains("2.0.45"), str(req)
         assert req.specifier.contains("2.0.46"), str(req)
+
+
+def test_sqlmodel_is_not_capped_below_the_tz_aware_release() -> None:
+    """
+    Scenario: the sqlmodel cap is lifted (st-v058-byoa-48)
+      Given the admin handles both aware and naive datetime columns
+      When  the runtime sqlmodel requirement is read from the distribution metadata
+      Then  it still allows the 0.0.19 floor
+      And   it allows sqlmodel 0.0.45+ (``UTCDateTime``) with no upper cap
+    """
+    (req,) = [r for r in _runtime_requirements() if r.name.lower() == "sqlmodel"]
+
+    assert req.specifier.contains("0.0.19")
+    assert not req.specifier.contains("0.0.18")
+    assert req.specifier.contains("0.0.45")
+    assert req.specifier.contains("0.0.47")
+    assert all(spec.operator in {">=", ">"} for spec in req.specifier)
