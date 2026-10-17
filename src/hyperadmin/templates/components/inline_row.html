@@ -7,7 +7,7 @@
     data-testid="inline-{{ inline.prefix }}-row-{{ row.index }}"
     {% if row.has_errors %}aria-invalid="true"{% endif %}
     id="inline-{{ inline.prefix }}-row-{{ row.index }}">
-    {%- if row.pk -%}
+    {%- if row.pk is not none -%}
     <input type="hidden" name="{{ inline.prefix }}-{{ row.index }}-pk" value="{{ row.pk }}" />
     {%- endif -%}
     {%- for field in row.fields -%}

@@ -3,11 +3,16 @@
     <input id="{{- field.name -}}"
            name="{{- field.name -}}"
            type="datetime-local"
-           value="{{- field.value or '' -}}"
+           step="1"
+           value="{{- field.value|ha_datetime_input -}}"
            class="ha-input"
+           aria-describedby="{{- field.name -}}-tz"
            aria-invalid="{{- 'true' if field.errors else 'false' -}}"
             {%- if widget.htmx_attrs -%}
                 {%- for k, v in widget.htmx_attrs.items() -%} {{ k }}="{{ v }}"{%- endfor -%}
             {%- endif -%}
     />
+    <p class="ha-help-text" id="{{- field.name -}}-tz" data-testid="{{- field.name -}}-tz">
+        {%- trans tz=ha_timezone_name() -%}Time zone: {{ tz }}{%- endtrans -%}
+    </p>
 {%- endcall -%}
