@@ -1954,8 +1954,11 @@ class DynamicModelView:
         for item_id in ids:
             try:
                 item = await self.adapter.get(pk=item_id)
-            except Exception as exc:
-                outcomes.append(BulkRowResult(id=item_id, status="failed", detail=str(exc)))
+            except Exception:
+                # Never echo the raw exception: driver errors embed SQL and bound
+                # parameters. Details go to the server log only.
+                logger.exception("Bulk action %r could not load row %s", action_def.name, item_id)
+                outcomes.append(BulkRowResult(id=item_id, status="failed", detail="Database error"))
                 continue
             if item is None:
                 outcomes.append(BulkRowResult(id=item_id, status="failed", detail="not found"))
@@ -1974,14 +1977,9 @@ class DynamicModelView:
                     "forbidden" if exc.status_code == HTTPStatus.FORBIDDEN else "failed"
                 )
                 outcomes.append(BulkRowResult(id=item_id, status=status, detail=str(exc.detail)))
-            except Exception as exc:
-                logger.warning(
-                    "Bulk action %r failed on row %s: %s",
-                    action_def.name,
-                    item_id,
-                    exc,
-                )
-                outcomes.append(BulkRowResult(id=item_id, status="failed", detail=str(exc)))
+            except Exception:
+                logger.exception("Bulk action %r failed on row %s", action_def.name, item_id)
+                outcomes.append(BulkRowResult(id=item_id, status="failed", detail="Action failed"))
             else:
                 outcomes.append(BulkRowResult(id=item_id, status="ok", detail=None))
         return outcomes
