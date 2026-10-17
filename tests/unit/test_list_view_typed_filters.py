@@ -193,6 +193,29 @@ def test_integer_filter_coerced(spy: list[Any]) -> None:
     assert resp.context["filter_errors"] == {}  # type: ignore[attr-defined]
 
 
+def test_repeated_exact_filter_uses_the_last_value(spy: list[Any]) -> None:
+    """
+    Scenario: repeated exact filter uses the last value
+      Given Order list_filter ['quantity']
+      When  /admin/order?filter_quantity=1&filter_quantity=3 is requested
+      Then  only quantity 3 rows are listed
+      And   the active filter re-rendered into links is the same value 3
+    """
+    # Given Order list_filter ['quantity']
+    client = _client()
+
+    # When /admin/order?filter_quantity=1&filter_quantity=3 is requested
+    resp = client.get("/admin/tforder?filter_quantity=1&filter_quantity=3")
+
+    # Then only quantity 3 rows are listed
+    assert resp.status_code == 200
+    assert _titles(resp.text, "o") == ["o-three", "o-two"]
+    assert spy[-1] == [FilterCondition("quantity", "exact", 3)]
+    # And the active filter re-rendered into links is the same value 3
+    assert resp.context["active_filters"] == {"quantity": "3"}  # type: ignore[attr-defined]
+    assert resp.context["filter_errors"] == {}  # type: ignore[attr-defined]
+
+
 def test_non_whitelisted_ignored(spy: list[Any]) -> None:
     """
     Scenario: non-whitelisted ignored

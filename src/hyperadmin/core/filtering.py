@@ -315,7 +315,13 @@ def _collect_raw_values(
             logger.debug("Ignoring filter with unsupported operator %r on %r", op, name)
             continue
         values = str(value).split(",") if op == "in" else [str(value)]
-        grouped.setdefault((name, op), []).extend(v.strip() for v in values if v.strip())
+        cleaned = [v.strip() for v in values if v.strip()]
+        if op == "in":
+            grouped.setdefault((name, op), []).extend(cleaned)
+        elif cleaned:
+            # Single-value operators: the last repeated parameter wins, so the
+            # applied value and the re-rendered active value are the same one.
+            grouped[(name, op)] = cleaned[-1:]
     return grouped
 
 
