@@ -2,7 +2,7 @@
 type: story
 id: st-v058-byoa-45
 title: "feat(templates): pk-agnostic item links/testids and tz-aware datetime rendering"
-status: todo
+status: in-review
 priority: high
 assignee: null
 labels:
@@ -15,7 +15,7 @@ estimate: null
 epic_ref:
   id: ep-v058-byoa-01
 created_at: 2026-09-28T00:00:00Z
-updated_at: 2026-09-28T00:00:00Z
+updated_at: 2026-10-17T00:00:00Z
 ---
 
 ## Summary
@@ -63,10 +63,10 @@ Scenario: aware list cell
 
 ## Acceptance Criteria
 
-- [ ] int-id links unchanged
-- [ ] UUID links work
-- [ ] aware edit value
-- [ ] aware list cell
+- [x] int-id links unchanged
+- [x] UUID links work
+- [x] aware edit value
+- [x] aware list cell
 - [ ] `poe lint` and `poe test:unit` pass (and `poe test:e2e`)
 
 ## Review amendments (2026-09-28)

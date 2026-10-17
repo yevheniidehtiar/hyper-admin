@@ -1,17 +1,14 @@
 from __future__ import annotations
 
-import types
 from abc import ABC, abstractmethod
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import AbstractAsyncContextManager, contextmanager
 from contextvars import ContextVar
 from dataclasses import dataclass
-from datetime import datetime
-from typing import TYPE_CHECKING, Annotated, Any, Protocol, Union, cast, get_args, get_origin
-
-from pydantic import AwareDatetime, NaiveDatetime
+from typing import TYPE_CHECKING, Any, Protocol, cast
 
 from hyperadmin.core.primary_key import DEFAULT_PK, InvalidPrimaryKey, PrimaryKeyInfo
+from hyperadmin.core.timezones import annotation_datetime_kind
 
 if TYPE_CHECKING:
     import builtins
@@ -182,24 +179,6 @@ class ListEnvelope:
     meta: PaginationMeta
 
 
-def _annotation_datetime_kind(annotation: Any) -> DateTimeKind | None:
-    origin = get_origin(annotation)
-    if origin is Annotated:
-        return _annotation_datetime_kind(get_args(annotation)[0])
-    if origin is Union or origin is types.UnionType:
-        kinds: set[DateTimeKind | None]
-        kinds = {_annotation_datetime_kind(arg) for arg in get_args(annotation)}
-        kinds.discard(None)
-        return kinds.pop() if len(kinds) == 1 else None
-    if annotation is AwareDatetime:
-        return "aware"
-    if annotation is NaiveDatetime:
-        return "naive"
-    if isinstance(annotation, type) and issubclass(annotation, datetime):
-        return "naive"
-    return None
-
-
 class BaseAdapter(ABC):
     """Abstract base class for data adapters.
 
@@ -266,7 +245,7 @@ class BaseAdapter(ABC):
         model_fields = getattr(self.model, "model_fields", None)
         if not isinstance(model_fields, dict) or field not in model_fields:
             return None
-        return _annotation_datetime_kind(model_fields[field].annotation)
+        return annotation_datetime_kind(model_fields[field].annotation)
 
     def get_queryset(self, request: Request | None = None) -> dict[str, Any]:
         """Return additional equality filters merged into ``list()`` and ``get()`` queries.

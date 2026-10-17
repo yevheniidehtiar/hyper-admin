@@ -95,8 +95,16 @@ def resolve_tz(ctx: Context) -> tzinfo:
     value cannot turn every ``ha_display``/``ha_datetime_input`` render into
     a 500.
     """
-    request = ctx.get("request")
-    default = ctx.get(TIMEZONE_GLOBAL, dt_timezone.utc)
+    return resolve_request_tz(ctx.get("request"), ctx.get(TIMEZONE_GLOBAL))
+
+
+def resolve_request_tz(request: Any, default: Any = None) -> tzinfo:
+    """Resolve the display timezone for ``request``, outside a template render.
+
+    Same rules as :func:`resolve_tz`: ``request.state.hyperadmin_timezone``
+    wins (an invalid zone name is logged and ignored), then ``default`` (the
+    admin's configured timezone), then UTC when ``default`` is not a ``tzinfo``.
+    """
     default = default if isinstance(default, tzinfo) else dt_timezone.utc
     override = getattr(getattr(request, "state", None), "hyperadmin_timezone", None)
     if not override:
@@ -118,6 +126,17 @@ def resolve_tz(ctx: Context) -> tzinfo:
 def ha_datetime_input(ctx: Context, value: Any) -> str:
     """Format ``value`` for a ``datetime-local`` input in the resolved timezone."""
     return format_datetime_input(value, resolve_tz(ctx))
+
+
+@pass_context
+def ha_timezone_name(ctx: Context) -> str:
+    """Return the name of the resolved display timezone (a Jinja global).
+
+    An IANA zone renders as its key (``Europe/Amsterdam``) and UTC as ``UTC``.
+    The ``datetime_input`` widget shows it as a hint next to the input, so the
+    operator knows which zone a naive ``datetime-local`` value is entered in.
+    """
+    return str(resolve_tz(ctx))
 
 
 @pass_context
@@ -173,3 +192,4 @@ def register_template_filters(
     env.filters["ha_dom_token"] = ha_dom_token
     env.filters["ha_datetime_input"] = ha_datetime_input
     env.filters["ha_display"] = ha_display
+    env.globals["ha_timezone_name"] = ha_timezone_name

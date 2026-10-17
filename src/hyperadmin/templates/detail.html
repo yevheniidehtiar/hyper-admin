@@ -27,7 +27,7 @@
         {%- for act in actions -%}
         <button
             data-testid="action-{{ act.name }}-btn"
-            hx-post="{{- url_for(model_name_lower ~ '-action', item_id=item.id, action_name=act.name) -}}"
+            hx-post="{{- url_for(model_name_lower ~ '-action', item_id=item|ha_pk(pk_attr|default('id')), action_name=act.name) -}}"
             hx-confirm="{% trans label=act.label %}Run action '{{ label }}'?{% endtrans %}"
             class="ha-btn ha-btn-action"
         >{{ act.label }}</button>
