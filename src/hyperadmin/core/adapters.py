@@ -340,10 +340,10 @@ class BaseAdapter(ABC):
         parent being saved. Adapters provide the lookup via :meth:`inline_child_pks`,
         which returns DB-typed keys (e.g. ``uuid.UUID`` for a UUID-keyed child).
 
-        A submitted ``_pk`` is a form value — a plain ``str`` or ``int`` from
-        ``views/forms.py``'s ``_parse_inline_pk``, or whatever a direct adapter
-        caller passes. It is parsed through the *child* model's own primary-key
-        codec (not the parent's) before comparing against ``owned``, so a
+        A submitted ``_pk`` is a key already parsed by ``InlineFormset`` with the
+        child's codec, or whatever a direct adapter caller passes. It is parsed
+        (again) through the *child* model's own primary-key codec (not the
+        parent's) before comparing against ``owned``, so a
         UUID-keyed child's submitted ``str(uuid)`` compares equal to the
         ``uuid.UUID`` instances ``inline_child_pks`` returns, instead of every
         row with an existing ``_pk`` being rejected as foreign.

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import timedelta, timezone
 from enum import Enum
 from typing import Any
 
@@ -499,3 +500,81 @@ def test_empty_optional_values_become_none_only_when_the_type_allows_it() -> Non
     assert instance is not None
     assert instance.email is None
     assert instance.notes == ""
+
+
+# ---------------------------------------------------------------------------
+# pk-aware PydanticForm (st-v058-byoa-31, BYOA SDD A.6)
+# ---------------------------------------------------------------------------
+
+
+class _NaturalKeyModel(BaseModel):
+    code: str
+    name: str = "x"
+
+
+class _IdKeyModel(BaseModel):
+    id: int | None = None
+    name: str = "x"
+
+
+def test_natural_pk_on_create_is_a_required_field():
+    """
+    Scenario: natural pk on create
+      Given a natural str pk model
+      When  the create form is built with pk_editable=True
+      Then  'code' is a required field
+    """
+    form = PydanticForm(_NaturalKeyModel, pk_attr="code", pk_editable=True)
+
+    fields = {f.name: f for f in form.fields}
+
+    assert "code" in fields
+    assert fields["code"].required is True
+
+
+def test_natural_pk_is_skipped_when_not_editable():
+    """
+    Scenario: natural pk hidden on edit
+      Given a natural str pk model
+      When  the form is built with pk_attr='code' and pk_editable=False
+      Then  'code' is not a form field
+      And   a non-pk field named like the old default is still shown
+    """
+
+    class _WithIdColumn(BaseModel):
+        code: str
+        id: int = 0
+
+    form = PydanticForm(_WithIdColumn, pk_attr="code")
+
+    assert [f.name for f in form.fields] == ["id"]
+
+
+def test_pydantic_form_defaults_are_back_compatible():
+    """
+    Scenario: defaults are back-compatible
+      Given PydanticForm defaults
+      When  the form is built
+      Then  'id' is skipped
+      And   pk_attr is 'id', pk_editable is False and timezone is UTC
+    """
+    form = PydanticForm(_IdKeyModel)
+
+    assert [f.name for f in form.fields] == ["name"]
+    assert form.pk_attr == "id"
+    assert form.pk_editable is False
+    assert form.timezone is timezone.utc
+
+
+def test_pydantic_form_keeps_a_custom_timezone():
+    """
+    Scenario: custom timezone is kept
+      Given a tzinfo other than UTC
+      When  the form is built with timezone=<that tz>
+      Then  form.timezone is that tz
+    """
+    tz = timezone(timedelta(hours=2))
+
+    form = PydanticForm(_IdKeyModel, timezone=tz)
+
+    assert form.timezone is tz
