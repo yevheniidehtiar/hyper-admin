@@ -7,6 +7,8 @@ and builds the response here:
 - ``X-Content-Type-Options: nosniff`` and ``Content-Security-Policy: sandbox``
   on every file, so a stored HTML or SVG file can never run script in the
   admin's origin;
+- ``Cache-Control: private, no-store`` so neither shared caches nor the
+  browser keep a copy once the session ends or the permission is revoked;
 - ``Content-Disposition: inline`` only for an allow-list of raster image types
   (PNG, JPEG, GIF, WebP), and ``attachment`` for everything else, SVG included.
 
@@ -37,7 +39,7 @@ INLINE_IMAGE_TYPES: dict[str, str] = {
 FILE_SECURITY_HEADERS: dict[str, str] = {
     "X-Content-Type-Options": "nosniff",
     "Content-Security-Policy": "sandbox",
-    "Cache-Control": "private",
+    "Cache-Control": "private, no-store",
 }
 
 _UNIQUE_PREFIX = re.compile(r"^[0-9a-f]{32}-(?=.)")
