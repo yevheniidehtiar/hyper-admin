@@ -95,8 +95,16 @@ def resolve_tz(ctx: Context) -> tzinfo:
     value cannot turn every ``ha_display``/``ha_datetime_input`` render into
     a 500.
     """
-    request = ctx.get("request")
-    default = ctx.get(TIMEZONE_GLOBAL, dt_timezone.utc)
+    return resolve_request_tz(ctx.get("request"), ctx.get(TIMEZONE_GLOBAL))
+
+
+def resolve_request_tz(request: Any, default: Any = None) -> tzinfo:
+    """Resolve the display timezone for ``request``, outside a template render.
+
+    Same rules as :func:`resolve_tz`: ``request.state.hyperadmin_timezone``
+    wins (an invalid zone name is logged and ignored), then ``default`` (the
+    admin's configured timezone), then UTC when ``default`` is not a ``tzinfo``.
+    """
     default = default if isinstance(default, tzinfo) else dt_timezone.utc
     override = getattr(getattr(request, "state", None), "hyperadmin_timezone", None)
     if not override:

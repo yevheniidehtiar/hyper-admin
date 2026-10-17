@@ -58,6 +58,7 @@ from hyperadmin.views.forms import (
     field_is_required,
 )
 from hyperadmin.views.htmx import HtmxTemplateResponse
+from hyperadmin.views.template_filters import TIMEZONE_GLOBAL, resolve_request_tz
 
 logger = logging.getLogger(__name__)
 
@@ -340,6 +341,23 @@ class DynamicModelView:
     def _form_pk_kwargs(self, *, create: bool) -> dict[str, Any]:
         """``PydanticForm`` pk options: a natural (non-generated) key is an input on create only."""
         return {"pk_attr": self.pk.attr, "pk_editable": create and not self.pk.generated}
+
+    @staticmethod
+    def _stored_values(item: Any) -> dict[str, Any]:
+        """The stored field values of ``item`` (``model_dump()``, else ``__dict__``)."""
+        initial_func = getattr(item, "model_dump", None)
+        return cast(
+            "dict[str, Any]",
+            initial_func() if callable(initial_func) else dict(getattr(item, "__dict__", {})),
+        )
+
+    def _form_datetime_kwargs(self, request: Request) -> dict[str, Any]:
+        """``PydanticForm`` datetime options: the request's display timezone and column kinds."""
+        default_tz = self.templates.env.globals.get(TIMEZONE_GLOBAL)
+        return {
+            "timezone": resolve_request_tz(request, default_tz),
+            "datetime_kind": self.adapter.datetime_kind,
+        }
 
     def _inline_formset(self, spec: InlineModelSpec, **kwargs: Any) -> InlineFormset:
         """Build a formset that parses submitted child keys with the inline model's own codec."""
@@ -875,8 +893,12 @@ class DynamicModelView:
         ``process_bind_param`` can write them to storage.  Empty file inputs
         (no file selected) are removed from the dict to avoid overwriting
         existing values.
+
+        Keys that are not form fields are dropped: a hidden field (an auto-now
+        timestamp, a field outside ``form_include``) is never user-writable.
         """
-        data: dict[str, Any] = dict(form_data)
+        allowed = {field.name for field in form.fields}
+        data: dict[str, Any] = {k: v for k, v in dict(form_data).items() if k in allowed}
         for field in form.fields:
             is_multi = isinstance(field.widget, (MultiSelectWidget, RelationMultiSelectWidget))
             is_checkbox = isinstance(field.widget, CheckboxInput)
@@ -957,6 +979,7 @@ class DynamicModelView:
             form_layout=getattr(self.options, "form_layout", None),
             form_fields=getattr(self.options, "form_fields", None) or None,
             **self._form_pk_kwargs(create=True),
+            **self._form_datetime_kwargs(request),
         )
         data = self._extract_form_data(form_data, form)
         file_uploads = self._pop_file_uploads(data, form)
@@ -1001,7 +1024,8 @@ class DynamicModelView:
             )
 
         try:
-            create_data = instance.model_dump()
+            # Auto-now fields are stamped by the model/database, never the form.
+            create_data = instance.model_dump(exclude=set(form.auto_now_field_names))
             create_data.update(file_uploads)
             new_item = await self.adapter.create(data=create_data)
         except IntegrityError as exc:
@@ -1042,11 +1066,7 @@ class DynamicModelView:
         item = await self._get_or_404(pk)
         await self._check_object_permission(request, item, "change")
 
-        initial_func = getattr(item, "model_dump", None)
-        initial_values = cast(
-            "dict[str, Any]",
-            initial_func() if callable(initial_func) else getattr(item, "__dict__", {}),
-        )
+        initial_values = self._stored_values(item)
 
         # Override with re-submitted values on validation failure
         if values:
@@ -1130,10 +1150,13 @@ class DynamicModelView:
             widgets=relation_widgets,
             include=self.form_include,
             exclude=self._opaque_sensitive_fields or None,
+            # The stored values let an untouched datetime keep its exact value.
+            initial=self._without_sensitive(self._stored_values(existing)),
             fieldsets=getattr(self.options, "fieldsets", None) or None,
             form_layout=getattr(self.options, "form_layout", None),
             form_fields=getattr(self.options, "form_fields", None) or None,
             **self._form_pk_kwargs(create=False),
+            **self._form_datetime_kwargs(request),
         )
         data = self._extract_form_data(form_data, form)
         file_uploads = self._pop_file_uploads(data, form)
@@ -1484,6 +1507,7 @@ class DynamicModelView:
             form_layout=getattr(self.options, "form_layout", None),
             form_fields=getattr(self.options, "form_fields", None) or None,
             **self._form_pk_kwargs(create=True),
+            **self._form_datetime_kwargs(request),
         )
         data = self._extract_form_data(form_data, form)
         data.pop("target", None)
@@ -1498,7 +1522,8 @@ class DynamicModelView:
             )
 
         try:
-            create_data = instance.model_dump()
+            # Auto-now fields are stamped by the model/database, never the form.
+            create_data = instance.model_dump(exclude=set(form.auto_now_field_names))
             create_data.update(file_uploads)
             new_item = await self.adapter.create(data=create_data)
         except IntegrityError as exc:
@@ -1781,7 +1806,12 @@ class DynamicModelView:
         merged = dict(current)
         merged[field] = raw_value
 
-        form = PydanticForm(self.model, pk_attr=self.pk.attr)
+        form = PydanticForm(
+            self.model,
+            initial=current,
+            pk_attr=self.pk.attr,
+            **self._form_datetime_kwargs(request),
+        )
         form_field = next((f for f in form.fields if f.name == field), None)
         if form_field is None:
             raise HTTPException(status_code=403, detail="Field not editable")

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import types
 from dataclasses import dataclass
 from dataclasses import field as dc_field
 from datetime import datetime, tzinfo
@@ -16,7 +17,12 @@ from hyperadmin.core.choices import ChoiceItem
 from hyperadmin.core.display import get_enum_label
 from hyperadmin.core.primary_key import DEFAULT_PK, InvalidPrimaryKey, PrimaryKeyInfo
 from hyperadmin.core.sensitive import effective_sensitive_field_names
-from hyperadmin.core.timezones import is_auto_now_factory
+from hyperadmin.core.timezones import (
+    annotation_datetime_kind,
+    format_datetime_input,
+    is_auto_now_factory,
+    parse_datetime_input,
+)
 from hyperadmin.i18n import gettext_lazy
 
 try:
@@ -28,13 +34,14 @@ except ImportError:
     _HAS_CLASSIFY = False
 
 if TYPE_CHECKING:
-    from collections.abc import Mapping
+    from collections.abc import Callable, Mapping
 
     from starlette.templating import Jinja2Templates
 
     from hyperadmin.core.fieldsets import FieldsetSpec
     from hyperadmin.core.inlines import InlineModelSpec
     from hyperadmin.core.layouts import FormLayout
+    from hyperadmin.core.timezones import DateTimeKind
 
 # Type alias: errors can be lazy-translated proxies or plain strings.
 # ``babel.support.LazyProxy`` satisfies the string protocol via ``__str__``.
@@ -42,6 +49,28 @@ ErrorList = list[Any]
 
 # Row error for an inline ``<prefix>-<i>-pk`` the inline model's codec rejects.
 _INVALID_PK_MESSAGE = gettext_lazy("Invalid primary key.")
+
+# Field error for a datetime input that is not a valid ISO-8601 date/time.
+_INVALID_DATETIME_MESSAGE = gettext_lazy("Enter a valid date/time")
+
+
+def _unwrap_optional(annotation: Any) -> Any:
+    """Return the first non-``None`` member of an optional union, else ``annotation``.
+
+    Handles both ``typing.Optional[X]`` / ``Union[X, None]`` and PEP 604 ``X | None``
+    (``types.UnionType``), so ``datetime | None`` picks the same widget as ``datetime``.
+    """
+    origin = get_origin(annotation)
+    args = get_args(annotation)
+    if (origin is Union or origin is types.UnionType) and type(None) in args:
+        return next(arg for arg in args if arg is not type(None))
+    return annotation
+
+
+def _is_datetime_annotation(annotation: Any) -> bool:
+    """Whether ``annotation`` is a datetime: ``datetime`` (or a subclass),
+    ``AwareDatetime``, ``NaiveDatetime`` or ``Annotated[datetime, ...]``."""
+    return annotation_datetime_kind(annotation) is not None
 
 
 @dataclass(slots=True)
@@ -237,6 +266,22 @@ def field_is_required(field: Any) -> bool:
     return bool(is_required() if callable(is_required) else is_required)
 
 
+def _is_untouched_datetime(raw: str, original: datetime, tz: tzinfo) -> bool:
+    """Whether ``raw`` is the rendered input value of ``original``.
+
+    The input shows ``original`` at second precision in ``tz``; a browser
+    submits a zero-seconds value in its short form (``2026-07-01T10:00``), so
+    the comparison is between parsed wall-clock times, not strings. Input with
+    an explicit offset was not produced by the widget and never matches.
+    """
+    try:
+        entered = datetime.fromisoformat(raw.strip())
+    except ValueError:
+        return False
+    shown = datetime.fromisoformat(format_datetime_input(original, tz))
+    return entered.tzinfo is None and entered == shown
+
+
 def _accepts_none(field: Any) -> bool:
     """Whether a field's annotation is optional (``X | None``), so ``""`` may become ``None``.
 
@@ -329,6 +374,7 @@ class PydanticForm:
         pk_attr: str = "id",
         pk_editable: bool = False,
         timezone: tzinfo = dt_timezone.utc,
+        datetime_kind: Callable[[str], DateTimeKind | None] | None = None,
     ) -> None:
         """Build a form over ``model``'s fields.
 
@@ -337,11 +383,15 @@ class PydanticForm:
             pk_editable: Render the primary key as an input. Set only on create
                 forms of models whose key is not generated (a natural key).
             timezone: The display timezone for datetime input.
+            datetime_kind: Resolves a field to ``"aware"`` or ``"naive"``
+                (typically ``adapter.datetime_kind``). Fields it returns ``None``
+                for fall back to their annotation.
         """
         self.model = model
         self.pk_attr = pk_attr
         self.pk_editable = pk_editable
         self.timezone = timezone
+        self.datetime_kind = datetime_kind
         self.widgets = widgets or {}
         self.include = set(include or [])
         self.exclude = set(exclude or [])
@@ -381,11 +431,7 @@ class PydanticForm:
                 choices_url = f"{self.choices_base_url}/{name}" if self.choices_base_url else ""
                 if meta.choices_source == "enum":
                     # Extract enum type for choices
-                    ann = getattr(field, "annotation", None)
-                    origin = get_origin(ann)
-                    args = get_args(ann)
-                    if origin is not None and args and origin is Union and type(None) in args:
-                        ann = next(a for a in args if a is not type(None))
+                    ann = _unwrap_optional(getattr(field, "annotation", None))
                     # Unwrap list[Enum]
                     if get_origin(ann) is list and get_args(ann):
                         ann = get_args(ann)[0]
@@ -417,12 +463,7 @@ class PydanticForm:
         if lower in {"description", "text", "body", "content"}:
             return Textarea()
 
-        ann = getattr(field, "annotation", None)
-        origin = get_origin(ann)
-        args = get_args(ann)
-
-        if origin is not None and args and origin is Union and type(None) in args:
-            ann = next(arg for arg in args if arg is not type(None))
+        ann = _unwrap_optional(getattr(field, "annotation", None))
 
         if ann is bool:
             return CheckboxInput()
@@ -430,7 +471,7 @@ class PydanticForm:
             return NumberInput()
         if ann is float:
             return FloatInput()
-        if ann is datetime:
+        if _is_datetime_annotation(ann):
             return DateTimeInput()
         if isinstance(ann, type) and issubclass(ann, Enum):
             return SelectInput()
@@ -545,26 +586,71 @@ class PydanticForm:
         for f in self.fields:
             f.value = data.get(f.name)
 
+    def _field_datetime_kind(self, form_field: FormField) -> DateTimeKind | None:
+        """The datetime kind of a datetime-annotated field, else ``None``.
+
+        The resolver (the adapter's column introspection) decides; its ``None``
+        falls back to the annotation. A non-datetime field is never parsed here.
+        """
+        declared = annotation_datetime_kind(getattr(form_field.model_field, "annotation", None))
+        if declared is None:
+            return None
+        kind = self.datetime_kind(form_field.name) if self.datetime_kind else None
+        return kind or declared
+
+    def _clean_datetimes(self, cleaned_data: dict[str, Any]) -> dict[str, ErrorList]:
+        """Parse submitted datetime strings in place; return the fields that failed.
+
+        Aware columns localise naive input in ``self.timezone`` and store UTC;
+        naive columns keep the wall-clock value. A string naming the same second
+        as the formatted initial value (browsers submit ``10:00`` for
+        ``10:00:00``) keeps the original datetime, so an untouched field does
+        not lose its sub-second precision on edit.
+        """
+        errors: dict[str, ErrorList] = {}
+        for f in self.fields:
+            raw = cleaned_data.get(f.name)
+            if not isinstance(raw, str) or not raw.strip():
+                continue
+            kind = self._field_datetime_kind(f)
+            if kind is None:
+                continue
+            original = self.initial.get(f.name)
+            if isinstance(original, datetime) and _is_untouched_datetime(
+                raw, original, self.timezone
+            ):
+                cleaned_data[f.name] = original
+                continue
+            try:
+                cleaned_data[f.name] = parse_datetime_input(raw, kind=kind, tz=self.timezone)
+            except ValueError:
+                errors[f.name] = [_INVALID_DATETIME_MESSAGE]
+        return errors
+
     def validate(self, data: dict[str, Any]) -> tuple[BaseModel | None, dict[str, ErrorList]]:
         cleaned_data = data.copy()
         for f in self.fields:
             if not f.required and cleaned_data.get(f.name) == "" and _accepts_none(f.model_field):
                 cleaned_data[f.name] = None
+        datetime_errors = self._clean_datetimes(cleaned_data)
 
+        instance: BaseModel | None = None
+        errs: dict[str, ErrorList] = {}
         try:
             instance = self.model.model_validate(cleaned_data)
-            self.errors = {}
-            return instance, {}
         except ValidationError as e:
-            errs: dict[str, ErrorList] = {}
             for error in e.errors():
                 loc = error["loc"][0]
                 key = str(loc)
                 errs.setdefault(key, []).append(gettext_lazy(error["msg"]))
-            self.errors = errs
-            for f in self.fields:
-                f.errors = errs.get(f.name)
-            return None, errs
+        # A datetime the form could not parse replaces pydantic's message for it.
+        errs.update(datetime_errors)
+        self.errors = errs
+        if not errs:
+            return instance, {}
+        for f in self.fields:
+            f.errors = errs.get(f.name)
+        return None, errs
 
     @property
     def media(self) -> tuple[str, ...]:
@@ -861,12 +947,7 @@ class InlineFormset:
 
 def _pick_inline_widget(name: str, field_info: FieldInfo) -> HtmxWidget:
     """Pick a simple widget for an inline field (no relation support yet)."""
-    ann = getattr(field_info, "annotation", None)
-    origin = get_origin(ann)
-    args = get_args(ann)
-
-    if origin is not None and args and origin is Union and type(None) in args:
-        ann = next(arg for arg in args if arg is not type(None))
+    ann = _unwrap_optional(getattr(field_info, "annotation", None))
 
     if ann is bool:
         return CheckboxInput()
@@ -874,7 +955,7 @@ def _pick_inline_widget(name: str, field_info: FieldInfo) -> HtmxWidget:
         return NumberInput()
     if ann is float:
         return FloatInput()
-    if ann is datetime:
+    if _is_datetime_annotation(ann):
         return DateTimeInput()
     if isinstance(ann, type) and issubclass(ann, Enum):
         return SelectInput()
