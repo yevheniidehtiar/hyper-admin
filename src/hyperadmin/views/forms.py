@@ -820,14 +820,14 @@ class InlineFormset:
                 # Collect pk for deletion
                 pk_key = f"{prefix}-{i}-pk"
                 pk_val = form_data.get(pk_key)
-                if pk_val:
+                if pk_val is not None:
                     results.append({"_delete": True, **self._submitted_pk(pk_val)})
                 continue
 
             row_data: dict[str, Any] = {}
             pk_key = f"{prefix}-{i}-pk"
             pk_val = form_data.get(pk_key)
-            if pk_val:
+            if pk_val is not None:
                 row_data.update(self._submitted_pk(pk_val))
 
             has_data = False
@@ -915,7 +915,7 @@ class InlineFormset:
 
             pk_key = f"{prefix}-{i}-pk"
             pk_val = form_data.get(pk_key)
-            pk_info = self._submitted_pk(pk_val) if pk_val else {}
+            pk_info = self._submitted_pk(pk_val) if pk_val is not None else {}
             pk = pk_info.get("_pk", pk_info.get("_pk_invalid"))
 
             row = self._build_row(i, values=vals, pk=pk)
