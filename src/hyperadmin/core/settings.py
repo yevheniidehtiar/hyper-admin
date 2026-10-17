@@ -40,16 +40,22 @@ ThemeLiteral = Literal["auto", "light", "dark"]
 MountModeLiteral = Literal["isolated", "router"]
 #: ``cookie_secure`` setting values (SDD C.4).
 CookieSecure = Literal["auto"] | bool
+SameSiteLiteral = Literal["lax", "strict", "none"]
+
+#: Request schemes whose cookies get ``Secure`` under ``cookie_secure="auto"``.
+_SECURE_SCHEMES = frozenset({"https", "wss"})
 
 
 def resolve_cookie_secure(cookie_secure: CookieSecure, scheme: str) -> bool:
-    """Resolve ``cookie_secure`` for a request (SDD C.4).
+    """Return whether an admin cookie gets the ``Secure`` flag (SDD C.4).
 
-    ``"auto"`` marks a cookie ``Secure`` when the effective request scheme is
-    https; ``True``/``False`` force it either way.
+    ``True`` / ``False`` are used as-is. ``"auto"`` follows the effective request
+    scheme (``request.url.scheme``, which honours ``X-Forwarded-Proto`` when the
+    server trusts the proxy), so plain-http installs and ``TestClient`` keep their
+    cookies while https/wss requests get ``Secure``.
     """
     if cookie_secure == "auto":
-        return scheme == "https"
+        return scheme.lower() in _SECURE_SCHEMES
     return cookie_secure is True
 
 
@@ -99,8 +105,9 @@ class HyperAdminSettings(BaseSettings):
     csrf_field_name: str = Field(default="csrf_token", min_length=1)
     #: Extra origins (``"https://admin.example"``) the ``Origin`` check accepts.
     csrf_trusted_origins: list[str] = Field(default_factory=list)
-    #: ``Secure`` flag for admin cookies (SDD C.4): ``"auto"`` follows the effective
-    #: request scheme; set ``True`` behind a TLS proxy uvicorn does not trust.
+    #: ``Secure`` flag for every admin cookie (session, CSRF, token, locale; SDD C.4):
+    #: ``"auto"`` follows the effective request scheme; set ``True`` behind a TLS
+    #: proxy uvicorn does not trust.
     cookie_secure: CookieSecure = "auto"
 
     # ── Database ─────────────────────────────────────────────────────────────
@@ -124,6 +131,16 @@ class HyperAdminSettings(BaseSettings):
     #: Name of the sub-application mount; admin routes resolve as
     #: ``f"{route_namespace}:{name}"`` (e.g. ``hyperadmin:user-list``) in isolated mode.
     route_namespace: str = Field(default="hyperadmin", min_length=1, pattern=r"^[^:/]+$")
+
+    # ── Admin cookies (SDD C.4) ─────────────────────────────────────────────────
+    #: Name of the admin's own session cookie. Its ``Path`` is the per-request admin
+    #: path, so it never collides with a host ``session`` cookie. In the deprecated
+    #: router mode the legacy cookie (``session``, ``Path=/``) is kept unless this
+    #: is set explicitly.
+    session_cookie: str = Field(default="hyperadmin_session", min_length=1)
+    #: Session lifetime in seconds (default: 14 days).
+    session_max_age: int = Field(default=1_209_600, gt=0)
+    session_same_site: SameSiteLiteral = "lax"
 
     # ── Discovery ─────────────────────────────────────────────────────────────
     auto_discover: bool = False

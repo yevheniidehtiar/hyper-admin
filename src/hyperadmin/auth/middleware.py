@@ -18,6 +18,8 @@ from starlette.responses import RedirectResponse, Response
 from hyperadmin.auth.otp import PARTIAL_AUTH_SESSION_KEY
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from starlette.requests import Request
 
 
@@ -43,6 +45,7 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
         permission_checker: Any = None,
         *,
         isolated: bool = False,
+        admin_path: Callable[[Request], str] | None = None,
     ) -> None:
         """Build the middleware.
 
@@ -56,12 +59,18 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
                 (SDD C.1): every request it sees is an admin request, and redirect
                 URLs are built from the sub-app's ``root_path``, which already
                 holds the full external admin path (host ``root_path`` included).
+            admin_path: Returns the per-request external admin path (SDD C.1)
+                that ``login_url`` and the MFA redirect are built from. ``Admin``
+                passes one that honours the host's ``root_path`` in both modes;
+                without it, the sub-app ``root_path`` (isolated) or the static
+                ``admin_prefix`` (router mode) is used.
         """
         super().__init__(app)
         self.auth_backend = auth_backend
         self.admin_prefix = admin_prefix.rstrip("/")
         self.permission_checker = permission_checker
         self.isolated = isolated
+        self._admin_path_for = admin_path
 
     def _relative_admin_path(self, request: Request) -> str | None:
         """Return the path below the admin prefix, or ``None`` for a host request.
@@ -79,6 +88,8 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
 
     def _admin_path(self, request: Request) -> str:
         """Return the external admin path that redirect URLs are built from."""
+        if self._admin_path_for is not None:
+            return self._admin_path_for(request)
         if self.isolated:
             return request.scope.get("root_path", "")
         return self.admin_prefix

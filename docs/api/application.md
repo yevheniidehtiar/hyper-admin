@@ -30,6 +30,10 @@ admin.mount("/admin")
 | `template_dirs` | `list[str] \| None` | `None` | Extra Jinja2 template search paths |
 | `mount_mode` | `"isolated" \| "router"` | `"isolated"` | `"isolated"` mounts the admin as a private sub-application (see below). `"router"` is the deprecated legacy mode, removed in 0.6 |
 | `route_namespace` | `str` | `"hyperadmin"` | Name of the admin mount; admin route names resolve as `hyperadmin:user-list` |
+| `session_cookie` | `str` | `"hyperadmin_session"` | Name of the admin's session cookie (built-in auth). Its `Path` is the admin path |
+| `session_max_age` | `int` | `1209600` | Session cookie lifetime in seconds (14 days) |
+| `session_same_site` | `"lax" \| "strict" \| "none"` | `"lax"` | `SameSite` attribute of the session cookie |
+| `cookie_secure` | `"auto" \| bool` | `"auto"` | `Secure` flag for every admin cookie. `"auto"` sets it when the request scheme is https, so plain-http development and `TestClient` keep working; set `true` in production behind a TLS proxy |
 
 ## Isolated mount
 
@@ -59,6 +63,19 @@ Uploaded files are served per record under the admin prefix, at
 object permissions and `get_queryset` scoping. There is no public `/uploads` mount any more;
 `settings.public_uploads_path` restores one as a logged escape hatch (see
 [File Uploads](../guides/file-uploads.md)).
+
+### Admin session cookie
+
+With built-in auth, the admin keeps its own signed session cookie, `hyperadmin_session`, with
+`Path` set to the per-request admin path (`/admin`, or `/api/admin` under a host `root_path`). A
+host `SessionMiddleware` keeps its own `session` cookie: logging in to the admin never writes the
+admin user into it, and the host session is untouched. The locale cookie uses the same path and
+`Secure` rule. In the deprecated router mode the legacy cookie (`session`, `Path=/`) is kept
+unless `session_cookie` is set explicitly.
+
+Behind a TLS-terminating proxy that the server does not trust (`forwarded_allow_ips`), the app
+sees plain http, so `cookie_secure="auto"` leaves `Secure` off and logs a one-time warning. Set
+`HYPERADMIN_COOKIE_SECURE=true` in production.
 
 ## CSRF protection
 
