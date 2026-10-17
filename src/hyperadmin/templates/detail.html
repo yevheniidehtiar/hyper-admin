@@ -12,7 +12,11 @@
             </dt>
             <dd class="ha-field-value">
                 {%- if file_fields is defined and key in file_fields and value -%}
-                    <a href="/uploads/{{ value }}" target="_blank" class="ha-file-link" data-testid="{{ key }}-download">{{ value }}</a>
+                    {%- if file_urls is defined and key in file_urls -%}
+                    <a href="{{ file_urls[key] }}" target="_blank" rel="noopener" class="ha-file-link" data-testid="{{ key }}-download">{{ value }}</a>
+                    {%- else -%}
+                    {{- value -}}
+                    {%- endif -%}
                 {%- elif value is not none -%}
                     {{- value|ha_display -}}
                 {%- else -%}

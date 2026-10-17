@@ -193,9 +193,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
     Opt it back in with `AdminOptions(sensitive_fields={"secret_name": False})`.
     The name heuristic does not apply to booleans, numbers or enums
     (`is_secret: bool`, `token_count: int`).
-- Known gap (st-v058-byoa-35): uploaded files are still served publicly from
-  the host's `/uploads` in both mount modes. Per-record file serving behind
-  the admin's permissions replaces it in st-v058-byoa-37.
+- **Uploaded files are no longer public** (st-v058-byoa-37, SDD C.5). The
+  `/uploads` static mount at the host root is removed. Files are served per
+  record at `{prefix}/{model}/{item_id}/file/{field}` (route `<model>-file`),
+  which requires `view`, applies `get_queryset` and the object `view` check,
+  and sends `nosniff`, `Content-Security-Policy: sandbox` and
+  `Content-Disposition: attachment` for everything except PNG, JPEG, GIF and
+  WebP (never SVG). Form uploads, like `upload_file_view`, are stored under a
+  unique `<uuid4 hex>-<name>` so a same-name upload never overwrites another
+  record's file. Upgrade note: links to `/uploads/<name>` stop working; set
+  `HYPERADMIN_PUBLIC_UPLOADS_PATH=/uploads` to restore the public mount (a
+  startup warning is logged).
 
 ### Deprecated
 - `mount_mode="router"` (the legacy `include_router` mount, st-v058-byoa-35)

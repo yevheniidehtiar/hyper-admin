@@ -15,6 +15,7 @@ from hyperadmin.core.introspection import (
 )
 from hyperadmin.core.lifecycle import Lifecycle, StartupGuardMiddleware
 from hyperadmin.core.settings import HyperAdminSettings
+from hyperadmin.core.storage_paths import storage_root
 from hyperadmin.discover import discover_admin_modules
 from hyperadmin.realtime import ConnectionRegistry, RealtimeSettings
 from hyperadmin.realtime.sse import make_sse_handler
@@ -530,18 +531,25 @@ class Admin:
 
         target.add_middleware(LocaleMiddleware, settings=self.settings)
 
-    def _mount_upload_storage(self) -> None:
-        """Mount the upload storage directory as a static-files endpoint."""
-        storage_path = getattr(self.storage, "_path", None)
-        if storage_path is None:
-            return
-        storage_path_str = str(storage_path)
-        if os.path.isdir(storage_path_str):
-            self.app.mount(
-                "/uploads",
-                StaticFiles(directory=storage_path_str),
-                name="uploads",
+    def _mount_public_uploads(self, path: str) -> None:
+        """Legacy escape hatch: mount the storage directory publicly at ``path`` (SDD C.5).
+
+        Only used when ``settings.public_uploads_path`` is set. Files are
+        otherwise served per record behind the admin's permission checks.
+        """
+        root = storage_root(self.storage)
+        if root is None or not root.is_dir():
+            logger.warning(
+                "public_uploads_path=%r ignored: the storage has no local directory", path
             )
+            return
+        logger.warning(
+            "HyperAdmin serves uploaded files publicly at %r (settings.public_uploads_path), "
+            "outside the admin's authentication and permissions. Unset it to serve files "
+            "only per record under the admin prefix.",
+            path,
+        )
+        self.app.mount(path, StaticFiles(directory=str(root)), name="uploads")
 
     async def _sync_permissions(self) -> None:
         """Sync permissions for all registered models to the database."""
@@ -666,8 +674,8 @@ class Admin:
         # for API callers). Set before any route is added to the admin router.
         self.router.route_class = admin_route_class(self.templates)
 
-        if self.storage:
-            self._mount_upload_storage()
+        if self.storage and self.settings.public_uploads_path:
+            self._mount_public_uploads(self.settings.public_uploads_path)
 
         if self.auth_backend:
             self._register_auth_routes(path)
