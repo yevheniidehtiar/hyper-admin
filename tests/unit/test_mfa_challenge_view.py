@@ -13,6 +13,7 @@ hand to simulate the post-password / pre-MFA state.
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -23,6 +24,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlmodel import SQLModel
 from starlette.middleware.sessions import SessionMiddleware
 from starlette.responses import Response
+from starlette.staticfiles import StaticFiles
 
 from hyperadmin.auth.backend import hash_password
 from hyperadmin.auth.models import User
@@ -60,6 +62,9 @@ async def alice(async_engine) -> User:
         return user
 
 
+_STATIC_DIR = str(Path(__file__).resolve().parents[2] / "src" / "hyperadmin" / "static")
+
+
 class _CapturingSender:
     """Test double for the EmailOTPService email_sender callable."""
 
@@ -93,6 +98,10 @@ def _build_app(async_engine, otp_service: Any | None = None, sender: Any | None 
     site._registry.clear()
 
     app = FastAPI()
+    # The MFA views render the admin layout, which links ``static`` assets; the
+    # admin's own static mount lives inside its sub-app, which these hand-wired
+    # routes bypass, so the host provides one.
+    app.mount("/static", StaticFiles(directory=_STATIC_DIR), name="static")
     backend = SessionAuthBackend(engine=async_engine)
     Admin(
         app,

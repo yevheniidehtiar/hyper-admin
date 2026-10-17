@@ -24,6 +24,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from jinja2 import pass_context
+
+# FastAPI itself imports ``get_route_path`` from here (see core/lifecycle.py).
+from starlette._utils import get_route_path
 from starlette.routing import NoMatchFound
 
 if TYPE_CHECKING:
@@ -31,6 +34,7 @@ if TYPE_CHECKING:
     from jinja2.runtime import Context
     from starlette.datastructures import URL
     from starlette.requests import Request
+    from starlette.types import ASGIApp, Receive, Scope, Send
 
 #: Key under ``request.scope`` that carries the admin's own routing data
 #: (currently ``{"namespace": str | None}``), set by the mount machinery.
@@ -113,3 +117,38 @@ def admin_base_path(request: Request) -> str:
         return root_path
     prefix = info.get("prefix", "") if isinstance(info, dict) else ""
     return f"{root_path}{prefix}"
+
+
+class AdminScopeMiddleware:
+    """Pure-ASGI middleware that records the admin's routing data on the scope.
+
+    Writes ``scope["hyperadmin"] = {"namespace": ..., "prefix": ...}``, which
+    :func:`admin_url_for`, the Jinja ``url_for`` override and
+    :func:`admin_base_path` read:
+
+    - **Isolated mode**: installed on the private sub-app with the route
+      namespace and no prefix, so every request reaching it is tagged (it
+      only ever sees admin requests).
+    - **Router mode**: installed on the host app with ``namespace=None`` and
+      the admin ``prefix``; it tags only requests whose route path is the
+      prefix itself or lies below it on a segment boundary, so a host's
+      ``/administrator`` stays untagged.
+    """
+
+    def __init__(self, app: ASGIApp, *, namespace: str | None, prefix: str = "") -> None:
+        self.app = app
+        self._namespace = namespace
+        self._prefix = prefix
+
+    def _applies(self, scope: Scope) -> bool:
+        if scope["type"] not in ("http", "websocket"):
+            return False
+        if not self._prefix:
+            return True
+        path = get_route_path(scope)
+        return path == self._prefix or path.startswith(self._prefix + "/")
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if self._applies(scope):
+            scope[SCOPE_KEY] = {"namespace": self._namespace, "prefix": self._prefix}
+        await self.app(scope, receive, send)
