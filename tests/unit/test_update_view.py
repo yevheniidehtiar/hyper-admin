@@ -159,7 +159,7 @@ def test_update_view_partial_update_preserves_missing_text_field(client: TestCli
 # Auto-now timestamps survive an edit (review of st-v058-byoa-16)
 # ---------------------------------------------------------------------------
 
-_SEEDED_AT = datetime(2020, 1, 2, 3, 4, 5)
+_SEEDED_AT = datetime(2020, 1, 2, 3, 4, 5, tzinfo=timezone.utc)
 
 
 class StampedNoteUpdate(SQLModel, table=True):
@@ -223,5 +223,6 @@ def test_editing_a_row_keeps_its_auto_now_timestamps(stamped_client):
     row = anyio.run(load)
     assert row is not None
     assert row.name == "New"
-    assert row.created_at == _SEEDED_AT
-    assert row.stamped_at == _SEEDED_AT
+    # SQLite drops the offset on sqlmodel<0.0.45 (naive DateTime); UTCDateTime keeps it.
+    assert row.created_at.replace(tzinfo=timezone.utc) == _SEEDED_AT
+    assert row.stamped_at.replace(tzinfo=timezone.utc) == _SEEDED_AT

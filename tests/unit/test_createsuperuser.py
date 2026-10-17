@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta, timezone
+
 import pytest
 from sqlalchemy import create_engine
 from sqlmodel import Session, SQLModel, select
@@ -46,6 +48,38 @@ def test_createsuperuser_success(db_url, setup_db):
         assert user.email == "admin@example.com"
         assert user.is_superuser is True
         assert user.password_hash.startswith("$argon2id$")
+
+
+def test_createsuperuser_on_new_sqlmodel(db_url, setup_db):
+    """
+    Scenario: createsuperuser on new sqlmodel (st-v058-byoa-48)
+      Given the installed sqlmodel (>=0.0.45 on the highest matrix) and built-in auth
+      When  createsuperuser runs
+      Then  the insert succeeds
+      And   the stored created_at reads back as an aware UTC instant
+    """
+    before = datetime.now(timezone.utc) - timedelta(seconds=5)
+
+    result = runner.invoke(
+        app,
+        [
+            "createsuperuser",
+            "--username",
+            "root",
+            "--email",
+            "root@example.com",
+            "--password",
+            "password123",
+            "--database-url",
+            db_url,
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    with Session(setup_db) as session:
+        user = session.exec(select(User).where(User.username == "root")).one()
+    assert user.created_at.utcoffset() == timedelta(0)
+    assert user.created_at >= before
 
 
 def test_createsuperuser_duplicate_username(db_url, setup_db):

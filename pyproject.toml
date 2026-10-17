@@ -23,7 +23,7 @@ dependencies = [
   # >=2.0.46: aiosqlite>=0.22 no longer runs its worker as a daemon thread; older
   # SQLAlchemy cannot stop it, so a pooled connection hangs the process on exit.
   "sqlalchemy>=2.0.46",
-  "sqlmodel>=0.0.19,<0.0.45",  # 0.0.45 enforces tz-aware datetimes; support tracked for v0.5.8
+  "sqlmodel>=0.0.19",
   "aiosqlite>=0.22.1",  # async SQLite driver for zero-config demo mode (sqlite+aiosqlite default URL)
   "greenlet>=1.0.1; python_version < '3.13'",  # SQLAlchemy asyncio bridge
   "greenlet>=3.1.0; python_version >= '3.13'",  # SQLAlchemy asyncio bridge

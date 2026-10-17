@@ -67,6 +67,24 @@ VIEWPORTS = {
 # changes on every run; such cells are masked so the baseline only pins layout.
 TIMESTAMP_TEXT = re.compile(r"^\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}")
 
+# The demo stamps ``created_at`` with ``utc_now``. sqlmodel < 0.0.45 stores it in a
+# naive ``DateTime`` column and renders the raw value (with microseconds); from
+# 0.0.45 ``UTCDateTime`` reads it back aware and it renders as a shorter localised
+# ``<time>``. CI runs both resolutions, so every timestamp cell is pinned to one
+# fixed text before capture: the baseline then pins layout, not the sqlmodel version.
+_TIMESTAMP_CELL = re.compile(r"\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}")
+_PINNED_TIMESTAMP = "2026-10-10 08:46:01.028746"
+
+
+def _pin_timestamp_cells(page: Page) -> None:
+    """Replace every timestamp cell's content with :data:`_PINNED_TIMESTAMP`."""
+    cells = page.get_by_role("cell", name=_TIMESTAMP_CELL)
+    assert cells.count() > 0, "no timestamp cell to pin; the list baseline would drift"
+    cells.evaluate_all(
+        "(cells, text) => cells.forEach((cell) => { cell.textContent = text; })",
+        _PINNED_TIMESTAMP,
+    )
+
 
 def _route(view: str) -> str:
     """Path under demo_base_url for each baseline view."""
@@ -155,6 +173,7 @@ def test_list_view_baseline(page: Page, demo_base_url: str, viewport_name: str) 
     page.set_viewport_size(VIEWPORTS[viewport_name])
     page.goto(demo_base_url + _route("list"))
     page.wait_for_load_state("networkidle")
+    _pin_timestamp_cells(page)
     _capture_or_compare(page, "list", viewport_name, mask=[page.get_by_text(TIMESTAMP_TEXT)])
 
 

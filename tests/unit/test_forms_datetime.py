@@ -533,7 +533,8 @@ class TzMeeting(SQLModel, table=True):
     id: int | None = SQLField(default=None, primary_key=True)
     title: str = ""
     starts_at: datetime = SQLField(sa_type=DateTime(timezone=True))  # type: ignore[call-overload]
-    local_at: datetime | None = None
+    # Explicitly naive: sqlmodel>=0.0.45 maps a bare ``datetime`` to tz-aware ``UTCDateTime``.
+    local_at: datetime | None = SQLField(default=None, sa_type=DateTime(timezone=False))  # type: ignore[call-overload]
 
 
 class _Admin(ModelAdmin):

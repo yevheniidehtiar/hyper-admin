@@ -63,6 +63,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - **Fixed: the auth prefix check is segment-safe** (st-v058-byoa-35). With
   auth at `/admin`, a host route such as `/administrator` is no longer
   treated as an admin path and redirected to the admin login.
+- **The `sqlmodel<0.0.45` cap is lifted** (st-v058-byoa-48): the requirement is
+  now `sqlmodel>=0.0.19`, so hosts can use sqlmodel's tz-aware `UTCDateTime`
+  columns. The bundled example models stamp `created_at`/`release_date` with
+  `hyperadmin.core.utc_now` (aware UTC) instead of `datetime.now`; host models
+  on sqlmodel>=0.0.45 must do the same (or annotate `NaiveDatetime`).
 - Constructing a `BaseAdapter` subclass, `SessionAuthBackend`,
   `PermissionSyncService` or `ModelPermissionChecker` with **neither**
   `engine=` **nor** `session_factory=` now raises `ValueError` (previously an

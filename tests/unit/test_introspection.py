@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid as uuid_lib
-from datetime import datetime
+from datetime import datetime, timedelta
 from enum import Enum
 
 import pytest
@@ -17,6 +17,7 @@ from hyperadmin.core.introspection import (
     infer_list_filter,
     infer_search_fields,
 )
+from hyperadmin.core.timezones import is_auto_now_factory, utc_now
 
 # ── Test models ────────────────────────────────────────────────────────
 
@@ -35,7 +36,7 @@ class MixedFieldModel(SQLModel, table=True):
     is_active: bool = True
     status: StatusEnum = Field(default=StatusEnum.ACTIVE)
     category_id: int | None = Field(default=None, foreign_key="test_categories.id")
-    created_at: datetime | None = Field(default_factory=datetime.now)
+    created_at: datetime | None = Field(default_factory=utc_now)
 
 
 class MinimalModel(SQLModel, table=True):
@@ -265,3 +266,22 @@ class TestDiscoverSqlmodelModels:
         model_names = {m.__name__ for m in models}
 
         assert "AbstractModel" not in model_names
+
+
+# ── utc_now fixture timestamps (st-v058-byoa-48) ───────────────────────
+
+
+def test_mixed_field_fixture_stamps_aware_utc() -> None:
+    """
+    Scenario: the introspection fixture inserts on every sqlmodel version
+      Given MixedFieldModel's created_at defaults to utc_now
+      When  an instance is built without a timestamp
+      Then  created_at is aware UTC, which sqlmodel>=0.0.45 UTCDateTime accepts
+      And   the field is still recognised as an auto-now default
+    """
+    instance = MixedFieldModel(name="x")
+
+    assert MixedFieldModel.model_fields["created_at"].default_factory is utc_now
+    assert is_auto_now_factory(MixedFieldModel.model_fields["created_at"].default_factory)
+    assert instance.created_at is not None
+    assert instance.created_at.utcoffset() == timedelta(0)

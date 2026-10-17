@@ -6,18 +6,20 @@ Verifies that ``Admin(app, engine=engine).mount("/admin")`` with
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from enum import Enum
 
 import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import create_async_engine
-from sqlmodel import Field, SQLModel
+from sqlmodel import Field, SQLModel, select
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from hyperadmin.core.app import Admin
 from hyperadmin.core.registry import site
 from hyperadmin.core.settings import HyperAdminSettings
+from hyperadmin.core.timezones import utc_now
 
 # ── Test models ────────────────────────────────────────────────────────
 
@@ -42,7 +44,7 @@ class ZCProduct(SQLModel, table=True):
     price: float = 0.0
     color: ZCColor = Field(default=ZCColor.RED)
     category_id: int | None = Field(default=None, foreign_key="zc_categories.id")
-    created_at: datetime | None = Field(default_factory=datetime.now)
+    created_at: datetime | None = Field(default_factory=utc_now)
 
 
 # ── Fixtures ───────────────────────────────────────────────────────────
@@ -132,6 +134,31 @@ class TestZeroConfig:
             resp = await client.get("/admin/zcproduct")
             assert resp.status_code == 200
             assert 'data-testid="list-error"' not in resp.text
+
+    @pytest.mark.anyio
+    async def test_auto_discovered_product_insert_stamps_aware_utc(self, engine) -> None:
+        """
+        Scenario: the zero-config fixture inserts on every sqlmodel version
+          Given ZCProduct's created_at defaults to utc_now
+          When  a product is inserted without a timestamp
+          Then  the insert succeeds (sqlmodel>=0.0.45 UTCDateTime rejects naive values)
+          And   the in-memory created_at is aware UTC
+        """
+        async with engine.begin() as conn:
+            await conn.run_sync(SQLModel.metadata.create_all, tables=[ZCCategory.__table__])
+            await conn.run_sync(SQLModel.metadata.create_all, tables=[ZCProduct.__table__])
+        product = ZCProduct(name="Widget")
+        stamped = product.created_at
+
+        async with AsyncSession(engine) as session:
+            session.add(product)
+            await session.commit()
+            stored = (await session.exec(select(ZCProduct))).one()
+
+        assert ZCProduct.model_fields["created_at"].default_factory is utc_now
+        assert stamped is not None
+        assert stamped.utcoffset() == timedelta(0)
+        assert stored.created_at is not None
 
     @pytest.mark.anyio
     async def test_dashboard_responds(self, engine) -> None:
