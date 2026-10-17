@@ -17,7 +17,7 @@ from hyperadmin.core.display import get_field_label
 from hyperadmin.core.introspection import infer_list_display, infer_list_filter, infer_search_fields
 from hyperadmin.core.options import AdminOptions
 from hyperadmin.views.dynamic import DynamicModelView
-from hyperadmin.views.error_pages import admin_route_class
+from hyperadmin.views.route import make_admin_route_class
 from hyperadmin.views.template_filters import register_template_filters
 
 if TYPE_CHECKING:
@@ -377,6 +377,8 @@ class HyperAdminRouter:
             adapter alongside (or instead of) ``engine``.
         debug: The admin's ``settings.debug``. List views re-raise database
             errors instead of rendering the list-error banner (BYOA SDD D.2).
+        route_class: The admin's ``HyperAdminRoute`` (``views/route.py``), set
+            on every generated router. Defaults to one bound to ``templates``.
 
     The timezone and datetime format reach the view layer by living on the
     shared Jinja environment (as the ``hyperadmin_timezone`` /
@@ -396,9 +398,13 @@ class HyperAdminRouter:
         session_factory: "SessionFactory | None" = None,
         *,
         debug: bool = False,
+        route_class: type[APIRoute] | None = None,
     ):
         self.engine = engine
         self.debug = debug
+        # The admin's own HyperAdminRoute (auth bridge, CSRF), or a default one
+        # bound to these templates when the router is used on its own.
+        self.route_class = route_class or make_admin_route_class(templates)
         self.permission_checker = permission_checker
         self.storage = storage
         self.session_factory = session_factory
@@ -422,7 +428,7 @@ class HyperAdminRouter:
         # lookups (choices target get_queryset) use the registered admin.
         admin_instances: dict[Any, Any] = {}
         nav_items: list[dict[str, str]] = []
-        route_class = admin_route_class(self.templates)
+        route_class = self.route_class
 
         # Add the main admin dashboard route
         dashboard_router = APIRouter(route_class=route_class)
