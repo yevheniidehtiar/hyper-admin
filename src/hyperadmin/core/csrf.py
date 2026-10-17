@@ -17,7 +17,7 @@ import hmac
 import secrets
 from typing import Any, Literal
 
-#: ``csrf_mode`` setting values; ``auto`` enforces whenever auth is configured.
+#: ``csrf_mode`` setting values; ``auto`` enforces whenever any auth is configured.
 CsrfMode = Literal["auto", "enforce", "report", "off"]
 #: What ``auto`` resolves to.
 EffectiveCsrfMode = Literal["enforce", "report", "off"]

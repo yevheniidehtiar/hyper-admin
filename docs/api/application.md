@@ -60,6 +60,27 @@ object permissions and `get_queryset` scoping. There is no public `/uploads` mou
 `settings.public_uploads_path` restores one as a logged escape hatch (see
 [File Uploads](../guides/file-uploads.md)).
 
+## CSRF protection
+
+Every unsafe admin request (POST, PUT, PATCH, DELETE) is checked with a signed double-submit
+token and an `Origin` check. `csrf_mode` (`HYPERADMIN_CSRF_MODE`) is one of:
+
+- `"auto"` (default): enforce when the admin has an `auth_backend` or the host app has app-level
+  `dependencies` (`FastAPI(dependencies=...)`). Otherwise CSRF is off.
+- `"enforce"`: always reject a failed check with a 403.
+- `"report"`: let failed checks through and log a `WARNING`.
+- `"off"`: no check.
+
+!!! warning "Host-managed auth must set `csrf_mode=\"enforce\"`"
+    The admin cannot see authentication done by host middleware. If your app protects the admin
+    with its own session cookie in a middleware, set `HYPERADMIN_CSRF_MODE=enforce`; under
+    `"auto"` such an admin has no CSRF check.
+
+Enforcing CSRF requires a real `secret_key` (`HYPERADMIN_SECRET_KEY`). The admin's CSRF cookie
+follows `cookie_secure` (`HYPERADMIN_COOKIE_SECURE`): `"auto"` sets `Secure` when the effective
+request scheme is https; set `true` behind a TLS-terminating proxy whose forwarded headers
+uvicorn does not trust.
+
 ## API Reference
 
 ::: hyperadmin.core.app.Admin
