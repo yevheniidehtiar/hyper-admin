@@ -3,11 +3,9 @@ import logging
 import math
 import os
 import re
-import uuid
 from collections.abc import Awaitable, Callable, Generator
 from contextlib import contextmanager
 from http import HTTPStatus
-from pathlib import PurePosixPath
 from typing import TYPE_CHECKING, Any, TypeVar, cast
 
 from fastapi import HTTPException, Query, Request
@@ -58,6 +56,8 @@ from hyperadmin.views.forms import (
     field_is_required,
 )
 from hyperadmin.views.htmx import HtmxTemplateResponse
+from hyperadmin.views.uploads import download_name, file_download_response, unique_upload_name
+from hyperadmin.views.urls import admin_url_for
 
 logger = logging.getLogger(__name__)
 
@@ -671,6 +671,7 @@ class DynamicModelView:
             if val is not None:
                 item_data[fname] = val.name if hasattr(val, "name") else str(val)
 
+        file_urls = self._file_urls(request, item_id, item_data, file_fields)
         context = {
             "request": request,
             "item_name": get_display_name(item),
@@ -679,6 +680,8 @@ class DynamicModelView:
             "actions": self.actions,
             "model_name_lower": self._model_name_lower,
             "file_fields": file_fields,
+            "file_urls": file_urls,
+            "file_labels": {name: download_name(item_data[name]) for name in file_urls},
             "pk_attr": self.pk.attr,
         }
         template_name = self._get_template_name("detail")
@@ -704,7 +707,9 @@ class DynamicModelView:
             if request is not None:
                 route_name = f"{self._model_name_lower}-inline-add-row"
                 try:
-                    add_row_url = str(request.url_for(route_name, inline_prefix=spec.model_name))
+                    add_row_url = str(
+                        admin_url_for(request, route_name, inline_prefix=spec.model_name)
+                    )
                 except Exception:
                     add_row_url = ""
             formset = self._inline_formset(spec, add_row_url=add_row_url)
@@ -893,13 +898,17 @@ class DynamicModelView:
                 data[field.name] = False
         return data
 
-    @staticmethod
     def _pop_file_uploads(
+        self,
         data: dict[str, Any],
         form: PydanticForm,
     ) -> dict[str, Any]:
         """Remove ``UploadFile`` values from *data* so Pydantic validation
         does not choke on non-string file objects.
+
+        Each upload is renamed to a unique stored name first, so saving it
+        through the column's ``FileType``/``ImageType`` never overwrites the
+        file of another record that was uploaded under the same name.
 
         Returns a dict of ``{field_name: UploadFile}`` that must be merged
         back into the adapter data after validation succeeds.
@@ -909,6 +918,7 @@ class DynamicModelView:
             if isinstance(field.widget, FileInputWidget) and field.name in data:
                 val = data.pop(field.name)
                 if isinstance(val, StarletteUpload):
+                    val.filename = self._new_upload_name(val.filename or "")
                     uploads[field.name] = val
         return uploads
 
@@ -1015,11 +1025,11 @@ class DynamicModelView:
         parent_pk = self.pk.value_of(new_item)
         if parent_pk is not None:
             await self._save_inline_rows(inline_valid_data, parent_pk)
-            redirect_url = request.url_for(
-                f"{self.model.__name__.lower()}-detail", item_id=parent_pk
+            redirect_url = admin_url_for(
+                request, f"{self.model.__name__.lower()}-detail", item_id=parent_pk
             )
         else:
-            redirect_url = request.url_for(f"{self.model.__name__.lower()}-list")
+            redirect_url = admin_url_for(request, f"{self.model.__name__.lower()}-list")
 
         if "hx-request" in request.headers:
             return Response(status_code=200, headers={"HX-Redirect": str(redirect_url)})
@@ -1210,7 +1220,7 @@ class DynamicModelView:
         # Save inline rows
         await self._save_inline_rows(inline_valid_data, pk)
 
-        redirect_url = request.url_for(f"{self.model.__name__.lower()}-list")
+        redirect_url = admin_url_for(request, f"{self.model.__name__.lower()}-list")
 
         if "hx-request" in request.headers:
             return Response(status_code=200, headers={"HX-Redirect": str(redirect_url)})
@@ -1566,7 +1576,7 @@ class DynamicModelView:
             "target": target,
             "values": values or {},
             "errors": errors or {},
-            "post_url": request.url_for(f"{self._model_name_lower}-create-popup"),
+            "post_url": admin_url_for(request, f"{self._model_name_lower}-create-popup"),
         }
         return self.templates.TemplateResponse(
             request,
@@ -1617,16 +1627,56 @@ class DynamicModelView:
         return JSONResponse({"filename": name})
 
     def _new_upload_name(self, client_name: str) -> str:
-        """Return a fresh, root-level storage name derived from ``client_name``.
+        """Return a fresh, unique storage name derived from ``client_name``."""
+        return unique_upload_name(self.storage, client_name)
 
-        Directory parts are dropped, the basename is sanitised, and a random
-        prefix makes the name unique so an upload never replaces a stored file.
+    def _file_urls(
+        self, request: Request, item_id: Any, item_data: dict[str, Any], file_fields: set[str]
+    ) -> dict[str, str]:
+        """Map each shown, non-empty file field to its per-record download URL.
+
+        Empty when no storage is configured, because the download route is then
+        not registered.
         """
-        basename = PurePosixPath(client_name.replace("\\", "/")).name
-        get_name = getattr(self.storage, "get_name", None)
-        safe = str(get_name(basename)) if callable(get_name) else basename
-        safe = PurePosixPath(safe.replace("\\", "/")).name.lstrip(".")
-        return f"{uuid.uuid4().hex}-{safe}" if safe else uuid.uuid4().hex
+        if not self.storage:
+            return {}
+        route_name = f"{self._model_name_lower}-file"
+        return {
+            name: str(admin_url_for(request, route_name, item_id=item_id, field_name=name))
+            for name in sorted(file_fields)
+            if item_data.get(name)
+        }
+
+    @_request_scoped
+    async def download_file_view(
+        self,
+        request: Request,
+        item_id: Any,
+        field_name: str,
+    ) -> Response:
+        """Stream the file stored in ``field_name`` of one record.
+
+        ``GET /{model}/{item_id}/file/{field_name}``
+
+        Requires ``view`` on the model. The record is loaded under the
+        request's queryset filter and must pass the object ``view`` check.
+        Returns 404 unless ``field_name`` is a non-sensitive file field whose
+        stored name resolves to an existing file inside the storage root. The
+        response policy (``nosniff``, ``CSP: sandbox``, attachment unless an
+        allow-listed raster image) lives in :mod:`hyperadmin.views.uploads`.
+        """
+        pk = self._resolve_pk(item_id)
+        await self._check_permission(request, "view")
+        if field_name not in self._get_file_fields() - self._sensitive_fields:
+            raise HTTPException(status_code=404, detail="File not found")
+        item = await self._get_or_404(pk)
+        await self._check_object_permission(request, item, "view")
+        value: Any = getattr(item, field_name, None)
+        path = self._stored_file_path(value)
+        if path is None or not path.is_file():
+            raise HTTPException(status_code=404, detail="File not found")
+        stored_name = value.name if hasattr(value, "name") else str(value)
+        return file_download_response(path, stored_name)
 
     @_request_scoped
     async def delete_file_view(
@@ -1876,7 +1926,7 @@ class DynamicModelView:
             ) from None
         self._remove_files(file_paths)
 
-        redirect_url = request.url_for(f"{self.model.__name__.lower()}-list")
+        redirect_url = admin_url_for(request, f"{self.model.__name__.lower()}-list")
 
         if "hx-request" in request.headers:
             return Response(status_code=200, headers={"HX-Redirect": str(redirect_url)})
@@ -1908,7 +1958,7 @@ class DynamicModelView:
         if isinstance(result, Response):
             return result
 
-        redirect_url = request.url_for(f"{self._model_name_lower}-list")
+        redirect_url = admin_url_for(request, f"{self._model_name_lower}-list")
         if "hx-request" in request.headers:
             return Response(status_code=200, headers={"HX-Redirect": str(redirect_url)})
         return RedirectResponse(url=redirect_url, status_code=303)
@@ -1997,8 +2047,8 @@ class DynamicModelView:
             "action": action_def,
             "outcomes": outcomes,
             "model_name": self._model_name_lower,
-            "bulk_endpoint_url": request.url_for(
-                f"{self._model_name_lower}-bulk-action", action_name=action_def.name
+            "bulk_endpoint_url": admin_url_for(
+                request, f"{self._model_name_lower}-bulk-action", action_name=action_def.name
             ),
             "failed_ids": [o.id for o in outcomes if o.status != "ok"],
         }
@@ -2032,7 +2082,8 @@ class DynamicModelView:
             "ids": ids,
             "fields": fields,
             "model_name": self._model_name_lower,
-            "confirm_url": request.url_for(
+            "confirm_url": admin_url_for(
+                request,
                 f"{self._model_name_lower}-bulk-action-confirm",
                 action_name=action_def.name,
             ),

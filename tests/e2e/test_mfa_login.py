@@ -8,9 +8,9 @@ Selectors follow the CLAUDE.md E2E Selector Convention — accessibility-first
 with ``data-testid`` for elements without a natural role. The test app
 served by the ``mfa_base_url`` fixture exposes three test-only endpoints:
 
-* ``POST /_test/reset_otp_state`` — wipe captured codes + session state
+* ``POST /_test/reset_otp_state`` — wipe captured codes
 * ``GET  /_test/latest_code?email=`` — read the most recent OTP for that email
-* ``POST /_test/backdate_session_otp`` — backdate session OTP past its TTL
+* ``POST /admin/mfa/_test/backdate_session_otp`` — backdate session OTP past its TTL
 
 These are HTTP helpers, not selectors — they let the Playwright test read
 the code that the in-process server just generated and drive expiry
@@ -149,7 +149,7 @@ def test_expired_otp_code_shows_error_with_resend_option(page: Page, mfa_base_ur
             const resp = await fetch(url, { method: 'POST', credentials: 'include' });
             return resp.status;
         }""",
-        f"{mfa_base_url}/_test/backdate_session_otp",
+        f"{mfa_base_url}/admin/mfa/_test/backdate_session_otp",
     )
     assert backdate_status == 204
 

@@ -306,6 +306,14 @@ def create_admin_router(  # noqa: PLR0912, PLR0913, PLR0917
         )
 
     if storage:
+        # Per-record file download behind view, queryset and object checks
+        # (BYOA SDD C.5); replaces the public `/uploads` static mount.
+        router.add_api_route(
+            f"{prefix}/{item_segment}/file/{{field_name}}",
+            view.download_file_view,
+            methods=["GET"],
+            name=f"{model_name}-file",
+        )
         router.add_api_route(
             f"{prefix}/{item_segment}/file/{{field_name}}",
             view.delete_file_view,

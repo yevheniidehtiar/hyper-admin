@@ -35,6 +35,7 @@ _DEFAULT_SUPPORTED_LOCALES = [
 ]
 
 ThemeLiteral = Literal["auto", "light", "dark"]
+MountModeLiteral = Literal["isolated", "router"]
 
 
 @lru_cache(maxsize=1)
@@ -86,6 +87,16 @@ class HyperAdminSettings(BaseSettings):
     #: keep the old "always create every table at startup" behaviour.
     create_tables: bool = False
 
+    # ── Mounting (SDD C.1) ──────────────────────────────────────────────────────
+    #: ``"isolated"`` (default) attaches the admin as a private sub-application, so
+    #: its middleware, static files, route names and OpenAPI stay out of the host.
+    #: ``"router"`` is the deprecated legacy mode (``include_router`` + global
+    #: middleware), removed in 0.6.
+    mount_mode: MountModeLiteral = "isolated"
+    #: Name of the sub-application mount; admin routes resolve as
+    #: ``f"{route_namespace}:{name}"`` (e.g. ``hyperadmin:user-list``) in isolated mode.
+    route_namespace: str = Field(default="hyperadmin", min_length=1, pattern=r"^[^:/]+$")
+
     # ── Discovery ─────────────────────────────────────────────────────────────
     auto_discover: bool = False
     discover_apps: list[str] = Field(default_factory=list)
@@ -99,6 +110,11 @@ class HyperAdminSettings(BaseSettings):
 
     # ── Uploads ───────────────────────────────────────────────────────────────
     upload_dir: str = "uploads"
+    #: Escape hatch (SDD C.5): when set, the storage directory is also mounted
+    #: publicly at this host path, outside the admin's authentication, and a
+    #: startup warning is logged. Files are otherwise served only per record at
+    #: ``{prefix}/{model}/{item_id}/file/{field}``.
+    public_uploads_path: str | None = Field(default=None, pattern=r"^/[^\s]*[^/\s]$")
 
     # ── Formatting ────────────────────────────────────────────────────────────
     date_format: str = "%Y-%m-%d"

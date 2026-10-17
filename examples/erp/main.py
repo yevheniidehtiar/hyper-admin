@@ -61,9 +61,6 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 app.mount("/static", StaticFiles(directory="src/hyperadmin/static"), name="static")
 
-# Custom reports router
-app.include_router(reports_router)
-
 # Auth setup
 auth_backend = SessionAuthBackend(engine=engine)
 permission_registry = PermissionSyncService(engine=engine)
@@ -107,6 +104,11 @@ admin.templates.env.globals["login_hint"] = ("demo", "demo") if DEMO_MODE else (
 app.state.admin = admin
 
 admin.mount(path="/admin")
+
+# Custom reports router: included into the admin sub-app so it runs behind the
+# admin login and is served at /admin/reports/profit-loss.
+assert admin.asgi_app is not None
+admin.asgi_app.include_router(reports_router)
 
 # Optional: Add custom report to the navigation menu
 assert "nav_items" in admin.templates.env.globals, "Call admin.mount() before adding nav items"
