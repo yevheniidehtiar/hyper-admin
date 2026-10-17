@@ -35,6 +35,7 @@ _DEFAULT_SUPPORTED_LOCALES = [
 ]
 
 ThemeLiteral = Literal["auto", "light", "dark"]
+MountModeLiteral = Literal["isolated", "router"]
 
 
 @lru_cache(maxsize=1)
@@ -85,6 +86,16 @@ class HyperAdminSettings(BaseSettings):
     #: zero-config ``Admin(app).mount("/admin")`` keeps working. Set this to ``True`` to
     #: keep the old "always create every table at startup" behaviour.
     create_tables: bool = False
+
+    # ── Mounting (SDD C.1) ──────────────────────────────────────────────────────
+    #: ``"isolated"`` (default) attaches the admin as a private sub-application, so
+    #: its middleware, static files, route names and OpenAPI stay out of the host.
+    #: ``"router"`` is the deprecated legacy mode (``include_router`` + global
+    #: middleware), removed in 0.6.
+    mount_mode: MountModeLiteral = "isolated"
+    #: Name of the sub-application mount; admin routes resolve as
+    #: ``f"{route_namespace}:{name}"`` (e.g. ``hyperadmin:user-list``) in isolated mode.
+    route_namespace: str = Field(default="hyperadmin", min_length=1, pattern=r"^[^:/]+$")
 
     # ── Discovery ─────────────────────────────────────────────────────────────
     auto_discover: bool = False

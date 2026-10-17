@@ -9,7 +9,11 @@ from sqlmodel import select
 from examples.erp.accounting.models import Account, AccountType, JournalEntry, JournalLine
 from examples.erp.db import engine
 from hyperadmin import Admin
+from hyperadmin.views.urls import admin_url_for
 
+#: Included into the admin sub-application (``admin.asgi_app``) in ``main.py``, so
+#: the report is served at ``/admin/reports/profit-loss`` behind the admin's own
+#: login, locale and session middleware.
 router = APIRouter()
 
 
@@ -76,7 +80,7 @@ async def _get_pl_data(year: int) -> dict[str, Any]:
     }
 
 
-@router.get("/admin/reports/profit-loss", response_class=HTMLResponse)
+@router.get("/reports/profit-loss", response_class=HTMLResponse)
 async def profit_loss_report(
     request: Request,
     year: int | None = None,
@@ -87,7 +91,9 @@ async def profit_loss_report(
 
     admin: Admin = request.app.state.admin
     pl_data = await _get_pl_data(year)
-    report_url = str(request.url_for("profit_loss_report"))
+    # Inside the admin sub-app the route name is namespaced (hyperadmin:...);
+    # admin_url_for resolves it either way.
+    report_url = str(admin_url_for(request, "profit_loss_report"))
 
     return admin.templates.TemplateResponse(
         request,

@@ -85,7 +85,11 @@ The report extends HyperAdmin with a plain FastAPI `APIRouter`:
 
 ```python
 # examples/erp/main.py (excerpt)
-app.include_router(reports_router)
+admin.mount(path="/admin")
+
+# Include the report into the admin sub-app: it is served under /admin and
+# runs behind the admin login.
+admin.asgi_app.include_router(reports_router)
 
 admin.templates.env.globals["nav_items"].append(
     {"name": "Profit & Loss Report", "url": "/reports/profit-loss", "icon": "ha-icon-chart"}
