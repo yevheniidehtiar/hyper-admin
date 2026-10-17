@@ -110,6 +110,11 @@ class HyperAdminSettings(BaseSettings):
 
     # ── Uploads ───────────────────────────────────────────────────────────────
     upload_dir: str = "uploads"
+    #: Escape hatch (SDD C.5): when set, the storage directory is also mounted
+    #: publicly at this host path, outside the admin's authentication, and a
+    #: startup warning is logged. Files are otherwise served only per record at
+    #: ``{prefix}/{model}/{item_id}/file/{field}``.
+    public_uploads_path: str | None = Field(default=None, pattern=r"^/[^\s]*[^/\s]$")
 
     # ── Formatting ────────────────────────────────────────────────────────────
     date_format: str = "%Y-%m-%d"

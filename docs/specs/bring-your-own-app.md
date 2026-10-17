@@ -691,9 +691,9 @@ The public mount at the root (`core/app.py:363-374`) is removed. Authentication 
 
 **Writes never overwrite.** Today `upload_file_view` needs only `add` on any model, and `FileSystemStorage.write` opens the target with `"wb"`, so one user can replace another record's file by uploading the same name. Now:
 - `upload_file_view` requires `add` or `change` and a file-field `field_name`;
-- it stores the file under a generated unique name, `<uuid4 hex>/<secure original name>`.
+- it stores the file under a generated unique name, `<uuid4 hex>-<secure original name>`. The name is flat rather than a `<uuid4 hex>/` directory because `fastapi-storages` 0.1.0 (the lowest supported version) flattens path separators on write. Create/update form uploads get the same unique name before the column's `FileType` writes them.
 
-`detail.html:14` changes to `url_for(model_name|lower ~ '-file', item_id=item|ha_pk(pk_attr), field=key)`.
+`detail.html:14` links to the `<model>-file` route. `detail_view` resolves those URLs itself (`file_urls`, one per shown non-empty file field, empty when no storage is configured) so the template needs no primary-key helper and never calls `url_for` on a route that is not registered.
 
 Escape hatch: setting `settings.public_uploads_path` restores the legacy public mount, with a startup warning.
 
