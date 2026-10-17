@@ -34,6 +34,7 @@ from hyperadmin.core.discovery import build_filter_metadata
 from hyperadmin.core.display import get_display_name
 from hyperadmin.core.fields import classify_field
 from hyperadmin.core.filtering import FilterValueError, coerce_filter_value
+from hyperadmin.core.inlines import InlineModelSpec
 from hyperadmin.core.options import AdminOptions
 from hyperadmin.core.primary_key import InvalidPrimaryKey, PrimaryKeyInfo
 from hyperadmin.core.registry import site
@@ -335,6 +336,14 @@ class DynamicModelView:
             return self.pk.parse(item_id)
         except InvalidPrimaryKey as exc:
             raise HTTPException(status_code=404, detail="Item not found") from exc
+
+    def _form_pk_kwargs(self, *, create: bool) -> dict[str, Any]:
+        """``PydanticForm`` pk options: a natural (non-generated) key is an input on create only."""
+        return {"pk_attr": self.pk.attr, "pk_editable": create and not self.pk.generated}
+
+    def _inline_formset(self, spec: InlineModelSpec, **kwargs: Any) -> InlineFormset:
+        """Build a formset that parses submitted child keys with the inline model's own codec."""
+        return InlineFormset(spec=spec, pk=self.adapter.for_model(spec.model).pk, **kwargs)
 
     async def _get_or_404(self, item_id: Any) -> Any:
         """Load ``item_id`` under the active queryset scope or raise 404."""
@@ -698,7 +707,7 @@ class DynamicModelView:
                     add_row_url = str(request.url_for(route_name, inline_prefix=spec.model_name))
                 except Exception:
                     add_row_url = ""
-            formset = InlineFormset(spec=spec, add_row_url=add_row_url)
+            formset = self._inline_formset(spec, add_row_url=add_row_url)
             instances = existing.get(formset.prefix, [])
             if instances:
                 formset.populate_from_instances(instances)
@@ -818,6 +827,7 @@ class DynamicModelView:
             fieldsets=getattr(self.options, "fieldsets", None) or None,
             form_layout=getattr(self.options, "form_layout", None),
             form_fields=getattr(self.options, "form_fields", None) or None,
+            **self._form_pk_kwargs(create=True),
         )
         if errors:
             form.bind(values or {})
@@ -914,7 +924,7 @@ class DynamicModelView:
         inline_valid_data: list[tuple[InlineFormset, list[dict]]] = []
         has_inline_errors = False
         for spec in getattr(self.options, "inlines", []):
-            formset = InlineFormset(spec=spec)
+            formset = self._inline_formset(spec)
             rows_data = formset.extract_submitted_data(form_data)
             valid_rows, row_errors = formset.validate_rows(rows_data)
             if row_errors:
@@ -946,6 +956,7 @@ class DynamicModelView:
             fieldsets=getattr(self.options, "fieldsets", None) or None,
             form_layout=getattr(self.options, "form_layout", None),
             form_fields=getattr(self.options, "form_fields", None) or None,
+            **self._form_pk_kwargs(create=True),
         )
         data = self._extract_form_data(form_data, form)
         file_uploads = self._pop_file_uploads(data, form)
@@ -1058,6 +1069,7 @@ class DynamicModelView:
             fieldsets=getattr(self.options, "fieldsets", None) or None,
             form_layout=getattr(self.options, "form_layout", None),
             form_fields=getattr(self.options, "form_fields", None) or None,
+            **self._form_pk_kwargs(create=False),
         )
 
         if errors:
@@ -1121,6 +1133,7 @@ class DynamicModelView:
             fieldsets=getattr(self.options, "fieldsets", None) or None,
             form_layout=getattr(self.options, "form_layout", None),
             form_fields=getattr(self.options, "form_fields", None) or None,
+            **self._form_pk_kwargs(create=False),
         )
         data = self._extract_form_data(form_data, form)
         file_uploads = self._pop_file_uploads(data, form)
@@ -1137,7 +1150,7 @@ class DynamicModelView:
         inline_valid_data: list[tuple[InlineFormset, list[dict]]] = []
         has_inline_errors = False
         for spec in getattr(self.options, "inlines", []):
-            formset = InlineFormset(spec=spec)
+            formset = self._inline_formset(spec)
             rows_data = formset.extract_submitted_data(form_data)
             await self._keep_stored_inline_secrets(formset, rows_data, pk)
             valid_rows, row_errors = formset.validate_rows(rows_data, parent_pk=pk)
@@ -1338,7 +1351,7 @@ class DynamicModelView:
         if spec is None:
             raise HTTPException(status_code=404, detail=f"Unknown inline: {inline_prefix!r}")
 
-        formset = InlineFormset(spec=spec)
+        formset = self._inline_formset(spec)
         row = formset._build_row(index)
         context = {"request": request, "pk_attr": self.pk.attr, "row": row, "inline": formset}
         template = self.templates.get_template("components/inline_row.html")
@@ -1470,6 +1483,7 @@ class DynamicModelView:
             fieldsets=getattr(self.options, "fieldsets", None) or None,
             form_layout=getattr(self.options, "form_layout", None),
             form_fields=getattr(self.options, "form_fields", None) or None,
+            **self._form_pk_kwargs(create=True),
         )
         data = self._extract_form_data(form_data, form)
         data.pop("target", None)
@@ -1536,6 +1550,7 @@ class DynamicModelView:
             fieldsets=getattr(self.options, "fieldsets", None) or None,
             form_layout=getattr(self.options, "form_layout", None),
             form_fields=getattr(self.options, "form_fields", None) or None,
+            **self._form_pk_kwargs(create=True),
         )
         if errors:
             form.bind(values or {})
@@ -1722,7 +1737,12 @@ class DynamicModelView:
             return self.templates.TemplateResponse(request, "components/inline_cell.html", context)
 
         # Build a single-field form so we reuse widget selection + validation
-        form = PydanticForm(self.model, include=[field], initial={field: getattr(item, field)})
+        form = PydanticForm(
+            self.model,
+            include=[field],
+            initial={field: getattr(item, field)},
+            pk_attr=self.pk.attr,
+        )
         form_field = next((f for f in form.fields if f.name == field), None)
         if form_field is None:
             # Field is not exposed by PydanticForm (e.g. auto-now / id) — treat as not editable
@@ -1761,7 +1781,7 @@ class DynamicModelView:
         merged = dict(current)
         merged[field] = raw_value
 
-        form = PydanticForm(self.model)
+        form = PydanticForm(self.model, pk_attr=self.pk.attr)
         form_field = next((f for f in form.fields if f.name == field), None)
         if form_field is None:
             raise HTTPException(status_code=403, detail="Field not editable")

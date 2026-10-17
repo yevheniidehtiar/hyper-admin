@@ -3,7 +3,8 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from dataclasses import field as dc_field
-from datetime import datetime
+from datetime import datetime, tzinfo
+from datetime import timezone as dt_timezone
 from enum import Enum
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, Union, get_args, get_origin
 
@@ -13,6 +14,7 @@ from pydantic.fields import FieldInfo
 
 from hyperadmin.core.choices import ChoiceItem
 from hyperadmin.core.display import get_enum_label
+from hyperadmin.core.primary_key import DEFAULT_PK, InvalidPrimaryKey, PrimaryKeyInfo
 from hyperadmin.core.sensitive import effective_sensitive_field_names
 from hyperadmin.core.timezones import is_auto_now_factory
 from hyperadmin.i18n import gettext_lazy
@@ -37,6 +39,9 @@ if TYPE_CHECKING:
 # Type alias: errors can be lazy-translated proxies or plain strings.
 # ``babel.support.LazyProxy`` satisfies the string protocol via ``__str__``.
 ErrorList = list[Any]
+
+# Row error for an inline ``<prefix>-<i>-pk`` the inline model's codec rejects.
+_INVALID_PK_MESSAGE = gettext_lazy("Invalid primary key.")
 
 
 @dataclass(slots=True)
@@ -321,8 +326,22 @@ class PydanticForm:
         fieldsets: list[FieldsetSpec] | None = None,
         form_layout: FormLayout | None = None,
         form_fields: list[str] | None = None,
+        pk_attr: str = "id",
+        pk_editable: bool = False,
+        timezone: tzinfo = dt_timezone.utc,
     ) -> None:
+        """Build a form over ``model``'s fields.
+
+        Args:
+            pk_attr: The model's primary-key attribute; skipped unless ``pk_editable``.
+            pk_editable: Render the primary key as an input. Set only on create
+                forms of models whose key is not generated (a natural key).
+            timezone: The display timezone for datetime input.
+        """
         self.model = model
+        self.pk_attr = pk_attr
+        self.pk_editable = pk_editable
+        self.timezone = timezone
         self.widgets = widgets or {}
         self.include = set(include or [])
         self.exclude = set(exclude or [])
@@ -452,7 +471,7 @@ class PydanticForm:
                 continue
             if name in self.exclude:
                 continue
-            if name == "id":
+            if name == self.pk_attr and not self.pk_editable:
                 continue
             if self._is_auto_now_field(field):
                 continue
@@ -579,18 +598,21 @@ class InlineFormRow:
         index: The row index (0-based) within the formset.
         fields: The form fields for this row.
         pk: The primary key of an existing inline record, or ``None`` for new rows.
+            A submitted key the inline model's codec rejects is kept raw.
         delete: Whether this row is marked for deletion.
+        pk_errors: Errors for a submitted key the codec rejected.
     """
 
     index: int
     fields: list[FormField]
-    pk: int | None = None
+    pk: Any = None
     delete: bool = False
+    pk_errors: ErrorList | None = None
 
     @property
     def has_errors(self) -> bool:
-        """Whether any field on this row carries a validation error."""
-        return any(field.errors for field in self.fields)
+        """Whether the row's key or any of its fields carries a validation error."""
+        return bool(self.pk_errors) or any(field.errors for field in self.fields)
 
 
 @dataclass
@@ -599,12 +621,18 @@ class InlineFormset:
 
     Provides methods to build empty rows, populate from existing data,
     validate submitted data, and extract structured results.
+
+    ``pk`` is the *inline* model's primary-key codec (from its adapter). Every
+    submitted ``<prefix>-<i>-pk`` is parsed through it; a value it rejects is a
+    row error. A parsed key is still only a claim: the adapter's ownership
+    check rejects any key that is not an existing child of the parent.
     """
 
     spec: InlineModelSpec
     rows: list[InlineFormRow] = dc_field(default_factory=list)
     errors: dict[int, dict[str, ErrorList]] = dc_field(default_factory=dict)
     add_row_url: str = ""
+    pk: PrimaryKeyInfo = DEFAULT_PK
 
     @property
     def prefix(self) -> str:
@@ -614,7 +642,7 @@ class InlineFormset:
     @property
     def display_fields(self) -> list[str]:
         """Return field names shown in each row."""
-        return self.spec.get_display_fields()
+        return self.spec.get_display_fields(pk_attr=self.pk.attr)
 
     @property
     def sensitive_fields(self) -> set[str]:
@@ -641,7 +669,7 @@ class InlineFormset:
         return self.spec.max_num
 
     def _build_row(
-        self, index: int, values: dict[str, Any] | None = None, pk: int | None = None
+        self, index: int, values: dict[str, Any] | None = None, pk: Any = None
     ) -> InlineFormRow:
         """Build a single ``InlineFormRow`` for the given index."""
         model_fields = getattr(self.spec.model, "model_fields", {})
@@ -674,7 +702,7 @@ class InlineFormset:
         self.rows = []
         for i, inst in enumerate(instances):
             vals = inst.model_dump() if hasattr(inst, "model_dump") else {}
-            pk = getattr(inst, "id", None)
+            pk = self.pk.value_of(inst)
             self.rows.append(self._build_row(i, values=vals, pk=pk))
         # Add extra empty rows
         self.build_empty_rows()
@@ -707,14 +735,14 @@ class InlineFormset:
                 pk_key = f"{prefix}-{i}-pk"
                 pk_val = form_data.get(pk_key)
                 if pk_val:
-                    results.append({"_delete": True, "_pk": _parse_inline_pk(pk_val)})
+                    results.append({"_delete": True, **self._submitted_pk(pk_val)})
                 continue
 
             row_data: dict[str, Any] = {}
             pk_key = f"{prefix}-{i}-pk"
             pk_val = form_data.get(pk_key)
             if pk_val:
-                row_data["_pk"] = _parse_inline_pk(pk_val)
+                row_data.update(self._submitted_pk(pk_val))
 
             has_data = False
             for field_name in self.display_fields:
@@ -732,7 +760,7 @@ class InlineFormset:
     def validate_rows(
         self,
         rows_data: list[dict[str, Any]],
-        parent_pk: int | None = None,
+        parent_pk: Any = None,
     ) -> tuple[list[dict[str, Any]], dict[int, dict[str, ErrorList]]]:
         """Validate each row's data against the inline model.
 
@@ -744,6 +772,9 @@ class InlineFormset:
         errors: dict[int, dict[str, ErrorList]] = {}
 
         for i, row in enumerate(rows_data):
+            if "_pk_invalid" in row:
+                errors[i] = {"pk": [_INVALID_PK_MESSAGE]}
+                continue
             if row.get("_delete"):
                 valid.append(row)
                 continue
@@ -798,9 +829,12 @@ class InlineFormset:
 
             pk_key = f"{prefix}-{i}-pk"
             pk_val = form_data.get(pk_key)
-            pk = _parse_inline_pk(pk_val) if pk_val else None
+            pk_info = self._submitted_pk(pk_val) if pk_val else {}
+            pk = pk_info.get("_pk", pk_info.get("_pk_invalid"))
 
             row = self._build_row(i, values=vals, pk=pk)
+            if "_pk_invalid" in pk_info:
+                row.pk_errors = [_INVALID_PK_MESSAGE]
 
             # Apply field-level errors
             if i in self.errors:
@@ -812,18 +846,17 @@ class InlineFormset:
 
             self.rows.append(row)
 
+    def _submitted_pk(self, raw: Any) -> dict[str, Any]:
+        """Parse a submitted ``<prefix>-<i>-pk`` with the inline model's codec.
 
-def _parse_inline_pk(raw: Any) -> Any:
-    """Parse a submitted inline ``<prefix>-<i>-pk`` value.
-
-    Integer keys are returned as ``int``. Anything else is kept as the raw
-    string: it can never match an owned child key, so the adapter's ownership
-    check rejects it (404) instead of the parse raising a 500.
-    """
-    try:
-        return int(raw)
-    except (TypeError, ValueError):
-        return str(raw)
+        Returns ``{"_pk": <typed key>}``, or ``{"_pk_invalid": <raw str>}`` when
+        the codec rejects it (e.g. ``"zzz"`` for a UUID key). A ``str`` key keeps
+        its exact text, so ``"007"`` is never turned into ``7``.
+        """
+        try:
+            return {"_pk": self.pk.parse(raw)}
+        except InvalidPrimaryKey:
+            return {"_pk_invalid": str(raw)}
 
 
 def _pick_inline_widget(name: str, field_info: FieldInfo) -> HtmxWidget:
