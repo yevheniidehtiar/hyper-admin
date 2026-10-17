@@ -266,6 +266,22 @@ def field_is_required(field: Any) -> bool:
     return bool(is_required() if callable(is_required) else is_required)
 
 
+def _is_untouched_datetime(raw: str, original: datetime, tz: tzinfo) -> bool:
+    """Whether ``raw`` is the rendered input value of ``original``.
+
+    The input shows ``original`` at second precision in ``tz``; a browser
+    submits a zero-seconds value in its short form (``2026-07-01T10:00``), so
+    the comparison is between parsed wall-clock times, not strings. Input with
+    an explicit offset was not produced by the widget and never matches.
+    """
+    try:
+        entered = datetime.fromisoformat(raw.strip())
+    except ValueError:
+        return False
+    shown = datetime.fromisoformat(format_datetime_input(original, tz))
+    return entered.tzinfo is None and entered == shown
+
+
 def _accepts_none(field: Any) -> bool:
     """Whether a field's annotation is optional (``X | None``), so ``""`` may become ``None``.
 
@@ -586,9 +602,10 @@ class PydanticForm:
         """Parse submitted datetime strings in place; return the fields that failed.
 
         Aware columns localise naive input in ``self.timezone`` and store UTC;
-        naive columns keep the wall-clock value. A string equal to the formatted
-        initial value keeps the original datetime, so an untouched field does not
-        lose its sub-second precision on edit.
+        naive columns keep the wall-clock value. A string naming the same second
+        as the formatted initial value (browsers submit ``10:00`` for
+        ``10:00:00``) keeps the original datetime, so an untouched field does
+        not lose its sub-second precision on edit.
         """
         errors: dict[str, ErrorList] = {}
         for f in self.fields:
@@ -599,8 +616,8 @@ class PydanticForm:
             if kind is None:
                 continue
             original = self.initial.get(f.name)
-            if isinstance(original, datetime) and raw == format_datetime_input(
-                original, self.timezone
+            if isinstance(original, datetime) and _is_untouched_datetime(
+                raw, original, self.timezone
             ):
                 cleaned_data[f.name] = original
                 continue
