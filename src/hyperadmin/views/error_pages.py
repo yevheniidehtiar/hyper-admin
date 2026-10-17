@@ -3,22 +3,18 @@
 FastAPI answers an ``HTTPException`` with JSON. That is right for API callers, but
 a person who clicks a sidebar link they may not use, or a delete that is refused,
 should stay in the admin: a full page in the admin layout for a navigation, a
-toast for an HTMX request. A route class (not an app-wide exception handler)
-keeps this to the admin's own routes, so the host app's error handling is never
-replaced.
+toast for an HTMX request. The admin route class (``views/route.py``, not an
+app-wide exception handler) keeps this to the admin's own routes, so the host
+app's error handling is never replaced.
 """
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
-
-from fastapi import HTTPException
-from fastapi.routing import APIRoute
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Coroutine
-
     from fastapi.templating import Jinja2Templates
+    from starlette.exceptions import HTTPException
     from starlette.requests import Request
     from starlette.responses import Response
 
@@ -48,23 +44,3 @@ def render_error(templates: Jinja2Templates, request: Request, exc: HTTPExceptio
         response.headers["HX-Reswap"] = "beforeend"
         return response
     return templates.TemplateResponse(request, "error.html", context, status_code=exc.status_code)
-
-
-def admin_route_class(templates: Jinja2Templates) -> type[APIRoute]:
-    """Build the route class every admin route uses, bound to the admin's templates."""
-
-    class HyperAdminRoute(APIRoute):
-        def get_route_handler(self) -> Callable[[Request], Coroutine[Any, Any, Response]]:
-            handler = super().get_route_handler()
-
-            async def route_handler(request: Request) -> Response:
-                try:
-                    return await handler(request)
-                except HTTPException as exc:
-                    if exc.status_code not in HTML_ERROR_STATUSES or not wants_html(request):
-                        raise
-                    return render_error(templates, request, exc)
-
-            return route_handler
-
-    return HyperAdminRoute
