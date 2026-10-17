@@ -2,7 +2,7 @@
 type: story
 id: st-v058-byoa-29
 title: "refactor(views): DynamicModelView item handlers use self.pk and _resolve_pk"
-status: todo
+status: in-review
 priority: high
 assignee: null
 labels:
