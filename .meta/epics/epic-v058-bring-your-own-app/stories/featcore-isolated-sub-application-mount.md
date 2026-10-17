@@ -2,7 +2,7 @@
 type: story
 id: st-v058-byoa-35
 title: "feat(core): isolated sub-application mount"
-status: todo
+status: in-review
 priority: high
 assignee: null
 labels:

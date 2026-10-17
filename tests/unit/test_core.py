@@ -130,9 +130,9 @@ def test_admin_theme_invalid(mock_fastapi_app: MagicMock) -> None:
         HyperAdminSettings(theme="neon")  # type: ignore[arg-type]
 
 
-def test_admin_theme_exposed_to_templates(mock_fastapi_app: MagicMock) -> None:
+def test_admin_theme_exposed_to_templates() -> None:
     settings = HyperAdminSettings(theme="dark")
-    admin = Admin(app=mock_fastapi_app, settings=settings)
+    admin = Admin(app=FastAPI(), settings=settings)
     admin.mount("/admin")
     assert admin.templates.env.globals["theme"] == "dark"
 
@@ -215,9 +215,9 @@ def test_admin_no_warning_without_auth(
 # ---------------------------------------------------------------------------
 
 
-def test_admin_site_title_in_template_globals(mock_fastapi_app: MagicMock) -> None:
+def test_admin_site_title_in_template_globals() -> None:
     settings = HyperAdminSettings(site_title="ERP Admin", theme="light")
-    admin = Admin(app=mock_fastapi_app, settings=settings)
+    admin = Admin(app=FastAPI(), settings=settings)
     admin.mount("/admin")
     assert admin.templates.env.globals["site_title"] == "ERP Admin"
     assert admin.templates.env.globals["theme"] == "light"

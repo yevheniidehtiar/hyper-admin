@@ -123,15 +123,15 @@ admin.mount(path="/admin")
 # ── Test-only helper endpoints ────────────────────────────────────────────
 #
 # All under ``/_test/`` so they are clearly out of scope for production-style
-# E2E flows. They are mounted directly on the FastAPI app (NOT on the admin
-# router) so they sit OUTSIDE the auth middleware's ``/admin`` prefix and
-# stay reachable from anonymous and partial-auth Playwright contexts alike.
+# E2E flows. The capture helpers are mounted directly on the host FastAPI app,
+# outside the admin. The session helper must see the admin session, which lives
+# only inside the isolated admin sub-app (SDD C.1), so it is registered there,
+# under ``/mfa/`` — the paths a partial-auth user may reach.
 
 
 async def _reset_otp_state(request: Request) -> Response:
-    """Wipe captured codes + clear any session OTP/partial-auth state."""
+    """Wipe captured codes. Session state is reset by clearing the browser's cookies."""
     _SENDER.reset()
-    request.session.clear()
     return Response(status_code=204)
 
 
@@ -168,10 +168,13 @@ def _register_test_routes(_app: FastAPI) -> None:
     # take a single ``Request`` and return ``Response`` objects.
     _app.router.add_route("/_test/reset_otp_state", _reset_otp_state, methods=["POST"])
     _app.router.add_route("/_test/latest_code", _latest_code, methods=["GET"])
-    _app.router.add_route("/_test/backdate_session_otp", _backdate_session_otp, methods=["POST"])
 
 
 _register_test_routes(app)
+assert admin.asgi_app is not None
+admin.asgi_app.router.add_route(
+    "/mfa/_test/backdate_session_otp", _backdate_session_otp, methods=["POST"]
+)
 
 
 # Re-export for completeness; the fixture imports ``app`` only.
