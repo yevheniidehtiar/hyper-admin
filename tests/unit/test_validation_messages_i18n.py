@@ -33,6 +33,7 @@ from babel.messages.pofile import read_po
 from fastapi import FastAPI, Request
 from fastapi.testclient import TestClient
 from pydantic import (
+    AnyUrl,
     BaseModel,
     BeforeValidator,
     Field,
@@ -294,6 +295,89 @@ class TestValidationMessageIsTranslated:
         expected = "Список має містити щонайменше 2 елементи після валідації, а не 0"  # noqa: RUF001
         assert translate_error(err) == expected
 
+    @pytest.mark.parametrize(
+        ("tp", "value", "expected"),
+        [
+            (Literal["a", "b"], "z", "Значення має бути одним із: 'a' або 'b'"),  # noqa: RUF001
+            (Literal["a", "b", "c"], "z", "Значення має бути одним із: 'a', 'b' або 'c'"),  # noqa: RUF001
+            (_Color, "green", "Значення має бути одним із: 'red' або 'blue'"),  # noqa: RUF001
+            (Literal["a"], "z", "Значення має бути одним із: 'a'"),
+        ],
+        ids=["two-literals", "three-literals", "enum", "single-literal"],
+    )
+    def test_choice_list_conjunction_is_translated(
+        self, uk_locale: None, tp: Any, value: Any, expected: str
+    ) -> None:
+        """
+        Scenario: the "or" joining enum / literal choices is translated
+          Given locale 'uk'
+          And   a field restricted to a set of choices
+          When  a value outside the choices is submitted
+          Then  the choices are joined with the Ukrainian "або", not "or"
+        """
+        err = _first_error(tp, value)
+
+        assert translate_error(err) == expected
+
+    def test_choice_containing_or_is_not_split(self, uk_locale: None) -> None:
+        """
+        Scenario: a choice that itself contains " or " stays intact
+          Given locale 'uk'
+          And   a Literal['a', 'x or y'] field
+          When  'z' is submitted
+          Then  only the separator between the choices is translated
+        """
+        err = _first_error(Literal["a", "x or y"], "z")
+
+        assert translate_error(err) == "Значення має бути одним із: 'a' або 'x or y'"  # noqa: RUF001
+
+    def test_unbalanced_choice_list_is_left_unchanged(self, uk_locale: None) -> None:
+        """
+        Scenario: an expected list with no splittable separator is kept as is
+          Given locale 'uk'
+          And   an enum error whose only " or " precedes an unclosed quote
+          When  translate_error runs
+          Then  the expected list is interpolated unchanged
+        """
+        err = {"type": "enum", "msg": "Input should be x or 'y", "ctx": {"expected": "x or 'y"}}
+
+        assert translate_error(err) == "Значення має бути одним із: x or 'y"
+
+    @pytest.mark.parametrize(
+        ("tp", "value", "expected"),
+        [
+            (
+                datetime.date,
+                "x",
+                "Значення має бути коректною датою або датою з часом, значення закоротке",  # noqa: RUF001
+            ),
+            (
+                datetime.date,
+                "2020-1x-01",
+                "Значення має бути коректною датою або датою з часом, некоректний символ у місяці",  # noqa: RUF001
+            ),
+            (
+                AnyUrl,
+                "/relative",
+                "Значення має бути коректною URL-адресою, відносна URL-адреса без бази",
+            ),
+        ],
+        ids=["date-too-short", "date-bad-month", "relative-url"],
+    )
+    def test_parser_error_detail_is_translated(
+        self, uk_locale: None, tp: Any, value: Any, expected: str
+    ) -> None:
+        """
+        Scenario: the parser's error detail is translated too
+          Given locale 'uk'
+          And   a date or URL field
+          When  a malformed value is submitted
+          Then  both the message and pydantic-core's error detail are Ukrainian
+        """
+        err = _first_error(tp, value)
+
+        assert translate_error(err) == expected
+
     def test_every_mapped_msgid_has_a_reviewed_ukrainian_translation(self) -> None:
         """
         Scenario: the Ukrainian catalog covers every mapped msgid
@@ -305,7 +389,8 @@ class TestValidationMessageIsTranslated:
         with po_path.open("rb") as fh:
             catalog = read_po(fh)
 
-        msgids: list[str] = [*vm._MESSAGES.values(), *vm._FIELD_TYPES]
+        msgids: list[str] = [*vm._MESSAGES.values(), *vm._FIELD_TYPES, *vm._CTX_ERRORS]
+        msgids.append(vm._CHOICES_JOIN)
         msgids += [pair[0] for pair, _key in vm._PLURAL_MESSAGES.values()]
         msgids.append(vm._TOO_LONG_UNKNOWN_LENGTH[0])
         for msgid in msgids:

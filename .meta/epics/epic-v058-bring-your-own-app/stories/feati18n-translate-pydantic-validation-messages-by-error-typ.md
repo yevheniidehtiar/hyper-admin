@@ -2,7 +2,7 @@
 type: story
 id: st-v058-byoa-27
 title: "feat(i18n): translate Pydantic validation messages by error type (#531)"
-status: todo
+status: in-review
 priority: high
 assignee: null
 labels:

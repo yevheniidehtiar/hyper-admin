@@ -40,7 +40,10 @@ First PyPI pre-release: `pip install hyper-admin==0.5.0a1` (import name
   to `gettext(err["msg"])`. Form, inline-row and bulk-action-form errors now use
   it, so they render in the active locale (`translate_error_lazy` keeps form
   errors re-translatable at render time). English output is unchanged. Ships
-  Ukrainian translations; `poe i18n:extract` now also collects
+  Ukrainian translations, including the "or" joining `enum`/`literal_error`
+  choices and pydantic-core's fixed date/time/URL parser details (`input is
+  too short`, `relative URL without a base`, ...); interpolated details such as
+  UUID's `invalid length: found 3` stay in English. `poe i18n:extract` now also collects
   `gettext_noop` / `ngettext_noop` markers.
 - **`session_factory=` seam for bring-your-own-app hosts** (st-v058-byoa-21,
   SDD `docs/specs/bring-your-own-app.md` section C.3). A host that manages its

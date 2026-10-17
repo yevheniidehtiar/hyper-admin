@@ -129,6 +129,41 @@ _FIELD_TYPES: tuple[str, ...] = (
     gettext_noop("Dictionary"),
 )
 
+# Fixed English ``error`` ctx strings pydantic-core takes from its date/time
+# (speedate) and URL parsers. They reach the catalog through ``gettext`` in
+# :func:`_build_params`; interpolated ones ("invalid length: found 3") cannot.
+_CTX_ERRORS: tuple[str, ...] = (
+    gettext_noop("input is too short"),
+    gettext_noop("unexpected extra characters at the end of the input"),
+    gettext_noop("invalid datetime separator, expected `T`, `t`, `_` or space"),
+    gettext_noop("invalid date separator, expected `-`"),
+    gettext_noop("invalid time separator, expected `:`"),
+    gettext_noop("invalid character in year"),
+    gettext_noop("invalid character in month"),
+    gettext_noop("invalid character in day"),
+    gettext_noop("invalid character in hour"),
+    gettext_noop("invalid character in minute"),
+    gettext_noop("invalid character in second"),
+    gettext_noop("month value is outside expected range of 1-12"),
+    gettext_noop("day value is outside expected range"),
+    gettext_noop("hour value is outside expected range of 0-23"),
+    gettext_noop("minute value is outside expected range of 0-59"),
+    gettext_noop("second value is outside expected range of 0-59"),
+    gettext_noop("relative URL without a base"),
+    gettext_noop("empty host"),
+    gettext_noop("invalid port number"),
+    gettext_noop("invalid domain character"),
+    gettext_noop("invalid international domain name"),
+    gettext_noop("invalid IPv4 address"),
+    gettext_noop("invalid IPv6 address"),
+)
+
+# Joins the last choice of an ``enum`` / ``literal_error`` ``expected`` list.
+_CHOICES_JOIN: str = gettext_noop("%(choices)s or %(last)s")
+
+# Error types whose ``expected`` ctx is pydantic's English "'a', 'b' or 'c'".
+_CHOICE_TYPES: frozenset[str] = frozenset({"enum", "literal_error"})
+
 # ctx keys whose value is itself a human-readable message.
 _TRANSLATED_CTX_KEYS: frozenset[str] = frozenset({"error", "field_type"})
 
@@ -148,11 +183,34 @@ def _translate_text(text: str) -> str:
     return gettext(text) if text else text
 
 
-def _build_params(ctx: Mapping[str, Any]) -> dict[str, Any]:
+def _quotes_balanced(text: str) -> bool:
+    return text.count("'") % 2 == 0 and text.count('"') % 2 == 0
+
+
+def _translate_choices(expected: str) -> str:
+    """Re-join pydantic's ``"'a', 'b' or 'c'"`` with the catalog's "or".
+
+    The split point is the last ``" or "`` outside a quoted choice, so a
+    choice such as ``'x or y'`` is not cut in half. A single choice (no
+    separator) is returned unchanged.
+    """
+    sep = " or "
+    pos = expected.rfind(sep)
+    while pos != -1:
+        last = expected[pos + len(sep) :]
+        if _quotes_balanced(last):
+            return gettext(_CHOICES_JOIN) % {"choices": expected[:pos], "last": last}
+        pos = expected.rfind(sep, 0, pos)
+    return expected
+
+
+def _build_params(err_type: str, ctx: Mapping[str, Any]) -> dict[str, Any]:
     params: dict[str, Any] = {}
     for key, value in ctx.items():
         if key in _TRANSLATED_CTX_KEYS:
             params[key] = _translate_text(str(value))
+        elif key == "expected" and err_type in _CHOICE_TYPES:
+            params[key] = _translate_choices(str(value))
         else:
             params[key] = _format_ctx_value(value)
     return params
@@ -179,11 +237,12 @@ def translate_error(err: Mapping[str, Any]) -> str:
     """
     msg = str(err["msg"])
     ctx: Mapping[str, Any] = err.get("ctx") or {}
+    err_type = str(err.get("type", ""))
     try:
-        template = _resolve_template(str(err.get("type", "")), ctx)
+        template = _resolve_template(err_type, ctx)
         if template is None:
             return _translate_text(msg)
-        return template % _build_params(ctx)
+        return template % _build_params(err_type, ctx)
     except (KeyError, TypeError, ValueError):
         return _translate_text(msg)
 
