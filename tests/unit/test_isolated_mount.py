@@ -29,6 +29,7 @@ from hyperadmin.core.registry import site
 from hyperadmin.core.settings import HyperAdminSettings
 from hyperadmin.realtime import RealtimeSettings
 from hyperadmin.views.urls import AdminScopeMiddleware, admin_base_path
+from tests.conftest import with_csrf
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator
@@ -108,7 +109,9 @@ def _auth_admin(app: FastAPI, engine: AsyncEngine, **settings: Any) -> Admin:
 
 
 def _client(app: FastAPI, **kwargs: Any) -> AsyncClient:
-    return AsyncClient(transport=ASGITransport(app=app, **kwargs), base_url="http://test")
+    """A client carrying a valid CSRF pair for the ``_settings()`` secret (SDD D.1)."""
+    client = AsyncClient(transport=ASGITransport(app=app, **kwargs), base_url="http://test")
+    return with_csrf(client, "test-secret-key")
 
 
 async def _login(client: AsyncClient) -> None:

@@ -9,6 +9,7 @@
 -#}
 <form method="post" action="{{ confirm_url }}" data-testid="bulk-form"
       class="ha-bulk-form">
+  {{ csrf_input() if csrf_input is defined }}
   <h2 class="ha-bulk-form__title">{{ action.label }}</h2>
   <p class="ha-bulk-form__lede">
     {{ _("This action will run on") }} <strong>{{ ids|length }}</strong>

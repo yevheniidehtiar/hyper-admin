@@ -31,6 +31,7 @@
   {% if failed_ids %}
   <form method="post" action="{{ bulk_endpoint_url }}"
         data-testid="bulk-retry-form" class="ha-bulk-retry">
+    {{ csrf_input() if csrf_input is defined }}
     {% for pk in failed_ids %}<input type="hidden" name="ids" value="{{ pk }}" />{% endfor %}
     <button type="submit" class="ha-btn ha-btn-secondary"
             data-testid="bulk-retry-link">{{ _("Retry failures") }}</button>

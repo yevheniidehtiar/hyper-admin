@@ -24,6 +24,7 @@
         {% endif %}
         {% if supported_locales and supported_locales|length > 1 %}
         <form class="ha-locale-switcher" method="post" action="{{ admin_prefix }}/locale">
+            {{ csrf_input() if csrf_input is defined }}
             <label class="ha-sr-only" for="locale-switcher">{{ _("Language") }}</label>
             {{ icon('globe') }}
             <select id="locale-switcher"
@@ -56,6 +57,7 @@
             </button>
             <div x-show="open" @click.away="open = false" @keydown.escape="open = false" x-cloak class="ha-dropdown" role="menu">
                 <form method="post" action="{{ admin_prefix }}/logout">
+                    {{ csrf_input() if csrf_input is defined }}
                     <button type="submit" class="ha-dropdown-item" data-testid="logout-btn" role="menuitem">{{ icon('log-out') }}{{ _("Logout") }}</button>
                 </form>
             </div>

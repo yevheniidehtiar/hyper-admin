@@ -7,6 +7,8 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError, available_timezones
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from hyperadmin.core.csrf import CsrfMode
+
 _DEFAULT_SECRET_KEY = "hyperadmin-default-secret"  # noqa: S105
 _DEFAULT_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 _DEFAULT_SUPPORTED_LOCALES = [
@@ -74,6 +76,16 @@ class HyperAdminSettings(BaseSettings):
 
     # ── Security ─────────────────────────────────────────────────────────────
     secret_key: str = Field(default=_DEFAULT_SECRET_KEY)
+
+    # ── CSRF (SDD D.1) ──────────────────────────────────────────────────────────
+    #: ``"auto"`` enforces the signed double-submit check whenever auth is
+    #: configured and is off otherwise; ``"report"`` only logs failures.
+    csrf_mode: CsrfMode = "auto"
+    csrf_cookie_name: str = Field(default="hyperadmin_csrf", min_length=1)
+    csrf_header_name: str = Field(default="X-CSRF-Token", min_length=1)
+    csrf_field_name: str = Field(default="csrf_token", min_length=1)
+    #: Extra origins (``"https://admin.example"``) the ``Origin`` check accepts.
+    csrf_trusted_origins: list[str] = Field(default_factory=list)
 
     # ── Database ─────────────────────────────────────────────────────────────
     database_url: str = _DEFAULT_DATABASE_URL

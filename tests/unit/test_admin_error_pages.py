@@ -15,6 +15,7 @@ from sqlmodel import Field, SQLModel
 from hyperadmin import Admin
 from hyperadmin.core.registry import site
 from hyperadmin.core.settings import HyperAdminSettings
+from tests.conftest import with_csrf
 
 
 class ErrPageVisible(SQLModel, table=True):
@@ -86,7 +87,7 @@ def _client(user: _User) -> TestClient:
     site.register(ErrPageVisible)
     site.register(ErrPageHidden)
     admin.mount(path="/admin")
-    return TestClient(app)
+    return with_csrf(TestClient(app), "x" * 40)
 
 
 HTML = {"accept": "text/html"}

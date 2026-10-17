@@ -32,6 +32,7 @@ from hyperadmin.auth.otp import (
     PARTIAL_AUTH_SESSION_KEY,
     EmailOTPService,
 )
+from tests.conftest import with_csrf
 
 
 @pytest.fixture
@@ -130,7 +131,9 @@ class TestLoginRedirectsMfaUser:
         sender = _CapturingSender()
         app, _ = _build_app(async_engine, sender=sender)
         transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
+        async with with_csrf(
+            AsyncClient(transport=transport, base_url="http://test"), "test-secret-c3a"
+        ) as client:
             # When she POSTs valid credentials
             resp = await client.post(
                 "/admin/login",
@@ -169,7 +172,9 @@ class TestLoginPlainUser:
         sender = _CapturingSender()
         app, _ = _build_app(async_engine, sender=sender)
         transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
+        async with with_csrf(
+            AsyncClient(transport=transport, base_url="http://test"), "test-secret-c3a"
+        ) as client:
             # When he POSTs valid credentials
             resp = await client.post(
                 "/admin/login",
@@ -195,7 +200,9 @@ class TestEnableMfaFromSettings:
         # Given bob is fully authenticated
         app, _ = _build_app(async_engine)
         transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
+        async with with_csrf(
+            AsyncClient(transport=transport, base_url="http://test"), "test-secret-c3a"
+        ) as client:
             await client.post("/admin/login", data={"username": "bob", "password": "secret"})
             # When he visits the MFA settings page
             resp = await client.get("/admin/mfa/settings")
@@ -219,7 +226,9 @@ class TestEnableMfaFromSettings:
         sender = _CapturingSender()
         app, _ = _build_app(async_engine, sender=sender)
         transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
+        async with with_csrf(
+            AsyncClient(transport=transport, base_url="http://test"), "test-secret-c3a"
+        ) as client:
             await client.post("/admin/login", data={"username": "bob", "password": "secret"})
 
             # When he clicks "Enable MFA" — POST /admin/mfa/enable kicks off the flow
@@ -262,7 +271,9 @@ class TestDisableMfaFromSettings:
         sender = _CapturingSender()
         app, _ = _build_app(async_engine, sender=sender)
         transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
+        async with with_csrf(
+            AsyncClient(transport=transport, base_url="http://test"), "test-secret-c3a"
+        ) as client:
             # Login -> sends OTP -> partial-auth state
             await client.post("/admin/login", data={"username": "alice", "password": "secret"})
             assert len(sender.calls) == 1
@@ -308,7 +319,9 @@ class TestPartialAuthGate:
         sender = _CapturingSender()
         app, _ = _build_app(async_engine, sender=sender)
         transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
+        async with with_csrf(
+            AsyncClient(transport=transport, base_url="http://test"), "test-secret-c3a"
+        ) as client:
             await client.post("/admin/login", data={"username": "alice", "password": "secret"})
 
             # When she tries to hit a regular admin route
@@ -326,7 +339,9 @@ class TestPartialAuthGate:
         sender = _CapturingSender()
         app, _ = _build_app(async_engine, sender=sender)
         transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
+        async with with_csrf(
+            AsyncClient(transport=transport, base_url="http://test"), "test-secret-c3a"
+        ) as client:
             await client.post("/admin/login", data={"username": "alice", "password": "secret"})
             # The challenge endpoint itself stays reachable.
             resp = await client.get("/admin/mfa/challenge", follow_redirects=False)
@@ -337,7 +352,9 @@ class TestPartialAuthGate:
         """Edge: full-auth users (mfa_enabled=False) bypass the gate untouched."""
         app, _ = _build_app(async_engine)
         transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
+        async with with_csrf(
+            AsyncClient(transport=transport, base_url="http://test"), "test-secret-c3a"
+        ) as client:
             await client.post("/admin/login", data={"username": "bob", "password": "secret"})
             # Reaching /admin/ returns 200 — the dashboard.
             resp = await client.get("/admin/", follow_redirects=False)
@@ -362,7 +379,9 @@ class TestPartialAuthShapeValidation:
         sender = _CapturingSender()
         app, _ = _build_app(async_engine, sender=sender)
         transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
+        async with with_csrf(
+            AsyncClient(transport=transport, base_url="http://test"), "test-secret-c3a"
+        ) as client:
             await client.post("/admin/login", data={"username": "alice", "password": "secret"})
             resp = await client.get("/admin/mfa/challenge", follow_redirects=False)
             assert resp.status_code == 200, (
@@ -381,7 +400,9 @@ class TestEnableFlowRejectsBadCode:
         sender = _CapturingSender()
         app, _ = _build_app(async_engine, sender=sender)
         transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
+        async with with_csrf(
+            AsyncClient(transport=transport, base_url="http://test"), "test-secret-c3a"
+        ) as client:
             await client.post("/admin/login", data={"username": "bob", "password": "secret"})
             await client.post("/admin/mfa/enable")
             assert len(sender.calls) == 1
@@ -412,7 +433,9 @@ class TestPartialAuthGateOnlyChecksKey:
         # challenge.
         app, _ = _build_app(async_engine)
         transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
+        async with with_csrf(
+            AsyncClient(transport=transport, base_url="http://test"), "test-secret-c3a"
+        ) as client:
             resp = await client.get("/admin/", follow_redirects=False)
             assert resp.status_code == 302
             assert resp.headers["location"].endswith("/admin/login")
