@@ -898,8 +898,12 @@ class DynamicModelView:
         ``process_bind_param`` can write them to storage.  Empty file inputs
         (no file selected) are removed from the dict to avoid overwriting
         existing values.
+
+        Keys that are not form fields are dropped: a hidden field (an auto-now
+        timestamp, a field outside ``form_include``) is never user-writable.
         """
-        data: dict[str, Any] = dict(form_data)
+        allowed = {field.name for field in form.fields}
+        data: dict[str, Any] = {k: v for k, v in dict(form_data).items() if k in allowed}
         for field in form.fields:
             is_multi = isinstance(field.widget, (MultiSelectWidget, RelationMultiSelectWidget))
             is_checkbox = isinstance(field.widget, CheckboxInput)
@@ -1025,7 +1029,8 @@ class DynamicModelView:
             )
 
         try:
-            create_data = instance.model_dump()
+            # Auto-now fields are stamped by the model/database, never the form.
+            create_data = instance.model_dump(exclude=set(form.auto_now_field_names))
             create_data.update(file_uploads)
             new_item = await self.adapter.create(data=create_data)
         except IntegrityError as exc:
@@ -1522,7 +1527,8 @@ class DynamicModelView:
             )
 
         try:
-            create_data = instance.model_dump()
+            # Auto-now fields are stamped by the model/database, never the form.
+            create_data = instance.model_dump(exclude=set(form.auto_now_field_names))
             create_data.update(file_uploads)
             new_item = await self.adapter.create(data=create_data)
         except IntegrityError as exc:

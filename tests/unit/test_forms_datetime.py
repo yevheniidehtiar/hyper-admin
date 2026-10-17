@@ -237,6 +237,75 @@ def test_changed_value_replaces_the_initial_value() -> None:
     assert instance.starts_at == datetime(2026, 7, 2, 11, 0)
 
 
+@pytest.mark.parametrize(
+    ("model", "original"),
+    [
+        (NaiveEvent, datetime(2026, 7, 1, 10, 0, 0, 123456)),
+        (AwareEvent, datetime(2026, 7, 1, 8, 0, 0, 123456, tzinfo=timezone.utc)),
+    ],
+    ids=["naive", "aware"],
+)
+def test_unchanged_value_in_browser_short_form_is_preserved(
+    model: type[BaseModel], original: datetime
+) -> None:
+    """
+    Scenario: an untouched value submitted without zero seconds is preserved
+      Given an initial datetime at 10:00:00.123456 Amsterdam wall-clock time
+      When  the browser submits the short form '2026-07-01T10:00'
+      Then  the original datetime with microseconds is kept
+    """
+    # Given
+    form = PydanticForm(model, timezone=AMSTERDAM, initial={"starts_at": original})
+
+    # When
+    instance, errors = form.validate({"title": "x", "starts_at": "2026-07-01T10:00"})
+
+    # Then
+    assert errors == {}
+    assert instance is not None
+    assert getattr(instance, "starts_at") == original  # noqa: B009
+    assert getattr(instance, "starts_at").microsecond == 123456  # noqa: B009
+
+
+def test_value_with_an_offset_is_parsed_even_when_it_names_the_initial_second() -> None:
+    """
+    Scenario: input with an explicit offset is never treated as untouched
+      Given an initial naive datetime at 10:00:00.123456
+      When  '2026-07-01T10:00:00+02:00' is validated for the naive column
+      Then  the parsed wall-clock value replaces it (microseconds dropped)
+    """
+    # Given
+    original = datetime(2026, 7, 1, 10, 0, 0, 123456)
+    form = PydanticForm(NaiveEvent, timezone=AMSTERDAM, initial={"starts_at": original})
+
+    # When
+    instance, errors = form.validate({"title": "x", "starts_at": "2026-07-01T10:00:00+02:00"})
+
+    # Then
+    assert errors == {}
+    assert isinstance(instance, NaiveEvent)
+    assert instance.starts_at == datetime(2026, 7, 1, 10, 0)
+
+
+def test_invalid_datetime_with_an_initial_value_is_an_error() -> None:
+    """
+    Scenario: an unparsable edit of an existing datetime is an error
+      Given an initial datetime
+      When  'not-a-date' is validated
+      Then  the field has the datetime error
+    """
+    # Given
+    original = datetime(2026, 7, 1, 10, 0, 0, 123456)
+    form = PydanticForm(NaiveEvent, timezone=AMSTERDAM, initial={"starts_at": original})
+
+    # When
+    instance, errors = form.validate({"title": "x", "starts_at": "not-a-date"})
+
+    # Then
+    assert instance is None
+    assert [str(e) for e in errors["starts_at"]] == ["Enter a valid date/time"]
+
+
 def test_invalid_datetime() -> None:
     """
     Scenario: invalid datetime
@@ -634,3 +703,90 @@ def test_inline_save_localises_an_aware_column(engine) -> None:
     assert response.status_code == 200
     [row] = _rows(engine)
     assert _as_utc(row.starts_at) == datetime(2026, 7, 2, 10, 0, tzinfo=timezone.utc)
+
+
+# ---------------------------------------------------------------------------
+# Hidden fields are not user-writable
+# ---------------------------------------------------------------------------
+
+_FORGED = datetime(1999, 1, 1, 0, 0)
+
+
+class TzAudited(SQLModel, table=True):
+    __table_args__ = {"extend_existing": True}
+
+    id: int | None = SQLField(default=None, primary_key=True)
+    title: str = ""
+    note: str = "default"
+    created_at: datetime = SQLField(default_factory=lambda: datetime.now(timezone.utc))
+
+
+def _audited_rows(engine: Any) -> list[TzAudited]:
+    async def _fetch():
+        async with AsyncSession(engine) as session:
+            return list((await session.exec(select(TzAudited))).all())
+
+    return anyio.run(_fetch)
+
+
+def _mount_audited(engine: Any, *, options: AdminOptions | None = None) -> TestClient:
+    app = FastAPI()
+    settings = HyperAdminSettings(create_tables=False, timezone="Europe/Amsterdam")
+    admin = Admin(app=app, engine=engine, settings=settings)
+    site.register(TzAudited, _Admin, options=options or AdminOptions())
+    admin.mount(path="/admin")
+    return TestClient(app)
+
+
+@pytest.mark.parametrize(
+    ("path", "extra", "expected_status"),
+    [("/admin/tzaudited", {}, 303), ("/admin/tzaudited/create-popup", {"target": "x"}, 200)],
+    ids=["create", "create-popup"],
+)
+def test_create_ignores_a_posted_auto_now_field(
+    engine, path: str, extra: dict[str, str], expected_status: int
+) -> None:
+    """
+    Scenario: a forged auto-now timestamp is ignored on create
+      Given a model whose created_at stamps "now" and is hidden from the form
+      When  the create form posts created_at=1999-01-01T00:00:00
+      Then  the row is created with a fresh timestamp, not the posted one
+    """
+    # Given
+    client = _mount_audited(engine)
+    before = datetime.now(timezone.utc).replace(tzinfo=None)
+
+    # When
+    response = client.post(
+        path,
+        data={"title": "x", "created_at": "1999-01-01T00:00:00", **extra},
+        follow_redirects=False,
+    )
+
+    # Then
+    assert response.status_code == expected_status
+    [row] = _audited_rows(engine)
+    assert row.title == "x"
+    assert row.created_at.replace(tzinfo=None) != _FORGED
+    assert row.created_at.replace(tzinfo=None) >= before - timedelta(seconds=5)
+
+
+def test_create_ignores_a_posted_field_outside_the_form(engine) -> None:
+    """
+    Scenario: a field that is not on the form is not writable on create
+      Given form_fields lists only title
+      When  the create form posts title and note
+      Then  the row keeps note's model default
+    """
+    # Given
+    client = _mount_audited(engine, options=AdminOptions(form_fields=["title"]))
+
+    # When
+    response = client.post(
+        "/admin/tzaudited", data={"title": "x", "note": "forged"}, follow_redirects=False
+    )
+
+    # Then
+    assert response.status_code == 303
+    [row] = _audited_rows(engine)
+    assert row.note == "default"
