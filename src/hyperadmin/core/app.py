@@ -532,10 +532,23 @@ class Admin:
         nor the auth check ever touches a host request; in router mode it is the
         host app, and ``AuthenticationMiddleware`` matches ``admin_prefix`` on whole
         path segments.
+
+        The session cookie (SDD C.4) is ``settings.session_cookie`` scoped to the
+        per-request admin path, and ``AdminSessionMiddleware`` keeps a host
+        ``scope["session"]`` intact. Router mode keeps the legacy cookie
+        (``session``, ``Path=/``) unless ``session_cookie`` is set explicitly.
         """
-        from starlette.middleware.sessions import SessionMiddleware
+        from starlette.requests import Request
 
         from hyperadmin.auth.middleware import AuthenticationMiddleware
+        from hyperadmin.auth.session_middleware import AdminSessionMiddleware
+        from hyperadmin.views.urls import request_admin_path
+
+        def admin_path(request: Request) -> str:
+            return request_admin_path(request, admin_prefix)
+
+        settings = self.settings
+        scoped_cookie = isolated or "session_cookie" in settings.model_fields_set
 
         target.add_middleware(
             AuthenticationMiddleware,
@@ -543,10 +556,16 @@ class Admin:
             admin_prefix=admin_prefix,
             permission_checker=self.permission_checker,
             isolated=isolated,
+            admin_path=admin_path,
         )
         target.add_middleware(
-            SessionMiddleware,
-            secret_key=self.settings.secret_key,
+            AdminSessionMiddleware,
+            secret_key=settings.secret_key,
+            session_cookie=settings.session_cookie if scoped_cookie else "session",
+            max_age=settings.session_max_age,
+            same_site=settings.session_same_site,
+            cookie_secure=settings.cookie_secure,
+            admin_path=admin_path if scoped_cookie else None,
         )
 
     def _add_locale_middleware(self, target: FastAPI) -> None:

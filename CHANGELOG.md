@@ -35,6 +35,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
     non-datetime or unknown field per `BaseAdapter`'s contract.
 
 ### Changed
+- **BREAKING: the admin session cookie is renamed and scoped to the admin**
+  (st-v058-byoa-36, SDD `docs/specs/bring-your-own-app.md` section C.4). With
+  built-in auth, `AdminSessionMiddleware` (`hyperadmin.auth.session_middleware`)
+  stores the admin session in `hyperadmin_session` with `Path=<admin path>`
+  (which honours a host `root_path`), and saves and restores a host
+  `request.session`, so a host `SessionMiddleware` cookie is never overwritten.
+  Users log in again once after upgrading. New settings: `session_cookie`,
+  `session_max_age`, `session_same_site` and `cookie_secure` (`"auto"` default:
+  `Secure` on https requests; `true`/`false` to force), env `HYPERADMIN_*`.
+  Router mode keeps the legacy `session` cookie unless `session_cookie` is set.
+  `AuthenticationMiddleware`'s login redirect uses the per-request admin path in
+  router mode too.
+- **Security: the locale switcher no longer redirects off-site** (st-v058-byoa-36).
+  `POST {prefix}/locale` follows the `Referer` only when it is a same-origin URL
+  under the admin path, and otherwise redirects to the dashboard. Its cookie
+  `Path` is now the admin path (it was hard-coded to `/admin`, so the locale was
+  lost under `mount("/backoffice")`), and it is `Secure` per `cookie_secure`.
 - **BREAKING: `Admin.mount()` mounts an isolated sub-application by default**
   (st-v058-byoa-35, SDD `docs/specs/bring-your-own-app.md` section C.1).
   `mount("/admin")` now builds a private FastAPI app (no OpenAPI/docs) and
