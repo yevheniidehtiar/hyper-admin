@@ -50,12 +50,18 @@ class SessionAuthBackend:
             return user
 
     async def login(self, request: Any, user: User) -> None:
-        """Store the user ID in the session."""
+        """Start a fresh session holding only the user ID.
+
+        Pre-login state (a stale partial-auth marker, OTP records, or keys
+        planted in the cookie) is dropped, so a privilege change never
+        carries it into the authenticated session.
+        """
+        request.session.clear()
         request.session["user_id"] = user.id
 
     async def logout(self, request: Any) -> None:
-        """Clear the session."""
-        request.session.pop("user_id", None)
+        """Clear the whole session, not just the user ID."""
+        request.session.clear()
 
     async def get_current_user(self, request: Any) -> User | None:
         """Resolve the current user from the session, or ``None``."""

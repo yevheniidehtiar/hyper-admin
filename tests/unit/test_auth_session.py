@@ -99,6 +99,36 @@ class TestSessionAuthBackend:
         assert "user_id" not in request.session
 
     @pytest.mark.anyio
+    async def test_login_drops_pre_login_session_state(self, backend, seed_user):
+        """
+        Scenario: login rotates the session contents
+          Given a session carrying pre-login keys (a stale MFA marker, a planted key)
+          When  login() is called
+          Then  the session holds only the user ID
+        """
+        # Given
+        request = FakeRequest({"_mfa_partial": {"user_id": 99}, "planted": "x"})
+        # When
+        await backend.login(request, seed_user)
+        # Then
+        assert request.session == {"user_id": seed_user.id}
+
+    @pytest.mark.anyio
+    async def test_logout_drops_every_session_key(self, backend, seed_user):
+        """
+        Scenario: logout clears the whole session
+          Given an authenticated session that also carries other keys
+          When  logout() is called
+          Then  the session is empty
+        """
+        # Given
+        request = FakeRequest({"user_id": seed_user.id, "otp_history": {"1": []}})
+        # When
+        await backend.logout(request)
+        # Then
+        assert request.session == {}
+
+    @pytest.mark.anyio
     async def test_get_current_user_valid(self, backend, seed_user):
         request = FakeRequest({"user_id": seed_user.id})
         user = await backend.get_current_user(request)
