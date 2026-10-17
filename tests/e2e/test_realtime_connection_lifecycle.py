@@ -15,6 +15,8 @@ from http import HTTPStatus
 
 from playwright.sync_api import BrowserContext, Page, expect
 
+from tests.e2e.conftest import csrf_headers
+
 
 def _login(page: Page, base_url: str) -> None:
     page.goto(f"{base_url}/admin/login")
@@ -197,7 +199,9 @@ def test_drop_then_offline_then_online_heals(
     _wait_for_state(page, "connected")
 
     # When the underlying sockets drop and the browser is offline (reconnect attempts fail)
-    page.request.post(f"{realtime_base_url}/admin/_test/realtime/disconnect_all")
+    page.request.post(
+        f"{realtime_base_url}/admin/_test/realtime/disconnect_all", headers=csrf_headers(page)
+    )
     context.set_offline(True)
     _wait_for_state(page, "reconnecting", timeout_ms=10_000)
 
@@ -214,7 +218,9 @@ def test_server_disconnects_all_then_client_reconnects(page: Page, realtime_base
     _wait_for_state(page, "connected")
 
     # When the server force-closes every live connection (no process restart)
-    response = page.request.post(f"{realtime_base_url}/admin/_test/realtime/disconnect_all")
+    response = page.request.post(
+        f"{realtime_base_url}/admin/_test/realtime/disconnect_all", headers=csrf_headers(page)
+    )
     assert response.status == HTTPStatus.OK
     body = response.json()
     assert body["closed"] >= 2
@@ -230,7 +236,9 @@ def test_only_ws_drop_recovers_without_reload(page: Page, realtime_base_url: str
     _wait_for_state(page, "connected")
 
     # When only the WebSocket transport is dropped server-side
-    response = page.request.post(f"{realtime_base_url}/admin/_test/realtime/disconnect/ws")
+    response = page.request.post(
+        f"{realtime_base_url}/admin/_test/realtime/disconnect/ws", headers=csrf_headers(page)
+    )
     assert response.status == HTTPStatus.OK
     assert response.json()["closed"] >= 1
 
@@ -251,7 +259,9 @@ def test_repeated_failures_increase_reconnect_attempts(
     _wait_for_state(page, "connected")
 
     # When the live sockets drop and the browser stays offline long enough for several backoff cycles
-    page.request.post(f"{realtime_base_url}/admin/_test/realtime/disconnect_all")
+    page.request.post(
+        f"{realtime_base_url}/admin/_test/realtime/disconnect_all", headers=csrf_headers(page)
+    )
     context.set_offline(True)
     _wait_for_state(page, "reconnecting", timeout_ms=10_000)
     page.wait_for_timeout(4_000)  # 250 + 500 + 1000 + 2000 ≈ 4 attempts within 4 s
@@ -277,7 +287,9 @@ def test_long_disconnect_heals_after_backoff_cap(
 
     # When the live sockets drop and the browser stays offline long enough for backoff to reach cap
     # 250 ms × 2ⁿ caps at 10 s after attempt 6; wait 12 s to ensure the cap is exercised.
-    page.request.post(f"{realtime_base_url}/admin/_test/realtime/disconnect_all")
+    page.request.post(
+        f"{realtime_base_url}/admin/_test/realtime/disconnect_all", headers=csrf_headers(page)
+    )
     context.set_offline(True)
     _wait_for_state(page, "reconnecting", timeout_ms=10_000)
     page.wait_for_timeout(12_000)

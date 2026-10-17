@@ -11,6 +11,7 @@ from sqlmodel import Field, SQLModel
 
 from hyperadmin.auth.backend import hash_password
 from hyperadmin.auth.models import Permission, User, UserPermission
+from tests.conftest import with_csrf
 
 
 @pytest.fixture
@@ -113,7 +114,8 @@ def _build_app(async_engine, with_auth: bool = True):
 
 
 async def _login(client: AsyncClient, username: str, password: str = "password123"):  # noqa: S107
-    """Helper to login and get authenticated session."""
+    """Helper to login and get authenticated session (with a CSRF pair, SDD D.1)."""
+    with_csrf(client, "test-secret")
     await client.post("/admin/login", data={"username": username, "password": password})
 
 

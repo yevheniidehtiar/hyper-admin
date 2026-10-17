@@ -13,6 +13,7 @@
 -#}
 <form method="post" action="{{ post_url }}" data-testid="popup-form"
       class="ha-popup-form" hx-post="{{ post_url }}" hx-target="this" hx-swap="outerHTML">
+  {{ csrf_input() if csrf_input is defined }}
   <h2 class="ha-popup-form__title">{{ _("Create") }} {{ model_name }}</h2>
   <input type="hidden" name="target" value="{{ target }}" />
 

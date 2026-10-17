@@ -8,15 +8,30 @@ import time
 from collections.abc import Iterator
 from contextlib import closing
 from http import HTTPStatus
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pytest
+
+if TYPE_CHECKING:
+    from playwright.sync_api import Page
 
 _IN_CONTAINER = os.environ.get("IS_SANDBOX") == "1"
 
 # Server start is slower inside Docker or on a loaded machine (pre-push runs
 # while other work is going on); a slow start must not fail the suite.
 _SERVER_TIMEOUT = 30 if _IN_CONTAINER else 15
+
+
+def csrf_headers(page: "Page") -> dict[str, str]:
+    """Return the ``X-CSRF-Token`` header for the admin page open in ``page`` (SDD D.1).
+
+    Pages rendered by an admin with CSRF enforced (any auth configured) carry the
+    token in ``<meta name="csrf-token">``. ``page.request`` shares the browser
+    context's cookies, so sending that token completes the double-submit pair,
+    exactly as the page's own HTMX calls do.
+    """
+    token = page.locator('meta[name="csrf-token"]').get_attribute("content") or ""
+    return {"X-CSRF-Token": token}
 
 
 @pytest.fixture(scope="session")

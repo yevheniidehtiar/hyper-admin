@@ -11,6 +11,7 @@ from sqlmodel import SQLModel
 
 from hyperadmin.auth.backend import hash_password
 from hyperadmin.auth.models import Permission, User
+from tests.conftest import with_csrf
 
 
 @pytest.fixture
@@ -100,7 +101,9 @@ class TestAuthMiddleware:
     async def test_unauthenticated_redirects_to_login(self, async_engine):
         app = _build_auth_app(async_engine, register_models=False)
         transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
+        async with with_csrf(
+            AsyncClient(transport=transport, base_url="http://test"), "test-secret-key"
+        ) as client:
             resp = await client.get("/admin/", follow_redirects=False)
             assert resp.status_code == 302
             assert "/admin/login" in resp.headers["location"]
@@ -109,7 +112,9 @@ class TestAuthMiddleware:
     async def test_login_page_accessible_without_auth(self, async_engine):
         app = _build_auth_app(async_engine, register_models=False)
         transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
+        async with with_csrf(
+            AsyncClient(transport=transport, base_url="http://test"), "test-secret-key"
+        ) as client:
             resp = await client.get("/admin/login")
             assert resp.status_code == 200
 
@@ -117,7 +122,9 @@ class TestAuthMiddleware:
     async def test_login_success_redirects_to_admin(self, async_engine, seed_user):
         app = _build_auth_app(async_engine, register_models=False)
         transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
+        async with with_csrf(
+            AsyncClient(transport=transport, base_url="http://test"), "test-secret-key"
+        ) as client:
             resp = await client.post(
                 "/admin/login",
                 data={"username": "admin", "password": "password123"},
@@ -130,7 +137,9 @@ class TestAuthMiddleware:
     async def test_login_failure_shows_error(self, async_engine, seed_user):
         app = _build_auth_app(async_engine, register_models=False)
         transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
+        async with with_csrf(
+            AsyncClient(transport=transport, base_url="http://test"), "test-secret-key"
+        ) as client:
             resp = await client.post(
                 "/admin/login",
                 data={"username": "admin", "password": "wrong"},
@@ -142,7 +151,9 @@ class TestAuthMiddleware:
     async def test_logout_clears_session(self, async_engine, seed_user):
         app = _build_auth_app(async_engine, register_models=False)
         transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
+        async with with_csrf(
+            AsyncClient(transport=transport, base_url="http://test"), "test-secret-key"
+        ) as client:
             # Login first
             await client.post(
                 "/admin/login",
@@ -162,7 +173,9 @@ class TestAuthMiddleware:
         """After login, request.state.user should be populated."""
         app = _build_auth_app(async_engine, register_models=False)
         transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
+        async with with_csrf(
+            AsyncClient(transport=transport, base_url="http://test"), "test-secret-key"
+        ) as client:
             # Login
             await client.post(
                 "/admin/login",
@@ -179,7 +192,9 @@ class TestBackwardCompatibility:
         """auth_backend=None → all routes publicly accessible."""
         app = _build_no_auth_app(async_engine)
         transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
+        async with with_csrf(
+            AsyncClient(transport=transport, base_url="http://test"), "test-secret-key"
+        ) as client:
             resp = await client.get("/admin/")
             assert resp.status_code == 200
 
@@ -194,7 +209,9 @@ class TestPermissionSyncOnStartup:
 
         # Trigger startup
         transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
+        async with with_csrf(
+            AsyncClient(transport=transport, base_url="http://test"), "test-secret-key"
+        ) as client:
             await client.get("/admin/login")
 
         async with AsyncSession(async_engine) as session:

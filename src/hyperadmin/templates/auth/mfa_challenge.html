@@ -31,6 +31,7 @@
               action="{{ admin_prefix }}/mfa/verify"
               data-testid="mfa-verify-form"
               aria-labelledby="mfa-title">
+            {{ csrf_input() if csrf_input is defined }}
             <div class="ha-form-group">
                 <label for="mfa-code" class="ha-label">{{ _("Verification code") }}</label>
                 <input

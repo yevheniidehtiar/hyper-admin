@@ -15,7 +15,12 @@ import binascii
 import hashlib
 import hmac
 import secrets
-from typing import Any
+from typing import Any, Literal
+
+#: ``csrf_mode`` setting values; ``auto`` enforces whenever auth is configured.
+CsrfMode = Literal["auto", "enforce", "report", "off"]
+#: What ``auto`` resolves to.
+EffectiveCsrfMode = Literal["enforce", "report", "off"]
 
 _NONCE_BYTES = 32
 _KEY_CONTEXT = b"hyperadmin.csrf.v1"
@@ -40,6 +45,13 @@ def _b64decode(text: str) -> bytes:
         msg = "Non-canonical base64url encoding"
         raise ValueError(msg)
     return raw
+
+
+def resolve_csrf_mode(mode: CsrfMode, *, auth_enabled: bool) -> EffectiveCsrfMode:
+    """Resolve ``csrf_mode``: ``auto`` enforces whenever any auth is configured (SDD D.1)."""
+    if mode == "auto":
+        return "enforce" if auth_enabled else "off"
+    return mode
 
 
 class CsrfTokenSigner:

@@ -44,6 +44,7 @@
               hx-post="{{ admin_prefix }}/mfa/{{ flow }}"
               hx-target="#mfa-settings-card"
               hx-swap="outerHTML">
+            {{ csrf_input() if csrf_input is defined }}
             <p class="ha-text-muted">
                 {{ _("Enter the 6-digit code we sent to your email to confirm.") }}
             </p>
@@ -82,6 +83,7 @@
               hx-post="{{ admin_prefix }}/mfa/disable"
               hx-target="#mfa-settings-card"
               hx-swap="outerHTML">
+            {{ csrf_input() if csrf_input is defined }}
             <button type="submit"
                     class="ha-btn ha-btn-danger ha-btn-block"
                     data-testid="mfa-disable-btn">
@@ -95,6 +97,7 @@
               hx-post="{{ admin_prefix }}/mfa/enable"
               hx-target="#mfa-settings-card"
               hx-swap="outerHTML">
+            {{ csrf_input() if csrf_input is defined }}
             <button type="submit"
                     class="ha-btn ha-btn-primary ha-btn-block"
                     data-testid="mfa-enable-btn">

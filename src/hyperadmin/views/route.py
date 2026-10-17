@@ -265,7 +265,9 @@ def make_admin_route_class(  # noqa: PLR0913 - ExternalAuth settings; all but te
                         or not wants_html(request)
                     ):
                         raise
-                    return render_error(templates, request, exc)
+                    # The rendered admin layout carries the CSRF token, so the
+                    # cookie it was issued with must ride along.
+                    response = render_error(templates, request, exc)
                 if csrf is not None:
                     csrf.attach(request, response)
                 return response

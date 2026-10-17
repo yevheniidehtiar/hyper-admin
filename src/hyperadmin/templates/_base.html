@@ -5,6 +5,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {%- set _csrf_token = csrf_token() if csrf_token is defined else "" %}
+    {%- if _csrf_token %}
+    <meta name="csrf-token" content="{{ _csrf_token }}">
+    {%- endif %}
     <title>{% block title %}{{ site_title | default('HyperAdmin') }}{% endblock %}</title>
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', path='/img/hyperadmin-favicon.svg') }}">
     <link rel="preload" href="{{ url_for('static', path='/fonts/InterVariable.woff2') }}" as="font" type="font/woff2" crossorigin>
@@ -118,7 +122,8 @@
       }
     </script>
 </head>
-<body class="ha-page" x-data="{ sidebarOpen: false }" :class="{ 'ha-has-sidebar-open': sidebarOpen }">
+<body class="ha-page" x-data="{ sidebarOpen: false }" :class="{ 'ha-has-sidebar-open': sidebarOpen }"
+      {%- if _csrf_token %} hx-headers='{"{{ csrf_header_name }}": "{{ _csrf_token }}"}'{% endif %}>
     <a href="#main-content"
        class="ha-skip-link"
        @click="sidebarOpen = false"

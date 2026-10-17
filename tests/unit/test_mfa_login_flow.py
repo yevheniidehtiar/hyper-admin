@@ -26,6 +26,8 @@ from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlmodel import SQLModel
 
+from tests.conftest import with_csrf
+
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator
     from pathlib import Path
@@ -135,7 +137,9 @@ class TestEndToEndLoginSucceeds:
         sender = _CapturingSender()
         app = _build_app(async_engine, sender)
         transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
+        async with with_csrf(
+            AsyncClient(transport=transport, base_url="http://test"), "test-secret-c3c"
+        ) as client:
             # When she submits the correct password
             login_resp = await client.post(
                 "/admin/login",
@@ -181,7 +185,9 @@ class TestWrongCodeKeepsPartialAuth:
         sender = _CapturingSender()
         app = _build_app(async_engine, sender)
         transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
+        async with with_csrf(
+            AsyncClient(transport=transport, base_url="http://test"), "test-secret-c3c"
+        ) as client:
             await client.post(
                 "/admin/login",
                 data={"username": "alice", "password": "secret"},
@@ -221,7 +227,9 @@ class TestPartialAuthBlocksAdminRoute:
         sender = _CapturingSender()
         app = _build_app(async_engine, sender)
         transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
+        async with with_csrf(
+            AsyncClient(transport=transport, base_url="http://test"), "test-secret-c3c"
+        ) as client:
             await client.post(
                 "/admin/login",
                 data={"username": "alice", "password": "secret"},
@@ -253,7 +261,9 @@ class TestResendInvalidatesPriorCode:
         sender = _CapturingSender()
         app = _build_app(async_engine, sender)
         transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
+        async with with_csrf(
+            AsyncClient(transport=transport, base_url="http://test"), "test-secret-c3c"
+        ) as client:
             await client.post(
                 "/admin/login",
                 data={"username": "alice", "password": "secret"},
@@ -352,7 +362,9 @@ class TestExpiredCodeIsRejectedDistinctly:
         admin.asgi_app.router.add_route("/mfa/_test/backdate-otp", _backdate, methods=["POST"])
 
         transport = ASGITransport(app=app)
-        async with AsyncClient(transport=transport, base_url="http://test") as client:
+        async with with_csrf(
+            AsyncClient(transport=transport, base_url="http://test"), "test-secret-c3c-exp"
+        ) as client:
             # Given alice completes the password step
             await client.post(
                 "/admin/login",

@@ -23,6 +23,8 @@ from __future__ import annotations
 
 from playwright.sync_api import Page, expect
 
+from tests.e2e.conftest import csrf_headers
+
 
 def _login(page: Page, base_url: str, username: str, password: str = "secret123") -> None:  # noqa: S107
     """Submit the admin login form and wait until we reach the dashboard."""
@@ -71,7 +73,7 @@ def test_object_permission_check_is_enforced_on_update(
     response = page.request.put(
         f"{object_perm_base_url}/admin/order/40",
         form={"title": "hacked", "owner_id": "99"},
-        headers={"HX-Request": "true"},
+        headers={"HX-Request": "true", **csrf_headers(page)},
     )
 
     # Then the object-level checker blocks the change — 403
@@ -93,7 +95,7 @@ def test_object_permission_check_is_enforced_on_delete(
     # When bob attempts to delete order #40
     response = page.request.delete(
         f"{object_perm_base_url}/admin/order/40",
-        headers={"HX-Request": "true"},
+        headers={"HX-Request": "true", **csrf_headers(page)},
     )
 
     # Then the object-level checker blocks the delete — 403

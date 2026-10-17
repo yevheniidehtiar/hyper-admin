@@ -27,7 +27,9 @@ if TYPE_CHECKING:
     from fastapi.routing import APIRoute
 
     from hyperadmin.core.adapters import SessionFactory
+    from hyperadmin.core.csrf import EffectiveCsrfMode
     from hyperadmin.db import TableScope
+    from hyperadmin.views.csrf import CsrfGuard
 
 logger = logging.getLogger("hyperadmin")
 
@@ -116,7 +118,7 @@ class Admin:
             ConnectionRegistry() if realtime is not None else None
         )
 
-        self._validate_session_secret()
+        self._validate_secret_key()
 
         template_dirs = self.settings.template_dirs
         template_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "templates")
@@ -168,9 +170,22 @@ class Admin:
 
     # ── Validation helpers ─────────────────────────────────────────────────
 
-    def _validate_session_secret(self) -> None:
-        """Enforce session secret security policy when auth is enabled."""
-        if not self.auth_backend:
+    @property
+    def csrf_mode(self) -> "EffectiveCsrfMode":
+        """The effective CSRF mode: ``csrf_mode="auto"`` enforces when auth is on (SDD D.1)."""
+        from hyperadmin.core.csrf import resolve_csrf_mode
+
+        return resolve_csrf_mode(
+            self.settings.csrf_mode, auth_enabled=self.auth_backend is not None
+        )
+
+    def _validate_secret_key(self) -> None:
+        """Refuse the default ``secret_key`` when it signs anything that matters.
+
+        Fires when auth is enabled (it signs the session) or when CSRF resolves to
+        ``enforce`` (it signs the CSRF tokens, SDD D.1).
+        """
+        if not self.auth_backend and self.csrf_mode != "enforce":
             return
         if not self.settings.is_default_secret_key:
             return
@@ -180,7 +195,7 @@ class Admin:
             )
         else:
             msg = (
-                "Auth is enabled but no secret_key is configured. "
+                "Auth or CSRF enforcement is enabled but no secret_key is configured. "
                 "Set HYPERADMIN_SECRET_KEY (or pass HyperAdminSettings(secret_key=...))."
             )
             raise ValueError(msg)
@@ -656,7 +671,34 @@ class Admin:
         """Build the ``HyperAdminRoute`` class shared by every admin router (SDD B.2)."""
         from hyperadmin.views.route import make_admin_route_class
 
-        return make_admin_route_class(self.templates)
+        return make_admin_route_class(self.templates, csrf=self._build_csrf_guard())
+
+    def _build_csrf_guard(self) -> "CsrfGuard | None":
+        """Build the CSRF check and its template globals; ``None`` when CSRF is off."""
+        from hyperadmin.views.csrf import CsrfGuard, install_csrf_globals
+
+        mode = self.csrf_mode
+        if mode == "off":
+            return None
+        settings = self.settings
+        install_csrf_globals(
+            self.templates.env,
+            field_name=settings.csrf_field_name,
+            header_name=settings.csrf_header_name,
+        )
+        logger.info(
+            "HyperAdmin CSRF %s; trusted origins beyond the request host: %s",
+            mode,
+            settings.csrf_trusted_origins or "none (csrf_trusted_origins)",
+        )
+        return CsrfGuard(
+            settings.secret_key,
+            mode=mode,
+            cookie_name=settings.csrf_cookie_name,
+            header_name=settings.csrf_header_name,
+            field_name=settings.csrf_field_name,
+            trusted_origins=settings.csrf_trusted_origins,
+        )
 
     def mount(self, path: str = "/admin") -> None:
         """Mount the admin interface on the host FastAPI application.

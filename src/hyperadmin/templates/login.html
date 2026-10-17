@@ -20,6 +20,7 @@
         {%- endif -%}
 
         <form method="post" action="{{ admin_prefix }}/login" data-testid="login-form" aria-labelledby="login-title">
+            {{ csrf_input() if csrf_input is defined }}
             <div class="ha-form-group">
                 <label for="username" class="ha-label">{{ _("Username") }}</label>
                 <input
