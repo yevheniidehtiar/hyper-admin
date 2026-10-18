@@ -20,6 +20,8 @@ updated_at: 2026-05-05T00:00:00Z
 
 ## Summary
 
+> **Phase 2 (v0.8.0, with `hyperadmin-logfire`)** — see SDD "Phasing" (2026-10-18).
+
 End-to-end Playwright tests that exercise plugin hooks through real HTTP
 requests against a running admin. Uses an in-test plugin registered via a
 pytest fixture that monkeypatches `entry_points`.
