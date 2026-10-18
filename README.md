@@ -68,10 +68,11 @@ It's built model-first (domain → logic → views → UI) and developed with an
 
 ## Quickstart
 
-Not on PyPI yet — install from source:
+HyperAdmin is in pre-release, so pin the version (pip skips pre-releases otherwise).
+The distribution is `hyper-admin`; the import name is `hyperadmin`.
 
 ```bash
-pip install "git+https://github.com/yevheniidehtiar/hyper-admin.git"
+pip install hyper-admin==0.5.0a1
 ```
 
 ```python

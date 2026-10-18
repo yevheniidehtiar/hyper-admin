@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]  # https://packaging.python.org/en/latest/specifications/pyproject-toml/
 name = "hyper-admin"
-version = "0.1.0"
+version = "0.5.0a1"
 description = "A modern, Pydantic-native admin interface for FastAPI, powered by HTMX."
 readme = "README.md"
 authors = [
@@ -102,6 +102,8 @@ bump_message = "bump: v$current_version → v$new_version"
 tag_format = "v$version"
 update_changelog_on_bump = true
 version_provider = "uv"
+version_scheme = "pep440"
+major_version_zero = true  # pre-1.0: breaking changes bump the minor, not the major
 changelog_file = "CHANGELOG.md"
 
 [tool.coverage.report]  # https://coverage.readthedocs.io/en/latest/config.html#report
