@@ -43,7 +43,7 @@ hyperadmin = "hyperadmin.__main__:app"
 Homepage = "https://github.com/yevheniidehtiar/hyper-admin"
 Repository = "https://github.com/yevheniidehtiar/hyper-admin"
 Documentation = "https://yevheniidehtiar.github.io/hyper-admin"
-Changelog = "https://github.com/yevheniidehtiar/hyper-admin/blob/main/CHANGELOG.md"
+Changelog = "https://github.com/yevheniidehtiar/hyper-admin/blob/master/CHANGELOG.md"
 Issues = "https://github.com/yevheniidehtiar/hyper-admin/issues"
 
 [project.optional-dependencies]
