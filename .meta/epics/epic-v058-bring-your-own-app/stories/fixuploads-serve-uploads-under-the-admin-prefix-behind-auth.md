@@ -2,7 +2,7 @@
 type: story
 id: st-v058-byoa-37
 title: "fix(uploads): serve files per record behind permission, object and queryset checks with a nosniff/attachment policy"
-status: in-review
+status: done
 priority: high
 assignee: null
 labels:

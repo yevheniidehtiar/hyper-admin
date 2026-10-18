@@ -2,7 +2,7 @@
 type: story
 id: st-v058-byoa-44
 title: "feat(views): typed, whitelisted filters in list_view"
-status: in-review
+status: done
 priority: high
 assignee: null
 labels:

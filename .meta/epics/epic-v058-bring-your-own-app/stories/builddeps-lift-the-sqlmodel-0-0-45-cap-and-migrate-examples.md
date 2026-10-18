@@ -2,7 +2,7 @@
 type: story
 id: st-v058-byoa-48
 title: "build(deps): lift the sqlmodel<0.0.45 cap and migrate examples and fixtures to utc_now"
-status: in-review
+status: done
 priority: high
 assignee: null
 labels:

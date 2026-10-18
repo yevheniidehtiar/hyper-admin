@@ -65,7 +65,7 @@ without it taking over the app: your models, your UUID and string keys, your mig
 | st-v058-byoa-24 | [feat(adapters): apply FilterCondition lists with dict back-compat](stories/featadapters-apply-filtercondition-lists-with-dict-back-comp.md) | S | byoa-19, byoa-22 |
 | st-v058-byoa-25 | [feat(auth): ExternalAuth, TokenCookie, CallablePermissionChecker and build_admin_dependency](stories/featauth-externalauth-tokencookie-callablepermissionchecker.md) | M | byoa-17, byoa-18 |
 | st-v058-byoa-26 | [feat(core): lifecycle with opt-in create_tables, startup/shutdown/lifespan, first-request guard and init-db CLI](stories/featcore-lifecycle-with-opt-in-create-tables-startup-shutdow.md) | M | byoa-17, byoa-21 |
-| st-v058-byoa-27 † (deferred) | [feat(i18n): translate Pydantic validation messages by error type (#531)](stories/feati18n-translate-pydantic-validation-messages-by-error-typ.md) | M | byoa-00 |
+| st-v058-byoa-27 ‡ (merged into v0.5.8) | [feat(i18n): translate Pydantic validation messages by error type (#531)](stories/feati18n-translate-pydantic-validation-messages-by-error-typ.md) | M | byoa-00 |
 | st-v058-byoa-28 | [feat(routing): per-model pk convertor, hyperadmin_pk convertor, literal routes first, composite list-only](stories/featrouting-per-model-pk-convertor-hyperadmin-pk-convertor-l.md) | M | byoa-15 |
 | st-v058-byoa-29 | [refactor(views): DynamicModelView item handlers use self.pk and _resolve_pk](stories/refactorviews-dynamicmodelview-item-handlers-use-self-pk-and.md) | M | byoa-10, byoa-22, byoa-23, byoa-28 |
 | st-v058-byoa-30 | [refactor(views): bulk ids, single actions and popup payload are pk-type-agnostic](stories/refactorviews-bulk-ids-single-actions-and-popup-payload-are.md) | S | byoa-29 |
@@ -95,6 +95,7 @@ without it taking over the app: your models, your UUID and string keys, your mig
 | st-v058-byoa-54 | [chore(dogfood): dogfood-0 from a repository install once the bridge and isolated mount land](stories/choredogfood-dogfood-0-from-a-repository-install.md) | S | byoa-35, byoa-41 |
 
 † Moved to follow-up milestone under Owner decision 8 (recorded 2026-10-08); off the v0.5.8 critical path and labelled `deferred`.
+‡ Deferred under Owner decision 8, then built (#624) and merged into v0.5.8 by owner decision on 2026-10-18.
 
 These supersede the re-cut stubs `st-v058-byoa-01` to `-07` on `chore/meta-roadmap-recut`. When that branch merges,
 delete the stub story files and keep this `epic.md`.

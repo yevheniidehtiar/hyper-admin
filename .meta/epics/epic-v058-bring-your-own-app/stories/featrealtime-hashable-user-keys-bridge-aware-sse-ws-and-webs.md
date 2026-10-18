@@ -2,7 +2,7 @@
 type: story
 id: st-v058-byoa-42
 title: "feat(realtime): hashable user keys, bridge-aware SSE/WS and WebSocket Origin check"
-status: in-review
+status: done
 priority: high
 assignee: null
 labels:
@@ -14,7 +14,7 @@ estimate: null
 epic_ref:
   id: ep-v058-byoa-01
 created_at: 2026-09-28T00:00:00Z
-updated_at: 2026-09-28T00:00:00Z
+updated_at: 2026-10-17T00:00:00Z
 ---
 
 ## Summary

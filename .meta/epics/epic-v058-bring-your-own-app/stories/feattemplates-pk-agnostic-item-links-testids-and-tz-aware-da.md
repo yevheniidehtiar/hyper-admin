@@ -2,7 +2,7 @@
 type: story
 id: st-v058-byoa-45
 title: "feat(templates): pk-agnostic item links/testids and tz-aware datetime rendering"
-status: in-review
+status: done
 priority: high
 assignee: null
 labels:
