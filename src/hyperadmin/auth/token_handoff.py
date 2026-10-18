@@ -31,6 +31,7 @@ import binascii
 import inspect
 import json
 import logging
+import math
 import time
 import urllib.error
 import urllib.request
@@ -120,7 +121,7 @@ def jwt_expiry(token: str) -> float | None:
 
     Used only to size the cookie lifetime; the host dependency still verifies
     every request's token. Returns ``None`` for an opaque token, a malformed
-    payload or a missing/non-numeric ``exp``.
+    payload or a missing, non-numeric or non-finite (``NaN``/``Infinity``) ``exp``.
     """
     parts = token.split(".")
     if len(parts) != 3:  # noqa: PLR2004 - header.payload.signature
@@ -132,7 +133,7 @@ def jwt_expiry(token: str) -> float | None:
     except (binascii.Error, ValueError):
         return None
     exp = claims.get("exp") if isinstance(claims, dict) else None
-    if isinstance(exp, bool) or not isinstance(exp, (int, float)):
+    if isinstance(exp, bool) or not isinstance(exp, (int, float)) or not math.isfinite(exp):
         return None
     return float(exp)
 
@@ -422,13 +423,23 @@ async def bridge_login_view(  # noqa: PLR0913 - one view, its wiring passed expl
             str(form.get("password", "")),
             host_app=host_app,
         )
-        if token is not None:
+        if token is None:
+            error = "Invalid username or password."
+        elif len(token.encode("utf-8")) > MAX_TOKEN_BYTES:
+            # A browser silently drops an oversized cookie: storing it would
+            # loop the user back to this form with no explanation.
+            logger.warning(
+                "HyperAdmin bridge login: the issued token exceeds %d bytes and cannot be "
+                "stored in the admin cookie",
+                MAX_TOKEN_BYTES,
+            )
+            error = "The sign-in token is too large for the admin cookie."
+        else:
             response = RedirectResponse(safe_next(next_value, admin_path), status_code=303)
             _set_token_cookie(
                 response, request, cookie, token, admin_path=admin_path, cookie_secure=cookie_secure
             )
             return response
-        error = "Invalid username or password."
     target = safe_next(next_value, admin_path)
     context: dict[str, Any] = {
         "request": request,
