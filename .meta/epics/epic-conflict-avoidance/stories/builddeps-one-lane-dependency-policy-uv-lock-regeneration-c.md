@@ -28,7 +28,7 @@ in their own small PR; on a lock conflict, take `origin/develop`'s `uv.lock`, re
 
 - `.github/workflows/ci.yml` — new `lock` job (single Python, no matrix) running `uv lock --check`
 - `docs/contributing.md` — new `## Merge hygiene` heading with a full `### Dependencies` subsection (relock recipe)
-  and one-line stubs for `### Releases`, `### Story status`, `### Auto-rebase` (seam for st-conflict-02/03/04)
+  and one-line stubs for `### Releases`, `### Story status`, `### Conflicting PRs` (seam for st-conflict-02/03/04)
 
 ## Scenarios
 
