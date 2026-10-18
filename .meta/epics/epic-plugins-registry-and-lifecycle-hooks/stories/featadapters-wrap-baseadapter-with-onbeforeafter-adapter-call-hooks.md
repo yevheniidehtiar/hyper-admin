@@ -20,6 +20,8 @@ updated_at: 2026-05-05T00:00:00Z
 
 ## Summary
 
+> **Phase 2 (v0.8.0, with `hyperadmin-logfire`)** — see SDD "Phasing" (2026-10-18).
+
 Introduce `_AdapterHookWrapper(BaseAdapter)` that delegates every method to an
 inner adapter and dispatches `on_before_adapter_call` / `on_after_adapter_call`
 around each call. Wrap at `SiteRegistry.register()` boundary so concrete adapters

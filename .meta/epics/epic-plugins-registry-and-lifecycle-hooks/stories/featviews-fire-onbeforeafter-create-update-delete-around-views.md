@@ -20,6 +20,8 @@ updated_at: 2026-05-05T00:00:00Z
 
 ## Summary
 
+> **Phase 2 (v0.8.0, with `hyperadmin-logfire`)** — see SDD "Phasing" (2026-10-18).
+
 Fire app-level `on_before_create` / `on_after_create` / `on_before_update` /
 `on_after_update` / `on_before_delete` / `on_after_delete` hooks from
 `DynamicModelView` create, update, and delete handlers. These complement (not

@@ -9,7 +9,7 @@ github:
   last_sync_hash: sha256:3ba2173be78db3e6aff2215a420cdcbde415e8c1df238076ede716c87e2712ed
   synced_at: 2026-04-07T17:23:23.788Z
 created_at: 2026-04-02T13:44:25Z
-updated_at: 2026-09-28T00:00:00Z
+updated_at: 2026-10-18T00:00:00Z
 ---
 
 **Roadmap position 9/16 (2026-09-28 re-cut).** Reporting (H14) and charts (H15). The original Dashboard Builder epic (#422) is linked here as the widget/layout layer over `ReportView` — kept, not cut.
@@ -27,3 +27,10 @@ dataset.
 
 Spec: `docs/specs/olap-reporting.md`, `docs/specs/chart-components.md`.
 Tracking: `.meta/epics/epic-upstream-readiness/` (H14, H15).
+
+**Roadmap change (2026-10-18): reports + charts → plugin.** `ReportView`, the aggregates and
+the chart components no longer go into core `src/hyperadmin/reports/`; they ship as the
+first-party plugin **`hyperadmin-reports`** (in-repo uv workspace member
+`plugins/hyperadmin-reports/`, published to PyPI separately), built on the plugin UI seams
+from `docs/specs/plugin-registry.md` (phase 1). This milestone therefore depends on plugin
+registry phases 1a/1b.

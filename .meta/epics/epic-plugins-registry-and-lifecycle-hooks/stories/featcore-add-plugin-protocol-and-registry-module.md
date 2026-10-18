@@ -2,7 +2,7 @@
 type: story
 id: qLiduVMFCQew
 title: "feat(core): add Plugin protocol and PluginRegistry module"
-status: todo
+status: in-review
 priority: high
 assignee: null
 labels:
@@ -14,10 +14,14 @@ estimate: null
 epic_ref:
   id: um1zqB0-b2AZ
 created_at: 2026-05-05T00:00:00Z
-updated_at: 2026-05-05T00:00:00Z
+updated_at: 2026-10-18T00:00:00Z
 ---
 
 ## Summary
+
+> **2026-10-18 (plug-core):** `core/plugins.py` delivered. The `hyperadmin` /
+> `hyperadmin.core` re-exports move to `featcore-wire-plugin-ui-seams-into-admin` (phase 1b)
+> so this PR stays additive (new files only).
 
 Introduce the `Plugin` protocol and `PluginRegistry` class in a new module
 `src/hyperadmin/core/plugins.py`. This is the foundation that everything else in the

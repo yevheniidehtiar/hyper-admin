@@ -2,7 +2,7 @@
 type: epic
 id: um1zqB0-b2AZ
 title: "epic(plugins): Plugin Registry & Lifecycle Hooks"
-status: todo
+status: in_progress
 priority: high
 owner: null
 labels:
@@ -12,7 +12,7 @@ labels:
 milestone_ref:
   id: XnHVJphQRoMf
 created_at: 2026-05-05T00:00:00Z
-updated_at: 2026-05-05T00:00:00Z
+updated_at: 2026-10-18T00:00:00Z
 ---
 
 ## Overview
@@ -25,6 +25,19 @@ ORM adapters, AI features) and is the first required piece of the milestone.
 
 **SDD:** [`docs/specs/plugin-registry.md`](../../../docs/specs/plugin-registry.md)
 (required — touches `core/`, `adapters/` boundary, `views/`, CLI).
+
+## Phasing (2026-10-18)
+
+The plugin system is pulled forward: OLAP reports + charts ship as the first-party plugin
+`hyperadmin-reports` (`plugins/hyperadmin-reports/`), which needs **UI extension seams**
+(pages, nav, templates, static, permissions, typed settings). Phase 1a = registry + seam
+registration (`core/plugins.py`); phase 1b = wiring into `Admin` (after v0.5.8); phase 2
+(v0.8.0, with `hyperadmin-logfire`) = CRUD/adapter hook wiring + CLI. See the SDD "Phasing".
+
+### Track 0: UI extension seams (phase 1)
+- `featcore-plugin-ui-seam-registration-api` (1a)
+- `featcore-wire-plugin-ui-seams-into-admin` (1b)
+- `featviews-render-plugin-nav-and-sync-plugin-permissions` (1b)
 
 ## Tracks
 
