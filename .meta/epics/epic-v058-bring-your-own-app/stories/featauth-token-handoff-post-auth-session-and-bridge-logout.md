@@ -78,6 +78,7 @@ Scenario: no open redirect
 - The cookie's `Max-Age` is `min(max_age, jwt exp - now)`. A rejected cookie token is cleared before the redirect.
 - `next` validation: a relative path under the admin path plus `/`; `//`, backslashes and schemes are rejected.
 - Add a scenario: a bearer-only host with no frontend change reaches `/admin` in a browser.
+- Navbar (from the st-v058-byoa-46 security review, 2026-10-18): once `POST {prefix}/logout` exists, the bridge-mode branch of `_navbar.html` must post to `{{ admin_prefix }}/logout` with `{{ csrf_input() }}`, unconditionally (not only when `logout_url` is set). The host's own logout cannot clear the `HttpOnly`, `/admin`-scoped token cookie. Update `tests/unit/test_bridge_navbar_csrf_banner.py::test_bridged_navbar_logout_form_targets_the_host_logout_url` to match. Add an e2e scenario on `tests/e2e/_bridge_app.py`: after Logout, `GET /admin/` is no longer authenticated.
 
 ## Blocked by
 
