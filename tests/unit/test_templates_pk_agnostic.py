@@ -391,7 +391,8 @@ def _bulk_view(engine: Any) -> tuple[DynamicModelView, MagicMock]:
 
 
 def _bulk_request() -> Any:
-    return SimpleNamespace(url_for=lambda name, **params: f"/{name}")
+    # ``scope`` because admin_url_for reads the mount's namespace from it.
+    return SimpleNamespace(scope={}, url_for=lambda name, **params: f"/{name}")
 
 
 def test_bulk_form_and_result_ids_are_canonical_strings(engine) -> None:
