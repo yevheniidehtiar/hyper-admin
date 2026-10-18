@@ -41,9 +41,12 @@ If your story needs a hotspot that another in-flight story owns, add a `Blocked 
 
 - Branch from a fresh `origin/develop` (`git fetch origin develop` first).
 - Keep PRs small and merge them the same day where possible. Long-lived branches collect conflicts.
-- `git pull --rebase origin develop` before every push. The head session auto-rebases open PRs server-side after each
-  merge; pull before you push again.
+- `git pull --rebase origin develop` before every push.
 - Force-push with `--force-with-lease` only.
+- No pre-emptive rebases of open PRs (`gh pr update-branch`): `develop` does not require up-to-date branches, the
+  rebase merge rebases at merge time anyway, and a push restarts CI and dismisses approvals. After each `develop`
+  merge, find the open PRs whose `mergeable` turned `CONFLICTING`; only their owners rebase them. Revisit this if the
+  ruleset turns on strict status checks.
 
 ### Stacking
 
