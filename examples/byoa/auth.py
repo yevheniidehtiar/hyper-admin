@@ -6,8 +6,9 @@ hashes) so the example needs no extra dependency. A real app would use its JWT
 library of choice; HyperAdmin does not care how the token is checked, only that
 ``get_current_user`` returns a user or ``None``.
 
-Demo-only: the signing secret comes from ``BYOA_JWT_SECRET`` and defaults to a
-fixed value. Never ship a default secret.
+Demo-only: the signing secret comes from ``BYOA_JWT_SECRET``; when it is unset a
+fixed demo value is used and a warning is logged (see ``examples/byoa/config.py``).
+Never ship a default secret.
 """
 
 from __future__ import annotations
@@ -17,7 +18,6 @@ import binascii
 import hashlib
 import hmac
 import json
-import os
 import secrets
 import time
 from typing import Any
@@ -26,9 +26,11 @@ from fastapi import Depends, Request
 from fastapi.security import OAuth2PasswordBearer
 from sqlmodel import select
 
+from examples.byoa.config import demo_secret
 from examples.byoa.models import Account
 
-JWT_SECRET = os.environ.get("BYOA_JWT_SECRET", "byoa-demo-jwt-secret")
+# Demo-only fallback, never ship this: a real app reads os.environ["BYOA_JWT_SECRET"].
+JWT_SECRET = demo_secret("BYOA_JWT_SECRET", "byoa-demo-jwt-secret")
 TOKEN_TTL_SECONDS = 3600
 _PBKDF2_ROUNDS = 100_000
 
@@ -48,13 +50,17 @@ def hash_password(password: str, *, salt: str | None = None) -> str:
 
 
 def verify_password(password: str, stored: str) -> bool:
-    """Check ``password`` against a :func:`hash_password` value in constant time."""
+    """Check ``password`` against a :func:`hash_password` value in constant time.
+
+    A malformed ``stored`` value (wrong field count, non-numeric, non-positive or
+    out-of-range rounds) is a failed check, not an error.
+    """
     try:
         _, rounds, salt, expected = stored.split("$")
-    except ValueError:
+        digest = hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), int(rounds))
+    except (ValueError, OverflowError):
         return False
-    digest = hashlib.pbkdf2_hmac("sha256", password.encode(), salt.encode(), int(rounds))
-    return hmac.compare_digest(digest.hex(), expected)
+    return hmac.compare_digest(digest.hex().encode(), expected.encode())
 
 
 # ── JWT (HS256) ─────────────────────────────────────────────────────────────
@@ -89,7 +95,9 @@ def decode_token(token: str, *, secret: str = JWT_SECRET) -> dict[str, Any] | No
     if len(parts) != 3:  # noqa: PLR2004 - header.payload.signature
         return None
     header, payload, signature = parts
-    if not hmac.compare_digest(signature, _sign(f"{header}.{payload}", secret)):
+    # Compare bytes: compare_digest refuses str values with non-ASCII characters.
+    expected = _sign(f"{header}.{payload}", secret)
+    if not hmac.compare_digest(signature.encode(), expected.encode()):
         return None
     try:
         claims = json.loads(_unb64(payload))

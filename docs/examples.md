@@ -86,11 +86,20 @@ An existing FastAPI app with its own lifespan, `/static` mount, `session` cookie
 **Run locally:**
 
 ```bash
-uv run uvicorn examples.byoa.main:app --reload
+HYPERADMIN_DEBUG=true uv run uvicorn examples.byoa.main:app --reload
 ```
+
+`HYPERADMIN_DEBUG=true` lets the admin start with its default secret key for local development;
+without it, set `HYPERADMIN_SECRET_KEY`, or the admin refuses to start. The host's own
+`BYOA_SESSION_SECRET` and `BYOA_JWT_SECRET` fall back to demo values and log a warning.
 
 Open [http://localhost:8000/admin/](http://localhost:8000/admin/) and sign in as `ada` / `lovelace`
 (superuser) or `grace` / `hopper` (staff, view-only).
+
+!!! warning "Demo data"
+    The seeded `ada` and `grace` accounts have published passwords, and the fallback secrets are
+    public. Delete the accounts and set real secrets before deploying anything built from this
+    example.
 
 ---
 

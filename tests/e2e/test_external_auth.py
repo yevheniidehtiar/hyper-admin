@@ -47,6 +47,7 @@ def byoa_base_url(e2e_port: int) -> Iterator[str]:
     env = os.environ.copy()
     env["E2E_TESTING"] = "1"
     env.pop("BYOA_DATABASE_URL", None)
+    env["HYPERADMIN_SECRET_KEY"] = "byoa-e2e-admin-secret"
     with tempfile.TemporaryFile(mode="w+") as server_log:
         proc = subprocess.Popen(cmd, stdout=server_log, stderr=subprocess.STDOUT, env=env)
         base = f"http://localhost:{e2e_port}"
