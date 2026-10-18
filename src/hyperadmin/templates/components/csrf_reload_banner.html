@@ -1,8 +1,10 @@
 {#- CSRF reload banner (BYOA SDD D.1): revealed by _base.html's htmx hook when a
     request is refused with a 403 carrying X-HyperAdmin-CSRF (a stale token,
-    e.g. after the secret key rotated). Reloading issues a fresh token. -#}
+    e.g. after the secret key rotated). Reloading issues a fresh token.
+    Its own region, not .ha-toast-container: that selector is the HX-Retarget
+    target for refused-request toasts (views/error_pages.py). -#}
 {%- from "components/_icons.html" import icon -%}
-<div class="ha-toast-container">
+<div class="ha-csrf-banner-region">
     <div x-data="{ show: false }" x-show="show" x-cloak @ha-csrf-failed.window="show = true"
          class="ha-toast ha-alert-warning" role="alert" data-testid="csrf-reload-banner">
         {{ icon('triangle-alert') }}

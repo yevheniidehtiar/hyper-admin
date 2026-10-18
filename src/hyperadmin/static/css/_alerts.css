@@ -110,6 +110,16 @@
   color: var(--ha-color-info-text);
 }
 
+/* CSRF reload banner: its own region, bottom corner, so it never stacks on
+   (or receives) the error toasts retargeted to .ha-toast-container. */
+.ha-csrf-banner-region {
+  position: fixed;
+  bottom: var(--ha-space-4);
+  inset-inline-end: var(--ha-space-4);
+  width: min(calc(100% - 2 * var(--ha-space-4)), 380px);
+  z-index: var(--ha-z-toast);
+}
+
 .ha-toast-actions {
   margin-top: var(--ha-space-2);
 }
