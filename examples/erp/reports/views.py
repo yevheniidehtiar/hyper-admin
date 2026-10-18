@@ -1,5 +1,5 @@
 import datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
@@ -8,8 +8,10 @@ from sqlmodel import select
 
 from examples.erp.accounting.models import Account, AccountType, JournalEntry, JournalLine
 from examples.erp.db import engine
-from hyperadmin import Admin
 from hyperadmin.views.urls import admin_url_for
+
+if TYPE_CHECKING:
+    from hyperadmin import Admin
 
 #: Included into the admin sub-application (``admin.asgi_app``) in ``main.py``, so
 #: the report is served at ``/admin/reports/profit-loss`` behind the admin's own
