@@ -22,6 +22,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 from sqlmodel import Field, SQLModel
 from sqlmodel.ext.asyncio.session import AsyncSession
+from starlette.websockets import WebSocketDisconnect
 
 from hyperadmin import Admin
 from hyperadmin.adapters.sqlmodel import SQLModelAdapter
@@ -36,6 +37,8 @@ from hyperadmin.core.model import ModelAdmin
 from hyperadmin.core.options import AdminOptions
 from hyperadmin.core.registry import site
 from hyperadmin.core.settings import HyperAdminSettings
+from hyperadmin.realtime import RealtimeSettings
+from hyperadmin.realtime.ws import WS_CLOSE_UNAUTHORIZED
 
 _SECRET = "bridge-test-secret"
 
@@ -813,3 +816,123 @@ def test_bridge_admin_is_noted_for_auth_metadata(
         auth_package.metadata()
 
     assert "bridge mode" in caplog.text
+
+
+# ---------------------------------------------------------------------------
+# Review follow-ups: bridge-mode logout button and realtime WebSocket auth
+# ---------------------------------------------------------------------------
+
+
+def test_bridge_navbar_has_no_builtin_logout_form(engine: AsyncEngine) -> None:
+    """
+    Scenario: bridge mode without logout_url renders no dead logout button
+      Given Admin(auth=ExternalAuth(get_user=dep)) with no logout_url
+      When  an admitted superuser GETs /admin/
+      Then  the page has no form posting to the unregistered /admin/logout
+      And   no logout button is rendered
+    """
+    _, client = _build(engine)
+
+    response = client.get("/admin/", headers=_bearer("super-token"))
+
+    assert response.status_code == 200
+    assert 'action="/admin/logout"' not in response.text
+    assert 'data-testid="logout-btn"' not in response.text
+
+
+def test_bridge_navbar_logout_posts_to_host_logout_url(engine: AsyncEngine) -> None:
+    """
+    Scenario: bridge mode with logout_url posts Logout to the host's URL
+      Given Admin(auth=ExternalAuth(get_user=dep, logout_url="/auth/logout"))
+      When  an admitted superuser GETs /admin/
+      Then  the logout form posts to /auth/logout
+      And   it does not target the unregistered /admin/logout
+    """
+    _, client = _build(engine, logout_url="/auth/logout")
+
+    response = client.get("/admin/", headers=_bearer("super-token"))
+
+    assert response.status_code == 200
+    assert 'action="/auth/logout"' in response.text
+    assert 'action="/admin/logout"' not in response.text
+
+
+async def _ws_user_from_header(websocket: Any) -> BxHostUser | None:
+    """The host's ``websocket_user``: the same bearer lookup on WebSocket scope."""
+    return get_current_user(websocket.headers.get("authorization"))
+
+
+def _build_realtime(engine: AsyncEngine, **auth_kwargs: Any) -> tuple[Admin, TestClient]:
+    app = FastAPI()
+    _register()
+    admin = Admin(
+        app,
+        engine=engine,
+        settings=_settings(),
+        realtime=RealtimeSettings(),
+        auth=ExternalAuth(get_user=get_current_user, **auth_kwargs),
+    )
+    admin.mount("/admin")
+    return admin, TestClient(app)
+
+
+def test_bridge_websocket_admits_user_resolved_by_websocket_user(
+    engine: AsyncEngine, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """
+    Scenario: realtime WebSocket admits a bridge user passing can_access
+      Given Admin(auth=ExternalAuth(websocket_user=hook)) with realtime enabled
+      When  a superuser opens /admin/realtime/ws with a valid bearer
+      Then  the connection is registered for that user's id
+      And   it is not closed as unauthorized
+    """
+    import hyperadmin.realtime.ws as ws_module
+
+    admin, client = _build_realtime(engine, websocket_user=_ws_user_from_header)
+    registry = admin._realtime_registry
+    assert registry is not None
+    registered: list[set[int]] = []
+
+    async def _one_shot_receive_loop(websocket: Any) -> None:
+        # Record the registered users, then end the session server-side.
+        registered.append(registry.users())
+
+    monkeypatch.setattr(ws_module, "_receive_loop", _one_shot_receive_loop)
+
+    with (
+        client.websocket_connect("/admin/realtime/ws", headers=_bearer("super-token")) as ws,
+        pytest.raises(WebSocketDisconnect) as excinfo,
+    ):
+        ws.receive_bytes()
+
+    assert registered == [{SUPER.id}]
+    assert excinfo.value.code != WS_CLOSE_UNAUTHORIZED
+
+
+@pytest.mark.parametrize(
+    ("auth_kwargs", "token"),
+    [
+        pytest.param({"websocket_user": _ws_user_from_header}, "customer-token", id="can-access"),
+        pytest.param({"websocket_user": _ws_user_from_header}, "bogus", id="anonymous"),
+        pytest.param({}, "super-token", id="no-websocket-user-hook"),
+    ],
+)
+def test_bridge_websocket_refuses_unadmitted_connections(
+    engine: AsyncEngine, auth_kwargs: dict[str, Any], token: str
+) -> None:
+    """
+    Scenario: realtime WebSocket refuses a bridge user who is not admitted
+      Given Admin(auth=ExternalAuth(...)) with realtime enabled
+      When  a WebSocket opens as a user failing can_access, as an anonymous
+            caller, or with no websocket_user hook configured
+      Then  the connection is closed with code 4401
+    """
+    _, client = _build_realtime(engine, **auth_kwargs)
+
+    with (
+        client.websocket_connect("/admin/realtime/ws", headers=_bearer(token)) as ws,
+        pytest.raises(WebSocketDisconnect) as excinfo,
+    ):
+        ws.receive_bytes()
+
+    assert excinfo.value.code == WS_CLOSE_UNAUTHORIZED

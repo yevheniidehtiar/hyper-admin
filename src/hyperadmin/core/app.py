@@ -572,7 +572,12 @@ class Admin:
             methods=["GET"],
             name="admin-realtime-sse",
         )
-        ws_handler = make_ws_handler(registry, settings, self.auth_backend)
+        ws_auth: Any = self.auth_backend
+        if self.auth is not None:
+            from hyperadmin.auth.bridge import BridgeWebSocketAuth
+
+            ws_auth = BridgeWebSocketAuth(self.auth)
+        ws_handler = make_ws_handler(registry, settings, ws_auth)
         # On the admin router, so it lands under the prefix in both mount modes
         # (and inside the namespace in isolated mode).
         self.router.add_websocket_route("/realtime/ws", ws_handler, name="admin-realtime-ws")
