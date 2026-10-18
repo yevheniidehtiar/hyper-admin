@@ -27,7 +27,7 @@ This module imports only ``core/`` and ``views/`` (CONSTITUTION.md §2); the
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol, TypeVar
 from urllib.parse import urlencode
 
 from fastapi import Depends, Request
@@ -47,7 +47,13 @@ if TYPE_CHECKING:
     from fastapi import params
     from fastapi.templating import Jinja2Templates
 
-__all__ = ["DEFAULT_API_PREFIXES", "RouteCsrfCheck", "make_admin_route_class"]
+__all__ = [
+    "CSRF_EXEMPT_ATTR",
+    "DEFAULT_API_PREFIXES",
+    "RouteCsrfCheck",
+    "csrf_exempt",
+    "make_admin_route_class",
+]
 
 #: Admin-relative path prefixes served to programs, not people: auth errors
 #: there are a bare 401/403, never a redirect or an HTML page.
@@ -57,6 +63,26 @@ DEFAULT_API_PREFIXES: tuple[str, ...] = ("/realtime/",)
 _PHASE_KEY = "hyperadmin.route_phase"
 _PHASE_DEPENDENCIES = "dependencies"
 _PHASE_ENDPOINT = "endpoint"
+#: ``scope`` key set while a :func:`csrf_exempt` endpoint is being served.
+_CSRF_EXEMPT_KEY = "hyperadmin.csrf_exempt"
+
+#: Endpoint attribute set by :func:`csrf_exempt`.
+CSRF_EXEMPT_ATTR = "hyperadmin_csrf_exempt"
+
+_EndpointT = TypeVar("_EndpointT", bound="Callable[..., Any]")
+
+
+def csrf_exempt(endpoint: _EndpointT) -> _EndpointT:
+    """Mark an admin endpoint as exempt from the CSRF check (and the cookie bridge).
+
+    Only for endpoints authenticated by a header a cross-site page cannot set,
+    such as the token handoff (SDD B.4). The token cookie is **not** copied into
+    ``Authorization`` for them either, so ambient cookies never authenticate an
+    exempt request.
+    """
+    setattr(endpoint, CSRF_EXEMPT_ATTR, True)
+    return endpoint
+
 
 _SIGN_IN_PAGE = (
     "<!doctype html><html><head><meta charset='utf-8'><title>Sign in required</title></head>"
@@ -140,6 +166,7 @@ def make_admin_route_class(  # noqa: PLR0913 - ExternalAuth settings; all but te
     templates: Jinja2Templates | None = None,
     *,
     login_url: str | None = None,
+    login_path: str | None = None,
     next_param: str = "next",
     token_cookie: str | None = None,
     token_scheme: str = "Bearer",  # noqa: S107 - an auth scheme name, not a secret
@@ -154,8 +181,11 @@ def make_admin_route_class(  # noqa: PLR0913 - ExternalAuth settings; all but te
             a view raises is rendered inside the admin layout for people
             (``views/error_pages.py``); JSON stays for API callers.
         login_url: ``ExternalAuth.login_url``. Anonymous browsers are sent there
-            with ``next_param=<admin path+query>``; without it they get a 401
-            "Sign in to the host application" page.
+            with ``next_param=<admin path+query>``; without it (and without
+            ``login_path``) they get a 401 "Sign in to the host application" page.
+        login_path: Admin-relative path of the bridge login form (``"/login"``),
+            used when ``login_url`` is unset; resolved under the per-request
+            admin path (SDD B.4).
         next_param: ``ExternalAuth.next_param``.
         token_cookie: ``TokenCookie.name`` when the token handoff is enabled;
             ``None`` disables the cookie bridge.
@@ -183,7 +213,7 @@ def make_admin_route_class(  # noqa: PLR0913 - ExternalAuth settings; all but te
     async def after_dependencies(request: Request) -> None:
         """Mark the end of dependency solving, then run the CSRF check (step 3)."""
         request.scope[_PHASE_KEY] = _PHASE_ENDPOINT
-        if csrf is not None:
+        if csrf is not None and not request.scope.get(_CSRF_EXEMPT_KEY):
             failure = await csrf.verify(request)
             if failure is not None:
                 raise _CsrfRejected(failure)
@@ -191,10 +221,14 @@ def make_admin_route_class(  # noqa: PLR0913 - ExternalAuth settings; all but te
     marker = Depends(after_dependencies)
 
     def login_target(request: Request) -> str | None:
-        if login_url is None:
+        if login_url is not None:
+            base = login_url
+        elif login_path is not None:
+            base = admin_base_path(request) + login_path
+        else:
             return None
-        separator = "&" if "?" in login_url else "?"
-        return f"{login_url}{separator}{urlencode({next_param: _next_target(request)})}"
+        separator = "&" if "?" in base else "?"
+        return f"{base}{separator}{urlencode({next_param: _next_target(request)})}"
 
     def authentication_required(request: Request, *, bridged: bool) -> Response:
         target = login_target(request)
@@ -238,9 +272,14 @@ def make_admin_route_class(  # noqa: PLR0913 - ExternalAuth settings; all but te
 
         def get_route_handler(self) -> Callable[[Request], Coroutine[Any, Any, Response]]:
             handler = super().get_route_handler()
+            exempt = bool(getattr(self.endpoint, CSRF_EXEMPT_ATTR, False))
 
             async def route_handler(request: Request) -> Response:
-                bridged = _bridge_token_cookie(request, token_cookie, token_scheme)
+                if exempt:
+                    request.scope[_CSRF_EXEMPT_KEY] = True
+                    bridged = False
+                else:
+                    bridged = _bridge_token_cookie(request, token_cookie, token_scheme)
                 request.scope[_PHASE_KEY] = _PHASE_DEPENDENCIES
                 try:
                     response = await handler(request)
