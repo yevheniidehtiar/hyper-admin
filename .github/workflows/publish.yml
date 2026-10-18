@@ -1,25 +1,88 @@
 name: Publish
 
+# Builds, checks and smoke-tests the wheel for tag v<version>, then uploads it
+# to PyPI with trusted publishing (OIDC, GitHub environment `pypi`).
+#
+# - workflow_call: release.yml calls this in the same run, right after it
+#   creates the GitHub release. A release created with GITHUB_TOKEN does not
+#   trigger other workflows, so `on: release` would never fire.
+# - workflow_dispatch: manual fallback for a release created by hand, or to
+#   rerun a failed upload.
+#
+# PyPI matches the trusted publisher against the top-level workflow, so the
+# `pypi` publisher must list release.yml (and publish.yml for manual dispatch).
 on:
-  release:
-    types:
-      - created
+  workflow_call:
+    inputs:
+      version:
+        description: "Version to publish; the v<version> tag must exist"
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish; the v<version> tag must exist"
+        required: true
+        type: string
+
+permissions:
+  contents: read
 
 jobs:
-  publish:
+  build:
     runs-on: ubuntu-latest
-    environment: pypi
-    permissions:
-      id-token: write
-
     steps:
-      - name: Checkout
+      - name: Checkout the release tag
         uses: actions/checkout@v7
+        with:
+          ref: v${{ inputs.version }}
 
       - name: Install uv
         uses: astral-sh/setup-uv@v7
 
-      - name: Publish package
+      - name: Build sdist and wheel
+        run: uv build
+
+      - name: Check distribution metadata
+        run: uvx twine check --strict dist/*
+
+      - name: Smoke-test the wheel in a clean venv
+        env:
+          VERSION: ${{ inputs.version }}
         run: |
-          uv build
-          uv publish
+          # Only the wheel and its runtime dependencies (plus httpx for
+          # TestClient), never the project's dev dependencies.
+          uv venv --no-project "$RUNNER_TEMP/smoke"
+          uv pip install --python "$RUNNER_TEMP/smoke/bin/python" dist/*.whl httpx
+          # Run outside the checkout so `import hyperadmin` resolves to the wheel.
+          cd "$RUNNER_TEMP"
+          "$RUNNER_TEMP/smoke/bin/python" "$GITHUB_WORKSPACE/scripts/smoke_test_wheel.py" --expect-version "$VERSION"
+
+      - name: Upload distributions
+        uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
+
+  publish:
+    needs: build
+    # Defence in depth: never upload from a pull-request context, even if a
+    # PR-triggered workflow were ever to call this one.
+    if: github.event_name != 'pull_request' && github.event_name != 'pull_request_target'
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - name: Download distributions
+        uses: actions/download-artifact@v7
+        with:
+          name: dist
+          path: dist/
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+
+      - name: Publish to PyPI
+        run: uv publish --trusted-publishing always dist/*

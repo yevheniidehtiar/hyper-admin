@@ -1,43 +1,58 @@
+name: Release
 
-name: Release Agent
-
+# Tags master, creates the GitHub release and publishes to PyPI in one run.
+#
+# The version bump is a normal commit in the develop -> master PR; this
+# workflow never pushes a commit. It checks `inputs.version` against
+# pyproject.toml, pushes the v<version> tag, creates the GitHub release
+# (a pre-release for a/b/rc versions) and calls publish.yml.
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'New version (patch/minor/major/x.y.z)'
+        description: "Version to release; must equal [project].version in pyproject.toml (e.g. 0.5.0a1)"
         required: true
-        default: 'patch'
+        type: string
 
 permissions:
-  contents: write
-  id-token: write
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
-  prepare-release:
+  release:
+    if: github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-      - uses: astral-sh/setup-uv@v7
-        with:
-          enable-cache: true
-      - run: uv sync --locked --all-extras
-      - name: Release Candidate Report
-        if: false # TODO: Enable after setting up ANTHROPIC_API_KEY
-        uses: anthropics/claude-code-action@v1
-        with:
-          prompt: |
-            Analyze the project's readiness for version #{{ github.event.inputs.version }}.
-            Review closed issues in the current milestone, QA results, and changelog.
-            Produce a Release Candidate (RC) report as specified in docs/agentic-workflow/release-agent.md.
-        env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-      - name: Automated Bump
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          uv run cz bump --yes
-          git push origin main --tags
 
+      - name: Tag and create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ inputs.version }}
+        run: |
+          PYPROJECT_VERSION="$(python3 -c 'import tomllib; print(tomllib.load(open("pyproject.toml", "rb"))["project"]["version"])')"
+          if [ "$VERSION" != "$PYPROJECT_VERSION" ]; then
+            echo "::error::inputs.version ($VERSION) does not match pyproject.toml ($PYPROJECT_VERSION)"
+            exit 1
+          fi
+          git tag "v$VERSION" "$GITHUB_SHA"
+          git push origin "refs/tags/v$VERSION"
+          PRERELEASE=""
+          if [[ "$VERSION" =~ (a|b|rc)[0-9]+$ ]]; then
+            PRERELEASE="--prerelease"
+          fi
+          gh release create "v$VERSION" --verify-tag --generate-notes --title "v$VERSION" $PRERELEASE
+
+  publish:
+    needs: release
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/publish.yml
+    with:
+      version: ${{ inputs.version }}

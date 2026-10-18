@@ -4,8 +4,30 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
+Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
+`0.5.0a1`); while the major version is `0`, breaking changes bump the minor version.
 
 ## [Unreleased]
+
+## [0.5.0a1] - not yet published
+
+First PyPI pre-release: `pip install hyper-admin==0.5.0a1` (import name
+`hyperadmin`). Every entry in this section ships in it.
+
+### Release
+- **Version `0.5.0a1` and a working release chain** (st-v058-byoa-50, SDD
+  `docs/specs/bring-your-own-app.md` section E).
+  - `hyperadmin.__version__` reads the installed distribution version through
+    `importlib.metadata`.
+  - Commitizen uses `version_scheme = "pep440"` and `major_version_zero = true`.
+  - `release.yml` (manual dispatch on `master`) checks its `version` input
+    against `pyproject.toml`, pushes the `v<version>` tag, creates the GitHub
+    release (`--prerelease` for `a`/`b`/`rc` versions) and calls `publish.yml`
+    in the same run. It no longer pushes a bump commit or targets `main`.
+  - `publish.yml` is `workflow_call` + `workflow_dispatch` (no longer
+    `on: release`). It builds from the tag, runs `twine check`, installs the
+    wheel into a clean venv and requests `GET /admin/` from a zero-config
+    `Admin(app).mount("/admin")` before uploading with PyPI trusted publishing.
 
 ### Added
 - **`session_factory=` seam for bring-your-own-app hosts** (st-v058-byoa-21,

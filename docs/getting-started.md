@@ -8,19 +8,22 @@
 
 ## Installation
 
+HyperAdmin is in pre-release, so pin the version (installers skip pre-releases otherwise).
+The distribution is `hyper-admin`; the import name is `hyperadmin`.
+
 === "pip"
     ```bash
-    pip install hyperadmin
+    pip install hyper-admin==0.5.0a1
     ```
 
 === "uv"
     ```bash
-    uv add hyperadmin
+    uv add hyper-admin==0.5.0a1
     ```
 
 === "poetry"
     ```bash
-    poetry add hyperadmin
+    poetry add hyper-admin==0.5.0a1
     ```
 
 ## Quickstart
