@@ -692,10 +692,12 @@ class Admin:
             field_name=settings.csrf_field_name,
             header_name=settings.csrf_header_name,
         )
+        # Only the count: the settings object also carries secret_key, and an Origin
+        # rejection already logs the offending origin together with csrf_trusted_origins.
         logger.info(
-            "HyperAdmin CSRF %s; trusted origins beyond the request host: %s",
+            "HyperAdmin CSRF %s; %d trusted origin(s) beyond the request host",
             mode,
-            settings.csrf_trusted_origins or "none (csrf_trusted_origins)",
+            len(settings.csrf_trusted_origins),
         )
         return CsrfGuard(
             settings.secret_key,

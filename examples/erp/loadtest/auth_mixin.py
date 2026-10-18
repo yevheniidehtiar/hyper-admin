@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 from http import HTTPStatus
 
 from locust.exception import StopUser
@@ -21,6 +22,12 @@ logger = logging.getLogger(__name__)
 # Substring the login page renders on bad credentials (see auth/views.py).
 _LOGIN_ERROR_MARKER = "Invalid username or password"
 
+# The CSRF token the login form carries (``csrf_input()`` in templates/login.html).
+_CSRF_INPUT = re.compile(r'name="csrf_token" value="([^"]+)"')
+
+# Header every later unsafe request sends the token in (``settings.csrf_header_name``).
+CSRF_HEADER = "X-CSRF-Token"
+
 
 class HyperAdminAuthMixin:
     """Mix in before ``HttpUser`` to authenticate via ``POST {ADMIN_PREFIX}/login``."""
@@ -30,9 +37,17 @@ class HyperAdminAuthMixin:
     def on_start(self) -> None:
         username = os.environ.get("LOADTEST_USER", "admin")
         password = os.environ.get("LOADTEST_PASSWORD", "admin")
+        # The admin enforces CSRF (signed double-submit): GET the login page for the token and
+        # its cookie, post the token with the form, then send it as a header on every later
+        # POST/PUT/DELETE. The token is tied to the cookie, not the login, so it stays valid.
+        page = self.client.get(self.login_path, name="GET /admin/login")
+        match = _CSRF_INPUT.search(page.text)
+        token = match.group(1) if match else ""
+        if token:
+            self.client.headers[CSRF_HEADER] = token
         with self.client.post(
             self.login_path,
-            data={"username": username, "password": password},
+            data={"username": username, "password": password, "csrf_token": token},
             name="POST /admin/login",
             catch_response=True,
         ) as response:

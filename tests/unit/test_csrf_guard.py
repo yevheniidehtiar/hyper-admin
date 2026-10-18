@@ -448,10 +448,11 @@ def test_startup_logs_the_effective_trusted_origins(
     engine: AsyncEngine, caplog: pytest.LogCaptureFixture
 ) -> None:
     """
-    Scenario: the admin logs its effective trusted origins at mount
+    Scenario: the admin logs its CSRF mode and trusted-origin count at mount
       Given csrf_trusted_origins=["https://ops.example"] and auth configured
       When  the admin is mounted
-      Then  an INFO record names the trusted origin
+      Then  an INFO record gives the mode and one trusted origin
+      And   the origin itself is not logged (settings also carry secret_key)
     """
     # Given / When
     with caplog.at_level(logging.INFO, logger="hyperadmin"):
@@ -462,7 +463,9 @@ def test_startup_logs_the_effective_trusted_origins(
         )
 
     # Then
-    assert any("https://ops.example" in r.getMessage() for r in caplog.records)
+    messages = [r.getMessage() for r in caplog.records]
+    assert "HyperAdmin CSRF enforce; 1 trusted origin(s) beyond the request host" in messages
+    assert not any(re.search(r"\bops\.example\b", m) for m in messages)
 
 
 # ── Guard rules on a minimal admin router ──────────────────────────────────
@@ -653,7 +656,7 @@ def test_origin_failure_log_names_origin_host_and_the_setting(
 
     # Then
     message = " ".join(r.getMessage() for r in caplog.records if r.levelno == logging.WARNING)
-    assert "https://evil.example" in message
+    assert re.search(r"\bhttps://evil\.example\b", message)
     assert "testserver" in message
     assert "csrf_trusted_origins" in message
 
