@@ -1,12 +1,12 @@
 ---
 type: story
 id: st-v054-olap-02
-title: "feat(reports): source dispatcher, fact-table cache seam, filter integration"
-status: todo
+title: "feat(reports): source dispatcher and fact-table cache seam"
+status: in-review
 priority: high
 assignee: null
 labels:
-  - size:M
+  - size:S
   - planned
   - backend
   - upstream-readiness
@@ -15,24 +15,28 @@ estimate: null
 epic_ref:
   id: ep-v054-olap-01
 created_at: 2026-05-11T00:00:00Z
-updated_at: 2026-05-11T00:00:00Z
+updated_at: 2026-10-18T00:00:00Z
 ---
 
 ## Summary
 
 Add `FactTableSource` and the source dispatcher: when a `ReportView` declares
 a cache, the dispatcher reads from the fact table instead of the live query
-with no calling-code change. Wire the report's `filters` list through the
-v0.5.6 filter pipeline so a `ReportView` can mount the same sidebar as a
-list view.
+with no calling-code change. `ReportView.run(where=[...])` accepts SQLAlchemy
+clauses (applied before grouping) as the seam the v0.5.6 filter pipeline plugs
+into.
+
+Filter integration (the former third scenario) was cut on 2026-10-18 because it
+depends on the v0.5.6 filter library (`FilterDef`); it moved to
+`featreports-filter-integration`.
 
 **Spec:** [`docs/specs/olap-reporting.md`](../../../../docs/specs/olap-reporting.md)
 
 ## Files to Change
 
 - **New:** `plugins/hyperadmin-reports/src/hyperadmin_reports/cache.py`
-- **Modified:** `plugins/hyperadmin-reports/src/hyperadmin_reports/view.py` — source dispatcher in `.run()`
-- **Modified:** `plugins/hyperadmin-reports/tests/test_reports_core.py` — cache + filter coverage
+- **Modified:** `plugins/hyperadmin-reports/src/hyperadmin_reports/view.py` — source dispatcher in `.run()`, `where` seam, `register_report` validator
+- **New:** `plugins/hyperadmin-reports/tests/test_reports_cache.py` — cache + dispatcher coverage
 
 ## Scenarios
 
@@ -47,21 +51,15 @@ Scenario: cache validation rejects missing columns
   Given a fact table missing the "sku" column referenced in rows
   When  register_report() runs
   Then  ValueError is raised: "FactTableSource missing column 'sku'"
-
-Scenario: filters are applied before the aggregate
-  Given a DateRangeFilter and a Sum aggregate
-  When  .run() executes with {"created_at__gte": "2026-02-01"}
-  Then  the SQL WHERE clause includes "created_at >= '2026-02-01'"
-  And   the result excludes pre-February rows
 ```
 
 ## Acceptance Criteria
 
-- [ ] `FactTableSource` implemented; live-query default preserved
-- [ ] Column-shape validation at `register_report` time
-- [ ] Filter parse → apply → run pipeline in `ReportView.run()`
-- [ ] Unit tests for all three scenarios
-- [ ] `poe lint` passes
+- [x] `FactTableSource` implemented; live-query default preserved
+- [x] Column-shape validation at `register_report` time
+- [x] `where` clause seam in `ReportView.run()` for the filter pipeline
+- [x] Unit tests for both scenarios
+- [x] `poe lint` passes
 
 ## Blocked by
 
