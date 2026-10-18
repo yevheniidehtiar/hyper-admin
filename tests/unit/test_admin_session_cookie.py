@@ -93,6 +93,15 @@ def _set_cookies(response: Any, name: str) -> list[str]:
     ]
 
 
+def _raw_set_cookies(response: Any, name: str) -> list[str]:
+    """Return the ``Set-Cookie`` values for cookie ``name`` with their case intact.
+
+    ``_set_cookies`` lower-cases for attribute checks, which garbles the base64
+    payload; decode payloads from these instead.
+    """
+    return [v for v in response.headers.get_list("set-cookie") if v.startswith(f"{name}=")]
+
+
 def _cookie_payload(cookie: str) -> dict[str, Any]:
     """Decode the JSON payload of a signed Starlette session ``Set-Cookie``."""
     signed = cookie.split(";", 1)[0].split("=", 1)[1]
@@ -178,7 +187,7 @@ async def test_host_session_untouched(engine: AsyncEngine) -> None:
     assert host_view.json() == {"cart": ["apple"]}
     assert host_cookie is not None
     # The login response never rewrites the host cookie with admin data...
-    for cookie in _set_cookies(resp, "session"):
+    for cookie in _raw_set_cookies(resp, "session"):
         assert "user_id" not in _cookie_payload(cookie)
     # ...and the browser's host cookie still decodes to the host's own data.
     assert client.cookies.get("session") == host_cookie
