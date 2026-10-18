@@ -1,4 +1,4 @@
-"""Unit tests for the ``hyperadmin.reports`` core (aggregates, crosstab, bucketing, run).
+"""Unit tests for the ``hyperadmin_reports`` core (aggregates, crosstab, bucketing, run).
 
 Scenarios map 1:1 to
 ``.meta/epics/epic-v054-olap-reporting/stories/featreports-aggregates-and-crosstab-core.md``;
@@ -9,7 +9,7 @@ the remaining tests cover per-aggregate / per-dialect SQL and edge cases from
 from __future__ import annotations
 
 from collections.abc import AsyncIterator
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from typing import Any
 
 import pytest
@@ -24,7 +24,7 @@ from sqlalchemy.ext.asyncio import (
 )
 from sqlmodel import Field, SQLModel
 
-from hyperadmin.reports import (
+from hyperadmin_reports import (
     AUTO_THRESHOLDS,
     Count,
     Group,
@@ -88,10 +88,10 @@ class SkuAuto(ReportView):
 
 
 ORDERS: list[tuple[str, int, datetime, int | None]] = [
-    ("A", 10, datetime(2025, 1, 5), 1),
-    ("A", 20, datetime(2025, 2, 10), 1),
-    ("B", 5, datetime(2025, 1, 20), 2),
-    ("A", 7, datetime(2025, 11, 30), 1),
+    ("A", 10, datetime(2025, 1, 5, tzinfo=timezone.utc), 1),
+    ("A", 20, datetime(2025, 2, 10, tzinfo=timezone.utc), 1),
+    ("B", 5, datetime(2025, 1, 20, tzinfo=timezone.utc), 2),
+    ("A", 7, datetime(2025, 11, 30, tzinfo=timezone.utc), 1),
 ]
 
 
@@ -459,7 +459,11 @@ async def test_many2one_renders_display_inferred_from_foreign_key(seeded: AsyncS
 
 
 async def test_many2one_falls_back_to_pk(seeded: AsyncSession) -> None:
-    seeded.add(ReportOrder(sku="C", amount=1, created_at=datetime(2025, 3, 1), supplier_id=99))
+    seeded.add(
+        ReportOrder(
+            sku="C", amount=1, created_at=datetime(2025, 3, 1, tzinfo=timezone.utc), supplier_id=99
+        )
+    )
     await seeded.commit()
 
     class Explicit(ReportView):

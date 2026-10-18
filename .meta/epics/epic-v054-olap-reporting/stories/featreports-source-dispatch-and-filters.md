@@ -30,9 +30,9 @@ list view.
 
 ## Files to Change
 
-- **New:** `src/hyperadmin/reports/cache.py`
-- **Modified:** `src/hyperadmin/reports/view.py` — source dispatcher in `.run()`
-- **Modified:** `tests/unit/test_reports_core.py` — cache + filter coverage
+- **New:** `plugins/hyperadmin-reports/src/hyperadmin_reports/cache.py`
+- **Modified:** `plugins/hyperadmin-reports/src/hyperadmin_reports/view.py` — source dispatcher in `.run()`
+- **Modified:** `plugins/hyperadmin-reports/tests/test_reports_core.py` — cache + filter coverage
 
 ## Scenarios
 

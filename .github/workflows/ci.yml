@@ -31,8 +31,8 @@ jobs:
       - run: uv sync --locked --all-extras
       - run: uv run ruff check .
       - run: uv run ruff format --check .
-      - run: uv run mypy src
-      - run: uv run pytest --tb=short --cov=src/hyperadmin --cov-report=xml --ignore=tests/e2e
+      - run: uv run mypy src plugins/hyperadmin-reports/src
+      - run: uv run pytest --tb=short --cov=src/hyperadmin --cov=plugins/hyperadmin-reports/src/hyperadmin_reports --cov-report=xml --ignore=tests/e2e
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v7
         with:

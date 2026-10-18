@@ -97,6 +97,14 @@ loadtest = [
 [tool.hatch.build.targets.wheel]
 packages = ["src/hyperadmin"]
 
+# First-party plugins live in-repo as uv workspace members (plugins/<dist>/, src-layout).
+# The core never imports them; the root dev group installs them so one env lints and tests all.
+[tool.uv.workspace]
+members = ["plugins/*"]
+
+[tool.uv.sources]
+hyperadmin-reports = { workspace = true }
+
 [tool.commitizen]  # https://commitizen-tools.github.io/commitizen/config/
 bump_message = "bump: v$current_version → v$new_version"
 tag_format = "v$version"
@@ -122,7 +130,7 @@ output = "reports/coverage.xml"
 [tool.mypy]  # https://mypy.readthedocs.io/en/latest/config_file.html
 junit_xml = "$MYPY_CONFIG_FILE_DIR/reports/mypy.xml"
 python_version = "3.12"
-mypy_path = "src"
+mypy_path = "src:plugins/hyperadmin-reports/src"
 ignore_missing_imports = true
 pretty = true
 show_column_numbers = true
@@ -132,13 +140,13 @@ warn_unreachable = true
 
 [tool.basedpyright]  # https://docs.basedpyright.com/latest/configuration/config-files/
 typeCheckingMode = "standard"
-include = ["src"]
+include = ["src", "plugins/*/src"]
 pythonVersion = "3.10"
 reportAny = false  # Too much noise for now
 
 [tool.pytest.ini_options]  # https://docs.pytest.org/en/latest/reference/reference.html#ini-options-ref
-addopts = "--color=yes --doctest-modules --exitfirst --failed-first --verbosity=2 --junitxml=reports/pytest.xml --cov=src --cov-report=term-missing --cov-report=xml:reports/coverage.xml"
-testpaths = ["tests"]
+addopts = "--color=yes --doctest-modules --exitfirst --failed-first --verbosity=2 --junitxml=reports/pytest.xml --cov=src --cov=plugins/hyperadmin-reports/src --cov-report=term-missing --cov-report=xml:reports/coverage.xml"
+testpaths = ["tests", "plugins/hyperadmin-reports/tests"]
 xfail_strict = true
 faulthandler_timeout = 300  # dump all thread stacks if a single test hangs (CI diagnosability)
 filterwarnings = "ignore:The `name` is not the first parameter anymore:DeprecationWarning"
@@ -148,7 +156,7 @@ asyncio_mode = "auto"
 exclude = [".claude"]
 fix = true
 line-length = 100
-src = ["src", "tests"]
+src = ["src", "tests", "plugins/*/src"]
 target-version = "py310"
 
 [tool.ruff.format]
@@ -204,7 +212,7 @@ unfixable = []
 fixable = ["ALL"]
 
 [tool.ruff.lint.per-file-ignores]
-"tests/**/*.py" = [
+"**/tests/**/*.py" = [  # core tests/ and plugins/*/tests/
   "ARG001",   # unused function arguments (fixtures)
   "ARG002",   # unused method arguments (fixtures)
   "ARG005",   # unused lambda arguments (mock factories)
@@ -294,7 +302,7 @@ type = "simple"
 
   [tool.poe.tasks.typecheck]
   help = "Run basedpyright type checker"
-  cmd = "basedpyright src"
+  cmd = "basedpyright src plugins/hyperadmin-reports/src"
 
   [tool.poe.tasks.lint]
   help = "Lint this package"
@@ -335,12 +343,12 @@ type = "simple"
   [tool.poe.tasks."test:unit"]
   help = "Run unit tests with pytests"
   sequence = [
-    { cmd = "pytest -vv -q tests/unit" },
+    { cmd = "pytest -vv -q tests/unit plugins/hyperadmin-reports/tests" },
   ]
   [tool.poe.tasks."test:cov-diff"]
   help = "Unit tests, then fail unless every changed line vs origin/develop is covered (100% patch)"
   sequence = [
-    { cmd = "pytest -q tests/unit" },
+    { cmd = "pytest -q tests/unit plugins/hyperadmin-reports/tests" },
     { cmd = "diff-cover reports/coverage.xml --compare-branch=origin/develop --fail-under=100" },
   ]
 
@@ -426,5 +434,6 @@ echo "==> All checks passed across the compatibility matrix."
 [dependency-groups]
 dev = [
     "faker>=40.41.0",
+    "hyperadmin-reports",  # workspace member (plugins/hyperadmin-reports)
 ]
 

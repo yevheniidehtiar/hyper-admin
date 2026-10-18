@@ -1,4 +1,4 @@
-# SDD: OLAP / Pivot Reporting (`hyperadmin.reports`)
+# SDD: OLAP / Pivot Reporting (`hyperadmin-reports` plugin)
 
 | Field | Value |
 |---|---|
@@ -7,7 +7,7 @@
 | Issue | TBD |
 | Milestone | v0.5.4 — Reporting & Charts |
 | Created | 2026-05-11 |
-| Last updated | 2026-10-17 |
+| Last updated | 2026-10-18 |
 
 ---
 
@@ -22,8 +22,9 @@ declarative report layer, every consumer carries an ad-hoc copy of this.
 
 ## Goals
 
-- New `src/hyperadmin/reports/` package: declarative `ReportView` registered
-  on the admin alongside `ModelAdmin`.
+- New first-party plugin `hyperadmin-reports` (import package `hyperadmin_reports`,
+  in-repo uv workspace member at `plugins/hyperadmin-reports/`): declarative
+  `ReportView` registered on the admin alongside `ModelAdmin`.
 - Declarative aggregates: `Sum`, `Count`, `StringAggComma`, `Min`, `Max`,
   `Many2One` (resolves to the related row's display).
 - Crosstab dimensions: one row group, N column groups (e.g. row = SKU, cols =
@@ -106,17 +107,25 @@ Scenario: cached fact-table source replaces the live query
 ### Architecture
 
 ```
-reports/                   — NEW top-level package
-  __init__.py              — re-exports: ReportView, Group, TimeBucket, Sum, Count, ...
-  aggregates.py            — Sum, Count, Min, Max, StringAggComma, Many2One
-  view.py                  — ReportView base class + registration
-  crosstab.py              — pivot builder (rows × cols → grid)
-  bucketing.py             — TimeBucket, auto-period resolver
-  export.py                — CSV/XLSX streamers
-  cache.py                 — FactTableSource seam
-views/dynamic.py           — minor: registry exposes report routes alongside model routes
-templates/reports/         — list.html, detail.html, export buttons
+plugins/hyperadmin-reports/          — NEW first-party plugin (uv workspace member)
+  pyproject.toml                     — dist `hyperadmin-reports`; depends on `hyper-admin`;
+                                       entry point hyperadmin.plugins: reports
+  src/hyperadmin_reports/
+    __init__.py                      — re-exports: ReportView, Group, TimeBucket, Sum, Count, ...
+    plugin.py                        — ReportsPlugin (duck-typed: `name`, `on_register(admin)`)
+    aggregates.py                    — Sum, Count, Min, Max, StringAggComma, Many2One
+    view.py                          — ReportView base class + registration
+    crosstab.py                      — pivot builder (rows × cols → grid)
+    bucketing.py                     — TimeBucket, auto-period resolver
+    export.py                        — CSV/XLSX streamers
+    cache.py                         — FactTableSource seam
+    templates/reports/               — list.html, detail.html, export buttons
+  tests/                             — plugin unit tests (run by the root poe/CI tasks)
 ```
+
+Dependency direction: the plugin imports `hyperadmin` (e.g. `hyperadmin.core.display`);
+the core never imports `hyperadmin_reports`. Routes reach the admin through the plugin's
+`on_register` hook, not through edits to `views/`.
 
 The dispatch order on a request:
 
@@ -202,7 +211,7 @@ affected since the milestone has not yet shipped.
 
 | Decision | Rationale | Alternatives considered |
 |---|---|---|
-| `reports/` as a top-level package | Mirrors `filters/` boundary; reports can compose multiple models | Stash under `core/reports/` (couples core); under `views/reports/` (couples to view layer) |
+| `reports/` as a top-level package (superseded 2026-10-18, see the plugin row below) | Mirrors `filters/` boundary; reports can compose multiple models | Stash under `core/reports/` (couples core); under `views/reports/` (couples to view layer) |
 | Pivot in memory after a single grouped query | Predictable, portable across adapters; avoids DB-specific PIVOT syntax | DB-side `PIVOT` (SQL Server) / `crosstab` (Postgres) — non-portable |
 | Cache seam at the `ReportView` level | Drop-in fact table swap, no calling-code change | Plumb caching into every aggregate (more surface, less win) |
 | CSV + XLSX in v0.5.4 | Both are required by the H14 acceptance check | CSV-only (fails the check); JSON-only (consumer-side conversion burden) |
@@ -212,3 +221,4 @@ affected since the milestone has not yet shipped.
 | XLSX export includes a "Filters used" cover sheet (Open Question 3, resolved 2026-10-17) | Small, and gives downstream audit trails the exact filter context | No cover sheet; filters in the file name only |
 | `ReportView.run()` takes the caller's `AsyncSession` or session factory | Keeps `reports/` independent of `hyperadmin.db` defaults and of adapters; works with any session-factory seam | Import the module-level engine/session (couples to the default DB wiring) |
 | Aggregate SQL is the executed SQL: `Aggregate.sql(dialect)` text is inlined into the grouped query; bucket formats are inlined literals | One source of truth per dialect; PostgreSQL rejects `GROUP BY` when SELECT and GROUP BY carry different bound parameters | SQLAlchemy `func.*` with bound format strings (breaks on PostgreSQL) |
+| Reports (and charts) ship as the first-party plugin `hyperadmin-reports` (`plugins/hyperadmin-reports/`, uv workspace member, `hyperadmin.plugins` entry point `reports`) — decided by the owner 2026-10-18 | Keeps the core small and optional dependencies (e.g. XLSX) out of it; the core never imports the plugin; one repo, one lock, one CI | `src/hyperadmin/reports/` inside the core package (the original design); a separate repository (split release/CI for a tightly coupled API) |

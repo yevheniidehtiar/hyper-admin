@@ -16,7 +16,7 @@ updated_at: 2026-09-28T00:00:00Z
 
 H14 + H15 from upstream readiness — re-scoped from "Dashboard Builder" to
 match the framework-neutral capability vocabulary. New
-`src/hyperadmin/reports/` module: `ReportView`, declarative aggregates
+`plugins/hyperadmin-reports/src/hyperadmin_reports/` module: `ReportView`, declarative aggregates
 (`Sum`, `Count`, `StringAggComma`, `Min`, `Max`, `Many2One`), crosstab
 dimensions (one row group, N column groups), time-series bucketing
 (day / week / month / quarter / year auto), filter-form integration via

@@ -1,6 +1,6 @@
 """Declarative OLAP-style reports: aggregates, crosstab pivots and time bucketing."""
 
-from hyperadmin.reports.aggregates import (
+from hyperadmin_reports.aggregates import (
     Aggregate,
     Count,
     Many2One,
@@ -9,9 +9,9 @@ from hyperadmin.reports.aggregates import (
     StringAggComma,
     Sum,
 )
-from hyperadmin.reports.bucketing import AUTO_THRESHOLDS, Period, TimeBucket, resolve_period
-from hyperadmin.reports.crosstab import Pivot, pivot
-from hyperadmin.reports.view import Dimension, Group, ReportResult, ReportView
+from hyperadmin_reports.bucketing import AUTO_THRESHOLDS, Period, TimeBucket, resolve_period
+from hyperadmin_reports.crosstab import Pivot, pivot
+from hyperadmin_reports.view import Dimension, Group, ReportResult, ReportView
 
 __all__ = [
     "AUTO_THRESHOLDS",

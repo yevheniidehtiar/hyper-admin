@@ -29,10 +29,10 @@ so a million-cell export does not blow memory. Permission codename
 
 ## Files to Change
 
-- **New:** `src/hyperadmin/reports/export.py` — `stream_csv`, `stream_xlsx`
+- **New:** `plugins/hyperadmin-reports/src/hyperadmin_reports/export.py` — `stream_csv`, `stream_xlsx`
 - **Modified:** `src/hyperadmin/views/dynamic.py` (or new `views/reports.py` if cleaner) — route registration
 - **Modified:** `src/hyperadmin/core/app.py` — `Admin.register_report(...)` and discovery
-- **Modified:** `tests/unit/test_reports_core.py` — route + export tests
+- **Modified:** `plugins/hyperadmin-reports/tests/test_reports_core.py` — route + export tests
 
 ## Scenarios
 

@@ -31,7 +31,7 @@ fallback, filter context).
 
 ## Files to Change
 
-- **Modified:** `src/hyperadmin/reports/view.py` — `chart_view` handler
+- **Modified:** `plugins/hyperadmin-reports/src/hyperadmin_reports/view.py` — `chart_view` handler
 - **Modified:** `src/hyperadmin/core/app.py` — register the chart route alongside the report grid
 - **New:** `tests/e2e/test_chart_components.py`
 
