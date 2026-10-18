@@ -46,6 +46,7 @@ MaybeAwaitable: TypeAlias = _T | Awaitable[_T]
 
 __all__ = [
     "BridgeDefaultPermissionChecker",
+    "BridgeWebSocketAuth",
     "CallablePermissionChecker",
     "ExternalAuth",
     "HostUserModelGuard",
@@ -282,6 +283,32 @@ class HostUserModelGuard:
     async def get_user_permissions(self, user: Any) -> set[str]:
         """Delegate to the wrapped checker (see its own caveats)."""
         return set(await self.inner.get_user_permissions(user))
+
+
+class BridgeWebSocketAuth:
+    """Adapts :class:`ExternalAuth` to the realtime WebSocket's auth contract.
+
+    The realtime handler expects an object with ``get_current_user(websocket)``
+    returning a user or ``None``. HTTP dependencies do not run on WebSocket
+    scope, so the host resolves the user through ``ExternalAuth.websocket_user``;
+    the user must still pass ``can_access``. Without ``websocket_user`` every
+    connection is anonymous and is refused (fail closed).
+    """
+
+    __slots__ = ("_auth",)
+
+    def __init__(self, auth: ExternalAuth) -> None:
+        self._auth = auth
+
+    async def get_current_user(self, websocket: WebSocket) -> Any | None:
+        """Return the host user admitted to the admin, or ``None``."""
+        resolve = self._auth.websocket_user
+        if resolve is None:
+            return None
+        user = await resolve(websocket)
+        if user is None or not await _maybe_await(self._auth.can_access(user)):
+            return None
+        return user
 
 
 def build_admin_dependency(auth: ExternalAuth) -> Callable[..., Awaitable[Any]]:

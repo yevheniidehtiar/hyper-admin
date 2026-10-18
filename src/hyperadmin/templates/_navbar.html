@@ -57,10 +57,21 @@
                 {{ icon('chevron-down', 'ha-icon-sm ha-navbar-user-btn-chevron') }}
             </button>
             <div x-show="open" @click.away="open = false" @keydown.escape="open = false" x-cloak class="ha-dropdown" role="menu">
+                {#- Bridge mode has no built-in {prefix}/logout route yet (st-v058-byoa-41):
+                    only offer Logout when the host supplied ExternalAuth.logout_url. -#}
+                {% if auth_mode == "external" %}
+                {% if logout_url %}
+                {#- No admin csrf_input: the admin's token must not leak to a host URL. -#}
+                <form method="post" action="{{ logout_url }}">
+                    <button type="submit" class="ha-dropdown-item" data-testid="logout-btn" role="menuitem">{{ icon('log-out') }}{{ _("Logout") }}</button>
+                </form>
+                {% endif %}
+                {% else %}
                 <form method="post" action="{{ admin_prefix }}/logout">
                     {{ csrf_input() if csrf_input is defined }}
                     <button type="submit" class="ha-dropdown-item" data-testid="logout-btn" role="menuitem">{{ icon('log-out') }}{{ _("Logout") }}</button>
                 </form>
+                {% endif %}
             </div>
             {% else %}
             <button @click="open = !open" @keydown.escape="open = false" class="ha-navbar-user-btn" aria-haspopup="true" :aria-expanded="open">
