@@ -14,6 +14,58 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
 First PyPI pre-release: `pip install hyper-admin==0.5.0a1` (import name
 `hyperadmin`). Every entry in this section ships in it.
 
+### Upgrade note
+
+New: **bring your own app** (st-v058-byoa-51). Adding HyperAdmin to an existing
+FastAPI app — its own models, engine, lifespan and login — is described in
+`docs/guides/existing-app.md` and `docs/guides/external-auth.md`;
+`examples/byoa/` is a runnable host app with UUID and natural-`str` keys, a JWT
+API, its own `/static` and `session` cookie, and
+`Admin(auth=ExternalAuth(...), session_factory=...)`. Existing installs should
+check the points below before upgrading.
+
+- **CSRF is enforced** whenever auth is configured (`auth_backend=`, `auth=` or
+  app-level host dependencies). Every built-in page and HTMX request carries
+  the token. A custom template with a raw `<form method="post">` needs
+  `{{ csrf_input() }}`; your own scripts read `<meta name="csrf-token">` and send
+  `X-CSRF-Token`. A rejected request gets 403 with `X-HyperAdmin-CSRF: failed`.
+  Escape hatch for one release: `HYPERADMIN_CSRF_MODE=report` logs failures
+  instead of refusing them. `HYPERADMIN_SECRET_KEY` is now required whenever
+  CSRF is enforced.
+- **Behind a TLS-terminating proxy.** The `Origin` rule compares the Origin's
+  `host[:port]` with the request's `Host` (or `X-Forwarded-Host`) header; an
+  `https` Origin on a request the app sees as plain `http` is accepted on the
+  host alone, so a proxy that talks http to uvicorn does not turn every save into
+  a 403. `Sec-Fetch-Site: same-origin` passes, `cross-site` fails. If the admin
+  is reached through another hostname, list it in `csrf_trusted_origins`
+  (`HYPERADMIN_CSRF_TRUSTED_ORIGINS='["https://admin.example.com"]'`). Cookies
+  under the default `cookie_secure="auto"` are `Secure` only when the app sees
+  `https`: set `HYPERADMIN_COOKIE_SECURE=true`, or let uvicorn trust the proxy
+  with `--forwarded-allow-ips` (`forwarded_allow_ips`) so the app sees the real
+  scheme. Origin rejections are logged at `WARNING` with the observed Origin
+  and Host.
+- **Bring-your-own-auth permissions are fail-safe.** Without
+  `ExternalAuth(has_permission=...)`, superusers get every permission and every
+  other user is view-only. `ExternalAuth(allow_full_access=True)` opts into full
+  access for everyone who passes `can_access` (with a startup warning). A user
+  who is not a superuser never gets `change_*`/`delete_*` on the host user
+  model unless `has_permission` grants it.
+- **Sensitive fields are hidden.** Text fields marked `hyperadmin_sensitive`,
+  or named like `password|secret|token|hash`, leave search, sort, filters, list
+  columns and detail pages, and are write-only on forms. Opt a field back in
+  with `AdminOptions(sensitive_fields={"secret_name": False})`.
+- **No tables are created by default** (`create_tables=False`) except in
+  zero-config demo mode on SQLite. Use your migrations, `hyperadmin init-db`
+  (built-in auth tables) or `HYPERADMIN_CREATE_TABLES=true`.
+- **Compose `admin.lifespan()`** into your app's `lifespan=`. Startup has a
+  first-request safety net, shutdown does not: with realtime enabled, SSE and
+  WebSocket connections are drained only when the host runs `admin.lifespan()`
+  (or `admin.shutdown()`).
+- **The admin is an isolated sub-application**: its static files move to
+  `{prefix}/static`, its route names become `hyperadmin:*`, uploads are served
+  per record, and the built-in session cookie is renamed `hyperadmin_session`
+  (users log in once more). See the entries below for each change.
+
 ### Release
 - **Version `0.5.0a1` and a working release chain** (st-v058-byoa-50, SDD
   `docs/specs/bring-your-own-app.md` section E).

@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in - BYOA host</title>
+  <link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+  <h1>Sign in</h1>
+  <form id="login-form">
+    <label for="username">Username</label>
+    <input id="username" name="username" autocomplete="username" required>
+    <label for="password">Password</label>
+    <input id="password" name="password" type="password" autocomplete="current-password" required>
+    <button type="submit">Sign in</button>
+    <p class="error" id="login-error" role="alert"></p>
+  </form>
+  <script>
+    // 1. Get a bearer token from the host's own /token endpoint.
+    // 2. Hand it to the admin: POST /admin/auth/session stores it in an HttpOnly
+    //    cookie scoped to /admin (the header cannot be forged cross-site, so the
+    //    handoff needs no CSRF token).
+    // 3. Go back to the admin page that sent us here.
+    const form = document.getElementById("login-form");
+    const error = document.getElementById("login-error");
+    function safeNext() {
+      const next = new URLSearchParams(location.search).get("next") || "/admin/";
+      return next.startsWith("/admin/") && !next.startsWith("//") ? next : "/admin/";
+    }
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      error.textContent = "";
+      const reply = await fetch("/token", { method: "POST", body: new URLSearchParams(new FormData(form)) });
+      if (!reply.ok) {
+        error.textContent = "Invalid username or password.";
+        return;
+      }
+      const { access_token } = await reply.json();
+      const handoff = await fetch("/admin/auth/session", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${access_token}` },
+      });
+      if (!handoff.ok) {
+        error.textContent = "The admin did not accept the sign-in.";
+        return;
+      }
+      location.assign(safeNext());
+    });
+  </script>
+</body>
+</html>

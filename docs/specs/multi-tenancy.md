@@ -7,7 +7,7 @@
 | Issue | #421 (epic) |
 | Milestone | v0.5.3 — Multi-Tenancy Filtering |
 | Created | 2026-05-10 |
-| Last updated | 2026-05-10 |
+| Last updated | 2026-10-18 |
 
 ---
 
@@ -360,6 +360,75 @@ Recommended adoption path for existing apps:
       user's tenant attribute. New users without a claim get `tenant_id=None` and are
       unreachable until an admin assigns them. **Resolved by reference to `oauth-sso.md`.**
 
+## Amendment: bring your own app (v0.5.8)
+
+Recorded 2026-10-18 by st-v058-byoa-51, as required by
+[`bring-your-own-app.md`](bring-your-own-app.md) ("How the three investigations were
+reconciled", row "Multi-tenancy"). This amendment **supersedes** the `TenantMiddleware`
+design above wherever the two disagree.
+
+**Why.** The design above resolves the tenant in a `TenantMiddleware` that reads
+`request.state.user`. That only works with built-in auth, where `AuthenticationMiddleware`
+sets the user before any route runs. In bring-your-own-auth mode
+(`Admin(auth=ExternalAuth(...))`) there is no authentication middleware: the admin principal
+is resolved by a route dependency, `hyperadmin.auth.bridge.build_admin_dependency(auth)`,
+while FastAPI solves the route's dependencies. A middleware runs before that, so it would
+always see an anonymous request and resolve no tenant.
+
+**Amended design.**
+
+1. **Tenant resolution is a route dependency that runs after the admin principal.**
+   `resolve_tenant(request)` (in `auth/tenant.py`) is appended to the protected admin
+   router's dependencies after `build_admin_dependency(auth)`
+   (`Admin._protected_dependencies()`), so `request.state.user` is already set when it runs.
+   FastAPI solves router dependencies in declaration order, and `HyperAdminRoute` keeps its
+   CSRF marker last. In built-in mode the same dependency runs too;
+   `AuthenticationMiddleware` has set the user long before. One code path serves both modes.
+2. **`ModelAdmin.get_queryset(request)` is the supported alternative** for hosts that scope
+   rows themselves, and it also works in both modes. Since st-v058-byoa-10 the view layer
+   evaluates `get_queryset` inside a request-scoped `queryset_scope` (a `ContextVar`, never
+   state on the shared adapter), after route dependencies have run, for every list, item,
+   inline, bulk, file and choices handler. A host can therefore write
+   `return {"tenant_id": request.state.user.tenant_id}` without any tenancy feature.
+3. **`TenantAwareAdapterMixin.get_queryset`** reads `request.state.tenant_id` as designed;
+   when it is unset it calls `resolve_tenant(request)` itself (idempotent, cached on
+   `request.state`), so an adapter call made before the dependency ran never silently drops
+   the filter.
+4. **Resolution sources are unchanged** (user attribute `tenant_id_attr`, then the opt-in
+   header, then the subdomain), but read the user from `request.state.user`, which both
+   modes now set. For a bridged host user, `tenant_id_attr` names an attribute of the host's
+   own user model.
+5. **Realtime.** WebSocket connections are not routed through HTTP dependencies. A
+   tenant-aware realtime feature resolves the tenant from the WebSocket's user (set by
+   `ExternalAuth.websocket_user` or the built-in backend) in its handler.
+
+**Effect on this SDD.** The architecture diagram becomes:
+
+```
+HTTP request
+    │
+    ▼
+route dependency: admin principal ──► request.state.user  (built-in: AuthenticationMiddleware)
+    │
+    ▼
+route dependency: resolve_tenant  ──► request.state.tenant_id
+    │
+    ▼
+view handler → queryset_scope → ModelAdmin.get_queryset / TenantAwareAdapterMixin
+```
+
+The `TenantMiddleware` entries in Goals, API / Protocol Changes and the Open Question on
+middleware ordering are replaced by `resolve_tenant`; the ordering question is resolved by
+dependency order. The BDD scenarios stay valid, and gain one for bridge mode:
+
+```
+Scenario: tenant is resolved for a bridged host user
+  Given Admin(auth=ExternalAuth(get_user=dep)) and dep returns a host user with tenant_id 7
+  And   Order.tenant_field = "tenant_id"
+  When  GET /admin/order
+  Then  only orders with tenant_id = 7 are listed
+```
+
 ## Decision Log
 
 | Decision | Rationale | Alternatives considered |
@@ -372,3 +441,4 @@ Recommended adoption path for existing apps:
 | Superuser bypass on by default | Mirrors Django; admin tools need it | Default-off — surprising for users coming from Django |
 | Filter is a flat `dict[tenant_field, tenant_id]` | Consistent with v0.5.1 `get_queryset()` shape; no `Select` mutator coupling | Callable filter — too flexible, harder to reason about; defer to v0.5.3+ if needed |
 | No new table for tenant ↔ user mapping | Host apps already have this; framework would duplicate / conflict | Ship a `Tenant` table — out of scope, opinionated |
+| Resolve the tenant in a route dependency after the admin principal (BYOA amendment, 2026-10-18) | In bridge mode the user only exists once route dependencies run; one path serves built-in and bridge auth | Keep `TenantMiddleware` (never sees a bridged user); resolve only inside the adapter mixin (no single place to fail fast) |

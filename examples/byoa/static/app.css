@@ -1,0 +1,16 @@
+/* byoa host stylesheet: served by the host's own /static mount, not by HyperAdmin. */
+body {
+  font-family: system-ui, sans-serif;
+  max-width: 28rem;
+  margin: 4rem auto;
+  padding: 0 1rem;
+}
+
+form {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.error {
+  color: #b91c1c;
+}
