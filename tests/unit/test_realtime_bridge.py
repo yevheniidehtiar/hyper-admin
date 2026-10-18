@@ -276,6 +276,7 @@ def test_mixed_key_types() -> None:
       Given connections for int and UUID users
       When  the debug snapshot is built
       Then  it does not raise
+      And   int keys keep their numeric order ahead of the other keys
     """
     # Given connections for int and UUID users
     registry = ConnectionRegistry()
@@ -296,7 +297,8 @@ def test_mixed_key_types() -> None:
     assert response.status_code == 200
     payload = json.loads(bytes(response.body))
     assert payload["count"] == 4
-    assert payload["users"] == [12, 3, str(_UUID), "carol"]
+    # And int keys keep their numeric order ahead of the other keys
+    assert payload["users"] == [3, 12, str(_UUID), "carol"]
     assert registry.users() == {12, 3, _UUID, "carol"}
 
 
@@ -319,9 +321,11 @@ def _ws_session(
         seen.append(registry.users())
 
     monkeypatch.setattr(ws_module, "_receive_loop", _one_shot_receive_loop)
+    # A refused handshake raises from ``websocket_connect`` itself (the server
+    # closes before accepting); an admitted one raises on the first receive.
     with (
-        client.websocket_connect("/admin/realtime/ws", headers=headers) as ws,
         pytest.raises(WebSocketDisconnect) as excinfo,
+        client.websocket_connect("/admin/realtime/ws", headers=headers) as ws,
     ):
         ws.receive_bytes()
     return excinfo.value.code, seen
@@ -334,7 +338,7 @@ def test_foreign_origin_ws_closed(
     Scenario: foreign-origin WS closed
       Given realtime with built-in auth
       When  a WS handshake arrives with Origin: https://evil.example
-      Then  the socket is closed with the unauthorized code
+      Then  the handshake is rejected with the unauthorized code
     """
     # Given realtime with built-in auth
     admin, client = _builtin_admin(_HostUser(id=1))
@@ -343,7 +347,7 @@ def test_foreign_origin_ws_closed(
     with caplog.at_level(logging.WARNING, logger="hyperadmin.csrf"):
         code, seen = _ws_session(client, {"Origin": "https://evil.example"}, monkeypatch, admin)
 
-    # Then the socket is closed with the unauthorized code
+    # Then the handshake is rejected with the unauthorized code
     assert code == WS_CLOSE_UNAUTHORIZED
     assert seen == []
     assert "https://evil.example" in caplog.text

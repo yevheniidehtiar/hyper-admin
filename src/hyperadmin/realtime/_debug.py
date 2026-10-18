@@ -27,15 +27,26 @@ def _json_key(key: Hashable) -> int | str:
     return key if isinstance(key, (int, str)) else str(key)
 
 
+def _sort_key(key: Hashable) -> tuple[int, int, str]:
+    """Order ints numerically ahead of every other key, the rest by ``str``.
+
+    Int-only deployments keep their numeric order, and a mix of key types
+    (int, UUID, str) sorts without raising ``TypeError``.
+    """
+    if isinstance(key, int) and not isinstance(key, bool):
+        return (0, key, "")
+    return (1, 0, str(key))
+
+
 def make_count_handler(registry: ConnectionRegistry) -> Handler:
     async def count(_request: Request) -> Response:
         snap = registry.snapshot()
         return JSONResponse(
             {
                 "count": len(snap),
-                # Keys are any hashable (int, UUID, str): ``key=str`` sorts a mix
-                # of types, and non-JSON keys are rendered as strings.
-                "users": [_json_key(k) for k in sorted({c.user_id for c in snap}, key=str)],
+                # Keys are any hashable (int, UUID, str): ints sort numerically
+                # first, the rest by ``str``; non-JSON keys render as strings.
+                "users": [_json_key(k) for k in sorted({c.user_id for c in snap}, key=_sort_key)],
                 "by_transport": {
                     "sse": sum(1 for c in snap if c.transport == "sse"),
                     "ws": sum(1 for c in snap if c.transport == "ws"),
