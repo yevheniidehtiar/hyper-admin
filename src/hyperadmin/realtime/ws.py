@@ -1,10 +1,10 @@
 """WebSocket endpoint for the real-time MVP.
 
-Accepts the handshake, enforces auth inside the handler (Starlette's
+Rejects a handshake from a foreign ``Origin`` before accepting it (cross-site
+WebSocket hijacking: the browser sends the admin's cookies with any page's
+handshake), then accepts, enforces auth inside the handler (Starlette's
 ``BaseHTTPMiddleware`` and FastAPI route dependencies do not run on WS scope),
-refuses a foreign ``Origin`` (cross-site WebSocket hijacking: the browser
-sends the admin's cookies with any page's handshake), and exchanges ping/pong
-heartbeats. No business payload — that arrives once the PubSub layer is
+and exchanges ping/pong heartbeats. No business payload — that arrives once the PubSub layer is
 plugged in.
 """
 
@@ -41,15 +41,18 @@ def make_ws_handler(
     ``websocket.state.user_key`` when the backend sets it (the bridge does),
     else on ``user.id`` (built-in auth).
 
-    ``origin_allowed`` vets the handshake before any auth runs; a refused
-    handshake is closed with ``WS_CLOSE_UNAUTHORIZED``.
+    ``origin_allowed`` vets the handshake before it is accepted and before any
+    auth runs; a refused handshake is rejected (closed while still connecting)
+    with ``WS_CLOSE_UNAUTHORIZED``.
     """
 
     async def ws_endpoint(websocket: WebSocket) -> None:
-        await websocket.accept()
         if origin_allowed is not None and not origin_allowed(websocket):
+            # Closing before ``accept()`` refuses the handshake (HTTP 403 under
+            # uvicorn): a cross-site page never sees ``onopen`` fire.
             await websocket.close(code=WS_CLOSE_UNAUTHORIZED)
             return
+        await websocket.accept()
         user = await auth_backend.get_current_user(websocket) if auth_backend else None
         if user is None:
             await websocket.close(code=WS_CLOSE_UNAUTHORIZED)
