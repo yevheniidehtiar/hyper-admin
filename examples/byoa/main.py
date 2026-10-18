@@ -8,10 +8,18 @@ user model keyed by UUID. Adding the admin takes the block marked
 
 Run it::
 
-    uv run uvicorn examples.byoa.main:app --reload
+    HYPERADMIN_DEBUG=true uv run uvicorn examples.byoa.main:app --reload
+
+``HYPERADMIN_DEBUG=true`` lets the admin start with its default secret key for
+local development; without it (and without ``HYPERADMIN_SECRET_KEY``) the admin
+refuses to start, exactly as it would in your app. The host's own
+``BYOA_SESSION_SECRET`` and ``BYOA_JWT_SECRET`` fall back to demo values with a
+logged warning (``examples/byoa/config.py``).
 
 Then open http://127.0.0.1:8000/admin/ and sign in as ``ada`` / ``lovelace``
-(superuser) or ``grace`` / ``hopper`` (staff, view-only).
+(superuser) or ``grace`` / ``hopper`` (staff, view-only). These seeded accounts,
+with their published passwords, are demo data: delete them before any
+deployment, and do not point ``BYOA_DATABASE_URL`` at a database you care about.
 
 The database is in memory by default; set ``BYOA_DATABASE_URL`` (for example
 ``sqlite+aiosqlite:///byoa.db``) to keep data between runs.
@@ -33,6 +41,7 @@ from sqlmodel import SQLModel, select
 from starlette.middleware.sessions import SessionMiddleware
 
 from examples.byoa.auth import authenticate, get_current_user, hash_password, issue_token
+from examples.byoa.config import demo_secret
 from examples.byoa.models import HOST_TABLES, Account, Country, Project
 from hyperadmin import Admin, HyperAdminSettings
 from hyperadmin.auth import ExternalAuth, TokenCookie
@@ -50,7 +59,11 @@ sessionmaker = async_sessionmaker(engine, expire_on_commit=False)
 
 
 async def seed() -> None:
-    """Insert the demo rows once."""
+    """Insert the demo rows once.
+
+    Demo data only: the two accounts below have published passwords. A real app
+    creates its users through its own sign-up or management command.
+    """
     async with sessionmaker() as session:
         if (await session.execute(select(Account))).first() is not None:
             return
@@ -95,8 +108,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
 
 app = FastAPI(title="BYOA host", lifespan=lifespan)
+# Demo-only fallback, never ship this: a real app reads os.environ["BYOA_SESSION_SECRET"].
 app.add_middleware(
-    SessionMiddleware, secret_key=os.environ.get("BYOA_SESSION_SECRET", "byoa-demo-session")
+    SessionMiddleware, secret_key=demo_secret("BYOA_SESSION_SECRET", "byoa-demo-session")
 )
 app.mount("/static", StaticFiles(directory=HERE / "static"), name="static")
 
@@ -170,9 +184,8 @@ site.register(Account)  # the host user model: superusers edit it, staff only vi
 admin = Admin(
     app,
     session_factory=sessionmaker,
-    settings=HyperAdminSettings(
-        secret_key=os.environ.get("HYPERADMIN_SECRET_KEY", "byoa-demo-admin-secret")
-    ),
+    # Reads HYPERADMIN_SECRET_KEY; the default key is refused unless HYPERADMIN_DEBUG=true.
+    settings=HyperAdminSettings(),
     auth=ExternalAuth(
         get_user=get_current_user,
         login_url="/login",

@@ -12,7 +12,11 @@ afterwards: no other test module sees the example's models.
 from __future__ import annotations
 
 import ast
+import logging
+import os
 import re
+import subprocess
+import sys
 import uuid
 from collections.abc import Iterator
 from pathlib import Path
@@ -35,16 +39,22 @@ WIRING_MARKER = "<!-- minimal-wiring -->"
 MAX_WIRING_LINES = 20
 
 
+#: The admin key the tests run the example with (the example refuses the default key).
+TEST_ADMIN_SECRET = "byoa-unit-test-admin-secret"
+
+
 @pytest.fixture(scope="module")
 def byoa() -> Iterator[Any]:
     """Import ``examples.byoa.main`` once, then restore the global ``site`` registry."""
     saved = dict(site._registry)
-    from examples.byoa import main
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setenv("HYPERADMIN_SECRET_KEY", TEST_ADMIN_SECRET)
+        from examples.byoa import main
 
-    try:
-        yield main
-    finally:
-        site._registry = saved
+        try:
+            yield main
+        finally:
+            site._registry = saved
 
 
 @pytest.fixture
@@ -196,22 +206,184 @@ def test_host_api_is_jwt_protected(client: TestClient) -> None:
 def test_tampered_or_expired_token_is_anonymous(byoa: Any, client: TestClient) -> None:
     """
     Scenario: a tampered or expired JWT resolves no user
-      Given a token signed with another key, an expired token and a malformed one
+      Given a token signed with another key, an expired token and malformed ones,
+            including a signature with a non-ASCII byte
       When  each is sent to /api/me
       Then  each response is 401
     """
-    # Given a token signed with another key, an expired token and a malformed one
+    # Given a token signed with another key, an expired token and malformed ones,
+    # including a signature with a non-ASCII byte
     from examples.byoa import auth
 
     forged = auth.issue_token("ada", secret="not-the-secret")
     expired = auth.issue_token("ada", ttl_seconds=-10)
-    tokens = [forged, expired, "not-a-jwt", "a.b.c"]
+    tokens = [forged.encode(), expired.encode(), b"not-a-jwt", b"a.b.c", b"a.b.\xe9"]
 
     # When each is sent to /api/me
-    statuses = [client.get("/api/me", headers=_auth(t)).status_code for t in tokens]
+    statuses = [
+        client.get("/api/me", headers={"Authorization": b"Bearer " + t}).status_code for t in tokens
+    ]
 
     # Then each response is 401
-    assert statuses == [401, 401, 401, 401]
+    assert statuses == [401, 401, 401, 401, 401]
+
+
+def test_non_ascii_bearer_sends_the_browser_to_the_host_login(client: TestClient) -> None:
+    """
+    Scenario: a bearer with a non-ASCII signature is anonymous in the admin
+      Given a bearer token whose signature segment contains a non-ASCII byte
+      When  it is sent to /admin/
+      Then  the browser is redirected to the host login page
+    """
+    # Given a bearer token whose signature segment contains a non-ASCII byte
+    headers = {"Authorization": b"Bearer a.b.\xe9"}
+
+    # When it is sent to /admin/
+    response = client.get("/admin/", headers=headers, follow_redirects=False)
+
+    # Then the browser is redirected to the host login page
+    assert response.status_code == 303
+    assert response.headers["location"].startswith("/login")
+
+
+@pytest.mark.parametrize(
+    "stored",
+    [
+        "no-dollar-signs",
+        "pbkdf2_sha256$many$salt$abcd",
+        "pbkdf2_sha256$0$salt$abcd",
+        "pbkdf2_sha256$-5$salt$abcd",
+        f"pbkdf2_sha256${2**70}$salt$abcd",
+        "pbkdf2_sha256$1$salt$\u00e9",
+    ],
+)
+def test_malformed_password_hash_is_a_failed_check(byoa: Any, stored: str) -> None:
+    """
+    Scenario: a malformed stored password hash fails the check instead of erroring
+      Given an account password_hash a superuser saved in a malformed shape
+      When  the host verifies a password against it
+      Then  the check returns False
+    """
+    # Given an account password_hash a superuser saved in a malformed shape
+    from examples.byoa import auth
+
+    # When the host verifies a password against it
+    result = auth.verify_password("lovelace", stored)
+
+    # Then the check returns False
+    assert result is False
+
+
+def test_hashed_password_round_trips(byoa: Any) -> None:
+    """
+    Scenario: a hash made by hash_password verifies the right password only
+      Given a password hashed with hash_password
+      When  the right and a wrong password are verified against it
+      Then  only the right one passes
+    """
+    # Given a password hashed with hash_password
+    from examples.byoa import auth
+
+    stored = auth.hash_password("lovelace")
+
+    # When the right and a wrong password are verified against it
+    right = auth.verify_password("lovelace", stored)
+    wrong = auth.verify_password("babbage", stored)
+
+    # Then only the right one passes
+    assert (right, wrong) == (True, False)
+
+
+def test_admin_secret_key_comes_from_the_environment(byoa: Any) -> None:
+    """
+    Scenario: the example reads the admin secret key from HYPERADMIN_SECRET_KEY
+      Given HYPERADMIN_SECRET_KEY is set when the example is imported
+      When  the admin's settings are read
+      Then  the admin signs with that key, not a hard-coded fallback
+    """
+    # Given HYPERADMIN_SECRET_KEY is set when the example is imported (byoa fixture)
+    # When the admin's settings are read
+    secret_key = byoa.admin.settings.secret_key
+
+    # Then the admin signs with that key, not a hard-coded fallback
+    assert secret_key == TEST_ADMIN_SECRET
+
+
+def test_example_refuses_the_default_admin_secret_key(tmp_path: Path) -> None:
+    """
+    Scenario: the example refuses to start with the default admin secret key
+      Given neither HYPERADMIN_SECRET_KEY nor HYPERADMIN_DEBUG is set
+      When  examples.byoa.main is imported
+      Then  the import fails with the admin's missing-secret-key error
+    """
+    # Given neither HYPERADMIN_SECRET_KEY nor HYPERADMIN_DEBUG is set
+    env = {k: v for k, v in os.environ.items() if not k.startswith("HYPERADMIN_")}
+    env["PYTHONPATH"] = str(ROOT)
+
+    # When examples.byoa.main is imported (from a directory without a .env file)
+    result = subprocess.run(
+        [sys.executable, "-c", "import examples.byoa.main"],
+        cwd=tmp_path,
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+        timeout=60,
+    )
+
+    # Then the import fails with the admin's missing-secret-key error
+    assert result.returncode != 0
+    assert "no secret_key is configured" in result.stderr
+
+
+def test_missing_host_secret_falls_back_with_a_warning(
+    byoa: Any, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    """
+    Scenario: a missing host secret uses the demo fallback and logs a warning
+      Given BYOA_JWT_SECRET is not set
+      When  the host reads it through demo_secret
+      Then  the demo fallback is returned
+      And   a warning naming BYOA_JWT_SECRET is logged
+    """
+    # Given BYOA_JWT_SECRET is not set
+    from examples.byoa.config import demo_secret
+
+    monkeypatch.delenv("BYOA_JWT_SECRET", raising=False)
+
+    # When the host reads it through demo_secret
+    with caplog.at_level(logging.WARNING, logger="examples.byoa.config"):
+        value = demo_secret("BYOA_JWT_SECRET", "fallback-value")
+
+    # Then the demo fallback is returned
+    assert value == "fallback-value"
+    # And a warning naming BYOA_JWT_SECRET is logged
+    assert any("BYOA_JWT_SECRET" in r.getMessage() for r in caplog.records)
+
+
+def test_set_host_secret_is_used_without_a_warning(
+    byoa: Any, monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
+    """
+    Scenario: a set host secret is used as is
+      Given BYOA_SESSION_SECRET is set
+      When  the host reads it through demo_secret
+      Then  the configured value is returned
+      And   no warning is logged
+    """
+    # Given BYOA_SESSION_SECRET is set
+    from examples.byoa.config import demo_secret
+
+    monkeypatch.setenv("BYOA_SESSION_SECRET", "configured-value")
+
+    # When the host reads it through demo_secret
+    with caplog.at_level(logging.WARNING, logger="examples.byoa.config"):
+        value = demo_secret("BYOA_SESSION_SECRET", "fallback-value")
+
+    # Then the configured value is returned
+    assert value == "configured-value"
+    # And no warning is logged
+    assert not caplog.records
 
 
 def test_uuid_and_natural_str_models_render(byoa: Any, client: TestClient) -> None:
