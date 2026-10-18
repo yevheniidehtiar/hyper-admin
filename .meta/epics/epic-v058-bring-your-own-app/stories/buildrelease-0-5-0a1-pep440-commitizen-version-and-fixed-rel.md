@@ -2,7 +2,7 @@
 type: story
 id: st-v058-byoa-50
 title: "build(release): 0.5.0a1, pep440 commitizen, __version__ and fixed release/publish workflows"
-status: todo
+status: in-review
 priority: high
 assignee: null
 labels:
