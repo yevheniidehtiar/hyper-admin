@@ -12,6 +12,8 @@ afterwards: no other test module sees the example's models.
 from __future__ import annotations
 
 import ast
+import base64
+import json
 import logging
 import os
 import re
@@ -79,6 +81,12 @@ def _auth(token: str) -> dict[str, str]:
     return {"Authorization": f"Bearer {token}"}
 
 
+def _session_payload(signed: str) -> dict[str, Any]:
+    """Decode the JSON payload of a signed Starlette session cookie value."""
+    data = signed.strip('"').split(".", 1)[0]
+    return json.loads(base64.b64decode(data + "=" * (-len(data) % 4)))
+
+
 def _set_cookies(response: Any) -> list[str]:
     return [v for k, v in response.headers.multi_items() if k.lower() == "set-cookie"]
 
@@ -109,8 +117,14 @@ def test_byoa_example_boots(client: TestClient) -> None:
     assert dashboard.status_code == 200
     assert health.status_code == 200
     # And the host session cookie is untouched
-    assert not [c for c in _set_cookies(dashboard) if c.startswith("session=")]
-    assert client.cookies.get("session") == host_session
+    # Compare payloads, not raw values: older Starlette re-sends (and re-signs) a
+    # non-empty host session cookie on every response, so the signed value can
+    # change while the host data stays the same.
+    for cookie in _set_cookies(dashboard):
+        if cookie.startswith("session="):
+            assert _session_payload(cookie.split(";", 1)[0].split("=", 1)[1]) == {"visits": 1}
+    assert _session_payload(client.cookies.get("session") or "") == {"visits": 1}
+    assert _session_payload(host_session) == {"visits": 1}
     assert client.get("/").json()["visits"] == 2
 
 
