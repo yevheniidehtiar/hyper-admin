@@ -119,6 +119,15 @@ These rules prevent premature expansion and future refactoring pain:
 
 ---
 
+## 7. Conflict Avoidance
+
+Parallel PRs must merge without conflicts. Features are additive: they add files and register through an
+extension point instead of appending to shared lists; hotspot files have one owner per wave; dependency
+changes ship in their own PR. The full rule set is in
+[`.claude/rules/conflict-avoidance.md`](.claude/rules/conflict-avoidance.md).
+
+---
+
 ## Violations
 
 A constitution violation is any change that:

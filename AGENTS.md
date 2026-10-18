@@ -113,6 +113,8 @@ For each structural PR, evaluate and report pass/fail per section:
 **Growth guardrails**
 - [ ] No modified module exceeds ~300 LOC without justification in the PR description
 - [ ] New adapter follows the `BaseAdapter` contract without modifying `core/`
+- [ ] Change is additive per `.claude/rules/conflict-avoidance.md` (registers through an extension
+  point, minimal hunks in hotspot files)
 
 ## Output Format
 
