@@ -1,0 +1,18 @@
+{#- CSRF reload banner (BYOA SDD D.1): revealed by _base.html's htmx hook when a
+    request is refused with a 403 carrying X-HyperAdmin-CSRF (a stale token,
+    e.g. after the secret key rotated). Reloading issues a fresh token. -#}
+{%- from "components/_icons.html" import icon -%}
+<div class="ha-toast-container">
+    <div x-data="{ show: false }" x-show="show" x-cloak @ha-csrf-failed.window="show = true"
+         class="ha-toast ha-alert-warning" role="alert" data-testid="csrf-reload-banner">
+        {{ icon('triangle-alert') }}
+        <div class="ha-toast-body">
+            <strong class="ha-alert-title">{{ _("This page's security token is out of date") }}</strong>
+            <span>{{ _("Reload the page, then try again.") }}</span>
+            <div class="ha-toast-actions">
+                <button type="button" class="ha-btn ha-btn--primary ha-btn--sm" onclick="window.location.reload()">{{ _("Reload page") }}</button>
+            </div>
+        </div>
+        <button type="button" @click="show = false" class="ha-toast-close" aria-label="{{ _('Close') }}">{{ icon('x', 'ha-icon-sm') }}</button>
+    </div>
+</div>

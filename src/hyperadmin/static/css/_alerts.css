@@ -110,6 +110,10 @@
   color: var(--ha-color-info-text);
 }
 
+.ha-toast-actions {
+  margin-top: var(--ha-space-2);
+}
+
 .ha-toast-close {
   position: absolute;
   top: var(--ha-space-2);

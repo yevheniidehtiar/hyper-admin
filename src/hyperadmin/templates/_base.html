@@ -37,6 +37,11 @@
       document.addEventListener('htmx:beforeSwap', function (evt) {
         try {
           var xhr = evt.detail && evt.detail.xhr;
+          // A 403 from the CSRF guard (stale token, SDD D.1): offer a reload.
+          if (xhr && xhr.status === 403 && xhr.getResponseHeader('X-HyperAdmin-CSRF')) {
+            window.dispatchEvent(new CustomEvent('ha-csrf-failed'));
+            return;
+          }
           // A refused request (403 / 404 / 409) carries an error toast that the
           // server retargets to the toast region: show it on the current page.
           if (xhr && [403, 404, 409].indexOf(xhr.status) !== -1 && xhr.getResponseHeader('HX-Retarget')) {
@@ -130,6 +135,7 @@
        data-testid="skip-link">Skip to main content</a>
     <div class="ha-container">
         {% block messages %}{% include "_messages.html" %}{% endblock %}
+        {% if _csrf_token %}{% include "components/csrf_reload_banner.html" %}{% endif %}
         <header role="banner">
             {% block navbar %}{% include "_navbar.html" %}{% endblock %}
         </header>
