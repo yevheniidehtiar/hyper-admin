@@ -21,6 +21,9 @@
 
         <form method="post" action="{{ admin_prefix }}/login" data-testid="login-form" aria-labelledby="login-title">
             {{ csrf_input() if csrf_input is defined }}
+            {%- if next_url %}
+            <input type="hidden" name="{{ next_param }}" value="{{ next_url }}">
+            {%- endif %}
             <div class="ha-form-group">
                 <label for="username" class="ha-label">{{ _("Username") }}</label>
                 <input

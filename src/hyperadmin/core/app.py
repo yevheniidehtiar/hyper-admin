@@ -122,6 +122,10 @@ class Admin:
         self.settings = settings or HyperAdminSettings()
         self.app = app
         self.router = APIRouter()
+        #: Admin routes outside the auth guard (SDD B.3): the bridge login form, and
+        #: the token handoff, which carries its own guard. Included without the
+        #: protected router's dependencies.
+        self.public_router = APIRouter()
         demo_mode = engine is None and session_factory is None
         self.engine = engine if not demo_mode else self._default_engine()
         self.session_factory = session_factory
@@ -481,6 +485,87 @@ class Admin:
         if otp_service is not None:
             self._register_mfa_routes(admin_prefix)
 
+    def _register_bridge_routes(self, path: str, auth: "ExternalAuth") -> None:
+        """Register the bridge-mode logout, token handoff and login form (SDD B.3, B.4).
+
+        - ``POST {prefix}/logout``: protected and CSRF-checked; clears the token
+          cookie and redirects to ``auth.logout_url or "/"``.
+        - ``POST {prefix}/auth/session`` (with ``token_cookie``): exempt from
+          CSRF and guarded by its own dependencies, the size check first, then
+          ``build_admin_dependency(auth)``.
+        - ``GET/POST {prefix}/login`` (with ``token_cookie.token_endpoint``): the
+          public, CSRF-protected admin login form for bearer-only hosts.
+
+        Raises:
+            ValueError: ``token_endpoint="auto"`` finds no ``OAuth2PasswordBearer``
+                in ``auth.get_user``'s dependencies.
+        """
+        from starlette.requests import Request
+
+        from hyperadmin.auth import token_handoff
+        from hyperadmin.auth.bridge import build_admin_dependency
+        from hyperadmin.views.route import csrf_exempt
+        from hyperadmin.views.urls import request_admin_path
+
+        admin_prefix = path.rstrip("/")
+        cookie = auth.token_cookie
+        cookie_secure = self.settings.cookie_secure
+
+        async def logout_post(request: Request):
+            return await token_handoff.bridge_logout_view(
+                request,
+                cookie=cookie,
+                admin_path=request_admin_path(request, admin_prefix),
+                logout_url=auth.logout_url,
+                cookie_secure=cookie_secure,
+            )
+
+        self.router.add_api_route("/logout", logout_post, methods=["POST"], name="admin-logout")
+        if cookie is None:
+            return
+
+        @csrf_exempt
+        async def handoff_post(request: Request):
+            return await token_handoff.token_handoff_view(
+                request,
+                cookie=cookie,
+                admin_path=request_admin_path(request, admin_prefix),
+                cookie_secure=cookie_secure,
+                next_param=auth.next_param,
+            )
+
+        self.public_router.add_api_route(
+            cookie.handoff_path,
+            handoff_post,
+            methods=["POST"],
+            name="admin-token-handoff",
+            dependencies=[
+                Depends(token_handoff.reject_oversized_token),
+                Depends(build_admin_dependency(auth)),
+            ],
+        )
+        if cookie.token_endpoint is None:
+            return
+        endpoint = token_handoff.resolve_token_endpoint(cookie.token_endpoint, auth.get_user)
+        templates = self.templates
+        host_app = self.app
+
+        async def login(request: Request):
+            return await token_handoff.bridge_login_view(
+                request,
+                templates=templates,
+                cookie=cookie,
+                endpoint=endpoint,
+                host_app=host_app,
+                admin_path=request_admin_path(request, admin_prefix),
+                cookie_secure=cookie_secure,
+                next_param=auth.next_param,
+            )
+
+        self.public_router.add_api_route(
+            "/login", login, methods=["GET", "POST"], name="admin-login"
+        )
+
     def _register_mfa_routes(self, admin_prefix: str) -> None:
         """Register the MFA challenge / verify / resend / settings endpoints.
 
@@ -822,6 +907,7 @@ class Admin:
             csrf=csrf,
             translate_auth_errors=True,
             login_url=auth.login_url,
+            login_path="/login" if token_cookie and token_cookie.token_endpoint else None,
             next_param=auth.next_param,
             token_cookie=token_cookie.name if token_cookie is not None else None,
             token_scheme=token_cookie.scheme if token_cookie is not None else "Bearer",
@@ -893,12 +979,15 @@ class Admin:
         # place for the auth-error translation, token-cookie bridge and CSRF hook.
         # Set before any route is added to the admin router.
         self.router.route_class = self._make_route_class()
+        self.public_router.route_class = self.router.route_class
 
         if self.storage and self.settings.public_uploads_path:
             self._mount_public_uploads(self.settings.public_uploads_path)
 
         if self.auth_backend:
             self._register_auth_routes(path)
+        if self.auth is not None:
+            self._register_bridge_routes(path, self.auth)
         if self._should_register_auth_models():
             self._register_auth_models()
 
@@ -947,6 +1036,7 @@ class Admin:
         sub_app.include_router(
             self.router, tags=["HyperAdmin"], dependencies=self._protected_dependencies()
         )
+        sub_app.include_router(self.public_router, tags=["HyperAdmin"])
 
         # add_middleware prepends, so the last one added runs first:
         # StartupGuard -> AdminScope -> Session -> Authentication -> Locale -> routes.
@@ -971,6 +1061,7 @@ class Admin:
             tags=["HyperAdmin"],
             dependencies=self._protected_dependencies(),
         )
+        self.app.include_router(self.public_router, prefix=admin_prefix, tags=["HyperAdmin"])
 
         # LocaleMiddleware runs whether or not auth is configured. It must be
         # added before the auth middleware so the chain is
