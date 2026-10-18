@@ -287,8 +287,17 @@ def auth_base_url(e2e_port: int) -> Iterator[str]:
                 proc.kill()
 
 
-def _spawn_uvicorn(module_path: str, port: int, ready_path: str = "/admin/login"):
-    """Spawn ``uvicorn module_path:app`` and block until ``ready_path`` returns 200."""
+def _spawn_uvicorn(
+    module_path: str,
+    port: int,
+    ready_path: str = "/admin/login",
+    extra_env: dict[str, str] | None = None,
+):
+    """Spawn ``uvicorn module_path:app`` and block until ``ready_path`` returns 200.
+
+    ``extra_env`` is merged over the inherited environment (e.g. to set a
+    ``HYPERADMIN_*`` setting for one fixture app only).
+    """
     pytest.importorskip("uvicorn")
     requests = pytest.importorskip("requests")  # type: ignore[assignment]
 
@@ -306,6 +315,7 @@ def _spawn_uvicorn(module_path: str, port: int, ready_path: str = "/admin/login"
     ]
     env = os.environ.copy()
     env["E2E_TESTING"] = "1"
+    env.update(extra_env or {})
     # Output goes to a temp file, not a PIPE: an unread pipe fills (~64 KB) and
     # blocks the server mid-run. The parent's handle closes; the child keeps its own.
     fd, log_path = tempfile.mkstemp(prefix="hyperadmin-e2e-", suffix=".log")
@@ -384,6 +394,28 @@ def restartable_realtime_url(e2e_port: int) -> Iterator[dict]:
         yield {"base": state["base"], "kill": kill, "start": start, "state": state}
     finally:
         kill()
+
+
+@pytest.fixture
+def pk_types_base_url(e2e_port: int) -> Iterator[str]:
+    """Start the pk-type and timezone fixture app and yield the base URL.
+
+    Wires :mod:`tests.e2e.apps.pk_types` (UUID, natural ``str`` and ``int``
+    primary keys plus a timezone-aware ``Event``) with
+    ``HYPERADMIN_TIMEZONE=Europe/Amsterdam``. Each server gets a fresh
+    temp-file SQLite database seeded with two Documents, Country ``FR`` and
+    one Product.
+    """
+    proc, base = _spawn_uvicorn(
+        "tests.e2e.apps.pk_types",
+        e2e_port,
+        ready_path="/",
+        extra_env={"HYPERADMIN_TIMEZONE": "Europe/Amsterdam"},
+    )
+    try:
+        yield base
+    finally:
+        _terminate(proc)
 
 
 @pytest.fixture
