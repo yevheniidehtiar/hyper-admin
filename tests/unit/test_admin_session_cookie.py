@@ -74,6 +74,9 @@ async def engine(tmp_path: Path) -> AsyncIterator[AsyncEngine]:
 
 
 def _admin(app: FastAPI, engine: AsyncEngine, **overrides: Any) -> Admin:
+    # These scenarios are about the session cookie, not CSRF (covered in
+    # test_csrf_guard.py), so the CSRF check is off unless a test opts in.
+    overrides.setdefault("csrf_mode", "off")
     settings = HyperAdminSettings(create_tables=False, secret_key="test-secret-key", **overrides)
     return Admin(
         app, engine=engine, settings=settings, auth_backend=SessionAuthBackend(engine=engine)
