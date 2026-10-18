@@ -20,6 +20,8 @@ updated_at: 2026-05-05T00:00:00Z
 
 ## Summary
 
+> **Phase 2 (v0.8.0, with `hyperadmin-logfire`)** — see SDD "Phasing" (2026-10-18).
+
 Add a `hyperadmin plugins list` Typer subcommand that introspects discovered
 plugins and prints them as a table. Mirrors the existing `createsuperuser`
 command pattern at `src/hyperadmin/management/commands/createsuperuser.py`.

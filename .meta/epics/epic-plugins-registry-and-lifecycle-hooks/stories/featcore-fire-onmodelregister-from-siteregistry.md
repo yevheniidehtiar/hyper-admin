@@ -19,6 +19,8 @@ updated_at: 2026-05-05T00:00:00Z
 
 ## Summary
 
+> **Phase 2 (v0.8.0, with `hyperadmin-logfire`)** — see SDD "Phasing" (2026-10-18).
+
 Fire the `on_model_register` hook from `SiteRegistry.register()` after a model
 + adapter + options has been successfully attached. Plugins receive
 `(admin, model, options)` and can index models, pre-warm caches, register custom
