@@ -3,6 +3,7 @@ import signal
 import socket
 import subprocess
 import sys
+import tempfile
 import time
 from collections.abc import Iterator
 from contextlib import closing
@@ -13,8 +14,9 @@ import pytest
 
 _IN_CONTAINER = os.environ.get("IS_SANDBOX") == "1"
 
-# Server start is slower inside Docker; give it more time.
-_SERVER_TIMEOUT = 15 if _IN_CONTAINER else 5
+# Server start is slower inside Docker or on a loaded machine (pre-push runs
+# while other work is going on); a slow start must not fail the suite.
+_SERVER_TIMEOUT = 30 if _IN_CONTAINER else 15
 
 
 @pytest.fixture(scope="session")
@@ -31,6 +33,13 @@ def browser_type_launch_args(browser_type_launch_args: dict[str, Any]) -> dict[s
             "--disable-background-networking",  # avoid firewall-blocked Google service requests
         ],
     }
+
+
+def _tail(log: Any, lines: int = 40) -> str:
+    """Return the last ``lines`` lines a test server wrote to ``log``."""
+    log.flush()
+    log.seek(0)
+    return "".join(log.readlines()[-lines:])
 
 
 def _find_free_port() -> int:
@@ -80,45 +89,47 @@ def demo_base_url(e2e_port: int) -> Iterator[str]:
     env = os.environ.copy()
     env["E2E_TESTING"] = "1"
 
-    proc = subprocess.Popen(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        env=env,
-        text=True,
-    )
+    # A temp file, not a PIPE: an unread pipe fills (~64 KB) and blocks the server mid-run.
+    with tempfile.TemporaryFile(mode="w+") as server_log:
+        proc = subprocess.Popen(
+            cmd,
+            stdout=server_log,
+            stderr=subprocess.STDOUT,
+            env=env,
+            text=True,
+        )
 
-    base = f"http://localhost:{e2e_port}"
+        base = f"http://localhost:{e2e_port}"
 
-    try:
-        # Wait for server readiness
-        deadline = time.time() + _SERVER_TIMEOUT
-        last_err: Exception | None = None
-        while time.time() < deadline:
-            try:
-                r = requests.get(base + "/", timeout=0.5)
-                if r.status_code == HTTPStatus.OK:
-                    break
-            except Exception as e:
-                last_err = e
-            time.sleep(0.3)
-        else:
-            raise RuntimeError(f"Server did not start: {last_err}")
+        try:
+            # Wait for server readiness
+            deadline = time.time() + _SERVER_TIMEOUT
+            last_err: Exception | None = None
+            while time.time() < deadline:
+                try:
+                    r = requests.get(base + "/", timeout=0.5)
+                    if r.status_code == HTTPStatus.OK:
+                        break
+                except Exception as e:
+                    last_err = e
+                time.sleep(0.3)
+            else:
+                raise RuntimeError(f"Server did not start: {last_err}\n{_tail(server_log)}")
 
-        yield base
-    finally:
-        if proc.poll() is None:
-            try:
-                if os.name == "nt":
-                    proc.terminate()
-                else:
-                    proc.send_signal(signal.SIGTERM)
-            except Exception:
-                pass
-            try:
-                proc.wait(timeout=5)
-            except Exception:
-                proc.kill()
+            yield base
+        finally:
+            if proc.poll() is None:
+                try:
+                    if os.name == "nt":
+                        proc.terminate()
+                    else:
+                        proc.send_signal(signal.SIGTERM)
+                except Exception:
+                    pass
+                try:
+                    proc.wait(timeout=5)
+                except Exception:
+                    proc.kill()
 
 
 @pytest.fixture
@@ -157,8 +168,8 @@ def mfa_base_url(e2e_port: int) -> Iterator[str]:
 
     proc = subprocess.Popen(
         cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        stdout=subprocess.DEVNULL,  # an unread PIPE fills (~64 KB) and blocks the server
+        stderr=subprocess.DEVNULL,
         env=env,
         text=True,
     )
@@ -223,8 +234,8 @@ def auth_base_url(e2e_port: int) -> Iterator[str]:
 
     proc = subprocess.Popen(
         cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        stdout=subprocess.DEVNULL,  # an unread PIPE fills (~64 KB) and blocks the server
+        stderr=subprocess.DEVNULL,
         env=env,
         text=True,
     )
@@ -280,7 +291,11 @@ def _spawn_uvicorn(module_path: str, port: int, ready_path: str = "/admin/login"
     ]
     env = os.environ.copy()
     env["E2E_TESTING"] = "1"
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env, text=True)
+    # Output goes to a temp file, not a PIPE: an unread pipe fills (~64 KB) and
+    # blocks the server mid-run. The parent's handle closes; the child keeps its own.
+    fd, log_path = tempfile.mkstemp(prefix="hyperadmin-e2e-", suffix=".log")
+    with os.fdopen(fd, "w") as log:
+        proc = subprocess.Popen(cmd, stdout=log, stderr=subprocess.STDOUT, env=env, text=True)
 
     base = f"http://localhost:{port}"
     deadline = time.time() + _SERVER_TIMEOUT
@@ -294,7 +309,8 @@ def _spawn_uvicorn(module_path: str, port: int, ready_path: str = "/admin/login"
             last_err = e
         time.sleep(0.3)
     proc.kill()
-    raise RuntimeError(f"Server did not start: {last_err}")
+    with open(log_path) as log:
+        raise RuntimeError(f"Server did not start: {last_err}\n{_tail(log)}")
 
 
 def _terminate(proc: subprocess.Popen) -> None:
@@ -396,8 +412,8 @@ def object_perm_base_url(e2e_port: int) -> Iterator[str]:
 
     proc = subprocess.Popen(
         cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        stdout=subprocess.DEVNULL,  # an unread PIPE fills (~64 KB) and blocks the server
+        stderr=subprocess.DEVNULL,
         env=env,
         text=True,
     )
