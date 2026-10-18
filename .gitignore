@@ -1,5 +1,7 @@
 # Coverage.py
 htmlcov/
+# Root-anchored: only the pytest/mypy/coverage output dir. Unanchored, it also hid the
+# tracked examples/erp/reports/ source from git tooling and ruff.
 /reports/
 
 # Copier

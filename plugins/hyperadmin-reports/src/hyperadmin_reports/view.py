@@ -29,9 +29,9 @@ from sqlalchemy import Select, func, inspect, literal_column, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from hyperadmin.core.display import get_display_name, get_field_label
-from hyperadmin.reports.aggregates import Aggregate, Many2One
-from hyperadmin.reports.bucketing import Period, TimeBucket
-from hyperadmin.reports.crosstab import Pivot, pivot
+from hyperadmin_reports.aggregates import Aggregate, Many2One
+from hyperadmin_reports.bucketing import Period, TimeBucket
+from hyperadmin_reports.crosstab import Pivot, pivot
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Mapper

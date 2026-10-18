@@ -19,8 +19,9 @@ updated_at: 2026-05-11T00:00:00Z
 
 ## Overview
 
-Implements upstream readiness capability **H14**: new
-`src/hyperadmin/reports/` package with declarative aggregates, crosstab
+Implements upstream readiness capability **H14**: new first-party
+plugin `hyperadmin-reports` (uv workspace member at `plugins/hyperadmin-reports/`,
+import package `hyperadmin_reports`; the core never imports it) with declarative aggregates, crosstab
 dimensions, time-series bucketing, filter integration (via H12), CSV / XLSX
 export, permission gating (via H5), and a cached materialisation seam for
 fact-table-backed reports.

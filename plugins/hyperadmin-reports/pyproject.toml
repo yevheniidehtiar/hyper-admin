@@ -1,0 +1,26 @@
+[build-system]  # https://docs.astral.sh/uv/concepts/projects/config/#build-systems
+requires = ["hatchling>=1.32.4"]
+build-backend = "hatchling.build"
+
+[project]  # https://packaging.python.org/en/latest/specifications/pyproject-toml/
+name = "hyperadmin-reports"
+version = "0.1.0"
+description = "First-party HyperAdmin plugin: OLAP / pivot reports (aggregates, crosstab, time bucketing)."
+readme = "README.md"
+authors = [
+  { name = "Yevhenii Dehtiar", email = "yevhenii.dehtiar@gmail.com" },
+]
+license = { text = "MIT" }
+requires-python = ">=3.10,<4.0"
+dependencies = [
+  "hyper-admin",  # sqlalchemy / sqlmodel come through the core's own floors
+]
+
+[project.entry-points."hyperadmin.plugins"]
+reports = "hyperadmin_reports.plugin:ReportsPlugin"
+
+[tool.uv.sources]
+hyper-admin = { workspace = true }
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/hyperadmin_reports"]

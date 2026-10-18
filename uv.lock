@@ -10,6 +10,12 @@ resolution-markers = [
     "python_full_version < '3.11'",
 ]
 
+[manifest]
+members = [
+    "hyper-admin",
+    "hyperadmin-reports",
+]
+
 [[package]]
 name = "agent-detector"
 version = "2.0.0"
@@ -2443,6 +2449,7 @@ redis = [
 [package.dev-dependencies]
 dev = [
     { name = "faker" },
+    { name = "hyperadmin-reports" },
 ]
 
 [package.metadata]
@@ -2507,7 +2514,21 @@ requires-dist = [
 provides-extras = ["dev", "redis", "loadtest"]
 
 [package.metadata.requires-dev]
-dev = [{ name = "faker", specifier = ">=40.41.0" }]
+dev = [
+    { name = "faker", specifier = ">=40.41.0" },
+    { name = "hyperadmin-reports", editable = "plugins/hyperadmin-reports" },
+]
+
+[[package]]
+name = "hyperadmin-reports"
+version = "0.1.0"
+source = { editable = "plugins/hyperadmin-reports" }
+dependencies = [
+    { name = "hyper-admin" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "hyper-admin", editable = "." }]
 
 [[package]]
 name = "identify"

@@ -1,7 +1,7 @@
 """Declarative report aggregates.
 
 Each aggregate renders its own per-dialect SQL via :meth:`Aggregate.sql`; the
-grouped query in :mod:`hyperadmin.reports.view` executes exactly that text, so
+grouped query in :mod:`hyperadmin_reports.view` executes exactly that text, so
 the documented SQL and the executed SQL never drift apart.
 """
 
@@ -137,7 +137,7 @@ class Many2One(Aggregate):
     """The group's foreign-key value, rendered as the related row's display.
 
     The query selects ``MAX(fk)`` (constant within a group keyed on the FK's
-    owner); :meth:`hyperadmin.reports.ReportView.run` then swaps each id for
+    owner); :meth:`hyperadmin_reports.ReportView.run` then swaps each id for
     the related row's display name, falling back to the raw pk when the
     target model is unknown or the row no longer exists.
 
