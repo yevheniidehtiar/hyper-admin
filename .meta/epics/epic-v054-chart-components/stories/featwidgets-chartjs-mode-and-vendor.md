@@ -15,8 +15,12 @@ estimate: null
 epic_ref:
   id: ep-v054-charts-01
 created_at: 2026-05-11T00:00:00Z
-updated_at: 2026-05-11T00:00:00Z
+updated_at: 2026-10-17T00:00:00Z
 ---
+
+> **Cancelled 2026-10-17.** Project-owner decision: no Chart.js, ever. Charts are
+> server-rendered SVG built from the design system; see the revision note in
+> [`docs/specs/chart-components.md`](../../../../docs/specs/chart-components.md).
 
 ## Summary
 
