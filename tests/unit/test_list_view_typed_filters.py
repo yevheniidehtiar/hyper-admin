@@ -48,7 +48,8 @@ class TfOrder(SQLModel, table=True):
     title: str = ""
     quantity: int = 0
     customer_id: uuid.UUID | None = None
-    created_at: datetime | None = None
+    # Explicitly naive: sqlmodel>=0.0.45 maps a bare ``datetime`` to a tz-aware column.
+    created_at: datetime | None = Field(default=None, sa_type=DateTime())  # type: ignore[call-overload]
     placed_at: datetime | None = Field(default=None, sa_type=DateTime(timezone=True))  # type: ignore[call-overload]
 
 
