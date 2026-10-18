@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import uuid
 from collections.abc import Hashable, Iterator
 from dataclasses import dataclass, field
@@ -350,7 +351,7 @@ def test_foreign_origin_ws_closed(
     # Then the handshake is rejected with the unauthorized code
     assert code == WS_CLOSE_UNAUTHORIZED
     assert seen == []
-    assert "https://evil.example" in caplog.text
+    assert re.search(r"\bhttps://evil\.example\b", caplog.text)
 
 
 @pytest.mark.parametrize(
