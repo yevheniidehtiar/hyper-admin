@@ -174,3 +174,24 @@ def test_no_csrf_reload_banner_when_csrf_is_off(engine: AsyncEngine) -> None:
 
     assert response.status_code == 200
     assert 'data-testid="csrf-reload-banner"' not in response.text
+
+
+def test_csrf_reload_banner_stays_out_of_the_error_toast_region(engine: AsyncEngine) -> None:
+    """
+    Scenario: CSRF reload banner stays out of the error-toast region
+      Given a bridged admin with CSRF enforced
+      When  the dashboard renders
+      Then  the page holds exactly one .ha-toast-container (the messages region)
+      And   the csrf-reload-banner sits in its own ha-csrf-banner-region wrapper
+    """
+    client = _client(engine)
+
+    response = client.get("/admin/", headers=_BEARER)
+
+    assert response.status_code == 200
+    assert len(re.findall(r'class="ha-toast-container"', response.text)) == 1
+    region = re.search(
+        r'<div class="ha-csrf-banner-region">\s*<div[^>]*data-testid="csrf-reload-banner"',
+        response.text,
+    )
+    assert region is not None
