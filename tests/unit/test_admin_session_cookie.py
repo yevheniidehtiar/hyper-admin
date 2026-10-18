@@ -192,8 +192,12 @@ async def test_host_session_untouched(engine: AsyncEngine) -> None:
     # The login response never rewrites the host cookie with admin data...
     for cookie in _raw_set_cookies(resp, "session"):
         assert "user_id" not in _cookie_payload(cookie)
-    # ...and the browser's host cookie still decodes to the host's own data.
-    assert client.cookies.get("session") == host_cookie
+    # ...and the browser's host cookie still decodes to the host's own data. Compare the
+    # payload, not the raw value: older Starlette re-signs the host cookie on every
+    # response, so its timestamp segment changes when the requests cross a second.
+    current = client.cookies.get("session")
+    assert current is not None
+    assert _cookie_payload(f"session={current}") == {"cart": ["apple"]}
     assert _cookie_payload(f"session={host_cookie}") == {"cart": ["apple"]}
 
 
