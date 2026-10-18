@@ -369,6 +369,19 @@ def realtime_base_url(e2e_port: int) -> Iterator[str]:
 
 
 @pytest.fixture
+def bridge_base_url(e2e_port: int) -> Iterator[str]:
+    """Start the bridge-mode app (:mod:`tests.e2e._bridge_app`) and yield the base URL.
+
+    The host authenticates with a ``host_user=ada`` cookie; there is no admin login page.
+    """
+    proc, base = _spawn_uvicorn("tests.e2e._bridge_app", e2e_port, ready_path="/healthz")
+    try:
+        yield base
+    finally:
+        _terminate(proc)
+
+
+@pytest.fixture
 def restartable_realtime_url(e2e_port: int) -> Iterator[dict]:
     """Yield a controller for a realtime app that can be killed and restarted.
 
