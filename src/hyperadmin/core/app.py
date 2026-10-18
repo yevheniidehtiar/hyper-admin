@@ -1,9 +1,10 @@
 import logging
 import os
+import sys
 import warnings
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
-from fastapi import APIRouter, FastAPI
+from fastapi import APIRouter, Depends, FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -24,8 +25,10 @@ from hyperadmin.realtime.ws import make_ws_handler
 if TYPE_CHECKING:
     from contextlib import AbstractAsyncContextManager
 
+    from fastapi import params
     from fastapi.routing import APIRoute
 
+    from hyperadmin.auth.bridge import ExternalAuth
     from hyperadmin.core.adapters import SessionFactory
     from hyperadmin.core.csrf import EffectiveCsrfMode
     from hyperadmin.db import TableScope
@@ -35,6 +38,9 @@ logger = logging.getLogger("hyperadmin")
 
 #: HyperAdmin's own CSS, JS, fonts and icons, served under ``{prefix}/static``.
 _STATIC_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "static")
+
+#: ``"builtin"`` with ``auth_backend=``, ``"external"`` with ``auth=`` (SDD B.3).
+AuthMode = Literal["builtin", "external"]
 
 
 class Admin:
@@ -71,6 +77,7 @@ class Admin:
         realtime: RealtimeSettings | None = None,
         *,
         session_factory: "SessionFactory | None" = None,
+        auth: "ExternalAuth | None" = None,
     ) -> None:
         """Initialise HyperAdmin and attach it to a FastAPI application.
 
@@ -101,6 +108,16 @@ class Admin:
                 auth service instead of ``engine``. Bring-your-own-app hosts
                 that manage their own engine and session lifecycle pass this
                 instead of ``engine=``. See SDD C.3.
+            auth: Bring-your-own-auth (``ExternalAuth``): the host's own
+                ``get_user`` dependency guards every admin route, and no
+                built-in session, login or ``hyperadmin_*`` table is used.
+                Mutually exclusive with ``auth_backend`` and ``otp_service``.
+                See SDD B.3.
+
+        Raises:
+            ValueError: ``auth`` is combined with ``auth_backend`` or
+                ``otp_service``, or with a ``ModelPermissionChecker`` while
+                ``settings.register_auth_models`` is not ``True``.
         """
         self.settings = settings or HyperAdminSettings()
         self.app = app
@@ -113,6 +130,14 @@ class Admin:
         self.permission_registry = permission_registry
         self.storage = storage
         self.otp_service = otp_service
+        self.auth = auth
+        self._auth_mode: AuthMode | None = None
+        if auth is not None:
+            self._auth_mode = "external"
+            self._validate_external_auth()
+            self.permission_checker = self._resolve_bridge_permission_checker(auth)
+        elif auth_backend is not None:
+            self._auth_mode = "builtin"
         self.realtime = realtime
         self._realtime_registry: ConnectionRegistry | None = (
             ConnectionRegistry() if realtime is not None else None
@@ -174,7 +199,7 @@ class Admin:
     def csrf_mode(self) -> "EffectiveCsrfMode":
         """The effective CSRF mode: ``csrf_mode="auto"`` enforces when auth is on (SDD D.1).
 
-        "Auth is on" means an ``auth_backend`` or app-level ``dependencies`` on the
+        "Auth is on" means ``auth_backend``, ``auth=`` or app-level ``dependencies`` on the
         host app (the usual host login guard). Host auth middleware cannot be
         detected; such hosts set ``csrf_mode="enforce"``.
         """
@@ -182,8 +207,81 @@ class Admin:
 
         # getattr: a plain Starlette router (or a test double) has no ``dependencies``.
         host_dependencies = getattr(getattr(self.app, "router", None), "dependencies", None)
-        auth_enabled = self.auth_backend is not None or bool(host_dependencies)
+        auth_enabled = self._auth_mode is not None or bool(host_dependencies)
         return resolve_csrf_mode(self.settings.csrf_mode, auth_enabled=auth_enabled)
+
+    def _validate_external_auth(self) -> None:
+        """Reject combinations ``auth=`` cannot serve (SDD B.3)."""
+        for name, value in (("auth_backend", self.auth_backend), ("otp_service", self.otp_service)):
+            if value is not None:
+                msg = (
+                    f"Admin(auth=...) and Admin({name}=...) are mutually exclusive: "
+                    f"auth= brings the host's own authentication, {name}= is built-in auth."
+                )
+                raise ValueError(msg)
+        # Looked up, not imported: importing auth.permissions registers the
+        # hyperadmin_* tables, which a bridge-mode host must never get. A checker
+        # cannot be a ModelPermissionChecker unless its module is already loaded.
+        model_checker = getattr(
+            sys.modules.get("hyperadmin.auth.permissions"), "ModelPermissionChecker", None
+        )
+        if (
+            model_checker is not None
+            and isinstance(self.permission_checker, model_checker)
+            and self.settings.register_auth_models is not True
+        ):
+            msg = (
+                "ModelPermissionChecker with Admin(auth=...) requires "
+                "settings.register_auth_models=True: it reads the built-in hyperadmin_* "
+                "permission tables keyed on user.id, so host user ids must also be ints "
+                "matching hyperadmin_users. Pass ExternalAuth(has_permission=...) instead "
+                "to keep permissions in the host application."
+            )
+            raise ValueError(msg)
+
+    def _resolve_bridge_permission_checker(self, auth: "ExternalAuth") -> Any:
+        """Pick the bridge-mode permission checker; the first match wins (SDD B.3).
+
+        1. An explicit ``Admin(permission_checker=...)``.
+        2. ``auth.has_permission``: used as is when it is a ``PermissionChecker``,
+           wrapped in ``CallablePermissionChecker`` when it is a plain callable.
+        3. The fail-safe ``BridgeDefaultPermissionChecker``: superusers get every
+           permission, everyone else ``view_*`` only (all of them with
+           ``allow_full_access=True``).
+
+        Every checker except one built from ``has_permission`` is wrapped in
+        ``HostUserModelGuard``, so a non-superuser never gets ``change_*`` or
+        ``delete_*`` on the host user model unless ``has_permission`` grants it.
+        """
+        import hyperadmin.auth as auth_package
+        from hyperadmin.auth.bridge import (
+            BridgeDefaultPermissionChecker,
+            CallablePermissionChecker,
+            HostUserModelGuard,
+        )
+
+        # Lets hyperadmin.auth.metadata() warn a bridge-mode host (SDD B.5).
+        auth_package._note_bridge_admin_constructed()
+        if self.permission_checker is not None:
+            return HostUserModelGuard(self.permission_checker)
+        has_permission = auth.has_permission
+        if has_permission is not None:
+            if callable(getattr(has_permission, "has_permission", None)):
+                return has_permission
+            return CallablePermissionChecker(has_permission)  # type: ignore[arg-type]
+        logger.warning(
+            "HyperAdmin Admin(auth=ExternalAuth(...)) has no has_permission: using the "
+            "fail-safe default (superusers get every permission, everyone else view-only). "
+            "Pass ExternalAuth(has_permission=...) to map the host's own permissions."
+        )
+        if auth.allow_full_access:
+            logger.warning(
+                "HyperAdmin ExternalAuth(allow_full_access=True): every user that passes "
+                "can_access gets every permission, except change/delete on the host user model."
+            )
+        return HostUserModelGuard(
+            BridgeDefaultPermissionChecker(allow_full_access=auth.allow_full_access)
+        )
 
     def _validate_secret_key(self) -> None:
         """Refuse the default ``secret_key`` when it signs anything that matters.
@@ -337,7 +435,7 @@ class Admin:
         admin_router = HyperAdminRouter(
             engine=self.engine,
             templates=self.templates,
-            permission_checker=self.permission_checker if self.auth_backend else None,
+            permission_checker=self.permission_checker if self._auth_mode is not None else None,
             storage=self.storage,
             timezone=self.settings.tzinfo,
             datetime_format=self.settings.datetime_format,
@@ -634,10 +732,21 @@ class Admin:
             except Exception:
                 logger.warning("Failed to auto-register model %s", model.__name__)
 
+    def _should_register_auth_models(self) -> bool:
+        """Whether ``mount()`` registers the built-in auth model admins (SDD B.3).
+
+        ``settings.register_auth_models=None`` (default) means on for
+        ``auth_backend=``, off for ``auth=`` and without auth; a bool wins.
+        """
+        explicit = self.settings.register_auth_models
+        if explicit is not None:
+            return explicit
+        return self._auth_mode == "builtin"
+
     def _register_auth_models(self) -> None:
         """Auto-register User, Group, Permission in the admin site.
 
-        Called from ``mount()`` when ``auth_backend`` is configured.
+        Called from ``mount()`` when :meth:`_should_register_auth_models` is true.
         Skips silently if a model is already registered.
         Each auth model gets its own admin class to avoid shared
         class-level state on the default ``ModelAdmin``.
@@ -696,7 +805,34 @@ class Admin:
         """Build the ``HyperAdminRoute`` class shared by every admin router (SDD B.2)."""
         from hyperadmin.views.route import make_admin_route_class
 
-        return make_admin_route_class(self.templates, csrf=self._build_csrf_guard())
+        csrf = self._build_csrf_guard()
+        auth = self.auth
+        if auth is None:
+            return make_admin_route_class(self.templates, csrf=csrf)
+        # Bridge mode: the route class owns auth-error translation and the
+        # token-cookie bridge (SDD B.2, B.4).
+        token_cookie = auth.token_cookie
+        return make_admin_route_class(
+            self.templates,
+            csrf=csrf,
+            translate_auth_errors=True,
+            login_url=auth.login_url,
+            next_param=auth.next_param,
+            token_cookie=token_cookie.name if token_cookie is not None else None,
+            token_scheme=token_cookie.scheme if token_cookie is not None else "Bearer",
+        )
+
+    def _protected_dependencies(self) -> "list[params.Depends]":
+        """Dependencies the (protected) admin router is included with (SDD B.3).
+
+        In bridge mode the host's ``get_user``, through ``build_admin_dependency``,
+        guards every admin route; otherwise there are none.
+        """
+        if self.auth is None:
+            return []
+        from hyperadmin.auth.bridge import build_admin_dependency
+
+        return [Depends(build_admin_dependency(self.auth))]
 
     def _build_csrf_guard(self) -> "CsrfGuard | None":
         """Build the CSRF check and its template globals; ``None`` when CSRF is off."""
@@ -758,6 +894,7 @@ class Admin:
 
         if self.auth_backend:
             self._register_auth_routes(path)
+        if self._should_register_auth_models():
             self._register_auth_models()
 
         if self.settings.auto_discover:
@@ -773,7 +910,11 @@ class Admin:
 
         if admin_prefix_context not in self.templates.context_processors:
             self.templates.context_processors.append(admin_prefix_context)
-        self.templates.env.globals["auth_enabled"] = self.auth_backend is not None
+        self.templates.env.globals["auth_enabled"] = self._auth_mode is not None
+        self.templates.env.globals["auth_mode"] = self._auth_mode
+        self.templates.env.globals["logout_url"] = (
+            self.auth.logout_url if self.auth is not None else None
+        )
         self.templates.env.globals["realtime_enabled"] = self.realtime is not None
         self.templates.env.globals["theme"] = self.settings.theme
         self.templates.env.globals["site_title"] = self.settings.site_title
@@ -798,7 +939,9 @@ class Admin:
         sub_app.dependency_overrides = self.app.dependency_overrides
         sub_app.state = self.app.state
         sub_app.mount("/static", StaticFiles(directory=_STATIC_DIR), name="static")
-        sub_app.include_router(self.router, tags=["HyperAdmin"])
+        sub_app.include_router(
+            self.router, tags=["HyperAdmin"], dependencies=self._protected_dependencies()
+        )
 
         # add_middleware prepends, so the last one added runs first:
         # StartupGuard -> AdminScope -> Session -> Authentication -> Locale -> routes.
@@ -817,7 +960,12 @@ class Admin:
         from hyperadmin.views.urls import AdminScopeMiddleware
 
         self.app.mount("/static", StaticFiles(directory=_STATIC_DIR), name="static")
-        self.app.include_router(self.router, prefix=admin_prefix, tags=["HyperAdmin"])
+        self.app.include_router(
+            self.router,
+            prefix=admin_prefix,
+            tags=["HyperAdmin"],
+            dependencies=self._protected_dependencies(),
+        )
 
         # LocaleMiddleware runs whether or not auth is configured. It must be
         # added before the auth middleware so the chain is

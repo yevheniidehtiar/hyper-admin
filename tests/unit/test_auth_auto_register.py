@@ -130,3 +130,56 @@ class TestAuthAutoRegistration:
         assert User not in site._registry
         assert Group not in site._registry
         assert Permission not in site._registry
+
+
+class TestRegisterAuthModelsSetting:
+    """``settings.register_auth_models`` (st-v058-byoa-40, SDD B.3)."""
+
+    def test_built_in_models_kept_for_auth_backend(self, async_engine):
+        """
+        Scenario: built-in models kept for auth_backend
+          Given Admin(auth_backend=SessionAuthBackend(engine))
+          When  it mounts
+          Then  User, Group and Permission admins are registered
+        """
+        admin = _build_auth_admin(async_engine)
+        assert admin.settings.register_auth_models is None
+
+        admin.mount("/admin")
+
+        assert {User, Group, Permission} <= set(site._registry)
+
+    def test_explicit_false_skips_registration_for_auth_backend(self, async_engine):
+        """
+        Scenario: register_auth_models=False opts out with auth_backend
+          Given Admin(auth_backend=...) and settings.register_auth_models=False
+          When  it mounts
+          Then  no built-in auth model is registered
+        """
+        admin = _build_auth_admin(async_engine)
+        admin.settings.register_auth_models = False
+
+        admin.mount("/admin")
+
+        assert User not in site._registry
+        assert Group not in site._registry
+        assert Permission not in site._registry
+
+    def test_explicit_true_registers_without_auth(self, async_engine):
+        """
+        Scenario: register_auth_models=True opts in without auth_backend
+          Given Admin() with no auth and settings.register_auth_models=True
+          When  it mounts
+          Then  User, Group and Permission admins are registered
+        """
+        from fastapi import FastAPI
+
+        from hyperadmin.core.app import Admin
+        from hyperadmin.core.settings import HyperAdminSettings
+
+        settings = HyperAdminSettings(create_tables=False, register_auth_models=True)
+        admin = Admin(FastAPI(), engine=async_engine, settings=settings)
+
+        admin.mount("/admin")
+
+        assert {User, Group, Permission} <= set(site._registry)
