@@ -23,7 +23,7 @@ if TYPE_CHECKING:
     from pathlib import Path
 
 _IN_CONTAINER = os.environ.get("IS_SANDBOX") == "1"
-_SERVER_TIMEOUT = 15 if _IN_CONTAINER else 5
+_SERVER_TIMEOUT = 30 if _IN_CONTAINER else 15
 
 
 @pytest.fixture
@@ -50,8 +50,8 @@ def upload_base_url(e2e_port: int) -> Iterator[str]:
 
     proc = subprocess.Popen(
         cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        stdout=subprocess.DEVNULL,  # an unread PIPE fills (~64 KB) and blocks the server
+        stderr=subprocess.DEVNULL,
         env=env,
         text=True,
     )
