@@ -1,6 +1,6 @@
 # Examples
 
-Two runnable example apps ship with HyperAdmin.
+Three runnable example apps ship with HyperAdmin.
 
 ## simple — Basic CRUD
 
@@ -73,6 +73,24 @@ uv run fastapi dev examples/erp/main.py
 | `purchases` | `Bill` (Expenses), `BillItem` |
 | `accounting` | `Account`, `JournalEntry`, `JournalLine` |
 | `auth` | `User`, `Group`, `Permission` |
+
+---
+
+## byoa — Bring your own app
+
+An existing FastAPI app with its own lifespan, `/static` mount, `session` cookie, JWT-protected
+`/api` and a UUID-keyed user model, with HyperAdmin added through
+`Admin(auth=ExternalAuth(...), session_factory=...)`. Walkthrough:
+[Add HyperAdmin to an existing FastAPI app](guides/existing-app.md).
+
+**Run locally:**
+
+```bash
+uv run uvicorn examples.byoa.main:app --reload
+```
+
+Open [http://localhost:8000/admin/](http://localhost:8000/admin/) and sign in as `ada` / `lovelace`
+(superuser) or `grace` / `hopper` (staff, view-only).
 
 ---
 
