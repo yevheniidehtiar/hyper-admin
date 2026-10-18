@@ -2,7 +2,7 @@
 type: story
 id: st-v058-byoa-41
 title: "feat(auth): token handoff, bearer login form, JWT-exp cookie lifetime and bridge logout"
-status: todo
+status: in-review
 priority: high
 assignee: null
 labels:
@@ -64,12 +64,12 @@ Scenario: no open redirect
 
 ## Acceptance Criteria
 
-- [ ] handoff sets cookie
-- [ ] invalid token rejected
-- [ ] oversized token
-- [ ] logout clears cookie
-- [ ] no open redirect
-- [ ] `poe lint` and `poe test:unit` pass
+- [x] handoff sets cookie
+- [x] invalid token rejected
+- [x] oversized token
+- [x] logout clears cookie
+- [x] no open redirect
+- [x] `poe lint` and `poe test:unit` pass
 
 ## Review amendments (2026-09-28)
 
