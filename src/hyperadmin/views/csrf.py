@@ -45,15 +45,17 @@ from hyperadmin.core.settings import CookieSecure, resolve_cookie_secure
 from hyperadmin.views.urls import admin_base_path
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Mapping
+    from collections.abc import Callable, Iterable, Mapping
 
     from fastapi import Request
     from jinja2 import Environment
+    from starlette.requests import HTTPConnection
 
 __all__ = [
     "CSRF_FAILED_HEADER",
     "CsrfGuard",
     "install_csrf_globals",
+    "make_websocket_origin_check",
 ]
 
 logger = logging.getLogger("hyperadmin.csrf")
@@ -65,6 +67,8 @@ CSRF_FAILED_HEADER = "X-HyperAdmin-CSRF"
 _SAFE_METHODS = frozenset({"GET", "HEAD", "OPTIONS", "TRACE"})
 _FORM_TYPES = ("application/x-www-form-urlencoded", "multipart/form-data")
 _DEFAULT_PORTS = {"http": "80", "https": "443"}
+#: A WebSocket handshake's scheme, as the scheme of the page that opened it.
+_WS_SCHEMES = {"ws": "http", "wss": "https"}
 #: ``request.state`` flag: the token was issued on this request, so the cookie
 #: must be set on the response.
 _ISSUED_FLAG = "csrf_token_issued"
@@ -81,6 +85,67 @@ def _strip_default_port(host: str, *schemes: str) -> str:
 
 def _normalize_origin(origin: str) -> str:
     return origin.strip().rstrip("/").lower()
+
+
+def _origin_allowed(conn: HTTPConnection, origin: str, trusted_origins: frozenset[str]) -> bool:
+    """Return whether ``origin`` is the connection's own host or a trusted origin.
+
+    A WebSocket's ``ws``/``wss`` scheme is compared as ``http``/``https``, the
+    scheme of the page that opened it.
+    """
+    if _normalize_origin(origin) in trusted_origins:
+        return True
+    parts = urlsplit(origin.strip().lower())
+    if not parts.netloc or parts.scheme not in _DEFAULT_PORTS:
+        return False  # "null", or an opaque/unknown scheme
+    request_scheme = _WS_SCHEMES.get(conn.url.scheme, conn.url.scheme)
+    # A TLS-terminating proxy uvicorn does not trust: the app sees http while
+    # the browser sends an https Origin. Compare hosts only in that case.
+    if parts.scheme != request_scheme and not (
+        request_scheme == "http" and parts.scheme == "https"
+    ):
+        return False
+    origin_host = _strip_default_port(parts.netloc, parts.scheme)
+    candidates = [conn.headers.get("host", "")]
+    forwarded = conn.headers.get("x-forwarded-host")
+    if forwarded:
+        candidates.append(forwarded.split(",")[0])
+    return any(
+        origin_host == _strip_default_port(candidate.strip().lower(), parts.scheme, request_scheme)
+        for candidate in candidates
+        if candidate.strip()
+    )
+
+
+def make_websocket_origin_check(
+    trusted_origins: Iterable[str] = (),
+) -> Callable[[HTTPConnection], bool]:
+    """Build the realtime WebSocket's handshake ``Origin`` check (SDD D.1).
+
+    WebSockets do not go through ``HyperAdminRoute``, and a browser attaches the
+    admin's cookies to a handshake opened by any page, so the handler vets
+    ``Origin`` itself: it must be the admin's own host (as for unsafe HTTP
+    requests) or listed in ``csrf_trusted_origins``. A handshake without
+    ``Origin`` (a non-browser client, which carries no ambient cookies) passes.
+    The check applies in every CSRF mode: it is the only cross-site defence
+    the WebSocket has.
+    """
+    trusted = frozenset(_normalize_origin(o) for o in trusted_origins)
+
+    def origin_allowed(conn: HTTPConnection) -> bool:
+        origin = conn.headers.get("origin")
+        if origin is None or _origin_allowed(conn, origin, trusted):
+            return True
+        logger.warning(
+            "HyperAdmin WebSocket Origin check failed: Origin %r does not match Host %r. "
+            "Add the origin to csrf_trusted_origins (HYPERADMIN_CSRF_TRUSTED_ORIGINS) "
+            "if it is legitimate.",
+            origin,
+            conn.headers.get("host", ""),
+        )
+        return False
+
+    return origin_allowed
 
 
 def install_csrf_globals(env: Environment, *, field_name: str, header_name: str) -> None:
@@ -231,29 +296,7 @@ class CsrfGuard:
         return f"Origin {origin!r} does not match Host {host!r}"
 
     def _origin_allowed(self, request: Request, origin: str) -> bool:
-        if _normalize_origin(origin) in self.trusted_origins:
-            return True
-        parts = urlsplit(origin.strip().lower())
-        if not parts.netloc or parts.scheme not in _DEFAULT_PORTS:
-            return False  # "null", or an opaque/unknown scheme
-        request_scheme = request.url.scheme
-        # A TLS-terminating proxy uvicorn does not trust: the app sees http while
-        # the browser sends an https Origin. Compare hosts only in that case.
-        if parts.scheme != request_scheme and not (
-            request_scheme == "http" and parts.scheme == "https"
-        ):
-            return False
-        origin_host = _strip_default_port(parts.netloc, parts.scheme)
-        candidates = [request.headers.get("host", "")]
-        forwarded = request.headers.get("x-forwarded-host")
-        if forwarded:
-            candidates.append(forwarded.split(",")[0])
-        return any(
-            origin_host
-            == _strip_default_port(candidate.strip().lower(), parts.scheme, request_scheme)
-            for candidate in candidates
-            if candidate.strip()
-        )
+        return _origin_allowed(request, origin, self.trusted_origins)
 
     async def _token_failure(self, request: Request) -> str | None:
         """Return why the double-submit token check fails, or ``None``."""

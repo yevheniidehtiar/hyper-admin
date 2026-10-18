@@ -11,7 +11,7 @@ counts and let any caller force-disconnect every live client.
 
 from __future__ import annotations
 
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Hashable
 from typing import Literal
 
 from starlette.requests import Request
@@ -22,13 +22,20 @@ from hyperadmin.realtime.registry import ConnectionRegistry
 Handler = Callable[[Request], Awaitable[Response]]
 
 
+def _json_key(key: Hashable) -> int | str:
+    """Return ``key`` as a JSON value: ints and strings as-is, anything else as ``str``."""
+    return key if isinstance(key, (int, str)) else str(key)
+
+
 def make_count_handler(registry: ConnectionRegistry) -> Handler:
     async def count(_request: Request) -> Response:
         snap = registry.snapshot()
         return JSONResponse(
             {
                 "count": len(snap),
-                "users": sorted({c.user_id for c in snap}),
+                # Keys are any hashable (int, UUID, str): ``key=str`` sorts a mix
+                # of types, and non-JSON keys are rendered as strings.
+                "users": [_json_key(k) for k in sorted({c.user_id for c in snap}, key=str)],
                 "by_transport": {
                     "sse": sum(1 for c in snap if c.transport == "sse"),
                     "ws": sum(1 for c in snap if c.transport == "ws"),

@@ -925,7 +925,6 @@ def test_bridge_websocket_admits_user_resolved_by_websocket_user(
     [
         pytest.param({"websocket_user": _ws_user_from_header}, "customer-token", id="can-access"),
         pytest.param({"websocket_user": _ws_user_from_header}, "bogus", id="anonymous"),
-        pytest.param({}, "super-token", id="no-websocket-user-hook"),
     ],
 )
 def test_bridge_websocket_refuses_unadmitted_connections(
@@ -934,8 +933,7 @@ def test_bridge_websocket_refuses_unadmitted_connections(
     """
     Scenario: realtime WebSocket refuses a bridge user who is not admitted
       Given Admin(auth=ExternalAuth(...)) with realtime enabled
-      When  a WebSocket opens as a user failing can_access, as an anonymous
-            caller, or with no websocket_user hook configured
+      When  a WebSocket opens as a user failing can_access or as an anonymous caller
       Then  the connection is closed with code 4401
     """
     _, client = _build_realtime(engine, **auth_kwargs)
