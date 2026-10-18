@@ -1,8 +1,8 @@
 <div align="center">
   <a href="https://yevheniidehtiar.github.io/hyper-admin/" target="_blank">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="src/hyperadmin/static/img/hyperadmin-wordmark-dark.svg">
-      <img src="src/hyperadmin/static/img/hyperadmin-wordmark.svg" alt="HyperAdmin" width="330"/>
+      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/yevheniidehtiar/hyper-admin/master/src/hyperadmin/static/img/hyperadmin-wordmark-dark.svg">
+      <img src="https://raw.githubusercontent.com/yevheniidehtiar/hyper-admin/master/src/hyperadmin/static/img/hyperadmin-wordmark.svg" alt="HyperAdmin" width="330"/>
     </picture>
   </a>
   <p><strong>The Django-admin experience for FastAPI — generated straight from your Pydantic models.</strong><br/>
@@ -20,7 +20,7 @@
       <img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json" alt="Ruff">
     </a>
     <img src="https://img.shields.io/badge/status-alpha-orange.svg" alt="Status: Alpha">
-    <a href="LICENSE">
+    <a href="https://github.com/yevheniidehtiar/hyper-admin/blob/master/LICENSE">
       <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT">
     </a>
     <a href="https://codespaces.new/yevheniidehtiar/hyper-admin?devcontainer_path=.devcontainer%2Fdevcontainer.json">
@@ -35,8 +35,8 @@
 
   <br/>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/demo/list-dark.png">
-    <img src="docs/assets/demo/list.png" alt="HyperAdmin invoice list in the ERP demo" width="820"/>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/yevheniidehtiar/hyper-admin/master/docs/assets/demo/list-dark.png">
+    <img src="https://raw.githubusercontent.com/yevheniidehtiar/hyper-admin/master/docs/assets/demo/list.png" alt="HyperAdmin invoice list in the ERP demo" width="820"/>
   </picture>
 </div>
 
@@ -103,11 +103,11 @@ Prefer to click around first? **[Try the live demo](https://hyper-admin-demo.onr
 | 📖 **Documentation** | <https://yevheniidehtiar.github.io/hyper-admin/> |
 | ▶️ **Live demo & tour** | [hyper-admin-demo.onrender.com](https://hyper-admin-demo.onrender.com/admin/) (`demo` / `demo`) · [docs › Live Demo](https://yevheniidehtiar.github.io/hyper-admin/demo/) · [Open in Codespaces](https://codespaces.new/yevheniidehtiar/hyper-admin?devcontainer_path=.devcontainer%2Fdevcontainer.json) |
 | 🚀 **Getting started** | [docs › Getting Started](https://yevheniidehtiar.github.io/hyper-admin/getting-started/) |
-| 🧩 **Example app (ERP)** | [`examples/erp/`](examples/erp) · [docs › ERP](https://yevheniidehtiar.github.io/hyper-admin/examples/erp/) |
-| 🗺️ **Roadmap** | [docs › Roadmap](https://yevheniidehtiar.github.io/hyper-admin/roadmap/) · [`ROADMAP.md`](ROADMAP.md) |
-| 🏛️ **Architecture** | [`CONSTITUTION.md`](CONSTITUTION.md) — principles, module boundaries, dependency rules |
-| 🤝 **Contributing** | [`CONTRIBUTING.md`](CONTRIBUTING.md) · [`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md) |
-| 🔒 **Security** | [`SECURITY.md`](SECURITY.md) |
+| 🧩 **Example app (ERP)** | [`examples/erp/`](https://github.com/yevheniidehtiar/hyper-admin/tree/master/examples/erp) · [docs › ERP](https://yevheniidehtiar.github.io/hyper-admin/examples/erp/) |
+| 🗺️ **Roadmap** | [docs › Roadmap](https://yevheniidehtiar.github.io/hyper-admin/roadmap/) · [`ROADMAP.md`](https://github.com/yevheniidehtiar/hyper-admin/blob/master/ROADMAP.md) |
+| 🏛️ **Architecture** | [`CONSTITUTION.md`](https://github.com/yevheniidehtiar/hyper-admin/blob/master/CONSTITUTION.md) — principles, module boundaries, dependency rules |
+| 🤝 **Contributing** | [`CONTRIBUTING.md`](https://github.com/yevheniidehtiar/hyper-admin/blob/master/CONTRIBUTING.md) · [`CODE_OF_CONDUCT.md`](https://github.com/yevheniidehtiar/hyper-admin/blob/master/CODE_OF_CONDUCT.md) |
+| 🔒 **Security** | [`SECURITY.md`](https://github.com/yevheniidehtiar/hyper-admin/blob/master/SECURITY.md) |
 | 📓 **Changelog** | [docs › Changelog](https://yevheniidehtiar.github.io/hyper-admin/changelog/) |
 
 ## Tech stack
@@ -143,4 +143,4 @@ and built with AI-assisted development via [Claude](https://www.anthropic.com/).
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT — see [LICENSE](https://github.com/yevheniidehtiar/hyper-admin/blob/master/LICENSE).

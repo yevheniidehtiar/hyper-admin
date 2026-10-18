@@ -115,6 +115,34 @@ def test_changelog_has_a_section_for_the_version() -> None:
     assert f"## [{_pyproject_version()}]" in changelog
 
 
+def test_project_urls_point_at_branches_that_exist() -> None:
+    """
+    Scenario: PyPI project links resolve
+      Given the [project.urls] table that PyPI renders on the release page
+      When  its links are read
+      Then  none points at the non-existent main branch
+    """
+    start = _PYPROJECT.index("[project.urls]")
+    urls = _PYPROJECT[start : _PYPROJECT.index("\n[", start + 1)]
+    assert "/blob/master/CHANGELOG.md" in urls
+    assert "/blob/main/" not in urls and "/tree/main/" not in urls
+
+
+def test_readme_links_and_images_resolve_on_pypi() -> None:
+    """
+    Scenario: the PyPI long description has no broken links or images
+      Given README.md, which is published as the PyPI long description
+      When  its links, images and <source> elements are read
+      Then  every target is an absolute URL or an in-page anchor
+    """
+    readme = (_REPO_ROOT / "README.md").read_text()
+    targets = re.findall(r'(?:src|srcset|href)="([^"]+)"', readme)
+    targets += re.findall(r"\]\(([^)\s]+)\)", readme)
+    assert targets
+    relative = [t for t in targets if not t.startswith(("https://", "http://", "#"))]
+    assert relative == []
+
+
 # --- publish.yml -------------------------------------------------------------
 
 
@@ -159,13 +187,13 @@ def test_smoke_test_before_upload() -> None:
     build = _runs(jobs["build"])
 
     assert "uv build" in build
-    assert "twine check" in build
+    assert "check --strict dist/*" in build
     # A clean venv with only the wheel (plus TestClient's httpx), never the project's dev deps.
     assert "uv venv" in build and "--no-project" in build
     assert "dist/*.whl" in build
     assert "uv sync" not in build and "--all-extras" not in build
     assert "scripts/smoke_test_wheel.py" in build
-    assert build.index("twine check") < build.index("smoke_test_wheel.py")
+    assert build.index("check --strict") < build.index("smoke_test_wheel.py")
     assert jobs["publish"]["needs"] == "build"
 
 
@@ -184,6 +212,25 @@ def test_publish_job_uses_trusted_publishing_from_the_pypi_environment() -> None
     assert "uv publish --trusted-publishing always" in _runs(publish)
     assert "secrets." not in (_WORKFLOWS / "publish.yml").read_text()
     assert workflow["permissions"] == {"contents": "read"}
+
+
+def test_publish_pins_third_party_actions_and_tools() -> None:
+    """
+    Scenario: a re-pointed action tag cannot mint the PyPI token
+      Given publish.yml, whose publish job holds an OIDC id-token
+      When  its third-party actions and tools are read
+      Then  every non-GitHub action is pinned to a full commit SHA
+      And   twine is pinned to an exact version
+    """
+    workflow = _load_workflow("publish.yml")
+    uses = [
+        step["uses"] for job in workflow["jobs"].values() for step in job["steps"] if "uses" in step
+    ]
+    third_party = [u for u in uses if not u.startswith("actions/")]
+    assert any(u.startswith("astral-sh/setup-uv@") for u in third_party)
+    for ref in third_party:
+        assert re.fullmatch(r"[\w.-]+/[\w.-]+@[0-9a-f]{40}", ref), ref
+    assert re.search(r"uvx twine==\d+\.\d+\.\d+ check", _runs(workflow["jobs"]["build"]))
 
 
 @pytest.mark.parametrize("name", sorted(p.name for p in _WORKFLOWS.glob("*.yml")))
