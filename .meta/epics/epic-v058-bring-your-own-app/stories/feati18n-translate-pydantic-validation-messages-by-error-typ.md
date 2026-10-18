@@ -2,24 +2,24 @@
 type: story
 id: st-v058-byoa-27
 title: "feat(i18n): translate Pydantic validation messages by error type (#531)"
-status: in-review
+status: done
 priority: high
 assignee: null
 labels:
   - size:M
-  - deferred
   - area:i18n
   - layer:logic
 estimate: null
 epic_ref:
   id: ep-v058-byoa-01
 created_at: 2026-09-28T00:00:00Z
-updated_at: 2026-10-08T00:00:00Z
+updated_at: 2026-10-17T00:00:00Z
 ---
 
-## Deferred (2026-10-08)
+## Scope change (2026-10-18)
 
-Moved to follow-up milestone per Owner decision 8 (recorded in the SDD on 2026-10-08). Not part of the v0.5.8 critical path; do not start this story in v0.5.8.
+Originally deferred out of v0.5.8 (Owner decision 8, 2026-10-08). It was built anyway as PR #624, and the
+owner chose to merge it into v0.5.8 on 2026-10-18. The `deferred` label is removed and the story is done.
 
 ## Summary
 
