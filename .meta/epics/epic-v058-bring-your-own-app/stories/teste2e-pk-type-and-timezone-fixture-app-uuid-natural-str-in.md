@@ -2,7 +2,7 @@
 type: story
 id: st-v058-byoa-49
 title: "test(e2e): pk-type and timezone fixture app (UUID, natural str, int)"
-status: todo
+status: in-review
 priority: high
 assignee: null
 labels:
@@ -15,7 +15,7 @@ estimate: null
 epic_ref:
   id: ep-v058-byoa-01
 created_at: 2026-09-28T00:00:00Z
-updated_at: 2026-09-28T00:00:00Z
+updated_at: 2026-10-18T00:00:00Z
 ---
 
 ## Summary
@@ -63,12 +63,12 @@ Scenario: timezone round-trip
 
 ## Acceptance Criteria
 
-- [ ] UUID CRUD
-- [ ] malformed UUID
-- [ ] natural key create
-- [ ] UUID inline edit
-- [ ] timezone round-trip
-- [ ] `poe lint` and `poe test:unit` pass (and `poe test:e2e`)
+- [x] UUID CRUD
+- [x] malformed UUID
+- [x] natural key create
+- [x] UUID inline edit
+- [x] timezone round-trip
+- [x] `poe lint` and `poe test:unit` pass (and `poe test:e2e`)
 
 ## Blocked by
 
