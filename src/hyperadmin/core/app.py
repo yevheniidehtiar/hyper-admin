@@ -893,7 +893,7 @@ class Admin:
 
     def _make_route_class(self) -> "type[APIRoute]":
         """Build the ``HyperAdminRoute`` class shared by every admin router (SDD B.2)."""
-        from hyperadmin.views.route import make_admin_route_class
+        from hyperadmin.views.route import DEFAULT_API_PREFIXES, make_admin_route_class
 
         csrf = self._build_csrf_guard()
         auth = self.auth
@@ -902,10 +902,18 @@ class Admin:
         # Bridge mode: the route class owns auth-error translation and the
         # token-cookie bridge (SDD B.2, B.4).
         token_cookie = auth.token_cookie
+        # A rejected token handoff is an API call from an SPA: always a bare 401,
+        # never a browser redirect to a login page (SDD B.4).
+        api_prefixes = (
+            (*DEFAULT_API_PREFIXES, token_cookie.handoff_path)
+            if token_cookie is not None
+            else DEFAULT_API_PREFIXES
+        )
         return make_admin_route_class(
             self.templates,
             csrf=csrf,
             translate_auth_errors=True,
+            api_prefixes=api_prefixes,
             login_url=auth.login_url,
             login_path="/login" if token_cookie and token_cookie.token_endpoint else None,
             next_param=auth.next_param,

@@ -70,6 +70,10 @@ def get_current_user(authorization: str | None = Header(default=None)) -> ThHost
     return _TOKENS.get(authorization.removeprefix("Bearer "))
 
 
+# json.dumps cannot emit an overflowing literal; json.loads reads 1e400 as inf.
+_OVERFLOW_EXP_PAYLOAD = base64.urlsafe_b64encode(b'{"exp": 1e400}').decode()
+
+
 def _jwt(payload: dict[str, Any]) -> str:
     def part(data: dict[str, Any]) -> str:
         raw = json.dumps(data).encode()
@@ -172,22 +176,32 @@ def test_handoff_sets_cookie() -> None:
     assert client.get("/admin/").status_code == 200
 
 
-def test_invalid_token_rejected() -> None:
+@pytest.mark.parametrize(
+    "auth_kwargs",
+    [
+        {},
+        {"login_url": "/login"},
+        {"token_cookie": TokenCookie(token_endpoint=lambda u, p: None)},
+    ],
+    ids=["no-login", "login_url", "token_endpoint"],
+)
+def test_invalid_token_rejected(auth_kwargs: dict[str, Any]) -> None:
     """
     Scenario: invalid token rejected
-      Given the host rejects 'Bearer bad'
+      Given the host rejects 'Bearer bad' (with or without a browser login page)
       When  POST /admin/auth/session is sent
-      Then  the response is 401
+      Then  the response is 401, never a redirect to a login page
       And   no cookie is set
     """
     # Given
-    _, client = _build(token_cookie=TokenCookie())
+    _, client = _build(**{"token_cookie": TokenCookie(), **auth_kwargs})
 
     # When
     response = client.post("/admin/auth/session", headers={"Authorization": "Bearer bad"})
 
     # Then
     assert response.status_code == 401
+    assert "location" not in response.headers
     assert not any(h.startswith("hyperadmin_token=bad") for h in _set_cookie_headers(response))
     assert client.cookies.get("hyperadmin_token") is None
 
@@ -649,12 +663,16 @@ class TestCookieMaxAge:
             _jwt({"sub": "no-exp"}),
             _jwt({"exp": "soon"}),
             _jwt({"exp": True}),
+            _jwt({"exp": float("nan")}),
+            _jwt({"exp": float("inf")}),
+            _jwt({"exp": float("-inf")}),
+            f"a.{_OVERFLOW_EXP_PAYLOAD}.c",
         ],
     )
     def test_unreadable_payloads_have_no_expiry(self, token: str) -> None:
         """
         Scenario: a token without a readable numeric exp has no expiry
-          Given a malformed, non-JSON, non-object or exp-less payload
+          Given a malformed, non-JSON, non-object, exp-less or non-finite-exp payload
           When  jwt_expiry(token) is read
           Then  the result is None
         """
@@ -907,6 +925,65 @@ def test_login_form_with_issue_token_callable_and_bad_next() -> None:
     assert response.status_code == 303
     assert response.headers["location"] == "/admin/"
     assert client.cookies.get("hyperadmin_token") == "staff-token"
+
+
+def test_login_form_refuses_an_oversized_issued_token(caplog: pytest.LogCaptureFixture) -> None:
+    """
+    Scenario: an issued token too large for the cookie re-renders the form
+      Given TokenCookie(token_endpoint=issue_token) returning a token over MAX_TOKEN_BYTES
+      When  POST /admin/login is sent with valid credentials
+      Then  the form is re-rendered (200) with an error
+      And   no hyperadmin_token cookie is set
+    """
+
+    # Given
+    def issue_token(username: str, password: str) -> str | None:
+        return "x" * (MAX_TOKEN_BYTES + 1)
+
+    _, client = _build(get_user=bearer_user, token_cookie=TokenCookie(token_endpoint=issue_token))
+    csrf = _csrf_from(client, "/admin/login")
+
+    # When
+    with caplog.at_level("WARNING", logger="hyperadmin.auth"):
+        response = client.post(
+            "/admin/login", data={"username": "ada", "password": "secret", "csrf_token": csrf}
+        )
+
+    # Then
+    assert response.status_code == 200
+    assert 'data-testid="login-error"' in response.text
+    assert "too large for the admin cookie" in response.text
+    assert "exceeds" in caplog.text
+    # And
+    assert not any(h.startswith("hyperadmin_token=") for h in _set_cookie_headers(response))
+    assert client.cookies.get("hyperadmin_token") is None
+
+
+def test_bridge_navbar_logout_form_targets_admin_logout_with_csrf() -> None:
+    """
+    Scenario: the bridge-mode navbar logs out through the admin's own logout route
+      Given ExternalAuth(token_cookie=TokenCookie(), logout_url="/bye") and a token cookie
+      When  the dashboard is rendered
+      Then  the logout form posts to /admin/logout and carries a CSRF field
+      And   it does not post straight to the host's logout_url
+    """
+    # Given
+    _, client = _build(token_cookie=TokenCookie(), logout_url="/bye")
+    client.cookies.set("hyperadmin_token", "staff-token")
+
+    # When
+    page = client.get("/admin/")
+
+    # Then
+    assert page.status_code == 200
+    form = re.search(
+        r'<form method="post" action="/admin/logout">(.*?)</form>', page.text, re.DOTALL
+    )
+    assert form is not None
+    assert 'name="csrf_token"' in form.group(1)
+    assert 'data-testid="logout-btn"' in form.group(1)
+    # And
+    assert 'action="/bye"' not in page.text
 
 
 def test_login_url_wins_over_the_login_form() -> None:

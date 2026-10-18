@@ -823,38 +823,49 @@ def test_bridge_admin_is_noted_for_auth_metadata(
 # ---------------------------------------------------------------------------
 
 
-def test_bridge_navbar_has_no_builtin_logout_form(engine: AsyncEngine) -> None:
+def test_bridge_navbar_logout_posts_to_admin_logout(engine: AsyncEngine) -> None:
     """
-    Scenario: bridge mode without logout_url renders no dead logout button
+    Scenario: bridge mode without logout_url still offers Logout
       Given Admin(auth=ExternalAuth(get_user=dep)) with no logout_url
       When  an admitted superuser GETs /admin/
-      Then  the page has no form posting to the unregistered /admin/logout
-      And   no logout button is rendered
+      Then  the logout button posts to the admin's own /admin/logout
     """
+    # Given
     _, client = _build(engine)
 
+    # When
     response = client.get("/admin/", headers=_bearer("super-token"))
 
+    # Then
     assert response.status_code == 200
-    assert 'action="/admin/logout"' not in response.text
-    assert 'data-testid="logout-btn"' not in response.text
+    assert 'action="/admin/logout"' in response.text
+    assert 'data-testid="logout-btn"' in response.text
 
 
-def test_bridge_navbar_logout_posts_to_host_logout_url(engine: AsyncEngine) -> None:
+def test_bridge_navbar_logout_with_logout_url_goes_through_admin_logout(
+    engine: AsyncEngine,
+) -> None:
     """
-    Scenario: bridge mode with logout_url posts Logout to the host's URL
+    Scenario: bridge mode with logout_url logs out through /admin/logout first
       Given Admin(auth=ExternalAuth(get_user=dep, logout_url="/auth/logout"))
       When  an admitted superuser GETs /admin/
-      Then  the logout form posts to /auth/logout
-      And   it does not target the unregistered /admin/logout
+      Then  the logout form posts to /admin/logout, which redirects to /auth/logout
+      And   it does not post straight to the host's URL
     """
+    # Given
     _, client = _build(engine, logout_url="/auth/logout")
 
+    # When
     response = client.get("/admin/", headers=_bearer("super-token"))
 
+    # Then
     assert response.status_code == 200
-    assert 'action="/auth/logout"' in response.text
-    assert 'action="/admin/logout"' not in response.text
+    assert 'action="/admin/logout"' in response.text
+    assert 'action="/auth/logout"' not in response.text
+    # And
+    logout = client.post("/admin/logout", headers=_bearer("super-token"))
+    assert logout.status_code == 303
+    assert logout.headers["location"] == "/auth/logout"
 
 
 async def _ws_user_from_header(websocket: Any) -> BxHostUser | None:
