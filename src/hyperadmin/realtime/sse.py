@@ -29,8 +29,11 @@ def make_sse_handler(
     """Return a Starlette handler bound to the supplied registry + settings."""
 
     async def sse_endpoint(request: Request) -> Response:
-        user = getattr(request.state, "user", None)
-        if user is None:
+        # Both auth modes set ``user`` and ``user_key``: the bridge dependency
+        # and ``AuthenticationMiddleware``. The key is any hashable (UUID, str,
+        # int), so the stream never assumes the host user has an ``id``.
+        user_key = getattr(request.state, "user_key", None)
+        if getattr(request.state, "user", None) is None or user_key is None:
             return Response(status_code=401)
 
         stop = asyncio.Event()
@@ -38,7 +41,7 @@ def make_sse_handler(
         async def _close() -> None:
             stop.set()
 
-        conn = RealtimeConnection(user_id=user.id, transport="sse", close=_close)
+        conn = RealtimeConnection(user_id=user_key, transport="sse", close=_close)
 
         async def event_stream() -> AsyncIterator[bytes]:
             try:

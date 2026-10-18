@@ -15,6 +15,7 @@ from starlette._utils import get_route_path
 from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
 from starlette.responses import RedirectResponse, Response
 
+from hyperadmin.auth.bridge import default_display_name
 from hyperadmin.auth.otp import PARTIAL_AUTH_SESSION_KEY
 
 if TYPE_CHECKING:
@@ -140,6 +141,10 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
         # somehow lingers alongside a full session (e.g. cookie tampering),
         # the marker is meaningless and we ignore it; full auth wins.
         request.state.user = user
+        # The same ``request.state`` keys the bridge dependency sets (SDD B.3),
+        # so realtime and templates read one contract in both auth modes.
+        request.state.user_key = user.id
+        request.state.user_display = default_display_name(user)
         request.state.user_permissions = await self._user_permissions(user)
         return await call_next(request)
 

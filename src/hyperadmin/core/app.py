@@ -572,15 +572,7 @@ class Admin:
             methods=["GET"],
             name="admin-realtime-sse",
         )
-        ws_auth: Any = self.auth_backend
-        if self.auth is not None:
-            from hyperadmin.auth.bridge import BridgeWebSocketAuth
-
-            ws_auth = BridgeWebSocketAuth(self.auth)
-        ws_handler = make_ws_handler(registry, settings, ws_auth)
-        # On the admin router, so it lands under the prefix in both mount modes
-        # (and inside the namespace in isolated mode).
-        self.router.add_websocket_route("/realtime/ws", ws_handler, name="admin-realtime-ws")
+        self._register_realtime_ws_route(registry, settings)
 
         if settings.enable_test_endpoints:
             from hyperadmin.realtime._debug import (
@@ -607,6 +599,35 @@ class Admin:
                 methods=["POST"],
                 name="admin-realtime-test-disconnect-transport",
             )
+
+    def _register_realtime_ws_route(
+        self, registry: ConnectionRegistry, settings: RealtimeSettings
+    ) -> None:
+        """Register the realtime WebSocket route, with its handshake ``Origin`` check.
+
+        In bridge mode the host resolves WebSocket users through
+        ``ExternalAuth.websocket_user`` (HTTP dependencies do not run on WebSocket
+        scope). Without it no user could ever be admitted, so the route is not
+        registered at all; SSE keeps working (SDD B, Edge cases).
+        """
+        from hyperadmin.views.csrf import make_websocket_origin_check
+
+        ws_auth: Any = self.auth_backend
+        if self.auth is not None:
+            if self.auth.websocket_user is None:
+                logger.info(
+                    "HyperAdmin realtime: WebSocket route not registered in bridge mode "
+                    "because ExternalAuth.websocket_user is not set; SSE stays available."
+                )
+                return
+            from hyperadmin.auth.bridge import BridgeWebSocketAuth
+
+            ws_auth = BridgeWebSocketAuth(self.auth)
+        origin_allowed = make_websocket_origin_check(self.settings.csrf_trusted_origins)
+        ws_handler = make_ws_handler(registry, settings, ws_auth, origin_allowed)
+        # On the admin router, so it lands under the prefix in both mount modes
+        # (and inside the namespace in isolated mode).
+        self.router.add_websocket_route("/realtime/ws", ws_handler, name="admin-realtime-ws")
 
     def _register_locale_route(self, path: str) -> None:
         """Register the POST /locale route for the locale switcher."""

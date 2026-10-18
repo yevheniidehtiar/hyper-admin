@@ -15,7 +15,7 @@ It is deliberately *not* a pubsub: cross-process fan-out lives behind the
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Awaitable, Callable
+from collections.abc import Awaitable, Callable, Hashable
 from dataclasses import dataclass
 from typing import Literal
 
@@ -29,9 +29,13 @@ class RealtimeConnection:
     Equality is identity-based (``eq=False`` keeps the default ``object``
     comparison) so two connections from the same user are tracked as
     separate entries.
+
+    ``user_id`` is the principal's key (``request.state.user_key``): any
+    hashable value, so host users keyed by UUID or string work as well as
+    the built-in integer ids.
     """
 
-    user_id: int
+    user_id: Hashable
     transport: Transport
     close: Callable[[], Awaitable[None]]
 
@@ -58,7 +62,7 @@ class ConnectionRegistry:
     def count(self) -> int:
         return len(self._conns)
 
-    def users(self) -> set[int]:
+    def users(self) -> set[Hashable]:
         return {c.user_id for c in self._conns}
 
     def snapshot(self) -> tuple[RealtimeConnection, ...]:

@@ -308,6 +308,10 @@ class BridgeWebSocketAuth:
         user = await resolve(websocket)
         if user is None or not await _maybe_await(self._auth.can_access(user)):
             return None
+        # The same keys the HTTP dependency sets, so the realtime handler keys
+        # the connection on ``user_key`` (any hashable), not on ``user.id``.
+        websocket.state.user_key = self._auth.user_key(user)
+        websocket.state.user_display = self._auth.display_name(user)
         return user
 
 
