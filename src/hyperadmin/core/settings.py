@@ -114,6 +114,10 @@ class HyperAdminSettings(BaseSettings):
     #: zero-config ``Admin(app).mount("/admin")`` keeps working. Set this to ``True`` to
     #: keep the old "always create every table at startup" behaviour.
     create_tables: bool = False
+    #: Register the built-in ``User``/``Group``/``Permission`` admins (SDD B.3).
+    #: ``None`` (default) means on with ``auth_backend=`` and off with ``auth=``
+    #: (bring-your-own-auth) or no auth; ``True``/``False`` force it either way.
+    register_auth_models: bool | None = None
 
     # ── Mounting (SDD C.1) ──────────────────────────────────────────────────────
     #: ``"isolated"`` (default) attaches the admin as a private sub-application, so

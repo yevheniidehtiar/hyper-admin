@@ -48,6 +48,7 @@ __all__ = [
     "BridgeDefaultPermissionChecker",
     "CallablePermissionChecker",
     "ExternalAuth",
+    "HostUserModelGuard",
     "MaybeAwaitable",
     "TokenCookie",
     "build_admin_dependency",
@@ -251,6 +252,36 @@ class BridgeDefaultPermissionChecker:
             must go through :meth:`has_permission`.
         """
         return set()
+
+
+class HostUserModelGuard:
+    """Wraps a permission checker so a non-superuser never edits the host user model.
+
+    The host user model is the class of the object ``get_user`` returns, read
+    per call from ``type(user)``, so it needs no configuration. A user without
+    a truthy ``is_superuser`` is denied ``change_<model>`` and
+    ``delete_<model>`` on it whatever ``inner`` says; every other codename is
+    delegated. ``Admin(auth=...)`` wraps every checker in this guard except one
+    built from ``ExternalAuth.has_permission``, which may grant those codenames
+    explicitly (SDD section B.3).
+    """
+
+    __slots__ = ("inner",)
+
+    def __init__(self, inner: PermissionChecker) -> None:
+        self.inner = inner
+
+    async def has_permission(self, user: Any, codename: str) -> bool:
+        """Deny change/delete on the host user model to non-superusers; else delegate."""
+        if not getattr(user, "is_superuser", False):
+            model = type(user).__name__.lower()
+            if codename.lower() in {f"change_{model}", f"delete_{model}"}:
+                return False
+        return bool(await self.inner.has_permission(user, codename))
+
+    async def get_user_permissions(self, user: Any) -> set[str]:
+        """Delegate to the wrapped checker (see its own caveats)."""
+        return set(await self.inner.get_user_permissions(user))
 
 
 def build_admin_dependency(auth: ExternalAuth) -> Callable[..., Awaitable[Any]]:

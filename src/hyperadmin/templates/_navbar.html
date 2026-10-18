@@ -49,7 +49,8 @@
         </button>
         <div x-data="{ open: false }" class="ha-navbar-user">
             {% if auth_enabled and request.state.user %}
-            {%- set username = request.state.user.username -%}
+            {#- user_display is set in bridge mode (ExternalAuth.display_name, SDD B.3). -#}
+            {%- set username = request.state.user_display if request.state.user_display is defined else request.state.user.username -%}
             <button @click="open = !open" @keydown.escape="open = false" class="ha-navbar-user-btn" aria-haspopup="true" :aria-expanded="open">
                 <span class="ha-avatar" aria-hidden="true">{{ username[:1] | upper }}</span>
                 <span class="ha-navbar-user-name" data-testid="current-user">{{ username }}</span>
