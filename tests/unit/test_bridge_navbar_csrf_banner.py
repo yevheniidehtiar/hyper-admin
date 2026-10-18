@@ -114,24 +114,31 @@ def test_bridged_navbar_shows_the_host_display_name(engine: AsyncEngine) -> None
     assert re.search(r'data-testid="current-user">\s*Ada\s*<', response.text)
 
 
-def test_bridged_navbar_logout_form_targets_the_host_logout_url(engine: AsyncEngine) -> None:
+def test_bridged_navbar_logout_goes_through_the_admin_then_the_host_logout_url(
+    engine: AsyncEngine,
+) -> None:
     """
-    Scenario: bridged navbar logout form posts to the host's logout URL
+    Scenario: bridged navbar logout clears the admin cookie, then reaches the host
       Given a bridged admin with logout_url '/auth/logout' and CSRF enforced
-      When  the dashboard renders
-      Then  the navbar logout form posts to /auth/logout
-      And   the admin CSRF token is not sent to the host URL
+      When  the dashboard renders and the navbar logout form is submitted
+      Then  the form posts to the admin's own /admin/logout with the admin CSRF token
+      And   that route redirects to the host's /auth/logout
     """
     client = _client(engine, logout_url="/auth/logout")
 
     response = client.get("/admin/", headers=_BEARER)
 
     form = re.search(
-        r'<form method="post" action="/auth/logout">(.*?)</form>', response.text, re.DOTALL
+        r'<form method="post" action="/admin/logout">(.*?)</form>', response.text, re.DOTALL
     )
     assert form is not None
     assert 'data-testid="logout-btn"' in form.group(1)
-    assert 'name="csrf_token"' not in form.group(1)
+    token = re.search(r'name="csrf_token" value="([^"]+)"', form.group(1))
+    assert token is not None
+
+    logout = client.post("/admin/logout", headers=_BEARER, data={"csrf_token": token.group(1)})
+    assert logout.status_code == 303
+    assert logout.headers["location"] == "/auth/logout"
 
 
 def test_admin_page_ships_a_hidden_csrf_reload_banner(engine: AsyncEngine) -> None:
