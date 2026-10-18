@@ -21,10 +21,11 @@ updated_at: 2026-05-11T00:00:00Z
 ## Overview
 
 Implements upstream readiness capability **H15**: SVG primitives
-(`BarChart`, `LineChart`, `StackedBarChart`, `PieChart`) and an HTMX-loaded
-chart fragment route per `ReportView`. Server-rendered SVG by default with
-an optional Chart.js mode for richer interactivity. Accessible by default —
-each chart ships an inline `<details><table>` data fallback.
+(`LineChart`, `BarChart`, `StackedBarChart`, `Sparkline` + chart frame) and an
+HTMX-loaded chart fragment route per `ReportView`. Server-rendered SVG only,
+built from the design system (`docs/design/system/components/Chart/`) — no
+Chart.js (owner decision, 2026-10-17). Accessible by default — each chart
+ships an inline `<details><table>` data fallback.
 
 **SDD:** [`docs/specs/chart-components.md`](../../../docs/specs/chart-components.md)
 (required — new module, cross-module integration with reports + filters).
@@ -36,7 +37,7 @@ each chart ships an inline `<details><table>` data fallback.
 - Accessible markup (`role="img"`, `<title>`, `<desc>`, data-table fallback).
 - CSS variable palette (`--ha-chart-1` … `--ha-chart-7`).
 
-### Track B: Chart.js mode + vendored bundle
+### Track B: Chart.js mode + vendored bundle — cancelled 2026-10-17 (no Chart.js)
 - `static/vendor/chart-js/chart.umd.js` (vendored, not from CDN).
 - `templates/widgets/charts/chartjs.html` — canvas + JSON dataset slot.
 - Graceful fallback to SVG if the vendor file is missing.
@@ -57,10 +58,8 @@ stacked bar, lazy-load, a11y data table, filter context pass-through).
 
 ## Acceptance Criteria
 
-- [ ] Four SVG primitives implemented + visual snapshots
-- [ ] Chart.js mode opt-in via `mode="chartjs"` or `Admin(chart_mode="chartjs")`
-- [ ] Chart.js bundle vendored under `static/vendor/`
-- [ ] `Chart` wrapper exported from `hyperadmin.widgets`
+- [ ] SVG primitives (line, bar, stacked bar, sparkline + frame) implemented + visual snapshots
+- [ ] `Chart` wrapper exported from `hyperadmin_reports.charts` (the `hyperadmin-reports` plugin)
 - [ ] `/admin/reports/{slug}/chart` fragment endpoint registered
 - [ ] Filter querystring forwarded transparently
 - [ ] Accessible data-table fallback on by default

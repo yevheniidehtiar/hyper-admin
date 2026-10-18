@@ -1,6 +1,6 @@
 Server-rendered SVG line, bar and stacked-bar charts inside a chart frame with period switch, legend, table fallback and loading, no-data and error states.
 
-**Template:** `components/charts/line.html`, `bar.html`, `stacked_bar.html`, `sparkline.html`, `frame.html` — Jinja2 macros that take already-aggregated, already-thinned points.
+**Template:** `hyperadmin_reports/charts/` in the `hyperadmin-reports` plugin: `line.html`, `bar.html`, `stacked_bar.html`, `sparkline.html`, `frame.html` — Jinja2 macros that take already-aggregated, already-thinned points.
 
 **The view provides:** series (name, points, unit), x labels formatted for the locale, y ticks, a one-sentence takeaway for `<desc>`, and the period options.
 

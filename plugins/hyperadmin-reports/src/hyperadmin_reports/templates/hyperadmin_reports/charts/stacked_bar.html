@@ -1,0 +1,23 @@
+{#-
+    Stacked bar chart: one stack per x label, one segment per series separated by a
+    1px surface line, and a focusable hit area reading out every value of the stack.
+
+        {%- from "hyperadmin_reports/charts/stacked_bar.html" import stacked_bar_chart -%}
+        {{ stacked_bar_chart(chart) }}   {# chart: hyperadmin_reports.charts.StackedBarChart #}
+-#}
+{%- from "hyperadmin_reports/charts/_svg.html" import chart_svg, axes -%}
+
+{%- macro stacked_bar_chart(chart) -%}
+{%- call chart_svg(chart) -%}
+{{ axes(chart) }}
+{%- for stack in chart.stacks -%}
+<g class="stack">
+{%- for seg in stack.segments -%}
+<rect class="{{ seg.cls }}" x="{{ seg.x }}" y="{{ seg.y }}" width="{{ seg.width }}" height="{{ seg.height }}"/>
+<line class="sep" x1="{{ seg.x }}" x2="{{ seg.x2 }}" y1="{{ seg.y }}" y2="{{ seg.y }}"/>
+{%- endfor -%}
+<rect class="pt-hit" x="{{ stack.hit.x }}" y="{{ chart.top }}" width="{{ stack.hit.width }}" height="{{ chart.plot_height }}" tabindex="0" role="img" aria-label="{{ stack.hit.label }}"><title>{{ stack.hit.label }}</title></rect>
+</g>
+{%- endfor -%}
+{%- endcall -%}
+{%- endmacro -%}
