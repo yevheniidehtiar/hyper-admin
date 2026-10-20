@@ -88,7 +88,7 @@ def test_css_index_registers_every_new_partial_in_the_components_layer() -> None
     index = (CSS / "hyperadmin.css").read_text()
     imports = re.findall(r'@import "([^"]+)"(?:\s+layer\((\w+)\))?;', index)
 
-    layers = {name: layer for name, layer in imports}
+    layers = dict(imports)
     for partial in NEW_PARTIALS:
         assert layers.get(partial) == "components", partial
     for name, _layer in imports:
