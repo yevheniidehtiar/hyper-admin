@@ -15,6 +15,7 @@ services:
     buildFilter:
       paths:
         - src/**
+        - plugins/**
         - examples/__init__.py
         - examples/erp/**
         - deploy/demo/**
