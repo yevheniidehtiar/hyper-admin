@@ -23,6 +23,7 @@ The caller owns the database session: :meth:`ReportView.run` takes an
 
 from __future__ import annotations
 
+import re
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass
 from datetime import date, datetime
@@ -270,14 +271,47 @@ class ReportView:
             record[agg.name] = names.get(record[agg.name], record[agg.name])
 
 
-def register_report(report: type[ReportView]) -> type[ReportView]:
-    """Validate ``report`` (including its ``cache`` shape) and return it unchanged.
+_REPORTS: dict[str, type[ReportView]] = {}
+_SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9_-]*$")
 
-    Raises ``ValueError`` at registration time instead of on the first request;
-    usable as a class decorator.
+
+def register_report(report: type[ReportView]) -> type[ReportView]:
+    """Validate ``report`` (including its ``cache`` shape), register it and return it unchanged.
+
+    Raises ``ValueError`` at registration time instead of on the first request:
+    an invalid declaration, a slug that is not URL-safe (``[a-z0-9][a-z0-9_-]*``)
+    or a slug another report already holds. Re-registering the same class is a
+    no-op. Usable as a class decorator.
+
+    Register reports before ``Admin(...)`` is built: the plugin declares each
+    report's permission codename while the admin loads it.
     """
     report.validate()
+    if not _SLUG_RE.match(report.slug):
+        raise ValueError(f"{report.__name__}.slug {report.slug!r} is not URL-safe")
+    existing = _REPORTS.get(report.slug)
+    if existing is not None and existing is not report:
+        raise ValueError(
+            f"report slug {report.slug!r} is already registered by {existing.__name__}"
+        )
+    _REPORTS[report.slug] = report
     return report
+
+
+def unregister_report(report: type[ReportView]) -> None:
+    """Remove ``report`` from the registry (no-op if it is not registered)."""
+    if _REPORTS.get(report.slug) is report:
+        del _REPORTS[report.slug]
+
+
+def registered_reports() -> list[type[ReportView]]:
+    """Registered reports, in registration order."""
+    return list(_REPORTS.values())
+
+
+def get_report(slug: str) -> type[ReportView] | None:
+    """The report registered under ``slug``, or ``None``."""
+    return _REPORTS.get(slug)
 
 
 def _mapper(model: type[Any]) -> Mapper[Any]:
