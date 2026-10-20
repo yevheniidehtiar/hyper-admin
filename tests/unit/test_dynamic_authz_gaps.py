@@ -393,7 +393,7 @@ def test_bulk_action_respects_the_queryset_filter() -> None:
 
     assert resp.status_code == 200
     assert ACTION_CALLS == [4]
-    assert "not found" in resp.text
+    assert "Row not found" in resp.text
 
 
 # ---------------------------------------------------------------------------

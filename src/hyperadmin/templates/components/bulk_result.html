@@ -1,4 +1,8 @@
-{#- Per-row result page for a completed bulk action (H3, v0.5.5).
+{#- Per-row result of a completed bulk action (H3, v0.5.5) — design: BulkActionFlow.
+
+    Problems are listed first, then the done rows; above 20 rows the done rows
+    fold into a <details>. A fragment with HTMX (swapped into
+    ``#bulk-result-region``), a page without it (``bulk_result.html``).
 
     Context:
       - action: ActionDef
@@ -6,36 +10,124 @@
       - bulk_endpoint_url: URL of the /bulk endpoint (for "Retry failures")
       - failed_ids: list[str] — non-"ok" outcome keys, stringified with the
         model's pk codec (``pk.to_str``)
+      - model_name: lowercase model name (optional) — record links and "Back to"
 -#}
-<section class="ha-bulk-result" data-testid="bulk-result">
-  <h2 class="ha-bulk-result__title">{{ action.label }} — {{ _("Results") }}</h2>
-
-  <table class="ha-bulk-result__table">
-    <thead>
-      <tr><th>{{ _("ID") }}</th><th>{{ _("Status") }}</th><th>{{ _("Detail") }}</th></tr>
-    </thead>
-    <tbody>
-      {% for outcome in outcomes %}
-      <tr data-testid="bulk-result-row">
-        <td>{{ outcome.id }}</td>
-        <td>
-          <span class="ha-bulk-status ha-bulk-status--{{ outcome.status }}"
-                data-testid="bulk-result-status-{{ outcome.id|ha_dom_token }}">{{ outcome.status }}</span>
+{%- from "components/_icons.html" import icon -%}
+{%- set problems = outcomes|rejectattr('status', 'equalto', 'ok')|list -%}
+{%- set done = outcomes|selectattr('status', 'equalto', 'ok')|list -%}
+{%- set failed = outcomes|selectattr('status', 'equalto', 'failed')|list|length -%}
+{%- set forbidden = outcomes|selectattr('status', 'equalto', 'forbidden')|list|length -%}
+{%- set total = outcomes|length -%}
+{%- set tone = 'ok' if not problems else ('mixed' if done else 'failed') -%}
+{%- set fold = total > 20 and done|length > 0 -%}
+{%- set words = {'ok': _("Done"), 'failed': _("Failed"), 'forbidden': _("Forbidden")} -%}
+{%- set plain = {
+    'not found': _("Row not found. It may have been deleted after you selected it."),
+    'Database error': _("The row could not be loaded because of a database error. Check the server logs, then retry."),
+    'Action failed': _("The action failed on this row. Check the server logs, then retry."),
+} -%}
+{%- macro problem_sentence() -%}
+  {%- if failed and forbidden -%}
+    {% trans failed=failed, forbidden=forbidden %}{{ failed }} failed and {{ forbidden }} not allowed.{% endtrans %}
+  {%- elif failed -%}
+    {% trans failed=failed %}{{ failed }} failed.{% endtrans %}
+  {%- elif forbidden -%}
+    {% trans forbidden=forbidden %}{{ forbidden }} not allowed.{% endtrans %}
+  {%- endif -%}
+{%- endmacro -%}
+{%- macro result_row(outcome) -%}
+      <tr class="ha-table-row" data-testid="bulk-result-row">
+        <td class="ha-table-cell ha-bulk-result__key" data-label="{{ _('Row') }}">
+          {%- if model_name is defined -%}
+          <a href="{{ url_for(model_name|lower ~ '-detail', item_id=outcome.id) }}">{{ outcome.id }}</a>
+          {%- else -%}{{ outcome.id }}{%- endif -%}
         </td>
-        <td>{{ outcome.detail or "" }}</td>
+        <td class="ha-table-cell" data-label="{{ _('Result') }}">
+          <span class="ha-pill ha-bulk-status ha-bulk-status--{{ outcome.status }}"
+                data-testid="bulk-result-status-{{ outcome.id|ha_dom_token }}">{{ words[outcome.status] }}</span>
+        </td>
+        <td class="ha-table-cell" data-label="{{ _('What happened') }}">
+          {%- if outcome.detail -%}{{ plain.get(outcome.detail, outcome.detail) }}
+          {%- else -%}<span class="ha-null">&mdash;<span class="ha-sr-only">{{ _("no detail") }}</span></span>{%- endif -%}
+        </td>
       </tr>
-      {% endfor %}
-    </tbody>
-  </table>
+{%- endmacro -%}
+<section class="ha-bulk-result ha-bulk-result--{{ tone }}" data-testid="bulk-result"
+         aria-labelledby="bulk-result-headline">
+  <h2 class="ha-bulk-result__title">{{ action.label }}</h2>
 
-  {% if failed_ids %}
-  <form method="post" action="{{ bulk_endpoint_url }}"
-        hx-post="{{ bulk_endpoint_url }}" hx-target="#bulk-result-region" hx-swap="innerHTML"
-        data-testid="bulk-retry-form" class="ha-bulk-retry">
-    {{ csrf_input() if csrf_input is defined }}
-    {% for pk in failed_ids %}<input type="hidden" name="ids" value="{{ pk }}" />{% endfor %}
-    <button type="submit" class="ha-btn ha-btn-secondary"
-            data-testid="bulk-retry-link">{{ _("Retry failures") }}</button>
-  </form>
-  {% endif %}
+  <div class="ha-bulk-result__summary">
+    <p class="ha-bulk-result__headline" id="bulk-result-headline" role="status" data-testid="bulk-result-headline">
+      {%- if tone == 'ok' -%}{{ icon('circle-check') }}
+      {%- elif tone == 'mixed' -%}{{ icon('triangle-alert') }}
+      {%- else -%}{{ icon('circle-x') }}{%- endif -%}
+      <span>
+        {%- if total == 0 -%}
+          {{ _("No rows were selected.") }}
+        {%- elif tone == 'ok' -%}
+          {% trans count=total %}All {{ count }} rows done.{% endtrans %}
+        {%- elif tone == 'mixed' -%}
+          {% trans done=done|length, count=total %}{{ done }} of {{ count }} rows done.{% endtrans %} {{ problem_sentence() }}
+        {%- else -%}
+          {{ _("No rows done.") }} {{ problem_sentence() }}
+        {%- endif -%}
+      </span>
+    </p>
+    <ul class="ha-bulk-result__tally" aria-label="{{ _('Totals') }}" data-testid="bulk-result-tally">
+      <li><span class="ha-pill ha-bulk-status ha-bulk-status--ok">{{ words['ok'] }}</span><span class="ha-num">{{ done|length }}</span></li>
+      <li><span class="ha-pill ha-bulk-status ha-bulk-status--failed">{{ words['failed'] }}</span><span class="ha-num">{{ failed }}</span></li>
+      <li><span class="ha-pill ha-bulk-status ha-bulk-status--forbidden">{{ words['forbidden'] }}</span><span class="ha-num">{{ forbidden }}</span></li>
+    </ul>
+    {% if total -%}
+    <div class="ha-progress__segments" role="img"
+         aria-label="{% trans done=done|length, failed=failed, forbidden=forbidden %}{{ done }} done, {{ failed }} failed, {{ forbidden }} forbidden{% endtrans %}">
+      {%- if done %}<span class="is-done" style="flex: {{ done|length }}"></span>{% endif -%}
+      {%- if failed %}<span class="is-failed" style="flex: {{ failed }}"></span>{% endif -%}
+      {%- if forbidden %}<span class="is-forbidden" style="flex: {{ forbidden }}"></span>{% endif -%}
+    </div>
+    {%- endif %}
+  </div>
+
+  <div class="ha-table-wrapper">
+    <table class="ha-table ha-bulk-result__table" aria-label="{{ _('Results per row') }}" data-testid="bulk-result-table">
+      <thead>
+        <tr class="ha-table-header">
+          <th class="ha-table-th" scope="col">{{ _("Row") }}</th>
+          <th class="ha-table-th" scope="col">{{ _("Result") }}</th>
+          <th class="ha-table-th" scope="col">{{ _("What happened") }}</th>
+        </tr>
+      </thead>
+      <tbody class="ha-table-body">
+        {%- for outcome in problems %}{{ result_row(outcome) }}{% endfor -%}
+        {%- if not fold %}{% for outcome in done %}{{ result_row(outcome) }}{% endfor %}{% endif -%}
+      </tbody>
+    </table>
+    {% if fold -%}
+    <details class="ha-bulk-result__more" data-testid="bulk-result-more">
+      <summary>{{ icon('chevron-right', 'ha-icon--sm ha-icon--mirror') }}{% trans count=done|length %}Show the {{ count }} done rows{% endtrans %}</summary>
+      <table class="ha-table ha-bulk-result__table" aria-label="{{ _('Done rows') }}">
+        <tbody class="ha-table-body">
+          {%- for outcome in done %}{{ result_row(outcome) }}{% endfor -%}
+        </tbody>
+      </table>
+    </details>
+    {%- endif %}
+  </div>
+
+  <div class="ha-bulk-result__actions">
+    {% if failed_ids -%}
+    <form method="post" action="{{ bulk_endpoint_url }}"
+          hx-post="{{ bulk_endpoint_url }}" hx-target="#bulk-result-region" hx-swap="innerHTML"
+          data-testid="bulk-retry-form" class="ha-bulk-retry">
+      {{ csrf_input() if csrf_input is defined }}
+      {% for pk in failed_ids %}<input type="hidden" name="ids" value="{{ pk }}" />{% endfor %}
+      <button type="submit" class="ha-btn"
+              data-testid="bulk-retry-link">{{ icon('rotate-ccw', 'ha-icon--sm') }}{% trans count=failed_ids|length %}Retry failures ({{ count }}){% endtrans %}</button>
+    </form>
+    {%- endif %}
+    {% if model_name is defined -%}
+    <a class="ha-btn ha-btn--primary" href="{{ url_for(model_name|lower ~ '-list') }}"
+       data-testid="bulk-back-link">{% trans model_name=model_name|capitalize %}Back to {{ model_name }}{% endtrans %}</a>
+    {%- endif %}
+  </div>
 </section>

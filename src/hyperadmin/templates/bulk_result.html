@@ -1,0 +1,20 @@
+{#- Per-row result of a bulk action as a full page (no JavaScript / direct POST).
+    With HTMX the view renders components/bulk_result.html into the list's
+    result region instead. The wrapper keeps the region id so a "Retry
+    failures" submit from this page lands in place. -#}
+{%- extends "base.html" -%}
+{%- from "components/_icons.html" import icon -%}
+
+{%- block title -%}{{ action.label }} | HyperAdmin{%- endblock -%}
+
+{%- block content -%}
+    <nav class="ha-crumbs" aria-label="{{ _('Breadcrumb') }}" data-testid="bulk-breadcrumb">
+        <ol>
+            <li><a href="{{ url_for(model_name|lower ~ '-list') }}">{{ model_name|capitalize }}</a>{{ icon('chevron-right', 'ha-icon--sm ha-icon--mirror') }}</li>
+            <li aria-current="page">{{ action.label }}</li>
+        </ol>
+    </nav>
+    <div id="bulk-result-region" class="ha-card" data-testid="bulk-result-page">
+        {%- include "components/bulk_result.html" -%}
+    </div>
+{%- endblock -%}

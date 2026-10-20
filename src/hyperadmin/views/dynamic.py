@@ -2128,7 +2128,12 @@ class DynamicModelView:
             ),
             "failed_ids": [self.pk.to_str(o.id) for o in outcomes if o.status != "ok"],
         }
-        return self.templates.TemplateResponse(request, "components/bulk_result.html", context)
+        if "hx-request" in request.headers:
+            # Fragment for the list's result region (the toolbar's hx-target).
+            context["is_htmx"] = True
+            return self.templates.TemplateResponse(request, "components/bulk_result.html", context)
+        context["is_htmx"] = False
+        return self.templates.TemplateResponse(request, "bulk_result.html", context)
 
     def _render_bulk_form(
         self,
@@ -2164,7 +2169,18 @@ class DynamicModelView:
                 action_name=action_def.name,
             ),
         }
-        return self.templates.TemplateResponse(request, "components/bulk_form.html", context)
+        if "hx-request" in request.headers:
+            # The parameter step is a dialog: retarget the toolbar's (or the
+            # confirm form's) swap from the result region into the popup slot.
+            context["is_htmx"] = True
+            return self.templates.TemplateResponse(
+                request,
+                "components/bulk_form.html",
+                context,
+                headers={"HX-Retarget": "#ha-popup-root", "HX-Reswap": "innerHTML"},
+            )
+        context["is_htmx"] = False
+        return self.templates.TemplateResponse(request, "bulk_form.html", context)
 
     @_request_scoped
     async def run_bulk_action(self, request: Request, action_name: str) -> Response:

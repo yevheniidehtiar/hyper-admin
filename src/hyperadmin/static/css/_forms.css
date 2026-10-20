@@ -259,3 +259,120 @@ input[type="file"].ha-input {
     padding-block-start: var(--ha-space-1);
   }
 }
+
+/* ==========================================================================
+   Design-system field primitives used by the bulk parameter form (v0.5.5):
+   .ha-field (label, control and message as one column), .ha-errmsg (the
+   message under its control), .ha-req / .ha-opt (required and optional marks)
+   and .ha-check (a checkbox with its accessible name).
+   ========================================================================== */
+
+.ha-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ha-space-1);
+  min-width: 0;
+}
+
+.ha-field > .ha-label {
+  margin-bottom: 0;
+}
+
+.ha-req {
+  color: var(--ha-color-danger-text);
+  margin-inline-start: var(--ha-space-0-5);
+}
+
+.ha-opt {
+  color: var(--ha-color-text-muted);
+  font-weight: var(--ha-font-normal);
+  margin-inline-start: var(--ha-space-1);
+}
+
+.ha-errmsg {
+  display: flex;
+  gap: var(--ha-space-1);
+  align-items: flex-start;
+  margin: var(--ha-space-1) 0 0;
+  font-size: var(--ha-font-size-xs);
+  line-height: 18px;
+  font-weight: var(--ha-font-medium);
+  color: var(--ha-color-danger-text);
+}
+
+.ha-errmsg .ha-icon {
+  flex-shrink: 0;
+}
+
+.ha-check {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ha-space-2);
+  min-height: var(--ha-target-min);
+  min-width: var(--ha-target-min);
+  cursor: pointer;
+}
+
+.ha-check input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--ha-color-primary);
+  cursor: pointer;
+}
+
+/* Bulk parameter step: a dialog with HTMX, a page without it */
+.ha-bulk-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ha-space-4);
+  max-width: 40rem;
+}
+
+.ha-popup-root > .ha-bulk-form {
+  width: min(40rem, 100%);
+  max-width: none;
+}
+
+.ha-bulk-form__title {
+  margin: 0;
+  font-size: 1.25rem;
+  line-height: 28px;
+  font-weight: var(--ha-font-semibold);
+  color: var(--ha-color-text-strong);
+}
+
+.ha-bulk-form__lede {
+  margin: 0;
+  color: var(--ha-color-text);
+}
+
+.ha-bulk-form__ids {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ha-space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ha-bulk-form__ids li {
+  padding: 0 var(--ha-space-2);
+  border-radius: var(--ha-radius-sm);
+  background-color: var(--ha-surface-sunken);
+  font-size: var(--ha-font-size-xs);
+  line-height: 22px;
+}
+
+.ha-bulk-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ha-space-2);
+  justify-content: flex-end;
+  padding-block-start: var(--ha-space-4);
+  border-block-start: var(--ha-border-width) solid var(--ha-color-border-light);
+}
+
+.ha-bulk-form .ha-alert {
+  margin-bottom: 0;
+}
