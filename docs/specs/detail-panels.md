@@ -3,11 +3,13 @@
 | Field | Value |
 |---|---|
 | Author | Claude Code |
-| Status | Draft |
+| Status | Approved |
 | Issue | TBD |
 | Milestone | v0.5.6 — Detail Panels & Filter Library |
 | Created | 2026-05-11 |
-| Last updated | 2026-05-11 |
+| Last updated | 2026-10-20 |
+| Approved by | Yevhenii Dehtiar |
+| Approved on | 2026-10-20 |
 
 ---
 
@@ -37,7 +39,10 @@ register their own panels.
 - One bundled demo: a built-in `PDFStreamPanel` factory that streams a
   static PDF stored in-tree, so the qualification check can exercise the
   streaming path without consumer code.
-- Permission re-check per panel: `view_{model}_panel_{slug}` codename.
+- Permission re-check per panel: `view_{model}_panel_{slug}` codename, checked
+  through the configured `PermissionChecker` (built-in `ModelPermissionChecker`
+  or the `ExternalAuth` bridge's `has_permission`) like every other admin
+  permission, so it works in both auth modes shipped in v0.5.8.
 
 ## Non-Goals
 
@@ -47,6 +52,8 @@ register their own panels.
   own epic (`epic-inline-cell-editing`).
 - Persisted panel ordering per user. The order is whatever the admin author
   declares.
+- Panels on plugin pages. `PanelDef` attaches to a `ModelAdmin` detail page
+  only; plugin pages (`core/plugins.py`) compose their own templates.
 
 ## BDD Scenarios
 
@@ -94,14 +101,23 @@ Touched modules:
 
 ```
 core/panels.py        — NEW: PanelDef dataclass, @panel decorator, registry helper
+panels/               — NEW package: bundled panel factories (pdf_stream_panel),
+                        re-exported from hyperadmin.__init__
 core/options.py       — add panels: list[PanelDef] | None
-views/dynamic.py      — _resolve_panels(), render_panel_view, stream_panel_view, route registration
+views/dynamic.py      — _resolve_panels(), render_panel_view, stream_panel_view
+routing.py            — registers the two panel routes on the admin router
 templates/detail.html — tab strip + content slot
 templates/components/panel_tab_strip.html — NEW
-examples/full-demo/   — bundled PDF in tests/_fixtures/ to drive the streaming demo
+examples/erp/         — registers the bundled pdf_stream_panel on one model; the
+                        PDF fixture lives in tests/_fixtures/
 ```
 
-No new top-level module — `panels` lives under `core/` next to `actions.py`.
+`core/panels.py` holds the domain types next to `actions.py`. The bundled
+factories live in the new `hyperadmin.panels` package (decided at approval),
+which imports `core/` and never the reverse (CONSTITUTION §2). Panel routes
+are registered in `routing.py` like every other model route, so they run
+under `HyperAdminRoute` (auth bridge, CSRF guard, error pages) inside the
+isolated admin sub-app that v0.5.8 made the default.
 
 ### Data Model Changes
 
@@ -115,10 +131,19 @@ class PanelDef:
     handler: Callable[..., Awaitable[Response]]
     icon: str | None = None
     permission: str | None = None   # default derived as f"view_{model}_panel_{slug}"
+    enabled: Callable[[Any], bool] | None = None   # (obj) -> bool; None = always shown
 ```
 
-The `@panel(slug=..., label=...)` decorator marks a `ModelAdmin` method as a
-panel handler with the same semantics as `@action`.
+Panel handlers receive the loaded instance (decided at approval):
+
+```python
+async def handler(self, request: Request, obj: Any) -> Response: ...
+```
+
+The view loads `obj` once — 404 when missing, then the object-permission
+check — before any handler or `enabled` predicate runs, so panels never
+re-fetch. The `@panel(slug=..., label=...)` decorator marks a `ModelAdmin`
+method as a panel handler with the same registration semantics as `@action`.
 
 ### API / Protocol Changes
 
@@ -126,29 +151,44 @@ panel handler with the same semantics as `@action`.
 
 ```python
 async def render_panel_view(
-    self, request: Request, item_id: int, slug: str
+    self, request: Request, item_id: Any, slug: str
 ) -> Response: ...
 
 async def stream_panel_view(
-    self, request: Request, item_id: int, slug: str
+    self, request: Request, item_id: Any, slug: str
 ) -> Response: ...
 ```
 
-Routes:
+`item_id` is `Any`: the route uses the model's primary-key convertor
+(`{item_id:<pk convertor>}`, BYOA SDD A.5), so natural keys work.
+
+Routes (registered in `routing.py` on the admin router, after the literal
+routes):
 
 ```
-GET /{model}/{id}/panels/{slug}          → render_panel_view (HTML fragment)
-GET /{model}/{id}/panels/{slug}/stream   → stream_panel_view (binary stream)
+GET {prefix}/{model}/{item_id}/panels/{slug}          → render_panel_view   name: {model}-panel
+GET {prefix}/{model}/{item_id}/panels/{slug}/stream   → stream_panel_view   name: {model}-panel-stream
 ```
+
+Templates and views build these URLs with `url_for` / `admin_url_for`
+(`hyperadmin:{model}-panel` in isolated mode, plain name in router mode),
+never from a hard-coded `/admin/...` prefix.
 
 The render view inspects the handler's return type. If the handler returns a
 `StreamingResponse`, the rendered fragment is `<iframe src=".../stream">` and
 the actual stream is served from the dedicated `/stream` sub-route on demand.
 
-`PDFStreamPanel` factory (bundled):
+`pdf_stream_panel` factory (bundled in `hyperadmin.panels`, re-exported from
+`hyperadmin.__init__`):
 
 ```python
-def pdf_stream_panel(*, slug: str, label: str, path_resolver: Callable[[Any], Path]) -> PanelDef: ...
+def pdf_stream_panel(
+    *,
+    slug: str,
+    label: str,
+    path_resolver: Callable[[Any], Path],
+    enabled: Callable[[Any], bool] | None = None,
+) -> PanelDef: ...
 ```
 
 `path_resolver(instance) -> Path` returns the on-disk path; the factory wraps
@@ -166,7 +206,8 @@ existing `detail.html` renders unchanged — no tab strip, no extra routes.
 |---|---|
 | Duplicate slug at registration | `ValueError("duplicate panel slug 'x'")` |
 | Slug not in registry | 404 with `"Unknown panel"` |
-| Handler raises HTTPException | propagate; HTMX swap shows the error fragment |
+| Handler raises HTTPException | propagate; `HyperAdminRoute` renders 403/404 inside the admin layout for browsers (JSON for API callers); the HTMX swap shows that fragment |
+| `enabled(obj)` returns False | tab omitted from the strip; a direct GET on the panel URL returns 404 |
 | Handler returns non-`Response` | `TypeError` raised at request time, logged |
 | Streaming handler returns wrong media type | accepted; the iframe wrapper hands display to the browser |
 | Permission codename missing | derived default applied silently |
@@ -182,9 +223,16 @@ the new tab markup.
 
 ## Open Questions
 
-- [ ] Should panel handlers receive the loaded instance (`obj: Any`) directly, or only `request, item_id` like `@action`? Proposal: pass `obj` — saves every panel re-fetching, matches Django's `ModelAdmin.get_object()` ergonomics.
-- [ ] Should the bundled `PDFStreamPanel` ship in `hyperadmin.panels.streams` or directly under `hyperadmin`? Proposal: `hyperadmin.panels` namespace (new package re-exported from `hyperadmin.__init__`).
-- [ ] Should panels support an `enabled` predicate `(obj) -> bool` so a tab disappears for instances in the wrong state (e.g. an unpaid order has no Invoice tab)? Proposal: yes — `PanelDef.enabled: Callable[[Any], bool] | None`.
+All open questions resolved at approval (2026-10-20):
+
+- [x] Panel handlers receive the loaded instance: `handler(self, request, obj)`.
+  Saves every panel re-fetching and matches Django's `ModelAdmin.get_object()`
+  ergonomics.
+- [x] The bundled `pdf_stream_panel` ships in a new `hyperadmin.panels` package,
+  re-exported from `hyperadmin.__init__`.
+- [x] `PanelDef.enabled: Callable[[Any], bool] | None` is added so a tab
+  disappears for instances in the wrong state (e.g. an unpaid order has no
+  Invoice tab).
 
 ## Decision Log
 
@@ -193,4 +241,8 @@ the new tab markup.
 | Lazy-load each tab via HTMX | Detail page stays fast; panel handlers can do expensive work without blocking initial render | Render all panels server-side up front; preload only the first |
 | Streaming bodies live on a separate `/stream` sub-route, iframed | Browsers' Content-Disposition handling assumes a top-level navigation or iframe; HTMX swap of a binary body is ambiguous | Inline the stream in the swap (fails for binary); force download (breaks "Invoice in-tab" UX) |
 | Default permission codename `view_{model}_panel_{slug}` | Lines up with object-permission machinery from v0.5.1 | Free-form perm string per panel; no perm by default (insecure) |
-| Bundle one demo factory only (`PDFStreamPanel`) | Just enough to make the qualification check executable; History/Transitions live downstream | Ship History/Transitions stubs (out of scope per plan); ship no factory (fails the check) |
+| Bundle one demo factory only (`pdf_stream_panel`) | Just enough to make the qualification check executable; History/Transitions live downstream | Ship History/Transitions stubs (out of scope per plan); ship no factory (fails the check) |
+| Handlers receive `obj` (approved) | One fetch per detail request; the object-permission check runs once, before any panel | `(request, item_id)` like `@action` (every panel re-fetches and re-checks) |
+| Factories in `hyperadmin.panels`, re-exported from `hyperadmin.__init__` (approved) | Keeps `core/` free of streaming helpers; consumers import one name | `hyperadmin.panels.streams` (deeper path for one factory); directly under `hyperadmin` (clutters the root) |
+| `PanelDef.enabled` predicate (approved) | Instance-scoped tabs without a custom handler returning an empty body | Always show the tab (confusing empty panels); handler-side 404 only (tab still rendered) |
+| Panel routes registered in `routing.py` under `HyperAdminRoute` (alignment with v0.5.8) | Same auth bridge, CSRF guard, error pages and `hyperadmin:` route names as every model route | Register from `views/dynamic.py` (bypasses the pk convertor and route class) |

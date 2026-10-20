@@ -3,19 +3,22 @@
 | Field | Value |
 |---|---|
 | Author | Claude Code |
-| Status | Draft |
+| Status | Approved |
 | Issue | TBD |
 | Milestone | v0.5.6 — Detail Panels & Filter Library |
 | Created | 2026-05-11 |
-| Last updated | 2026-05-11 |
+| Last updated | 2026-10-20 |
+| Approved by | Yevhenii Dehtiar |
+| Approved on | 2026-10-20 |
 
 ---
 
 ## Problem
 
-`AdminOptions.list_filter` (`src/hyperadmin/core/options.py:52`) accepts a flat
-`list[str]` of field names. The renderer compiles each into a generic exact-
-match `<select>`. Real admin work requires richer filter kinds — date ranges,
+`AdminOptions.list_filter` (`src/hyperadmin/core/options.py:75`) accepts a flat
+`list[str]` of field names. The renderer compiles each into a typed, whitelisted
+`FilterCondition` (`core/filtering.py`, v0.5.8) rendered as a generic exact-match
+`<select>` or range input. Real admin work requires richer filter kinds — date ranges,
 multi-FK, multi-choice, booleans, "rows owned by me", and "current period"
 defaults — plus URL-shareable state and per-user named saved views. Today,
 consumers fork the list view to add any of this.
@@ -37,6 +40,9 @@ consumers fork the list view to add any of this.
   saved views, and load one with a single click.
 - Permission-aware: `IsOwnerFilter` reuses `ObjectPermissionChecker` from
   v0.5.1 so it honours object-level rules.
+- One filter pipeline: every `FilterDef` compiles down to the typed
+  `FilterCondition` list that v0.5.8 introduced (`core/filtering.py`), so the
+  adapters keep a single whitelisted path from querystring to SQL.
 
 ## Non-Goals
 
@@ -69,10 +75,10 @@ Scenario: applying a filter swaps only the table body
   And   the URL is updated via HX-Push-Url
 
 Scenario: IsOwnerFilter restricts to objects the user owns
-  Given IsOwnerFilter(owner_field="created_by") and the user is alice
+  Given IsOwnerFilter(owner_fields="created_by") and the user is alice
   When  the user toggles "Mine only" and submits
   Then  the request includes ?is_owner=1
-  And   the result rows all have created_by == alice.id
+  And   the result rows all have created_by == alice's user key
 
 Scenario: CurrentPeriodDefault preselects the current month on first load
   Given CurrentPeriodDefault(field="created_at", period="month") and no querystring
@@ -103,6 +109,8 @@ Scenario: another user does not see alice's saved views
 
 ```
 core/options.py            — list_filter type widens to list[FilterDef | str]
+core/filtering.py          — existing (v0.5.8): FilterCondition, parse_filter_params;
+                             every FilterDef compiles down to it
 core/filters_compat.py     — NEW: adapter that wraps legacy strings into FilterDef
 filters/                   — NEW package
   __init__.py              — re-export public filter classes
@@ -113,6 +121,7 @@ filters/                   — NEW package
   boolean.py               — BooleanFilter, IsOwnerFilter
   saved_views.py           — SavedView model + service
 views/dynamic.py           — list_view passes filter sidebar context; saved-views endpoints
+routing.py                 — registers the saved-views routes on the admin router
 templates/components/      — filter_sidebar.html, saved_views.html
 templates/list.html        — sidebar slot
 ```
@@ -130,16 +139,24 @@ New SQLModel table:
 class SavedView(SQLModel, table=True):
     __tablename__ = "hyperadmin_saved_view"
     id: int | None = Field(default=None, primary_key=True)
-    user_id: int = Field(index=True)
+    user_key: str = Field(index=True, max_length=255)
     model: str = Field(index=True, max_length=255)
     name: str = Field(max_length=255)
     querystring: str = Field()
     is_default: bool = Field(default=False)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=utc_now, sa_type=UTCNaiveDateTime)
 ```
 
-Migration ships in `migrations/versions/` (Alembic), forward-only. Existing
-deployments are unaffected until they upgrade.
+`user_key` is the stringified `request.state.user_key` that the v0.5.8 auth
+pipeline sets in both modes (`User.id` with built-in auth, `ExternalAuth.user_key`
+in bridge mode), so saved views work for host users too. Timestamps use
+`core/timezones.utc_now` and the `UTCNaiveDateTime` type, like the auth models.
+
+HyperAdmin ships no migration tool (BYOA SDD C): the table joins the
+`hyperadmin_*` metadata, so `hyperadmin init-db` (or the opt-in DDL step)
+creates it on fresh databases, and hosts that run Alembic pick it up through
+`hyperadmin.auth.metadata()`-style target metadata. Existing deployments are
+unaffected until they add the table.
 
 ### API / Protocol Changes
 
@@ -152,16 +169,27 @@ class FilterDef(Protocol):
     def slug(self) -> str: ...                           # urlsafe key, defaults to field
     def render(self, ctx: FilterRenderContext) -> str: ...
     def parse(self, qs: MultiDict[str, str]) -> dict[str, Any]: ...
-    def apply(self, query: Any, parsed: dict[str, Any]) -> Any: ...
+    def compile(self, parsed: dict[str, Any]) -> list[FilterCondition]: ...
 ```
+
+`compile` returns `FilterCondition` objects (`core/filtering.py`); the adapters
+already turn those into SQL (`adapters/_filter_clause.build_clause`), so a
+filter never touches the query object and the v0.5.8 whitelist still applies.
 
 **New view methods on `DynamicModelView`** (saved views):
 
 ```python
-GET    /{model}/saved-views          → list current user's saved views (JSON or HTML)
-POST   /{model}/saved-views          → create with name + current querystring
-DELETE /{model}/saved-views/{id}     → delete one (must belong to current user)
+GET    {prefix}/{model}/saved-views          → list current user's saved views (JSON or HTML)   name: {model}-saved-views
+POST   {prefix}/{model}/saved-views          → create with name + current querystring          name: {model}-saved-view-create
+DELETE {prefix}/{model}/saved-views/{id}     → delete one (must belong to current user)        name: {model}-saved-view-delete
 ```
+
+The routes are registered in `routing.py` on the admin router, so they run
+under `HyperAdminRoute` inside the isolated sub-app: the auth bridge resolves
+the user, and the CSRF guard (BYOA SDD D.1) checks POST and DELETE — HTMX
+sends the `X-CSRF-Token` header through the `hx-headers` global the base
+layout already sets. Templates build the URLs with `url_for`
+(`hyperadmin:{model}-saved-views` in isolated mode).
 
 Permission check on every endpoint: only the owning user can read/write their
 saved views. Superusers can list everyone's only if `AdminOptions.saved_views_shared = True` (defaults to False — v0.5.6 is per-user).
@@ -181,8 +209,9 @@ saved views. Superusers can list everyone's only if `AdminOptions.saved_views_sh
 | `MultiFKFilter` choice points to deleted row | classifier rebuilds choices on every list render; stale querystring values are filtered out silently |
 | `IsOwnerFilter` with anonymous user | parsing yields `is_owner=False`; filter applies nothing (no leak) |
 | `CurrentPeriodDefault` already overridden by user querystring | default is skipped — explicit user input wins |
-| Saved view name collision per user | uniqueness enforced via DB unique `(user_id, model, name)` |
-| User loads another user's saved-view id | 404 — endpoint scopes to `request.user.id` |
+| Saved view name collision per user | uniqueness enforced via DB unique `(user_key, model, name)` |
+| User loads another user's saved-view id | 404 — endpoint scopes to `request.state.user_key` |
+| Host mounted under a `root_path` | `HX-Push-Url` and the `CurrentPeriodDefault` redirect use the per-request admin path (`admin_base_path`, BYOA SDD C.1), never the static prefix |
 | HTMX request without filters | full list is returned (no filters applied), URL unchanged |
 | Non-HTMX request | full page rendered (sidebar + table) |
 | Filter applied via HX-Push-Url then user refreshes | querystring fully reconstructs the result |
@@ -190,17 +219,25 @@ saved views. Superusers can list everyone's only if `AdminOptions.saved_views_sh
 ## Migration & Backward Compatibility
 
 - `list_filter` type widened; old `list[str]` configs keep working.
-- New table `hyperadmin_saved_view` added via Alembic migration.
-- `AdminOptions.saved_views_enabled` defaults True; consumers who don't run
-  Alembic must set it False to avoid 500s on the new endpoints — documented
+- New table `hyperadmin_saved_view`, created by `hyperadmin init-db` / the
+  opt-in DDL step on fresh databases; existing deployments add it with their
+  own migration tool.
+- `AdminOptions.saved_views_enabled` defaults True; consumers who don't create
+  the table must set it False to avoid 500s on the new endpoints — documented
   in the upgrade guide.
 - No `__init__.py` removals; only additions (`hyperadmin.filters.*` re-exports).
 
 ## Open Questions
 
-- [ ] Should `IsOwnerFilter` accept multiple owner fields (e.g. `created_by` *or* `assigned_to`)? Proposal: yes — `owner_fields: list[str] | str`. Single field is the common case.
-- [ ] Should `CurrentPeriodDefault` issue a redirect (HX-Push-Url) or just emit the right hidden inputs on first load? Proposal: redirect, so the URL is always source-of-truth.
-- [ ] Should the saved-view sidebar be HTMX-loaded or rendered with the page? Proposal: rendered with the page — small payload, avoids extra round-trip on every list view.
+All open questions resolved at approval (2026-10-20):
+
+- [x] `IsOwnerFilter(owner_fields: list[str] | str)` accepts one or several
+  owner fields (e.g. `created_by` *or* `assigned_to`); a single field stays the
+  common case.
+- [x] `CurrentPeriodDefault` redirects with `HX-Push-Url` on first load, so the
+  URL is always the source of truth.
+- [x] The saved-views sidebar is rendered with the page (no HTMX load): small
+  payload, no extra round-trip on every list view.
 
 ## Decision Log
 
@@ -211,3 +248,8 @@ saved views. Superusers can list everyone's only if `AdminOptions.saved_views_sh
 | Per-user saved views in v0.5.6 | Smallest scope that satisfies the H12 acceptance check | Cross-user shared views (out of scope; opens permission model questions) |
 | HTMX swap of `<tbody>` (not full list) | Filter sidebar stays stable, mobile keeps scroll position | OOB swap of full list (more bytes; flashes the sidebar) |
 | Legacy `list[str]` retained | Avoids a breaking change in `AdminOptions` | Force migration to `FilterDef` (semver-major) |
+| `IsOwnerFilter(owner_fields=...)` accepts one or many fields (approved) | "Mine" often means created *or* assigned; a list costs nothing for the single-field case | Single `owner_field` only (consumers subclass for the OR case) |
+| `CurrentPeriodDefault` redirects with `HX-Push-Url` (approved) | Querystring stays the single source of truth; refresh and share links behave the same as a manual filter | Emit hidden inputs on first load (URL lies about the applied filter) |
+| Saved-views sidebar rendered with the page (approved) | A few rows per user; one request instead of two per list view | HTMX-load the sidebar (extra round-trip, flashes on every navigation) |
+| `FilterDef.compile` returns `FilterCondition` lists (alignment with v0.5.8) | Adapters already consume `FilterCondition`; keeps the typed whitelist as the only path to SQL | `apply(query)` hook that mutates the adapter query (bypasses the whitelist) |
+| Saved views keyed by `request.state.user_key` (alignment with v0.5.8) | Works for host users in `ExternalAuth` bridge mode, where there is no `hyperadmin_user` row | Integer `user_id` FK to the built-in user table (breaks bridge mode) |
