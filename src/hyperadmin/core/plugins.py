@@ -4,7 +4,7 @@ Plugins are discovered through the ``hyperadmin.plugins`` entry-point group. Eac
 plugin's ``on_register(admin)`` contributes UI seams (pages, nav entries, template
 dirs, a static dir, permission codenames) through the registry's ``add_*`` methods;
 the registry only *collects* them. Mounting, Jinja wiring, sidebar rendering and
-permission sync happen in ``Admin`` (later phase), so this module stays a leaf:
+permission sync happen in ``Admin.mount()`` via ``plugin_wiring``, so this module stays a leaf:
 no HTTP, no ORM, no imports from ``views/``, ``adapters/`` or ``auth/``.
 """
 
@@ -167,6 +167,21 @@ class PluginRegistry:
         deterministic; a later entry point reusing a name is skipped.
         """
         registry = cls()
+        registry.load_entry_points(admin=admin, disabled=disabled, settings=settings)
+        return registry
+
+    def load_entry_points(
+        self,
+        *,
+        admin: Any,
+        disabled: Iterable[str] = (),
+        settings: Mapping[str, Mapping[str, Any]] | None = None,
+    ) -> None:
+        """Like :meth:`discover`, into this registry.
+
+        ``Admin`` assigns ``admin.plugins`` first and then loads into it, so a
+        plugin's ``on_register`` can call ``admin.plugins.add_*``.
+        """
         skip = set(disabled) | parse_disabled_env(os.environ.get(DISABLED_PLUGINS_ENV))
         settings = settings or {}
         eps = sorted(
@@ -185,13 +200,12 @@ class PluginRegistry:
                 continue
             seen[ep.name] = ep.value
             if ep.name in skip:
-                registry._skipped[ep.name] = "disabled"
+                self._skipped[ep.name] = "disabled"
                 continue
-            plugin = registry._load(ep)
+            plugin = self._load(ep)
             if plugin is None:
                 continue
-            registry.register(plugin, admin=admin, settings=settings.get(ep.name), origin=ep.value)
-        return registry
+            self.register(plugin, admin=admin, settings=settings.get(ep.name), origin=ep.value)
 
     def _load(self, ep: EntryPoint) -> Plugin | None:
         try:

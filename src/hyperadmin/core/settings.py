@@ -149,6 +149,10 @@ class HyperAdminSettings(BaseSettings):
     # ── Discovery ─────────────────────────────────────────────────────────────
     auto_discover: bool = False
     discover_apps: list[str] = Field(default_factory=list)
+    #: Load ``hyperadmin.plugins`` entry points when the ``Admin`` is built. ``False``
+    #: skips discovery entirely; plugins can still be registered by hand with
+    #: ``admin.plugins.register(plugin, admin=admin)`` before ``mount()``.
+    plugins_enabled: bool = True
 
     # ── Templates ─────────────────────────────────────────────────────────────
     template_dirs: list[str] = Field(default_factory=list)

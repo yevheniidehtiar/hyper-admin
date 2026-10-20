@@ -43,6 +43,36 @@
             {%- endif -%}
             {%- endfor -%}
         </ul>
+        {#- Plugin sections (plugin-registry SDD): after the models, same permission rule. -#}
+        {%- for section in plugin_nav | default([]) -%}
+        {%- set visible_items = [] -%}
+        {%- for item in section['items'] -%}
+        {%- if not item.permission or user_permissions is none or item.permission in user_permissions -%}
+        {%- if visible_items.append(item) -%}{%- endif -%}
+        {%- endif -%}
+        {%- endfor -%}
+        {%- if visible_items -%}
+        <h3 class="ha-sidebar-section-title">{{ section.title or _("Plugins") }}</h3>
+        <ul class="ha-sidebar-nav">
+            {%- for item in visible_items -%}
+            <li>
+                <a href="{{ admin_prefix }}{{ item.url }}"
+                   class="ha-sidebar-link"
+                   data-testid="{{ item.testid }}"
+                   @click="sidebarOpen = false"{% if request.url.path == admin_prefix ~ item.url %}
+                   aria-current="page"{% endif %}>
+                    {%- if item.icon and item.icon in icon_paths -%}
+                    {{ icon(item.icon) }}
+                    {%- elif item.icon -%}
+                    <i class="{{ item.icon }}" aria-hidden="true"></i>
+                    {%- endif -%}
+                    <span>{{ item.name }}</span>
+                </a>
+            </li>
+            {%- endfor -%}
+        </ul>
+        {%- endif -%}
+        {%- endfor -%}
         </nav>
     </div>
 </aside>

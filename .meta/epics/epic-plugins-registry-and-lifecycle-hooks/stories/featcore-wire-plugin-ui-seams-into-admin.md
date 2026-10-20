@@ -2,7 +2,7 @@
 type: story
 id: X0iESCETqvl-
 title: "feat(core): wire plugin discovery, pages, static and templates into Admin"
-status: todo
+status: in-review
 priority: high
 assignee: null
 labels:
@@ -14,7 +14,7 @@ estimate: null
 epic_ref:
   id: um1zqB0-b2AZ
 created_at: 2026-10-18T00:00:00Z
-updated_at: 2026-10-18T00:00:00Z
+updated_at: 2026-10-20T00:00:00Z
 ---
 
 ## Summary

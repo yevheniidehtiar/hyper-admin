@@ -213,8 +213,13 @@ core does not import FastAPI). `prefix` defaults to `/<plugin name>`, must match
 Phase 1b mounts each router **inside the admin sub-app** (`admin.asgi_app`, post-#632), so:
 
 - routes use the admin's `HyperAdminRoute` (auth bridge, CSRF, admin-rendered 403/404/409);
-  `Admin` sets `router.route_class` before `include_router`, so plugin authors write plain
-  `APIRouter()` code;
+  `include_router` keeps each route's own class, so `Admin.mount()` **rebuilds** every
+  `APIRoute` / `APIWebSocketRoute` of the page router on the admin route class
+  (`core/plugin_wiring.py`). Plugin authors write plain `APIRouter()` code; routes must be
+  declared directly on the page router — a nested `include_router`, mount or raw Starlette
+  route is logged at ERROR and that page is not mounted;
+- in bridge mode (`auth=ExternalAuth`) plugin routes get the same `get_user` guard as model
+  routes, because they are added to the admin's protected router;
 - routes run behind the admin session — the request carries the admin user exactly like model
   views do; plugins enforce their own codenames with the admin's permission checker;
 - route names join the `hyperadmin:` namespace, e.g. `url_for("hyperadmin:reports-index")`.
@@ -226,6 +231,8 @@ Phase 1b mounts each router **inside the admin sub-app** (`admin.asgi_app`, post
 
 `add_nav_entry(self, label=, url_name=, icon=, permission=, section=, order=, url_params=)`.
 `url_name` is a route name in the `hyperadmin:` namespace (usually the plugin's own page);
+`url_name` is resolved once at `mount()`; an entry naming no route is logged at ERROR and
+left out. Each link gets `data-testid="sidebar-plugin-<plugin>-<url_name>"`.
 `icon` uses the admin's icon set names; `permission` is a codename the user must hold for the
 entry to render (entry hidden otherwise; the page still enforces it); `section` groups
 entries under a heading (`None` → a "Plugins" section); entries are ordered by
@@ -305,7 +312,15 @@ Admin(
 ```
 
 `HYPERADMIN_DISABLED_PLUGINS=foo,bar` is unioned with `disabled_plugins` — an env-disable
-cannot be re-enabled in code.
+cannot be re-enabled in code. `HyperAdminSettings.plugins_enabled = False`
+(`HYPERADMIN_PLUGINS_ENABLED=false`) skips entry-point discovery entirely; a plugin can
+still be registered by hand with `admin.plugins.register(plugin, admin=admin)` before
+`mount()`, which is when every seam is applied.
+
+Plugin codenames are synced by `PermissionSyncService.sync_codenames` with
+`content_type="plugin:<name>"`; a custom `PermissionRegistry` without that method only
+syncs model permissions. In bridge mode there is no `Permission` table: plugins check their
+codenames through `admin.permission_checker`, as views do.
 
 ### Data Model Changes
 

@@ -15,6 +15,14 @@ from hyperadmin.core.introspection import (
     infer_search_fields,
 )
 from hyperadmin.core.lifecycle import Lifecycle, StartupGuardMiddleware
+from hyperadmin.core.plugin_wiring import (
+    build_plugin_routes,
+    extend_template_loader,
+    mount_plugin_static,
+    plugin_permission_rows,
+    resolve_plugin_nav,
+)
+from hyperadmin.core.plugins import PluginRegistry
 from hyperadmin.core.settings import HyperAdminSettings
 from hyperadmin.core.storage_paths import storage_root
 from hyperadmin.discover import discover_admin_modules
@@ -23,6 +31,7 @@ from hyperadmin.realtime.sse import make_sse_handler
 from hyperadmin.realtime.ws import make_ws_handler
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable, Mapping
     from contextlib import AbstractAsyncContextManager
 
     from fastapi import params
@@ -78,6 +87,8 @@ class Admin:
         *,
         session_factory: "SessionFactory | None" = None,
         auth: "ExternalAuth | None" = None,
+        disabled_plugins: "Iterable[str]" = (),
+        plugin_settings: "Mapping[str, Mapping[str, Any]] | None" = None,
     ) -> None:
         """Initialise HyperAdmin and attach it to a FastAPI application.
 
@@ -113,6 +124,11 @@ class Admin:
                 built-in session, login or ``hyperadmin_*`` table is used.
                 Mutually exclusive with ``auth_backend`` and ``otp_service``.
                 See SDD B.3.
+            disabled_plugins: Names of ``hyperadmin.plugins`` entry points not to
+                load; unioned with ``HYPERADMIN_DISABLED_PLUGINS``.
+            plugin_settings: Raw settings per plugin name, validated into each
+                plugin's ``settings_model`` before its ``on_register``. See
+                ``docs/specs/plugin-registry.md``.
 
         Raises:
             ValueError: ``auth`` is combined with ``auth_backend`` or
@@ -179,6 +195,14 @@ class Admin:
 
         if self.settings.discover_apps:
             discover_admin_modules(self.settings.discover_apps)
+
+        # Assigned before loading: a plugin's on_register calls admin.plugins.add_*.
+        # What plugins contribute is applied in mount().
+        self.plugins = PluginRegistry()
+        if self.settings.plugins_enabled:
+            self.plugins.load_entry_points(
+                admin=self, disabled=disabled_plugins, settings=plugin_settings
+            )
 
     # ── Convenience properties ─────────────────────────────────────────────
 
@@ -815,6 +839,45 @@ class Admin:
             model_name = model.__name__.lower()
             models.append((model_name, admin_class))
         await self.permission_registry.sync_permissions(models)
+        await self._sync_plugin_permissions(models)
+
+    async def _sync_plugin_permissions(self, models: "list[tuple[str, Any]]") -> None:
+        """Sync plugin codenames next to the model ones (plugin-registry SDD).
+
+        Needs a registry with ``sync_codenames`` (``PermissionSyncService``); a
+        codename a model already defines is logged and skipped.
+        """
+        sync_codenames = getattr(self.permission_registry, "sync_codenames", None)
+        if not self.plugins.permissions or sync_codenames is None:
+            return
+        from hyperadmin.auth.permissions import generate_default_permissions
+
+        taken = {
+            codename
+            for model_name, admin_class in models
+            for codename, _ in [
+                *generate_default_permissions(model_name),
+                *(getattr(admin_class, "permissions", None) or []),
+            ]
+        }
+        await sync_codenames(plugin_permission_rows(self.plugins, taken=taken))
+
+    def dispatch_hook(self, hook: str, /, **kwargs: Any) -> None:
+        """Fire a plugin lifecycle hook with ``admin=self`` (errors are logged, not raised)."""
+        self.plugins.dispatch_hook(hook, admin=self, **kwargs)
+
+    def _apply_plugins(self) -> None:
+        """Add plugin pages after the model routes, plugin templates and sidebar entries."""
+        from hyperadmin.core.registry import site
+
+        model_slugs = {model.__name__.lower() for model in site._registry}
+        self.router.routes.extend(
+            build_plugin_routes(
+                self.plugins, route_class=self.router.route_class, reserved=model_slugs
+            )
+        )
+        extend_template_loader(self.templates.env, self.plugins)
+        self.templates.env.globals["plugin_nav"] = resolve_plugin_nav(self.plugins, self.router)
 
     def _auto_register_models(self) -> None:
         """Auto-register discovered SQLModel models with smart defaults.
@@ -1026,6 +1089,7 @@ class Admin:
         self._register_locale_route(path)
         self._register_realtime_routes()
         self._register_views()
+        self._apply_plugins()
         self.templates.env.globals["admin_prefix"] = admin_prefix
         # Per-request override of the static global (SDD C.1): under a host
         # root_path, "{{ admin_prefix }}/..." links must carry it too.
@@ -1061,6 +1125,7 @@ class Admin:
         # request.app.state keep working under the admin prefix.
         sub_app.dependency_overrides = self.app.dependency_overrides
         sub_app.state = self.app.state
+        mount_plugin_static(sub_app, self.plugins)
         sub_app.mount("/static", StaticFiles(directory=_STATIC_DIR), name="static")
         sub_app.include_router(
             self.router, tags=["HyperAdmin"], dependencies=self._protected_dependencies()
@@ -1083,6 +1148,7 @@ class Admin:
         """Legacy router mode: admin routes and middleware live on the host app."""
         from hyperadmin.views.urls import AdminScopeMiddleware
 
+        mount_plugin_static(self.app, self.plugins)
         self.app.mount("/static", StaticFiles(directory=_STATIC_DIR), name="static")
         self.app.include_router(
             self.router,
