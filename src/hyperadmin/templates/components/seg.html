@@ -1,0 +1,38 @@
+{#-
+    Segmented control (design system: Chart period switch, ReportPage group-by).
+
+    Usage:
+        {%- from "components/seg.html" import seg -%}
+        {{ seg(options, label=_('Period'), testid='chart-period') }}
+        {{ seg(options, name='period', labelledby='p-l', testid='report-period') }}
+
+    options: a list of {value, label, selected, href, attrs}.
+      - With `name`, each option is a submit button (name/value) carrying
+        aria-pressed, so the control posts its GET form without JavaScript.
+      - Without `name`, each option is a link to `href` (or `?<param>=<value>`)
+        carrying aria-current on the selected one; pass `attrs` (e.g. hx-get)
+        to upgrade it.
+    Each option gets data-testid="<testid>-<value>" when `testid` is given.
+-#}
+{%- macro seg(options, name=None, label=None, labelledby=None, describedby=None, testid=None, param=None, class='') -%}
+<div class="ha-seg{{ ' ' ~ class if class }}" role="group"
+     {%- if labelledby %} aria-labelledby="{{ labelledby }}"{% elif label %} aria-label="{{ label }}"{% endif %}
+     {%- if describedby %} aria-describedby="{{ describedby }}"{% endif %}
+     {%- if testid %} data-testid="{{ testid }}"{% endif %}>
+    {%- for option in options -%}
+    {%- set value = option.value | default(option.label) -%}
+    {%- set selected = option.selected | default(false) -%}
+    {%- set attrs = option.attrs | default({}) -%}
+    {%- if name %}
+    <button type="submit" name="{{ name }}" value="{{ value }}" aria-pressed="{{ 'true' if selected else 'false' }}"
+            {%- if testid %} data-testid="{{ testid }}-{{ value }}"{% endif %}
+            {%- for k, v in attrs.items() %} {{ k }}="{{ v }}"{% endfor %}>{{ option.label }}</button>
+    {%- else %}
+    <a href="{{ option.href if option.href else '?' ~ (param or 'period') ~ '=' ~ value }}"
+       {%- if selected %} aria-current="true"{% endif %}
+       {%- if testid %} data-testid="{{ testid }}-{{ value }}"{% endif %}
+       {%- for k, v in attrs.items() %} {{ k }}="{{ v }}"{% endfor %}>{{ option.label }}</a>
+    {%- endif %}
+    {%- endfor %}
+</div>
+{%- endmacro -%}

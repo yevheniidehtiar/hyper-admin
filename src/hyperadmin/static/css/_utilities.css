@@ -69,6 +69,12 @@
   white-space: nowrap;
 }
 
+/* Keyboard users focus the cell (tabindex="0") and the full value unfolds. */
+.ha-trunc:focus-visible {
+  white-space: normal;
+  overflow: visible;
+}
+
 .ha-mb-4 {
   margin-bottom: var(--ha-space-4);
 }

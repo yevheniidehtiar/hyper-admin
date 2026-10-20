@@ -35,6 +35,14 @@
 @import "_inline-cell.css"   layer(components);
 @import "_theme-toggle.css"  layer(components);
 @import "_realtime.css"      layer(components);
+@import "_popup.css"         layer(components);
+@import "_menu.css"          layer(components);
+@import "_popover.css"       layer(components);
+@import "_banner.css"        layer(components);
+@import "_progress.css"      layer(components);
+@import "_seg.css"           layer(components);
+@import "_sticky.css"        layer(components);
+@import "_pill.css"          layer(components);
 @import "_utilities.css"     layer(utilities);
 @import "_accessibility.css" layer(accessibility);
 @import "_responsive.css"    layer(responsive);

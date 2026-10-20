@@ -7,6 +7,7 @@
 {{- super() }}
 <link rel="stylesheet" href="{{ url_for('static', path='/css/_autocomplete.css') }}">
 <script src="{{ url_for('static', path='/js/autocomplete.js') }}" defer></script>
+<script src="{{ url_for('static', path='/js/primitives.js') }}" defer></script>
 <div id="ha-popup-root" class="ha-popup-root" role="dialog" aria-modal="true"
      aria-label="{{ _('Create') }}" data-testid="popup-root"></div>
 {%- endblock %}

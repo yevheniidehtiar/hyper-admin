@@ -1,0 +1,161 @@
+/* ==========================================================================
+   Progress (design system: components/Progress)
+   How far a long task has got: a labelled track whose bar width comes from
+   style="--value: 48%", rendered by the server and re-rendered over HTMX.
+   Each state has a word and an icon, not only a colour.
+   ========================================================================== */
+
+.ha-progress {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ha-space-1);
+  min-inline-size: 0;
+}
+
+.ha-progress__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0 var(--ha-space-3);
+  font-size: 0.8125rem;
+}
+
+.ha-progress__label {
+  font-weight: var(--ha-font-medium);
+  color: var(--ha-color-text-strong);
+}
+
+.ha-progress__value {
+  color: var(--ha-color-text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ha-progress__track {
+  position: relative;
+  block-size: 8px;
+  border-radius: var(--ha-radius-pill);
+  background-color: var(--ha-surface-sunken);
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px var(--ha-color-border-light);
+}
+
+.ha-progress--sm .ha-progress__track {
+  block-size: 4px;
+}
+
+/* fills from the inline start, so from the right in RTL */
+.ha-progress__bar {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  inline-size: var(--value, 0%);
+  border-radius: inherit;
+  background-color: var(--ha-color-primary);
+  transition: inline-size 250ms ease;
+}
+
+.ha-progress--indeterminate .ha-progress__bar {
+  inline-size: 40%;
+  animation: ha-indeterminate 1.4s ease-in-out infinite;
+}
+
+@keyframes ha-indeterminate {
+  0% {
+    inset-inline-start: -40%;
+  }
+
+  100% {
+    inset-inline-start: 100%;
+  }
+}
+
+.ha-progress--success .ha-progress__bar {
+  background-color: var(--ha-color-success-text);
+}
+
+.ha-progress--warning .ha-progress__bar {
+  background-color: var(--ha-color-warning-text);
+}
+
+.ha-progress--danger .ha-progress__bar {
+  background-color: var(--ha-color-danger-text);
+}
+
+.ha-progress__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ha-space-1) var(--ha-space-3);
+  font-size: var(--ha-font-size-xs);
+  line-height: 18px;
+  color: var(--ha-color-text-muted);
+}
+
+.ha-progress__foot .ha-btn {
+  margin-inline-start: auto;
+}
+
+.ha-progress__status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ha-space-1);
+  font-weight: var(--ha-font-medium);
+}
+
+.ha-progress--success .ha-progress__status {
+  color: var(--ha-color-success-text);
+}
+
+.ha-progress--warning .ha-progress__status {
+  color: var(--ha-color-warning-text);
+}
+
+.ha-progress--danger .ha-progress__status {
+  color: var(--ha-color-danger-text);
+}
+
+/* multi-stage jobs: one segment per step */
+.ha-progress__segments {
+  display: flex;
+  gap: 2px;
+  block-size: 8px;
+}
+
+.ha-progress__segments > span {
+  flex: 1;
+  border-radius: 2px;
+  background-color: var(--ha-surface-sunken);
+  box-shadow: inset 0 0 0 1px var(--ha-color-border-light);
+}
+
+.ha-progress__segments > .is-done {
+  background-color: var(--ha-color-primary);
+  box-shadow: none;
+}
+
+.ha-progress__segments > .is-failed {
+  background-color: var(--ha-color-danger-text);
+  box-shadow: none;
+}
+
+/* "Exporting… 40%" inside a busy button */
+.ha-btn__progress {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ha-progress--indeterminate .ha-progress__bar {
+    animation: none;
+    inset-inline-start: 30%;
+  }
+}
+
+@media (forced-colors: active) {
+  .ha-progress__bar,
+  .ha-progress__segments > .is-done {
+    background-color: Highlight;
+    forced-color-adjust: none;
+  }
+}

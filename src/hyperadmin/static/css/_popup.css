@@ -1,0 +1,65 @@
+/* ==========================================================================
+   Shared popup layer (design system: Menu, Popover, Combobox)
+   A <details class="ha-layer"> whose <summary> is the trigger and whose
+   .ha-popup child floats under it. It opens, closes and submits without
+   JavaScript; static/js/primitives.js adds Esc, arrow keys, click-outside,
+   one-open-at-a-time and the viewport flip (--up, --end).
+   ========================================================================== */
+
+.ha-layer {
+  position: relative;
+  display: inline-block;
+}
+
+.ha-layer--block {
+  display: block;
+}
+
+.ha-popup {
+  position: absolute;
+  z-index: var(--ha-z-popover);
+  inset-block-start: calc(100% + var(--ha-space-1));
+  inset-inline-start: 0;
+}
+
+.ha-popup--end {
+  inset-inline-start: auto;
+  inset-inline-end: 0;
+}
+
+.ha-popup--up {
+  inset-block-start: auto;
+  inset-block-end: calc(100% + var(--ha-space-1));
+}
+
+/* specimens and print */
+.ha-popup--static {
+  position: static;
+  margin-block-start: var(--ha-space-1);
+}
+
+.ha-popup--static.ha-menu,
+.ha-popup--static .ha-listbox {
+  max-block-size: none;
+}
+
+details.ha-layer > summary {
+  list-style: none;
+}
+
+details.ha-layer > summary::-webkit-details-marker {
+  display: none;
+}
+
+details.ha-layer:not([open]) > .ha-popup {
+  display: none;
+}
+
+summary.ha-btn[aria-expanded="true"],
+details[open] > summary.ha-btn {
+  background-color: var(--ha-surface-hover);
+}
+
+details[open] > summary.ha-btn--primary {
+  background-color: var(--ha-color-primary-hover);
+}

@@ -1,0 +1,72 @@
+{#-
+    Progress (design system: components/Progress): how far a long task has got.
+    The server renders it and re-renders it over HTMX polling or a realtime
+    event until the job ends.
+
+    Usage:
+        {%- from "components/progress.html" import progress -%}
+        {{ progress(_('Exporting invoices'), value=12, max=25, value_text='48% · 12 of 25 pages', testid='progress-export') }}
+        {{ progress(_('Preparing export…'), testid='progress-export') }}                       (indeterminate)
+        {{ progress(_('Export ready'), value=100, state='success', status=_('Finished in 14 s'),
+                    actions=[{'label': _('Download CSV'), 'href': url, 'primary': True}]) }}
+        {{ progress(_('Importing contacts'), steps=5, step=3, value_text=_('Step 3 of 5 · Validating rows')) }}
+        {%- call progress(_('Exporting'), value=40) %}<span>{{ _('About 20 s left') }}</span>{% endcall %}  (extra foot content)
+
+    value=None → indeterminate (no aria-valuenow). state: '' | success | warning | danger.
+    size: md | sm. status: the state in words (with its icon); the caller block
+    and `actions` ({label, href, primary, testid, attrs}) go in the foot.
+    failed_steps: how many of the `steps` segments are marked failed.
+-#}
+{%- from "components/_icons.html" import icon -%}
+
+{%- set progress_icons = {'success': 'circle-check', 'warning': 'triangle-alert', 'danger': 'circle-x'} -%}
+
+{%- macro progress(label, value=None, max=100, value_text='', state='', size='md', status='', actions=[], steps=None, step=0, failed_steps=0, testid=None, id=None) -%}
+{%- set indeterminate = value is none and steps is none -%}
+{%- set pct = (100 * value / max) | round | int if (value is not none and max) else 0 -%}
+{%- set aria_text = value_text or (pct ~ '%' if value is not none else '') -%}
+<div class="ha-progress{{ ' ha-progress--' ~ state if state }}{{ ' ha-progress--sm' if size == 'sm' }}{{ ' ha-progress--indeterminate' if indeterminate }}"
+     {%- if id %} id="{{ id }}"{% endif %}
+     {%- if testid %} data-testid="{{ testid }}"{% endif %}>
+    <div class="ha-progress__head">
+        <span class="ha-progress__label">{{ label }}</span>
+        <span class="ha-progress__value" aria-live="polite">{{ value_text }}</span>
+    </div>
+    {%- if steps is not none %}
+    <div role="progressbar" aria-label="{{ label }}" aria-valuemin="0" aria-valuemax="{{ steps }}" aria-valuenow="{{ step }}"
+         {%- if aria_text %} aria-valuetext="{{ aria_text }}"{% endif %}>
+        <div class="ha-progress__segments" aria-hidden="true">
+            {%- for i in range(steps) -%}
+            <span class="{{ 'is-failed' if (i >= step and i < step + failed_steps) else ('is-done' if i < step) }}"></span>
+            {%- endfor -%}
+        </div>
+    </div>
+    {%- else %}
+    <div class="ha-progress__track" role="progressbar" aria-label="{{ label }}" aria-valuemin="0" aria-valuemax="100"
+         {%- if value is not none %} aria-valuenow="{{ pct }}" aria-valuetext="{{ aria_text }}"{% endif %}>
+        <span class="ha-progress__bar"{% if value is not none %} style="--value: {{ pct }}%"{% endif %}></span>
+    </div>
+    {%- endif %}
+    {%- if status or actions or caller is defined %}
+    <div class="ha-progress__foot">
+        {%- if status %}
+        <span class="ha-progress__status">{% if progress_icons.get(state) %}{{ icon(progress_icons[state], 'ha-icon--sm') }}{% endif %}{{ status }}</span>
+        {%- endif %}
+        {%- if caller is defined %}{{ caller() }}{% endif %}
+        {%- for action in actions %}
+        {%- set attrs = action.attrs | default({}) -%}
+        {%- set action_class = 'ha-btn ha-btn--sm' ~ (' ha-btn--primary' if action.primary) -%}
+        {%- if action.href %}
+        <a class="{{ action_class }}" href="{{ action.href }}"
+           {%- if action.testid %} data-testid="{{ action.testid }}"{% endif %}
+           {%- for k, v in attrs.items() %} {{ k }}="{{ v }}"{% endfor %}>{{ action.label }}</a>
+        {%- else %}
+        <button type="button" class="{{ action_class }}"
+                {%- if action.testid %} data-testid="{{ action.testid }}"{% endif %}
+                {%- for k, v in attrs.items() %} {{ k }}="{{ v }}"{% endfor %}>{{ action.label }}</button>
+        {%- endif %}
+        {%- endfor %}
+    </div>
+    {%- endif %}
+</div>
+{%- endmacro -%}
