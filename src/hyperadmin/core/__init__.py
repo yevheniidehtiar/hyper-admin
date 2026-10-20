@@ -23,6 +23,13 @@ from hyperadmin.core.introspection import (
     infer_search_fields,
 )
 from hyperadmin.core.layouts import FormLayout
+from hyperadmin.core.panels import (
+    PanelDef,
+    collect_panels,
+    panel,
+    panel_permission_codename,
+    resolve_panels,
+)
 from hyperadmin.core.primary_key import DEFAULT_PK, InvalidPrimaryKey, PrimaryKeyInfo
 from hyperadmin.core.timezones import utc_now
 
@@ -45,16 +52,21 @@ __all__ = [
     "ListEnvelope",
     "ObjectPermissionChecker",
     "PaginationMeta",
+    "PanelDef",
     "PrimaryKeyInfo",
     "SelectFieldMeta",
     "action",
     "classify_field",
     "collect_actions",
+    "collect_panels",
     "discover_sqlmodel_models",
     "get_field_label",
     "get_field_metadata",
     "infer_list_display",
     "infer_list_filter",
     "infer_search_fields",
+    "panel",
+    "panel_permission_codename",
+    "resolve_panels",
     "utc_now",
 ]
