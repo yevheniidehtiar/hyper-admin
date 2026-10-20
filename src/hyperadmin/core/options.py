@@ -3,12 +3,13 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from hyperadmin.core.auth import ObjectPermissionChecker
 from hyperadmin.core.fieldsets import FieldsetSpec
 from hyperadmin.core.inlines import InlineModelSpec
 from hyperadmin.core.layouts import FormLayout
+from hyperadmin.core.panels import PanelDef
 
 
 class RelationDependency(BaseModel):
@@ -205,6 +206,34 @@ class AdminOptions(BaseModel):
     ``<select>`` rendering. Set to ``False`` to opt back into the legacy
     widget on a per-model basis.
     """
+    panels: list[PanelDef] | None = None
+    """Detail-page panels rendered as lazily-loaded tabs. See ``docs/specs/detail-panels.md``.
+
+    ``None`` (default) keeps the plain detail page: no tab strip and no panel
+    routes. Slugs must be unique per model, including across ``@panel``
+    methods on the ``ModelAdmin`` (enforced by
+    :func:`hyperadmin.core.panels.resolve_panels` at registration). A panel
+    without an explicit ``permission`` is gated by ``view_{model}_panel_{slug}``.
+
+    Example:
+        ```python
+        AdminOptions(
+            panels=[
+                PanelDef(slug="invoice", label="Invoice", handler=render_invoice),
+            ]
+        )
+        ```
+    """
+
+    @field_validator("panels")
+    @classmethod
+    def _unique_panel_slugs(cls, panels: list[PanelDef] | None) -> list[PanelDef] | None:
+        seen: set[str] = set()
+        for panel_def in panels or ():
+            if panel_def.slug in seen:
+                raise ValueError(f"duplicate panel slug {panel_def.slug!r}")
+            seen.add(panel_def.slug)
+        return panels
 
     def validate_against_model(self, model: type) -> None:
         """Validate options that reference field names against a concrete model.
