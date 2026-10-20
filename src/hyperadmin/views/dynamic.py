@@ -56,8 +56,8 @@ from hyperadmin.views.forms import (
     MultiSelectWidget,
     PydanticForm,
     RelationMultiSelectWidget,
-    RelationSelectWidget,
     field_is_required,
+    relation_widget,
 )
 from hyperadmin.views.htmx import HtmxTemplateResponse
 from hyperadmin.views.template_filters import TIMEZONE_GLOBAL, request_tz
@@ -761,6 +761,8 @@ class DynamicModelView:
         widgets: dict[str, HtmxWidget] = {}
         sv = selected_values or {}
         dependent_fields: dict[str, str] = getattr(self.options, "dependent_fields", {})
+        relation_filters = getattr(self.options, "relation_filters", None) or {}
+        autocomplete = bool(getattr(self.options, "use_autocomplete_widget", False))
 
         # FK-column → relationship-name mapping so that country_id → "country"
         # for get_choices() and the HTMX URL.
@@ -778,7 +780,12 @@ class DynamicModelView:
             # Resolve FK column name to relationship name (e.g. country_id → country)
             rel_name: str = fk_to_rel.get(name) or name
             choices_url = f"/{self._model_name_lower}/choices/{rel_name}"
-            dependent_on = meta.dependent_on or dependent_fields.get(name)
+            dependency = relation_filters.get(name)
+            dependent_on = (
+                meta.dependent_on
+                or dependent_fields.get(name)
+                or (dependency.depends_on if dependency else None)
+            )
             choices: list[ChoiceItem]
             target = self._relation_target_for_field(name)
             if request is not None and not await self._may_view_related(request, target):
@@ -790,23 +797,47 @@ class DynamicModelView:
                     ChoiceItem(value=c["value"], label=c["label"], selected=c["value"] == current)
                     for c in raw_choices
                 ]
+            elif autocomplete:
+                # No preload: keep the stored key(s) selectable until the user searches.
+                choices = self._opaque_selected_choices(target, sv.get(name))
             else:
                 choices = []
-            if meta.multiple:
-                widgets[name] = RelationMultiSelectWidget(
-                    choices_url=choices_url,
-                    choices=choices,
-                    preload=meta.preload,
-                    dependent_on=dependent_on,
+            popup_url = None
+            if autocomplete and request is not None:
+                choices_url = str(
+                    admin_url_for(request, f"{self._model_name_lower}-choices", field_name=rel_name)
                 )
-            else:
-                widgets[name] = RelationSelectWidget(
-                    choices_url=choices_url,
-                    choices=choices,
-                    preload=meta.preload,
-                    dependent_on=dependent_on,
-                )
+                popup_url = await self._popup_url_for(request, target, name)
+            widgets[name] = relation_widget(
+                choices_url=choices_url,
+                choices=choices,
+                preload=meta.preload,
+                multiple=meta.multiple,
+                dependent_on=dependent_on,
+                autocomplete=autocomplete,
+                placeholder=dependency.placeholder if dependency else None,
+                popup_url=popup_url,
+            )
         return widgets
+
+    async def _popup_url_for(self, request: Request, target: Any, field_name: str) -> str | None:
+        """Return the "+" create-popup URL for ``field_name``'s target model, or ``None``.
+
+        Only a model registered with this Admin, whose admin exposes create and
+        whose ``add`` permission the user holds, gets a popup.
+        """
+        if target is None or target is self.model or not self._is_registered(target):
+            return None
+        from starlette.routing import NoMatchFound  # noqa: PLC0415
+
+        target_name = target.__name__.lower()
+        if not await self._has_permission(request, f"add_{target_name}"):
+            return None
+        try:
+            url = admin_url_for(request, f"{target_name}-create-popup")
+        except NoMatchFound:
+            return None
+        return str(url.include_query_params(target=field_name))
 
     @staticmethod
     def _opaque_selected_choices(target: Any, current: Any) -> list[ChoiceItem]:
@@ -1430,11 +1461,22 @@ class DynamicModelView:
 
         # Forward only the declared cascade keys (e.g. country_id=1)
         declared = self._declared_cascade_keys(field_name)
-        extra_filters = {k: v for k, v in request.query_params.items() if k in declared}
+        extra_filters: dict[str, Any] = {
+            k: v for k, v in request.query_params.items() if k in declared
+        }
         ignored = set(request.query_params) - declared - {"q", "limit", "offset"}
         if ignored:
             logger.debug("Ignoring undeclared choices parameters %s", sorted(ignored))
 
+        # relation_display is keyed by the form field (FK column or relationship name).
+        relation_display = getattr(self.options, "relation_display", None) or {}
+        owners = [n for n, rel in self._fk_to_relation().items() if rel == field_name]
+        display_key = next((n for n in [*owners, field_name] if n in relation_display), None)
+        if display_key is not None:
+            # Only when configured: adapters predating ``label_fn`` keep working.
+            extra_filters["label_fn"] = functools.partial(
+                self._resolve_relation_label, target_field=display_key
+            )
         choices = await self.adapter.get_choices(
             field_name, q=q, limit=limit, offset=offset, **extra_filters
         )

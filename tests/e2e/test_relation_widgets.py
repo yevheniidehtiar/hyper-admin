@@ -82,3 +82,38 @@ def test_city_list_shows_entries(page: Page, demo_base_url: str) -> None:
     expect(page.get_by_test_id("list-table")).to_be_visible()
     expect(page.get_by_test_id("list-table")).to_contain_text("London")
     expect(page.get_by_test_id("list-table")).to_contain_text("Paris")
+
+
+def test_city_create_popup_creates_and_selects_country(page: Page, demo_base_url: str) -> None:
+    """Scenario: "+" popup creates the related row and selects it."""
+    # Given the City create form, whose country_id FK targets the registered Country admin
+    page.goto(demo_base_url + "/admin/city/create")
+    expect(page.get_by_test_id("autocomplete-country_id")).to_be_visible()
+
+    # When the user opens the "+" popup and saves a new country
+    page.get_by_test_id("autocomplete-add-country_id").click()
+    popup = page.get_by_test_id("popup-form")
+    expect(popup).to_be_visible()
+    popup.get_by_label("Name").fill("Portugal")
+    page.get_by_test_id("popup-form-submit").click()
+
+    # Then the popup closes and the parent field selects the new country
+    expect(page.get_by_test_id("popup-form")).to_have_count(0)
+    expect(page.get_by_test_id("popup-root")).to_be_hidden()
+    country_select = page.get_by_test_id("autocomplete-select-country_id")
+    selected = country_select.evaluate("el => el.options[el.selectedIndex].text")
+    assert selected == "Portugal"
+
+
+def test_city_autocomplete_search_filters_options(page: Page, demo_base_url: str) -> None:
+    """Scenario: typing in the search input swaps in the matching options."""
+    # Given the City create form
+    page.goto(demo_base_url + "/admin/city/create")
+
+    # When the user types part of a country name
+    page.get_by_test_id("autocomplete-country_id").fill("fra")
+
+    # Then only the matching country is offered
+    options = page.get_by_test_id("autocomplete-select-country_id").locator("option")
+    expect(options).to_have_count(1)
+    expect(options.first).to_have_text("France")

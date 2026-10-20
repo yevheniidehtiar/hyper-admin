@@ -1,5 +1,5 @@
 import builtins
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import func, inspect, or_
@@ -281,6 +281,7 @@ class SQLModelAdapter(BaseAdapter):
         q: str = "",
         limit: int = 50,
         offset: int = 0,
+        label_fn: Callable[[Any], str] | None = None,
         **filters: Any,
     ) -> builtins.list[ChoiceItem]:
         """Return paginated, searchable choices for a relation field.
@@ -341,7 +342,7 @@ class SQLModelAdapter(BaseAdapter):
                 # any key kind (UUIDs become lowercase, hyphenated strings).
                 value=target_pk.to_str(target_pk.value_of(item)),
                 # Never str(item): SQLModel's default __str__ prints every column.
-                label=get_display_name(item),
+                label=label_fn(item) if label_fn else get_display_name(item),
                 selected=False,
             )
             for item in items
