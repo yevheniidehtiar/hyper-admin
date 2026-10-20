@@ -220,9 +220,16 @@ databases add it with their own migration. The column each release adds:
 
 | Since | Table | Column | Alembic operation |
 |---|---|---|---|
-| v0.5.7 | `hyperadmin_groups` | `permissions_version` (permission-matrix version stamp) | `op.add_column("hyperadmin_groups", sa.Column("permissions_version", sa.Integer(), nullable=False, server_default="0"))` |
+| v0.5.7 | `hyperadmin_groups` | `permissions_version` | `op.add_column("hyperadmin_groups", sa.Column("permissions_version", sa.Integer(), nullable=False, server_default="0"))` |
 
 The downgrade is `op.drop_column("hyperadmin_groups", "permissions_version")`.
+
+`permissions_version` is the permission matrix's optimistic-concurrency stamp:
+every grid an operator loads carries the group's current value, and a save is
+only committed (and the stamp bumped, atomically with the permission rows) when
+that value is still current. A stale grid therefore cannot overwrite a newer
+save; it gets a 409 and reloads. Existing groups start at `0`. See
+`docs/specs/permission-matrix-ui.md`.
 
 ## 6. Datetimes and timezones
 

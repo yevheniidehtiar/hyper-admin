@@ -61,10 +61,7 @@ class Group(SQLModel, table=True):
     description: str | None = Field(default=None, max_length=255)
     is_active: bool = Field(default=True)
     created_at: datetime = Field(default_factory=utc_now, sa_type=UTCNaiveDateTime)
-    # Optimistic-concurrency stamp for the permission matrix: bumped on every
-    # successful ``PermissionMatrixService.save_diff`` so a stale grid cannot
-    # overwrite a newer save (docs/specs/permission-matrix-ui.md). Existing
-    # deployments add the column with their own migration tool.
+    # Optimistic-concurrency stamp of the permission matrix; see docs/specs/permission-matrix-ui.md
     permissions_version: int = Field(default=0, sa_column_kwargs={"server_default": "0"})
 
     user_groups: list["UserGroup"] = Relationship(
