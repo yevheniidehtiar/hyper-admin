@@ -17,6 +17,14 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
   `--ha-z-popover` layer token and ten Lucide icons (`ellipsis`, `download`,
   `upload`, `copy`, `mail`, `refresh-cw`, `clock`, `circle-help`,
   `columns-3`, `sparkles`) available through `icon(name)`.
+- **Design system Wave 2 flow designs** (v0.5.4 – v0.5.7): BulkActionFlow,
+  AutocompleteStates, ReportPage with the CrosstabTable, FilterSidebar,
+  SavedViews, PanelStates, PermissionMatrix and ObjectPermissionPopover, each
+  with guidelines (template, view contract, test ids, don'ts), every state in a
+  live preview (light, dark, RTL, compact, 375px) and reference CSS in the
+  "Wave 2" section of `components/bundle.css`. Six more Lucide icons
+  (`bookmark`, `external-link`, `history`, `rotate-ccw`, `shield-check`,
+  `sliders-horizontal`) available through `icon(name)`.
 
 ## [0.5.0a1] - not yet published
 
