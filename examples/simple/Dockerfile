@@ -9,6 +9,9 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 COPY pyproject.toml .
 COPY README.md .
 COPY src/ ./src/
+# First-party plugins are uv workspace members (pyproject [tool.uv.workspace]); `uv sync` fails
+# without them.
+COPY plugins/ ./plugins/
 COPY examples/simple/ ./examples/simple/
 
 # Install the project and dependencies
