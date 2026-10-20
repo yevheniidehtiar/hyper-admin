@@ -57,11 +57,11 @@ class MultiChoiceFilter(FilterDef):
         return self.typed_conditions(binding, {"in": values}) if values else []
 
     def describe(self, parsed: dict[str, Any]) -> str | None:
-        values = parsed.get("in")
+        values: list[str] = parsed.get("in") or []
         if not values:
             return None
         labels = dict(self.options)
-        return ", ".join(labels[value] if value in labels else value for value in values)
+        return ", ".join(labels.get(value, value) for value in values)
 
     def context(self, ctx: FilterRenderContext) -> dict[str, Any]:
         base = super().context(ctx)
