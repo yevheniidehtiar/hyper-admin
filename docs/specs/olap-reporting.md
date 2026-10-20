@@ -174,8 +174,11 @@ GET /admin/reports/{slug}/export.csv   → CSV stream
 GET /admin/reports/{slug}/export.xlsx  → XLSX stream
 ```
 
-Reports are registered via `admin.register_report(ReportClass)` mirroring
-`admin.register(ModelAdmin)`.
+Reports are registered via `hyperadmin_reports.register_report(ReportClass)` before
+`Admin(...)` is built (core must not import the plugin, so there is no
+`admin.register_report`). The `reports` plugin mounts the routes through
+`admin.plugins.add_page`, adds a "Reports" sidebar entry and declares each report's
+`view_report_{slug}` codename with `add_permission` (`docs/specs/plugin-registry.md`).
 
 ### Configuration Changes
 
