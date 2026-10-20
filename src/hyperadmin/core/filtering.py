@@ -35,8 +35,13 @@ from hyperadmin.core.timezones import DateTimeKind, parse_datetime_input
 
 logger = logging.getLogger(__name__)
 
-FilterOp = Literal["exact", "gte", "lte", "in", "isnull"]
-FILTER_OPS: frozenset[str] = frozenset({"exact", "gte", "lte", "in", "isnull"})
+FilterOp = Literal["exact", "gte", "lte", "in", "isnull", "any_of"]
+FILTER_OPS: frozenset[str] = frozenset({"exact", "gte", "lte", "in", "isnull", "any_of"})
+# ``any_of`` is a composite built by library code only (``IsOwnerFilter``):
+# ``value`` is a sequence of ``(field, value)`` pairs OR-ed together. The URL
+# never parses to it, so a querystring cannot reach other columns through it.
+URL_FILTER_OPS: frozenset[str] = FILTER_OPS - {"any_of"}
+_PAIR = 2  # an ``any_of`` value item is a ``(field, value)`` tuple
 FILTER_PARAM_PREFIX = "filter_"
 _OP_SEPARATOR = "__"
 # Caps a membership list (query-string ``__in`` or a direct FilterCondition):
@@ -71,6 +76,13 @@ class FilterCondition:
     def __post_init__(self) -> None:
         if self.op not in FILTER_OPS:
             msg = f"Unknown filter operator {self.op!r}; expected one of {sorted(FILTER_OPS)}"
+            raise ValueError(msg)
+        if self.op == "any_of" and not (
+            isinstance(self.value, Sequence)
+            and self.value
+            and all(isinstance(pair, tuple) and len(pair) == _PAIR for pair in self.value)
+        ):
+            msg = "any_of expects a non-empty sequence of (field, value) pairs"
             raise ValueError(msg)
 
 
@@ -234,7 +246,7 @@ def _iter_params(params: Any) -> Iterable[tuple[str, str]]:
 def _split_key(key: str) -> tuple[str, FilterOp]:
     name = key[len(FILTER_PARAM_PREFIX) :]
     head, sep, tail = name.rpartition(_OP_SEPARATOR)
-    if sep and head and tail in FILTER_OPS:
+    if sep and head and tail in URL_FILTER_OPS:
         return head, tail  # type: ignore[return-value]
     return name, "exact"
 
@@ -333,7 +345,7 @@ def parse_filter_params(
     tz: tzinfo = timezone.utc,
     datetime_kind: DateTimeKindResolver | None = None,
     annotation_of: AnnotationResolver | None = None,
-    ops: Iterable[str] = FILTER_OPS,
+    ops: Iterable[str] = URL_FILTER_OPS,
 ) -> ParsedFilters:
     """Parse ``filter_*`` query parameters into typed conditions.
 
@@ -351,7 +363,8 @@ def parse_filter_params(
             adapter passes the mapped column's ``python_type``). ``None`` from the
             resolver falls back to ``model_fields``, then to ``str``. Needed for
             plain SQLAlchemy models, which have no ``model_fields``.
-        ops: Operators the caller accepts from the URL (default: all). A
+        ops: Operators the caller accepts from the URL (default: all but the
+            composite ``any_of``, which only library code builds). A
             parameter with any other operator is ignored, like a non-whitelisted
             field. An exact date on a datetime field still expands to its
             whole-day bounds.

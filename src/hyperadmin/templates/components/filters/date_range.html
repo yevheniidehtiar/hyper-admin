@@ -1,0 +1,26 @@
+{#- DateRangeFilter group: presets, From/To inputs, inline error (FilterSidebar design). -#}
+{%- from "components/_icons.html" import icon -%}
+{%- set f = filter.field -%}
+<fieldset class="ha-filtergroup{% if error %} has-error{% endif %}" data-testid="filter-{{ f }}">
+    <legend>{{ filter.title }}{% if active %}<a class="ha-filtergroup__clear" href="{{ clear_href }}">{{ _("Clear") }}<span class="ha-sr-only"> {{ filter.title|lower }}</span></a>{% endif %}</legend>
+    {%- if presets %}
+    <div class="ha-presets" role="group" aria-label="{{ filter.title }}: {{ _('quick ranges') }}">
+        {%- for value, label in presets %}
+        <button type="submit" name="{{ f }}__preset" value="{{ value }}" aria-pressed="{{ 'true' if preset == value else 'false' }}">{{ _(label) }}</button>
+        {%- endfor %}
+    </div>
+    {%- endif %}
+    <div class="ha-daterange">
+        <div class="ha-field">
+            <label class="ha-label" for="filter-{{ f }}-gte">{{ _("From") }}</label>
+            <input class="ha-input" type="date" id="filter-{{ f }}-gte" name="{{ f }}__gte" value="{{ gte }}" data-testid="filter-{{ f }}-gte"{% if error %} aria-invalid="true" aria-describedby="filter-{{ filter.slug }}-error"{% endif %}>
+        </div>
+        <div class="ha-field">
+            <label class="ha-label" for="filter-{{ f }}-lte">{{ _("To") }}</label>
+            <input class="ha-input" type="date" id="filter-{{ f }}-lte" name="{{ f }}__lte" value="{{ lte }}" data-testid="filter-{{ f }}-lte"{% if error %} aria-invalid="true" aria-describedby="filter-{{ filter.slug }}-error"{% endif %}>
+        </div>
+    </div>
+    {%- if error %}
+    <p class="ha-errmsg" id="filter-{{ filter.slug }}-error" data-testid="filter-{{ filter.slug }}-error">{{ icon('circle-x', 'ha-icon--sm') }}{{ _(error) }}</p>
+    {%- endif %}
+</fieldset>
