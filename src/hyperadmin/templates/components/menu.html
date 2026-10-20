@@ -1,0 +1,74 @@
+{#-
+    Menu (design system: components/Menu): a disclosure, not an ARIA menu.
+
+    Usage:
+        {%- from "components/menu.html" import menu -%}
+        {{ menu(_('Actions'), items, testid='row-actions') }}
+        {{ menu(_('More actions for %(name)s') % {'name': obj}, items, icon_only=True, align='end') }}
+
+    items: a list of dicts, each one of
+      - {label, href, icon, description, shortcut, danger, testid, attrs}       a link
+      - {label, post_url, icon, description, danger, testid, attrs}             a POST form
+      - {label, pressed, icon, description, testid, attrs}                      a toggle button (aria-pressed)
+      - {label, disabled_reason, icon}                                          disabled, stays focusable
+      - {heading: 'Group'}                                                      a group label
+      - {divider: true}                                                         an <hr>
+    A danger item should come last, after a divider, with a label ending in "…".
+    static/js/primitives.js adds Esc, arrow keys, click-outside and focus return.
+-#}
+{%- from "components/_icons.html" import icon -%}
+
+{%- macro menu(label, items, align='start', icon_only=False, trigger_icon='ellipsis', trigger_class='', testid=None, id=None, aria_label=None) -%}
+{%- set menu_id = id or ('ha-menu-' ~ (label | lower | replace(' ', '-') | replace('…', ''))) -%}
+<details class="ha-layer"{% if testid %} data-testid="{{ testid }}"{% endif %}>
+    <summary class="ha-btn{{ ' ha-btn--icon' if icon_only }}{{ ' ' ~ trigger_class if trigger_class }}" id="{{ menu_id }}-trigger"
+             {%- if icon_only %} aria-label="{{ label }}"{% endif %}>
+        {%- if icon_only -%}
+            {{ icon(trigger_icon) }}
+        {%- else -%}
+            {{ label }}{{ icon('chevron-down', 'ha-icon--sm') }}
+        {%- endif -%}
+    </summary>
+    <div class="ha-popup ha-menu{{ ' ha-popup--end' if align == 'end' }}" aria-label="{{ aria_label or label }}" data-ha-align="{{ align }}">
+        {%- for item in items %}
+        {%- if item.divider %}
+        <hr>
+        {%- elif item.heading %}
+        <div class="ha-menu__label">{{ item.heading }}</div>
+        {%- else %}
+        {%- set attrs = item.attrs | default({}) -%}
+        {%- set item_class = 'ha-menu__item' ~ (' ha-menu__item--danger' if item.danger) -%}
+        {%- set desc_id = menu_id ~ '-desc-' ~ loop.index -%}
+        {%- set body -%}
+            {%- if item.icon %}{{ icon(item.icon) }}{% endif -%}
+            {%- if item.pressed is defined and item.pressed is not none %}{{ icon('check', 'ha-menu__check') }}{% endif -%}
+            <span class="ha-menu__text"><span>{{ item.label }}</span>
+                {%- if item.description or item.disabled_reason -%}
+                <span class="ha-menu__desc" id="{{ desc_id }}">{{ item.disabled_reason or item.description }}</span>
+                {%- endif -%}
+            </span>
+            {%- if item.shortcut %}<span class="ha-menu__end"><kbd class="ha-kbd">{{ item.shortcut }}</kbd></span>{% endif -%}
+        {%- endset -%}
+        {%- set common -%}
+            {%- if item.testid %} data-testid="{{ item.testid }}"{% endif -%}
+            {%- if item.description or item.disabled_reason %} aria-describedby="{{ desc_id }}"{% endif -%}
+            {%- for k, v in attrs.items() %} {{ k }}="{{ v }}"{% endfor -%}
+        {%- endset -%}
+        {%- if item.disabled_reason %}
+        <button type="button" class="{{ item_class }}" aria-disabled="true"{{ common }}>{{ body }}</button>
+        {%- elif item.post_url %}
+        <form method="post" action="{{ item.post_url }}">
+            {{- csrf_input() if csrf_input is defined -}}
+            <button type="submit" class="{{ item_class }}"{{ common }}>{{ body }}</button>
+        </form>
+        {%- elif item.href %}
+        <a class="{{ item_class }}" href="{{ item.href }}"{{ common }}>{{ body }}</a>
+        {%- else %}
+        <button type="button" class="{{ item_class }}"
+                {%- if item.pressed is defined and item.pressed is not none %} aria-pressed="{{ 'true' if item.pressed else 'false' }}"{% endif %}{{ common }}>{{ body }}</button>
+        {%- endif %}
+        {%- endif %}
+        {%- endfor %}
+    </div>
+</details>
+{%- endmacro -%}

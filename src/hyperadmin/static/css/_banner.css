@@ -1,0 +1,118 @@
+/* ==========================================================================
+   Banner (design system: components/Banner)
+   A full-width notice under the navbar for session- or app-level state
+   (tenant context, stale record, connection, rate limit, maintenance).
+   An Alert is for the page's own content; a Toast for what just happened.
+   ========================================================================== */
+
+.ha-banners {
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  inset-block-start: 0;
+  z-index: var(--ha-z-sticky);
+}
+
+.ha-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ha-space-2) var(--ha-space-3);
+  min-block-size: 44px;
+  padding: var(--ha-space-2) var(--ha-space-4);
+  background-color: var(--ha-surface-sunken);
+  color: var(--ha-color-text-strong);
+  border-block-end: var(--ha-border-width) solid var(--ha-color-border-light);
+  font-weight: var(--ha-font-medium);
+}
+
+.ha-banner > .ha-icon {
+  flex: none;
+}
+
+.ha-banner__text {
+  flex: 1 1 260px;
+  min-inline-size: 0;
+  margin: 0;
+}
+
+.ha-banner__text span {
+  font-weight: var(--ha-font-normal);
+  color: var(--ha-color-text);
+}
+
+.ha-banner__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ha-space-2);
+  margin-inline-start: auto;
+}
+
+.ha-banner .ha-btn--icon {
+  inline-size: var(--ha-target-min);
+  min-block-size: var(--ha-target-min);
+  border: 0;
+  background: transparent;
+  color: inherit;
+}
+
+.ha-banner--info {
+  background-color: var(--ha-color-info-soft);
+  color: var(--ha-color-info-text);
+  border-block-end-color: var(--ha-color-info-text);
+}
+
+.ha-banner--warning {
+  background-color: var(--ha-color-warning-soft);
+  color: var(--ha-color-warning-text);
+  border-block-end-color: var(--ha-color-warning-text);
+}
+
+.ha-banner--danger {
+  background-color: var(--ha-color-danger-soft);
+  color: var(--ha-color-danger-text);
+  border-block-end-color: var(--ha-color-danger-text);
+}
+
+.ha-banner--success {
+  background-color: var(--ha-color-success-soft);
+  color: var(--ha-color-success-text);
+  border-block-end-color: var(--ha-color-success-text);
+}
+
+/* the tenant you are working in; never dismissible */
+.ha-banner--context {
+  background-color: var(--ha-color-primary-soft);
+  color: var(--ha-color-primary-text);
+  border-block-end-color: var(--ha-color-brand);
+}
+
+.ha-banner__more {
+  font-size: var(--ha-font-size-xs);
+  font-weight: var(--ha-font-semibold);
+}
+
+.ha-tenant-dot {
+  inline-size: 24px;
+  block-size: 24px;
+  border-radius: var(--ha-radius-sm);
+  background-color: var(--ha-color-primary-soft);
+  color: var(--ha-color-primary-text);
+  font-size: var(--ha-font-size-xs);
+  font-weight: var(--ha-font-semibold);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.ha-banner--context .ha-tenant-dot {
+  background-color: var(--ha-surface-raised);
+  box-shadow: inset 0 0 0 1px var(--ha-color-brand);
+}
+
+/* the Retry-After countdown */
+.ha-countdown {
+  font-variant-numeric: tabular-nums;
+}

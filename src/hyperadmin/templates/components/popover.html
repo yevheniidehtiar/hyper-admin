@@ -1,0 +1,59 @@
+{#-
+    Popover (design system: components/Popover): a small non-modal dialog
+    opened from a trigger, for structured detail with up to two actions.
+
+    Usage:
+        {%- from "components/popover.html" import popover -%}
+        {{ popover(_('What is a journal entry?'), title=_('Journal entry'), body=_('A dated record…'), id='help-journal') }}
+
+        {%- call popover(_('AI-generated'), title=_('Suggested category'), id='ai-cat',
+                         trigger_class='ha-btn ha-btn--sm', trigger_icon='sparkles',
+                         actions=[{'label': _('Accept'), 'primary': True, 'attrs': {'hx-post': url}}],
+                         testid='popover-ai') %}
+            <p>Based on 14 similar invoices.</p>
+        {%- endcall %}
+
+    trigger_label: the trigger's accessible name; with trigger_icon only, it
+      becomes the aria-label of a .ha-info-btn (circle-help by default).
+    body / caller(): the content under the title. actions: {label, href, primary, testid, attrs}.
+    static/js/primitives.js moves focus into the dialog, closes on Esc or the
+    close button and returns focus to the trigger.
+-#}
+{%- from "components/_icons.html" import icon -%}
+
+{%- macro popover(trigger_label, title, id, body='', actions=[], trigger_icon='circle-help', trigger_class='', trigger_text=False, align='start', closable=True, testid=None) -%}
+<details class="ha-layer">
+    <summary class="{{ trigger_class or 'ha-info-btn' }}"
+             {%- if not trigger_text %} aria-label="{{ trigger_label }}"{% endif %}
+             {%- if testid %} data-testid="{{ testid }}"{% endif %}>
+        {{- icon(trigger_icon, 'ha-icon--sm') -}}
+        {%- if trigger_text %}{{ trigger_label }}{% endif -%}
+    </summary>
+    <div class="ha-popup ha-popover{{ ' ha-popup--end' if align == 'end' }}" role="dialog" aria-labelledby="{{ id }}-title" tabindex="-1" data-ha-align="{{ align }}">
+        <div class="ha-popover__head">
+            <h3 class="ha-popover__title" id="{{ id }}-title">{{ title }}</h3>
+            {%- if closable %}
+            <button type="button" class="ha-btn ha-btn--icon" aria-label="{{ _('Close') }}" data-ha-popup-close>{{ icon('x', 'ha-icon--sm') }}</button>
+            {%- endif %}
+        </div>
+        {%- if caller is defined %}{{ caller() }}{% elif body %}<p>{{ body }}</p>{% endif %}
+        {%- if actions %}
+        <div class="ha-popover__actions">
+            {%- for action in actions %}
+            {%- set attrs = action.attrs | default({}) -%}
+            {%- set action_class = 'ha-btn ha-btn--sm' ~ (' ha-btn--primary' if action.primary) -%}
+            {%- if action.href %}
+            <a class="{{ action_class }}" href="{{ action.href }}"
+               {%- if action.testid %} data-testid="{{ action.testid }}"{% endif %}
+               {%- for k, v in attrs.items() %} {{ k }}="{{ v }}"{% endfor %}>{{ action.label }}</a>
+            {%- else %}
+            <button type="button" class="{{ action_class }}"
+                    {%- if action.testid %} data-testid="{{ action.testid }}"{% endif %}
+                    {%- for k, v in attrs.items() %} {{ k }}="{{ v }}"{% endfor %}>{{ action.label }}</button>
+            {%- endif %}
+            {%- endfor %}
+        </div>
+        {%- endif %}
+    </div>
+</details>
+{%- endmacro -%}

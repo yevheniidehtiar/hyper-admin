@@ -1,0 +1,95 @@
+/* ==========================================================================
+   Segmented control (design system: Chart period switch, ReportPage group-by,
+   FilterSidebar tri-state)
+   Buttons carry aria-pressed, links aria-current, radios their checked state:
+   the selected option is bold, not only filled.
+   ========================================================================== */
+
+.ha-seg {
+  display: inline-flex;
+  padding: 2px;
+  border-radius: var(--ha-radius-md);
+  background-color: var(--ha-surface-sunken);
+}
+
+.ha-seg button,
+.ha-seg a {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 28px;
+  padding: 0 var(--ha-space-3);
+  border: 0;
+  border-radius: var(--ha-radius-sm);
+  background: transparent;
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: var(--ha-font-medium);
+  color: var(--ha-color-text-muted);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.ha-seg button[aria-pressed="true"],
+.ha-seg a[aria-current="true"] {
+  background-color: var(--ha-surface-raised);
+  color: var(--ha-color-text-strong);
+  box-shadow: var(--ha-shadow-sm);
+  font-weight: var(--ha-font-semibold);
+}
+
+/* the same look built from real radios, so it submits without JavaScript */
+.ha-seg--radio {
+  flex-wrap: wrap;
+}
+
+.ha-seg--radio label {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-block-size: 28px;
+  padding: 0 var(--ha-space-3);
+  border-radius: var(--ha-radius-sm);
+  font-size: 0.8125rem;
+  font-weight: var(--ha-font-medium);
+  color: var(--ha-color-text-muted);
+  cursor: pointer;
+}
+
+.ha-seg--radio input {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  block-size: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.ha-seg--radio label:has(input:checked) {
+  background-color: var(--ha-surface-raised);
+  color: var(--ha-color-text-strong);
+  box-shadow: var(--ha-shadow-sm);
+  font-weight: var(--ha-font-semibold);
+}
+
+.ha-seg--radio label:has(input:focus-visible) {
+  outline: 2px solid var(--ha-color-focus-ring);
+  outline-offset: 1px;
+}
+
+@media (pointer: coarse) {
+  .ha-seg button,
+  .ha-seg a,
+  .ha-seg--radio label {
+    min-block-size: var(--ha-target-touch);
+  }
+}
+
+@media (forced-colors: active) {
+  .ha-seg button[aria-pressed="true"],
+  .ha-seg a[aria-current="true"],
+  .ha-seg--radio label:has(input:checked) {
+    border: 1px solid CanvasText;
+    forced-color-adjust: none;
+  }
+}

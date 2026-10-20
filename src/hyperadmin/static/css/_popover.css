@@ -1,0 +1,170 @@
+/* ==========================================================================
+   Tooltip and popover (design system: components/Popover)
+   Tooltip: a short label or reason, shown on hover and keyboard focus by
+   CSS alone (Esc hides it via .is-dismissed). Popover: a small non-modal
+   dialog in a .ha-popup for structured detail with up to two actions.
+   ========================================================================== */
+
+.ha-tip {
+  position: relative;
+  display: inline-flex;
+}
+
+.ha-tooltip {
+  position: absolute;
+  z-index: var(--ha-z-popover);
+  inset-block-end: calc(100% + 8px);
+  inset-inline-start: 50%;
+  translate: -50% 0;
+  inline-size: max-content;
+  max-inline-size: 240px;
+  padding: var(--ha-space-1) var(--ha-space-2);
+  border-radius: var(--ha-radius-sm);
+  background-color: var(--ha-color-text-strong);
+  color: var(--ha-surface-raised);
+  font-size: var(--ha-font-size-xs);
+  line-height: 18px;
+  font-weight: var(--ha-font-medium);
+  text-align: center;
+  pointer-events: none;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 120ms;
+}
+
+[dir="rtl"] .ha-tooltip {
+  translate: 50% 0;
+}
+
+.ha-tooltip::after {
+  content: "";
+  position: absolute;
+  inset-block-start: 100%;
+  inset-inline-start: 50%;
+  margin-inline-start: -5px;
+  border: 5px solid transparent;
+  border-block-start-color: var(--ha-color-text-strong);
+}
+
+.ha-tooltip--below {
+  inset-block-end: auto;
+  inset-block-start: calc(100% + 8px);
+}
+
+.ha-tooltip--below::after {
+  inset-block-start: auto;
+  inset-block-end: 100%;
+  border-block-start-color: transparent;
+  border-block-end-color: var(--ha-color-text-strong);
+}
+
+.ha-tip:hover > .ha-tooltip,
+.ha-tip:focus-within > .ha-tooltip,
+.ha-tooltip.is-open {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* Esc (WCAG 2.2, 1.4.13) */
+.ha-tip.is-dismissed > .ha-tooltip {
+  visibility: hidden;
+  opacity: 0;
+}
+
+.ha-popover {
+  inline-size: 300px;
+  max-inline-size: calc(100vw - 2 * var(--ha-space-4));
+  padding: var(--ha-space-4);
+  background-color: var(--ha-surface-overlay);
+  border: var(--ha-border-width) solid var(--ha-color-border-light);
+  border-radius: var(--ha-radius-lg);
+  box-shadow: var(--ha-shadow-md);
+  color: var(--ha-color-text);
+  font-size: 0.8125rem;
+  line-height: 20px;
+}
+
+/* focus lands on the dialog itself when it opens */
+.ha-popover:focus-visible {
+  outline-offset: -2px;
+}
+
+.ha-popover__head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ha-space-2);
+  margin-block-end: var(--ha-space-2);
+}
+
+.ha-popover__title {
+  margin: 0;
+  flex: 1;
+  font-size: var(--ha-font-size-sm);
+  line-height: 21px;
+  font-weight: var(--ha-font-semibold);
+  color: var(--ha-color-text-strong);
+}
+
+.ha-popover__head .ha-btn--icon {
+  inline-size: var(--ha-target-min);
+  min-block-size: var(--ha-target-min);
+  margin: -4px;
+  border: 0;
+  background: none;
+  color: var(--ha-color-text-muted);
+}
+
+.ha-popover p {
+  margin: 0 0 var(--ha-space-2);
+}
+
+.ha-popover__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ha-space-2);
+  margin-block-start: var(--ha-space-3);
+}
+
+.ha-popover__meta {
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--ha-space-1) var(--ha-space-3);
+  font-size: var(--ha-font-size-xs);
+}
+
+.ha-popover__meta dt {
+  color: var(--ha-color-text-muted);
+}
+
+.ha-popover__meta dd {
+  margin: 0;
+  color: var(--ha-color-text-strong);
+}
+
+/* the circle-help trigger next to a label */
+.ha-info-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--ha-target-min);
+  block-size: var(--ha-target-min);
+  border: 0;
+  border-radius: var(--ha-radius-pill);
+  background: none;
+  color: var(--ha-color-text-muted);
+  cursor: pointer;
+  padding: 0;
+}
+
+.ha-info-btn:hover {
+  background-color: var(--ha-surface-hover);
+  color: var(--ha-color-text-strong);
+}
+
+@media (forced-colors: active) {
+  .ha-tooltip,
+  .ha-popover {
+    border: 1px solid CanvasText;
+  }
+}

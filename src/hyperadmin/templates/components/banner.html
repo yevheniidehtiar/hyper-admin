@@ -1,0 +1,77 @@
+{#-
+    Banner (design system: components/Banner): a full-width notice under the
+    navbar for session- or app-level state. An Alert is for the page's own
+    content; a Toast for something that just happened.
+
+    Usage:
+        {%- from "components/banner.html" import banner, banners -%}
+        {{ banner(_('Connection lost.'), kind='warning', detail=_('Changes by others will not appear until reconnected.'),
+                  actions=[{'label': _('Retry now'), 'attrs': {'hx-post': url}}], testid='connection-lost') }}
+        {{ banners(request.state.banners) }}    (the sticky region: most severe first, at most two + "more")
+
+    kind: danger | warning | context | info | success. danger and warning get
+    role="alert", the rest role="status"; pass live=False to announce neither
+    (a banner already on the page at load). dismissible adds the ✕ button
+    (static/js/primitives.js removes the banner); a context banner is never
+    dismissible. actions: {label, href, primary, disabled, testid, attrs}.
+-#}
+{%- from "components/_icons.html" import icon -%}
+
+{%- set banner_icons = {'danger': 'circle-x', 'warning': 'triangle-alert', 'info': 'info', 'success': 'circle-check'} -%}
+{%- set banner_rank = {'danger': 0, 'warning': 1, 'context': 2, 'info': 3, 'success': 4} -%}
+
+{%- macro banner(message, kind='info', detail='', actions=[], dismissible=False, live=True, id=None, testid=None, icon_name=None, prefix='') -%}
+{%- set role = 'alert' if (live and kind in ('danger', 'warning')) else ('status' if live else none) -%}
+{%- set icon_to_show = icon_name if icon_name is not none else banner_icons.get(kind) -%}
+<div class="ha-banner ha-banner--{{ kind }}"{% if role %} role="{{ role }}"{% endif %}
+     {%- if id %} id="{{ id }}"{% endif %}
+     {%- if testid %} data-testid="{{ testid }}"{% endif %}>
+    {%- if icon_to_show %}{{ icon(icon_to_show) }}{% endif %}
+    <p class="ha-banner__text">{{ prefix }}{{ message }}{% if detail %} <span>{{ detail }}</span>{% endif %}</p>
+    {%- if actions or (dismissible and kind != 'context') %}
+    <div class="ha-banner__actions">
+        {%- for action in actions %}
+        {%- set attrs = action.attrs | default({}) -%}
+        {%- set action_class = 'ha-btn ha-btn--sm' ~ (' ha-btn--primary' if action.primary) -%}
+        {%- if action.href %}
+        <a class="{{ action_class }}" href="{{ action.href }}"
+           {%- if action.testid %} data-testid="{{ action.testid }}"{% endif %}
+           {%- for k, v in attrs.items() %} {{ k }}="{{ v }}"{% endfor %}>{{ action.label }}</a>
+        {%- else %}
+        <button type="button" class="{{ action_class }}"
+                {%- if action.disabled %} disabled{% endif %}
+                {%- if action.testid %} data-testid="{{ action.testid }}"{% endif %}
+                {%- for k, v in attrs.items() %} {{ k }}="{{ v }}"{% endfor %}>{{ action.label }}</button>
+        {%- endif %}
+        {%- endfor %}
+        {%- if dismissible and kind != 'context' %}
+        <button type="button" class="ha-btn ha-btn--icon" aria-label="{{ _('Dismiss') }}" data-ha-dismiss>{{ icon('x', 'ha-icon--sm') }}</button>
+        {%- endif %}
+    </div>
+    {%- endif %}
+</div>
+{%- endmacro -%}
+
+{%- macro banners(items, limit=2, more_href=None, testid='banners') -%}
+{%- set ns = namespace(count=0) -%}
+<div class="ha-banners" role="region" aria-label="{{ _('Notices') }}"{% if testid %} data-testid="{{ testid }}"{% endif %}>
+    {#- most severe first: danger, warning, context, info, success -#}
+    {%- for rank in range(5) %}
+    {%- for item in items if banner_rank.get(item.kind | default('info'), 3) == rank %}
+    {%- if ns.count < limit %}
+    {{ banner(item.message, kind=item.kind | default('info'), detail=item.detail | default(''), actions=item.actions | default([]),
+              dismissible=item.dismissible | default(false), live=item.live | default(true), id=item.id | default(none), testid=item.testid | default(none)) }}
+    {%- endif %}
+    {%- set ns.count = ns.count + 1 %}
+    {%- endfor %}
+    {%- endfor %}
+    {%- if ns.count > limit %}
+    {%- set extra = ns.count - limit %}
+    <div class="ha-banner">
+        {%- if more_href %}<a class="ha-banner__more" href="{{ more_href }}">{% else %}<span class="ha-banner__more">{% endif -%}
+        {%- trans count=extra %}+{{ count }} more notice{% pluralize %}+{{ count }} more notices{% endtrans -%}
+        {%- if more_href %}</a>{% else %}</span>{% endif %}
+    </div>
+    {%- endif %}
+</div>
+{%- endmacro -%}

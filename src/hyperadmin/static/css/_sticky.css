@@ -1,0 +1,54 @@
+/* ==========================================================================
+   Sticky table helpers (design system: DataTable, CrosstabTable)
+   The header row stays put on vertical scroll (same values as .ha-table-th,
+   for tables whose cells carry no ha-table-* classes); .ha-col-check (the
+   checkbox column) and .ha-sticky-first (the record-title column) stay put
+   on horizontal scroll, the rest slides under them.
+   ========================================================================== */
+
+.ha-table thead th {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: var(--ha-z-sticky);
+  background-color: var(--ha-surface-sunken);
+}
+
+.ha-table .ha-col-check,
+.ha-table .ha-sticky-first {
+  position: sticky;
+  inset-inline-start: 0;
+  background-color: var(--ha-surface-raised);
+  z-index: 1;
+}
+
+.ha-table .ha-col-check + .ha-sticky-first {
+  inset-inline-start: 44px;
+}
+
+.ha-table .ha-sticky-first {
+  box-shadow: inset -1px 0 0 var(--ha-color-border-light);
+}
+
+[dir="rtl"] .ha-table .ha-sticky-first {
+  box-shadow: inset 1px 0 0 var(--ha-color-border-light);
+}
+
+.ha-table thead .ha-sticky-first,
+.ha-table thead .ha-col-check {
+  z-index: calc(var(--ha-z-sticky) + 1);
+  background-color: var(--ha-surface-sunken);
+}
+
+/* hover fills the whole row, sticky cells included */
+.ha-table tbody tr:hover > .ha-sticky-first,
+.ha-table tbody tr:hover > .ha-col-check {
+  background-color: var(--ha-surface-hover);
+}
+
+.ha-table .ha-col-check {
+  inline-size: 44px;
+  min-inline-size: 44px;
+  max-inline-size: 44px;
+  padding-inline: 0;
+  text-align: center;
+}

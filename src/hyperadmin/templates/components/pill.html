@@ -1,0 +1,15 @@
+{#-
+    Status pill (design system: pills, badges, chips): a word on its soft
+    tint, with a dot in the same ink. Never colour alone: the label is the
+    status.
+
+    Usage:
+        {%- from "components/pill.html" import pill -%}
+        {{ pill(_('Paid'), 'success') }}
+        {{ pill(_('Overdue'), 'danger', testid='row-status') }}
+
+    kind: '' (neutral) | success | warning | danger | info | new.
+-#}
+{%- macro pill(label, kind='', testid=None, class='') -%}
+<span class="ha-pill{{ ' ha-pill--' ~ kind if kind }}{{ ' ' ~ class if class }}"{% if testid %} data-testid="{{ testid }}"{% endif %}>{{ label }}</span>
+{%- endmacro -%}

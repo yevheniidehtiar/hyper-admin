@@ -1,0 +1,20 @@
+{#-
+    Tooltip (design system: components/Popover): a short text label or reason
+    on hover, keyboard focus and tap; Esc hides it (static/js/primitives.js).
+
+    Usage:
+        {%- from "components/tooltip.html" import tip -%}
+        {%- call tip(_('Edit invoice')) %}<button class="ha-btn ha-btn--icon" aria-label="{{ _('Edit invoice') }}">…</button>{% endcall %}
+        {%- call tip(reason, id='tip-remind', describes=True) %}<button aria-disabled="true" aria-describedby="tip-remind">…</button>{% endcall %}
+
+    The caller block is the trigger. By default the tooltip repeats the
+    trigger's own label (aria-hidden); with describes=True it adds information
+    (a disabled reason, a full truncated value): it gets role="tooltip" and
+    the id the trigger points at with aria-describedby.
+-#}
+{%- macro tip(content, id=None, describes=False, placement='above', class='') -%}
+<span class="ha-tip{{ ' ' ~ class if class }}">
+    {{- caller() -}}
+    <span class="ha-tooltip{{ ' ha-tooltip--below' if placement == 'below' }}"
+          {%- if describes %} role="tooltip"{% if id %} id="{{ id }}"{% endif %}{% else %} aria-hidden="true"{% endif %}>{{ content }}</span></span>
+{%- endmacro -%}

@@ -1,0 +1,123 @@
+/* ==========================================================================
+   Status pills, counts and chips (design system: pills, badges, chips)
+   A status is a word on its *-soft tint in the *-text ink, with a dot in
+   the same ink: never colour alone. .ha-count is a number badge; .ha-chip
+   an active filter with its remove button.
+   ========================================================================== */
+
+.ha-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ha-space-1);
+  padding: var(--ha-space-0-5) var(--ha-space-2);
+  border-radius: var(--ha-radius-pill);
+  font-size: var(--ha-font-size-xs);
+  line-height: 18px;
+  font-weight: var(--ha-font-medium);
+  white-space: nowrap;
+  background-color: var(--ha-surface-sunken);
+  color: var(--ha-color-text);
+}
+
+.ha-pill::before {
+  content: "";
+  inline-size: 6px;
+  block-size: 6px;
+  border-radius: var(--ha-radius-pill);
+  background-color: currentColor;
+}
+
+.ha-pill--success {
+  background-color: var(--ha-color-success-soft);
+  color: var(--ha-color-success-text);
+}
+
+.ha-pill--danger {
+  background-color: var(--ha-color-danger-soft);
+  color: var(--ha-color-danger-text);
+}
+
+.ha-pill--warning {
+  background-color: var(--ha-color-warning-soft);
+  color: var(--ha-color-warning-text);
+}
+
+.ha-pill--info {
+  background-color: var(--ha-color-info-soft);
+  color: var(--ha-color-info-text);
+}
+
+.ha-pill--new {
+  background-color: var(--ha-color-accent-soft);
+  color: var(--ha-color-accent);
+}
+
+.ha-pill--new::before {
+  display: none;
+}
+
+.ha-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-inline-size: 20px;
+  block-size: 20px;
+  padding: 0 6px;
+  border-radius: var(--ha-radius-pill);
+  background-color: var(--ha-surface-sunken);
+  color: var(--ha-color-text-strong);
+  font-size: var(--ha-font-size-xs);
+  font-weight: var(--ha-font-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.ha-count--attn {
+  background-color: var(--ha-color-accent);
+  color: var(--ha-color-on-accent);
+}
+
+.ha-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ha-space-1);
+  padding-inline: var(--ha-space-2) var(--ha-space-0-5);
+  min-block-size: 28px;
+  border-radius: var(--ha-radius-md);
+  background-color: var(--ha-color-primary-soft);
+  color: var(--ha-color-primary-text);
+  font-size: 0.8125rem;
+  font-weight: var(--ha-font-medium);
+  border: var(--ha-border-width) solid transparent;
+}
+
+.ha-chip button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--ha-target-min);
+  block-size: var(--ha-target-min);
+  border: 0;
+  background: transparent;
+  color: inherit;
+  border-radius: var(--ha-radius-sm);
+  cursor: pointer;
+  padding: 0;
+}
+
+.ha-chip button:hover {
+  background-color: var(--ha-surface-hover);
+}
+
+.ha-chip--invalid {
+  background-color: var(--ha-color-danger-soft);
+  color: var(--ha-color-danger-text);
+  border-color: var(--ha-color-danger-text);
+}
+
+@media (forced-colors: active) {
+  .ha-pill,
+  .ha-chip {
+    border: 1px solid CanvasText;
+    forced-color-adjust: none;
+  }
+}
