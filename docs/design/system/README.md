@@ -59,6 +59,8 @@ Values tuned from the brief, so contrast holds: light `ha-color-primary` is #0F7
 
 - Radii: `ha-radius-sm` checkboxes and cells being edited; `ha-radius-md` buttons, inputs, chips, nav items; `ha-radius-lg` cards, tables, alerts, toasts; `ha-radius-xl` dialogs and the login card only; `ha-radius-pill` pills, avatars, counts.
 - Shadows are few: `ha-shadow-sm` on cards and the table on the page background, `ha-shadow-md` on menus and popovers, `ha-shadow-lg` on dialogs, toasts and the drawer. Borders do the separating; shadows only say "floating".
+- Layers, bottom to top: sticky table headers and banners `ha-z-sticky`, navbar and sidebar `ha-z-nav`, menus, combobox lists, tooltips and popovers `ha-z-popover`, dialogs and the drawer `ha-z-overlay`, toasts `ha-z-toast`.
+- Every floating layer (Menu, Combobox, Popover) opens from a real control, works without JavaScript (`<details>`/`<summary>` or `:hover, :focus-within`), closes on Esc and returns focus to its trigger.
 - No gradients. No coloured left-border cards. The only coloured edge is the 3px active-nav indicator (`ha-color-brand`) and the error edge of a formset row.
 
 ## Motion
@@ -71,7 +73,7 @@ Values tuned from the brief, so contrast holds: light `ha-color-primary` is #0F7
 - Inline SVG with `class="ha-icon"` and `stroke="currentColor"` so icons take the text colour. No icon font, no sprite request.
 - Decorative icons get `aria-hidden="true"`. An icon-only button gets an `aria-label` that names the action and the object: "Edit invoice INV-0142".
 - **Mirroring in RTL**: add `.ha-icon--mirror` to directional icons (chevrons, back and forward arrows, progress, "reply"). Never mirror checkmarks, media controls, clocks, charts' up/down deltas, sort arrows, or the logo.
-- `src/hyperadmin/static/icons/` holds the 25 icons the components use (`stroke="currentColor"`); add more from the same pinned Lucide release.
+- `src/hyperadmin/static/icons/` holds the 39 icons the admin and the components use (`stroke="currentColor"`), inlined by the generated `icon(name)` macro; add more from the same pinned Lucide release and rerun `scripts/generate_icon_macro.py`.
 
 ## Logo
 
@@ -150,6 +152,7 @@ Name mapping, where the shipped CSS keeps an older name:
 ## Implementing the rest
 
 - The table's card layout is still a viewport media query at `ha-bp-md`. Moving it to a container query on the table wrapper (`container: ha-table / inline-size`) lets a table in a narrow panel or dialog turn into cards too.
+- Wave 1 building blocks are specified but not shipped: Menu, Combobox, Progress, Banner and Popover (`components/<Name>/`). Their CSS is in `components/bundle.css` and `--ha-z-popover` is already in `_tokens.css`; port each into its own partial when the first milestone needs it (Menu and Combobox for v0.5.5 bulk actions and AutocompleteWidget, Banner for v0.6.0a and v0.5.3, Progress for bulk jobs and exports, Popover for field help and disabled reasons). The connection-lost notice in the Presence preview now uses `.ha-banner--warning`.
 - Components the templates do not emit yet: status pills (enum columns still print `Status.PAID`), stat cards, charts, dialogs (deletes still use `hx-confirm`), breadcrumbs, presence avatars, the density switch and the collapsed sidebar. Their CSS is in `components/bundle.css`.
 - First load stays under 150 KB of CSS, fonts and JS: split each font into a Latin and a Cyrillic+Greek file with `unicode-range`, so a Latin-script page downloads only the Latin halves.
 - Copy still to bring to sentence case: "Create New Invoice" and "Invoice List" should read "Add invoice" and "Invoices"; that changes translation message IDs, so it goes with a catalogue update.

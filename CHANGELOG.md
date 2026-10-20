@@ -9,6 +9,15 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
 
 ## [Unreleased]
 
+### Added
+- **Design system Wave 1 building blocks** (`docs/design/system/components/`):
+  Menu, Combobox (async, single and multiple), Progress, Banner and Popover
+  / Tooltip, each with guidelines, every state in a live preview (light,
+  dark, RTL) and reference CSS in `components/bundle.css`. New
+  `--ha-z-popover` layer token and ten Lucide icons (`ellipsis`, `download`,
+  `upload`, `copy`, `mail`, `refresh-cw`, `clock`, `circle-help`,
+  `columns-3`, `sparkles`) available through `icon(name)`.
+
 ## [0.5.0a1] - not yet published
 
 First PyPI pre-release: `pip install hyper-admin==0.5.0a1` (import name
