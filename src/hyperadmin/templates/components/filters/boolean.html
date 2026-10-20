@@ -1,0 +1,10 @@
+{#- BooleanFilter group: tri-state Any / Yes / No as real radios. -#}
+{%- set f = filter.field -%}
+<fieldset class="ha-filtergroup" data-testid="filter-{{ f }}">
+    <legend id="filter-{{ f }}-legend">{{ filter.title }}</legend>
+    <div class="ha-seg ha-seg--radio" role="radiogroup" aria-labelledby="filter-{{ f }}-legend">
+        <label><input type="radio" name="{{ f }}" value=""{% if state == "" %} checked{% endif %}>{{ _("Any") }}</label>
+        <label><input type="radio" name="{{ f }}" value="1"{% if state == "1" %} checked{% endif %}>{{ _("Yes") }}</label>
+        <label><input type="radio" name="{{ f }}" value="0"{% if state == "0" %} checked{% endif %}>{{ _("No") }}</label>
+    </div>
+</fieldset>

@@ -1,0 +1,11 @@
+{#- LegacyFieldFilter group: the exact-match <select> a plain list_filter string gets. -#}
+{%- set f = filter.field -%}
+<fieldset class="ha-filtergroup" data-testid="filter-{{ f }}-group">
+    <legend>{{ filter.title }}{% if active %}<a class="ha-filtergroup__clear" href="{{ clear_href }}">{{ _("Clear") }}<span class="ha-sr-only"> {{ filter.title|lower }}</span></a>{% endif %}</legend>
+    <select id="filter-{{ f }}" name="filter_{{ f }}" class="ha-select" aria-label="{{ filter.title }}" data-testid="filter-{{ f }}">
+        <option value="">{{ _("Any") }}</option>
+        {%- for choice in choices %}
+        <option value="{{ choice.value }}"{% if choice.selected %} selected{% endif %}>{{ choice.label }}</option>
+        {%- endfor %}
+    </select>
+</fieldset>

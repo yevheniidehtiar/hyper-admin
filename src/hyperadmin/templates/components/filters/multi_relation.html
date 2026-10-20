@@ -1,0 +1,20 @@
+{#- MultiFKFilter group: search box over a checklist of related rows, selected first. -#}
+{%- from "components/_icons.html" import icon -%}
+{%- set f = filter.field -%}
+<fieldset class="ha-filtergroup" data-testid="filter-{{ f }}" x-data="{ q: '' }">
+    <legend>{{ filter.title }}{% if selected_count %}<span class="ha-caption ha-muted">{{ ngettext("%(num)d selected", "%(num)d selected", selected_count) }}</span><a class="ha-filtergroup__clear" href="{{ clear_href }}">{{ _("Clear") }}<span class="ha-sr-only"> {{ filter.title|lower }}</span></a>{% endif %}</legend>
+    {%- if filter.searchable %}
+    <div class="ha-checklist__search">
+        {{ icon('search', 'ha-icon--sm') }}
+        <input class="ha-input" type="search" x-model="q" aria-label="{{ _('Search %(label)s', label=filter.title|lower) }}" placeholder="{{ _('Search %(label)s', label=filter.title|lower) }}" data-testid="filter-{{ f }}-search">
+    </div>
+    {%- endif %}
+    <ul class="ha-checklist">
+        {%- for choice in choices %}
+        <li x-show="!q || $el.textContent.toLowerCase().includes(q.toLowerCase())"><label class="ha-check"><input type="checkbox" name="{{ f }}__in" value="{{ choice.value }}"{% if choice.selected %} checked{% endif %}>{{ choice.label }}{% if choice.count is defined %}<span class="ha-count">{{ choice.count }}</span>{% endif %}</label></li>
+        {%- endfor %}
+    </ul>
+    {%- if more %}
+    <a class="ha-checklist__more" href="?{{ f }}__more=1" data-testid="filter-{{ f }}-more">{{ ngettext("Show %(num)d more", "Show %(num)d more", more) }}{{ icon('chevron-down', 'ha-icon--sm') }}</a>
+    {%- endif %}
+</fieldset>

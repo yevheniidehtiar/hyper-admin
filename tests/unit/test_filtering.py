@@ -631,3 +631,28 @@ def test_annotation_resolver_overrides_model_fields() -> None:
     )
 
     assert parsed.conditions == [FilterCondition("note", "exact", 7)]
+
+
+# ---------------------------------------------------------------------------
+# any_of: a composite built by library code only (IsOwnerFilter, v0.5.6)
+# ---------------------------------------------------------------------------
+
+
+def test_any_of_condition_accepts_field_value_pairs() -> None:
+    condition = FilterCondition("created_by", "any_of", (("created_by", 1), ("assigned_to", 1)))
+
+    assert condition.value == (("created_by", 1), ("assigned_to", 1))
+
+
+@pytest.mark.parametrize("value", [(), 1, ("created_by",), (("created_by", 1, 2),)])
+def test_any_of_condition_rejects_malformed_pairs(value: Any) -> None:
+    with pytest.raises(ValueError, match="pairs"):
+        FilterCondition("created_by", "any_of", value)
+
+
+def test_any_of_is_never_parsed_from_the_url() -> None:
+    """``filter_quantity__any_of`` is treated as an (unknown) field name, not an operator."""
+    parsed = parse_filter_params(Order, {"filter_quantity__any_of": "3"}, ["quantity"])
+
+    assert parsed.conditions == []
+    assert parsed.active == {}

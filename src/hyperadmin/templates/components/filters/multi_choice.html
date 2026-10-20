@@ -1,0 +1,10 @@
+{#- MultiChoiceFilter group: a checklist of fixed values. -#}
+{%- set f = filter.field -%}
+<fieldset class="ha-filtergroup" data-testid="filter-{{ f }}">
+    <legend>{{ filter.title }}{% if active %}<a class="ha-filtergroup__clear" href="{{ clear_href }}">{{ _("Clear") }}<span class="ha-sr-only"> {{ filter.title|lower }}</span></a>{% endif %}</legend>
+    <ul class="ha-checklist">
+        {%- for choice in choices %}
+        <li><label class="ha-check"><input type="checkbox" name="{{ f }}__in" value="{{ choice.value }}"{% if choice.selected %} checked{% endif %}>{{ choice.label }}</label></li>
+        {%- endfor %}
+    </ul>
+</fieldset>

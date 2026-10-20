@@ -530,3 +530,29 @@ def test_coerce_column_value_coerces_date_type_field() -> None:
     mapper = sa_inspect(_DatedModel)
 
     assert coerce_column_value(mapper, "on_date", "2024-06-15") == date(2024, 6, 15)
+
+
+# ---------------------------------------------------------------------------
+# Scenario: any_of condition applies (IsOwnerFilter with several owner fields)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.anyio
+async def test_any_of_condition_applies(
+    engine: AsyncEngine, products: list[Any], adapter_class: AdapterClass
+) -> None:
+    """
+    Scenario: any_of condition applies
+      Given condition any_of ((quantity, 3), (id, <Widget A's id>))
+      When  list() runs
+      Then  rows matching either equality are returned
+    """
+    adapter = adapter_class(FilterProduct, engine)
+    widget_a = next(item for item in products if item.name == "Widget A")
+
+    items, total = await adapter.list(
+        filters=[FilterCondition("quantity", "any_of", (("quantity", 3), ("id", widget_a.id)))]
+    )
+
+    assert total == 2
+    assert {item.name for item in items} == {"Widget A", "Widget B"}

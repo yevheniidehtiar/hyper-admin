@@ -1,0 +1,8 @@
+{#- CurrentPeriodDefault hint: shown inside the date group while the default applies. -#}
+{%- from "components/_icons.html" import icon -%}
+{%- if active %}
+<div class="ha-filter-hint" data-testid="filter-{{ filter.field }}-default" data-default-query="{{ default_query }}">
+    {{ icon('info', 'ha-icon--sm') }}
+    <p>{{ _("Showing %(period)s by default.", period=_(period_label)) }} <a href="{{ show_all_href }}">{{ _("Show all dates") }}</a></p>
+</div>
+{%- endif %}

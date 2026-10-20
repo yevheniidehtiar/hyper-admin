@@ -13,6 +13,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from sqlalchemy import or_
+
 from hyperadmin.core.filtering import MAX_IN_VALUES
 
 if TYPE_CHECKING:
@@ -53,7 +55,11 @@ def build_clause(model: Any, condition: FilterCondition) -> ColumnElement[bool]:
             msg = f"Too many values for {condition.field} (max {MAX_IN_VALUES})"
             raise ValueError(msg)
         return column.in_(condition.value)
-    # op == "isnull" — FilterCondition.__post_init__ guarantees one of the five
+    if op == "any_of":
+        # ``value`` is ``((field, value), ...)``: equality on any of the named
+        # columns, OR-ed (``IsOwnerFilter`` with several owner fields).
+        return or_(*(getattr(model, name) == value for name, value in condition.value))
+    # op == "isnull" — FilterCondition.__post_init__ guarantees one of the six
     # FilterOp values, so this is the only case left.
     return column.is_(None) if condition.value else column.is_not(None)
 

@@ -1,0 +1,8 @@
+{#- IsOwnerFilter group: the "Mine only" switch with a help line. -#}
+<fieldset class="ha-filtergroup" data-testid="filter-is_owner-group">
+    <legend class="ha-sr-only">{{ _("Owner") }}</legend>
+    <label class="ha-switch"><input type="checkbox" role="switch" name="is_owner" value="1"{% if active %} checked{% endif %} data-testid="filter-is_owner">{{ _(filter.title) }}</label>
+    {%- if filter.help_text %}
+    <p class="ha-help">{{ _(filter.help_text) }}</p>
+    {%- endif %}
+</fieldset>
