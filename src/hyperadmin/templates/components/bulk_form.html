@@ -8,6 +8,7 @@
       - confirm_url: URL of the /bulk/confirm endpoint
 -#}
 <form method="post" action="{{ confirm_url }}" data-testid="bulk-form"
+      hx-post="{{ confirm_url }}" hx-target="#bulk-result-region" hx-swap="innerHTML"
       class="ha-bulk-form">
   {{ csrf_input() if csrf_input is defined }}
   <h2 class="ha-bulk-form__title">{{ action.label }}</h2>

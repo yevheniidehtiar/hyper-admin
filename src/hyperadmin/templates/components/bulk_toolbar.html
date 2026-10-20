@@ -1,0 +1,40 @@
+{#- Bulk-action toolbar for the list view (H3, v0.5.5).
+
+    Rendered only when ``bulk_actions`` (the ModelAdmin's ``bulk=True`` actions)
+    is non-empty. Row checkboxes join this form through ``form="bulk-action-form"``,
+    since they live inside the table, outside the form element.
+
+    The selected option's ``data-url`` is the bulk endpoint; htmx posts there and
+    swaps the param form or per-row result into ``#bulk-result-region``. An
+    action that requires a selection is not sent when no row is checked: the
+    inline warning is shown instead (the endpoint still answers 400 server-side).
+
+    Context:
+      - bulk_actions: list[ActionDef] with ``bulk=True``
+      - model_name: the model class name (route names use ``model_name|lower``)
+-#}
+<form id="bulk-action-form" class="ha-bulk-toolbar" data-testid="bulk-toolbar"
+      method="post"
+      action="{{- url_for(model_name|lower ~ '-bulk-action', action_name=bulk_actions[0].name) -}}"
+      hx-post="{{- url_for(model_name|lower ~ '-bulk-action', action_name=bulk_actions[0].name) -}}"
+      hx-target="#bulk-result-region"
+      hx-swap="innerHTML"
+      hx-on::config-request="var option = this.elements['bulk-action'].selectedOptions[0]; var warning = this.querySelector('[data-testid=bulk-selection-warning]'); var checked = document.querySelectorAll('[data-testid=bulk-checkbox]:checked').length; if (option.dataset.requiresSelection === 'true' &amp;&amp; checked === 0) { warning.hidden = false; event.preventDefault(); return; } warning.hidden = true; event.detail.path = option.dataset.url;">
+    {{ csrf_input() if csrf_input is defined }}
+    <label class="ha-bulk-toolbar__label" for="bulk-action-select">{{ _("Bulk action") }}</label>
+    <select id="bulk-action-select" name="bulk-action" class="ha-select ha-bulk-toolbar__select"
+            data-testid="bulk-action-select"
+            onchange="this.form.action = this.selectedOptions[0].dataset.url;">
+        {%- for act in bulk_actions -%}
+        <option value="{{ act.name }}"
+                data-url="{{- url_for(model_name|lower ~ '-bulk-action', action_name=act.name) -}}"
+                data-requires-selection="{{ 'true' if act.requires_selection else 'false' }}">{{ act.label }}</option>
+        {%- endfor -%}
+    </select>
+    <button type="submit" class="ha-btn ha-btn-secondary" data-testid="bulk-run-btn">{{ _("Run") }}</button>
+    <p class="ha-bulk-toolbar__warning" role="alert" data-testid="bulk-selection-warning" hidden>
+        {{- _("Select at least one row") -}}
+    </p>
+</form>
+<div id="bulk-result-region" class="ha-bulk-result-region" aria-live="polite"
+     data-testid="bulk-result-region"></div>

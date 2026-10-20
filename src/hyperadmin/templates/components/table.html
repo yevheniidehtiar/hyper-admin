@@ -1,9 +1,20 @@
 {%- from "components/_icons.html" import icon -%}
 <div id="model-list" class="ha-table-wrapper">
     {%- include "components/list_error.html" -%}
+    {%- if bulk_actions -%}
+        {%- include "components/bulk_toolbar.html" -%}
+    {%- endif -%}
     <table class="ha-table" data-testid="list-table" aria-label="{% trans model_name=model_name %}{{ model_name }} list{% endtrans %}">
         <thead>
             <tr class="ha-table-header">
+                {%- if bulk_actions -%}
+                <th class="ha-table-th ha-bulk-cell" scope="col">
+                    <input type="checkbox" class="ha-bulk-checkbox"
+                           aria-label="{{ _('Select all rows') }}"
+                           data-testid="bulk-select-all"
+                           onchange="var on = this.checked; this.closest('table').querySelectorAll('[data-testid=bulk-checkbox]').forEach(function (box) { box.checked = on; });" />
+                </th>
+                {%- endif -%}
                 {%- for field in fields -%}
                     {%- include "components/sortable_header.html" -%}
                 {%- endfor -%}
@@ -14,6 +25,14 @@
             {%- for item in items -%}
             <tr class="ha-table-row" data-testid="list-row">
                 {%- set item_pk = item|ha_pk(pk_attr|default('id')) -%}
+                {%- if bulk_actions -%}
+                <td class="ha-table-cell ha-bulk-cell" data-label="{{ _('Select') }}">
+                    <input type="checkbox" class="ha-bulk-checkbox" name="ids"
+                           value="{{ item_pk }}" form="bulk-action-form"
+                           aria-label="{% trans pk=item_pk %}Select row {{ pk }}{% endtrans %}"
+                           data-testid="bulk-checkbox" />
+                </td>
+                {%- endif -%}
                 {%- for field in fields -%}
                     {%- set cell_label = model_name if field == '__str__' else (field_labels[field] if field_labels is defined and field in field_labels else field.replace('_', ' ').title()) -%}
                     {%- if list_editable and field in list_editable and field != pk_attr|default('id') -%}

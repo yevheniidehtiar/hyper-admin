@@ -30,6 +30,7 @@
 
   {% if failed_ids %}
   <form method="post" action="{{ bulk_endpoint_url }}"
+        hx-post="{{ bulk_endpoint_url }}" hx-target="#bulk-result-region" hx-swap="innerHTML"
         data-testid="bulk-retry-form" class="ha-bulk-retry">
     {{ csrf_input() if csrf_input is defined }}
     {% for pk in failed_ids %}<input type="hidden" name="ids" value="{{ pk }}" />{% endfor %}
