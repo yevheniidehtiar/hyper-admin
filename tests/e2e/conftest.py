@@ -521,3 +521,20 @@ def object_perm_base_url(e2e_port: int) -> Iterator[str]:
                 proc.wait(timeout=5)
             except Exception:
                 proc.kill()
+
+
+@pytest.fixture
+def bulk_base_url(e2e_port: int) -> Iterator[str]:
+    """Start the bulk-action fixture app (:mod:`tests.e2e.apps.bulk_actions`) and yield the base URL.
+
+    Auth is on (superuser ``alice / secret123``); ``Order`` rows 1, 2 and 3
+    are seeded with the ``archive`` (formless), ``reassign`` (parameter
+    form) and ``archive_overdue`` (no selection required) bulk actions. The
+    host exposes ``/_test/calls``, ``/_test/reset``, ``/_test/forbid`` and
+    ``/_test/deny`` so tests can observe and steer the handler.
+    """
+    proc, base = _spawn_uvicorn("tests.e2e.apps.bulk_actions", e2e_port)
+    try:
+        yield base
+    finally:
+        _terminate(proc)
