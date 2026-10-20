@@ -665,6 +665,7 @@ class DynamicModelView:
             "options": self.options,
             "list_editable": list(self.options.list_editable or []),
             "list_error": list_error,
+            "bulk_actions": [a for a in self.actions if a.bulk],
         }
 
         # Use table template for HTMX requests, full layout for regular requests

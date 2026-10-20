@@ -237,3 +237,53 @@
     padding: 0 var(--ha-space-3);
   }
 }
+
+/* --------------------------------------------------------------------------
+   Bulk actions: checkbox column, toolbar and result region (v0.5.5)
+   -------------------------------------------------------------------------- */
+
+.ha-bulk-cell {
+  width: 1%;
+  text-align: center;
+}
+
+.ha-bulk-checkbox {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--ha-color-primary);
+  cursor: pointer;
+}
+
+.ha-bulk-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ha-space-2);
+  padding: var(--ha-space-3) var(--ha-cell-px);
+  border-block-end: var(--ha-border-width) solid var(--ha-color-border-light);
+}
+
+.ha-bulk-toolbar__label {
+  font-size: var(--ha-font-size-sm);
+  color: var(--ha-color-text-muted);
+}
+
+.ha-bulk-toolbar__select {
+  width: auto;
+  min-width: 12rem;
+}
+
+.ha-bulk-toolbar__warning {
+  margin: 0;
+  font-size: var(--ha-font-size-sm);
+  color: var(--ha-color-danger);
+}
+
+.ha-bulk-result-region:empty {
+  display: none;
+}
+
+.ha-bulk-result-region {
+  padding: var(--ha-space-3) var(--ha-cell-px);
+  border-block-end: var(--ha-border-width) solid var(--ha-color-border-light);
+}
