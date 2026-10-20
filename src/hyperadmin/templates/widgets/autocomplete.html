@@ -1,0 +1,57 @@
+{#- FK/M2M autocomplete widget (H6, v0.5.5) — see docs/specs/htmx-autocomplete.md.
+
+    A debounced search input GETs the choices fragment into the select below
+    it. With `dependent_on` the parent field's value rides along via
+    hx-include and a parent change re-fetches. The "+" button loads the
+    create popup into #ha-popup-root; static/js/autocomplete.js inserts the
+    created row on `hyperadminPopupCreated`.
+
+    Context: field (FormField), widget (AutocompleteWidget / AutocompleteMultiWidget)
+-#}
+{%- from "components/_macros.html" import field_wrapper -%}
+{%- call field_wrapper(field) -%}
+<div class="ha-autocomplete" data-field="{{- field.name -}}">
+    <div class="ha-autocomplete__bar">
+        <input type="search" {# -#}
+               name="q" {# -#}
+               form="ha-autocomplete-detached" {# -#}
+               class="ha-input ha-autocomplete__search" {# -#}
+               autocomplete="off" {# -#}
+               aria-label="{{ _('Search') }} {{ field.label }}" {# -#}
+               aria-controls="{{- field.name -}}" {# -#}
+               {%- if widget.placeholder %} placeholder="{{- widget.placeholder -}}"{%- endif %} {# -#}
+               hx-get="{{- widget.choices_url -}}" {# -#}
+               {%- if widget.dependent_on %} {# -#}
+               hx-trigger="input changed delay:200ms, search, change from:[name='{{- widget.dependent_on -}}']" {# -#}
+               hx-include="[name='{{- widget.dependent_on -}}']" {# -#}
+               data-depends-on="{{- widget.dependent_on -}}" {# -#}
+               {%- else %} {# -#}
+               hx-trigger="input changed delay:200ms, search" {# -#}
+               {%- endif %} {# -#}
+               hx-target="#{{- field.name -}}" {# -#}
+               hx-swap="innerHTML" {# -#}
+               data-testid="autocomplete-{{- field.name -}}">
+        {%- if widget.popup_url %}
+        <button type="button" {# -#}
+                class="ha-btn ha-btn-secondary ha-autocomplete__add" {# -#}
+                aria-label="{{ _('Add new') }} {{ field.label }}" {# -#}
+                hx-get="{{- widget.popup_url -}}" {# -#}
+                hx-target="#ha-popup-root" {# -#}
+                hx-swap="innerHTML" {# -#}
+                data-testid="autocomplete-add-{{- field.name -}}">+</button>
+        {%- endif %}
+    </div>
+    <select id="{{- field.name -}}" {# -#}
+            name="{{- field.name -}}" {# -#}
+            {%- if widget.multiple %} multiple aria-multiselectable="true"{%- endif %} {# -#}
+            class="ha-select ha-select--relation ha-autocomplete__select{%- if widget.multiple %} ha-select--multi{%- endif -%}" {# -#}
+            aria-invalid="{{ 'true' if field.errors else 'false' }}" {# -#}
+            data-ha-autocomplete-select {# -#}
+            data-testid="autocomplete-select-{{- field.name -}}">
+        {%- if not widget.multiple %}<option value="">---------</option>{% endif -%}
+        {%- for choice in widget.choices -%}
+        <option value="{{- choice.value -}}" {%- if choice.selected %} selected{%- endif -%}>{{- choice.label -}}</option>
+        {%- endfor -%}
+    </select>
+</div>
+{%- endcall -%}

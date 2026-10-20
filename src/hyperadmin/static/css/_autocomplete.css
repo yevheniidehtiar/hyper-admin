@@ -1,0 +1,50 @@
+/* ==========================================================================
+   Autocomplete widget + inline-create popup (H6, v0.5.5)
+   Linked from base.html next to #ha-popup-root, so it ships with the slot.
+   ========================================================================== */
+
+.ha-autocomplete {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ha-space-2);
+}
+
+.ha-autocomplete__bar {
+  display: flex;
+  gap: var(--ha-space-2);
+}
+
+.ha-autocomplete__search {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.ha-autocomplete__add {
+  flex: 0 0 auto;
+  min-width: var(--ha-ctl-h);
+}
+
+.ha-popup-root:empty {
+  display: none;
+}
+
+.ha-popup-root {
+  position: fixed;
+  inset: 0;
+  z-index: var(--ha-z-overlay);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--ha-space-4);
+  background: rgb(0 0 0 / 0.45);
+}
+
+.ha-popup-root > * {
+  width: min(32rem, 100%);
+  max-height: calc(100vh - 2 * var(--ha-space-4));
+  overflow: auto;
+  padding: var(--ha-space-6);
+  background: var(--ha-surface-raised);
+  border-radius: var(--ha-radius-lg);
+  box-shadow: var(--ha-shadow-xl);
+}

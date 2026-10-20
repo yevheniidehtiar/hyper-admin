@@ -235,6 +235,90 @@ class RelationMultiSelectWidget(HtmxWidget):
         self.dependent_on = dependent_on
 
 
+class _AutocompleteMixin:
+    """Search input + populated ``<select>`` (+ optional "+" popup) for a relation (H6).
+
+    The search input GETs ``choices_url?q=`` debounced and swaps the returned
+    ``<option>`` fragment into the select. ``dependent_on`` adds an
+    ``hx-include`` of the parent field and re-fetches when the parent changes.
+    ``popup_url`` renders the "+" button that loads the create popup into
+    ``#ha-popup-root``; it is ``None`` when the related model is not registered.
+    """
+
+    multiple: ClassVar[bool] = False
+    placeholder: str | None
+    popup_url: str | None
+
+    def _init_autocomplete(self, placeholder: str | None, popup_url: str | None) -> None:
+        object.__setattr__(self, "template_path", "widgets/autocomplete.html")
+        self.placeholder = placeholder
+        self.popup_url = popup_url
+
+
+class AutocompleteWidget(_AutocompleteMixin, RelationSelectWidget):
+    """Autocomplete widget for a single FK relation field."""
+
+    def __init__(
+        self,
+        choices_url: str,
+        choices: list[ChoiceItem] | None = None,
+        preload: bool = True,
+        dependent_on: str | None = None,
+        placeholder: str | None = None,
+        popup_url: str | None = None,
+    ) -> None:
+        super().__init__(choices_url, choices, preload, dependent_on)
+        self._init_autocomplete(placeholder, popup_url)
+
+
+class AutocompleteMultiWidget(_AutocompleteMixin, RelationMultiSelectWidget):
+    """Autocomplete widget for a M2M relation field (multi-select list)."""
+
+    multiple: ClassVar[bool] = True
+
+    def __init__(
+        self,
+        choices_url: str,
+        choices: list[ChoiceItem] | None = None,
+        preload: bool = True,
+        dependent_on: str | None = None,
+        placeholder: str | None = None,
+        popup_url: str | None = None,
+    ) -> None:
+        super().__init__(choices_url, choices, preload, dependent_on)
+        self._init_autocomplete(placeholder, popup_url)
+
+
+def relation_widget(
+    *,
+    choices_url: str,
+    choices: list[ChoiceItem],
+    preload: bool,
+    multiple: bool,
+    dependent_on: str | None = None,
+    autocomplete: bool = False,
+    placeholder: str | None = None,
+    popup_url: str | None = None,
+) -> HtmxWidget:
+    """Return the widget for a relation field: autocomplete when enabled, else the plain select."""
+    if autocomplete:
+        cls: type[AutocompleteWidget] | type[AutocompleteMultiWidget] = (
+            AutocompleteMultiWidget if multiple else AutocompleteWidget
+        )
+        return cls(
+            choices_url=choices_url,
+            choices=choices,
+            preload=preload,
+            dependent_on=dependent_on,
+            placeholder=placeholder,
+            popup_url=popup_url,
+        )
+    plain = RelationMultiSelectWidget if multiple else RelationSelectWidget
+    return plain(
+        choices_url=choices_url, choices=choices, preload=preload, dependent_on=dependent_on
+    )
+
+
 def hybrid_to_python(raw: str | list[str], storage: Literal["json", "csv"]) -> list[str]:
     """Deserialise a stored hybrid list field back to a Python list of strings."""
     if isinstance(raw, list):

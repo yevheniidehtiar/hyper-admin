@@ -468,6 +468,7 @@ class BaseAdapter(ABC):
         q: str = "",
         limit: int = 50,
         offset: int = 0,
+        label_fn: Callable[[Any], str] | None = None,
         **filters: Any,
     ) -> builtins.list[ChoiceItem]:
         """Return paginated, searchable choices for a relation field.
@@ -477,6 +478,8 @@ class BaseAdapter(ABC):
             q: Optional search string (ILIKE match on string columns).
             limit: Max results to return. Must not exceed 200.
             offset: Number of rows to skip for pagination.
+            label_fn: Renders each target row's option label (``relation_display``);
+                defaults to :func:`~hyperadmin.core.display.get_display_name`.
             **filters: Extra equality filters forwarded to the query (cascading support).
 
         Returns:
