@@ -369,6 +369,19 @@ def realtime_base_url(e2e_port: int) -> Iterator[str]:
 
 
 @pytest.fixture
+def plugin_base_url(e2e_port: int) -> Iterator[str]:
+    """Start the demo-plugin app (:mod:`tests.e2e.apps.plugin_registry`) and yield the base URL.
+
+    Seeds superuser ``alice`` and permissionless ``bob`` (both ``secret123``).
+    """
+    proc, base = _spawn_uvicorn("tests.e2e.apps.plugin_registry", e2e_port)
+    try:
+        yield base
+    finally:
+        _terminate(proc)
+
+
+@pytest.fixture
 def bridge_base_url(e2e_port: int) -> Iterator[str]:
     """Start the bridge-mode app (:mod:`tests.e2e._bridge_app`) and yield the base URL.
 

@@ -2,7 +2,7 @@
 type: story
 id: UExbEq_t2pV_
 title: "feat(core): wire plugin discovery into Admin.__init__"
-status: todo
+status: in-review
 priority: high
 assignee: null
 labels:
@@ -14,7 +14,7 @@ estimate: null
 epic_ref:
   id: um1zqB0-b2AZ
 created_at: 2026-05-05T00:00:00Z
-updated_at: 2026-05-05T00:00:00Z
+updated_at: 2026-10-20T00:00:00Z
 ---
 
 ## Summary

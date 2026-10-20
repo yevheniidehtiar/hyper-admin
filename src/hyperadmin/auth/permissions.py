@@ -20,6 +20,7 @@ from hyperadmin.auth.models import (
 from hyperadmin.core.adapters import open_session, require_engine_or_session_factory
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
     from contextlib import AbstractAsyncContextManager
 
     from sqlalchemy.ext.asyncio import AsyncEngine
@@ -78,6 +79,26 @@ class PermissionSyncService:
                         )
                         existing_set.add(codename)
 
+            if to_create:
+                session.add_all(to_create)
+                await session.commit()
+
+    async def sync_codenames(self, permissions: Iterable[tuple[str, str, str | None]]) -> None:
+        """Create missing permissions that belong to no model (e.g. plugin codenames).
+
+        Args:
+            permissions: ``(codename, name, content_type)`` tuples; existing
+                codenames are left untouched.
+        """
+        async with self._session() as session:
+            existing = set((await session.execute(select(Permission.codename))).scalars().all())
+            to_create: list[Permission] = []
+            for codename, name, content_type in permissions:
+                if codename not in existing:
+                    to_create.append(
+                        Permission(codename=codename, name=name, content_type=content_type)
+                    )
+                    existing.add(codename)
             if to_create:
                 session.add_all(to_create)
                 await session.commit()
