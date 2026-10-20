@@ -161,6 +161,8 @@ def test_html_grid_renders_pivot(engine: AsyncEngine) -> None:
     assert '/admin/reports/orders-revenue/export.xlsx"' in response.text
     assert 'data-testid="report-export-csv"' in response.text
     assert 'data-testid="report-export-xlsx"' in response.text
+    assert 'data-testid="report-export"' in response.text
+    assert 'data-testid="report-period">Period: Created At by month</p>' in response.text
 
 
 def test_csv_stream_sets_attachment_disposition(engine: AsyncEngine) -> None:
@@ -244,7 +246,8 @@ def test_index_lists_only_reports_the_user_may_view(engine: AsyncEngine) -> None
     assert '/admin/reports/orders-revenue/"' in allowed.text
     assert "Orders by SKU" not in allowed.text
     assert 'data-testid="sidebar-plugin-reports-reports-index"' in allowed.text
-    assert 'data-testid="report-list-empty"' in denied.text
+    assert 'data-testid="report-index"' in allowed.text
+    assert 'data-testid="report-index-empty"' in denied.text
 
 
 def test_report_without_column_dimension_uses_session_factory(engine: AsyncEngine) -> None:
@@ -280,7 +283,7 @@ def test_empty_report_renders_no_data(engine: AsyncEngine) -> None:
 
     response = _client(engine).get("/admin/reports/orders-revenue/")
 
-    assert 'data-testid="report-empty"' in response.text
+    assert 'data-testid="report-no-data"' in response.text
 
 
 @pytest.mark.anyio

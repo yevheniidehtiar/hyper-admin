@@ -5,11 +5,18 @@
 {%- block content -%}
     <div class="ha-page-header" data-testid="page-header">
         <h1 class="ha-page-title">{{ report.get_label() }}</h1>
-        <div class="ha-page-header-actions">
+        <div class="ha-page-header-actions" data-testid="report-export">
             <a href="{{- url_for('report-export-csv', slug=report.slug) -}}" class="ha-btn ha-btn-secondary" data-testid="report-export-csv" download>{{ _("Export CSV") }}</a>
             <a href="{{- url_for('report-export-xlsx', slug=report.slug) -}}" class="ha-btn ha-btn-secondary" data-testid="report-export-xlsx" download>{{ _("Export XLSX") }}</a>
         </div>
     </div>
+    {%- if periods -%}
+    <p class="ha-text-muted" data-testid="report-period">
+        {%- for label, period in periods -%}
+        {{ _("Period") }}: {{ label }} {{ _("by") }} {{ period }}{%- if not loop.last %} · {% endif -%}
+        {%- endfor -%}
+    </p>
+    {%- endif -%}
     <div class="ha-table-wrapper">
         <table class="ha-table" data-testid="report-grid" aria-label="{{ report.get_label() }}">
             <thead>
@@ -28,7 +35,7 @@
                 </tr>
                 {%- else -%}
                 <tr class="ha-table-row">
-                    <td class="ha-table-cell ha-text-muted" colspan="{{ table.header | length or 1 }}" data-testid="report-empty">{{ _("No data") }}</td>
+                    <td class="ha-table-cell ha-text-muted" colspan="{{ table.header | length or 1 }}" data-testid="report-no-data">{{ _("No data") }}</td>
                 </tr>
                 {%- endfor -%}
             </tbody>

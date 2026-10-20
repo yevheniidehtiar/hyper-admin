@@ -82,9 +82,17 @@ def build_router(admin: Any) -> APIRouter:
     @router.get("/{slug}/", name="report-detail", response_class=HTMLResponse)
     async def report_detail(request: Request, slug: str) -> Response:
         report = await authorized(request, slug)
-        table = await run(report)
+        result = await report.run(_session_source(admin))
+        # The bucket each TimeBucket ran with ("auto" already resolved), by dimension label.
+        periods = [
+            (dim.label, result.periods[dim.name])
+            for dim in (*report.rows, *report.cols)
+            if dim.name in result.periods
+        ]
         return admin.templates.TemplateResponse(
-            request, "reports/detail.html", {"report": report, "table": table}
+            request,
+            "reports/detail.html",
+            {"report": report, "table": build_table(report, result), "periods": periods},
         )
 
     @router.get("/{slug}/export.csv", name="report-export-csv")
