@@ -73,7 +73,7 @@ Values tuned from the brief, so contrast holds: light `ha-color-primary` is #0F7
 - Inline SVG with `class="ha-icon"` and `stroke="currentColor"` so icons take the text colour. No icon font, no sprite request.
 - Decorative icons get `aria-hidden="true"`. An icon-only button gets an `aria-label` that names the action and the object: "Edit invoice INV-0142".
 - **Mirroring in RTL**: add `.ha-icon--mirror` to directional icons (chevrons, back and forward arrows, progress, "reply"). Never mirror checkmarks, media controls, clocks, charts' up/down deltas, sort arrows, or the logo.
-- `src/hyperadmin/static/icons/` holds the 39 icons the admin and the components use (`stroke="currentColor"`), inlined by the generated `icon(name)` macro; add more from the same pinned Lucide release and rerun `scripts/generate_icon_macro.py`.
+- `src/hyperadmin/static/icons/` holds the 45 icons the admin and the components use (`stroke="currentColor"`), inlined by the generated `icon(name)` macro; add more from the same pinned Lucide release and rerun `scripts/generate_icon_macro.py`.
 
 ## Logo
 
@@ -98,6 +98,17 @@ Server-rendered SVG first: a Jinja2 macro emits the `<svg>`, themed by tokens, s
 - The plot keeps `direction: ltr` inside RTL pages (`.ha-chart` sets it), so `text-anchor` and the time axis never flip.
 - Data inside the plot stays left-to-right in RTL; the frame (title, legend, period switch) mirrors. Tick labels and tooltips use locale number, date and currency formats.
 - The optional client-side layer (`interactive=True`) is vendored, pinned, loaded only on that report page, and the SVG still renders without it.
+
+## Flows (v0.5.4 – v0.5.7)
+
+Eight flow components sit on the pieces above: **BulkActionFlow**, **AutocompleteStates**, **ReportPage** (with the CrosstabTable), **FilterSidebar**, **SavedViews**, **PanelStates**, **PermissionMatrix** and **ObjectPermissionPopover**. Rules they share:
+
+- **Every step has a URL or a form.** Without JavaScript, the bulk parameter step is a page; the bucket switch and boolean filters are submit buttons and radios; the bulk retry is a POST form; "Show more" is a link. HTMX and Alpine only make these faster.
+- **Swap the smallest region.** Applying filters swaps the `<tbody>` and dims only the rows. A lazy tab fails or loads on its own. A report's grid scrolls in its own wrapper.
+- **Two save models, never mixed.** The permission matrix is a diff with one Save, a sticky save bar and an unsaved count, and a changed cell shows a dashed ring. Object rules and saved views save immediately and confirm inline with Undo.
+- **Inside a scrolling panel, actions open in the flow, not as a floating menu**, because a scroll container would clip it (as with saved-view actions).
+- **Results are per row**: problems first, done rows folded away. Each failure says what went wrong and how to fix it. Retry is offered only when something failed. Done, failed and forbidden also differ by marker shape.
+- **Null is not zero.** An empty bucket prints `—` (screen readers hear "no data"), a real zero prints `0`, and a key under the grid says so.
 
 ## Rebrand your admin
 
@@ -153,6 +164,7 @@ Name mapping, where the shipped CSS keeps an older name:
 
 - The table's card layout is still a viewport media query at `ha-bp-md`. Moving it to a container query on the table wrapper (`container: ha-table / inline-size`) lets a table in a narrow panel or dialog turn into cards too.
 - Wave 1 building blocks are specified but not shipped: Menu, Combobox, Progress, Banner and Popover (`components/<Name>/`). Their CSS is in `components/bundle.css` and `--ha-z-popover` is already in `_tokens.css`; port each into its own partial when the first milestone needs it (Menu and Combobox for v0.5.5 bulk actions and AutocompleteWidget, Banner for v0.6.0a and v0.5.3, Progress for bulk jobs and exports, Popover for field help and disabled reasons). The connection-lost notice in the Presence preview now uses `.ha-banner--warning`.
+- Wave 2 flow designs are specified but not shipped: BulkActionFlow, AutocompleteStates, ReportPage (with the CrosstabTable), FilterSidebar, SavedViews, PanelStates, PermissionMatrix and ObjectPermissionPopover (`components/<Name>/`). Their CSS is the "Wave 2" section of `components/bundle.css`. Port each into its own partial (for example `_bulk.css`, `_filters.css`, `_permissions.css`) with its milestone; the reports CSS ships with the `hyperadmin-reports` plugin. The in-flight `bulk_form.html` / `bulk_result.html` should move to the design-system classes listed in the BulkActionFlow guidelines.
 - Components the templates do not emit yet: status pills (enum columns still print `Status.PAID`), stat cards, charts, dialogs (deletes still use `hx-confirm`), breadcrumbs, presence avatars, the density switch and the collapsed sidebar. Their CSS is in `components/bundle.css`.
 - First load stays under 150 KB of CSS, fonts and JS: split each font into a Latin and a Cyrillic+Greek file with `unicode-range`, so a Latin-script page downloads only the Latin halves.
 - Copy still to bring to sentence case: "Create New Invoice" and "Invoice List" should read "Add invoice" and "Invoices"; that changes translation message IDs, so it goes with a catalogue update.
