@@ -14,6 +14,9 @@ ENV UV_COMPILE_BYTECODE=1 \
 
 COPY --chown=demo pyproject.toml uv.lock README.md LICENSE ./
 COPY --chown=demo src/ ./src/
+# First-party plugins are uv workspace members (pyproject [tool.uv.workspace]); `uv sync --locked`
+# fails without them.
+COPY --chown=demo plugins/ ./plugins/
 COPY --chown=demo examples/__init__.py ./examples/__init__.py
 COPY --chown=demo examples/erp/ ./examples/erp/
 
