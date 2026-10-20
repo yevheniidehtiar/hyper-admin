@@ -1,0 +1,44 @@
+<!-- @dsCard group="Actions" height=620 -->
+<!doctype html>
+<html>
+<head><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="../../tokens.css"><link rel="stylesheet" href="../bundle.css"><script>(function(){var t=new URLSearchParams(location.search).get("theme")||"light";document.documentElement.setAttribute("data-theme",t);var d=new URLSearchParams(location.search).get("dir");if(d)document.documentElement.setAttribute("dir",d);})();</script><meta charset="utf-8"><title>Menu — preview</title><style>body{margin:0;background:var(--ha-surface-base)} .pv{padding:16px;display:flex;flex-direction:column;gap:16px} .pv-l{font:500 12px/18px var(--font-sans);color:var(--ha-color-text-muted);margin:0 0 6px}</style></head>
+<body>
+<div class="ha-root pv">
+
+<div class="ha-row" style="align-items:flex-start;gap:24px">
+<div><p class="pv-l">Closed triggers</p><div class="ha-row"><button class="ha-btn" aria-haspopup="true" aria-expanded="false">Actions <svg class="ha-icon ha-icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button><button class="ha-btn ha-btn--icon" aria-label="More actions for INV-2026-0141" aria-expanded="false"><svg class="ha-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></button></div></div>
+<div><p class="pv-l">Row actions: icon, shortcut, description, disabled with reason, danger</p><details class="ha-layer" open data-testid="row-actions">
+<summary class="ha-btn ha-btn--icon" aria-label="More actions for INV-2026-0142"><svg class="ha-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg></summary>
+<div class="ha-popup ha-popup--static ha-menu" aria-label="Actions for INV-2026-0142">
+<div class="ha-menu__label">Invoice INV-2026-0142</div>
+<a class="ha-menu__item is-active" href="#" data-testid="row-edit-link"><svg class="ha-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg><span class="ha-menu__text"><span>Edit</span></span><span class="ha-menu__end"><kbd class="ha-kbd">E</kbd></span></a>
+<form method="post" action="#"><button type="submit" class="ha-menu__item"><svg class="ha-icon" viewBox="0 0 24 24" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg><span class="ha-menu__text"><span>Duplicate</span><span class="ha-menu__desc">Copies the lines, not the payments</span></span></button></form>
+<a class="ha-menu__item" href="#"><svg class="ha-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg><span class="ha-menu__text"><span>Download PDF</span></span></a>
+<hr>
+<button type="button" class="ha-menu__item" aria-disabled="true" aria-describedby="r-555734"><svg class="ha-icon" viewBox="0 0 24 24" aria-hidden="true"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg><span class="ha-menu__text"><span>Send payment reminder</span><span class="ha-menu__desc" id="r-555734">Only unpaid invoices can get a reminder</span></span></button>
+<hr>
+<a class="ha-menu__item ha-menu__item--danger" href="#" data-testid="row-delete-btn"><svg class="ha-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg><span class="ha-menu__text"><span>Delete…</span></span><span class="ha-menu__end"><kbd class="ha-kbd">Del</kbd></span></a>
+</div></details></div>
+<div><p class="pv-l">Bulk actions with a submenu</p><details class="ha-layer" open data-testid="bulk-actions">
+<summary class="ha-btn ha-btn--sm">3 selected · Actions <svg class="ha-icon ha-icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary>
+<div class="ha-popup ha-popup--static ha-menu" aria-label="Bulk actions">
+<form method="post" action="#"><button type="submit" class="ha-menu__item"><svg class="ha-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span class="ha-menu__text"><span>Mark as paid</span></span></button></form>
+<a class="ha-menu__item" href="#"><svg class="ha-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg><span class="ha-menu__text"><span>Export selected</span></span><span class="ha-menu__end"><svg class="ha-icon ha-icon--sm ha-icon--mirror" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></span></a>
+<a class="ha-menu__item" href="#"><svg class="ha-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span class="ha-menu__text"><span>Assign to…</span></span></a>
+<hr>
+<a class="ha-menu__item ha-menu__item--danger" href="#"><svg class="ha-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg><span class="ha-menu__text"><span>Delete 3 invoices…</span></span></a>
+</div></details></div>
+<div><p class="pv-l">Toggle items (aria-pressed)</p><details class="ha-layer" open>
+<summary class="ha-btn ha-btn--sm"><svg class="ha-icon ha-icon--sm" viewBox="0 0 24 24" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/><path d="M15 3v18"/></svg>Columns</summary>
+<div class="ha-popup ha-popup--static ha-menu" aria-label="Visible columns">
+<div class="ha-menu__label">Show columns</div>
+<button type="button" class="ha-menu__item" aria-pressed="true"><svg class="ha-icon ha-menu__check" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span class="ha-menu__text"><span>Number</span></span></button><button type="button" class="ha-menu__item" aria-pressed="true"><svg class="ha-icon ha-menu__check" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span class="ha-menu__text"><span>Customer</span></span></button><button type="button" class="ha-menu__item" aria-pressed="false"><svg class="ha-icon ha-menu__check" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span class="ha-menu__text"><span>Due date</span></span></button><button type="button" class="ha-menu__item" aria-pressed="true"><svg class="ha-icon ha-menu__check" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span class="ha-menu__text"><span>Amount</span></span></button>
+<hr><a class="ha-menu__item" href="#"><svg class="ha-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg><span class="ha-menu__text"><span>Reset to default</span></span></a>
+</div></details></div>
+</div>
+<div dir="rtl" lang="ar"><p class="pv-l">RTL</p><details class="ha-layer" open><summary class="ha-btn">إجراءات <svg class="ha-icon ha-icon--sm" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div class="ha-popup ha-popup--static ha-menu" aria-label="إجراءات">
+<a class="ha-menu__item" href="#"><svg class="ha-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg><span class="ha-menu__text"><span>تعديل</span></span><span class="ha-menu__end"><kbd class="ha-kbd">E</kbd></span></a><a class="ha-menu__item" href="#"><svg class="ha-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg><span class="ha-menu__text"><span>تصدير</span></span><span class="ha-menu__end"><svg class="ha-icon ha-icon--sm ha-icon--mirror" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></span></a><hr><a class="ha-menu__item ha-menu__item--danger" href="#"><svg class="ha-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg><span class="ha-menu__text"><span>حذف…</span></span></a></div></details></div>
+
+</div>
+</body>
+</html>
