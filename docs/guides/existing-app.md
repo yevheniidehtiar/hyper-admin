@@ -211,6 +211,19 @@ for the built-in auth tables only.
 When a table is missing, the list page shows a banner telling you to run your
 migrations or `hyperadmin init-db`, and the error is logged with its traceback.
 
+### Upgrading the built-in auth tables
+
+HyperAdmin ships no migration tool, so a column added to a `hyperadmin_*` table
+in a new release is created on fresh databases by `hyperadmin init-db` and picked
+up by Alembic autogenerate through `hyperadmin.auth.metadata()`. Existing
+databases add it with their own migration. The column each release adds:
+
+| Since | Table | Column | Alembic operation |
+|---|---|---|---|
+| v0.5.7 | `hyperadmin_groups` | `permissions_version` (permission-matrix version stamp) | `op.add_column("hyperadmin_groups", sa.Column("permissions_version", sa.Integer(), nullable=False, server_default="0"))` |
+
+The downgrade is `op.drop_column("hyperadmin_groups", "permissions_version")`.
+
 ## 6. Datetimes and timezones
 
 Naive and timezone-aware columns both work, on every supported sqlmodel version
