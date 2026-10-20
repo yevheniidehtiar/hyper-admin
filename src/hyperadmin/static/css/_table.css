@@ -239,94 +239,292 @@
 }
 
 /* --------------------------------------------------------------------------
-   Bulk actions: checkbox column, toolbar and result region (v0.5.5)
+   Bulk actions (v0.5.5): checkbox column, bulk bar and per-row result.
+   Ported from the design system's BulkActionFlow (components/bundle.css).
+   The proportion bar (.ha-progress__segments) is a shared primitive and is
+   styled where the other progress rules live; only its bulk-specific
+   "forbidden" segment is defined here.
    -------------------------------------------------------------------------- */
 
-.ha-bulk-cell {
-  width: 1%;
+.ha-table .ha-col-check {
+  width: 44px;
+  min-width: 44px;
+  max-width: 44px;
+  padding-inline: 0;
   text-align: center;
 }
 
-.ha-bulk-checkbox {
-  width: 1rem;
-  height: 1rem;
-  accent-color: var(--ha-color-primary);
-  cursor: pointer;
+.ha-table .ha-col-check .ha-check {
+  justify-content: center;
+  min-width: 44px;
 }
 
-.ha-bulk-toolbar {
+.ha-table tbody tr:has(> .ha-col-check input:checked) > .ha-table-cell {
+  background-color: var(--ha-surface-selected);
+}
+
+/* Bar: selection count, action picker, Run, Clear selection, inline warning */
+.ha-bulkbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ha-space-3);
+  padding: var(--ha-space-2) var(--ha-space-3);
+  background-color: var(--ha-color-primary-soft);
+  color: var(--ha-color-primary-text);
+  font-weight: var(--ha-font-semibold);
+  border-block-end: var(--ha-border-width) solid var(--ha-color-border-light);
+}
+
+.ha-bulkbar__count {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ha-space-2);
+  color: var(--ha-color-primary-text);
+}
+
+.ha-bulkbar__pick {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--ha-space-2);
-  padding: var(--ha-space-3) var(--ha-cell-px);
-  border-block-end: var(--ha-border-width) solid var(--ha-color-border-light);
+  flex: 1 1 18rem;
+  min-width: 0;
+  font-weight: var(--ha-font-normal);
 }
 
-.ha-bulk-toolbar__label {
-  font-size: var(--ha-font-size-sm);
-  color: var(--ha-color-text-muted);
-}
-
-.ha-bulk-toolbar .ha-bulk-toolbar__select {
+.ha-bulkbar__pick .ha-select {
   width: auto;
-  min-width: 12rem;
+  flex: 0 1 16rem;
+  min-width: 0;
+  min-height: var(--ha-control-height-compact);
+  font-size: var(--ha-font-size-sm);
 }
 
-.ha-bulk-toolbar__warning {
+.ha-bulkbar__end {
+  margin-inline-start: auto;
+}
+
+.ha-bulkbar--warn {
+  background-color: var(--ha-color-warning-soft);
+}
+
+.ha-bulkbar__warn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ha-space-1);
+  flex-basis: 100%;
   margin: 0;
   font-size: var(--ha-font-size-sm);
-  color: var(--ha-color-danger);
+  font-weight: var(--ha-font-medium);
+  color: var(--ha-color-warning-text);
 }
 
+.ha-bulkbar__warn[hidden] {
+  display: none;
+}
+
+/* Result region inside the list: empty until a bulk run lands in it */
 .ha-bulk-result-region:empty {
   display: none;
 }
 
 .ha-bulk-result-region {
-  padding: var(--ha-space-3) var(--ha-cell-px);
+  padding: var(--ha-space-4) var(--ha-cell-px);
   border-block-end: var(--ha-border-width) solid var(--ha-color-border-light);
+}
+
+/* Per-row result */
+.ha-bulk-result {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ha-space-4);
 }
 
 .ha-bulk-result__title {
-  margin: 0 0 var(--ha-space-2);
-  font-size: var(--ha-font-size-base);
-  font-weight: var(--ha-font-medium);
+  margin: 0;
+  font-size: 1.25rem;
+  line-height: 28px;
+  font-weight: var(--ha-font-semibold);
+  color: var(--ha-color-text-strong);
 }
 
-.ha-bulk-result__table {
-  border-collapse: collapse;
-  margin-block-end: var(--ha-space-3);
+.ha-bulk-result__summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ha-space-2) var(--ha-space-4);
+  padding: var(--ha-space-4);
+  border: var(--ha-border-width) solid var(--ha-color-border-light);
+  border-radius: var(--ha-radius-lg);
+  background-color: var(--ha-surface-raised);
+}
+
+.ha-bulk-result__headline {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ha-space-2);
+  flex: 1 1 20rem;
+  margin: 0;
+  font-weight: var(--ha-font-semibold);
+  color: var(--ha-color-text-strong);
+}
+
+.ha-bulk-result__headline .ha-icon {
+  flex-shrink: 0;
+  margin-block-start: 1px;
+}
+
+.ha-bulk-result--ok .ha-bulk-result__headline .ha-icon {
+  color: var(--ha-color-success-text);
+}
+
+.ha-bulk-result--mixed .ha-bulk-result__headline .ha-icon {
+  color: var(--ha-color-warning-text);
+}
+
+.ha-bulk-result--failed .ha-bulk-result__headline .ha-icon {
+  color: var(--ha-color-danger-text);
+}
+
+.ha-bulk-result__tally {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ha-space-1) var(--ha-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
   font-size: var(--ha-font-size-sm);
 }
 
-.ha-bulk-result__table th,
-.ha-bulk-result__table td {
-  padding: var(--ha-space-1) var(--ha-space-3);
-  text-align: start;
-  border-block-end: var(--ha-border-width) solid var(--ha-color-border-light);
+.ha-bulk-result__tally li {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ha-space-1);
 }
 
-.ha-bulk-result__table th {
+.ha-bulk-result__summary .ha-progress__segments {
+  flex-basis: 100%;
+}
+
+.ha-progress__segments > .is-forbidden {
+  background: repeating-linear-gradient(
+    135deg,
+    var(--ha-color-warning-text) 0 3px,
+    transparent 3px 6px
+  );
+  box-shadow: inset 0 0 0 1px var(--ha-color-warning-text);
+}
+
+.ha-bulk-result__table {
+  font-size: var(--ha-font-size-sm);
+}
+
+.ha-bulk-result__table .ha-table-cell:last-child {
+  white-space: normal;
+  min-width: 12rem;
+}
+
+.ha-bulk-result__table .ha-bulk-result__key {
   font-weight: var(--ha-font-medium);
+}
+
+.ha-bulk-result__more > summary {
+  display: flex;
+  align-items: center;
+  gap: var(--ha-space-2);
+  min-height: 44px;
+  padding: 0 var(--ha-cell-px);
+  cursor: pointer;
+  font-weight: var(--ha-font-medium);
+  color: var(--ha-color-primary-text);
+  border-block-start: var(--ha-border-width) solid var(--ha-color-border-light);
+  list-style: none;
+}
+
+.ha-bulk-result__more > summary::-webkit-details-marker {
+  display: none;
+}
+
+.ha-bulk-result__more > summary .ha-icon {
+  transition: rotate 150ms;
+}
+
+.ha-bulk-result__more[open] > summary .ha-icon {
+  rotate: 90deg;
+}
+
+.ha-bulk-result__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ha-space-2);
+}
+
+.ha-bulk-result__actions form {
+  display: contents;
+}
+
+.ha-null {
   color: var(--ha-color-text-muted);
 }
 
+/* Status pills: the word carries the meaning, the marker shape is a second cue.
+   .ha-bulk-status carries the pill base itself (the shared .ha-pill is ported
+   with the other primitives), so the result reads right on its own. */
 .ha-bulk-status {
-  display: inline-block;
-  padding: 0 var(--ha-space-2);
-  border-radius: var(--ha-radius-full);
-  font-size: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ha-space-1);
+  padding: var(--ha-space-0-5) var(--ha-space-2);
+  border-radius: var(--ha-radius-pill);
+  font-size: var(--ha-font-size-xs);
+  line-height: 18px;
   font-weight: var(--ha-font-medium);
+  white-space: nowrap;
+}
+
+.ha-bulk-status::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: var(--ha-radius-pill);
+  background: currentColor;
 }
 
 .ha-bulk-status--ok {
-  color: var(--ha-color-success);
-  background-color: var(--ha-color-success-light);
+  background-color: var(--ha-color-success-soft);
+  color: var(--ha-color-success-text);
 }
 
-.ha-bulk-status--failed,
+.ha-bulk-status--failed {
+  background-color: var(--ha-color-danger-soft);
+  color: var(--ha-color-danger-text);
+}
+
 .ha-bulk-status--forbidden {
-  color: var(--ha-color-danger);
-  background-color: var(--ha-color-danger-light);
+  background-color: var(--ha-color-warning-soft);
+  color: var(--ha-color-warning-text);
+}
+
+.ha-bulk-status--forbidden::before {
+  border-radius: 1px;
+}
+
+.ha-bulk-status--failed::before {
+  border-radius: 1px;
+  rotate: 45deg;
+}
+
+@media (max-width: 767px) {
+  .ha-table-cell.ha-col-check {
+    float: inline-end;
+    width: auto;
+    max-width: none;
+    padding: 0;
+  }
+
+  .ha-table-cell.ha-col-check::before {
+    content: none;
+  }
 }

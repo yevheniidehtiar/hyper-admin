@@ -185,7 +185,7 @@ def test_bulk_handler_captures_generic_exception_as_failed(client: TestClient):
       Given handler raises RuntimeError("boom") for id=2
       When  POST .../bulk with ids=[1,2,3]
       Then  result rows are ok / failed / ok in order
-      And   the "failed" row carries the generic detail "Action failed"
+      And   the "failed" row says in plain words that the action failed
       And   the raw exception text "boom" is not shown to the user
     """
     # Given
@@ -201,7 +201,7 @@ def test_bulk_handler_captures_generic_exception_as_failed(client: TestClient):
     assert response.status_code == 200
     body = response.text
     assert "failed" in body
-    assert "Action failed" in body
+    assert "The action failed on this row" in body
     assert "boom" not in body
 
 
@@ -212,7 +212,7 @@ def test_bulk_row_load_error_is_reported_generically(
     Scenario: database error while loading a row does not leak SQL to the browser
       Given the adapter raises an error embedding SQL and parameters for id=2
       When  POST .../bulk with ids=[1,2,3]
-      Then  the row for id=2 is "failed" with the generic detail "Database error"
+      Then  the row for id=2 is "failed" with a plain "database error" sentence
       And   neither the SQL text nor the bound parameter value appears in the response
       And   the handler still runs for ids 1 and 3
     """
@@ -237,7 +237,7 @@ def test_bulk_row_load_error_is_reported_generically(
     # Then
     assert response.status_code == 200
     body = response.text
-    assert "Database error" in body
+    assert "because of a database error" in body
     assert "SELECT" not in body
     assert "s3cr3t" not in body
     assert sorted(item_id for item_id, _ in _calls) == [1, 3]
@@ -488,7 +488,7 @@ def test_uuid_bulk(uuid_client: TestClient):
     body = response.text
     assert body.count('data-testid="bulk-result-row"') == 2
     for pk in ids:
-        assert f'data-testid="bulk-result-status-{pk}">ok<' in body
+        assert f'data-testid="bulk-result-status-{pk}">Done<' in body
     # The handler received typed uuid.UUID keys, not raw strings.
     assert _uuid_calls == [("archive", _UUID_A), ("archive", _UUID_B)]
 

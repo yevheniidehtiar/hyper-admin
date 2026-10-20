@@ -1,46 +1,81 @@
-{#- Parameter-collection form for a bulk action (H3, v0.5.5).
+{#- Parameter step of a bulk action (H3, v0.5.5) — design: BulkActionFlow.
+
+    The same partial is a dialog with HTMX (swapped into ``#ha-popup-root``)
+    and a page without it (``bulk_form.html`` wraps it with breadcrumbs).
 
     Context:
-      - action: ActionDef (has .name, .label, .form)
+      - action: ActionDef (has .name, .label, .form; .handler's docstring's
+        first line is the lede when present)
       - ids: list[str] — selected keys stringified with the model's pk codec
-        (``pk.to_str``), preserved as hidden inputs
+        (``pk.to_str``), shown as tags and preserved as hidden inputs
       - fields: list[dict(name,label,required,input_type,errors)] — built from action.form
       - confirm_url: URL of the /bulk/confirm endpoint
+      - is_htmx: bool — dialog (Cancel closes it) or page (Cancel links back)
+      - model_name: lowercase model name, for the page's Cancel link
 -#}
+{%- from "components/_icons.html" import icon -%}
+{%- set error_count = fields|selectattr('errors')|list|length -%}
+{%- set doc = (action.handler.__doc__ if action.handler is defined and action.handler.__doc__ else '')|trim -%}
+{%- set lede = doc.split('\n')[0]|trim -%}
+{%- if ids|length == 1 -%}
+    {%- set title -%}{% trans label=action.label %}{{ label }} 1 row{% endtrans %}{%- endset -%}
+{%- else -%}
+    {%- set title -%}{% trans label=action.label, count=ids|length %}{{ label }} {{ count }} rows{% endtrans %}{%- endset -%}
+{%- endif -%}
 <form method="post" action="{{ confirm_url }}" data-testid="bulk-form"
       hx-post="{{ confirm_url }}" hx-target="#bulk-result-region" hx-swap="innerHTML"
-      class="ha-bulk-form">
+      class="ha-bulk-form" aria-labelledby="bulk-form-title">
   {{ csrf_input() if csrf_input is defined }}
-  <h2 class="ha-bulk-form__title">{{ action.label }}</h2>
+  <h2 class="ha-bulk-form__title" id="bulk-form-title">{{ title }}</h2>
+  {% if error_count %}
+  <div class="ha-alert ha-alert-error" role="alert" tabindex="-1" data-testid="bulk-form-alert">
+    {{ icon('circle-x') }}
+    <div class="ha-alert-body">
+      <strong class="ha-alert-title">
+        {%- if error_count == 1 -%}{{ _("1 field needs fixing.") }}{%- else -%}{% trans count=error_count %}{{ count }} fields need fixing.{% endtrans %}{%- endif -%}
+      </strong>
+      <span>{% trans count=ids|length %}Your {{ count }} selected rows are kept.{% endtrans %}</span>
+    </div>
+  </div>
+  {% endif %}
   <p class="ha-bulk-form__lede">
-    {{ _("This action will run on") }} <strong>{{ ids|length }}</strong>
-    {{ _("selected row(s)") }}.
+    {%- if lede -%}{{ lede }}{%- else -%}{% trans count=ids|length %}This runs on the {{ count }} selected rows.{% endtrans %}{%- endif -%}
   </p>
 
+  <ul class="ha-bulk-form__ids" aria-label="{{ _('Selected rows') }}">
+    {%- for pk in ids %}<li class="ha-mono">{{ pk }}</li>{% endfor -%}
+  </ul>
   {% for pk in ids -%}
   <input type="hidden" name="ids" value="{{ pk }}" />
   {%- endfor %}
 
   {% for field in fields %}
-  <div class="ha-form-field" data-testid="bulk-form-field-{{ field.name }}">
-    <label for="bulk-{{ field.name }}">{{ field.label }}{% if field.required %} *{% endif %}</label>
+  <div class="ha-field" data-testid="bulk-form-field-{{ field.name }}">
+    <label class="ha-label" for="bulk-{{ field.name }}">
+      {{- field.label -}}
+      {%- if field.required %}<span class="ha-req" aria-hidden="true">*</span>{% else %}<span class="ha-opt">({{ _("optional") }})</span>{% endif -%}
+    </label>
     <input id="bulk-{{ field.name }}"
            name="{{ field.name }}"
            type="{{ field.input_type }}"
            {% if field.input_type == 'number' %}step="any"{% endif %}
            class="ha-input"
-           aria-invalid="{{ 'true' if field.errors else 'false' }}" />
+           aria-invalid="{{ 'true' if field.errors else 'false' }}"
+           {% if field.errors %}aria-describedby="bulk-{{ field.name }}-errors"{% endif %} />
     {% if field.errors %}
-    <ul class="ha-field-errors" aria-live="polite"
-        data-testid="bulk-form-{{ field.name }}-errors">
-      {% for e in field.errors %}<li>{{ e }}</li>{% endfor %}
-    </ul>
+    <p class="ha-errmsg" id="bulk-{{ field.name }}-errors" aria-live="polite"
+       data-testid="bulk-form-{{ field.name }}-errors">{{ icon('circle-x', 'ha-icon--sm') }}<span>{{ field.errors|join(' ') }}</span></p>
     {% endif %}
   </div>
   {% endfor %}
 
   <div class="ha-bulk-form__actions">
-    <button type="submit" class="ha-btn ha-btn-primary"
-            data-testid="bulk-confirm-btn">{{ _("Run") }}</button>
+    {% if is_htmx is defined and is_htmx -%}
+    <button type="button" class="ha-btn" data-ha-popup-close data-testid="bulk-cancel-btn">{{ _("Cancel") }}</button>
+    {%- elif model_name is defined -%}
+    <a class="ha-btn" href="{{ url_for(model_name|lower ~ '-list') }}" data-testid="bulk-cancel-btn">{{ _("Cancel") }}</a>
+    {%- endif %}
+    <button type="submit" class="ha-btn ha-btn--primary"
+            data-testid="bulk-confirm-btn">{{ title }}</button>
   </div>
 </form>

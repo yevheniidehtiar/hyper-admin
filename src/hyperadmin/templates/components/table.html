@@ -8,11 +8,13 @@
         <thead>
             <tr class="ha-table-header">
                 {%- if bulk_actions -%}
-                <th class="ha-table-th ha-bulk-cell" scope="col">
-                    <input type="checkbox" class="ha-bulk-checkbox"
-                           aria-label="{{ _('Select all rows') }}"
-                           data-testid="bulk-select-all"
-                           onchange="var on = this.checked; this.closest('table').querySelectorAll('[data-testid=bulk-checkbox]').forEach(function (box) { box.checked = on; });" />
+                <th class="ha-table-th ha-col-check" scope="col">
+                    <label class="ha-check">
+                        <input type="checkbox"
+                               aria-label="{{ _('Select all rows on this page') }}"
+                               data-testid="bulk-select-all"
+                               onchange="var on = this.checked; this.closest('table').querySelectorAll('input[name=ids][form=bulk-action-form]').forEach(function (box) { box.checked = on; });" />
+                    </label>
                 </th>
                 {%- endif -%}
                 {%- for field in fields -%}
@@ -26,11 +28,12 @@
             <tr class="ha-table-row" data-testid="list-row">
                 {%- set item_pk = item|ha_pk(pk_attr|default('id')) -%}
                 {%- if bulk_actions -%}
-                <td class="ha-table-cell ha-bulk-cell" data-label="{{ _('Select') }}">
-                    <input type="checkbox" class="ha-bulk-checkbox" name="ids"
-                           value="{{ item_pk }}" form="bulk-action-form"
-                           aria-label="{% trans pk=item_pk %}Select row {{ pk }}{% endtrans %}"
-                           data-testid="bulk-checkbox" />
+                <td class="ha-table-cell ha-col-check" data-label="{{ _('Select') }}">
+                    <label class="ha-check">
+                        <input type="checkbox" name="ids" value="{{ item_pk }}" form="bulk-action-form"
+                               data-testid="bulk-checkbox" />
+                        <span class="ha-sr-only">{% trans pk=item_pk %}Select {{ pk }}{% endtrans %}</span>
+                    </label>
                 </td>
                 {%- endif -%}
                 {%- for field in fields -%}
