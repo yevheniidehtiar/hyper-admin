@@ -975,12 +975,7 @@ class DynamicModelView:
             if request is not None and not await self._may_view_related(request, target):
                 choices = self._opaque_selected_choices(target, sv.get(name))
             elif meta.preload:
-                raw_choices = await self.adapter.get_choices(rel_name)
-                current = str(sv.get(name, ""))
-                choices = [
-                    ChoiceItem(value=c["value"], label=c["label"], selected=c["value"] == current)
-                    for c in raw_choices
-                ]
+                choices = await self._preload_choices(name, rel_name, dependent_on, sv)
             elif autocomplete:
                 # No preload: keep the stored key(s) selectable until the user searches.
                 choices = self._opaque_selected_choices(target, sv.get(name))
@@ -1004,11 +999,57 @@ class DynamicModelView:
             )
         return widgets
 
+    async def _preload_choices(
+        self,
+        name: str,
+        rel_name: str,
+        dependent_on: str | None,
+        selected_values: dict[str, Any],
+    ) -> list[ChoiceItem]:
+        """Return the preloaded options for relation field ``name``.
+
+        Mirrors what :meth:`choices_view` returns for the same widget: a
+        dependent field is filtered by the parent's current value (and
+        preloads nothing while the parent is unset, so the template shows the
+        placeholder), and labels follow ``AdminOptions.relation_display``.
+        The stored value stays selected.
+        """
+        filters: dict[str, Any] = {}
+        if dependent_on is not None:
+            parent_value = selected_values.get(dependent_on)
+            if parent_value in (None, ""):
+                return []
+            filters[dependent_on] = parent_value
+        label_fn = self._relation_label_fn(name, rel_name)
+        if label_fn is not None:
+            # Only when configured: adapters predating ``label_fn`` keep working.
+            filters["label_fn"] = label_fn
+        raw_choices = await self.adapter.get_choices(rel_name, **filters)
+        current = str(selected_values.get(name, ""))
+        return [
+            ChoiceItem(value=c["value"], label=c["label"], selected=c["value"] == current)
+            for c in raw_choices
+        ]
+
+    def _relation_label_fn(self, name: str, rel_name: str) -> Callable[[Any], str] | None:
+        """Return the ``label_fn`` for the relation widget ``name`` renders, or ``None``.
+
+        ``relation_display`` is keyed by the form field (FK column) or by the
+        relationship name; the FK column wins when both are configured.
+        """
+        relation_display = getattr(self.options, "relation_display", None) or {}
+        display_key = next((k for k in (name, rel_name) if k in relation_display), None)
+        if display_key is None:
+            return None
+        return functools.partial(self._resolve_relation_label, target_field=display_key)
+
     async def _popup_url_for(self, request: Request, target: Any, field_name: str) -> str | None:
         """Return the "+" create-popup URL for ``field_name``'s target model, or ``None``.
 
         Only a model registered with this Admin, whose admin exposes create and
-        whose ``add`` permission the user holds, gets a popup.
+        whose ``add`` permission the user holds, gets a popup. The URL names
+        this model as ``source`` so the popup labels the created row the way
+        this form's ``relation_display`` renders ``field_name``.
         """
         if target is None or target is self.model or not self._is_registered(target):
             return None
@@ -1021,7 +1062,7 @@ class DynamicModelView:
             url = admin_url_for(request, f"{target_name}-create-popup")
         except NoMatchFound:
             return None
-        return str(url.include_query_params(target=field_name))
+        return str(url.include_query_params(target=field_name, source=self._model_name_lower))
 
     @staticmethod
     def _opaque_selected_choices(target: Any, current: Any) -> list[ChoiceItem]:
@@ -1669,15 +1710,19 @@ class DynamicModelView:
         html = template.render(context)
         return Response(content=html, media_type="text/html")
 
-    def _resolve_relation_label(self, instance: Any, target_field: str) -> str:
+    def _resolve_relation_label(
+        self, instance: Any, target_field: str, options: Any | None = None
+    ) -> str:
         """Render the option label for ``instance`` per ``AdminOptions.relation_display``.
 
-        Falls back to :func:`get_display_name` (never the default ``__str__``,
-        which prints every column) when no template / callable is configured or
-        when rendering raises. The view never crashes a popup response over a
-        cosmetic label.
+        ``options`` defaults to this admin's; the popup passes the originating
+        form's admin options so the created row is labelled as that form
+        renders ``target_field``. Falls back to :func:`get_display_name` (never
+        the default ``__str__``, which prints every column) when no template /
+        callable is configured or when rendering raises. The view never crashes
+        a popup response over a cosmetic label.
         """
-        relation_display = getattr(self.options, "relation_display", None) or {}
+        relation_display = getattr(options or self.options, "relation_display", None) or {}
         template = relation_display.get(target_field)
         if template is None:
             return get_display_name(instance)
@@ -1705,13 +1750,16 @@ class DynamicModelView:
     async def create_popup_view(self, request: Request) -> Response:
         """Inline-create endpoint for FK/M2M autocomplete widgets.
 
-        GET  /{model}/create-popup?target=<field>
+        GET  /{model}/create-popup?target=<field>&source=<parent model>
             Renders the popup form fragment for the modal.
-        POST /{model}/create-popup
+        POST /{model}/create-popup?source=<parent model>
             Creates the row. On success returns 200 with an empty body and an
             ``HX-Trigger`` header carrying
             ``{"hyperadminPopupCreated": {"target": <field>, "id": <pk>, "label": <display>}}``
             so the parent widget can insert the new option and close the modal.
+            ``label`` follows the ``source`` admin's ``relation_display`` for
+            ``target`` — the template its preload and search results use — so
+            the inserted option matches its neighbours.
 
         Validation failures keep the modal open by re-rendering the form
         fragment with field-level errors. Permission failures propagate through
@@ -1719,11 +1767,12 @@ class DynamicModelView:
         """
         await self._check_permission(request, "add")
 
+        source = request.query_params.get("source") or None
         if request.method == "GET":
             target = request.query_params.get("target")
             if not target:
                 raise HTTPException(status_code=400, detail="target query param required")
-            return self._render_popup_form(request, target=target)
+            return self._render_popup_form(request, target=target, source=source)
 
         form_data = await request.form()
         target_value = form_data.get("target")
@@ -1757,7 +1806,12 @@ class DynamicModelView:
         if errs or not instance:
             legacy_errs = {k: v[0] for k, v in (errs or {}).items() if v}
             return self._render_popup_form(
-                request, target=str(target), values=data, errors=legacy_errs, status_code=200
+                request,
+                target=str(target),
+                source=source,
+                values=data,
+                errors=legacy_errs,
+                status_code=200,
             )
 
         try:
@@ -1771,13 +1825,14 @@ class DynamicModelView:
             return self._render_popup_form(
                 request,
                 target=str(target),
+                source=source,
                 values=data,
                 errors=field_errors,
                 status_code=200,
             )
 
         new_pk = self.pk.value_of(new_item)
-        label = self._resolve_relation_label(new_item, str(target))
+        label = self._popup_label(new_item, str(target), source)
         payload = {
             "hyperadminPopupCreated": {
                 "target": str(target),
@@ -1794,15 +1849,66 @@ class DynamicModelView:
             headers={"HX-Trigger": _json.dumps(payload)},
         )
 
+    def _popup_label(self, instance: Any, target: str, source: str | None) -> str:
+        """Label the popup-created ``instance`` as the originating form renders ``target``.
+
+        The option lands in the ``source`` model's form, so the label follows
+        *that* admin's ``relation_display`` (keyed by the FK column ``target``
+        or by its relationship name), not this model's. The source is honoured
+        only when it is registered and ``target`` really relates to this model;
+        otherwise the display name is used.
+        """
+        source_model = self._registered_model_named(source)
+        if source_model is None:
+            return get_display_name(instance)
+        rel_name = self._source_relation_name(source_model, target)
+        if rel_name is None:
+            return get_display_name(instance)
+        options = getattr(self._admin_for_model(source_model), "options", None)
+        relation_display = getattr(options, "relation_display", None) or {}
+        display_key = next((k for k in (target, rel_name) if k in relation_display), None)
+        if display_key is None:
+            return get_display_name(instance)
+        return self._resolve_relation_label(instance, display_key, options=options)
+
+    @staticmethod
+    def _registered_model_named(slug: str | None) -> Any:
+        """Return the registered model whose URL slug is ``slug`` (or ``None``)."""
+        if not slug:
+            return None
+        return next((m for m in site._registry if m.__name__.lower() == slug), None)
+
+    def _source_relation_name(self, source_model: Any, target: str) -> str | None:
+        """Return the ``source_model`` relationship ``target`` renders when it points here."""
+        from sqlalchemy import inspect as sa_inspect  # noqa: PLC0415
+        from sqlalchemy.exc import NoInspectionAvailable  # noqa: PLC0415
+
+        try:
+            mapper = sa_inspect(source_model)
+        except NoInspectionAvailable:
+            return None
+        for rel in mapper.relationships:
+            if getattr(getattr(rel, "mapper", None), "class_", None) is not self.model:
+                continue
+            columns = {getattr(c, "key", None) for c in getattr(rel, "local_columns", [])}
+            if target == rel.key or target in columns:
+                return str(rel.key)
+        return None
+
     def _render_popup_form(
         self,
         request: Request,
         target: str,
+        source: str | None = None,
         values: dict[str, Any] | None = None,
         errors: dict[str, str] | None = None,
         status_code: int = 200,
     ) -> Response:
-        """Render the popup-form fragment used both for initial GET and error re-renders."""
+        """Render the popup-form fragment used both for initial GET and error re-renders.
+
+        ``source`` (the originating form's model slug) rides along on the POST
+        URL so the created row is labelled per that form's ``relation_display``.
+        """
         create_include = self.form_include
         if create_include and self.form_create_exclude:
             create_include = [f for f in create_include if f not in self.form_create_exclude]
@@ -1822,6 +1928,9 @@ class DynamicModelView:
             form.errors = norm
             for fld in form.fields:
                 fld.errors = norm.get(fld.name)
+        post_url = admin_url_for(request, f"{self._model_name_lower}-create-popup")
+        if source:
+            post_url = post_url.include_query_params(source=source)
         context = {
             "request": request,
             "pk_attr": self.pk.attr,
@@ -1830,7 +1939,7 @@ class DynamicModelView:
             "target": target,
             "values": values or {},
             "errors": errors or {},
-            "post_url": admin_url_for(request, f"{self._model_name_lower}-create-popup"),
+            "post_url": post_url,
         }
         return self.templates.TemplateResponse(
             request,

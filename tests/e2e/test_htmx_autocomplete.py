@@ -80,10 +80,16 @@ def test_fk_field_renders_autocomplete_widget_by_default(
     expect(search).to_have_attribute("type", "search")
     expect(search).to_have_attribute("hx-get", autocomplete_base_url + SUPPLIER_CHOICES)
     expect(search).to_have_attribute("placeholder", "Search supplier")
-    # And the native select carries the value, preloaded with the seeded suppliers
+    # And the native select carries the value, preloaded with the seeded suppliers,
+    # labelled with the same relation_display template the search results use
     select = page.get_by_test_id("autocomplete-select-supplier_id")
     expect(select).to_have_value("")
-    assert _option_labels(select) == ["---------", "Acme", "Acme Packaging", "Brabant Bakkerij"]
+    assert _option_labels(select) == [
+        "---------",
+        "Acme — Paris",
+        "Acme Packaging — Lyon",
+        "Brabant Bakkerij — Tilburg",
+    ]
 
     # And typing "ac" issues one debounced GET with q=ac
     with page.expect_request(_is_choices_request(SUPPLIER_CHOICES, "q=ac")) as request_info:
@@ -166,8 +172,11 @@ def test_popup_creates_related_row_and_selects_it(page: Page, autocomplete_base_
     _open_create_form(page, autocomplete_base_url)
     expect(page.get_by_test_id("popup-root")).to_be_hidden()
 
-    # When the user clicks "+" next to the supplier field
-    with page.expect_request("**/admin/supplier/create-popup?target=supplier_id"):
+    # When the user clicks "+" next to the supplier field: the popup is told which
+    # field it fills and which form it was opened from
+    with page.expect_request(
+        _is_choices_request("/admin/supplier/create-popup", "target=supplier_id", "source=product")
+    ):
         page.get_by_role("button", name="Add supplier").click()
 
     # Then the create popup opens as a dialog
@@ -178,21 +187,28 @@ def test_popup_creates_related_row_and_selects_it(page: Page, autocomplete_base_
     popup.get_by_label("Name").fill("Zed Corp")
     popup.get_by_label("City").fill("Utrecht")
 
-    # When the user saves
-    with page.expect_response("**/admin/supplier/create-popup") as response_info:
+    # When the user saves (the form posts back with the source it was opened from)
+    with page.expect_response(
+        lambda r: (
+            r.request.method == "POST"
+            and "/admin/supplier/create-popup" in r.url
+            and "source=product" in r.url
+        )
+    ) as response_info:
         popup.get_by_role("button", name="Save and select").click()
     assert response_info.value.status == HTTPStatus.OK
 
     # Then the modal closes
     expect(page.get_by_test_id("popup-form")).to_have_count(0)
     expect(page.get_by_test_id("popup-root")).to_be_hidden()
-    # And the supplier field holds the new supplier's id and label
+    # And the supplier field holds the new supplier's id and label, rendered with
+    # the product form's relation_display like every other option in the list
     select = page.get_by_test_id("autocomplete-select-supplier_id")
     new_id = select.input_value()
     assert new_id not in ("", "42", "43", "44")
     assert int(new_id) > 44
     selected_label = select.evaluate("el => el.options[el.selectedIndex].text")
-    assert "Zed Corp" in selected_label
+    assert selected_label == "Zed Corp — Utrecht"
 
 
 def test_popup_hidden_when_related_model_unregistered(

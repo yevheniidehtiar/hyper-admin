@@ -7,7 +7,7 @@
 | Issue | TBD |
 | Milestone | v0.5.5 — Bulk Actions & Autocomplete |
 | Created | 2026-05-10 |
-| Last updated | 2026-05-11 |
+| Last updated | 2026-10-21 |
 | Approved by | Yevhenii Dehtiar |
 | Approved on | 2026-05-11 |
 
@@ -143,7 +143,9 @@ class RelationDependency(BaseModel):
 async def create_popup_view(self, request: Request) -> Response: ...
 ```
 
-Mounted at `POST /{model}/create-popup`. On successful create, returns:
+Mounted at `POST /{model}/create-popup?source=<parent model>`. The "+" button
+opens `GET /{target}/create-popup?target=<field>&source=<parent model>`, and the
+popup form posts back with the same `source`. On successful create, returns:
 
 ```
 HTTP 200
@@ -152,8 +154,15 @@ Content-Type: text/html
 <empty body, modal closes via hx-on>
 ```
 
-The label uses the related model's admin `relation_display` template if set,
-or falls back to `str(instance)`.
+The label uses the `source` (parent form) admin's `relation_display` for
+`target` — the same template its preloaded options and search results use, so
+the inserted option matches its neighbours — and falls back to the display
+name when no source template applies.
+
+Preloaded options follow the same rule: a widget's first 50 options are
+labelled with `relation_display`, and a dependent widget preloads only the
+rows matching the parent's current value (nothing, plus the placeholder, while
+the parent is unset).
 
 **`choices_view`** is unchanged — it already accepts arbitrary extra query
 params for cascading filters.
