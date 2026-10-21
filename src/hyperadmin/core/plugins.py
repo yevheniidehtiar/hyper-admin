@@ -91,6 +91,8 @@ class NavEntry:
     section: str | None = None
     order: int = 0
     url_params: Mapping[str, Any] = field(default_factory=dict)
+    #: ``data-testid`` of the sidebar link; ``None`` derives ``sidebar-plugin-<plugin>-<url_name>``.
+    testid: str | None = None
 
 
 @dataclass(frozen=True)
@@ -343,8 +345,13 @@ class PluginRegistry:
         section: str | None = None,
         order: int = 0,
         url_params: Mapping[str, Any] | None = None,
+        testid: str | None = None,
     ) -> NavEntry:
-        """Add a sidebar link; ``url_name`` is resolved in the ``hyperadmin:`` namespace."""
+        """Add a sidebar link; ``url_name`` is resolved in the ``hyperadmin:`` namespace.
+
+        ``testid`` names the link for tests when several entries share a
+        ``url_name`` (one per ``url_params``); by default it is derived from it.
+        """
         contrib = self._contributing(plugin)
         if not label or not url_name:
             raise PluginError("nav entry needs a label and a url_name")
@@ -357,6 +364,7 @@ class PluginRegistry:
             section=section,
             order=order,
             url_params=dict(url_params or {}),
+            testid=testid,
         )
         contrib.nav_entries.append(entry)
         return entry

@@ -163,7 +163,7 @@ def resolve_plugin_nav(registry: PluginRegistry, router: Router) -> list[dict[st
                 "url": str(url),
                 "icon": entry.icon or "",
                 "permission": entry.permission,
-                "testid": f"sidebar-plugin-{entry.plugin}-{entry.url_name}",
+                "testid": entry.testid or f"sidebar-plugin-{entry.plugin}-{entry.url_name}",
             }
         )
     return [{"title": title, "items": items} for title, items in sections.items()]

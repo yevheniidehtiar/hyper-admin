@@ -590,6 +590,32 @@ def test_unresolvable_nav_entry_is_skipped(
     assert [s["title"] for s in admin.templates.env.globals["plugin_nav"]] == [None]
 
 
+def test_nav_entry_testid_overrides_the_derived_one(monkeypatch: pytest.MonkeyPatch) -> None:
+    """
+    Scenario: several nav entries share a url_name and tell themselves apart by testid
+      Given two entries to "admin-dashboard", one with testid="nav-home"
+      When  the dashboard renders
+      Then  that link carries data-testid="nav-home" and the other keeps the derived id
+    """
+
+    class _Nav:
+        name = "nav"
+
+        def on_register(self, admin: Any) -> None:
+            admin.plugins.add_nav_entry(
+                self, label="Home", url_name="admin-dashboard", testid="nav-home"
+            )
+            admin.plugins.add_nav_entry(self, label="Start", url_name="admin-dashboard")
+
+    _install(monkeypatch, nav=_Nav)
+    _, client = _admin(auth=False)
+
+    page = client.get("/admin/", headers=HTML).text
+
+    assert 'data-testid="nav-home"' in page
+    assert 'data-testid="sidebar-plugin-nav-admin-dashboard"' in page
+
+
 # -- permissions --------------------------------------------------------------------
 
 
