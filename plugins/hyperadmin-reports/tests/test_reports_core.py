@@ -39,6 +39,7 @@ from hyperadmin_reports import (
     pivot,
     resolve_period,
 )
+from hyperadmin_reports.bucketing import describe_span, period_for_days, range_days
 
 pytestmark = pytest.mark.anyio
 
@@ -490,6 +491,105 @@ async def test_many2one_falls_back_to_pk(seeded: AsyncSession) -> None:
     assert [r["amount"] for r in no_fk.records] == [20, 5, 1]
     unmapped = await UnmappedTarget.run(seeded)
     assert [r["plain_id"] for r in unmapped.records] == [None, None, None]
+
+
+# ---------------------------------------------------------------------------
+# Period override (the report page's bucket switch) and the "Auto chose..." note
+# ---------------------------------------------------------------------------
+
+
+async def test_period_override_replaces_the_declared_bucket(seeded: AsyncSession) -> None:
+    """
+    Scenario: ?period= overrides the declared period
+      Given SkuByMonth declares a month bucket
+      When  it runs with period="quarter"
+      Then  the buckets are quarters and no auto span is recorded
+    """
+    result = await SkuByMonth.run(seeded, period="quarter")
+
+    assert result.periods == {"created_at": "quarter"}
+    assert result.auto_spans == {}
+    assert result.pivot().col_keys == [("2025-Q1",), ("2025-Q4",)]
+
+
+async def test_period_override_auto_records_the_span_it_decided_on(
+    seeded: AsyncSession,
+) -> None:
+    """
+    Scenario: Auto explains itself
+      Given SkuByMonth declares a month bucket
+      When  it runs with period="auto" (data range, then an explicit range, then no rows)
+      Then  auto_spans holds the day count that picked the bucket, or nothing without data
+    """
+    from_data = await SkuByMonth.run(seeded, period="auto")
+    explicit = await SkuAuto.run(seeded, date_range=(date(2025, 1, 1), date(2025, 1, 31)))
+
+    assert from_data.periods == {"created_at": "quarter"}
+    assert from_data.auto_spans == {"created_at": 330}
+    assert explicit.periods == {"created_at": "day"}
+    assert explicit.auto_spans == {"created_at": 31}
+
+    await seeded.execute(sa.delete(ReportOrder))
+    await seeded.commit()
+    no_rows = await SkuAuto.run(seeded)
+    assert no_rows.periods == {"created_at": "year"}
+    assert no_rows.auto_spans == {}
+
+
+def test_time_bucket_resolve_period_with_override() -> None:
+    bucket = TimeBucket("created_at", period="month")
+    assert bucket.resolve_period(None, "week") == "week"
+    assert bucket.resolve_period(None, "auto") == "year"
+    assert bucket.resolve_period((date(2025, 1, 1), date(2025, 1, 10)), "auto") == "day"
+    assert bucket.resolve_period((date(2025, 1, 1), date(2025, 1, 10))) == "month"
+
+
+@pytest.mark.parametrize(
+    ("days", "expected"),
+    [(1, "1-day"), (92, "92-day"), (93, "3-month"), (365, "12-month"), (1100, "36-month")],
+)
+def test_describe_span(days: int, expected: str) -> None:
+    assert describe_span(days) == expected
+
+
+def test_period_for_days_and_range_days() -> None:
+    assert [period_for_days(d) for d in (31, 32, 92, 93, 186, 187, 1100, 1101)] == [
+        "day",
+        "week",
+        "week",
+        "month",
+        "month",
+        "quarter",
+        "quarter",
+        "year",
+    ]
+    assert range_days(("2025-01-31", date(2025, 1, 1))) == 31
+
+
+@pytest.mark.parametrize(
+    ("key", "period", "expected"),
+    [
+        ("2025-Q3", "quarter", ("2025", "Q3")),
+        ("2026-W03", "week", ("2026", "W03")),
+        ("2026-01-15", "day", ("2026", "01-15")),
+        ("2026-01", "month", ("2026", "2026-01")),
+        ("2026", "year", (None, "2026")),
+        ("2026", "month", (None, "2026")),
+        (None, "month", (None, "")),
+    ],
+)
+def test_time_bucket_split_key(key: Any, period: Any, expected: tuple[str | None, str]) -> None:
+    assert TimeBucket.split_key(key, period) == expected
+
+
+def test_report_description_and_summary() -> None:
+    class Described(SkuByMonth):
+        slug = "described"
+        description = "Revenue per SKU and month."
+
+    assert SkuByMonth.get_description() == ""
+    assert Described.get_description() == "Revenue per SKU and month."
+    assert SkuByMonth.get_summary() == "Report order · sum of amount, count of rows"
 
 
 def test_filters_are_declared_but_unused() -> None:

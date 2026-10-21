@@ -3,42 +3,6 @@
 {%- block title -%}{{ report.get_label() }} | {{ site_title | default("HyperAdmin") }}{%- endblock -%}
 
 {%- block content -%}
-    <div class="ha-page-header" data-testid="page-header">
-        <h1 class="ha-page-title">{{ report.get_label() }}</h1>
-        <div class="ha-page-header-actions" data-testid="report-export">
-            <a href="{{- url_for('report-export-csv', slug=report.slug) -}}" class="ha-btn ha-btn-secondary" data-testid="report-export-csv" download>{{ _("Export CSV") }}</a>
-            <a href="{{- url_for('report-export-xlsx', slug=report.slug) -}}" class="ha-btn ha-btn-secondary" data-testid="report-export-xlsx" download>{{ _("Export XLSX") }}</a>
-        </div>
-    </div>
-    {%- if periods -%}
-    <p class="ha-text-muted" data-testid="report-period">
-        {%- for label, period in periods -%}
-        {{ _("Period") }}: {{ label }} {{ _("by") }} {{ period }}{%- if not loop.last %} · {% endif -%}
-        {%- endfor -%}
-    </p>
-    {%- endif -%}
-    <div class="ha-table-wrapper">
-        <table class="ha-table" data-testid="report-grid" aria-label="{{ report.get_label() }}">
-            <thead>
-                <tr class="ha-table-header">
-                    {%- for heading in table.header -%}
-                    <th class="ha-table-th" scope="col">{{ heading }}</th>
-                    {%- endfor -%}
-                </tr>
-            </thead>
-            <tbody class="ha-table-body">
-                {%- for row in table.rows -%}
-                <tr class="ha-table-row" data-testid="report-row">
-                    {%- for cell in row -%}
-                    <td class="ha-table-cell" data-label="{{ table.header[loop.index0] }}">{%- if cell is none -%}<span class="ha-text-muted">&mdash;</span>{%- else -%}{{ cell }}{%- endif -%}</td>
-                    {%- endfor -%}
-                </tr>
-                {%- else -%}
-                <tr class="ha-table-row">
-                    <td class="ha-table-cell ha-text-muted" colspan="{{ table.header | length or 1 }}" data-testid="report-no-data">{{ _("No data") }}</td>
-                </tr>
-                {%- endfor -%}
-            </tbody>
-        </table>
-    </div>
+    <link rel="stylesheet" href="{{ url_for('static', path='/plugins/reports/reports.css') }}">
+    {%- include "reports/_page.html" -%}
 {%- endblock -%}

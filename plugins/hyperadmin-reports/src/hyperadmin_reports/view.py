@@ -25,7 +25,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import date, datetime
 from typing import TYPE_CHECKING, Any, ClassVar
 
@@ -34,7 +34,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from hyperadmin.core.display import get_display_name, get_field_label
 from hyperadmin_reports.aggregates import Aggregate, Many2One
-from hyperadmin_reports.bucketing import Period, TimeBucket
+from hyperadmin_reports.bucketing import Period, PeriodOrAuto, TimeBucket, range_days
 from hyperadmin_reports.crosstab import Pivot, pivot
 
 if TYPE_CHECKING:
@@ -77,7 +77,9 @@ class ReportResult:
     ``records`` holds one mapping per ``(rows, cols)`` group, keyed by each
     dimension's and aggregate's ``name``. ``periods`` maps every
     :class:`TimeBucket` dimension to the concrete period it was run with
-    (``auto`` already resolved).
+    (``auto`` already resolved); ``auto_spans`` holds, for the dimensions that
+    were resolved from ``auto``, the inclusive day count of the range that
+    decided it (so a page can say "Auto: quarter, for a 12-month range").
     """
 
     records: list[dict[str, Any]]
@@ -86,6 +88,7 @@ class ReportResult:
     values: list[str]
     periods: dict[str, Period]
     fills: dict[str, Any]
+    auto_spans: dict[str, int] = field(default_factory=dict)
 
     @property
     def columns(self) -> list[str]:
@@ -109,6 +112,8 @@ class ReportView:
 
     slug: ClassVar[str] = ""
     label: ClassVar[str] = ""
+    #: One sentence shown under the title and on the reports index card.
+    description: ClassVar[str] = ""
     model: ClassVar[type[Any]]
     rows: ClassVar[Sequence[Dimension]] = ()
     cols: ClassVar[Sequence[Dimension]] = ()
@@ -120,6 +125,17 @@ class ReportView:
     @classmethod
     def get_label(cls) -> str:
         return cls.label or cls.slug.replace("-", " ").replace("_", " ").capitalize()
+
+    @classmethod
+    def get_description(cls) -> str:
+        return cls.description
+
+    @classmethod
+    def get_summary(cls) -> str:
+        """What the report aggregates, e.g. ``"Orders · sum of amount, count of rows"``."""
+        source = _CAMEL_RE.sub(" ", cls.model.__name__).capitalize()
+        parts = (f"{a.title.lower()} of {_target_label(a).lower()}" for a in cls.values)
+        return f"{source} · {', '.join(parts)}"
 
     @classmethod
     def get_permission(cls) -> str:
@@ -188,17 +204,20 @@ class ReportView:
         *,
         date_range: DateRange | None = None,
         where: Sequence[ColumnElement[bool]] = (),
+        period: PeriodOrAuto | None = None,
     ) -> ReportResult:
         """Execute the grouped query and return the flat result set.
 
         ``date_range`` (inclusive) drives ``TimeBucket(period="auto")``; without
         it the range is the bucketed column's min/max in the data. ``where``
-        takes SQLAlchemy clauses built against :meth:`source_model`.
+        takes SQLAlchemy clauses built against :meth:`source_model`. ``period``
+        overrides the declared period of every :class:`TimeBucket` dimension for
+        this run (the page's bucket switch).
         """
         if isinstance(session, AsyncSession):
-            return await cls._run(session, date_range, where)
+            return await cls._run(session, date_range, where, period)
         async with session() as owned:
-            return await cls._run(owned, date_range, where)
+            return await cls._run(owned, date_range, where, period)
 
     @classmethod
     async def _run(
@@ -206,16 +225,21 @@ class ReportView:
         session: AsyncSession,
         date_range: DateRange | None,
         where: Sequence[ColumnElement[bool]],
+        override: PeriodOrAuto | None = None,
     ) -> ReportResult:
         cls.validate()
         dialect = session.get_bind().dialect.name
         periods: dict[str, Period] = {}
+        auto_spans: dict[str, int] = {}
         for dim in (*cls.rows, *cls.cols):
             if isinstance(dim, TimeBucket):
                 span = date_range
-                if dim.period == "auto" and span is None:
-                    span = await cls._data_range(session, dim.field, where)
-                periods[dim.name] = dim.resolve_period(span)
+                if (override or dim.period) == "auto":
+                    if span is None:
+                        span = await cls._data_range(session, dim.field, where)
+                    if span is not None:
+                        auto_spans[dim.name] = range_days(span)
+                periods[dim.name] = dim.resolve_period(span, override)
 
         result = await session.execute(cls.build_query(dialect, periods, where))
         records = [dict(row._mapping) for row in result]
@@ -233,6 +257,7 @@ class ReportView:
             values=[a.name for a in cls.values],
             periods=periods,
             fills={a.name: a.empty for a in cls.values},
+            auto_spans=auto_spans,
         )
 
     @classmethod
@@ -273,6 +298,7 @@ class ReportView:
 
 _REPORTS: dict[str, type[ReportView]] = {}
 _SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9_-]*$")
+_CAMEL_RE = re.compile(r"(?<=[a-z0-9])(?=[A-Z])")
 
 
 def register_report(report: type[ReportView]) -> type[ReportView]:
@@ -316,6 +342,10 @@ def get_report(slug: str) -> type[ReportView] | None:
 
 def _mapper(model: type[Any]) -> Mapper[Any]:
     return inspect(model)
+
+
+def _target_label(agg: Aggregate) -> str:
+    return "rows" if agg.field == "*" else get_field_label(agg.field)
 
 
 def _fk_target(model: type[Any], field: str) -> type[Any] | None:

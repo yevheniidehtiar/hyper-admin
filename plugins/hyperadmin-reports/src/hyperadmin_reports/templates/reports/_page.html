@@ -1,0 +1,146 @@
+{#-
+    The report page body (design system: components/ReportPage): crumbs, header with
+    the export menu, the bucket switch, the crosstab and its key. The bucket switch
+    swaps this whole fragment in place (hx-target="#report-page"), so the export
+    links always carry the period on screen.
+
+    Context: report, grid (ReportGrid), periods ([(label, period)]), bucket
+    ({options, note, selected} or none), export_query ("?..." or "").
+-#}
+{%- from "components/_icons.html" import icon -%}
+{%- from "components/seg.html" import seg -%}
+{%- from "components/menu.html" import menu -%}
+
+{%- macro value_cell(cell, start, num, extra='') -%}
+{%- set classes = ('ha-num ' if num or cell.kind in ('num', 'zero')) ~ ('ha-xtab__start ' if start) ~ ('ha-xtab__zero ' if cell.kind == 'zero') ~ extra -%}
+<td class="{{ classes | trim }}">
+    {%- if cell.kind == 'null' -%}
+    <span class="ha-null">&mdash;<span class="ha-sr-only"> {{ _("no data") }}</span></span>
+    {%- elif cell.kind == 'list' -%}
+    <span class="ha-trunc" tabindex="0" title="{{ cell.value }}">{{ cell.value }}</span>
+    {%- else -%}
+    {{ cell.value }}
+    {%- endif -%}
+</td>
+{%- endmacro -%}
+
+{%- set export_items = [
+    {'heading': _("Uses the current period and filters")},
+    {'label': 'CSV', 'href': url_for('report-export-csv', slug=report.slug) ~ export_query, 'icon': 'file-text', 'description': report.slug ~ '.csv', 'testid': 'report-export-csv'},
+    {'label': 'Excel', 'href': url_for('report-export-xlsx', slug=report.slug) ~ export_query, 'icon': 'file-text', 'description': report.slug ~ '.xlsx, ' ~ _("with a “Filters used” sheet"), 'testid': 'report-export-xlsx'},
+] -%}
+{%- set flags = grid.column_flags -%}
+<div id="report-page" class="ha-report" data-testid="report-page">
+    <nav class="ha-crumbs" aria-label="{{ _('Breadcrumb') }}">
+        <ol>
+            <li><a href="{{ url_for('reports-index') }}">{{ _("Reports") }}</a>{{ icon('chevron-right', 'ha-icon--sm ha-icon--mirror') }}</li>
+            <li aria-current="page">{{ report.get_label() }}</li>
+        </ol>
+    </nav>
+    <header class="ha-page-header ha-report-head" data-testid="page-header">
+        <div class="ha-report-head__text">
+            <h1 class="ha-h1">{{ report.get_label() }}</h1>
+            {%- if report.get_description() %}
+            <p class="ha-report-head__lede">{{ report.get_description() }}</p>
+            {%- endif %}
+            {%- if periods %}
+            <div class="ha-report-head__meta" data-testid="report-meta">
+                {{ icon('calendar', 'ha-icon--sm') }}
+                <span>{% for label, period in periods %}{{ label }} {{ _("by") }} {{ period }}{% if not loop.last %} · {% endif %}{% endfor %}</span>
+            </div>
+            {%- endif %}
+        </div>
+        <div class="ha-page-header-actions">
+            {{ menu(_('Export'), export_items, align='end', testid='report-export') }}
+        </div>
+    </header>
+    {%- if bucket %}
+    <div class="ha-report-controls" data-testid="report-controls">
+        <span class="ha-report-controls__label" id="report-period-label">{{ _("Group by") }}</span>
+        {{ seg(bucket.options, labelledby='report-period-label', describedby=('report-period-note' if bucket.note else none), testid='report-period') }}
+        {%- if bucket.note %}
+        <span class="ha-report-controls__auto" id="report-period-note" data-testid="report-period-note">{{ icon('info', 'ha-icon--sm') }}<span>{{ bucket.note }}</span></span>
+        {%- endif %}
+    </div>
+    {%- endif %}
+    <div class="ha-table-wrapper ha-xtab-wrap" data-testid="report-grid" tabindex="0" role="region"
+         aria-label="{{ report.get_label() }} ({{ _('scrolls sideways') }})"
+         {%- if grid.column_labels | length > 24 %} data-density="compact"{% endif %}>
+        <table class="ha-table ha-xtab" aria-label="{{ report.get_label() }}">
+            <thead>
+                {%- for header_row in grid.header_rows %}
+                {%- set first_level = loop.first %}
+                {%- set leaf_level = loop.last %}
+                <tr>
+                    {%- if first_level %}
+                    <th scope="col" rowspan="{{ grid.levels }}" class="ha-sticky-first">{{ grid.row_labels | join(' / ') }}</th>
+                    {%- endif %}
+                    {%- for cell in header_row %}
+                    <th scope="{{ 'col' if leaf_level else 'colgroup' }}"{% if cell.span > 1 %} colspan="{{ cell.span }}"{% endif %} class="{{ (('ha-num ' if cell.num) ~ ('ha-xtab__start' if cell.start)) | trim }}">
+                        {%- if cell.title -%}
+                        <abbr title="{{ cell.title }}">{{ cell.label }}</abbr>{% if cell.sr_suffix %}<span class="ha-sr-only">{{ cell.sr_suffix }}</span>{% endif %}
+                        {%- else -%}
+                        {{ cell.label }}
+                        {%- endif -%}
+                    </th>
+                    {%- endfor %}
+                    {%- if first_level %}
+                    {%- for label in grid.total_labels %}
+                    <th scope="col" rowspan="{{ grid.levels }}" class="ha-num ha-xtab__total">{{ label }}</th>
+                    {%- endfor %}
+                    {%- endif %}
+                </tr>
+                {%- endfor %}
+            </thead>
+            {%- if grid.rows %}
+            {%- for band, rows in grid.bands() %}
+            <tbody>
+                {%- if grid.grouped_rows %}
+                <tr data-testid="report-rowgroup">
+                    <th scope="rowgroup" colspan="{{ grid.width }}" class="ha-sticky-first">{{ band }}</th>
+                </tr>
+                {%- endif %}
+                {%- for row in rows %}
+                <tr data-testid="report-row">
+                    <th scope="row" class="ha-sticky-first">{{ row.label }}</th>
+                    {%- for cell in row.cells %}
+                    {{ value_cell(cell, flags[loop.index0][0], flags[loop.index0][1]) }}
+                    {%- endfor %}
+                    {%- for cell in row.totals %}
+                    {{ value_cell(cell, false, true, 'ha-xtab__total') }}
+                    {%- endfor %}
+                </tr>
+                {%- endfor %}
+            </tbody>
+            {%- endfor %}
+            {%- if grid.has_col_totals %}
+            <tfoot>
+                <tr data-testid="report-totals">
+                    <th scope="row" class="ha-sticky-first">{{ _("Total") }}</th>
+                    {%- for cell in grid.col_totals %}
+                    {{ value_cell(cell, flags[loop.index0][0], flags[loop.index0][1]) }}
+                    {%- endfor %}
+                    {%- for cell in grid.grand_totals %}
+                    {{ value_cell(cell, false, true, 'ha-xtab__total') }}
+                    {%- endfor %}
+                </tr>
+            </tfoot>
+            {%- endif %}
+            {%- else %}
+            <tbody>
+                <tr>
+                    <td colspan="{{ grid.width }}" class="ha-xtab__nodata" data-testid="report-no-data">
+                        {{- _("No data") }}{% for label, period in periods %} {{ _("for") }} {{ label | lower }} {{ _("by") }} {{ period }}{% endfor %}.
+                        {%- if export_query %} <a href="{{ request.url.path }}">{{ _("Clear filters") }}</a>{% endif -%}
+                    </td>
+                </tr>
+            </tbody>
+            {%- endif %}
+        </table>
+    </div>
+    <ul class="ha-xtab-key" aria-label="{{ _('How to read the cells') }}" data-testid="report-key">
+        {%- for item in grid.key_items %}
+        <li>{{ item }}</li>
+        {%- endfor %}
+    </ul>
+</div>

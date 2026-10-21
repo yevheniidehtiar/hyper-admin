@@ -14,7 +14,9 @@ quarter    ``2026-Q1``       ``2026-Q1``
 year       ``2026``          ``2026``
 =========  ================  ======================================
 
-``period="auto"`` is resolved per request by :func:`resolve_period`.
+``period="auto"`` is resolved per request by :func:`resolve_period`; a report
+page may override any declared period with ``?period=`` (see
+:meth:`TimeBucket.resolve_period`).
 """
 
 from __future__ import annotations
@@ -55,18 +57,49 @@ def _as_date(value: date | datetime | str) -> date:
     return date.fromisoformat(value[:10])
 
 
+def range_days(date_range: tuple[date | datetime | str, date | datetime | str]) -> int:
+    """Inclusive number of days an ``(start, end)`` range spans.
+
+    >>> range_days((date(2025, 1, 1), date(2025, 1, 31)))
+    31
+    """
+    start, end = (_as_date(bound) for bound in date_range)
+    return abs((end - start).days) + 1
+
+
+def period_for_days(days: int) -> Period:
+    """The ``auto`` bucket for a range of ``days`` days (see :data:`AUTO_THRESHOLDS`)."""
+    for limit, period in AUTO_THRESHOLDS:
+        if days <= limit:
+            return period
+    return "year"
+
+
 def resolve_period(date_range: tuple[date | datetime | str, date | datetime | str]) -> Period:
     """Pick a bucket period for an inclusive ``(start, end)`` range.
 
     >>> resolve_period((date(2025, 1, 1), date(2025, 12, 31)))
     'quarter'
     """
-    start, end = (_as_date(bound) for bound in date_range)
-    days = abs((end - start).days) + 1
-    for limit, period in AUTO_THRESHOLDS:
-        if days <= limit:
-            return period
-    return "year"
+    return period_for_days(range_days(date_range))
+
+
+def describe_span(days: int) -> str:
+    """Human-readable length of a ``days``-day range, for the "Auto chose ..." note.
+
+    Up to the week threshold the note counts days; beyond it, whole months.
+
+    >>> describe_span(45)
+    '45-day'
+    >>> describe_span(365)
+    '12-month'
+    """
+    if days <= AUTO_THRESHOLDS[1][0]:
+        return f"{days}-day"
+    return f"{max(1, round(days / _DAYS_PER_MONTH))}-month"
+
+
+_DAYS_PER_MONTH = 30.4375
 
 
 class TimeBucket:
@@ -91,18 +124,41 @@ class TimeBucket:
         return self._label if self._label is not None else get_field_label(self.field)
 
     def resolve_period(
-        self, date_range: tuple[date | datetime | str, date | datetime | str] | None
+        self,
+        date_range: tuple[date | datetime | str, date | datetime | str] | None,
+        override: PeriodOrAuto | None = None,
     ) -> Period:
         """Concrete period for this bucket; ``auto`` needs a ``date_range``.
 
-        A fixed period ignores the range. ``auto`` without a range (no data to
-        span) collapses to ``year`` — a single bucket for any realistic set.
+        ``override`` (the page's ``?period=``) replaces the declared period for
+        this request. A fixed period ignores the range. ``auto`` without a range
+        (no data to span) collapses to ``year`` — a single bucket for any
+        realistic set.
         """
-        if self.period != "auto":
-            return self.period
+        period = override if override is not None else self.period
+        if period != "auto":
+            return period
         if date_range is None:
             return "year"
         return resolve_period(date_range)
+
+    @staticmethod
+    def split_key(key: Any, period: Period) -> tuple[str | None, str]:
+        """``(year, short label)`` of a formatted bucket key, for two-level headers.
+
+        Sub-year buckets abbreviate to what the year does not already say:
+        ``"2025-Q1"`` → ``("2025", "Q1")``, ``"2026-W03"`` → ``("2026", "W03")``,
+        ``"2026-01-15"`` → ``("2026", "01-15")``. Month keys keep their full
+        label (``"2026-01"``) and a ``year`` bucket has no parent level.
+
+        >>> TimeBucket.split_key("2025-Q3", "quarter")
+        ('2025', 'Q3')
+        """
+        text = "" if key is None else str(key)
+        if period == "year" or len(text) < _YEAR_PREFIX_LEN:
+            return (None, text)
+        year = text[: _YEAR_PREFIX_LEN - 1]
+        return (year, text if period == "month" else text[_YEAR_PREFIX_LEN:])
 
     def expression(self, column: ColumnElement[Any], period: Period) -> ColumnElement[str]:
         """SQL expression computing the bucket key of ``column``."""
@@ -118,6 +174,9 @@ class TimeBucket:
 
     def __repr__(self) -> str:
         return f"TimeBucket({self.field!r}, period={self.period!r})"
+
+
+_YEAR_PREFIX_LEN = len("2026-")
 
 
 class _BucketKey(FunctionElement[str]):
