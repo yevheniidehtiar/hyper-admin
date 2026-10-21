@@ -169,7 +169,7 @@ def _column_levels(
         outer: list[str] = []
         leaf: list[str] = []
         title: str | None = None
-        for dim, value in zip(report.cols, key):
+        for dim, value in zip(report.cols, key, strict=True):
             if isinstance(dim, TimeBucket):
                 year, short = TimeBucket.split_key(value, result.periods[dim.name])
                 if year is not None:
@@ -221,7 +221,7 @@ def _header_rows(
                 start=start,
                 num=not multi and _is_numeric(aggs[0]),
             )
-            for leaf, start in zip(leaves, starts)
+            for leaf, start in zip(leaves, starts, strict=True)
         ]
     )
     if multi:
@@ -271,12 +271,12 @@ def build_grid(report: type[ReportView], result: ReportResult) -> ReportGrid:
         cells = [
             GridCell(value, cell_kind(a, value))
             for col_key in col_keys
-            for a, p in zip(aggs, pivots)
+            for a, p in zip(aggs, pivots, strict=True)
             for value in (p.cell(row_key, col_key),)
         ]
         totals = [
             GridCell(total, cell_kind(a, total))
-            for a, p in zip(aggs, pivots)
+            for a, p in zip(aggs, pivots, strict=True)
             if a in totalled
             for total in (a.total(p.cell(row_key, c) for c in col_keys),)
         ]
@@ -285,7 +285,7 @@ def build_grid(report: type[ReportView], result: ReportResult) -> ReportGrid:
     col_totals = [
         GridCell(total, cell_kind(a, total))
         for col_key in col_keys
-        for a, p in zip(aggs, pivots)
+        for a, p in zip(aggs, pivots, strict=True)
         for total in (a.total(p.cell(r, col_key) for r in row_keys),)
     ]
     grand_totals = [

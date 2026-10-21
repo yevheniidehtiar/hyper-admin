@@ -7,7 +7,6 @@ the documented SQL and the executed SQL never drift apart.
 
 from __future__ import annotations
 
-from collections.abc import Iterable
 from functools import cache
 from typing import TYPE_CHECKING, Any, ClassVar
 
@@ -17,6 +16,8 @@ from sqlalchemy.exc import NoSuchModuleError
 from hyperadmin.core.display import get_field_label
 
 if TYPE_CHECKING:
+    from collections.abc import Iterable
+
     from sqlalchemy.engine import Dialect
 
 _COMMA = ", "
