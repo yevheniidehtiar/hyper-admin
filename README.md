@@ -15,7 +15,7 @@
     <a href="https://yevheniidehtiar.github.io/hyper-admin/">
       <img src="https://github.com/yevheniidehtiar/hyper-admin/actions/workflows/pages.yml/badge.svg?branch=develop" alt="Docs">
     </a>
-    <img src="https://img.shields.io/badge/python-3.10%2B-blue.svg" alt="Python 3.10+">
+    <img src="https://img.shields.io/badge/python-3.11%2B-blue.svg" alt="Python 3.11+">
     <a href="https://github.com/astral-sh/ruff">
       <img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json" alt="Ruff">
     </a>

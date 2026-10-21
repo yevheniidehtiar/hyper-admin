@@ -11,22 +11,37 @@ authors = [
   { name = "Yevhenii Dehtiar", email = "yevhenii.dehtiar@gmail.com" },
 ]
 license = { text = "MIT" }
-requires-python = ">=3.10,<4.0"
+requires-python = ">=3.11,<4.0"
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Framework :: FastAPI",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: 3 :: Only",
+]
 dependencies = [
   "fastapi>=0.116.0",
   "fastapi-storages>=0.1.0",  # FileType/ImageType column types and storage for upload fields
   "pydantic>=2.10.1; python_version < '3.13'",  # <2.10 can't resolve the InlineModelSpec forward ref; 2.10.0 breaks sqlmodel defaults
-  "pydantic>=2.11; python_version >= '3.13'",
+  "pydantic>=2.11; python_version == '3.13'",
+  "pydantic>=2.12; python_version >= '3.14'",  # 2.12.0 is the first release whose pydantic-core ships CPython 3.14 wheels
   "pydantic-settings>=2.14.2",  # HyperAdminSettings (core/settings.py); >=2.14.2 fixes GHSA-4xgf-cpjx-pc3j
   "jinja2>=3.1.6",
   "python-multipart>=0.0.26",  # form and file-upload parsing for admin POST views
   # >=2.0.46: aiosqlite>=0.22 no longer runs its worker as a daemon thread; older
   # SQLAlchemy cannot stop it, so a pooled connection hangs the process on exit.
   "sqlalchemy>=2.0.46",
-  "sqlmodel>=0.0.19",
+  "sqlmodel>=0.0.19; python_version < '3.14'",
+  "sqlmodel>=0.0.27; python_version >= '3.14'",  # first release whose table models build on CPython 3.14 (deferred annotations)
   "aiosqlite>=0.22.1",  # async SQLite driver for zero-config demo mode (sqlite+aiosqlite default URL)
   "greenlet>=1.0.1; python_version < '3.13'",  # SQLAlchemy asyncio bridge
-  "greenlet>=3.1.0; python_version >= '3.13'",  # SQLAlchemy asyncio bridge
+  "greenlet>=3.1.0; python_version == '3.13'",  # SQLAlchemy asyncio bridge
+  "greenlet>=3.2.0; python_version >= '3.14'",  # 3.2.0 is the first release with CPython 3.14 wheels
   "pillow>=12.2.0",  # needed by fastapi-storages ImageType for image upload fields
   "typing-extensions>=4.14.1",
   "typer>=0.12",  # `hyperadmin` management CLI
@@ -72,7 +87,7 @@ dev = [
   "pyzmq>=27.2.0",
   "ruff==0.16.10",
   # Docs site (Zensical requires Python >= 3.11; docs are built on 3.13 in CI).
-  "zensical>=0.0.69; python_version >= '3.11'",
+  "zensical>=0.0.69",
   "mkdocstrings-python>=2.0.9",
   # Cap MkDocs below 2.0: mkdocstrings and mkdocs-autorefs still import the MkDocs
   # plugin API (mkdocs.plugins/config/exceptions) under Zensical, which 2.0 removes.
@@ -91,7 +106,7 @@ loadtest = [
   "flask>=3.1.3",  # locust floor pulls flask 2.2.5 (PYSEC-2026-2151) under lowest-direct
   "rich>=15.0.0",
   "asyncpg>=0.32.0",  # must stay >=0.30: 0.29 has no CPython 3.13 wheels and fails to build
-  "psycopg[binary]>=3.2.3",  # sync driver for `hyperadmin seed` (3.2.3 ships CPython 3.13 wheels)
+  "psycopg[binary]>=3.2.10",  # sync driver for `hyperadmin seed` (3.2.10 is the first release with CPython 3.14 wheels)
 ]
 
 [tool.hatch.build.targets.wheel]
@@ -293,7 +308,7 @@ type = "simple"
 
   [tool.poe.tasks."docs:build"]
   help = "Build the documentation site with Zensical (deployed to GitHub Pages by .github/workflows/pages.yml)"
-  # Zensical requires Python >= 3.11; run it in an ephemeral 3.13 env so the default 3.10 dev env still works.
+  # Run Zensical in an ephemeral 3.13 env so the docs stack never touches the dev environment.
   cmd = "uv run --isolated --python 3.13 --all-extras zensical build --clean"
 
   [tool.poe.tasks."docs:serve"]
@@ -406,7 +421,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-COMBOS="3.10:lowest-direct 3.13:lowest-direct 3.13:highest"
+COMBOS="3.11:lowest-direct 3.14:lowest-direct 3.14:highest"
 
 for combo in $COMBOS; do
   pyver="${combo%%:*}"

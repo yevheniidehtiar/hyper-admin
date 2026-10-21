@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+- **Breaking: Python 3.10 is no longer supported; Python 3.14 is.** `requires-python`
+  is now `>=3.11`. Python 3.10 reached end of life in October 2026, and Pillow 13
+  (which fixes CVE-2026-112895 and seven related advisories) only ships for 3.11+.
+  The lock pins certifi 2026.10.19 (GHSA-6q48-6c7w-9gw2) and Pillow 13.0.0. CI,
+  `poe deps:bump` and `.python-version` follow (3.11 to 3.14).
+
 ### Security
 - **Authorization and row scoping on every item handler** (st-v058-byoa-10).
   - Inline cell edit/save, inline add-row, update form, file delete/upload and
