@@ -378,7 +378,9 @@ def test_nav_entries_are_ordered_by_order_then_label() -> None:
 
     def first(p: Any) -> None:
         registry.add_nav_entry(p, label="Zeta", url_name="z", order=1)
-        registry.add_nav_entry(p, label="Beta", url_name="b", order=1, url_params={"k": 1})
+        registry.add_nav_entry(
+            p, label="Beta", url_name="b", order=1, url_params={"k": 1}, testid="nav-beta"
+        )
 
     def second(p: Any) -> None:
         registry.add_nav_entry(p, label="Omega", url_name="o", order=0, section="Data")
@@ -388,6 +390,7 @@ def test_nav_entries_are_ordered_by_order_then_label() -> None:
 
     assert [e.label for e in registry.nav_entries] == ["Omega", "Beta", "Zeta"]
     assert registry.nav_entries[1].url_params == {"k": 1}
+    assert [e.testid for e in registry.nav_entries] == [None, "nav-beta", None]
 
 
 def test_static_dirs_skip_plugins_without_one() -> None:
