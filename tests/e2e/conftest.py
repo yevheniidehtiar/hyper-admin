@@ -538,3 +538,19 @@ def bulk_base_url(e2e_port: int) -> Iterator[str]:
         yield base
     finally:
         _terminate(proc)
+
+
+@pytest.fixture
+def autocomplete_base_url(e2e_port: int) -> Iterator[str]:
+    """Start the autocomplete fixture app (:mod:`tests.e2e.apps.autocomplete`) and yield the base URL.
+
+    Auth is on (superuser ``alice / secret123``). ``Product`` has FKs to the
+    registered ``Supplier`` (rendered as ``"{name} — {city}"``) and
+    ``Variant`` (dependent on ``supplier_id``), and to the unregistered
+    ``Brand``. Suppliers 42, 43 and 44, variants 1 and 2 and brand 1 are seeded.
+    """
+    proc, base = _spawn_uvicorn("tests.e2e.apps.autocomplete", e2e_port)
+    try:
+        yield base
+    finally:
+        _terminate(proc)
