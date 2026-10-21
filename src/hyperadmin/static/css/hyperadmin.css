@@ -43,6 +43,7 @@
 @import "_seg.css"           layer(components);
 @import "_sticky.css"        layer(components);
 @import "_pill.css"          layer(components);
+@import "_panels.css"        layer(components);
 @import "_utilities.css"     layer(utilities);
 @import "_accessibility.css" layer(accessibility);
 @import "_responsive.css"    layer(responsive);

@@ -260,6 +260,21 @@ def create_admin_router(  # noqa: PLR0912, PLR0913, PLR0917
             methods=["GET"],
             name=f"{model_name}-detail",
         )
+        if view.panels:
+            # Detail-page panels (docs/specs/detail-panels.md): the lazy-loaded
+            # fragment and, for streaming handlers, the bytes behind its frame.
+            router.add_api_route(
+                f"{prefix}/{item_segment}/panels/{{slug}}",
+                view.render_panel_view,
+                methods=["GET"],
+                name=f"{model_name}-panel",
+            )
+            router.add_api_route(
+                f"{prefix}/{item_segment}/panels/{{slug}}/stream",
+                view.stream_panel_view,
+                methods=["GET"],
+                name=f"{model_name}-panel-stream",
+            )
 
     if options.can_edit:
         router.add_api_route(

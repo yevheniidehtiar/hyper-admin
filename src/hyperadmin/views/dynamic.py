@@ -6,13 +6,15 @@ import re
 from collections.abc import Awaitable, Callable, Generator
 from contextlib import contextmanager
 from http import HTTPStatus
+from types import SimpleNamespace
 from typing import TYPE_CHECKING, Any, TypeVar, cast
+from urllib.parse import unquote
 
 from fastapi import HTTPException, Query, Request
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, ValidationError
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-from starlette.responses import RedirectResponse, Response
+from starlette.responses import RedirectResponse, Response, StreamingResponse
 
 if TYPE_CHECKING:
     from jinja2 import FileSystemLoader
@@ -37,6 +39,7 @@ from hyperadmin.core.filtering import (
 )
 from hyperadmin.core.inlines import InlineModelSpec
 from hyperadmin.core.options import AdminOptions
+from hyperadmin.core.panels import PanelDef, panel_permission_codename, resolve_panels
 from hyperadmin.core.primary_key import InvalidPrimaryKey, PrimaryKeyInfo
 from hyperadmin.core.registry import site
 from hyperadmin.core.sensitive import (
@@ -192,6 +195,16 @@ class DynamicModelView:
         # Expose the live adapter on the admin instance so action handlers can use self.adapter
         if admin_instance is not None:
             admin_instance.adapter = self.adapter
+        # Detail-page panels (docs/specs/detail-panels.md): ``options.panels``
+        # merged with the admin's ``@panel`` methods, slugs checked for
+        # collisions and permission codenames filled in — so a duplicate slug
+        # fails here, at registration, not on the first request. Without an
+        # admin instance (a view built directly) only ``options.panels`` apply.
+        panel_source = (
+            admin_instance if admin_instance is not None else SimpleNamespace(options=options)
+        )
+        self.panels: list[PanelDef] = resolve_panels(panel_source, self.model)
+        self._panel_map: dict[str, PanelDef] = {p.slug: p for p in self.panels}
 
     async def _has_permission(self, request: Request, codename: str) -> bool:
         """Return whether the request's user holds ``codename`` (always true without auth)."""
@@ -705,9 +718,179 @@ class DynamicModelView:
             "file_urls": file_urls,
             "file_labels": {name: download_name(item_data[name]) for name in file_urls},
             "pk_attr": self.pk.attr,
+            "panels": await self._visible_panels(request, item, item_id),
         }
         template_name = self._get_template_name("detail")
         return self.templates.TemplateResponse(request, template_name, context)
+
+    # --- Detail-page panels (docs/specs/detail-panels.md) -------------------
+
+    def _panel_codename(self, panel_def: PanelDef) -> str:
+        """Return the permission codename guarding ``panel_def``."""
+        return panel_def.permission or panel_permission_codename(self.model, panel_def.slug)
+
+    def _panel_or_404(self, slug: str) -> PanelDef:
+        """Return the registered panel for ``slug`` or raise 404 ``"Unknown panel"``."""
+        panel_def = self._panel_map.get(slug)
+        if panel_def is None:
+            raise HTTPException(status_code=404, detail="Unknown panel")
+        return panel_def
+
+    async def _visible_panels(
+        self, request: Request, item: Any, item_id: Any
+    ) -> list[dict[str, Any]]:
+        """Return the panels the detail page shows for ``item``, in declared order.
+
+        A panel is listed when its ``enabled`` predicate accepts ``item`` and the
+        user holds its permission codename, so the tab strip never shows a tab
+        that could only answer 403 or 404. Each entry carries ``slug``,
+        ``label``, ``icon`` and the ``url`` of its ``render_panel_view``.
+        """
+        visible: list[dict[str, Any]] = []
+        for panel_def in self.panels:
+            if panel_def.enabled is not None and not panel_def.enabled(item):
+                continue
+            if not await self._has_permission(request, self._panel_codename(panel_def)):
+                continue
+            url = admin_url_for(
+                request, f"{self._model_name_lower}-panel", item_id=item_id, slug=panel_def.slug
+            )
+            visible.append(
+                {
+                    "slug": panel_def.slug,
+                    "label": panel_def.label,
+                    "icon": panel_def.icon,
+                    "url": str(url),
+                }
+            )
+        return visible
+
+    async def _load_panel_target(self, request: Request, item_id: Any, panel_def: PanelDef) -> Any:
+        """Run every check both panel routes share and return the loaded record.
+
+        In order: ``view_{model}`` (a panel is part of the detail page), the
+        panel's own codename, the record under the request's queryset scope
+        (404 when hidden or missing), the object ``view`` check, and finally the
+        ``enabled`` predicate — a hidden tab's URL is a 404, never a leak.
+        """
+        pk = self._resolve_pk(item_id)
+        await self._check_permission(request, "view")
+        if not await self._has_permission(request, self._panel_codename(panel_def)):
+            raise HTTPException(status_code=403, detail="Permission denied")
+        item = await self._get_or_404(pk)
+        await self._check_object_permission(request, item, "view")
+        if panel_def.enabled is not None and not panel_def.enabled(item):
+            raise HTTPException(status_code=404, detail="Unknown panel")
+        return item
+
+    async def _run_panel_handler(
+        self, request: Request, panel_def: PanelDef, item: Any
+    ) -> Response:
+        """Call the panel handler with the loaded record and insist on a ``Response``."""
+        # ``Any``: the declared return type is a promise the handler may break.
+        result: Any = await panel_def.handler(request, item)
+        if not isinstance(result, Response):
+            logger.error(
+                "panel %r on %s returned %s, not a Response",
+                panel_def.slug,
+                self.model.__name__,
+                type(result).__name__,
+            )
+            raise TypeError(
+                f"panel {panel_def.slug!r} handler must return a starlette Response, "
+                f"got {type(result).__name__}"
+            )
+        return result
+
+    @_request_scoped
+    async def render_panel_view(self, request: Request, item_id: Any, slug: str) -> Response:
+        """Render one panel's body for the detail page's lazy-loading tab.
+
+        ``GET /{model}/{item_id}/panels/{slug}``
+
+        An ``HTMLResponse`` (any non-streaming ``Response``) is returned as the
+        fragment to swap inline. A ``StreamingResponse`` is *not* sent: its type
+        alone is inspected, and the document viewer fragment pointing at
+        :meth:`stream_panel_view` is rendered instead, so binary bodies never go
+        through an HTMX swap. A 403 from any check — or raised by the handler —
+        becomes the forbidden panel state, retargeted to the panel element that
+        asked (``HX-Retarget: this``), so sibling tabs keep working.
+        """
+        panel_def = self._panel_or_404(slug)
+        try:
+            item = await self._load_panel_target(request, item_id, panel_def)
+            result = await self._run_panel_handler(request, panel_def, item)
+        except HTTPException as exc:
+            if exc.status_code != HTTPStatus.FORBIDDEN:
+                raise
+            return self._render_panel_forbidden(request, panel_def)
+        if isinstance(result, StreamingResponse):
+            await _discard_stream(result)
+            return self._render_panel_document(request, item_id, panel_def, result)
+        return result
+
+    @_request_scoped
+    async def stream_panel_view(self, request: Request, item_id: Any, slug: str) -> Response:
+        """Serve a streaming panel's bytes for the viewer frame or a download.
+
+        ``GET /{model}/{item_id}/panels/{slug}/stream[?download=1]``
+
+        Re-runs every check :meth:`render_panel_view` runs, then returns the
+        handler's response as-is with ``Content-Disposition`` forced to
+        ``inline`` when the handler set none, or to ``attachment`` when
+        ``?download`` is present (the viewer's Download button). Errors here
+        propagate to ``HyperAdminRoute``, which renders them inside the frame.
+        """
+        panel_def = self._panel_or_404(slug)
+        item = await self._load_panel_target(request, item_id, panel_def)
+        result = await self._run_panel_handler(request, panel_def, item)
+        disposition = result.headers.get("content-disposition", "")
+        if "download" in request.query_params:
+            result.headers["content-disposition"] = _as_attachment(disposition)
+        elif not disposition:
+            result.headers["content-disposition"] = "inline"
+        return result
+
+    def _render_panel_forbidden(self, request: Request, panel_def: PanelDef) -> Response:
+        """Render the 403 panel state into the requesting panel element."""
+        context = {
+            "request": request,
+            "state": "forbidden",
+            "panel": panel_def,
+            "permission": self._panel_codename(panel_def),
+        }
+        response = self.templates.TemplateResponse(
+            request, "components/panel_states.html", context, status_code=403
+        )
+        # ``_base.html`` lets HTMX swap a 403 only when it is retargeted; ``this``
+        # is the element that issued the hx-get, i.e. the panel body itself.
+        response.headers["HX-Retarget"] = "this"
+        response.headers["HX-Reswap"] = "innerHTML"
+        return response
+
+    def _render_panel_document(
+        self, request: Request, item_id: Any, panel_def: PanelDef, result: StreamingResponse
+    ) -> Response:
+        """Render the document viewer fragment for a streaming panel."""
+        stream_url = str(
+            admin_url_for(
+                request,
+                f"{self._model_name_lower}-panel-stream",
+                item_id=item_id,
+                slug=panel_def.slug,
+            )
+        )
+        context = {
+            "request": request,
+            "panel": panel_def,
+            "stream_url": stream_url,
+            "download_url": f"{stream_url}?download=1",
+            "file_name": _disposition_filename(result.headers.get("content-disposition"))
+            or panel_def.label,
+            "file_size": _human_size(result.headers.get("content-length")),
+            "media_type": result.headers.get("content-type", ""),
+        }
+        return self.templates.TemplateResponse(request, "components/panel_document.html", context)
 
     def _build_inline_formsets(
         self,
@@ -2248,3 +2431,55 @@ async def admin_dashboard(request: Request, templates: Jinja2Templates):
     """Renders the main admin dashboard page."""
     context = {"request": request}
     return templates.TemplateResponse(request, "dashboard.html", context)
+
+
+# --- Panel response helpers (docs/specs/detail-panels.md) -------------------
+
+_DISPOSITION_EXT_FILENAME_RE = re.compile(r"filename\*\s*=\s*(?:utf-8|UTF-8)''([^;]+)")
+_DISPOSITION_FILENAME_RE = re.compile(r'filename\s*=\s*"?([^";]+)"?')
+_SIZE_UNITS = ("B", "KB", "MB", "GB", "TB")
+_SIZE_STEP = 1024
+
+
+async def _discard_stream(response: StreamingResponse) -> None:
+    """Close a streaming body that will never be sent.
+
+    ``render_panel_view`` only inspects the response's type and headers; the
+    body generator is finalised here so a handler that opens a resource at the
+    top of its generator never leaks it.
+    """
+    aclose = getattr(response.body_iterator, "aclose", None)
+    if aclose is not None:
+        await aclose()
+
+
+def _disposition_filename(value: str | None) -> str | None:
+    """Return the file name a ``Content-Disposition`` header carries, if any."""
+    if not value:
+        return None
+    match = _DISPOSITION_EXT_FILENAME_RE.search(value)
+    if match:
+        return unquote(match.group(1).strip())
+    match = _DISPOSITION_FILENAME_RE.search(value)
+    return match.group(1).strip() if match else None
+
+
+def _human_size(value: str | None) -> str | None:
+    """Format a ``Content-Length`` value as ``"182 KB"``; ``None`` when absent or invalid."""
+    if value is None or not value.isdigit():
+        return None
+    size = float(value)
+    unit = _SIZE_UNITS[0]
+    for unit in _SIZE_UNITS:
+        if size < _SIZE_STEP or unit == _SIZE_UNITS[-1]:
+            break
+        size /= _SIZE_STEP
+    return f"{int(size)} {unit}" if unit == _SIZE_UNITS[0] else f"{size:.0f} {unit}"
+
+
+def _as_attachment(disposition: str) -> str:
+    """Turn an ``inline`` (or missing) disposition into ``attachment``, keeping its parameters."""
+    kind, sep, params = disposition.partition(";")
+    if kind.strip().lower() == "attachment":
+        return disposition
+    return f"attachment{sep}{params}" if sep else "attachment"
