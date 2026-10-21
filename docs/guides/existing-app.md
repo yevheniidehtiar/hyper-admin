@@ -233,8 +233,39 @@ matrix page imports it when it is registered):
 | v0.5.7 | `hyperadmin_permission_audit` | one row per permission change: `actor_key`, `group_id`, `action`, `model`, `codename`, `object_pk`, `before`, `after`, `created_at` |
 | v0.5.7 | `hyperadmin_group_object_permissions` | the matrix's object rules: `group_id`, `model`, `codename`, `object_pk`, unique together |
 
-Alembic autogenerate produces their `create_table` operations; the downgrade
-is `op.drop_table(...)` for each. Set `permissions_matrix_enabled=False` on
+Alembic autogenerate produces their `create_table` operations; written by
+hand they are:
+
+```python
+op.create_table(
+    "hyperadmin_permission_audit",
+    sa.Column("id", sa.Integer(), primary_key=True),
+    sa.Column("actor_key", sa.String(255), nullable=False),
+    sa.Column("group_id", sa.Integer(), nullable=False),
+    sa.Column("action", sa.String(64), nullable=False),
+    sa.Column("model", sa.String(255), nullable=False),
+    sa.Column("codename", sa.String(255), nullable=False),
+    sa.Column("object_pk", sa.String(255), nullable=True),
+    sa.Column("before", sa.Boolean(), nullable=False),
+    sa.Column("after", sa.Boolean(), nullable=False),
+    sa.Column("created_at", sa.DateTime(), nullable=False),
+)
+op.create_index("ix_hyperadmin_permission_audit_actor_key", "hyperadmin_permission_audit", ["actor_key"])
+op.create_index("ix_hyperadmin_permission_audit_group_id", "hyperadmin_permission_audit", ["group_id"])
+op.create_table(
+    "hyperadmin_group_object_permissions",
+    sa.Column("id", sa.Integer(), primary_key=True),
+    sa.Column("group_id", sa.Integer(), sa.ForeignKey("hyperadmin_groups.id"), nullable=False),
+    sa.Column("model", sa.String(255), nullable=False),
+    sa.Column("codename", sa.String(255), nullable=False),
+    sa.Column("object_pk", sa.String(255), nullable=False),
+    sa.UniqueConstraint("group_id", "model", "codename", "object_pk", name="uq_group_object_rule"),
+)
+op.create_index("ix_hyperadmin_group_object_permissions_group_id", "hyperadmin_group_object_permissions", ["group_id"])
+```
+
+The downgrade is `op.drop_table("hyperadmin_group_object_permissions")` and
+`op.drop_table("hyperadmin_permission_audit")`. Set `permissions_matrix_enabled=False` on
 `HyperAdminSettings` to leave the matrix (and its sidebar entry) out of an
 admin that has no groups to edit; the codename it gates on is
 `permissions_matrix_codename` (default `change_groups_permissions`, superusers
