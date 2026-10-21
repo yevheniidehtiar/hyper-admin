@@ -154,6 +154,16 @@ class HyperAdminSettings(BaseSettings):
     #: ``admin.plugins.register(plugin, admin=admin)`` before ``mount()``.
     plugins_enabled: bool = True
 
+    # ── Permission matrix (docs/specs/permission-matrix-ui.md) ───────────────
+    #: Register the ``{prefix}/permissions-matrix/`` page and its sidebar entry.
+    #: ``False`` leaves the URL unrouted (404) for projects without groups.
+    permissions_matrix_enabled: bool = True
+    #: Codename an operator needs to open and save the matrix (superusers always
+    #: may). Synced into ``hyperadmin_permissions`` next to the plugin codenames.
+    permissions_matrix_codename: str = Field(
+        default="change_groups_permissions", min_length=1, pattern=r"^[a-z][a-z0-9_]*$"
+    )
+
     # ── Templates ─────────────────────────────────────────────────────────────
     template_dirs: list[str] = Field(default_factory=list)
 

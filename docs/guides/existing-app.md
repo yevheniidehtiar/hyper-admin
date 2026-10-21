@@ -224,6 +224,22 @@ databases add it with their own migration. The column each release adds:
 
 The downgrade is `op.drop_column("hyperadmin_groups", "permissions_version")`.
 
+The same release adds two tables for the permission matrix, both part of
+`hyperadmin.auth.metadata()` once `hyperadmin.permissions` is imported (the
+matrix page imports it when it is registered):
+
+| Since | Table | Purpose |
+|---|---|---|
+| v0.5.7 | `hyperadmin_permission_audit` | one row per permission change: `actor_key`, `group_id`, `action`, `model`, `codename`, `object_pk`, `before`, `after`, `created_at` |
+| v0.5.7 | `hyperadmin_group_object_permissions` | the matrix's object rules: `group_id`, `model`, `codename`, `object_pk`, unique together |
+
+Alembic autogenerate produces their `create_table` operations; the downgrade
+is `op.drop_table(...)` for each. Set `permissions_matrix_enabled=False` on
+`HyperAdminSettings` to leave the matrix (and its sidebar entry) out of an
+admin that has no groups to edit; the codename it gates on is
+`permissions_matrix_codename` (default `change_groups_permissions`, superusers
+always pass).
+
 `permissions_version` is the permission matrix's optimistic-concurrency stamp:
 every grid an operator loads carries the group's current value, and a save is
 only committed (and the stamp bumped, atomically with the permission rows) when

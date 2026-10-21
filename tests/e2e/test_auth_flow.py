@@ -82,7 +82,7 @@ def test_auth_models_in_sidebar(page: Page, auth_base_url: str) -> None:
     # Then the sidebar contains User, Group, and Permission
     expect(sidebar.get_by_text("User")).to_be_visible()
     expect(sidebar.get_by_text("Group")).to_be_visible()
-    expect(sidebar.get_by_text("Permission")).to_be_visible()
+    expect(sidebar.get_by_text("Permissions", exact=True)).to_be_visible()
 
 
 def test_logout_clears_session(page: Page, auth_base_url: str) -> None:

@@ -203,6 +203,7 @@ class Admin:
             self.plugins.load_entry_points(
                 admin=self, disabled=disabled_plugins, settings=plugin_settings
             )
+        self._register_permissions_matrix()
 
     # ── Convenience properties ─────────────────────────────────────────────
 
@@ -861,6 +862,28 @@ class Admin:
             ]
         }
         await sync_codenames(plugin_permission_rows(self.plugins, taken=taken))
+
+    def _register_permissions_matrix(self) -> None:
+        """Register the built-in permission-matrix page (``docs/specs/permission-matrix-ui.md``).
+
+        It edits the built-in ``Group`` / ``GroupPermission`` tables, so it is only
+        registered when those are in use: built-in auth, or bridge mode with
+        ``settings.register_auth_models=True``. Otherwise there are no groups to
+        edit and the page, its nav entry and its codename are left out (the URL
+        answers 404), as they are with ``permissions_matrix_enabled=False``.
+        """
+        if not self.settings.permissions_matrix_enabled or self._auth_mode is None:
+            return
+        if self._auth_mode == "external" and self.settings.register_auth_models is not True:
+            logger.info(
+                "HyperAdmin permission matrix not registered: Admin(auth=...) without the "
+                "built-in auth models (settings.register_auth_models=True), so there are "
+                "no groups to edit."
+            )
+            return
+        from hyperadmin.views.permissions_matrix import PermissionMatrixPage
+
+        self.plugins.register(PermissionMatrixPage(self), admin=self)
 
     def dispatch_hook(self, hook: str, /, **kwargs: Any) -> None:
         """Fire a plugin lifecycle hook with ``admin=self`` (errors are logged, not raised)."""
