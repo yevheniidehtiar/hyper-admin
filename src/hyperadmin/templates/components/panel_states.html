@@ -1,0 +1,10 @@
+{#- Detail-panel state fragment (PanelStates design). Swapped into the panel element
+    that issued the hx-get (HX-Retarget: this), so sibling tabs keep working. -#}
+{%- from "components/_icons.html" import icon -%}
+{%- if state == "forbidden" -%}
+<div class="ha-panel-state" role="status" data-testid="panel-forbidden">
+    <span class="ha-empty-glyph">{{ icon('lock') }}</span>
+    <strong>{{ _("You don't have access to this panel.") }}</strong>
+    <p>{% trans permission=permission %}Ask an administrator for the "{{ permission }}" permission.{% endtrans %}</p>
+</div>
+{%- endif -%}

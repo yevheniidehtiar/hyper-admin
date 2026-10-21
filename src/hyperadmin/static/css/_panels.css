@@ -1,0 +1,161 @@
+/*
+ * Detail-page tabs and panels — ported from docs/design/system/components/bundle.css
+ * (DetailPanel tabs, PanelStates: loading skeleton, 403/error state, document viewer).
+ */
+
+/* ---------- tab strip (DetailPanel) ---------- */
+.ha-tabs {
+  display: flex;
+  gap: var(--ha-space-1);
+  border-block-end: 1px solid var(--ha-color-border-light);
+  padding-inline: var(--ha-space-4);
+  overflow-x: auto;
+}
+
+.ha-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ha-space-2);
+  min-block-size: 44px;
+  padding: 0 var(--ha-space-3);
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 500;
+  color: var(--ha-color-text-muted);
+  border-block-end: 2px solid transparent;
+  margin-block-end: -1px;
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.ha-tab:hover {
+  color: var(--ha-color-text-strong);
+}
+
+.ha-tab[aria-selected="true"] {
+  color: var(--ha-color-primary-text);
+  border-block-end-color: var(--ha-color-primary);
+  font-weight: 600;
+}
+
+/* ---------- panel body and states (PanelStates) ---------- */
+.ha-panel {
+  padding: var(--ha-pad-card);
+}
+
+.ha-skel {
+  display: block;
+  block-size: 12px;
+  border-radius: var(--ha-radius-sm);
+  background: var(--ha-surface-sunken);
+  animation: ha-pulse 1.4s ease-in-out infinite;
+}
+
+.ha-panel[aria-busy="true"] .ha-skel + .ha-skel {
+  margin-block-start: var(--ha-space-3);
+}
+
+@keyframes ha-pulse {
+  50% { opacity: 0.5; }
+}
+
+.ha-panel-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: var(--ha-space-3);
+  padding: var(--ha-space-8) var(--ha-space-6);
+}
+
+.ha-panel-state p {
+  margin: 0;
+  max-inline-size: 44ch;
+  color: var(--ha-color-text-muted);
+}
+
+.ha-panel-state strong {
+  color: var(--ha-color-text-strong);
+}
+
+.ha-panel-state--error .ha-empty-glyph {
+  background: var(--ha-color-danger-light);
+  color: var(--ha-color-danger-text);
+}
+
+.ha-panel-state--error strong {
+  color: var(--ha-color-danger-text);
+}
+
+/* ---------- streamed document viewer ---------- */
+.ha-docview {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--ha-color-border-light);
+  border-radius: var(--ha-radius-lg);
+  overflow: hidden;
+  background: var(--ha-surface-sunken);
+}
+
+.ha-docview__bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ha-space-2) var(--ha-space-3);
+  padding: var(--ha-space-2) var(--ha-space-3);
+  background: var(--ha-surface-raised);
+  border-block-end: 1px solid var(--ha-color-border-light);
+}
+
+.ha-docview__name {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ha-space-2);
+  flex: 1 1 12rem;
+  min-inline-size: 0;
+  font-weight: 600;
+  color: var(--ha-color-text-strong);
+}
+
+.ha-docview__name > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ha-docview__name .ha-caption {
+  font-weight: 400;
+  color: var(--ha-color-text-muted);
+  flex: none;
+}
+
+.ha-docview__frame {
+  display: block;
+  inline-size: 100%;
+  block-size: clamp(22rem, 70vh, 56rem);
+  border: 0;
+  background: var(--ha-surface-sunken);
+}
+
+.ha-docview__fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ha-space-3);
+  text-align: center;
+  padding: var(--ha-space-8) var(--ha-space-6);
+}
+
+.ha-docview__fallback p {
+  margin: 0;
+  max-inline-size: 40ch;
+  color: var(--ha-color-text);
+}
+
+@media (forced-colors: active) {
+  .ha-docview { border: 1px solid CanvasText; }
+  .ha-tab[aria-selected="true"] { border: 1px solid CanvasText; forced-color-adjust: none; }
+}

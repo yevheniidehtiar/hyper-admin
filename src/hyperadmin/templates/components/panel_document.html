@@ -1,0 +1,19 @@
+{#- Document viewer for a panel whose handler returned a StreamingResponse (PanelStates design).
+    The bytes are served by the /stream sub-route; the fragment only embeds it. -#}
+{%- from "components/_icons.html" import icon -%}
+<div class="ha-docview" data-testid="panel-pdf-viewer">
+    <div class="ha-docview__bar">
+        <span class="ha-docview__name">
+            {{- icon('file-text') -}}
+            <span>{{ file_name }}</span>
+            {%- if file_size %}<span class="ha-caption">{{ file_size }}</span>{% endif -%}
+        </span>
+        <a class="ha-btn ha-btn-sm ha-btn-ghost" href="{{ stream_url }}" target="_blank" rel="noopener" data-testid="panel-open-link">
+            {{- icon('external-link', 'ha-icon-sm') }}{{ _("Open in new tab") }}<span class="ha-sr-only"> {{ _("(opens a new tab)") }}</span>
+        </a>
+        <a class="ha-btn ha-btn-sm" href="{{ download_url }}" download data-testid="panel-download-link">
+            {{- icon('download', 'ha-icon-sm') }}{{ _("Download") -}}
+        </a>
+    </div>
+    <iframe class="ha-docview__frame" src="{{ stream_url }}" title="{% trans name=file_name %}{{ name }}, preview{% endtrans %}" data-testid="panel-stream-frame"></iframe>
+</div>
