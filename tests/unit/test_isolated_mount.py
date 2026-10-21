@@ -278,7 +278,7 @@ async def test_isolated_mode_namespaces_route_names(engine: AsyncEngine) -> None
       Given the default (isolated) mount mode
       When  the admin is mounted at /admin
       Then  admin routes resolve only as "hyperadmin:<name>"
-      And   no DeprecationWarning is emitted
+      And   no mount_mode DeprecationWarning is emitted
     """
     # Given
     app = FastAPI()
@@ -286,7 +286,9 @@ async def test_isolated_mode_namespaces_route_names(engine: AsyncEngine) -> None
 
     # When
     with warnings.catch_warnings():
-        warnings.simplefilter("error", DeprecationWarning)
+        # Only the admin's own deprecation is an error here: third-party ones (e.g.
+        # fastapi 0.116 calling asyncio.iscoroutinefunction on Python 3.14) are not.
+        warnings.filterwarnings("error", message="mount_mode", category=DeprecationWarning)
         admin.mount("/admin")
 
     # Then

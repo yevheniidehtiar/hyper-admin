@@ -43,7 +43,7 @@ uv sync --all-extras  # Install all dependencies
 uv run <cmd>          # Run commands in the virtual environment
 ```
 
-Zensical needs Python >= 3.11: use `poe docs:build` / `poe docs:serve` (or `UV_PYTHON=3.13 uv run zensical ...`), not plain `uv run zensical` in the default 3.10 env (it fails with "Failed to spawn: zensical").
+Use `poe docs:build` / `poe docs:serve` for the docs site: they run Zensical in an isolated 3.13 env so the docs stack never touches the dev environment.
 
 ## Dependency Management
 
@@ -62,9 +62,9 @@ poe deps:bump         # Bump lock file and verify across compatibility matrix
 This command:
 1. Runs `uv lock --upgrade` to resolve latest compatible versions
 2. Verifies lint + unit tests + security checks across 3 combos:
-   - Python 3.10 + lowest-direct
-   - Python 3.13 + lowest-direct
-   - Python 3.13 + highest
+   - Python 3.11 + lowest-direct
+   - Python 3.14 + lowest-direct
+   - Python 3.14 + highest
 3. Restores the default environment when done (even on failure)
 
 ## Branch and Commit Conventions

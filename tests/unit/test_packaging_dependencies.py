@@ -126,7 +126,8 @@ def test_pydantic_lower_bound_resolves_admin_forward_references() -> None:
         assert not req.specifier.contains("2.9.2"), str(req)
         # 2.10.0 regressed default factories (fixed in 2.10.1); sqlmodel defaults break.
         assert not req.specifier.contains("2.10.0"), str(req)
-        assert req.specifier.contains("2.11.7"), str(req)
+        # Every floor (including the Python 3.14 one, >=2.12) admits a current release.
+        assert req.specifier.contains("2.12.0"), str(req)
 
 
 def test_sqlalchemy_floor_on_python_313_is_importable() -> None:
@@ -155,14 +156,24 @@ def test_sqlmodel_is_not_capped_below_the_tz_aware_release() -> None:
     """
     Scenario: the sqlmodel cap is lifted (st-v058-byoa-48)
       Given the admin handles both aware and naive datetime columns
-      When  the runtime sqlmodel requirement is read from the distribution metadata
-      Then  it still allows the 0.0.19 floor
-      And   it allows sqlmodel 0.0.45+ (``UTCDateTime``) with no upper cap
+      When  the runtime sqlmodel requirements are read from the distribution metadata
+      Then  the floor below Python 3.14 is still 0.0.19
+      And   Python 3.14 gets 0.0.27 (the first release whose table models build there)
+      And   both allow sqlmodel 0.0.45+ (``UTCDateTime``) with no upper cap
     """
-    (req,) = [r for r in _runtime_requirements() if r.name.lower() == "sqlmodel"]
+    reqs = [r for r in _runtime_requirements() if r.name.lower() == "sqlmodel"]
+    by_python = {
+        py: [r for r in reqs if r.marker is None or r.marker.evaluate({"python_version": py})]
+        for py in ("3.11", "3.14")
+    }
+    (before_314,) = by_python["3.11"]
+    (on_314,) = by_python["3.14"]
 
-    assert req.specifier.contains("0.0.19")
-    assert not req.specifier.contains("0.0.18")
-    assert req.specifier.contains("0.0.45")
-    assert req.specifier.contains("0.0.47")
-    assert all(spec.operator in {">=", ">"} for spec in req.specifier)
+    assert before_314.specifier.contains("0.0.19")
+    assert not before_314.specifier.contains("0.0.18")
+    assert on_314.specifier.contains("0.0.27")
+    assert not on_314.specifier.contains("0.0.26")
+    for req in reqs:
+        assert req.specifier.contains("0.0.45"), str(req)
+        assert req.specifier.contains("0.0.47"), str(req)
+        assert all(spec.operator in {">=", ">"} for spec in req.specifier), str(req)

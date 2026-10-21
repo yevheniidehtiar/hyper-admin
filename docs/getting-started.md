@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- Python 3.10+
+- Python 3.11+
 - A FastAPI application
 - SQLModel or SQLAlchemy for your data models
 
