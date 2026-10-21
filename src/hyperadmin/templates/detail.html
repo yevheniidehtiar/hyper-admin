@@ -4,7 +4,7 @@
 {%- block detail_title -%}{{ item_name }}{%- endblock -%}
 
 {%- block detail_fields -%}
-    <div class="ha-card">
+    {%- set field_list -%}
         <dl class="ha-dl">
         {%- for key, value in item.items() -%}
             <dt>
@@ -25,7 +25,56 @@
             </dd>
         {%- endfor -%}
         </dl>
+    {%- endset -%}
+    {%- if panels -%}
+    {#- Tabbed layout (docs/specs/detail-panels.md, DetailPanel + PanelStates designs).
+        "Details" holds the field list; every other panel body lazy-loads itself with
+        hx-get. ``hx-trigger="intersect once"`` (IntersectionObserver), not "revealed":
+        htmx 1.9's revealed check passes for display:none elements, which would load
+        every panel at page load. ``?tab=<slug>`` selects a panel on load (and is what
+        the error state's Retry link reloads). -#}
+    {%- set panel_slugs = panels|map(attribute='slug')|list -%}
+    {%- set requested_tab = request.query_params.get('tab') -%}
+    {%- set active_tab = requested_tab if requested_tab in panel_slugs else 'fields' -%}
+    <div class="ha-card ha-card--tabbed" data-testid="detail-panels"
+         x-data='{
+            tab: "{{ active_tab }}",
+            tabs: {{ (["fields"] + panel_slugs)|tojson }},
+            show(slug) {
+                this.tab = slug;
+                this.$nextTick(() => { const t = document.getElementById("panel-tab-" + slug); if (t) t.focus(); });
+            },
+            move(step) {
+                const rtl = getComputedStyle(this.$root).direction === "rtl";
+                const i = this.tabs.indexOf(this.tab);
+                this.show(this.tabs[(i + (rtl ? -step : step) + this.tabs.length) % this.tabs.length]);
+            },
+            done(panel, ok) {
+                panel.removeAttribute("aria-busy");
+                const t = ok ? null : panel.querySelector("template[data-panel-error]");
+                if (t) panel.replaceChildren(t.content.cloneNode(true));
+            }
+         }'>
+        {%- include "components/panel_tab_strip.html" %}
+        <div class="ha-panel" role="tabpanel" id="panel-fields" aria-labelledby="panel-tab-fields" data-testid="panel-body-fields"
+             {% if active_tab != 'fields' %}hidden{% endif %} :hidden="tab !== 'fields'">
+            {{ field_list }}
+        </div>
+        {%- for p in panels %}
+        <div class="ha-panel" role="tabpanel" id="panel-{{ p.slug }}" aria-labelledby="panel-tab-{{ p.slug }}" data-testid="panel-body-{{ p.slug }}"
+             {% if active_tab != p.slug %}hidden{% endif %} :hidden="tab !== '{{ p.slug }}'"
+             hx-get="{{ p.url }}" hx-trigger="intersect once" hx-swap="innerHTML" aria-busy="true"
+             @htmx:after-request="done($el, $event.detail.successful)">
+            {%- with state = "loading", panel = p %}{% include "components/panel_states.html" %}{% endwith %}
+        </div>
+        {%- endfor %}
+        <noscript><style>.ha-panel[hidden] { display: block; }</style></noscript>
     </div>
+    {%- else -%}
+    <div class="ha-card">
+        {{ field_list }}
+    </div>
+    {%- endif -%}
     {%- if actions -%}
     <div class="ha-action-buttons" data-testid="action-buttons">
         {%- for act in actions -%}

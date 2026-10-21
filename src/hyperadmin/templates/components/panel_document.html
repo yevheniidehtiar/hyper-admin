@@ -15,5 +15,5 @@
             {{- icon('download', 'ha-icon-sm') }}{{ _("Download") -}}
         </a>
     </div>
-    <iframe class="ha-docview__frame" src="{{ stream_url }}" title="{% trans name=file_name %}{{ name }}, preview{% endtrans %}" data-testid="panel-stream-frame"></iframe>
+    <iframe class="ha-docview__frame" src="{{ stream_url }}" title="{% trans name=file_name %}{{ name }}, preview{% endtrans %}" data-testid="panel-iframe-{{ panel.slug }}"></iframe>
 </div>

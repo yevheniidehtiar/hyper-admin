@@ -1,0 +1,31 @@
+{#- Detail-page tab strip (DetailPanel design, docs/specs/detail-panels.md).
+
+    Expects ``panels`` (the view's visible panels: slug, label, icon, url),
+    ``active_tab`` (the slug selected on load) and ``item_name``. The first tab,
+    "Details", is the field list that ``detail.html`` renders itself; the panel
+    bodies that follow carry their own ``hx-get`` (PanelStates design), so the
+    strip only switches which one is shown.
+
+    Tabs are anchors to their panel's id: without JavaScript they still jump to
+    the section. With Alpine they become a WAI-ARIA tablist with arrow-key
+    navigation; the surrounding element provides ``tab``, ``show()`` and
+    ``move()`` (see ``detail.html``). -#}
+{%- from "components/_icons.html" import icon -%}
+<div class="ha-tabs" role="tablist" aria-label="{% trans name=item_name %}{{ name }} sections{% endtrans %}" data-testid="panel-tabs"
+     @keydown.right.prevent="move(1)" @keydown.left.prevent="move(-1)"
+     @keydown.home.prevent="show(tabs[0])" @keydown.end.prevent="show(tabs[tabs.length - 1])">
+    <a class="ha-tab" role="tab" id="panel-tab-fields" href="#panel-fields" aria-controls="panel-fields"
+       aria-selected="{{ 'true' if active_tab == 'fields' else 'false' }}"
+       {% if active_tab != 'fields' %}tabindex="-1"{% endif %}
+       :aria-selected="tab === 'fields' ? 'true' : 'false'" :tabindex="tab === 'fields' ? 0 : -1"
+       @click.prevent="show('fields')" data-testid="panel-tab-fields">{{ _("Details") }}</a>
+    {%- for p in panels %}
+    <a class="ha-tab" role="tab" id="panel-tab-{{ p.slug }}" href="#panel-{{ p.slug }}" aria-controls="panel-{{ p.slug }}"
+       aria-selected="{{ 'true' if active_tab == p.slug else 'false' }}"
+       {% if active_tab != p.slug %}tabindex="-1"{% endif %}
+       :aria-selected="tab === '{{ p.slug }}' ? 'true' : 'false'" :tabindex="tab === '{{ p.slug }}' ? 0 : -1"
+       @click.prevent="show('{{ p.slug }}')" data-testid="panel-tab-{{ p.slug }}">
+        {%- if p.icon %}{{ icon(p.icon, 'ha-icon-sm') }}{% endif %}{{ p.label -}}
+    </a>
+    {%- endfor %}
+</div>

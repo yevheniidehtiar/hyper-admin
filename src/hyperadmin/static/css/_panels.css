@@ -40,9 +40,22 @@
   font-weight: 600;
 }
 
+/* A detail card that holds the tab strip: the strip and the panels pad themselves. */
+.ha-card--tabbed {
+  padding: 0;
+}
+
 /* ---------- panel body and states (PanelStates) ---------- */
 .ha-panel {
   padding: var(--ha-pad-card);
+}
+
+.ha-panel[hidden] {
+  display: none;
+}
+
+.ha-panel-state .ha-btn {
+  margin-block-start: var(--ha-space-2);
 }
 
 .ha-skel {

@@ -1,7 +1,32 @@
-{#- Detail-panel state fragment (PanelStates design). Swapped into the panel element
-    that issued the hx-get (HX-Retarget: this), so sibling tabs keep working. -#}
+{#- Detail-panel state fragments (PanelStates design): ``state`` is one of
+    ``loading``, ``error`` or ``forbidden``.
+
+    ``loading`` is what a panel body holds until its hx-get answers (skeleton
+    lines, aria-busy on the panel). It also carries the ``error`` fragment in a
+    <template>, which the page swaps in when the request fails (network error,
+    5xx); Retry is a plain link to ``?tab={slug}`` so it works without JavaScript.
+
+    ``forbidden`` is the 403 body the view returns with ``HX-Retarget: this``,
+    swapped into the panel element that issued the hx-get, so sibling tabs keep
+    working. -#}
 {%- from "components/_icons.html" import icon -%}
-{%- if state == "forbidden" -%}
+{%- if state == "loading" -%}
+<span class="ha-skel" style="inline-size:40%"></span>
+<span class="ha-skel" style="inline-size:85%"></span>
+<span class="ha-skel" style="inline-size:70%"></span>
+<span class="ha-sr-only">{% trans label=panel.label %}Loading {{ label }}{% endtrans %}</span>
+<noscript><a href="{{ panel.url }}">{% trans label=panel.label %}Open {{ label }}{% endtrans %}</a></noscript>
+<template data-panel-error>
+    {%- with state = "error" %}{% include "components/panel_states.html" %}{% endwith -%}
+</template>
+{%- elif state == "error" -%}
+<div class="ha-panel-state ha-panel-state--error" role="{{ 'alert' if user_action else 'status' }}" data-testid="panel-error">
+    <span class="ha-empty-glyph">{{ icon('circle-x') }}</span>
+    <strong>{% trans label=panel.label %}{{ label }} didn't load.{% endtrans %}</strong>
+    <p>{{ _("The server took too long to answer. The other tabs still work.") }}</p>
+    <a class="ha-btn ha-btn-sm" href="?tab={{ panel.slug }}" data-testid="panel-retry">{{ icon('refresh-cw', 'ha-icon-sm') }}{{ _("Retry") }}</a>
+</div>
+{%- elif state == "forbidden" -%}
 <div class="ha-panel-state" role="status" data-testid="panel-forbidden">
     <span class="ha-empty-glyph">{{ icon('lock') }}</span>
     <strong>{{ _("You don't have access to this panel.") }}</strong>
