@@ -1,0 +1,158 @@
+{%- extends "_base.html" -%}
+{#- Permission matrix (docs/specs/permission-matrix-ui.md): one group's model x action grid.
+    An HTMX request (group switch) receives the ``grid`` block only. The save is a JSON diff
+    posted by the Alpine component below; without JavaScript the form posts the full grid. -#}
+
+{%- block title -%}{{ _("Permission matrix") }} | {{ site_title | default("HyperAdmin") }}{%- endblock -%}
+
+{%- block content -%}
+<section class="ha-perm-page" data-testid="permission-matrix">
+    <h1 class="ha-page-title">{{ _("Permission matrix") }}</h1>
+    <form method="get" action="{{ url_for('permissions-matrix') }}" class="ha-perm-head"
+          hx-get="{{ url_for('permissions-matrix') }}" hx-trigger="change" hx-target="#pmatrix-grid"
+          hx-swap="innerHTML" hx-push-url="true">
+        <label for="pmatrix-group" class="ha-label">{{ _("Group") }}</label>
+        <select id="pmatrix-group" name="group_id" class="ha-select" data-testid="pmatrix-group-select">
+            {%- for group in groups %}
+            <option value="{{ group.id }}"{% if group.id == selected_group_id %} selected{% endif %}>{{ group.name }}</option>
+            {%- endfor %}
+        </select>
+        <noscript><button type="submit" class="ha-btn">{{ _("Show") }}</button></noscript>
+    </form>
+    <div id="pmatrix-banner" data-testid="pmatrix-banner">
+        {%- if outcome %}{% include "permissions/_banner.html" %}{% endif -%}
+    </div>
+    <div id="pmatrix-grid">
+    {%- block grid %}
+    {%- if group_gone %}
+        <div class="ha-empty-state" data-testid="pmatrix-group-gone">
+            {{ _("This group no longer exists. Someone deleted it while you were editing. Nothing was saved.") }}
+        </div>
+    {%- elif grid is none %}
+        <div class="ha-empty-state" data-testid="pmatrix-empty">{{ _("No groups yet. Create a group first.") }}</div>
+    {%- elif not grid.rows %}
+        <div class="ha-empty-state" data-testid="pmatrix-empty">{{ _("No registered models") }}</div>
+    {%- else %}
+        <script>
+        function pmatrix() {
+            return {
+                initial: {}, version: 0, pending: 0,
+                init() {
+                    this.version = parseInt(this.$el.dataset.version, 10);
+                    this.snapshot();
+                    this.$el.addEventListener('change', () => this.count());
+                    window.addEventListener('beforeunload', (event) => { if (this.pending) event.preventDefault(); });
+                },
+                boxes() { return Array.from(this.$el.querySelectorAll('input[name="perm"]')); },
+                snapshot() {
+                    this.initial = {};
+                    this.boxes().forEach((box) => { this.initial[box.value] = box.checked; });
+                    this.count();
+                },
+                diff() {
+                    return this.boxes()
+                        .filter((box) => box.checked !== this.initial[box.value])
+                        .map((box) => ({ model: box.dataset.model, codename: box.value, granted: box.checked }));
+                },
+                count() {
+                    this.pending = this.diff().length;
+                    this.boxes().forEach((box) => { box.closest('td').classList.toggle('is-changed', box.checked !== this.initial[box.value]); });
+                },
+                selectAll(action, on) {
+                    this.boxes().filter((box) => box.dataset.action === action).forEach((box) => { box.checked = on; });
+                    this.count();
+                },
+                reset() {
+                    this.boxes().forEach((box) => { box.checked = this.initial[box.value]; });
+                    this.count();
+                },
+                async save() {
+                    const headers = { 'Content-Type': 'application/json', 'HX-Request': 'true' };
+                    const meta = document.querySelector('meta[name="csrf-token"]');
+                    if (meta) { headers['{{ csrf_header_name if csrf_header_name is defined else "X-CSRF-Token" }}'] = meta.content; }
+                    const body = JSON.stringify({
+                        group_id: parseInt(this.$el.dataset.groupId, 10), version: this.version, changes: this.diff(),
+                    });
+                    const response = await fetch(this.$el.action, { method: 'POST', headers, body, credentials: 'same-origin' });
+                    const banner = document.getElementById('pmatrix-banner');
+                    banner.innerHTML = await response.text();
+                    if (window.htmx) { window.htmx.process(banner); }
+                    if (response.ok) {
+                        const saved = banner.querySelector('[data-version]');
+                        if (saved) { this.version = parseInt(saved.dataset.version, 10); }
+                        this.snapshot();
+                        window.dispatchEvent(new CustomEvent('permissions-saved'));
+                    }
+                },
+            };
+        }
+        </script>
+        <form method="post" action="{{ url_for('permissions-matrix-save') }}" id="pmatrix-form"
+              data-testid="pmatrix-form" data-version="{{ grid.version }}" data-group-id="{{ grid.group_id }}"
+              x-data="pmatrix()" @submit.prevent="save">
+            <input type="hidden" name="group_id" value="{{ grid.group_id }}">
+            <input type="hidden" name="version" value="{{ grid.version }}" data-testid="pmatrix-version">
+            {{ csrf_input() if csrf_input is defined }}
+            <p class="ha-text-muted">{{ _("Changes apply to everyone in") }} {{ grid.group_name }}.</p>
+            <div class="ha-table-wrap ha-perm-wrap">
+                <table class="ha-table ha-perm" data-testid="pmatrix-table">
+                    <thead>
+                        <tr>
+                            <th scope="col">{{ _("Model") }}</th>
+                            {%- for action in grid.actions %}
+                            <th scope="col">
+                                <label>
+                                    <input type="checkbox" data-testid="pmatrix-select-all-{{ action }}"
+                                           @change="selectAll('{{ action }}', $event.target.checked)"
+                                           aria-label="{{ grid.group_name }} {{ _('can') }} {{ action }} {{ _('every model') }}">
+                                    {{ action }}
+                                </label>
+                            </th>
+                            {%- endfor %}
+                            <th scope="col">{{ _("Object rules") }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {%- for row in grid.rows %}
+                        <tr data-testid="pmatrix-row-{{ row.model }}">
+                            <th scope="row">{{ row.model }}</th>
+                            {%- for action in grid.actions %}
+                            {%- set cell = row.cells.get(action) %}
+                            <td>
+                                {%- if cell %}
+                                <input type="checkbox" name="perm" value="{{ cell.codename }}"
+                                       data-model="{{ row.model }}" data-action="{{ action }}"
+                                       data-testid="pmatrix-cell-{{ row.model }}-{{ cell.codename }}"
+                                       aria-label="{{ grid.group_name }} {{ _('can') }} {{ action }} {{ row.model }}"
+                                       {% if cell.granted %}checked{% endif %}>
+                                {%- else %}
+                                <span aria-hidden="true">&mdash;</span>
+                                <span class="ha-sr-only">{{ action }} {{ _("does not apply to") }} {{ row.model }}</span>
+                                {%- endif %}
+                            </td>
+                            {%- endfor %}
+                            <td>
+                                <button type="button" class="ha-btn ha-btn-sm" data-testid="pmatrix-object-cell-{{ row.model }}"
+                                        hx-get="{{ url_for('permissions-matrix-object', group=grid.group_id, model=row.model) }}"
+                                        hx-target="#pmatrix-popover" hx-swap="innerHTML"
+                                        aria-haspopup="dialog" aria-controls="pmatrix-popover">
+                                    {{ rule_counts.get(row.model, 0) }} {{ _("rules") }}
+                                </button>
+                            </td>
+                        </tr>
+                        {%- endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div id="pmatrix-popover" data-testid="pmatrix-popover"></div>
+            <div class="ha-savebar" data-testid="pmatrix-savebar">
+                <span data-testid="pmatrix-unsaved-count"><span x-text="pending">0</span> {{ _("unsaved changes") }}</span>
+                <button type="reset" class="ha-btn" data-testid="pmatrix-discard-btn" @click.prevent="reset">{{ _("Discard") }}</button>
+                <button type="submit" class="ha-btn ha-btn-primary" data-testid="pmatrix-save-btn">{{ _("Save changes") }}</button>
+            </div>
+        </form>
+    {%- endif %}
+    {%- endblock grid %}
+    </div>
+</section>
+{%- endblock -%}

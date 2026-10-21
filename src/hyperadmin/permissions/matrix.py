@@ -22,7 +22,7 @@ from hyperadmin.auth.permissions import generate_default_permissions
 from hyperadmin.core.adapters import open_session, require_engine_or_session_factory
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable, Mapping
+    from collections.abc import Awaitable, Callable, Iterable, Mapping
     from contextlib import AbstractAsyncContextManager
 
     from sqlalchemy.ext.asyncio import AsyncEngine
@@ -227,7 +227,14 @@ class PermissionMatrixService:
             rows=tuple(rows),
         )
 
-    async def save_diff(self, group_id: int, version: int, changes: Iterable[MatrixChange]) -> int:
+    async def save_diff(
+        self,
+        group_id: int,
+        version: int,
+        changes: Iterable[MatrixChange],
+        *,
+        before_commit: Callable[[AsyncSessionLike], Awaitable[None]] | None = None,
+    ) -> int:
         """Apply ``changes`` to the group and bump its version, all in one transaction.
 
         The version check and the bump are a single conditional ``UPDATE``; when
@@ -239,6 +246,11 @@ class PermissionMatrixService:
             group_id: Primary key of the group being saved.
             version: The ``permissions_version`` the caller loaded with the grid.
             changes: Cells to flip; a later change for the same codename wins.
+            before_commit: Awaited with the open session once the permission
+                rows are staged and before the commit, so the caller can add
+                rows that must land in the same transaction (the audit trail,
+                ``permissions.audit``). Whatever it raises abandons the whole
+                save. Not called for an empty ``changes``.
 
         Returns:
             The group's new ``permissions_version`` (unchanged when ``changes``
@@ -295,6 +307,8 @@ class PermissionMatrixService:
                     session.add(GroupPermission(group_id=group_id, permission_id=perm_id))
                 elif not granted and existing is not None:
                     await session.delete(existing)
+            if before_commit is not None:
+                await before_commit(session)
             await session.commit()
         return version + 1
 

@@ -1,0 +1,29 @@
+{#- Save outcome of the permission matrix, swapped into #pmatrix-banner (also the body of
+    the 403 / 404 / 409 save responses and of GET .../conflict). -#}
+{%- if outcome == "saved" %}
+<div class="ha-alert ha-alert-success" role="status" data-testid="pmatrix-saved-banner" data-version="{{ version }}">
+    {{ _("Permissions saved") }}: {{ saved }} {{ _("changes") }}
+</div>
+{%- elif outcome == "conflict" %}
+<div class="ha-alert ha-alert-warning" role="alert" data-testid="pmatrix-conflict-banner">
+    {{ conflict_message }}. {{ _("Nothing was saved; your changes are still on the page.") }}
+    <a href="{{ url_for('permissions-matrix') }}?group_id={{ group_id }}" data-testid="pmatrix-reload-link">{{ _("Reload") }}</a>
+</div>
+{%- elif outcome == "rejected" %}
+<div class="ha-alert ha-alert-error" role="alert" data-testid="pmatrix-rejected-banner">
+    <p>{{ rejected | length }} {{ _("changes weren't saved. You can only grant permissions you have yourself:") }}</p>
+    <ul>
+        {%- for cell in rejected %}
+        {%- include "permissions/_diff_row.html" %}
+        {%- endfor %}
+    </ul>
+</div>
+{%- elif outcome == "group_gone" %}
+<div class="ha-alert ha-alert-warning" role="alert" data-testid="pmatrix-group-gone">
+    {{ _("Group not found. Someone deleted it while you were editing. Nothing was saved.") }}
+</div>
+{%- elif outcome == "failed" %}
+<div class="ha-alert ha-alert-error" role="alert" data-testid="pmatrix-failed-banner">
+    {{ _("Save failed. Nothing was saved; try again.") }}
+</div>
+{%- endif %}
