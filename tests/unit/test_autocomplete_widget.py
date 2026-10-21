@@ -179,7 +179,7 @@ def test_add_button_rendered_when_related_model_registered():
     body = _client().get("/admin/acproduct/create").text
 
     assert 'data-testid="autocomplete-add-supplier_id"' in body
-    assert '/admin/acsupplier/create-popup?target=supplier_id"' in body
+    assert '/admin/acsupplier/create-popup?target=supplier_id&amp;source=acproduct"' in body
     assert 'hx-target="#ha-popup-root"' in body
 
 
@@ -385,3 +385,205 @@ def test_add_button_omitted_without_add_permission(monkeypatch: pytest.MonkeyPat
 
     assert 'data-testid="autocomplete-supplier_id"' in body
     assert 'data-testid="autocomplete-add-supplier_id"' not in body
+
+
+# ---------------------------------------------------------------------------
+# Label consistency (ac-fix): preload == search results == popup-created option
+# ---------------------------------------------------------------------------
+
+_DEPENDENT = {
+    "variant_id": RelationDependency(depends_on="supplier_id", placeholder="Pick a supplier first")
+}
+
+
+def _widget_select(body: str, field: str) -> str:
+    """The rendered ``<select>`` of the autocomplete widget for ``field``."""
+    return body.split(f'data-field="{field}"', 1)[1].split("</select>", 1)[0]
+
+
+def _popup_label(response: Any) -> str:
+    return json.loads(response.headers["HX-Trigger"])["hyperadminPopupCreated"]["label"]
+
+
+def test_preloaded_options_use_relation_display():
+    """
+    Scenario: preloaded options use the relation display template
+      Given relation_display has supplier_id = "{name} — {city}"
+      When  the create form renders the supplier_id widget
+      Then  its preloaded option reads "Acme — Paris", exactly like a search result
+    """
+    client = _client(relation_display={"supplier_id": "{name} — {city}"})
+
+    body = client.get("/admin/acproduct/create").text
+    searched = client.get("/admin/acproduct/choices/supplier?q=ac").text
+
+    assert '<option value="1">Acme — Paris</option>' in _widget_select(body, "supplier_id")
+    assert '<option value="1">Acme — Paris</option>' in searched
+
+
+def test_preloaded_options_use_relation_display_keyed_by_relationship():
+    """relation_display keyed by the relationship name labels the preload too."""
+    client = _client(relation_display={"supplier": lambda s: s.name.upper()})
+
+    body = client.get("/admin/acproduct/create").text
+
+    assert '<option value="1">ACME</option>' in _widget_select(body, "supplier_id")
+
+
+def test_dependent_preload_is_empty_while_parent_unset():
+    """
+    Scenario: dependent FK with no parent value preloads nothing
+      Given relation_filters has variant_id depends_on supplier_id
+      When  the create form renders before a supplier is chosen
+      Then  the variant_id select holds only the blank option
+      And   the search input shows the configured placeholder
+    """
+    client = _client(relation_filters=_DEPENDENT)
+
+    body = client.get("/admin/acproduct/create").text
+
+    select = _widget_select(body, "variant_id")
+    assert '<option value="">---------</option>' in select
+    assert '<option value="7"' not in select
+    assert 'placeholder="Pick a supplier first"' in select
+    # The independent supplier widget still preloads.
+    assert '<option value="1">Acme</option>' in _widget_select(body, "supplier_id")
+
+
+def test_dependent_preload_filters_by_parent_value():
+    """
+    Scenario: dependent FK preloads only the parent's rows
+      Given variants "Blue" (supplier 1) and "Red" (supplier 2)
+      And   a product with supplier_id=1 and variant_id=7
+      When  the edit form renders
+      Then  the variant_id select lists "Blue" selected and not "Red"
+    """
+    client = _client(relation_filters=_DEPENDENT)
+    client.post("/admin/acsupplier", data={"name": "Other", "city": "Lyon"})
+    client.post("/admin/acvariant", data={"name": "Red", "supplier_id": "2"})
+    client.post("/admin/acproduct", data={"name": "Lamp", "supplier_id": "1", "variant_id": "7"})
+
+    body = client.get("/admin/acproduct/1/edit").text
+
+    select = _widget_select(body, "variant_id")
+    assert '<option value="7" selected>Blue</option>' in select
+    assert "Red" not in select
+
+
+def test_dependent_preload_after_validation_error_uses_submitted_parent():
+    """A re-rendered create form filters the dependent preload by the submitted parent value."""
+    client = _client(relation_filters=_DEPENDENT)
+    client.post("/admin/acsupplier", data={"name": "Other", "city": "Lyon"})
+    client.post("/admin/acvariant", data={"name": "Red", "supplier_id": "2"})
+
+    # ``name`` is required: the form re-renders with the posted values.
+    body = client.post("/admin/acproduct", data={"supplier_id": "2"}).text
+
+    select = _widget_select(body, "variant_id")
+    assert "Red" in select
+    assert "Blue" not in select
+
+
+def test_popup_label_follows_source_form_relation_display():
+    """
+    Scenario: popup-created option uses the parent form's display template
+      Given the Product admin has relation_display supplier_id = "{name} — {city}"
+      And   the Supplier admin has no relation_display
+      When  the popup opened from the product form creates supplier "Zed" in "Utrecht"
+      Then  the HX-Trigger label is "Zed — Utrecht", matching the widget's other options
+    """
+    client = _client(relation_display={"supplier_id": "{name} — {city}"})
+
+    response = client.post(
+        "/admin/acsupplier/create-popup?source=acproduct",
+        data={"target": "supplier_id", "name": "Zed", "city": "Utrecht"},
+    )
+
+    assert response.status_code == 200
+    assert _popup_label(response) == "Zed — Utrecht"
+
+
+@pytest.mark.parametrize("target", ["supplier_id", "supplier"])
+def test_popup_label_follows_source_relationship_key(target: str):
+    """The source's relation_display may be keyed by the relationship name; callables work."""
+    client = _client(relation_display={"supplier": lambda s: s.name.upper()})
+
+    response = client.post(
+        "/admin/acsupplier/create-popup?source=acproduct", data={"target": target, "name": "Zed"}
+    )
+
+    assert _popup_label(response) == "ZED"
+
+
+@pytest.mark.parametrize(
+    ("source", "target"),
+    [
+        ("", "supplier_id"),  # no source: nothing to borrow a template from
+        ("nosuchmodel", "supplier_id"),  # unknown source slug
+        ("acproduct", "variant_id"),  # the source field does not point at this model
+        ("acvariant", "supplier_id"),  # the source admin has no relation_display
+    ],
+)
+def test_popup_label_falls_back_to_display_name(source: str, target: str):
+    """Without a usable source template the popup label is the plain display name."""
+    client = _client(relation_display={"supplier_id": "{name} — {city}"})
+
+    response = client.post(
+        f"/admin/acsupplier/create-popup?source={source}",
+        data={"target": target, "name": "Zed", "city": "Utrecht"},
+    )
+
+    assert _popup_label(response) == "Zed"
+
+
+def test_popup_label_ignores_unmapped_source_model():
+    """A registered source that SQLAlchemy cannot inspect falls back to the display name."""
+
+    class Plain:
+        pass
+
+    client = _client(relation_display={"supplier_id": "{name} — {city}"})
+    site._registry[Plain] = AcSupplierAdmin
+
+    response = client.post(
+        "/admin/acsupplier/create-popup?source=plain",
+        data={"target": "supplier_id", "name": "Zed", "city": "Utrecht"},
+    )
+
+    assert _popup_label(response) == "Zed"
+
+
+def test_popup_form_posts_back_with_source():
+    """The popup form keeps ``source`` on its POST URL, including after a validation error."""
+    client = _client()
+
+    opened = client.get("/admin/acsupplier/create-popup?target=supplier_id&source=acproduct").text
+    # ``name`` is required: the fragment re-renders with errors.
+    rerendered = client.post(
+        "/admin/acsupplier/create-popup?source=acproduct", data={"target": "supplier_id"}
+    ).text
+
+    assert "/admin/acsupplier/create-popup?source=acproduct" in opened
+    assert "/admin/acsupplier/create-popup?source=acproduct" in rerendered
+    assert 'name="target" value="supplier_id"' in rerendered
+
+
+def test_popup_form_keeps_source_after_integrity_error(monkeypatch: pytest.MonkeyPatch):
+    """A database constraint failure re-renders the popup without losing ``source``."""
+    from sqlalchemy.exc import IntegrityError
+
+    async def failing_create(self: Any, data: dict[str, Any]) -> Any:
+        raise IntegrityError("INSERT", {}, Exception("UNIQUE constraint failed: name"))
+
+    client = _client()
+    monkeypatch.setattr(SQLModelAdapter, "create", failing_create)
+
+    response = client.post(
+        "/admin/acsupplier/create-popup?source=acproduct",
+        data={"target": "supplier_id", "name": "Zed"},
+    )
+
+    assert response.status_code == 200
+    assert "HX-Trigger" not in response.headers
+    assert "/admin/acsupplier/create-popup?source=acproduct" in response.text
+    assert 'data-testid="popup-form"' in response.text
