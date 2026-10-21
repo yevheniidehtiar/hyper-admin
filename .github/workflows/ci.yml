@@ -10,7 +10,33 @@ on:
 permissions:
   contents: read
 
+# A newer push to the same PR supersedes the run in progress. Pushes to
+# develop/master are never cancelled, so every merge keeps a complete run.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
+  lint:
+    # Static checks once, on the lowest supported Python; the test matrix
+    # below no longer repeats them in every row.
+    name: Lint & typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      UV_PYTHON: "3.11"
+    steps:
+      - uses: actions/checkout@v7
+      - uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.11"
+          enable-cache: true
+      - run: uv sync --locked --all-extras
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run mypy src plugins/hyperadmin-reports/src
+      - run: uv run basedpyright src plugins/hyperadmin-reports/src
+
   test:
     name: Test (Py ${{ matrix.python-version }} on ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
@@ -22,6 +48,12 @@ jobs:
       matrix:
         python-version: ["3.11", "3.12", "3.13", "3.14"]
         os: [ubuntu-latest, macos-latest]
+        # macOS only on the lowest and highest supported Python; Ubuntu keeps all.
+        exclude:
+          - os: macos-latest
+            python-version: "3.12"
+          - os: macos-latest
+            python-version: "3.13"
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v7
@@ -29,15 +61,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
           enable-cache: true
       - run: uv sync --locked --all-extras
-      - run: uv run ruff check .
-      - run: uv run ruff format --check .
-      - run: uv run mypy src plugins/hyperadmin-reports/src
-      - run: uv run pytest --tb=short --cov=src/hyperadmin --cov=plugins/hyperadmin-reports/src/hyperadmin_reports --cov-report=xml --ignore=tests/e2e
+      - run: uv run pytest -n auto --dist loadgroup --tb=short --cov=src/hyperadmin --cov=plugins/hyperadmin-reports/src/hyperadmin_reports --cov-report=xml --ignore=tests/e2e
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-
-
-
-

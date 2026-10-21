@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import tempfile
 from unittest.mock import patch
 
 # ---------------------------------------------------------------------------
@@ -16,7 +17,7 @@ from sqlmodel import Field, SQLModel
 from hyperadmin.core.fields import classify_field
 from hyperadmin.core.uploads import FileFieldMeta
 
-_storage = FileSystemStorage("/tmp/test_uploads")  # noqa: S108
+_storage = FileSystemStorage(tempfile.mkdtemp(prefix="hyperadmin-test-uploads-"))
 
 
 class FileModel(SQLModel, table=True):

@@ -1,3 +1,4 @@
+import itertools
 import os
 import signal
 import socket
@@ -8,6 +9,7 @@ import time
 from collections.abc import Iterator
 from contextlib import closing
 from http import HTTPStatus
+from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 import pytest
@@ -18,8 +20,25 @@ if TYPE_CHECKING:
 _IN_CONTAINER = os.environ.get("IS_SANDBOX") == "1"
 
 # Server start is slower inside Docker or on a loaded machine (pre-push runs
-# while other work is going on); a slow start must not fail the suite.
-_SERVER_TIMEOUT = 30 if _IN_CONTAINER else 15
+# while other work is going on, and the xdist workers start several servers at
+# once); a slow start must not fail the suite.
+_SERVER_TIMEOUT = 30
+
+# ``pytest -n auto`` worker count for this suite. Every worker drives its own
+# Chromium plus one uvicorn per test, so the pool is sized for Playwright, not
+# for the CPU count: four by default, ``E2E_WORKERS=<n>`` overrides it.
+_DEFAULT_E2E_WORKERS = 4
+
+# Each xdist worker owns a disjoint block of localhost ports for its test
+# servers, so two workers can never race for the same port (a free port picked
+# from the OS could be handed to both before either server binds it).
+_PORT_RANGE_START = 18000
+_PORTS_PER_WORKER = 250
+
+
+def pytest_xdist_auto_num_workers(config: pytest.Config) -> int:
+    """Size ``-n auto`` for the E2E suite (see ``_DEFAULT_E2E_WORKERS``)."""
+    return int(os.environ.get("E2E_WORKERS") or _DEFAULT_E2E_WORKERS)
 
 
 def csrf_headers(page: "Page") -> dict[str, str]:
@@ -57,24 +76,40 @@ def _tail(log: Any, lines: int = 40) -> str:
     return "".join(log.readlines()[-lines:])
 
 
-def _find_free_port() -> int:
-    """Find an available TCP port on localhost.
+def _worker_index(worker_id: str) -> int:
+    """Map an xdist worker id (``gw3``) to its index; ``master`` (no xdist) is 0."""
+    return int(worker_id[2:]) if worker_id.startswith("gw") else 0
 
-    Returns
-    -------
-    int
-        A free port number bound to 127.0.0.1.
+
+def _port_is_free(port: int) -> bool:
+    """Whether ``port`` can be bound on every interface right now.
+
+    No ``SO_REUSEADDR``: a port still in ``TIME_WAIT`` from the previous test
+    server counts as taken, so the next server never fights its predecessor.
     """
     with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
-        s.bind(("127.0.0.1", 0))
-        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        return int(s.getsockname()[1])
+        try:
+            s.bind(("", port))
+        except OSError:
+            return False
+        return True
+
+
+@pytest.fixture(scope="session")
+def _e2e_port_pool(worker_id: str) -> Iterator[int]:
+    """Cycle through this worker's own block of ports (see ``_PORT_RANGE_START``)."""
+    start = _PORT_RANGE_START + _worker_index(worker_id) * _PORTS_PER_WORKER
+    return itertools.cycle(range(start, start + _PORTS_PER_WORKER))
 
 
 @pytest.fixture
-def e2e_port() -> int:
-    """Provide a free localhost port for the demo server per test function."""
-    return _find_free_port()
+def e2e_port(_e2e_port_pool: Iterator[int]) -> int:
+    """Provide a free localhost port, from this worker's block, per test function."""
+    for _ in range(_PORTS_PER_WORKER):
+        port = next(_e2e_port_pool)
+        if _port_is_free(port):
+            return port
+    raise RuntimeError(f"no free port left in this worker's block of {_PORTS_PER_WORKER}")
 
 
 @pytest.fixture
@@ -445,7 +480,7 @@ def pk_types_base_url(e2e_port: int) -> Iterator[str]:
 
 
 @pytest.fixture
-def object_perm_base_url(e2e_port: int) -> Iterator[str]:
+def object_perm_base_url(e2e_port: int, tmp_path: Path) -> Iterator[str]:
     """Start an object-permission-enabled HyperAdmin app for E2E tests.
 
     Wires :mod:`tests.e2e._object_perm_app`, which seeds:
@@ -479,9 +514,10 @@ def object_perm_base_url(e2e_port: int) -> Iterator[str]:
 
     env = os.environ.copy()
     env["E2E_TESTING"] = "1"
-    # Each subprocess gets its own DB file so tests don't see stale data
-    # from a previously-run server.
-    env["HYPERADMIN_E2E_OBJPERM_DB"] = f"/tmp/hyperadmin-e2e-objperm-{e2e_port}.db"  # noqa: S108
+    # Each subprocess gets its own DB file (under the test's own tmp_path, so
+    # parallel workers never share one) and tests never see stale data from a
+    # previously-run server.
+    env["HYPERADMIN_E2E_OBJPERM_DB"] = str(tmp_path / "objperm.db")
 
     proc = subprocess.Popen(
         cmd,
