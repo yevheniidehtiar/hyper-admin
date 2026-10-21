@@ -7,6 +7,7 @@ the documented SQL and the executed SQL never drift apart.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from functools import cache
 from typing import TYPE_CHECKING, Any, ClassVar
 
@@ -42,12 +43,16 @@ class Aggregate:
 
     Subclasses set :attr:`function` (the SQL aggregate name) and may override
     :meth:`sql` for dialect-specific syntax. :attr:`empty` is the value a pivot
-    cell takes when no row contributed to it.
+    cell takes when no row contributed to it. :attr:`totals` says whether the
+    report page and exports show row, column and grand totals for it
+    (:meth:`total`): sums, counts, minima and maxima can be folded, a
+    comma-joined list or a related record cannot.
     """
 
     function: ClassVar[str]
     title: ClassVar[str]
     empty: ClassVar[Any] = None
+    totals: ClassVar[bool] = False
 
     def __init__(self, field: str, *, label: str | None = None) -> None:
         self.field = field
@@ -75,6 +80,20 @@ class Aggregate:
         """
         return f"{self.function}({_quote(self.field, dialect)})"
 
+    def total(self, values: Iterable[Any]) -> Any:
+        """Fold pivot cells into one total, or ``None`` when nothing can be totalled.
+
+        Empty cells (``None``) are skipped; an all-empty line totals to ``None``,
+        never to a printed zero.
+        """
+        if not self.totals:
+            return None
+        present = [v for v in values if v is not None]
+        return self._fold(present) if present else None
+
+    def _fold(self, values: list[Any]) -> Any:
+        return sum(values)
+
     def __repr__(self) -> str:
         return f"{type(self).__name__}({self.field!r})"
 
@@ -84,6 +103,7 @@ class Sum(Aggregate):
 
     function = "SUM"
     title = "Sum"
+    totals = True
 
 
 class Count(Aggregate):
@@ -92,6 +112,7 @@ class Count(Aggregate):
     function = "COUNT"
     title = "Count"
     empty = 0
+    totals = True
 
     def __init__(self, field: str = "*", *, label: str | None = None) -> None:
         super().__init__(field, label=label)
@@ -103,17 +124,25 @@ class Count(Aggregate):
 
 
 class Min(Aggregate):
-    """``MIN(field)``."""
+    """``MIN(field)`` — its total is the smallest minimum."""
 
     function = "MIN"
     title = "Min"
+    totals = True
+
+    def _fold(self, values: list[Any]) -> Any:
+        return min(values)
 
 
 class Max(Aggregate):
-    """``MAX(field)``."""
+    """``MAX(field)`` — its total is the largest maximum."""
 
     function = "MAX"
     title = "Max"
+    totals = True
+
+    def _fold(self, values: list[Any]) -> Any:
+        return max(values)
 
 
 class StringAggComma(Aggregate):

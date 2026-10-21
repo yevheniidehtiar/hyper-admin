@@ -1,0 +1,213 @@
+/* ==========================================================================
+   Report page (docs/design/system/components/ReportPage)
+   Report-specific classes only: the index cards, the header lede and meta
+   line, the bucket switch row and the crosstab (ha-xtab). The generic pieces
+   (ha-seg, ha-menu, ha-trunc, ha-null, ha-num, ha-sticky-first, ha-crumbs,
+   ha-empty) come from the core stylesheet and are not repeated here.
+   ========================================================================== */
+
+/* Joins the core cascade layer the admin declares in hyperadmin.css, so it ranks
+   exactly as the core components do whether linked or imported. */
+@layer components {
+  /* --- Reports index: a grid of cards, the whole card is the link target --- */
+  .ha-report-index {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+    gap: var(--ha-space-4);
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .ha-report-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--ha-space-2);
+    padding: var(--ha-space-4);
+    border: var(--ha-border-width) solid var(--ha-color-border-light);
+    border-radius: var(--ha-radius-lg);
+    background-color: var(--ha-surface-raised);
+    box-shadow: var(--ha-shadow-sm);
+  }
+
+  .ha-report-card:hover,
+  .ha-report-card:focus-within {
+    border-color: var(--ha-color-primary);
+  }
+
+  .ha-report-card h2 { margin: 0; }
+  .ha-report-card h2 a { color: inherit; text-decoration: none; }
+  .ha-report-card h2 a::after { content: ""; position: absolute; inset: 0; }
+  .ha-report-card h2 a:focus-visible { outline: none; }
+  .ha-report-card:focus-within { outline: 2px solid var(--ha-color-focus-ring); outline-offset: 2px; }
+  .ha-report-card p { margin: 0; font-size: var(--ha-font-size-sm); color: var(--ha-color-text); }
+
+  /* --- Header: lede under the title, then the period and filter meta line --- */
+  .ha-report-head { align-items: flex-start; }
+  .ha-report-head__text { min-inline-size: 0; flex: 1 1 auto; }
+  .ha-report-head .ha-h1 { margin-block-end: var(--ha-space-1); }
+
+  .ha-report-head__lede {
+    margin: 0 0 var(--ha-space-2);
+    max-inline-size: 70ch;
+    color: var(--ha-color-text-muted);
+  }
+
+  .ha-report-head__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--ha-space-2);
+    font-size: 0.8125rem;
+    color: var(--ha-color-text-muted);
+  }
+
+  /* The export menu hangs off a short trigger: let it keep the Menu's own width
+     instead of the trigger's, so its label and file names do not wrap. */
+  .ha-report-head .ha-page-header-actions .ha-menu {
+    max-inline-size: min(280px, calc(100vw - 2 * var(--ha-space-4)));
+  }
+
+  /* --- Bucket switch row: label, segmented control, the "Auto chose..." note --- */
+  .ha-report-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--ha-space-2) var(--ha-space-3);
+    margin-block-end: var(--ha-space-4);
+  }
+
+  .ha-report-controls__label {
+    font-size: 0.8125rem;
+    font-weight: var(--ha-font-medium);
+    color: var(--ha-color-text-muted);
+  }
+
+  .ha-report-controls .ha-seg { flex-wrap: wrap; }
+
+  .ha-report-controls__auto {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ha-space-1);
+    font-size: 0.8125rem;
+    color: var(--ha-color-text-muted);
+  }
+
+  /* --- Crosstab: scrolls inside its wrapper, never widens the page --- */
+  .ha-xtab-wrap {
+    max-block-size: min(70vh, 40rem);
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+
+  .ha-xtab-wrap:focus-visible {
+    outline: 2px solid var(--ha-color-focus-ring);
+    outline-offset: 2px;
+  }
+
+  .ha-xtab { width: auto; min-width: 100%; }
+
+  .ha-xtab th,
+  .ha-xtab td {
+    height: var(--ha-row-h);
+    padding: 0 var(--ha-cell-px);
+    vertical-align: middle;
+    white-space: nowrap;
+    border-block-end: var(--ha-border-width) solid var(--ha-color-border-light);
+  }
+
+  .ha-xtab thead th {
+    font-size: 0.8125rem;
+    font-weight: var(--ha-font-medium);
+    color: var(--ha-color-text-muted);
+    text-align: start;
+  }
+
+  .ha-xtab thead th[scope="colgroup"] { text-align: center; }
+  .ha-xtab thead abbr { text-decoration: none; }
+
+  /* Both header rows stick: the second sits under the first at the row height. */
+  .ha-xtab thead tr:nth-child(2) th { inset-block-start: var(--ha-row-h); }
+  .ha-xtab thead tr:nth-child(3) th { inset-block-start: calc(2 * var(--ha-row-h)); }
+
+  /* A hairline where a column group starts. */
+  .ha-xtab__start { box-shadow: inset 1px 0 0 var(--ha-color-border-light); }
+  [dir="rtl"] .ha-xtab__start { box-shadow: inset -1px 0 0 var(--ha-color-border-light); }
+
+  .ha-xtab tbody th[scope="row"] {
+    font-weight: var(--ha-font-medium);
+    color: var(--ha-color-text-strong);
+    text-align: start;
+  }
+
+  /* Row groups are quiet bands. */
+  .ha-xtab th[scope="rowgroup"] {
+    font-size: 0.8125rem;
+    font-weight: var(--ha-font-semibold);
+    color: var(--ha-color-text-muted);
+    background-color: var(--ha-surface-sunken);
+    text-align: start;
+  }
+
+  .ha-xtab tbody td { color: var(--ha-color-text); font-size: var(--ha-font-size-sm); }
+  .ha-xtab tbody tr:hover > td { background-color: var(--ha-surface-hover); }
+
+  /* Totals: the page surface and semibold text, separated by a rule, not coloured. */
+  .ha-xtab .ha-xtab__total {
+    font-weight: var(--ha-font-semibold);
+    color: var(--ha-color-text-strong);
+    background-color: var(--ha-surface-base);
+    box-shadow: inset 2px 0 0 var(--ha-color-border);
+  }
+
+  [dir="rtl"] .ha-xtab .ha-xtab__total { box-shadow: inset -2px 0 0 var(--ha-color-border); }
+
+  .ha-xtab tfoot th,
+  .ha-xtab tfoot td {
+    position: sticky;
+    inset-block-end: 0;
+    z-index: 1;
+    font-weight: var(--ha-font-semibold);
+    color: var(--ha-color-text-strong);
+    background-color: var(--ha-surface-base);
+    border-block-start: 2px solid var(--ha-color-border);
+    border-block-end: 0;
+  }
+
+  .ha-xtab tfoot th { text-align: start; }
+
+  .ha-xtab tfoot th.ha-sticky-first { z-index: 2; }
+
+  /* Zero is a value: normal text. Null (.ha-null, core) is muted. */
+  .ha-xtab__zero { color: var(--ha-color-text); }
+
+  .ha-xtab__nodata {
+    padding: var(--ha-space-6);
+    text-align: center;
+    color: var(--ha-color-text-muted);
+    font-style: italic;
+    white-space: normal;
+  }
+
+  .ha-xtab__nodata a { font-style: normal; }
+
+  /* Numbers and bucket labels stay left-to-right in RTL pages. */
+  .ha-xtab .ha-num { direction: ltr; unicode-bidi: isolate; }
+
+  /* The key under the grid. */
+  .ha-xtab-key {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ha-space-1) var(--ha-space-4);
+    list-style: none;
+    margin: calc(-1 * var(--ha-space-2)) 0 var(--ha-space-6);
+    padding: 0;
+    font-size: var(--ha-font-size-xs);
+    line-height: 18px;
+    color: var(--ha-color-text-muted);
+  }
+
+  /* 403 card: the permission to ask for, in mono. */
+  .ha-report-forbidden code { font-size: 0.8125rem; }
+}

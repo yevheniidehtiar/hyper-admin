@@ -1,0 +1,19 @@
+{#-
+    The reports plugin's own 403 card: names the permission to ask for, so the
+    reader knows what to request. Context: report, codename, permission_name.
+-#}
+{%- extends "base.html" -%}
+{%- from "components/_icons.html" import icon -%}
+
+{%- block title -%}{{ _("You don't have access to this report") }} | {{ site_title | default("HyperAdmin") }}{%- endblock -%}
+
+{%- block content -%}
+    <link rel="stylesheet" href="{{ url_for('static', path='/plugins/reports/reports.css') }}">
+    <section class="ha-card ha-empty ha-report-forbidden" data-testid="report-forbidden" aria-labelledby="report-forbidden-title">
+        <span class="ha-empty-glyph">{{ icon('lock') }}</span>
+        <p class="ha-error-code ha-mono">{{ _("Error") }} 403</p>
+        <h1 id="report-forbidden-title" class="ha-h3">{{ _("You don't have access to this report") }}</h1>
+        <p class="ha-empty-text">{{ _("Ask an administrator for the “%(name)s” permission.", name=permission_name) }} <code class="ha-mono" data-testid="report-forbidden-codename">{{ codename }}</code></p>
+        <a href="{{ url_for('reports-index') }}" class="ha-btn ha-btn-secondary" data-testid="report-forbidden-back">{{ icon('bar-chart-3') }}{{ _("Back to reports") }}</a>
+    </section>
+{%- endblock -%}

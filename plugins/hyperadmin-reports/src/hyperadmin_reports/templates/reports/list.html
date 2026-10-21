@@ -1,17 +1,21 @@
 {%- extends "base.html" -%}
-{%- from "components/_icons.html" import icon -%}
 
 {%- block title -%}{{ _("Reports") }} | {{ site_title | default("HyperAdmin") }}{%- endblock -%}
 
 {%- block content -%}
+    <link rel="stylesheet" href="{{ url_for('static', path='/plugins/reports/reports.css') }}">
     <div class="ha-page-header" data-testid="page-header">
         <h1 class="ha-page-title">{{ _("Reports") }}</h1>
     </div>
     {%- if reports -%}
-    <ul class="ha-card" data-testid="report-index">
+    <ul class="ha-report-index" aria-label="{{ _('Reports') }}" data-testid="report-index">
         {%- for report in reports -%}
-        <li>
-            <a href="{{- url_for('report-detail', slug=report.slug) -}}" class="ha-action-link" data-testid="report-link-{{ report.slug }}">{{ icon('file-text') }}{{ report.get_label() }}</a>
+        <li class="ha-report-card">
+            <h2 class="ha-h4"><a href="{{- url_for('report-detail', slug=report.slug) -}}" data-testid="report-link-{{ report.slug }}">{{ report.get_label() }}</a></h2>
+            {%- if report.get_description() -%}
+            <p>{{ report.get_description() }}</p>
+            {%- endif -%}
+            <span class="ha-caption ha-muted">{{ report.get_summary() }}</span>
         </li>
         {%- endfor -%}
     </ul>

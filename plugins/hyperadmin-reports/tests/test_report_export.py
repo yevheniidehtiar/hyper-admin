@@ -60,6 +60,7 @@ def test_build_table_labels_each_value_under_each_column_key() -> None:
       Given a report with Sum and Count over a month bucket
       When  build_table runs on its result
       Then  each header is "<column key> / <aggregate label>" and missing cells take the fill
+      And   a "Total" column per aggregate and a "Total" row close the table
     """
     table = build_table(
         TwoValues,
@@ -77,17 +78,25 @@ def test_build_table_labels_each_value_under_each_column_key() -> None:
         "2025-01 / Count of Rows",
         "2025-02 / Sum of Amount",
         "2025-02 / Count of Rows",
+        "Total / Sum of Amount",
+        "Total / Count of Rows",
     ]
-    assert table.rows == [["A", 10, 1, None, 0], ["B", None, 0, 5, 2]]
+    assert table.rows == [
+        ["A", 10, 1, None, 0, 10, 1],
+        ["B", None, 0, 5, 2, 5, 2],
+        ["Total", 10, 1, 5, 2, 15, 3],
+    ]
 
 
 def test_build_table_of_an_empty_result_has_only_row_headers() -> None:
     """
     Scenario: an empty result set flattens to a header without rows
       When  build_table runs on a result with no records
-      Then  the header is the row dimensions only and there are no rows
+      Then  the header is the row dimensions and the totals columns, and there are no rows
     """
-    assert build_table(TwoValues, _result([])) == ReportTable(header=["Sku"], rows=[])
+    assert build_table(TwoValues, _result([])) == ReportTable(
+        header=["Sku", "Total / Sum of Amount", "Total / Count of Rows"], rows=[]
+    )
 
 
 def test_stream_csv_yields_rows_in_chunks() -> None:
