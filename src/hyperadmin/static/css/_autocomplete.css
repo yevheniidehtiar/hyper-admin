@@ -1,28 +1,9 @@
 /* ==========================================================================
-   Autocomplete widget + inline-create popup (H6, v0.5.5)
+   Inline-create popup slot (H6, v0.5.5)
    Linked from base.html next to #ha-popup-root, so it ships with the slot.
+   The widget itself (.ha-autocomplete, .ha-combobox) and the dialog
+   (.ha-dialog) are in _forms.css.
    ========================================================================== */
-
-.ha-autocomplete {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ha-space-2);
-}
-
-.ha-autocomplete__bar {
-  display: flex;
-  gap: var(--ha-space-2);
-}
-
-.ha-autocomplete__search {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-
-.ha-autocomplete__add {
-  flex: 0 0 auto;
-  min-width: var(--ha-ctl-h);
-}
 
 .ha-popup-root:empty {
   display: none;
@@ -36,7 +17,7 @@
   align-items: center;
   justify-content: center;
   padding: var(--ha-space-4);
-  background: rgb(0 0 0 / 0.45);
+  background: var(--ha-color-scrim);
 }
 
 .ha-popup-root > * {
@@ -47,4 +28,12 @@
   background: var(--ha-surface-raised);
   border-radius: var(--ha-radius-lg);
   box-shadow: var(--ha-shadow-xl);
+}
+
+/* The popup create form is the 640px design-system dialog. */
+.ha-popup-root > .ha-dialog {
+  width: min(40rem, 100%);
+  padding: 0;
+  background: var(--ha-surface-overlay);
+  border-radius: var(--ha-radius-xl);
 }
