@@ -355,30 +355,35 @@ type = "simple"
     { ref = "test:e2e" },
   ]
 
+  # Unit tests run on every CPU (pytest-xdist): ``--dist loadgroup`` is plain
+  # load-balancing unless a test carries ``@pytest.mark.xdist_group``, which pins
+  # the group to one worker. pytest-cov merges the workers' coverage data.
   [tool.poe.tasks."test:unit"]
-  help = "Run unit tests with pytests"
+  help = "Run unit tests with pytests (parallel, pytest-xdist)"
   sequence = [
-    { cmd = "pytest -vv -q tests/unit plugins/hyperadmin-reports/tests" },
+    { cmd = "pytest -vv -q -n auto --dist loadgroup tests/unit plugins/hyperadmin-reports/tests" },
   ]
   [tool.poe.tasks."test:cov-diff"]
   help = "Unit tests, then fail unless every changed line vs origin/develop is covered (100% patch)"
   sequence = [
-    { cmd = "pytest -q tests/unit plugins/hyperadmin-reports/tests" },
+    { cmd = "pytest -q -n auto --dist loadgroup tests/unit plugins/hyperadmin-reports/tests" },
     { cmd = "diff-cover reports/coverage.xml --compare-branch=origin/develop --fail-under=100" },
   ]
 
+  # E2E runs on a pool sized for Playwright, not for the CPU count: ``-n auto``
+  # resolves to four workers (``E2E_WORKERS=<n>`` overrides) via tests/e2e/conftest.py.
   [tool.poe.tasks."test:e2e"]
-  help = "Run end-to-end tests with Playwright"
+  help = "Run end-to-end tests with Playwright (parallel; E2E_WORKERS=<n> sets the pool)"
   sequence = [
     { shell = "playwright install chromium" },
-    { cmd = "pytest tests/e2e" },
+    { cmd = "pytest -n auto tests/e2e" },
   ]
 
   [tool.poe.tasks."test:e2e:fast"]
   help = "Run end-to-end tests with Playwright (fast with screenshots)"
   sequence = [
     { shell = "playwright install chromium" },
-    { shell = "E2E_TEST_TIMEOUT=5000 pytest tests/e2e --screenshot on" },
+    { shell = "E2E_TEST_TIMEOUT=5000 pytest -n auto tests/e2e --screenshot on" },
   ]
 
   [tool.poe.tasks."triage:audit"]

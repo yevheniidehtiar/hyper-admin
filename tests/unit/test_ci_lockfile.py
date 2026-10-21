@@ -138,6 +138,12 @@ def test_deps_bump_runs_checks_without_resyncing() -> None:
 def test_security_audit_runs_on_the_locked_highest_set_only() -> None:
     """Old floor releases carry known advisories; audit what the lock ships."""
     workflow = _load_workflow("test.yml")
+    audited_jobs = []
     for job_name, job in workflow["jobs"].items():
-        (step,) = [s for s in job["steps"] if "security-check" in s.get("run", "")]
-        assert step.get("if") == "matrix.resolution == 'highest'", job_name
+        steps = [s for s in job["steps"] if "security-check" in s.get("run", "")]
+        for step in steps:
+            assert step.get("if") == "matrix.resolution == 'highest'", job_name
+        if steps:
+            audited_jobs.append(job_name)
+    # Every unit-test row audits; the lint and E2E jobs run no dependency audit.
+    assert audited_jobs == ["test", "test-pr"]

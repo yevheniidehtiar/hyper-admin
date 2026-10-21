@@ -1,26 +1,16 @@
 import os
 import signal
-import socket
 import subprocess
 import sys
 import tempfile
 import time
 from collections.abc import Iterator
-from contextlib import closing
 from http import HTTPStatus
 from pathlib import Path
 
 import pytest
 import requests
 from playwright.sync_api import Page, expect
-
-
-def _find_free_port() -> int:
-    """Find an available TCP port on localhost."""
-    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
-        s.bind(("127.0.0.1", 0))
-        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        return int(s.getsockname()[1])
 
 
 @pytest.fixture
@@ -71,9 +61,9 @@ class MyModelAdmin(ModelView, model=MyModel):
 
 
 @pytest.fixture
-def override_base_url(override_app_dir: Path) -> Iterator[str]:
+def override_base_url(override_app_dir: Path, e2e_port: int) -> Iterator[str]:
     """Start the demo_app via uvicorn in a subprocess and yield base URL."""
-    port = _find_free_port()
+    port = e2e_port
 
     # Add the app dir to the python path
     env = os.environ.copy()

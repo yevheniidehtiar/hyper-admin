@@ -14,7 +14,48 @@ on:
       - develop
       - master
 
+# A newer push to the same PR supersedes the run in progress. Pushes to
+# develop/master and tags are never cancelled.
+concurrency:
+  group: test-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
+  lint:
+    # ``poe lint`` (every pre-commit hook: ruff, mypy, basedpyright, ...) runs
+    # once, on the lowest supported Python and the locked set, instead of in
+    # every matrix row below.
+    name: Lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      UV_PYTHON: "3.11"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install uv and Python 3.11
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.11"
+          enable-cache: true
+
+      - name: Check uv.lock is up to date
+        run: uv lock --check
+
+      - name: Install dependencies
+        run: uv sync --locked --all-extras --python 3.11
+
+      - name: Cache pre-commit hook environments
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml') }}
+
+      - name: Lint package
+        run: uv run poe lint
+
   test:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
@@ -34,14 +75,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v7
+      - name: Install uv and Python ${{ matrix.python-version }}
+        uses: astral-sh/setup-uv@v7
         with:
           python-version: ${{ matrix.python-version }}
-
-      - name: Install uv
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
-        shell: bash
+          enable-cache: true
+          cache-suffix: ${{ matrix.resolution }}
 
       - name: Check uv.lock is up to date
         run: uv lock --check
@@ -61,9 +100,6 @@ jobs:
             echo "UV_NO_SYNC=1" >> "$GITHUB_ENV"
           fi
 
-      - name: Lint package
-        run: uv run poe lint
-
       - name: Test package
         run: uv run poe test:unit
 
@@ -73,23 +109,6 @@ jobs:
         # known advisories by definition.
         if: matrix.resolution == 'highest'
         run: uv run poe security-check
-
-      - name: Install Playwright browsers
-        run: uv run playwright install --with-deps chromium
-
-      - name: E2E Test package
-        run: uv run poe test:e2e
-
-      - name: Upload visual regression diffs
-        # Baselines must be rendered on the CI runner; the actual/diff PNGs are the
-        # source for refreshing a drifted baseline (see tests/e2e/test_visual_regression.py).
-        if: failure()
-        uses: actions/upload-artifact@v7
-        with:
-          name: visual-diffs-py${{ matrix.python-version }}-${{ matrix.resolution }}
-          path: tests/e2e/snapshots/**/*.*.png
-          if-no-files-found: ignore
-          retention-days: 7
 
   test-pr:
     if: github.event_name == 'pull_request'
@@ -113,14 +132,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v7
+      - name: Install uv and Python ${{ matrix.python-version }}
+        uses: astral-sh/setup-uv@v7
         with:
           python-version: ${{ matrix.python-version }}
-
-      - name: Install uv
-        run: curl -LsSf https://astral.sh/uv/install.sh | sh
-        shell: bash
+          enable-cache: true
+          cache-suffix: ${{ matrix.resolution }}
 
       - name: Check uv.lock is up to date
         run: uv lock --check
@@ -140,9 +157,6 @@ jobs:
             echo "UV_NO_SYNC=1" >> "$GITHUB_ENV"
           fi
 
-      - name: Lint package
-        run: uv run poe lint
-
       - name: Test package
         run: uv run poe test:unit
 
@@ -152,3 +166,57 @@ jobs:
         # known advisories by definition.
         if: matrix.resolution == 'highest'
         run: uv run poe security-check
+
+  e2e:
+    # The Playwright suite runs once, on the highest Python and the locked set,
+    # split into shards: every shard takes every Nth test file (sorted) and runs
+    # them with pytest-xdist (tests/e2e/conftest.py sizes the worker pool).
+    name: E2E (shard ${{ matrix.shard }}/3)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
+
+    env:
+      UV_PYTHON: "3.14"
+      E2E_SHARDS: "3"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install uv and Python 3.14
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.14"
+          enable-cache: true
+
+      - name: Check uv.lock is up to date
+        run: uv lock --check
+
+      - name: Install dependencies
+        run: uv sync --locked --all-extras --python 3.14
+
+      - name: Install Playwright browsers
+        run: uv run playwright install --with-deps chromium
+
+      - name: E2E Test package (shard ${{ matrix.shard }} of ${{ env.E2E_SHARDS }})
+        run: |
+          files=$(find tests/e2e -maxdepth 1 -name 'test_*.py' | sort \
+            | awk -v n="$E2E_SHARDS" -v s="${{ matrix.shard }}" 'NR % n == (s - 1)')
+          echo "$files"
+          uv run pytest -n auto $files
+
+      - name: Upload visual regression diffs
+        # Baselines must be rendered on the CI runner; the actual/diff PNGs are the
+        # source for refreshing a drifted baseline (see tests/e2e/test_visual_regression.py).
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: visual-diffs-shard-${{ matrix.shard }}
+          path: tests/e2e/snapshots/**/*.*.png
+          if-no-files-found: ignore
+          retention-days: 7

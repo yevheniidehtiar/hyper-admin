@@ -85,14 +85,15 @@ repos:
         pass_filenames: false
       - id: test-unit
         name: unit tests
-        entry: uv run pytest -vv -q tests/unit plugins/hyperadmin-reports/tests
+        entry: uv run pytest -vv -q -n auto --dist loadgroup tests/unit plugins/hyperadmin-reports/tests
         language: system
         pass_filenames: false
         stages: [pre-push]
         types_or: [python, html, css, javascript]
       - id: test-e2e
         name: e2e tests
-        entry: uv run pytest tests/e2e --ignore=tests/e2e/test_profit_loss_report.py
+        # -n auto is four Playwright workers here (E2E_WORKERS=<n> overrides); see tests/e2e/conftest.py
+        entry: uv run pytest -n auto tests/e2e --ignore=tests/e2e/test_profit_loss_report.py
         language: system
         pass_filenames: false
         stages: [pre-push]

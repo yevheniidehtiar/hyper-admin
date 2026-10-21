@@ -2,12 +2,10 @@
 
 import os
 import signal
-import socket
 import subprocess
 import sys
 import time
 from collections.abc import Iterator
-from contextlib import closing
 from http import HTTPStatus
 from typing import Any
 
@@ -27,26 +25,18 @@ def _erp_login(page: Page, base_url: str) -> None:
     expect(page).to_have_url(base_url + "/admin/")
 
 
-_IN_CONTAINER = os.environ.get("IS_SANDBOX") == "1"
 # ERP app performs DB creation + permission sync + data seeding on startup,
-# which takes longer than the simple demo app.
-_SERVER_TIMEOUT = 30 if _IN_CONTAINER else 15
-
-
-def _find_free_port() -> int:
-    with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
-        s.bind(("127.0.0.1", 0))
-        s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        return int(s.getsockname()[1])
+# which takes longer than the simple demo app; parallel workers add load.
+_SERVER_TIMEOUT = 30
 
 
 @pytest.fixture
-def erp_base_url() -> Iterator[str]:
+def erp_base_url(e2e_port: int) -> Iterator[str]:
     """Start the ERP demo app via uvicorn in a subprocess and yield base URL."""
     pytest.importorskip("uvicorn")
     requests = pytest.importorskip("requests")  # type: ignore[assignment]
 
-    port = _find_free_port()
+    port = e2e_port
 
     cmd = [
         sys.executable,

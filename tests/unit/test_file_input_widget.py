@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import tempfile
+
 from fastapi_storages import FileSystemStorage
 from fastapi_storages.integrations.sqlalchemy import FileType, ImageType
 from sqlalchemy import Column
@@ -13,7 +15,7 @@ from hyperadmin.views.forms import FileInputWidget, PydanticForm
 # Test model
 # ---------------------------------------------------------------------------
 
-_storage = FileSystemStorage("/tmp/test_uploads")  # noqa: S108
+_storage = FileSystemStorage(tempfile.mkdtemp(prefix="hyperadmin-test-uploads-"))
 
 
 class WidgetFileModel(SQLModel, table=True):
