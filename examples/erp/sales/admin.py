@@ -1,13 +1,19 @@
 from __future__ import annotations
 
+from pathlib import Path
 from typing import ClassVar
 
-from examples.erp.sales.models import Invoice, InvoiceItem, TaxRate
+from examples.erp.sales.models import Invoice, InvoiceItem, InvoiceStatus, TaxRate
 from hyperadmin.adapters.sqlmodel import SQLModelAdapter
 from hyperadmin.core.inlines import InlineModelSpec
 from hyperadmin.core.model import ModelAdmin
 from hyperadmin.core.options import AdminOptions
 from hyperadmin.core.registry import site
+from hyperadmin.panels import pdf_stream_panel
+
+# The bundled streaming demo (docs/specs/detail-panels.md): an issued invoice's detail
+# page gets an "Invoice" tab that shows this sample PDF inline. Drafts have no tab.
+SAMPLE_PDF = Path(__file__).resolve().parents[3] / "tests" / "_fixtures" / "sample.pdf"
 
 
 class InvoiceAdmin(ModelAdmin):
@@ -32,6 +38,15 @@ class InvoiceAdmin(ModelAdmin):
                 relationship_name="items",
                 extra=2,
                 title="Invoice items",
+            ),
+        ],
+        panels=[
+            pdf_stream_panel(
+                slug="invoice",
+                label="Invoice",
+                icon="file-text",
+                path_resolver=lambda _invoice: SAMPLE_PDF,
+                enabled=lambda invoice: invoice.status != InvoiceStatus.DRAFT,
             ),
         ],
     )
