@@ -726,8 +726,9 @@ def test_pages_do_not_embed_target_rows_without_view_on_the_target(path: str) ->
     resp = client.get(path)
 
     assert resp.status_code == 200
-    assert "alice" not in resp.text
-    assert "bob" not in resp.text
+    # Whole words: the combobox widget class ("ha-combobox") contains "bob".
+    assert not re.search(r"\balice\b", resp.text)
+    assert not re.search(r"\bbob\b", resp.text)
 
 
 def test_pages_embed_target_rows_with_view_on_the_target() -> None:
@@ -747,7 +748,7 @@ def test_edit_form_keeps_the_selected_target_without_view_on_the_target() -> Non
     resp = client.get("/admin/azorder/1/edit")
 
     assert resp.status_code == 200
-    assert "bob" not in resp.text
+    assert not re.search(r"\bbob\b", resp.text)
     assert re.search(r'<option[^>]*value="2"[^>]*selected', resp.text)
 
 

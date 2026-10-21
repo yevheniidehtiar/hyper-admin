@@ -1,9 +1,13 @@
-{#- Inline-create popup form for FK/M2M autocomplete (H6, v0.5.5).
+{#- Inline-create popup for FK/M2M autocomplete (H6, v0.5.5) — design:
+    docs/design/system/components/AutocompleteStates ("+" opens the popup
+    create form in the Dialog).
 
-    Loaded into <div id="ha-popup-root"> via HTMX. On submit, the same URL is
-    POSTed and either returns this fragment again (validation errors) or an
-    empty 200 carrying an `HX-Trigger: hyperadminPopupCreated` header that the
-    widget JS listens for.
+    Loaded into <div id="ha-popup-root"> via HTMX as a 640px dialog. On
+    submit the same URL is POSTed and either returns this fragment again
+    (validation errors) or an empty 200 carrying an
+    `HX-Trigger: hyperadminPopupCreated` header that autocomplete.js listens
+    for: it selects the new row in the target field and closes the dialog.
+    Cancel and Close carry data-ha-popup-close; Escape closes too.
 
     Context:
       - form: PydanticForm — bound, with .errors populated on re-render
@@ -11,34 +15,49 @@
       - post_url: URL of the popup endpoint
       - model_name: str — used for the dialog heading
 -#}
+{%- from "components/_icons.html" import icon -%}
+{%- set model_lower = model_name|lower -%}
+{%- set target_label = target.replace('_id', '').replace('_', ' ') -%}
+<div class="ha-dialog ha-popup-dialog" role="dialog" aria-modal="true" aria-labelledby="popup-form-title" tabindex="-1">
 <form method="post" action="{{ post_url }}" data-testid="popup-form"
-      class="ha-popup-form" hx-post="{{ post_url }}" hx-target="this" hx-swap="outerHTML">
+      class="ha-popup-form" hx-post="{{ post_url }}" hx-target="closest .ha-dialog" hx-swap="outerHTML">
   {{ csrf_input() if csrf_input is defined }}
-  <h2 class="ha-popup-form__title">{{ _("Create") }} {{ model_name }}</h2>
   <input type="hidden" name="target" value="{{ target }}" />
-
-  {% for field in form.fields %}
-  <div class="ha-form-field" data-testid="popup-form-field-{{ field.name }}">
-    <label for="popup-{{ field.name }}">
-      {{ field.label }}{% if field.required %} *{% endif %}
-    </label>
-    <input id="popup-{{ field.name }}"
-           name="{{ field.name }}"
-           type="{{ field.widget.input_type }}"
-           value="{{ field.value or '' }}"
-           class="ha-input"
-           aria-invalid="{{ 'true' if field.errors else 'false' }}" />
-    {% if field.errors %}
-    <ul class="ha-field-errors" aria-live="polite"
-        data-testid="popup-form-{{ field.name }}-errors">
-      {% for e in field.errors %}<li>{{ e }}</li>{% endfor %}
-    </ul>
-    {% endif %}
+  <div class="ha-dialog__head">
+    <div>
+      <h2 class="ha-dialog__title" id="popup-form-title">{{ _('Add %(model)s', model=model_lower) }}</h2>
+      <p class="ha-dialog__lede">{{ _('Saving selects it in the %(field)s field.', field=target_label) }}</p>
+    </div>
+    <button type="button" class="ha-btn ha-btn--icon ha-btn--ghost ha-dialog__close"
+            aria-label="{{ _('Close') }}" data-ha-popup-close>{{ icon('x') }}</button>
   </div>
-  {% endfor %}
 
-  <div class="ha-popup-form__actions">
-    <button type="submit" class="ha-btn ha-btn-primary"
-            data-testid="popup-form-submit">{{ _("Save") }}</button>
+  <div class="ha-dialog__body">
+    {% for field in form.fields %}
+    <div class="ha-field" data-testid="popup-form-field-{{ field.name }}">
+      <label class="ha-label" for="popup-{{ field.name }}">
+        {{- field.label -}}
+        {%- if field.required %}<span class="ha-req" aria-hidden="true">*</span>{% endif -%}
+      </label>
+      <input id="popup-{{ field.name }}"
+             name="{{ field.name }}"
+             type="{{ field.widget.input_type }}"
+             value="{{ field.value or '' }}"
+             class="ha-input"
+             aria-invalid="{{ 'true' if field.errors else 'false' }}"
+             {% if field.errors %}aria-describedby="popup-{{ field.name }}-errors"{% endif %} />
+      {% if field.errors %}
+      <p class="ha-errmsg" id="popup-{{ field.name }}-errors" aria-live="polite"
+         data-testid="popup-form-{{ field.name }}-errors">{{ icon('circle-x', 'ha-icon--sm') }}<span>{{ field.errors|join(' ') }}</span></p>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="ha-dialog__foot">
+    <button type="button" class="ha-btn" data-ha-popup-close>{{ _("Cancel") }}</button>
+    <button type="submit" class="ha-btn ha-btn--primary"
+            data-testid="popup-form-submit">{{ _("Save and select") }}</button>
   </div>
 </form>
+</div>

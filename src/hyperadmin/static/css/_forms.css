@@ -376,3 +376,207 @@ input[type="file"].ha-input {
 .ha-bulk-form .ha-alert {
   margin-bottom: 0;
 }
+
+/* ==========================================================================
+   Autocomplete relation widget (H6, v0.5.5) — design-system Combobox and
+   AutocompleteStates ported under the shipped names. The search input sits
+   in a combobox control (leading search icon, spinner and clear button in
+   the tools slot), the native select carries the value, and the "+" icon
+   button opens the create popup. A dependent field waits (dashed, sunken,
+   disabled) until its parent has a value.
+   ========================================================================== */
+
+.ha-autocomplete {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: auto auto;
+  column-gap: var(--ha-space-2);
+  row-gap: var(--ha-space-2);
+  align-items: start;
+}
+
+.ha-autocomplete > .ha-combobox {
+  grid-column: 1;
+  grid-row: 1;
+  min-inline-size: 0;
+}
+
+.ha-autocomplete > .ha-btn--icon {
+  grid-column: 2;
+  grid-row: 1;
+  inline-size: var(--ha-ctl-h);
+  min-block-size: var(--ha-ctl-h);
+}
+
+.ha-autocomplete > .ha-autocomplete__select {
+  grid-column: 1 / -1;
+  grid-row: 2;
+}
+
+.ha-combobox {
+  position: relative;
+}
+
+.ha-combobox__control {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.ha-combobox__control > .ha-icon:first-child {
+  position: absolute;
+  inset-inline-start: 10px;
+  color: var(--ha-color-text-muted);
+  pointer-events: none;
+}
+
+.ha-combobox__control > .ha-input {
+  padding-inline-start: 36px;
+  padding-inline-end: calc(var(--ha-space-2) + var(--ha-target-min) + 24px);
+}
+
+.ha-combobox__control > .ha-input[type="search"]::-webkit-search-cancel-button,
+.ha-combobox__control > .ha-input[type="search"]::-webkit-search-decoration {
+  appearance: none;
+}
+
+.ha-combobox__tools {
+  position: absolute;
+  inset-inline-end: var(--ha-space-1);
+  display: flex;
+  align-items: center;
+  gap: 0;
+  color: var(--ha-color-text-muted);
+}
+
+.ha-combobox__tools button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--ha-target-min);
+  block-size: var(--ha-target-min);
+  border: 0;
+  border-radius: var(--ha-radius-sm);
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+
+.ha-combobox__tools button:hover {
+  background-color: var(--ha-surface-hover);
+  color: var(--ha-color-text-strong);
+}
+
+.ha-combobox__tools button[hidden] {
+  display: none;
+}
+
+/* The spinner replaces the clear button while the debounced search runs. */
+.ha-combobox__tools .ha-spinner {
+  display: none;
+  margin-inline: 4px;
+  color: var(--ha-color-primary-text);
+}
+
+.ha-combobox__tools .ha-spinner.htmx-request {
+  display: inline-block;
+  opacity: 1;
+}
+
+.ha-combobox__tools:has(.ha-spinner.htmx-request) button {
+  display: none;
+}
+
+/* Dependent field before its parent has a value */
+.ha-combobox.is-waiting .ha-combobox__control > .ha-input {
+  border-style: dashed;
+  background-color: var(--ha-surface-sunken);
+  color: var(--ha-color-text-muted);
+}
+
+.ha-combobox.is-waiting .ha-combobox__control > .ha-icon:first-child {
+  color: var(--ha-color-text-muted);
+}
+
+.ha-autocomplete__select {
+  min-inline-size: 0;
+}
+
+/* ==========================================================================
+   Dialog (design system) — the popup create form opens in one. Width is
+   set by its host (#ha-popup-root gives the popup form 640px).
+   ========================================================================== */
+
+.ha-dialog {
+  inline-size: min(100%, 480px);
+  background-color: var(--ha-surface-overlay);
+  color: var(--ha-color-text);
+  border: var(--ha-border-width) solid var(--ha-color-border-light);
+  border-radius: var(--ha-radius-xl);
+  box-shadow: var(--ha-shadow-xl);
+  padding: 0;
+}
+
+.ha-dialog:focus-visible {
+  outline: none;
+}
+
+.ha-dialog__head {
+  display: flex;
+  gap: var(--ha-space-3);
+  align-items: flex-start;
+  padding: var(--ha-space-6) var(--ha-space-6) 0;
+}
+
+.ha-dialog__head > div {
+  flex: 1;
+  min-inline-size: 0;
+}
+
+.ha-dialog__title {
+  margin: 0;
+  font-size: 1.125rem;
+  line-height: 26px;
+  font-weight: var(--ha-font-semibold);
+  color: var(--ha-color-text-strong);
+}
+
+.ha-dialog__lede {
+  margin: var(--ha-space-1) 0 0;
+  color: var(--ha-color-text-muted);
+}
+
+.ha-dialog__close {
+  margin-inline-start: auto;
+  inline-size: var(--ha-target-min);
+  min-block-size: var(--ha-target-min);
+  border: 0;
+  background: transparent;
+  color: var(--ha-color-text-muted);
+}
+
+.ha-dialog__body {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--ha-space-4);
+  padding: var(--ha-space-3) var(--ha-space-6) var(--ha-space-6);
+}
+
+.ha-dialog__foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--ha-space-2);
+  padding: var(--ha-space-4) var(--ha-space-6);
+  border-block-start: var(--ha-border-width) solid var(--ha-color-border-light);
+  background-color: var(--ha-surface-base);
+  border-end-start-radius: var(--ha-radius-xl);
+  border-end-end-radius: var(--ha-radius-xl);
+}
+
+@media (forced-colors: active) {
+  .ha-dialog {
+    border: 1px solid CanvasText;
+  }
+}
