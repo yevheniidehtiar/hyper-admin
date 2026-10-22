@@ -7,21 +7,37 @@ are gated by the existing session auth, enroll with a shared
 gracefully on the client side via ``static/js/realtime-status.js``.
 
 Subscribing to events / fan-out lives in the PubSub stories (see
-``epic-621-websocket-infrastructure-pubsub-backends/epic.md``).
+``epic-621-websocket-infrastructure-pubsub-backends/epic.md``). Presence
+(who is viewing / editing which record) lives in ``realtime/presence.py``
+(Epic 6.2.4).
 """
 
 from hyperadmin.realtime.config import RealtimeSettings
 from hyperadmin.realtime.events import PrimaryKey, RealtimeAction, RealtimeEvent
+from hyperadmin.realtime.presence import (
+    DEFAULT_PRESENCE_TTL,
+    InMemoryPresence,
+    PresenceBackend,
+    PresenceEntry,
+    PresenceMode,
+    presence_channel,
+)
 from hyperadmin.realtime.pubsub import InMemoryPubSub, PubSubBackend
 from hyperadmin.realtime.registry import ConnectionRegistry, RealtimeConnection
 
 __all__ = [
+    "DEFAULT_PRESENCE_TTL",
     "ConnectionRegistry",
+    "InMemoryPresence",
     "InMemoryPubSub",
+    "PresenceBackend",
+    "PresenceEntry",
+    "PresenceMode",
     "PrimaryKey",
     "PubSubBackend",
     "RealtimeAction",
     "RealtimeConnection",
     "RealtimeEvent",
     "RealtimeSettings",
+    "presence_channel",
 ]
