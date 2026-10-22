@@ -421,6 +421,7 @@ class PermissionMatrixPage:
             "rules": await self.rules.rules_for(group_id, slug),
             "outcome": None,
             "object_pk": None,
+            "codename": None,
         }
 
     async def object_view(self, request: Request, group: str, model: str) -> Response:
@@ -441,6 +442,7 @@ class PermissionMatrixPage:
             raise HTTPException(status_code=400, detail="Invalid object rule")
         key = ObjectRuleKey(model=context["model"], codename=codename, object_pk=object_pk)
         context["object_pk"] = object_pk
+        context["codename"] = codename
         if op == "add" and await self._not_grantable(user, [codename]):
             context["outcome"] = "rejected"
             return self._render(

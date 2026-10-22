@@ -1,4 +1,6 @@
-{#- One rejected cell of a save (``cell``: RejectedCell). -#}
-<li data-testid="pmatrix-rejected-{{ cell.codename }}">
-    <code>{{ cell.model }}</code> &middot; <code>{{ cell.codename }}</code> &mdash; {{ cell.reason }}
+{#- One rejected cell of a save (``cell``: RejectedCell), as "Delete orders". The data
+    attributes let matrix.html mark the cell itself. -#}
+{%- from "permissions/_macros.html" import model_label, action_label with context -%}
+<li data-testid="pmatrix-rejected-{{ cell.codename }}" data-rejected-codename="{{ cell.codename }}" data-rejected-model="{{ cell.model }}">
+    {{- action_label(cell.codename, [cell.model]) }} {{ model_label(cell.model) | lower -}}
 </li>

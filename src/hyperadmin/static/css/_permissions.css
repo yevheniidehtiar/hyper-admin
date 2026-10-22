@@ -1,0 +1,547 @@
+/* ==========================================================================
+   Permission matrix and object-rule popover
+   (design system: components/PermissionMatrix, components/ObjectPermissionPopover)
+   One group's model x action grid with a diff save: sticky first column and
+   header, a dashed ring round an unsaved cell (shape, not colour), a solid
+   danger ring round a rejected one, a pill per row for its object rules and
+   a sticky save bar. Under 640px of wrapper width the grid turns into one
+   card per model. The popover sits in a fixed slot the page positions next
+   to the pill that opened it, and becomes a bottom sheet on phones.
+   Also ships the shared Wave 2 pieces this page needs first:
+   .ha-savebar and .ha-inline-status.
+   ========================================================================== */
+
+/* ---------- header: group select and note ---------- */
+.ha-perm-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--ha-space-3) var(--ha-space-5);
+  margin-block-end: var(--ha-space-4);
+}
+
+.ha-perm-head .ha-field {
+  flex: 0 1 18rem;
+}
+
+.ha-perm-head__note {
+  display: flex;
+  align-items: center;
+  gap: var(--ha-space-2);
+  margin: 0;
+  min-block-size: var(--ha-control-height);
+  color: var(--ha-color-text);
+}
+
+.ha-perm-head__note .ha-icon {
+  flex: none;
+  color: var(--ha-color-info-text);
+}
+
+/* ---------- grid ---------- */
+.ha-perm-wrap {
+  container: ha-perm / inline-size;
+  position: relative;
+  max-block-size: min(70vh, 44rem);
+  margin: 0 0 var(--ha-space-4);
+  overflow: auto;
+  background-color: var(--ha-surface-raised);
+  border: var(--ha-border-width) solid var(--ha-color-border-light);
+  border-radius: var(--ha-radius-lg);
+  box-shadow: var(--ha-shadow-sm);
+}
+
+.ha-perm {
+  font-size: var(--ha-font-size-sm);
+}
+
+.ha-perm th,
+.ha-perm td {
+  block-size: var(--ha-row-h);
+  padding: 0 var(--ha-cell-px);
+  text-align: start;
+  vertical-align: middle;
+  white-space: nowrap;
+  border-block-end: var(--ha-border-width) solid var(--ha-color-border-light);
+}
+
+.ha-perm thead th {
+  font-size: 0.8125rem;
+  font-weight: var(--ha-font-medium);
+  color: var(--ha-color-text-muted);
+}
+
+.ha-perm tbody tr:last-child > * {
+  border-block-end: 0;
+}
+
+.ha-perm thead th.ha-perm__col {
+  text-align: center;
+}
+
+.ha-perm__colhead {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.ha-perm thead .ha-check {
+  min-block-size: var(--ha-target-min);
+}
+
+.ha-perm td.ha-perm__cell {
+  position: relative;
+  padding: 0;
+  text-align: center;
+}
+
+.ha-perm td.ha-perm__cell > .ha-check {
+  justify-content: center;
+  inline-size: 100%;
+  min-block-size: var(--ha-row-h);
+}
+
+/* the short visible label ("Change") only shows on the phone cards */
+.ha-perm__short {
+  display: none;
+}
+
+.ha-perm tbody th[scope="row"] {
+  font-weight: var(--ha-font-medium);
+  color: var(--ha-color-text-strong);
+}
+
+.ha-perm tbody th[scope="row"] .ha-caption {
+  display: block;
+  font-weight: var(--ha-font-normal);
+  color: var(--ha-color-text-muted);
+}
+
+.ha-perm td.ha-perm__na {
+  text-align: center;
+  color: var(--ha-color-text-muted);
+}
+
+/* unsaved: a dashed ring round the box (shape, not colour); rejected: a solid danger ring */
+.ha-perm td.is-changed > .ha-check::before,
+.ha-perm td.is-rejected > .ha-check::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  inline-size: 30px;
+  block-size: 30px;
+  border: 2px dashed var(--ha-color-primary-text);
+  border-radius: var(--ha-radius-md);
+  pointer-events: none;
+}
+
+.ha-perm td.is-rejected {
+  background-color: var(--ha-color-danger-soft);
+}
+
+.ha-perm td.is-rejected > .ha-check::before {
+  border-style: solid;
+  border-color: var(--ha-color-danger-text);
+}
+
+.ha-perm__err {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-start: calc(50% + 18px);
+  translate: 0 -50%;
+  display: inline-flex;
+  color: var(--ha-color-danger-text);
+  pointer-events: none;
+}
+
+/* ---------- object rules pill ---------- */
+.ha-perm td.ha-perm__obj-cell {
+  text-align: center;
+}
+
+.ha-perm__obj {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ha-space-1);
+  min-block-size: var(--ha-target-min);
+  padding: 0 var(--ha-space-2);
+  border: var(--ha-border-width) solid var(--ha-color-border);
+  border-radius: var(--ha-radius-pill);
+  background-color: var(--ha-surface-raised);
+  color: var(--ha-color-text-strong);
+  font: inherit;
+  font-size: var(--ha-font-size-xs);
+  font-weight: var(--ha-font-medium);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.ha-perm__obj > span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ha-space-1);
+}
+
+.ha-perm__obj:hover,
+.ha-perm__obj[aria-expanded="true"] {
+  background-color: var(--ha-surface-hover);
+  border-color: var(--ha-color-border-strong);
+}
+
+.ha-perm__obj--none {
+  color: var(--ha-color-text-muted);
+  border-style: dashed;
+}
+
+/* the one popover slot: fixed next to the pill that opened it (matrix.html places it) */
+.ha-perm__popslot {
+  position: fixed;
+  z-index: var(--ha-z-popover);
+}
+
+.ha-perm__popslot:empty {
+  display: none;
+}
+
+/* the hidden attribute wins over the component display rules above */
+.ha-perm__obj > span[hidden],
+.ha-perm__err[hidden],
+.ha-objrules__add[hidden] {
+  display: none;
+}
+
+/* ---------- rejected-cells alert ---------- */
+.ha-perm-rejected ul {
+  margin: var(--ha-space-1) 0 0;
+  padding-inline-start: var(--ha-space-5);
+  color: var(--ha-color-text);
+}
+
+/* ---------- phone: one card per model, short visible labels on each box ---------- */
+@container ha-perm (max-width: 639px) {
+  .ha-perm--cards thead {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .ha-perm--cards,
+  .ha-perm--cards tbody,
+  .ha-perm--cards tr {
+    display: block;
+  }
+
+  .ha-perm--cards tbody tr {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ha-space-1) var(--ha-space-2);
+    padding: var(--ha-space-3) var(--ha-space-4);
+    border-block-end: var(--ha-border-width) solid var(--ha-color-border-light);
+  }
+
+  .ha-perm--cards tbody tr > * {
+    display: block;
+    block-size: auto;
+    padding: 0;
+    border: 0;
+    background: transparent;
+  }
+
+  .ha-perm--cards tbody th[scope="row"] {
+    position: static;
+    flex-basis: 100%;
+    padding-block-end: var(--ha-space-1);
+    box-shadow: none;
+  }
+
+  .ha-perm--cards td.ha-perm__cell > .ha-check {
+    inline-size: auto;
+    min-block-size: 32px;
+    padding: 0 var(--ha-space-2);
+    justify-content: flex-start;
+    border: var(--ha-border-width) solid var(--ha-color-border);
+    border-radius: var(--ha-radius-md);
+  }
+
+  .ha-perm--cards .ha-perm__short {
+    display: inline;
+    font-size: 0.8125rem;
+    font-weight: var(--ha-font-medium);
+    color: var(--ha-color-text-strong);
+  }
+
+  .ha-perm--cards td.is-changed > .ha-check {
+    border: 2px dashed var(--ha-color-primary-text);
+  }
+
+  .ha-perm--cards td.is-changed > .ha-check::before,
+  .ha-perm--cards td.is-rejected > .ha-check::before {
+    content: none;
+  }
+
+  .ha-perm--cards td.is-rejected > .ha-check {
+    border: 2px solid var(--ha-color-danger-text);
+    background-color: var(--ha-color-danger-soft);
+  }
+
+  .ha-perm--cards td.ha-perm__cell,
+  .ha-perm--cards td.ha-perm__obj-cell {
+    position: relative;
+  }
+
+  .ha-perm--cards td.ha-perm__obj-cell {
+    flex-basis: 100%;
+    text-align: start;
+  }
+
+  .ha-perm--cards td.ha-perm__na {
+    display: none;
+  }
+
+  .ha-perm--cards .ha-perm__err {
+    inset-block-start: -6px;
+    inset-inline-start: auto;
+    inset-inline-end: -6px;
+    translate: none;
+    background-color: var(--ha-surface-raised);
+    border-radius: var(--ha-radius-pill);
+  }
+}
+
+/* ---------- object permission popover ---------- */
+.ha-objrules {
+  inline-size: 380px;
+  padding: 0;
+}
+
+.ha-objrules .ha-popover__head {
+  align-items: center;
+  margin: 0;
+  padding: var(--ha-space-3) var(--ha-space-4);
+  border-block-end: var(--ha-border-width) solid var(--ha-color-border-light);
+}
+
+.ha-objrules .ha-popover__title .ha-muted {
+  font-weight: var(--ha-font-normal);
+}
+
+.ha-objrules__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ha-space-2);
+  padding: var(--ha-space-2) var(--ha-space-4) var(--ha-space-3);
+}
+
+.ha-objrules__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ha-objrules__list li {
+  display: flex;
+  align-items: center;
+  gap: var(--ha-space-2);
+  min-block-size: 36px;
+  padding-block: var(--ha-space-1);
+  border-block-end: var(--ha-border-width) solid var(--ha-color-border-light);
+}
+
+.ha-objrules__list li:last-child {
+  border-block-end: 0;
+}
+
+.ha-objrules__rec {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+
+.ha-objrules__rec > :first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: var(--ha-font-medium);
+}
+
+.ha-objrules__rec .ha-caption {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ha-color-text-muted);
+}
+
+.ha-objrules__list form {
+  display: contents;
+}
+
+.ha-objrules__list .ha-btn--icon {
+  inline-size: var(--ha-target-min);
+  min-block-size: var(--ha-target-min);
+  border: 0;
+  background: none;
+  color: var(--ha-color-text-muted);
+}
+
+.ha-objrules__list .ha-btn--icon:hover {
+  background-color: var(--ha-color-danger-soft);
+  color: var(--ha-color-danger-text);
+}
+
+.ha-objrules__empty {
+  margin: 0;
+  padding-block: var(--ha-space-2);
+}
+
+.ha-objrules__add {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--ha-space-2);
+  align-items: end;
+  padding: var(--ha-space-2);
+  border: var(--ha-border-width) solid var(--ha-color-border-light);
+  border-radius: var(--ha-radius-md);
+  background-color: var(--ha-surface-base);
+}
+
+.ha-objrules__add > :first-child {
+  grid-column: 1 / -1;
+}
+
+.ha-objrules__add .ha-label {
+  font-size: var(--ha-font-size-xs);
+}
+
+.ha-objrules__add :is(.ha-input, .ha-select) {
+  min-block-size: var(--ha-control-height-compact);
+  font-size: 0.8125rem;
+}
+
+.ha-objrules__add .ha-btn {
+  min-block-size: var(--ha-control-height-compact);
+}
+
+.ha-objrules__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ha-space-2);
+  padding: var(--ha-space-2) var(--ha-space-4);
+  border-block-start: var(--ha-border-width) solid var(--ha-color-border-light);
+  border-end-start-radius: var(--ha-radius-lg);
+  border-end-end-radius: var(--ha-radius-lg);
+  background-color: var(--ha-surface-base);
+}
+
+.ha-objrules__skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ha-space-3);
+  padding-block: var(--ha-space-2);
+}
+
+@media (max-width: 639px) {
+  /* bottom sheet: full width, anchored to the viewport, not the cell */
+  .ha-perm__popslot {
+    inset: auto 0 0;
+  }
+
+  .ha-objrules {
+    position: fixed;
+    inset-inline: 0;
+    inset-block-end: 0;
+    inset-block-start: auto;
+    inline-size: 100%;
+    max-inline-size: 100%;
+    max-block-size: 85vh;
+    overflow-y: auto;
+    border-end-start-radius: 0;
+    border-end-end-radius: 0;
+  }
+}
+
+/* ---------- shared: inline status, sticky save bar ---------- */
+/* one-line confirmation after an immediate save ("Rule added"): icon + words, polite live region */
+.ha-inline-status {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--ha-space-1);
+  margin: 0;
+  font-size: var(--ha-font-size-xs);
+  line-height: 18px;
+  font-weight: var(--ha-font-medium);
+  color: var(--ha-color-success-text);
+}
+
+.ha-inline-status .ha-icon {
+  flex: none;
+}
+
+.ha-inline-status--error {
+  color: var(--ha-color-danger-text);
+}
+
+.ha-inline-status--muted {
+  color: var(--ha-color-text-muted);
+  font-weight: var(--ha-font-normal);
+}
+
+/* sticky bar at the bottom of a form with pending changes */
+.ha-savebar {
+  position: sticky;
+  inset-block-end: 0;
+  z-index: calc(var(--ha-z-sticky) + 2);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ha-space-2) var(--ha-space-3);
+  padding: var(--ha-space-3) var(--ha-space-4);
+  background-color: var(--ha-surface-overlay);
+  border: var(--ha-border-width) solid var(--ha-color-border);
+  border-radius: var(--ha-radius-lg);
+  box-shadow: var(--ha-shadow-lg);
+}
+
+.ha-savebar__count {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ha-space-2);
+  margin-inline-end: auto;
+  font-weight: var(--ha-font-semibold);
+  color: var(--ha-color-text-strong);
+}
+
+.ha-savebar__count .ha-icon {
+  color: var(--ha-color-primary-text);
+}
+
+/* ---------- touch, forced colours ---------- */
+@media (pointer: coarse) {
+  .ha-perm__obj,
+  .ha-objrules__list .ha-btn--icon {
+    min-block-size: var(--ha-target-touch);
+  }
+
+  .ha-objrules__list .ha-btn--icon {
+    inline-size: var(--ha-target-touch);
+  }
+}
+
+@media (forced-colors: active) {
+  .ha-perm td.is-changed > .ha-check::before,
+  .ha-perm td.is-rejected > .ha-check::before {
+    border-color: CanvasText;
+  }
+
+  .ha-savebar,
+  .ha-objrules {
+    border: 1px solid CanvasText;
+  }
+}
