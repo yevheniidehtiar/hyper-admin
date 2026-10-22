@@ -15,6 +15,12 @@ from hyperadmin.uploads.images import (
     prepare_image_upload,
     thumbnail_name,
 )
+from hyperadmin.uploads.storage import (
+    S3StorageBackend,
+    is_remote_storage,
+    remote_file_name,
+    remote_file_url,
+)
 from hyperadmin.uploads.validation import FileValidationError, validate_upload
 
 __all__ = [
@@ -25,10 +31,14 @@ __all__ = [
     "FileValidationError",
     "ImageMetadata",
     "ImageTooLargeError",
+    "S3StorageBackend",
     "auto_rotate",
     "extract_metadata",
     "generate_thumbnail",
+    "is_remote_storage",
     "prepare_image_upload",
+    "remote_file_name",
+    "remote_file_url",
     "thumbnail_name",
     "validate_upload",
 ]
