@@ -104,8 +104,10 @@ class Admin:
                 ``AuthBackend`` protocol. When ``None``, auth is disabled.
             permission_checker: An optional ``PermissionChecker`` implementation.
             permission_registry: An optional ``PermissionRegistry`` implementation.
-            storage: An optional ``FileSystemStorage`` (or compatible) instance
-                for file uploads. When ``None``, file upload support is disabled.
+            storage: An optional ``FileSystemStorage`` or ``S3StorageBackend``
+                instance for file uploads. When ``None``, ``settings.storage_backend``
+                decides: ``"s3"`` builds an ``S3StorageBackend`` from the ``aws_*``
+                settings, ``"local"`` (default) disables file upload support.
             otp_service: An optional MFA OTP service (e.g. ``EmailOTPService``).
                 When ``None``, the MFA endpoints (``/mfa/challenge`` etc) are
                 NOT registered and ``login_view`` skips the MFA branch — apps
@@ -148,7 +150,7 @@ class Admin:
         self.auth_backend = auth_backend
         self.permission_checker = permission_checker
         self.permission_registry = permission_registry
-        self.storage = storage
+        self.storage = storage if storage is not None else self._default_storage()
         self.otp_service = otp_service
         self.auth = auth
         self._auth_mode: AuthMode | None = None
@@ -807,6 +809,19 @@ class Admin:
         from hyperadmin.i18n import LocaleMiddleware
 
         target.add_middleware(LocaleMiddleware, settings=self.settings)
+
+    def _default_storage(self) -> Any:
+        """Build the storage ``settings.storage_backend`` selects when no ``storage=`` is passed.
+
+        ``"s3"`` returns an ``S3StorageBackend`` built from the ``aws_*`` settings
+        (story #402). ``"local"`` returns ``None``: uploads stay off until the host
+        passes a ``FileSystemStorage``, as before.
+        """
+        if self.settings.storage_backend != "s3":
+            return None
+        from hyperadmin.uploads.storage import S3StorageBackend
+
+        return S3StorageBackend.from_settings(self.settings)
 
     def _mount_public_uploads(self, path: str) -> None:
         """Legacy escape hatch: mount the storage directory publicly at ``path`` (SDD C.5).

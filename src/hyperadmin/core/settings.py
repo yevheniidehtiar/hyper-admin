@@ -4,8 +4,9 @@ from functools import lru_cache
 from typing import Literal
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError, available_timezones
 
-from pydantic import Field, field_validator
+from pydantic import AliasChoices, Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from typing_extensions import Self
 
 from hyperadmin.core.csrf import CsrfMode
 
@@ -38,6 +39,7 @@ _DEFAULT_SUPPORTED_LOCALES = [
 
 ThemeLiteral = Literal["auto", "light", "dark"]
 MountModeLiteral = Literal["isolated", "router"]
+StorageBackendLiteral = Literal["local", "s3"]
 #: ``cookie_secure`` setting values (SDD C.4).
 CookieSecure = Literal["auto"] | bool
 SameSiteLiteral = Literal["lax", "strict", "none"]
@@ -179,6 +181,63 @@ class HyperAdminSettings(BaseSettings):
     #: ``{prefix}/{model}/{item_id}/file/{field}``.
     public_uploads_path: str | None = Field(default=None, pattern=r"^/[^\s]*[^/\s]$")
 
+    # ── Uploads: S3-compatible object storage (epic #410, story #402) ──────────
+    #: ``"s3"`` makes ``Admin()`` build an ``S3StorageBackend`` from the ``aws_*``
+    #: settings when no ``storage=`` is passed (needs ``pip install 'hyper-admin[s3]'``).
+    #: ``"local"`` (default) leaves the choice to the host: uploads stay off until
+    #: a ``FileSystemStorage`` is passed.
+    storage_backend: StorageBackendLiteral = "local"
+    #: Every ``aws_*`` setting reads ``HYPERADMIN_AWS_*`` first and then the plain
+    #: ``AWS_*`` variable the AWS SDK and ``fastapi-storages`` use, so one set of
+    #: variables configures both. Credentials are optional: when unset, boto3's
+    #: own chain applies (profiles, instance and task roles).
+    aws_access_key_id: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("hyperadmin_aws_access_key_id", "aws_access_key_id"),
+    )
+    aws_secret_access_key: SecretStr | None = Field(
+        default=None,
+        validation_alias=AliasChoices("hyperadmin_aws_secret_access_key", "aws_secret_access_key"),
+    )
+    aws_s3_bucket_name: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("hyperadmin_aws_s3_bucket_name", "aws_s3_bucket_name"),
+    )
+    aws_s3_region: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "hyperadmin_aws_s3_region", "aws_s3_region", "aws_default_region"
+        ),
+    )
+    #: ``http(s)://host[:port]`` of an S3-compatible service (MinIO, R2, Hetzner,
+    #: Spaces); unset for AWS S3.
+    aws_s3_endpoint_url: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("hyperadmin_aws_s3_endpoint_url", "aws_s3_endpoint_url"),
+    )
+    #: Host object URLs are served from instead of the endpoint (CDN, R2 public
+    #: bucket domain); such URLs are not signed.
+    aws_s3_custom_domain: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("hyperadmin_aws_s3_custom_domain", "aws_s3_custom_domain"),
+    )
+    #: Sign object URLs (presigned, time-limited). ``False`` only for a
+    #: public-read bucket.
+    aws_s3_querystring_auth: bool = Field(
+        default=True,
+        validation_alias=AliasChoices(
+            "hyperadmin_aws_s3_querystring_auth", "aws_s3_querystring_auth", "aws_querystring_auth"
+        ),
+    )
+    #: ACL set on every written object (``"public-read"``); unset keeps objects
+    #: private and sends no ACL (required by services without ACLs, such as R2).
+    aws_s3_default_acl: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices(
+            "hyperadmin_aws_s3_default_acl", "aws_s3_default_acl", "aws_default_acl"
+        ),
+    )
+
     # ── Formatting ────────────────────────────────────────────────────────────
     date_format: str = "%Y-%m-%d"
     datetime_format: str = "%Y-%m-%d %H:%M:%S"
@@ -218,6 +277,16 @@ class HyperAdminSettings(BaseSettings):
             msg = f"Invalid timezone {value!r}. Zone names are case-sensitive.{hint}"
             raise ValueError(msg)
         return value
+
+    @model_validator(mode="after")
+    def _validate_storage_backend(self) -> Self:
+        if self.storage_backend == "s3" and not self.aws_s3_bucket_name:
+            msg = (
+                "storage_backend='s3' requires aws_s3_bucket_name "
+                "(HYPERADMIN_AWS_S3_BUCKET_NAME or AWS_S3_BUCKET_NAME)"
+            )
+            raise ValueError(msg)
+        return self
 
     @field_validator("theme", mode="before")
     @classmethod

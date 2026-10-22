@@ -105,6 +105,166 @@ Set via environment variable `HYPERADMIN_UPLOAD_DIR` or in settings:
 settings = HyperAdminSettings(upload_dir="media/files")
 ```
 
+## S3-Compatible Storage
+
+Uploads can live in an S3 bucket instead of a local directory: AWS S3,
+Cloudflare R2, MinIO, Hetzner Object Storage, DigitalOcean Spaces or any
+other S3-compatible service. Install the optional extra:
+
+```bash
+pip install 'hyper-admin[s3]'
+```
+
+`S3StorageBackend` is a `fastapi_storages.S3Storage` configured per instance
+(bucket, endpoint, region, credentials) instead of from process-wide
+environment variables read at import time:
+
+```python
+from fastapi_storages.integrations.sqlalchemy import FileType
+from sqlalchemy import Column
+from sqlmodel import Field, SQLModel
+
+from hyperadmin import Admin
+from hyperadmin.uploads import S3StorageBackend
+
+storage = S3StorageBackend(
+    bucket_name="admin-files",
+    region="eu-central-1",
+    # endpoint_url="https://minio.internal:9000",  # S3-compatible services only
+)
+
+class Product(SQLModel, table=True):
+    id: int | None = Field(default=None, primary_key=True)
+    manual: str | None = Field(default=None, sa_column=Column(FileType(storage=storage)))
+
+admin = Admin(app, engine=engine, storage=storage)
+```
+
+Credentials are optional. When `access_key_id` / `secret_access_key` are not
+given, boto3's own credential chain applies (`AWS_*` environment variables,
+profiles, instance and task roles).
+
+### Settings-driven configuration
+
+Set `storage_backend="s3"` and `Admin()` builds the backend itself when no
+`storage=` is passed. Each `aws_*` setting reads `HYPERADMIN_AWS_*` first and
+then the plain `AWS_*` variable the AWS SDK and `fastapi-storages` use, so one
+set of variables configures both:
+
+```bash
+export HYPERADMIN_STORAGE_BACKEND=s3
+export AWS_S3_BUCKET_NAME=admin-files
+export AWS_DEFAULT_REGION=eu-central-1
+export AWS_ACCESS_KEY_ID=...
+export AWS_SECRET_ACCESS_KEY=...
+```
+
+```python
+admin = Admin(app, engine=engine)   # admin.storage is an S3StorageBackend
+```
+
+Models still need the storage on their columns, so build it once from the
+same settings and share it:
+
+```python
+settings = HyperAdminSettings()
+storage = S3StorageBackend.from_settings(settings)
+# FileType(storage=storage) on the models, then:
+admin = Admin(app, engine=engine, settings=settings, storage=storage)
+```
+
+| Setting | Env (prefixed / plain) | Default | Description |
+|---------|------------------------|---------|-------------|
+| `storage_backend` | `HYPERADMIN_STORAGE_BACKEND` | `"local"` | `"s3"` builds an `S3StorageBackend` when no `storage=` is passed |
+| `aws_s3_bucket_name` | `HYPERADMIN_AWS_S3_BUCKET_NAME` / `AWS_S3_BUCKET_NAME` | `None` | Bucket (required for `"s3"`) |
+| `aws_s3_region` | `HYPERADMIN_AWS_S3_REGION` / `AWS_S3_REGION` / `AWS_DEFAULT_REGION` | `None` | Region name |
+| `aws_s3_endpoint_url` | `HYPERADMIN_AWS_S3_ENDPOINT_URL` / `AWS_S3_ENDPOINT_URL` | `None` | `http(s)://host[:port]` of an S3-compatible service; unset for AWS |
+| `aws_access_key_id` | `HYPERADMIN_AWS_ACCESS_KEY_ID` / `AWS_ACCESS_KEY_ID` | `None` | Static credentials (optional) |
+| `aws_secret_access_key` | `HYPERADMIN_AWS_SECRET_ACCESS_KEY` / `AWS_SECRET_ACCESS_KEY` | `None` | Stored as a `SecretStr` |
+| `aws_s3_querystring_auth` | `HYPERADMIN_AWS_S3_QUERYSTRING_AUTH` / `AWS_QUERYSTRING_AUTH` | `True` | Sign object URLs (presigned, time-limited) |
+| `aws_s3_custom_domain` | `HYPERADMIN_AWS_S3_CUSTOM_DOMAIN` / `AWS_S3_CUSTOM_DOMAIN` | `None` | Serve object URLs from a CDN or public-bucket domain (unsigned) |
+| `aws_s3_default_acl` | `HYPERADMIN_AWS_S3_DEFAULT_ACL` / `AWS_DEFAULT_ACL` | `None` | ACL on written objects, e.g. `public-read`; unset sends no ACL |
+
+### Providers
+
+The bucket must exist. `endpoint_url` is the service's S3 API host; the
+region is whatever the provider documents (`auto` for R2).
+
+=== "AWS S3"
+
+    ```bash
+    export AWS_S3_BUCKET_NAME=admin-files
+    export AWS_DEFAULT_REGION=eu-central-1
+    # credentials via AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY, a profile or an IAM role
+    ```
+
+=== "Cloudflare R2"
+
+    ```bash
+    export AWS_S3_BUCKET_NAME=admin-files
+    export AWS_S3_ENDPOINT_URL=https://<account-id>.r2.cloudflarestorage.com
+    export AWS_S3_REGION=auto
+    export AWS_ACCESS_KEY_ID=<r2 access key>
+    export AWS_SECRET_ACCESS_KEY=<r2 secret>
+    ```
+
+    R2 has no ACLs: leave `aws_s3_default_acl` unset. For a public bucket, set
+    `AWS_S3_CUSTOM_DOMAIN` to its public domain and `AWS_QUERYSTRING_AUTH=false`.
+
+=== "MinIO"
+
+    ```bash
+    export AWS_S3_BUCKET_NAME=admin-files
+    export AWS_S3_ENDPOINT_URL=http://localhost:9000   # http:// turns SSL off
+    export AWS_ACCESS_KEY_ID=minioadmin
+    export AWS_SECRET_ACCESS_KEY=minioadmin
+    ```
+
+=== "Hetzner Object Storage"
+
+    ```bash
+    export AWS_S3_BUCKET_NAME=admin-files
+    export AWS_S3_ENDPOINT_URL=https://fsn1.your-objectstorage.com
+    export AWS_S3_REGION=fsn1
+    export AWS_ACCESS_KEY_ID=<access key>
+    export AWS_SECRET_ACCESS_KEY=<secret key>
+    ```
+
+=== "DigitalOcean Spaces"
+
+    ```bash
+    export AWS_S3_BUCKET_NAME=admin-files
+    export AWS_S3_ENDPOINT_URL=https://fra1.digitaloceanspaces.com
+    export AWS_S3_REGION=fra1
+    export AWS_ACCESS_KEY_ID=<spaces key>
+    export AWS_SECRET_ACCESS_KEY=<spaces secret>
+    ```
+
+### How files are served from S3
+
+The per-record route (`GET /admin/{model}/{item_id}/file/{field}`) runs the
+same permission, queryset and object checks as for local storage, then
+redirects (302, `Cache-Control: private, no-store`) to the object URL. With
+`aws_s3_querystring_auth` on (the default) that URL is presigned and
+time-limited, so a private bucket works out of the box and the link stays
+behind the admin's authentication. Deleting a file, or a record with files,
+deletes the objects from the bucket.
+
+As with local storage, a stored name is only used when it is a plain object
+key: names with empty, `.` or `..` segments (which could leave the bucket
+prefix on a path-style URL) are refused, logged, and return 404.
+
+`public_uploads_path` has no effect with S3: there is no local directory to
+mount.
+
+!!! note "`ImageType` columns"
+    `fastapi-storages` reads an `ImageType` column by opening the image from a
+    local path, so use `FileType` columns with S3.
+
+### API
+
+::: hyperadmin.uploads.storage.S3StorageBackend
+
 ## File Validation
 
 Use `validate_upload()` for custom validation in action handlers:
