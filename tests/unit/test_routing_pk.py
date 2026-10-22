@@ -283,14 +283,20 @@ def test_composite_pk_registers_list_and_choices_routes_only(caplog):
     Scenario: composite list-only
       Given a composite-pk model
       When  routes are generated
-      Then  only list and choices routes exist
+      Then  only list, choices and list-scoped saved-view routes exist
       And   a warning is logged
     """
     with caplog.at_level(logging.WARNING, logger="hyperadmin.routing"):
         router = _build_router(CompositePkWidget, options=AdminOptions(list_display=["a", "b"]))
 
     names = {route.name for route in router.routes}
-    assert names == {"compositepkwidget-list", "compositepkwidget-choices"}
+    assert names == {
+        "compositepkwidget-list",
+        "compositepkwidget-choices",
+        "compositepkwidget-saved-views",
+        "compositepkwidget-saved-view-create",
+        "compositepkwidget-saved-view-delete",
+    }
     assert any(
         "composite primary key" in record.message and "registering list-only" in record.message
         for record in caplog.records
@@ -324,7 +330,13 @@ def test_composite_pk_forces_options_off():
     )
 
     names = {route.name for route in router.routes}
-    assert names == {"compositepkwidget-list", "compositepkwidget-choices"}
+    assert names == {
+        "compositepkwidget-list",
+        "compositepkwidget-choices",
+        "compositepkwidget-saved-views",
+        "compositepkwidget-saved-view-create",
+        "compositepkwidget-saved-view-delete",
+    }
 
 
 def test_composite_pk_list_page_returns_200_with_no_row_links():

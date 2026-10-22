@@ -23,50 +23,7 @@
                 <th class="ha-table-th ha-table-th-center" scope="col">{{ _("Actions") }}</th>
             </tr>
         </thead>
-        <tbody class="ha-table-body">
-            {%- for item in items -%}
-            <tr class="ha-table-row" data-testid="list-row">
-                {%- set item_pk = item|ha_pk(pk_attr|default('id')) -%}
-                {%- if bulk_actions -%}
-                <td class="ha-table-cell ha-col-check" data-label="{{ _('Select') }}">
-                    <label class="ha-check">
-                        <input type="checkbox" name="ids" value="{{ item_pk }}" form="bulk-action-form"
-                               data-testid="bulk-checkbox" />
-                        <span class="ha-sr-only">{% trans pk=item_pk %}Select {{ pk }}{% endtrans %}</span>
-                    </label>
-                </td>
-                {%- endif -%}
-                {%- for field in fields -%}
-                    {%- set cell_label = model_name if field == '__str__' else (field_labels[field] if field_labels is defined and field in field_labels else field.replace('_', ' ').title()) -%}
-                    {%- if list_editable and field in list_editable and field != pk_attr|default('id') -%}
-                        {%- include "components/inline_cell.html" -%}
-                    {%- else -%}
-                        <td class="ha-table-cell" data-label="{{ cell_label }}">{%- if item[field] is none -%}<span class="ha-text-muted">&mdash;</span>{%- else -%}{{- item[field]|ha_display -}}{%- endif -%}</td>
-                    {%- endif -%}
-                {%- endfor -%}
-                <td class="ha-table-cell ha-table-cell-center" data-label="{{ _('Actions') }}">
-                    <div class="ha-row-actions">
-                    {%- if can_detail is not defined or can_detail -%}
-                    <a href="{{- url_for(model_name|lower ~ '-detail', item_id=item_pk) -}}" class="ha-action-link" data-testid="row-view-link">{{ icon('eye') }}{{ _("View") }}</a>
-                    {%- endif -%}
-                    {%- if can_edit is not defined or can_edit -%}
-                    <a href="{{- url_for(model_name|lower ~ '-update-form', item_id=item_pk) -}}" class="ha-action-link" data-testid="row-edit-link">{{ icon('pencil') }}{{ _("Edit") }}</a>
-                    {%- endif -%}
-                    {%- if can_delete is not defined or can_delete -%}
-                    <button hx-delete="{{- url_for(model_name|lower ~ '-delete', item_id=item_pk) -}}"
-                            hx-confirm="{{ _('Are you sure you want to delete this item?') }}"
-                            hx-target="closest tr"
-                            hx-swap="outerHTML"
-                            class="ha-action-delete"
-                            data-testid="row-delete-btn">
-                        {{- icon('trash-2') }}{{ _("Delete") -}}
-                    </button>
-                    {%- endif -%}
-                    </div>
-                </td>
-            </tr>
-            {%- endfor -%}
-        </tbody>
+        {%- include "components/table_body.html" -%}
     </table>
     {%- include "components/pagination.html" -%}
 </div>

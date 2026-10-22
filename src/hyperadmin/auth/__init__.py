@@ -137,6 +137,10 @@ def metadata() -> MetaData:
             "hosts do not need them."
         )
     importlib.import_module(_MODELS_MODULE)
+    # The filter library's saved-views table (v0.5.6) is a hyperadmin_* table
+    # every mounted admin uses, in both auth modes; register it here too so
+    # init-db and Alembic hosts see it without having imported the views.
+    importlib.import_module("hyperadmin.filters.saved_views")
     target = MetaData()
     for table in SQLModel.metadata.sorted_tables:
         if table.name.startswith(_TABLE_PREFIX):
