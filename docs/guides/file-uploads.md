@@ -123,6 +123,35 @@ except FileValidationError as e:
     ...
 ```
 
+## Images: EXIF Rotation, Metadata and Thumbnails
+
+`hyperadmin.uploads.images` adds three pure helpers for `ImageType` fields. All of
+them refuse decompression bombs before decoding a single pixel (the header size is
+checked against `MAX_IMAGE_PIXELS`, Pillow's own default) and never raise on
+non-image input.
+
+```python
+from hyperadmin.uploads import (
+    ImageTooLargeError,
+    auto_rotate,
+    extract_metadata,
+    generate_thumbnail,
+    prepare_image_upload,
+)
+
+meta = extract_metadata(upload)  # ImageMetadata(width, height, format, orientation) or None
+upright = auto_rotate(pil_image)  # transposed to its EXIF orientation, tag removed
+thumb = generate_thumbnail(storage, "photo.jpg", max_size=(200, 200))
+# -> ".thumbs/photo_200x200.jpg" (cached next to the original),
+#    or PLACEHOLDER_THUMBNAIL when the file is missing, corrupt or too large
+```
+
+The admin's create and update forms call `prepare_image_upload()` on every
+`ImageType` upload before the column saves it: a photo whose camera recorded an
+EXIF orientation is re-encoded upright, so it displays correctly everywhere. An
+image above the pixel limit raises `ImageTooLargeError` (a `FileValidationError`),
+which the form answers with a `422` keyed by the field name.
+
 ## How It Works
 
 1. **Field Detection**: `classify_field()` inspects SQLAlchemy column types.
