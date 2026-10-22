@@ -15,19 +15,32 @@ to ask for. Without auth every report is open, as model views are.
 ``?period=`` (``auto`` or a bucket period) overrides the declared period of the
 report's time buckets for that request; the export links carry the page's
 query string, so a download matches what is on screen.
+
+``GET {slug}/chart`` is the chart fragment: the report's chart frame (see
+:mod:`hyperadmin_reports.chart_data`), run with the same query string as the page, so the
+chart and the grid always show the same period. The report page lazy-loads it over HTMX
+(``?embed=1`` hides the frame's own period switch, the page's "Group by" control being the
+authority there); embedded in a host template, the frame's switch re-requests the fragment.
+A chart that cannot be drawn or a query that fails renders the frame's error state with a
+200 status, because HTMX does not swap error responses.
 """
 
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING, Any
 from urllib.parse import urlencode
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse, StreamingResponse
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from starlette.responses import Response
 
+from hyperadmin.views.urls import admin_url_for
 from hyperadmin_reports.bucketing import PERIODS, TimeBucket, describe_span
+from hyperadmin_reports.chart_data import ChartUnavailableError, build_chart, chartable, placeholder
+from hyperadmin_reports.charts import PeriodOption
 from hyperadmin_reports.export import XLSX_MEDIA_TYPE, flatten_grid, stream_csv, stream_xlsx
 from hyperadmin_reports.grid import build_grid
 from hyperadmin_reports.view import get_report, registered_reports
@@ -39,6 +52,9 @@ if TYPE_CHECKING:
 
 #: ``?period=`` values the bucket switch offers, in display order.
 PERIOD_CHOICES: tuple[PeriodOrAuto, ...] = ("auto", *PERIODS)
+
+logger = logging.getLogger(__name__)
+
 #: Element the bucket switch swaps when HTMX is active (the whole report page).
 PAGE_TARGET = "#report-page"
 
@@ -85,6 +101,20 @@ def _time_bucket(report: type[ReportView]) -> TimeBucket | None:
 def _page_url(request: Request, **changes: str) -> str:
     """The page's path with its query string, with ``changes`` applied."""
     return f"{request.url.path}?{urlencode({**request.query_params, **changes})}"
+
+
+def chart_periods(
+    request: Request, report: type[ReportView], override: PeriodOrAuto | None
+) -> list[PeriodOption]:
+    """The chart frame's period switch: links to this fragment, ``[]`` without a time bucket."""
+    bucket = _time_bucket(report)
+    if bucket is None:
+        return []
+    selected = override or bucket.period
+    return [
+        PeriodOption(value.capitalize(), _page_url(request, period=value), value == selected)
+        for value in PERIOD_CHOICES
+    ]
 
 
 def bucket_switch(
@@ -183,6 +213,13 @@ def build_router(admin: Any) -> APIRouter:
             if dim.name in result.periods
         ]
         query = f"?{request.url.query}" if request.url.query else ""
+        chart = None
+        if chartable(report) and result.records:
+            chart = {
+                "url": admin_url_for(request, "report-chart", slug=slug).path,
+                "query": f"?{urlencode({**request.query_params, 'embed': '1'})}",
+                "placeholder": placeholder(report),
+            }
         template = (
             "reports/_page.html" if request.headers.get("hx-request") else "reports/detail.html"
         )
@@ -195,8 +232,36 @@ def build_router(admin: Any) -> APIRouter:
                 "periods": periods,
                 "bucket": bucket_switch(request, report, result, override),
                 "export_query": query,
+                "chart": chart,
             },
         )
+
+    @router.get("/{slug}/chart", name="report-chart", response_class=HTMLResponse)
+    async def report_chart(
+        request: Request, slug: str, period: str | None = None, embed: str | None = None
+    ) -> Response:
+        report = await authorized(request, slug)
+        if isinstance(report, Response):
+            return report
+        context: dict[str, Any] = {"state": "ready", "message": "", "caption": "", "periods": []}
+        try:
+            built = build_chart(report, await run(report, period))
+        except ChartUnavailableError as exc:
+            context |= {"state": "error", "chart": placeholder(report), "message": str(exc)}
+        except SQLAlchemyError:
+            logger.exception("report %s: chart query failed", report.slug)
+            query = f"?{request.url.query}" if request.url.query else ""
+            context |= {
+                "state": "error",
+                "chart": placeholder(report),
+                "message": "The report query failed.",
+                "retry_url": f"{request.url.path}{query}",
+            }
+        else:
+            context |= {"chart": built.chart, "caption": built.caption}
+            if embed is None:
+                context["periods"] = chart_periods(request, report, parse_period(period))
+        return admin.templates.TemplateResponse(request, "reports/chart.html", context)
 
     @router.get("/{slug}/export.csv", name="report-export-csv")
     async def report_export_csv(request: Request, slug: str, period: str | None = None) -> Response:
