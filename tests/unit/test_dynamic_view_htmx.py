@@ -13,6 +13,8 @@ from hyperadmin.adapters.registry import adapter_registry
 from hyperadmin.core.adapters import BaseAdapter
 from hyperadmin.core.registry import site
 from hyperadmin.views import dynamic as dynamic_module
+from hyperadmin.views.dynamic import create as create_module
+from hyperadmin.views.dynamic import update as update_module
 
 
 class DummyAdapter(BaseAdapter):
@@ -107,7 +109,8 @@ def request_factory():
 @pytest.fixture(autouse=True)
 def patch_htmx(monkeypatch):
     # Patch HtmxTemplateResponse class used in dynamic module
-    monkeypatch.setattr(dynamic_module, "HtmxTemplateResponse", FakeHtmxResponder)
+    monkeypatch.setattr(create_module, "HtmxTemplateResponse", FakeHtmxResponder)
+    monkeypatch.setattr(update_module, "HtmxTemplateResponse", FakeHtmxResponder)
 
 
 @pytest.fixture
@@ -162,7 +165,7 @@ def test_model_view_subclass_registration():
     class OtherModel(BaseModel):
         pass
 
-    with patch("hyperadmin.views.dynamic.site.register") as mock_register:
+    with patch("hyperadmin.views.dynamic.model_view.site.register") as mock_register:
 
         class OtherModelAdmin(dynamic_module.ModelView, model=OtherModel):
             pass
