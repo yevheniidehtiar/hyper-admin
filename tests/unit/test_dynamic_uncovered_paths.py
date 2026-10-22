@@ -23,7 +23,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi_storages import FileSystemStorage
 from fastapi_storages.integrations.sqlalchemy import FileType
 from pydantic import BaseModel, NaiveDatetime
-from sqlalchemy import Column, text
+from sqlalchemy import Column, DateTime, text
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 from sqlmodel import Field, Relationship, SQLModel
 from starlette.responses import Response
@@ -60,6 +60,7 @@ class UcOrder(SQLModel, table=True):
     notes: str = Field(default="", min_length=3)
     updated_at: NaiveDatetime = Field(
         default_factory=datetime.now,
+        sa_type=DateTime(),  # type: ignore[call-overload]
         sa_column_kwargs={"server_default": text("CURRENT_TIMESTAMP")},
     )
 
