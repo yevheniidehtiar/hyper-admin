@@ -186,7 +186,8 @@ def test_filter_metadata_is_not_queried_after_a_list_failure(
         SQLModelAdapter, "list", AsyncMock(side_effect=SQLAlchemyError("connection refused"))
     )
     metadata = AsyncMock(side_effect=SQLAlchemyError("connection refused"))
-    monkeypatch.setattr("hyperadmin.views.dynamic.build_filter_metadata", metadata)
+    monkeypatch.setattr("hyperadmin.views.dynamic.list_view.build_filter_metadata", metadata)
+    monkeypatch.setattr("hyperadmin.views.dynamic.base.build_filter_metadata", metadata)
 
     # When the list is opened
     resp = client.get("/admin/legadget")
