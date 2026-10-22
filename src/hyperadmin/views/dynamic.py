@@ -66,6 +66,7 @@ from hyperadmin.filters.saved_views import (
 )
 from hyperadmin.i18n import translate_error
 from hyperadmin.uploads import FileValidationError, prepare_image_upload
+from hyperadmin.uploads.storage import is_remote_storage, remote_file_name, remote_file_url
 from hyperadmin.views.error_pages import wants_html
 from hyperadmin.views.forms import (
     CheckboxInput,
@@ -2458,6 +2459,10 @@ class DynamicModelView:
         stored name resolves to an existing file inside the storage root. The
         response policy (``nosniff``, ``CSP: sandbox``, attachment unless an
         allow-listed raster image) lives in :mod:`hyperadmin.views.uploads`.
+
+        With a remote storage (S3, story #402) the same checks run and the
+        response is a redirect to the object URL (presigned by default), so the
+        link stays behind the admin's permissions.
         """
         pk = self._resolve_pk(item_id)
         await self._check_permission(request, "view")
@@ -2466,6 +2471,13 @@ class DynamicModelView:
         item = await self._get_or_404(pk)
         await self._check_object_permission(request, item, "view")
         value: Any = getattr(item, field_name, None)
+        if is_remote_storage(self.storage):
+            url = remote_file_url(self.storage, value)
+            if url is None:
+                raise HTTPException(status_code=404, detail="File not found")
+            return RedirectResponse(
+                url=url, status_code=302, headers={"Cache-Control": "private, no-store"}
+            )
         path = self._stored_file_path(value)
         if path is None or not path.is_file():
             raise HTTPException(status_code=404, detail="File not found")
@@ -2492,9 +2504,9 @@ class DynamicModelView:
             raise HTTPException(status_code=404, detail=f"Unknown file field: {field_name!r}")
         item = await self._get_or_404(pk)
         await self._check_object_permission(request, item, "change")
-        path = self._stored_file_path(getattr(item, field_name, None))
-        if path is not None:
-            self._remove_files([str(path)])
+        ref = self._stored_file_ref(getattr(item, field_name, None))
+        if ref is not None:
+            self._remove_files([ref])
         await self.adapter.update(pk=pk, data={field_name: None})
         if "hx-request" in request.headers:
             return Response(
@@ -2504,9 +2516,9 @@ class DynamicModelView:
         return Response(status_code=204)
 
     def _collect_file_paths(self, item: Any) -> list[str]:
-        """Return disk paths of all files attached to *item*.
+        """Return the file references (see ``_stored_file_ref``) of all files on *item*.
 
-        The paths are collected **before** the DB row is deleted so that
+        They are collected **before** the DB row is deleted so that
         ``ImageType.process_result_value`` (which opens the file) is not
         called after the file has already been removed.
         """
@@ -2514,9 +2526,9 @@ class DynamicModelView:
             return []
         paths: list[str] = []
         for name in sorted(self._get_file_fields()):
-            path = self._stored_file_path(getattr(item, name, None))
-            if path is not None:
-                paths.append(str(path))
+            ref = self._stored_file_ref(getattr(item, name, None))
+            if ref is not None:
+                paths.append(ref)
         return paths
 
     def _stored_file_path(self, value: Any) -> Any:
@@ -2526,13 +2538,28 @@ class DynamicModelView:
         name = value.name if hasattr(value, "name") else str(value)
         return resolve_storage_path(self.storage, name)
 
-    @staticmethod
-    def _remove_files(paths: list[str]) -> None:
-        """Remove regular files from disk, ignoring missing ones.
+    def _stored_file_ref(self, value: Any) -> str | None:
+        """Return what ``_remove_files`` needs for a file column value, or ``None``.
 
-        Paths must come from :func:`resolve_storage_path` (storage-root contained).
+        A disk path inside the storage root for a local storage; the object name
+        for a remote storage (S3), after the same containment check.
         """
-        for path in paths:
+        if is_remote_storage(self.storage):
+            return remote_file_name(value)
+        path = self._stored_file_path(value)
+        return None if path is None else str(path)
+
+    def _remove_files(self, refs: list[str]) -> None:
+        """Remove the files behind ``refs`` (from ``_stored_file_ref``), ignoring missing ones.
+
+        Local paths come from :func:`resolve_storage_path` (storage-root contained);
+        remote object names are deleted through the storage.
+        """
+        if is_remote_storage(self.storage):
+            for name in refs:
+                self.storage.delete(name)
+            return
+        for path in refs:
             if os.path.isfile(path):
                 os.remove(path)
 

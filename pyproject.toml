@@ -101,6 +101,11 @@ dev = [
 redis = [
   "redis>=5.0.1",  # RedisPubSub (realtime/pubsub_redis.py); 5.0.1 adds the asyncio aclose() API
 ]
+s3 = [
+  # S3StorageBackend (uploads/storage.py). fastapi-storages' own floor is 1.25, but its
+  # botocore (1.28) imports the `cgi` module, removed in Python 3.13; 1.26's botocore does not.
+  "boto3>=1.26",
+]
 loadtest = [
   "locust>=2.46.0",
   "flask>=3.1.3",  # locust floor pulls flask 2.2.5 (PYSEC-2026-2151) under lowest-direct
