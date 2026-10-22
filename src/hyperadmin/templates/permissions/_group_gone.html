@@ -1,0 +1,13 @@
+{#- The group was deleted while the operator was editing: the grid block (404) and the save
+    outcome (404) both show this empty state. -#}
+{%- from "components/_icons.html" import icon -%}
+<div class="ha-card">
+    <div class="ha-empty" data-testid="pmatrix-group-gone">
+        <span class="ha-empty-glyph">{{ icon('users') }}</span>
+        <h2 class="ha-h3">{{ _("This group no longer exists") }}</h2>
+        <p class="ha-empty-text">{{ _("Someone deleted it while you were editing. Nothing was saved.") }}</p>
+        <div class="ha-row">
+            <a class="ha-btn ha-btn--primary" href="{{ url_for('permissions-matrix') }}" data-testid="pmatrix-choose-group">{{ _("Choose another group") }}</a>
+        </div>
+    </div>
+</div>

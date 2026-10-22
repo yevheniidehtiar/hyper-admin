@@ -1,54 +1,95 @@
-{#- Object rules of one group on one model (docs/specs/permission-matrix-ui.md), loaded into
-    #pmatrix-popover by the row's "Object rules" button. Every add / remove posts at once. -#}
+{#- Object rules of one group on one model (design: ObjectPermissionPopover), loaded into
+    #pmatrix-popover by the row's pill. Every add / remove posts at once and re-renders this
+    fragment; matrix.html positions it, closes it on Esc / outside click / the close button
+    and reads ``data-rule-count`` to refresh the pill. -#}
+{%- from "components/_icons.html" import icon -%}
+{%- from "permissions/_macros.html" import model_label, action_label with context -%}
 {%- set save_url = url_for('permissions-matrix-object-save', group=group_id, model=model) %}
-<div class="ha-popover ha-objrules" role="dialog" data-testid="pmatrix-object-popover"
-     aria-label="{{ _('Object rules') }} · {{ group_name }} · {{ model }}">
-    <h2 class="ha-popover-title">
-        {{ _("Object rules") }} <span class="ha-text-muted">&middot; {{ group_name }} &middot; {{ model }}</span>
-    </h2>
-    {%- if outcome %}
-    <p class="ha-inline-status{% if outcome == 'rejected' %} ha-inline-status--error{% endif %}" role="status"
-       data-testid="pmatrix-object-status">
-        {%- if outcome == "added" %}{{ _("Rule for") }} {{ object_pk }} {{ _("added.") }}
-        {%- elif outcome == "removed" %}{{ _("Rule for") }} {{ object_pk }} {{ _("removed.") }}
-        {%- elif outcome == "rejected" %}{{ _("You can only grant permissions you have yourself.") }}
-        {%- else %}{{ _("No change.") }}
+{%- set label = model_label(model) %}
+<div class="ha-popover ha-objrules" role="dialog" aria-labelledby="pmatrix-popover-title" tabindex="-1"
+     data-testid="pmatrix-object-popover" data-model="{{ model }}" data-rule-count="{{ rules | length }}"
+     x-data="{ adding: {{ 'true' if outcome == 'rejected' else 'false' }} }">
+    <div class="ha-popover__head">
+        <h2 class="ha-popover__title" id="pmatrix-popover-title">
+            {{ _("Object rules") }} <span class="ha-muted">&middot; {{ group_name }} &middot; {{ label }}</span>
+        </h2>
+        <button type="button" class="ha-btn ha-btn--icon" aria-label="{{ _('Close object rules') }}"
+                data-testid="pmatrix-object-close" @click="$dispatch('pmatrix:close')">{{ icon('x', 'ha-icon--sm') }}</button>
+    </div>
+    <div class="ha-objrules__body">
+        {%- if rules %}
+        <ul class="ha-objrules__list" aria-label="{{ _('Object rules') }}">
+            {%- for rule in rules %}
+            <li data-testid="pmatrix-object-entry-{{ rule.id }}">
+                <span class="ha-objrules__rec">
+                    <span>{{ rule.object_pk }}</span>
+                    <span class="ha-caption">{{ label }}</span>
+                </span>
+                <span class="ha-pill">{{ action_label(rule.codename, [model]) }}</span>
+                <form method="post" action="{{ save_url }}" hx-post="{{ save_url }}" hx-target="#pmatrix-popover" hx-swap="innerHTML">
+                    {{ csrf_input() if csrf_input is defined }}
+                    <input type="hidden" name="op" value="remove">
+                    <input type="hidden" name="codename" value="{{ rule.codename }}">
+                    <input type="hidden" name="object_pk" value="{{ rule.object_pk }}">
+                    <button type="submit" class="ha-btn ha-btn--icon" data-testid="pmatrix-object-remove-{{ rule.id }}"
+                            aria-label="{{ _('Remove rule for %(record)s', record=rule.object_pk) }}">{{ icon('trash-2', 'ha-icon--sm') }}</button>
+                </form>
+            </li>
+            {%- endfor %}
+        </ul>
+        {%- else %}
+        <p class="ha-muted ha-objrules__empty" data-testid="pmatrix-object-empty">{{ _("No object rules. Group permissions apply.") }}</p>
         {%- endif %}
-    </p>
-    {%- endif %}
-    {%- if rules %}
-    <ul class="ha-objrules__list">
-        {%- for rule in rules %}
-        <li data-testid="pmatrix-object-entry-{{ rule.id }}">
-            <span>{{ rule.object_pk }}</span>
-            <span class="ha-pill">{{ rule.codename }}</span>
+        <form method="post" action="{{ save_url }}" class="ha-objrules__add" id="pmatrix-object-form"
+              hx-post="{{ save_url }}" hx-target="#pmatrix-popover" hx-swap="innerHTML"
+              aria-label="{{ _('Add object rule') }}" data-testid="pmatrix-object-add-form" :hidden="!adding">
+            {{ csrf_input() if csrf_input is defined }}
+            <input type="hidden" name="op" value="add">
+            <div class="ha-field">
+                <label for="pmatrix-object-pk" class="ha-label">{{ _("Record") }}</label>
+                <input id="pmatrix-object-pk" name="object_pk" class="ha-input" required x-ref="pk"
+                       data-testid="pmatrix-object-pk"{% if outcome == "rejected" and object_pk %} value="{{ object_pk }}"{% endif %}>
+            </div>
+            <div class="ha-field">
+                <label for="pmatrix-object-codename" class="ha-label">{{ _("Action") }}</label>
+                <select id="pmatrix-object-codename" name="codename" class="ha-select" data-testid="pmatrix-object-codename">
+                    {%- for option in codenames %}
+                    <option value="{{ option }}"{% if outcome == "rejected" and option == codename %} selected{% endif %}>{{ action_label(option, [model]) }}</option>
+                    {%- endfor %}
+                </select>
+            </div>
+            <button type="submit" class="ha-btn ha-btn--primary" data-testid="pmatrix-object-add-submit">{{ _("Add") }}</button>
+        </form>
+        {%- if outcome %}
+        <div class="ha-inline-status{% if outcome == 'rejected' %} ha-inline-status--error{% elif outcome == 'unchanged' %} ha-inline-status--muted{% endif %}"
+             role="{{ 'alert' if outcome == 'rejected' else 'status' }}" tabindex="-1" data-testid="pmatrix-object-status">
+            {%- if outcome == "added" %}
+            {{- icon('check', 'ha-icon--sm') }}{{ _("Rule for") }} {{ object_pk }} {{ _("added.") }}
+            {%- elif outcome == "removed" %}
+            {{- icon('check', 'ha-icon--sm') }}{{ _("Rule for") }} {{ object_pk }} {{ _("removed.") }}
+            {%- if codename %}
             <form method="post" action="{{ save_url }}" hx-post="{{ save_url }}" hx-target="#pmatrix-popover" hx-swap="innerHTML">
                 {{ csrf_input() if csrf_input is defined }}
-                <input type="hidden" name="op" value="remove">
-                <input type="hidden" name="codename" value="{{ rule.codename }}">
-                <input type="hidden" name="object_pk" value="{{ rule.object_pk }}">
-                <button type="submit" class="ha-btn ha-btn-sm" data-testid="pmatrix-object-remove-{{ rule.id }}"
-                        aria-label="{{ _('Remove rule for') }} {{ rule.object_pk }}">&#x2715;</button>
+                <input type="hidden" name="op" value="add">
+                <input type="hidden" name="codename" value="{{ codename }}">
+                <input type="hidden" name="object_pk" value="{{ object_pk }}">
+                <button type="submit" class="ha-btn ha-btn--sm ha-btn--ghost" data-testid="pmatrix-object-undo">{{ _("Undo") }}</button>
             </form>
-        </li>
-        {%- endfor %}
-    </ul>
-    {%- else %}
-    <p class="ha-text-muted" data-testid="pmatrix-object-empty">{{ _("No object rules. Group permissions apply.") }}</p>
-    {%- endif %}
-    <form method="post" action="{{ save_url }}" class="ha-objrules__add"
-          hx-post="{{ save_url }}" hx-target="#pmatrix-popover" hx-swap="innerHTML">
-        {{ csrf_input() if csrf_input is defined }}
-        <input type="hidden" name="op" value="add">
-        <label for="pmatrix-object-pk" class="ha-label">{{ _("Record") }}</label>
-        <input id="pmatrix-object-pk" name="object_pk" class="ha-input" required data-testid="pmatrix-object-pk">
-        <label for="pmatrix-object-codename" class="ha-label">{{ _("Action") }}</label>
-        <select id="pmatrix-object-codename" name="codename" class="ha-select" data-testid="pmatrix-object-codename">
-            {%- for codename in codenames %}
-            <option value="{{ codename }}">{{ codename }}</option>
-            {%- endfor %}
-        </select>
-        <button type="submit" class="ha-btn ha-btn-primary ha-btn-sm" data-testid="pmatrix-object-add">{{ _("Add") }}</button>
-    </form>
-    <p class="ha-text-muted">{{ _("Saved as you go. Group permissions still apply.") }}</p>
+            {%- endif %}
+            {%- elif outcome == "rejected" %}
+            {{- icon('circle-x', 'ha-icon--sm') }}{{ _("You can only grant permissions you have yourself.") }}
+            {%- else %}
+            {{- icon('info', 'ha-icon--sm') }}{{ _("No change.") }}
+            {%- endif %}
+        </div>
+        {%- endif %}
+    </div>
+    <div class="ha-objrules__foot">
+        <span class="ha-caption ha-muted">{{ _("Saved as you go. Group permissions still apply.") }}</span>
+        <button type="button" class="ha-btn ha-btn--sm" aria-controls="pmatrix-object-form" aria-expanded="false"
+                :aria-expanded="adding ? 'true' : 'false'" data-testid="pmatrix-object-add"
+                @click="adding = !adding; if (adding) $nextTick(() => $refs.pk.focus())">
+            {{- icon('plus', 'ha-icon--sm') -}}{{ _("Add rule") }}
+        </button>
+    </div>
 </div>

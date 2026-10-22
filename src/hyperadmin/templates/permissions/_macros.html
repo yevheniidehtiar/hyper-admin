@@ -1,0 +1,22 @@
+{#- Labels the permission-matrix templates derive from what the view provides (model slugs and
+    permission codenames). Import ``with context`` so the macros see ``_`` and ``nav_items``. -#}
+
+{#- The registered model's plural label ("Orders"), falling back to the capitalised slug. -#}
+{%- macro model_label(slug) -%}
+{%- set found = namespace(label=slug | capitalize) -%}
+{%- for item in nav_items | default([]) if item.url == '/' ~ slug -%}
+{%- set found.label = item.name -%}
+{%- endfor -%}
+{{- found.label -}}
+{%- endmacro -%}
+
+{#- A codename as a short action label: ``view`` -> "View", ``export_order`` -> "Export".
+    ``models`` are the slugs whose ``_<slug>`` suffix is stripped from a custom codename. -#}
+{%- macro action_label(codename, models) -%}
+{%- set found = namespace(action=codename) -%}
+{%- for slug in models | default([]) if found.action == codename and codename.endswith('_' ~ slug) -%}
+{%- set found.action = codename[:(codename | length) - (slug | length) - 1] -%}
+{%- endfor -%}
+{%- set builtin = {'view': _('View'), 'add': _('Add'), 'change': _('Change'), 'delete': _('Delete')} -%}
+{{- builtin.get(found.action) or (found.action | replace('_', ' ') | capitalize) -}}
+{%- endmacro -%}

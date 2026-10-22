@@ -677,7 +677,7 @@ async def test_object_permission_column_opens_the_popover(app, engine, seeded):
         assert 'data-testid="pmatrix-object-add"' in response.text
         assert '<option value="export_article">' in response.text
     cell = grid.text.index('data-testid="pmatrix-object-cell-article"')
-    assert "2 rules" in grid.text[cell : cell + 400]
+    assert "2 rules" in grid.text[cell : cell + 800]
 
 
 async def test_object_popover_unknown_group_or_model_is_404(app, seeded):
