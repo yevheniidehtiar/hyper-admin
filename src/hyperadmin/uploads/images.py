@@ -38,7 +38,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-#: Pixel budget (width × height) above which an image is treated as a bomb.
+#: Pixel budget (width x height) above which an image is treated as a bomb.
 MAX_IMAGE_PIXELS: int = Image.MAX_IMAGE_PIXELS or 89_478_485
 #: Directory, relative to the original, that holds its cached thumbnails.
 THUMBNAIL_DIR = ".thumbs"
@@ -68,7 +68,7 @@ class ImageMetadata:
         width: Pixel width as stored (before any EXIF rotation is applied).
         height: Pixel height as stored.
         format: Pillow format name, e.g. ``"JPEG"`` or ``"PNG"``.
-        orientation: EXIF orientation tag (1–8); ``1`` means "already upright".
+        orientation: EXIF orientation tag (1-8); ``1`` means "already upright".
     """
 
     width: int
@@ -130,7 +130,7 @@ def extract_metadata(
     Args:
         source: A path, a binary stream or a Starlette ``UploadFile``. Streams
             are rewound to position 0 afterwards.
-        max_pixels: Decompression-bomb threshold (width × height).
+        max_pixels: Decompression-bomb threshold (width x height).
 
     Returns:
         The metadata, or ``None`` when ``source`` is not an image Pillow can read.
@@ -176,7 +176,7 @@ def prepare_image_upload(
     Args:
         upload: The multipart upload; its ``file`` is read, possibly rewritten,
             and always rewound.
-        max_pixels: Decompression-bomb threshold (width × height).
+        max_pixels: Decompression-bomb threshold (width x height).
 
     Returns:
         The metadata of the file as it will be stored, or ``None`` for a non-image.
