@@ -31,13 +31,13 @@ from hyperadmin.core.registry import site
 from hyperadmin.core.settings import HyperAdminSettings
 from hyperadmin.panels import PDFStreamPanel, pdf_stream_panel, pdf_stream_response
 from hyperadmin.panels.pdf import _filename_param
-from hyperadmin.views import dynamic as dynamic_module
 from hyperadmin.views.dynamic import (
     _as_attachment,
     _discard_stream,
     _disposition_filename,
     _human_size,
 )
+from hyperadmin.views.dynamic import detail as detail_module
 
 PDF_BYTES = (
     b"%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n"
@@ -763,4 +763,4 @@ async def test_discard_stream_tolerates_iterators_without_aclose() -> None:
 
 def test_module_exports_streaming_response_type() -> None:
     """``render_panel_view`` detects streams by the starlette type, not a subclass of its own."""
-    assert dynamic_module.StreamingResponse is StreamingResponse
+    assert detail_module.StreamingResponse is StreamingResponse

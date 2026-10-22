@@ -434,7 +434,7 @@ async def test_build_relation_widgets_preload_injects_choices(
     view: dynamic_module.DynamicModelView,
 ) -> None:
     """When preload=True, _build_relation_widgets calls adapter.get_choices and injects choices."""
-    with patch("hyperadmin.views.dynamic.classify_field") as mock_classify:
+    with patch("hyperadmin.views.dynamic.relations.classify_field") as mock_classify:
         mock_classify.return_value = SelectFieldMeta(
             choices_source="relation", preload=True, multiple=False
         )
@@ -462,7 +462,7 @@ async def test_build_relation_widgets_lazy_no_adapter_call(
 ) -> None:
     """When preload=False, adapter.get_choices is NOT called; choices are empty."""
     view.adapter.get_choices = AsyncMock(return_value=[])
-    with patch("hyperadmin.views.dynamic.classify_field") as mock_classify:
+    with patch("hyperadmin.views.dynamic.relations.classify_field") as mock_classify:
         mock_classify.return_value = SelectFieldMeta(
             choices_source="relation", preload=False, multiple=False
         )

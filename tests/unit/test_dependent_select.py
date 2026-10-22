@@ -153,7 +153,7 @@ def test_relation_select_widget_dependent_on_none_default():
 @pytest.mark.anyio
 async def test_build_relation_widgets_wires_dependent_on(view):
     """_build_relation_widgets picks up dependent_fields from AdminOptions."""
-    with patch("hyperadmin.views.dynamic.classify_field") as mock_classify:
+    with patch("hyperadmin.views.dynamic.relations.classify_field") as mock_classify:
         from hyperadmin.core.choices import SelectFieldMeta
 
         mock_classify.return_value = SelectFieldMeta(

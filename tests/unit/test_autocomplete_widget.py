@@ -25,6 +25,8 @@ from hyperadmin.core.options import AdminOptions, RelationDependency
 from hyperadmin.core.registry import site
 from hyperadmin.core.settings import HyperAdminSettings
 from hyperadmin.views import dynamic as dynamic_module
+from hyperadmin.views.dynamic import base as base_module
+from hyperadmin.views.dynamic import relations as relations_module
 from hyperadmin.views.forms import (
     AutocompleteMultiWidget,
     AutocompleteWidget,
@@ -33,7 +35,7 @@ from hyperadmin.views.forms import (
     relation_widget,
 )
 
-STATIC_JS = Path(dynamic_module.__file__).parent.parent / "static" / "js" / "autocomplete.js"
+STATIC_JS = Path(dynamic_module.__file__).parent.parent.parent / "static" / "js" / "autocomplete.js"
 
 
 class AcSupplier(SQLModel, table=True):
@@ -341,7 +343,7 @@ def test_multi_autocomplete_template_renders_multiple_select():
 
 def test_lazy_autocomplete_keeps_stored_key_selectable(monkeypatch: pytest.MonkeyPatch):
     """A non-preloaded autocomplete still carries the stored key until the user searches."""
-    real_classify = dynamic_module.classify_field
+    real_classify = relations_module.classify_field
 
     def lazy_classify(field_info: Any, model: Any) -> Any:
         meta = real_classify(field_info, model)
@@ -349,7 +351,8 @@ def test_lazy_autocomplete_keeps_stored_key_selectable(monkeypatch: pytest.Monke
             return SelectFieldMeta(choices_source="relation", preload=False, multiple=False)
         return meta
 
-    monkeypatch.setattr(dynamic_module, "classify_field", lazy_classify)
+    monkeypatch.setattr(relations_module, "classify_field", lazy_classify)
+    monkeypatch.setattr(base_module, "classify_field", lazy_classify)
     client = _client()
     client.post("/admin/acproduct", data={"name": "Lamp", "supplier_id": "1"})
 
