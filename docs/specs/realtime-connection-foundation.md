@@ -256,6 +256,31 @@ await pubsub.publish("crud:article", b'{"op": "update", "pk": 1}')
 
 `InMemoryPubSub` is the zero-config, single-process backend: one bounded `asyncio.Queue` per subscriber. **Overflow policy:** when a subscriber's queue is full, its oldest pending message is dropped, so a slow consumer never blocks the publisher or other subscribers. Multi-worker deployments use `RedisPubSub` (#304 / #305), which implements the same protocol.
 
+## Presence Backend Protocol
+
+`hyperadmin.realtime.PresenceBackend` (#322 / #323, Epic 6.2.4) tracks who is viewing or editing which record. Entries are keyed by a per-record channel (`presence_channel(model, pk)` → `presence:{model}:{pk}`) and by `user_id` within it; every entry carries a TTL and is kept alive by repeating `set_presence()` (a heartbeat), so a crashed tab never leaves a ghost behind.
+
+| Method | Contract |
+|--------|----------|
+| `async set_presence(channel, user_id, *, display_name, mode, ttl=None)` | Announce or refresh a user; returns the stored `PresenceEntry`. A repeat call keeps `since`, updates `mode` / `display_name` / `last_seen` and pushes the expiry out by `ttl` (backend default when `None`). |
+| `async get_presence(channel)` | Live (unexpired) `PresenceEntry` list, oldest first. |
+| `async remove_presence(channel, user_id)` | Forget a user; no-op when absent. |
+| `async close()` | Idempotent. Drops all state; further calls raise `RuntimeError`. |
+
+```python
+from hyperadmin.realtime import InMemoryPresence, RealtimeSettings, presence_channel
+
+settings = RealtimeSettings(presence_ttl=30.0)   # default backend: InMemoryPresence
+presence = settings.resolve_presence()            # or RealtimeSettings(presence=RedisPresence(...))
+
+channel = presence_channel("article", 42)
+await presence.set_presence(channel, "u1", display_name="Ada", mode="editing")
+for entry in await presence.get_presence(channel):
+    ...   # entry.user_id, entry.display_name, entry.mode, entry.since, entry.last_seen
+```
+
+`InMemoryPresence` is the zero-config, single-process backend. Expiry is lazy — expired entries are purged whenever their channel is read or written (or by `sweep()`), so no background task is needed and nothing leaks. `RealtimeSettings.presence` selects the backend (`None` resolves to `InMemoryPresence(default_ttl=presence_ttl)`); multi-worker deployments pass a `RedisPresence` (#324 / #325). The WebSocket heartbeat handler and the presence banner are later Epic 6.2.4 stories.
+
 ## Open Questions
 
 - [x] SSE + WS or pick one? → **Both** (user decision 2026-05-05).

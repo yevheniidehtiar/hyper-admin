@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
+
+from hyperadmin.realtime.presence import DEFAULT_PRESENCE_TTL, InMemoryPresence, PresenceBackend
 
 
 class RealtimeSettings(BaseModel):
@@ -12,6 +14,10 @@ class RealtimeSettings(BaseModel):
     the kwarg as ``None`` (the default) disables every code path in the
     ``realtime`` module — fully backward compatible.
     """
+
+    # ``PresenceBackend`` is a runtime-checkable Protocol: pydantic validates
+    # ``presence`` with ``isinstance`` and rejects anything that lacks the methods.
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
     heartbeat_interval: float = Field(
         default=15.0,
@@ -39,3 +45,26 @@ class RealtimeSettings(BaseModel):
             "initiated drops. Must remain ``False`` in production."
         ),
     )
+    presence: PresenceBackend | None = Field(
+        default=None,
+        description=(
+            "Backend that tracks who is viewing / editing which record. ``None`` "
+            "(default) resolves to the zero-config ``InMemoryPresence``; pass a "
+            "``RedisPresence`` (``[redis]`` extra) for multi-worker deployments."
+        ),
+    )
+    presence_ttl: float = Field(
+        default=DEFAULT_PRESENCE_TTL,
+        gt=0,
+        description=(
+            "Seconds a presence entry survives without a heartbeat. Only used to "
+            "build the default ``InMemoryPresence``; an explicit ``presence`` "
+            "backend carries its own TTL."
+        ),
+    )
+
+    def resolve_presence(self) -> PresenceBackend:
+        """The configured ``presence`` backend, or a fresh ``InMemoryPresence``."""
+        if self.presence is not None:
+            return self.presence
+        return InMemoryPresence(default_ttl=self.presence_ttl)
