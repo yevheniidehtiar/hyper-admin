@@ -1,9 +1,17 @@
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import Any
+from collections.abc import Callable, Sequence
+from typing import TYPE_CHECKING, Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+if TYPE_CHECKING:
+    from hyperadmin.filters.base import FilterDef
+else:
+    # ``core/`` never imports ``hyperadmin.filters`` (filter library SDD): at
+    # runtime a filter entry is anything with the FilterDef shape, checked by
+    # ``_filter_entries`` below, so the annotation stays a type-level fact.
+    FilterDef = Any
 
 from hyperadmin.core.auth import ObjectPermissionChecker
 from hyperadmin.core.fieldsets import FieldsetSpec
@@ -73,12 +81,24 @@ class AdminOptions(BaseModel):
     - ``[]``: search disabled.
     - ``["name", "email"]``: explicit list used as-is.
     """
-    list_filter: list[str] | None = None
-    """List of field names to show in the filter bar.
+    list_filter: Sequence[FilterDef | str] | None = None
+    """Filters offered on the list view: field names, filter definitions, or both.
 
     - ``None`` (default): smart defaults via ``infer_list_filter()``.
     - ``[]``: filtering disabled.
-    - ``["is_active", "status"]``: explicit list used as-is.
+    - ``["is_active", "status"]``: legacy field names, each an exact-match
+      ``<select>`` driven by ``filter_<field>=<value>``.
+    - ``[DateRangeFilter(field="created_at"), "status"]``: explicit
+      :class:`~hyperadmin.filters.FilterDef` instances (``hyperadmin.filters``)
+      drive the filter sidebar, the HTMX table-body swap and saved views; strings
+      may be mixed in and keep their legacy behaviour.
+    """
+    saved_views_enabled: bool = True
+    """Whether the per-user saved-view endpoints and sidebar panel are available.
+
+    Saved views live in the ``hyperadmin_saved_view`` table. Set this to
+    ``False`` on an admin whose database does not have that table yet (see the
+    existing-app guide, section 5) to leave the endpoints unregistered.
     """
     sensitive_fields: dict[str, bool] = Field(default_factory=dict)
     """Override sensitive-field detection, in either direction.
@@ -224,6 +244,22 @@ class AdminOptions(BaseModel):
         )
         ```
     """
+
+    @field_validator("list_filter")
+    @classmethod
+    def _filter_entries(cls, entries: Sequence[Any] | None) -> Sequence[Any] | None:
+        for entry in entries or ():
+            if isinstance(entry, str):
+                continue
+            if callable(getattr(entry, "parse", None)) and callable(
+                getattr(entry, "compile", None)
+            ):
+                continue
+            raise ValueError(
+                f"list_filter entries must be field names or FilterDef instances, "
+                f"got {type(entry).__name__}"
+            )
+        return entries
 
     @field_validator("panels")
     @classmethod

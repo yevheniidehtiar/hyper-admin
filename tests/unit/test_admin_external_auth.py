@@ -311,7 +311,9 @@ def test_no_hyperadmin_tables_in_bridge_mode(tmp_path: Path) -> None:
     Scenario: no hyperadmin tables in bridge mode
       Given a fresh interpreter importing only hyperadmin and the bridge
       When  the admin mounts and starts
-      Then  SQLModel.metadata has no hyperadmin_users table
+      Then  SQLModel.metadata has no built-in auth table (users, groups, permissions)
+      And   only the filter library's saved-views table, which every mounted
+            admin uses in both auth modes, carries the hyperadmin_ prefix
     """
     code = f"""
         import asyncio
@@ -342,7 +344,7 @@ def test_no_hyperadmin_tables_in_bridge_mode(tmp_path: Path) -> None:
     )
 
     assert result.returncode == 0, result.stderr
-    assert result.stdout.strip().splitlines()[-1] == "[]"
+    assert result.stdout.strip().splitlines()[-1] == "['hyperadmin_saved_view']"
 
 
 # ---------------------------------------------------------------------------

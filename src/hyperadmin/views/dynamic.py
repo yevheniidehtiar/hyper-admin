@@ -3,22 +3,24 @@ import logging
 import math
 import os
 import re
-from collections.abc import Awaitable, Callable, Generator
+from collections.abc import Awaitable, Callable, Generator, Sequence
 from contextlib import contextmanager
 from http import HTTPStatus
 from types import SimpleNamespace
-from typing import TYPE_CHECKING, Any, TypeVar, cast
-from urllib.parse import unquote
+from typing import TYPE_CHECKING, Any, NamedTuple, TypeVar, cast
+from urllib.parse import unquote, urlencode
 
 from fastapi import HTTPException, Query, Request
 from fastapi.templating import Jinja2Templates
+from markupsafe import Markup
 from pydantic import BaseModel, ValidationError
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
-from starlette.responses import RedirectResponse, Response, StreamingResponse
+from starlette.responses import JSONResponse, RedirectResponse, Response, StreamingResponse
 
 if TYPE_CHECKING:
     from jinja2 import FileSystemLoader
 
+from starlette.datastructures import QueryParams
 from starlette.datastructures import UploadFile as StarletteUpload
 
 from hyperadmin.adapters import SQLAlchemyAdapter, SQLModelAdapter
@@ -34,9 +36,11 @@ from hyperadmin.core.discovery import build_filter_metadata
 from hyperadmin.core.display import get_display_name
 from hyperadmin.core.fields import classify_field
 from hyperadmin.core.filtering import (
+    FilterCondition,
     ParsedFilters,
     parse_filter_params,
 )
+from hyperadmin.core.filters_compat import LegacyFieldFilter, collect_filters
 from hyperadmin.core.inlines import InlineModelSpec
 from hyperadmin.core.options import AdminOptions
 from hyperadmin.core.panels import PanelDef, panel_permission_codename, resolve_panels
@@ -50,7 +54,18 @@ from hyperadmin.core.sensitive import (
 )
 from hyperadmin.core.storage_paths import resolve_storage_path, storage_root
 from hyperadmin.discover import app_label_var
+from hyperadmin.filters.base import FilterBinding, FilterDef, FilterRenderContext, clear_href
+from hyperadmin.filters.choice import MultiChoiceFilter
+from hyperadmin.filters.date import CurrentPeriodDefault
+from hyperadmin.filters.relation import MultiFKFilter
+from hyperadmin.filters.saved_views import (
+    SavedView,
+    SavedViewNameTakenError,
+    SavedViewService,
+    normalize_querystring,
+)
 from hyperadmin.i18n import translate_error
+from hyperadmin.views.error_pages import wants_html
 from hyperadmin.views.forms import (
     CheckboxInput,
     FileInputWidget,
@@ -65,7 +80,7 @@ from hyperadmin.views.forms import (
 from hyperadmin.views.htmx import HtmxTemplateResponse
 from hyperadmin.views.template_filters import TIMEZONE_GLOBAL, request_tz
 from hyperadmin.views.uploads import download_name, file_download_response, unique_upload_name
-from hyperadmin.views.urls import admin_url_for
+from hyperadmin.views.urls import SCOPE_KEY, admin_url_for
 
 logger = logging.getLogger(__name__)
 
@@ -80,6 +95,24 @@ _MAX_LIST_PAGE = 10**15
 # are deferred to a follow-up milestone (BYOA SDD Owner decision 8); widening
 # this set is the only change list_view needs to accept them.
 _LIST_FILTER_OPS = frozenset({"exact"})
+
+#: ``id`` of the ``<tbody>`` in ``components/table_body.html``: the element a
+#: filter-sidebar request targets, so ``HX-Target`` names it (filter library SDD).
+LIST_BODY_ID = "model-list-body"
+#: ``id`` of the whole table wrapper that search, sort and pagination target.
+_LIST_TABLE_ID = "model-list"
+
+
+class _ListFilters(NamedTuple):
+    """What ``list_view`` derives from the querystring before it queries."""
+
+    parsed: ParsedFilters
+    explicit: list[FilterDef]
+    binding: FilterBinding | None
+    conditions: list[FilterCondition]
+    #: The querystring to push when a ``CurrentPeriodDefault`` applies, else ``None``.
+    pushed_query: str | None
+
 
 # Missing-table messages from SQLite ("no such table"), PostgreSQL
 # ('relation "x" does not exist') and asyncpg ("UndefinedTableError").
@@ -456,7 +489,8 @@ class DynamicModelView:
         fields = [
             f
             for f in (self.options.list_filter or [])
-            if f in allowed
+            if isinstance(f, str)
+            and f in allowed
             and await self._may_view_related(request, self._relation_target_for_field(f))
         ]
         return await build_filter_metadata(self.model, fields, self.adapter)
@@ -500,12 +534,16 @@ class DynamicModelView:
                 data[name] = getattr(existing, name, None)
 
     def _filterable_fields(self) -> set[str]:
-        """Fields a URL ``filter_<name>`` may target: ``list_filter`` minus sensitive fields."""
+        """Fields a URL ``filter_<name>`` may target: ``list_filter`` strings, never sensitive.
+
+        Explicit :class:`FilterDef` entries read their own querystring keys
+        (see :meth:`_explicit_filters`) and are not part of this set.
+        """
         model_fields = getattr(self.model, "model_fields", {})
         return {
             f
             for f in (getattr(self.options, "list_filter", None) or [])
-            if f in model_fields and f not in self._sensitive_fields
+            if isinstance(f, str) and f in model_fields and f not in self._sensitive_fields
         }
 
     def _sortable_fields(self) -> set[str]:
@@ -551,6 +589,362 @@ class DynamicModelView:
             ops=_LIST_FILTER_OPS,
         )
 
+    # -- filter library (docs/specs/filter-library.md) ---------------------------
+
+    def _filter_defs(self) -> list[FilterDef]:
+        """``options.list_filter`` as filter definitions, in order, sensitive fields dropped.
+
+        Strings become :class:`LegacyFieldFilter` (only when they name a
+        filterable field); explicit definitions are kept unless they bind to a
+        sensitive column, which can never be filtered on.
+        """
+        allowed = self._filterable_fields()
+        defs: list[FilterDef] = []
+        for filter_def in collect_filters(self.options.list_filter):
+            if isinstance(filter_def, LegacyFieldFilter):
+                if filter_def.field in allowed:
+                    defs.append(filter_def)
+            elif filter_def.field not in self._sensitive_fields:
+                defs.append(filter_def)
+        return defs
+
+    def _explicit_filters(self) -> list[FilterDef]:
+        """The non-legacy filter definitions: the ones that compile through ``FilterDef``."""
+        return [f for f in self._filter_defs() if not isinstance(f, LegacyFieldFilter)]
+
+    def _filter_binding(self, request: Request) -> FilterBinding:
+        """Per-request facts the filters compile against (timezone, user key, model)."""
+        return FilterBinding(
+            model=self.model,
+            tz=request_tz(request, self.templates.env.globals.get(TIMEZONE_GLOBAL)),
+            datetime_kind=self.adapter.datetime_kind,
+            user=getattr(request.state, "user", None),
+            user_key=getattr(request.state, "user_key", None),
+        )
+
+    @staticmethod
+    def _compile_explicit(
+        explicit: list[FilterDef], query: Any, binding: FilterBinding
+    ) -> list[FilterCondition]:
+        """Every explicit filter's typed conditions for ``query``, in ``list_filter`` order."""
+        conditions: list[FilterCondition] = []
+        for filter_def in explicit:
+            conditions.extend(filter_def.compile(filter_def.parse(query), binding))
+        return conditions
+
+    @staticmethod
+    def _period_default_query(
+        explicit: list[FilterDef], query: QueryParams, binding: FilterBinding
+    ) -> str | None:
+        """``query`` with every applicable ``CurrentPeriodDefault`` made explicit, or ``None``.
+
+        The querystring is the single source of truth (SDD decision): on first
+        load the default's ``{field}__gte``/``__lte`` pair is pushed into the
+        URL rather than applied silently. ``None`` means no default applies
+        (the user already chose dates, or asked for ``{field}=all``).
+        """
+        current = query
+        changed = False
+        for filter_def in explicit:
+            if not isinstance(filter_def, CurrentPeriodDefault):
+                continue
+            pushed = filter_def.redirect_query(current, binding)
+            if pushed is not None:
+                current = QueryParams(pushed)
+                changed = True
+        return str(current) if changed else None
+
+    def _wants_list_body(self, request: Request, explicit: list[FilterDef]) -> bool:
+        """Whether an HTMX request gets the ``<tbody>`` fragment instead of the table.
+
+        htmx names its target in ``HX-Target``: the filter sidebar targets the
+        body (:data:`LIST_BODY_ID`), while search, sort and pagination target
+        the whole table. A target-less HTMX request (a scripted client) gets
+        the body when the model uses the filter library, and the full table
+        otherwise (the pre-0.5.6 contract).
+        """
+        target = request.headers.get("hx-target")
+        if target == LIST_BODY_ID:
+            return True
+        if target:
+            return False
+        return bool(explicit)
+
+    def _list_path(self, request: Request) -> str:
+        """The list URL's path for this request (``root_path`` and mount prefix included)."""
+        return admin_url_for(request, f"{self._model_name_lower}-list").path
+
+    @staticmethod
+    def _needs_choices(filter_def: FilterDef) -> bool:
+        """Whether the sidebar needs prefetched options to render ``filter_def``."""
+        if isinstance(filter_def, MultiFKFilter):
+            return True
+        return isinstance(filter_def, MultiChoiceFilter) and filter_def.choices is None
+
+    async def _choices_by_field(
+        self, request: Request, explicit: list[FilterDef]
+    ) -> dict[str, Sequence[ChoiceItem]]:
+        """Prefetched options keyed by field, for the explicit filters that list rows or values."""
+        model_fields = getattr(self.model, "model_fields", {})
+        fields: list[str] = []
+        for filter_def in explicit:
+            name = filter_def.field
+            if (
+                self._needs_choices(filter_def)
+                and name in model_fields
+                and name not in fields
+                and await self._may_view_related(request, self._relation_target_for_field(name))
+            ):
+                fields.append(name)
+        if not fields:
+            return {}
+        metadata = await build_filter_metadata(self.model, fields, self.adapter)
+        return {entry["name"]: entry["choices"] for entry in metadata}
+
+    async def _filter_groups(
+        self, request: Request, binding: FilterBinding
+    ) -> list[dict[str, Any]]:
+        """One rendered sidebar group per filter definition, legacy strings included.
+
+        Each entry carries the definition, its rendered HTML (``html``), whether
+        it is active, the chip text for the applied-filters strip, the inline
+        error for invalid input and the href that clears it.
+        """
+        defs = self._filter_defs()
+        if not defs:
+            return []
+        query = request.query_params
+        choices = await self._choices_by_field(
+            request, [f for f in defs if not isinstance(f, LegacyFieldFilter)]
+        )
+        for entry in await self._get_filter_metadata(request):
+            choices.setdefault(entry["name"], entry["choices"])
+        groups: list[dict[str, Any]] = []
+        for filter_def in defs:
+            parsed = filter_def.parse(query)
+            ctx = FilterRenderContext(
+                query=query,
+                binding=binding,
+                choices=choices.get(filter_def.field, ()),
+                templates=self.templates.env,
+            )
+            groups.append(
+                {
+                    "filter": filter_def,
+                    "slug": filter_def.slug,
+                    "title": filter_def.title,
+                    # Rendered by the admin's own autoescaping Jinja environment.
+                    "html": Markup(filter_def.render(ctx)),  # noqa: S704
+                    "active": bool(parsed),
+                    "chip": filter_def.describe(parsed),
+                    "error": filter_def.error(query),
+                    "clear_href": clear_href(query, filter_def.query_keys),
+                }
+            )
+        return groups
+
+    @staticmethod
+    def _explicit_query(explicit: list[FilterDef], query: QueryParams) -> str:
+        """The explicit filters' raw pairs as ``&k=v...`` for links that must keep them.
+
+        Pagination and sort links append it next to the legacy ``filter_*``
+        pairs, so a date range or "Mine only" survives a page change.
+        """
+        keys = {key for filter_def in explicit for key in filter_def.query_keys}
+        if not keys:
+            return ""
+        pairs = [(k, v) for k, v in query.multi_items() if k in keys]
+        return f"&{urlencode(pairs)}" if pairs else ""
+
+    def _list_filters(self, request: Request) -> _ListFilters:
+        """Run both filter pipelines over the querystring (see :meth:`list_view`)."""
+        parsed = self._parse_list_filters(request)
+        explicit = self._explicit_filters()
+        conditions = list(parsed.conditions)
+        if not explicit:
+            return _ListFilters(parsed, explicit, None, conditions, None)
+        binding = self._filter_binding(request)
+        query = request.query_params
+        conditions.extend(self._compile_explicit(explicit, query, binding))
+        pushed = self._period_default_query(explicit, query, binding)
+        return _ListFilters(parsed, explicit, binding, conditions, pushed)
+
+    def _list_rows(self, items: list[Any], file_fields: set[str]) -> list[dict[str, Any]]:
+        """``column_list`` cells per item, plus ``_pk`` (and ``id`` for custom templates)."""
+        rows: list[dict[str, Any]] = []
+        for item in items:
+            row: dict[str, Any] = {}
+            for field in self.column_list:
+                if field == "__str__":
+                    row[field] = get_display_name(item)
+                else:
+                    val = getattr(item, field, None)
+                    if field in file_fields and val is not None:
+                        val = val.name if hasattr(val, "name") else str(val)
+                    elif isinstance(val, BaseModel):
+                        # A related row: never its default __str__ (prints secrets).
+                        val = get_display_name(val)
+                    row[field] = val
+            row["_pk"] = self.pk.value_of(item)
+            # Custom templates still read ``item.id`` on int-id models.
+            if hasattr(item, "id"):
+                row["id"] = item.id
+            rows.append(row)
+        return rows
+
+    def _list_template(self, request: Request, filters: _ListFilters) -> tuple[str, dict[str, str]]:
+        """The template and extra headers for a list response.
+
+        HTMX gets the table for search/sort/pagination and the body alone for
+        the filter sidebar (plus ``HX-Push-Url`` so the URL carries the filter
+        state); everything else gets the full layout.
+        """
+        if not request.headers.get("hx-request"):
+            return self._get_template_name("list"), {}
+        if not self._wants_list_body(request, filters.explicit):
+            return "components/table.html", {}
+        pushed = filters.pushed_query
+        if pushed is None:
+            pushed = str(request.query_params)
+        path = self._list_path(request)
+        return "components/table_body.html", {"HX-Push-Url": f"{path}?{pushed}" if pushed else path}
+
+    # -- saved views (per user, docs/specs/filter-library.md) -------------------------
+
+    @functools.cached_property
+    def _saved_views(self) -> SavedViewService:
+        return SavedViewService(
+            getattr(self.adapter, "engine", None),
+            session_factory=getattr(self.adapter, "session_factory", None),
+        )
+
+    def _saved_views_available(self, request: Request) -> bool:
+        """Saved views need the option on and a mounted admin (the panel builds route URLs)."""
+        scope = getattr(request, "scope", None) or {}
+        return bool(self.options.saved_views_enabled) and SCOPE_KEY in scope
+
+    def _saved_views_user(self, request: Request) -> Any:
+        """The owner key of the request's user; 403 when nobody is signed in."""
+        user_key = getattr(request.state, "user_key", None)
+        if user_key is None:
+            raise HTTPException(status_code=403, detail="Saved views need a signed-in user")
+        return user_key
+
+    def _saved_view_href(self, request: Request, view: SavedView) -> str:
+        path = self._list_path(request)
+        return f"{path}?{view.querystring}" if view.querystring else path
+
+    def _saved_view_payload(self, request: Request, view: SavedView) -> dict[str, Any]:
+        return {
+            "id": view.id,
+            "name": view.name,
+            "querystring": view.querystring,
+            "href": self._saved_view_href(request, view),
+            "is_default": view.is_default,
+            "created_at": view.created_at.isoformat(),
+        }
+
+    async def _resolve_saved_view(self, request: Request, raw_id: str) -> str:
+        """The list URL a ``?view=<id>`` link stands for; 404 unless the view is the user's."""
+        user_key = getattr(request.state, "user_key", None)
+        view = (
+            await self._saved_views.get(user_key, self._model_name_lower, int(raw_id))
+            if raw_id.isdigit() and user_key is not None
+            else None
+        )
+        if view is None:
+            raise HTTPException(status_code=404, detail="Saved view not found")
+        return self._saved_view_href(request, view)
+
+    async def _saved_views_context(self, request: Request, *, loaded: bool) -> dict[str, Any]:
+        """Template context for the saved-views panel: the user's views, the active one, URLs.
+
+        ``loaded`` is false after a failed list query, when nothing else should
+        touch the database. A missing ``hyperadmin_saved_view`` table never
+        breaks the list page: the panel is left out and a warning names the fix.
+        """
+        context: dict[str, Any] = {
+            "saved_views_enabled": False,
+            "saved_views": [],
+            "active_saved_view_id": None,
+            "current_query": "",
+            "saved_views_url": None,
+        }
+        user_key = getattr(request.state, "user_key", None)
+        if not loaded or user_key is None or not self._saved_views_available(request):
+            return context
+        current = context["current_query"] = normalize_querystring(request.query_params)
+        try:
+            views = await self._saved_views.list_for(user_key, self._model_name_lower)
+        except SQLAlchemyError:
+            logger.warning(
+                "Saved views for %s are unavailable; create the hyperadmin_saved_view table "
+                "(existing-app guide, section 5) or set AdminOptions.saved_views_enabled=False",
+                self.model.__name__,
+                exc_info=True,
+            )
+            return context
+        slug = self._model_name_lower
+        context["saved_views_enabled"] = True
+        context["saved_views_url"] = str(admin_url_for(request, f"{slug}-saved-views"))
+        for view in views:
+            payload = self._saved_view_payload(request, view)
+            payload["active"] = view.querystring == current
+            payload["delete_url"] = str(
+                admin_url_for(request, f"{slug}-saved-view-delete", view_id=view.id)
+            )
+            if payload["active"]:
+                context["active_saved_view_id"] = view.id
+            context["saved_views"].append(payload)
+        return context
+
+    async def saved_views_list(self, request: Request) -> Response:
+        """``GET /{model}/saved-views``: the current user's views on this model, as JSON."""
+        await self._check_permission(request, "view")
+        user_key = self._saved_views_user(request)
+        views = await self._saved_views.list_for(user_key, self._model_name_lower)
+        return JSONResponse({"views": [self._saved_view_payload(request, v) for v in views]})
+
+    async def saved_view_create(self, request: Request) -> Response:
+        """``POST /{model}/saved-views``: save ``name`` + ``querystring`` for the current user.
+
+        The form fields are ``name`` and ``querystring`` (the latter defaults to
+        the request's own querystring, so a sidebar form posted from the
+        filtered list saves what is on screen). A browser or HTMX client is
+        sent to the new view (``303`` / ``HX-Redirect``); an API client gets
+        the view as ``201`` JSON. A taken name is ``409``, a blank one ``422``.
+        """
+        await self._check_permission(request, "view")
+        user_key = self._saved_views_user(request)
+        form = await request.form()
+        querystring = form.get("querystring")
+        if querystring is None:
+            querystring = request.url.query
+        try:
+            view = await self._saved_views.create(
+                user_key, self._model_name_lower, form.get("name"), querystring
+            )
+        except SavedViewNameTakenError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        href = self._saved_view_href(request, view)
+        if request.headers.get("hx-request"):
+            return Response(status_code=204, headers={"HX-Redirect": href})
+        if wants_html(request):
+            return RedirectResponse(url=href, status_code=303)
+        return JSONResponse(self._saved_view_payload(request, view), status_code=201)
+
+    async def saved_view_delete(self, request: Request, view_id: int) -> Response:
+        """``DELETE /{model}/saved-views/{id}``: remove the user's own view; others' ids are 404."""
+        await self._check_permission(request, "view")
+        user_key = self._saved_views_user(request)
+        if not await self._saved_views.delete(user_key, self._model_name_lower, view_id):
+            raise HTTPException(status_code=404, detail="Saved view not found")
+        # An empty 200 lets an ``hx-swap="outerHTML"`` row remove itself; API
+        # clients get the conventional 204.
+        return Response(status_code=200 if request.headers.get("hx-request") else 204)
+
     @_request_scoped
     async def list_view(
         self,
@@ -561,10 +955,32 @@ class DynamicModelView:
         sort_by: str = Query(None),
         sort_direction: str = Query("asc", pattern="^(asc|desc)$"),
     ):
-        """Renders the list view for the model with pagination, sorting, and filtering."""
-        await self._check_permission(request, "view")
+        """Renders the list view for the model with pagination, sorting, and filtering.
 
-        parsed_filters = self._parse_list_filters(request)
+        Filtering runs two pipelines over one whitelist: legacy ``list_filter``
+        strings keep the typed ``filter_<field>`` contract (with ``filter_errors``),
+        and explicit :class:`FilterDef` entries parse their own keys and compile
+        through ``FilterDef.compile`` (filter library SDD). An HTMX request from
+        the filter sidebar gets only the ``<tbody>`` plus ``HX-Push-Url``, so
+        the URL stays the source of truth; ``?view=<id>`` loads a saved view.
+        """
+        await self._check_permission(request, "view")
+        query = request.query_params
+        is_htmx = bool(request.headers.get("hx-request"))
+
+        view_ref = query.get("view")
+        if view_ref is not None and self._saved_views_available(request):
+            return RedirectResponse(
+                url=await self._resolve_saved_view(request, view_ref), status_code=302
+            )
+
+        filters = self._list_filters(request)
+        parsed_filters = filters.parsed
+        if filters.pushed_query is not None and not is_htmx:
+            # First load with a CurrentPeriodDefault: make the default
+            # explicit in the URL before rendering anything.
+            target = f"{self._list_path(request)}?{filters.pushed_query}"
+            return RedirectResponse(url=target, status_code=302, headers={"HX-Push-Url": target})
 
         # sort_by is whitelisted against the sortable displayed columns. An
         # unknown or sensitive value falls back to the default sort.
@@ -578,7 +994,6 @@ class DynamicModelView:
         # Format order_by for adapter (use negative prefix for descending)
         order_by = f"-{sort_by}" if sort_direction == "desc" else sort_by
         page = min(page, _MAX_LIST_PAGE)
-        is_htmx = bool(request.headers.get("hx-request"))
         list_error: dict[str, bool] | None = None
 
         try:
@@ -588,7 +1003,7 @@ class DynamicModelView:
                 page=page,
                 page_size=page_size,
                 search=search or None,
-                filters=parsed_filters.conditions,
+                filters=filters.conditions,
                 order_by=order_by,
                 search_fields=self.search_fields,
             )
@@ -624,43 +1039,37 @@ class DynamicModelView:
                 "end_index": 0,
             }
 
-        # Convert items to row dicts using column_list
-        display_fields = self.column_list
         file_fields = self._get_file_fields()
-        rows = []
-        for item in items:
-            row: dict[str, Any] = {}
-            for field in display_fields:
-                if field == "__str__":
-                    row[field] = get_display_name(item)
-                else:
-                    val = getattr(item, field, None)
-                    if field in file_fields and val is not None:
-                        val = val.name if hasattr(val, "name") else str(val)
-                    elif isinstance(val, BaseModel):
-                        # A related row: never its default __str__ (prints secrets).
-                        val = get_display_name(val)
-                    row[field] = val
-            row["_pk"] = self.pk.value_of(item)
-            # Custom templates still read ``item.id`` on int-id models.
-            if hasattr(item, "id"):
-                row["id"] = item.id
-            rows.append(row)
+        rows = self._list_rows(items, file_fields)
 
         # Get filter metadata if list_filter is configured. Skipped when the
         # list query failed: relation filters query the database again, and a
         # second failure would turn the list-error banner into a bare 500.
-        filter_metadata = (
-            await self._get_filter_metadata(request)
-            if self.options.list_filter and list_error is None
+        show_filters = bool(self.options.list_filter) and list_error is None
+        filter_metadata = await self._get_filter_metadata(request) if show_filters else []
+        # The sidebar groups (every filter, rendered) and the applied chips;
+        # legacy-only models render the groups too, so a sidebar can show them.
+        filter_groups = (
+            await self._filter_groups(request, filters.binding or self._filter_binding(request))
+            if show_filters
             else []
         )
+        applied_filters = [
+            {
+                "slug": group["slug"],
+                "label": group["title"],
+                "value": group["chip"],
+                "clear_href": group["clear_href"],
+            }
+            for group in filter_groups
+            if group["chip"]
+        ]
 
         context = {
             "request": request,
             "pk_attr": self.pk.attr,
             "model_name": self.model.__name__,
-            "fields": display_fields,
+            "fields": self.column_list,
             "field_labels": self.field_labels,
             "items": rows,
             "pagination": pagination,
@@ -670,6 +1079,11 @@ class DynamicModelView:
             "filter_metadata": filter_metadata,
             "active_filters": parsed_filters.active,
             "filter_errors": parsed_filters.errors,
+            "filter_groups": filter_groups,
+            "applied_filters": applied_filters,
+            "filter_query": self._explicit_query(filters.explicit, query),
+            "list_body_id": LIST_BODY_ID,
+            **await self._saved_views_context(request, loaded=list_error is None),
             "can_create": self.options.can_create,
             "can_edit": self.options.can_edit,
             "can_delete": self.options.can_delete,
@@ -681,13 +1095,12 @@ class DynamicModelView:
             "bulk_actions": [a for a in self.actions if a.bulk],
         }
 
-        # Use table template for HTMX requests, full layout for regular requests
-        template_name = "components/table.html" if is_htmx else self._get_template_name("list")
+        template_name, headers = self._list_template(request, filters)
         # A failed full page is a 500; an HTMX partial stays 200 so htmx swaps
         # the banner in instead of discarding the response.
         status_code = 500 if list_error is not None and not is_htmx else 200
         return self.templates.TemplateResponse(
-            request, template_name, context, status_code=status_code
+            request, template_name, context, status_code=status_code, headers=headers
         )
 
     @_request_scoped

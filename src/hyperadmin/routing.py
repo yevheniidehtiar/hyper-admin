@@ -98,7 +98,7 @@ def _extract_column_names(raw: list[Any] | None, model: type | None = None) -> l
     return names
 
 
-def create_admin_router(  # noqa: PLR0912, PLR0913, PLR0917
+def create_admin_router(  # noqa: PLR0912, PLR0913, PLR0915, PLR0917
     model: type[SQLModel],
     admin_class: Any,
     admin_instance: Any,
@@ -220,6 +220,28 @@ def create_admin_router(  # noqa: PLR0912, PLR0913, PLR0917
         methods=["GET"],
         name=f"{model_name}-choices",
     )
+
+    if options.saved_views_enabled and options.can_list:
+        # Per-user saved views (docs/specs/filter-library.md): list, save and
+        # delete the current user's named filter sets for this model.
+        router.add_api_route(
+            f"{prefix}/saved-views",
+            view.saved_views_list,
+            methods=["GET"],
+            name=f"{model_name}-saved-views",
+        )
+        router.add_api_route(
+            f"{prefix}/saved-views",
+            view.saved_view_create,
+            methods=["POST"],
+            name=f"{model_name}-saved-view-create",
+        )
+        router.add_api_route(
+            f"{prefix}/saved-views/{{view_id:int}}",
+            view.saved_view_delete,
+            methods=["DELETE"],
+            name=f"{model_name}-saved-view-delete",
+        )
 
     if options.inlines:
         router.add_api_route(

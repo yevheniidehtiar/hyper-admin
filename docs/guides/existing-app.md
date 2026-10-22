@@ -271,6 +271,40 @@ admin that has no groups to edit; the codename it gates on is
 `permissions_matrix_codename` (default `change_groups_permissions`, superusers
 always pass).
 
+v0.5.6 adds one table for the filter library's saved views. It is part of
+`hyperadmin.auth.metadata()` and of `SQLModel.metadata` as soon as the admin
+views are imported (every mounted admin, in both auth modes), so autogenerate
+sees it:
+
+| Since | Table | Purpose |
+|---|---|---|
+| v0.5.6 | `hyperadmin_saved_view` | one row per saved filter set: `user_key`, `model`, `name`, `querystring`, `is_default`, `created_at`; `(user_key, model, name)` unique |
+
+Written by hand:
+
+```python
+op.create_table(
+    "hyperadmin_saved_view",
+    sa.Column("id", sa.Integer(), primary_key=True),
+    sa.Column("user_key", sa.String(255), nullable=False),
+    sa.Column("model", sa.String(255), nullable=False),
+    sa.Column("name", sa.String(255), nullable=False),
+    sa.Column("querystring", sa.String(), nullable=False),
+    sa.Column("is_default", sa.Boolean(), nullable=False),
+    sa.Column("created_at", sa.DateTime(), nullable=False),
+    sa.UniqueConstraint("user_key", "model", "name", name="uq_hyperadmin_saved_view_name"),
+)
+op.create_index("ix_hyperadmin_saved_view_user_key", "hyperadmin_saved_view", ["user_key"])
+op.create_index("ix_hyperadmin_saved_view_model", "hyperadmin_saved_view", ["model"])
+```
+
+The downgrade is `op.drop_table("hyperadmin_saved_view")`. Until the table exists,
+the list page logs a warning and leaves the saved-views panel out; set
+`AdminOptions(saved_views_enabled=False)` on a model to leave its saved-view
+endpoints unregistered as well. `user_key` is the stringified
+`request.state.user_key`, so saved views work for host users in bring-your-own-auth
+mode too.
+
 `permissions_version` is the permission matrix's optimistic-concurrency stamp:
 every grid an operator loads carries the group's current value, and a save is
 only committed (and the stamp bumped, atomically with the permission rows) when
