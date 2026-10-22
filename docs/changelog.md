@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- **Image uploads: EXIF auto-rotation, metadata and cached thumbnails** (#404, #408,
+  epic #410). `hyperadmin.uploads.images` provides `extract_metadata()`,
+  `auto_rotate()`, `generate_thumbnail()` (cached under `.thumbs/` next to the
+  original, aspect ratio preserved) and the `prepare_image_upload()` hook the
+  create/update forms now run on every `ImageType` upload. Non-image input never
+  raises; decompression bombs are refused from the header with
+  `ImageTooLargeError` (a `422` on the form).
+
 ### Changed
 - **Breaking: Python 3.10 is no longer supported; Python 3.14 is.** `requires-python`
   is now `>=3.11`. Python 3.10 reached end of life in October 2026, and Pillow 13

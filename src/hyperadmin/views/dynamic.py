@@ -65,6 +65,7 @@ from hyperadmin.filters.saved_views import (
     normalize_querystring,
 )
 from hyperadmin.i18n import translate_error
+from hyperadmin.uploads import FileValidationError, prepare_image_upload
 from hyperadmin.views.error_pages import wants_html
 from hyperadmin.views.forms import (
     CheckboxInput,
@@ -1604,6 +1605,10 @@ class DynamicModelView:
         through the column's ``FileType``/``ImageType`` never overwrites the
         file of another record that was uploaded under the same name.
 
+        An image field's upload is auto-rotated to its EXIF orientation before
+        the column writes it; an image above the decompression-bomb limit is
+        refused with a 422 before any pixel is decoded.
+
         Returns a dict of ``{field_name: UploadFile}`` that must be merged
         back into the adapter data after validation succeeds.
         """
@@ -1613,8 +1618,21 @@ class DynamicModelView:
                 val = data.pop(field.name)
                 if isinstance(val, StarletteUpload):
                     val.filename = self._new_upload_name(val.filename or "")
+                    if field.widget.is_image:
+                        self._prepare_image_upload(field.name, val)
                     uploads[field.name] = val
         return uploads
+
+    @staticmethod
+    def _prepare_image_upload(field_name: str, upload: StarletteUpload) -> None:
+        """Run the image hook on ``upload``; map a refused image to a 422."""
+        try:
+            prepare_image_upload(upload)
+        except FileValidationError as exc:
+            raise HTTPException(
+                status_code=HTTPStatus.UNPROCESSABLE_ENTITY,
+                detail={field_name: str(exc)},
+            ) from exc
 
     def _validate_inline_formsets(
         self, form_data: Any
