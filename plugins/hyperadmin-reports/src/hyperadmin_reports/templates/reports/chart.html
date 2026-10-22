@@ -1,0 +1,6 @@
+{#-
+    The chart fragment (design system: components/Chart): the chart frame for one report,
+    swapped in place by HTMX. Context: chart, caption, periods, state, message, retry_url.
+-#}
+{%- from "hyperadmin_reports/charts/frame.html" import chart_frame -%}
+{{ chart_frame(chart, caption=caption, periods=periods, state=state, message=message, retry_url=retry_url | default("")) }}

@@ -94,6 +94,12 @@
     color: var(--ha-color-text-muted);
   }
 
+  /* --- Chart above the grid: the lazy slot, then the frame that replaces it --- */
+  .ha-report > .ha-report-chart,
+  .ha-report > .ha-chartframe {
+    margin-block-end: var(--ha-space-4);
+  }
+
   /* --- Crosstab: scrolls inside its wrapper, never widens the page --- */
   .ha-xtab-wrap {
     max-block-size: min(70vh, 40rem);

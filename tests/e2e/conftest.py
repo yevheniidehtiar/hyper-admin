@@ -417,6 +417,16 @@ def plugin_base_url(e2e_port: int) -> Iterator[str]:
 
 
 @pytest.fixture
+def report_charts_base_url(e2e_port: int) -> Iterator[str]:
+    """Start the chart-report app (:mod:`tests.e2e.apps.report_charts`) and yield the base URL."""
+    proc, base = _spawn_uvicorn("tests.e2e.apps.report_charts", e2e_port, ready_path="/host")
+    try:
+        yield base
+    finally:
+        _terminate(proc)
+
+
+@pytest.fixture
 def bridge_base_url(e2e_port: int) -> Iterator[str]:
     """Start the bridge-mode app (:mod:`tests.e2e._bridge_app`) and yield the base URL.
 

@@ -10,6 +10,7 @@
 {%- from "components/_icons.html" import icon -%}
 {%- from "components/seg.html" import seg -%}
 {%- from "components/menu.html" import menu -%}
+{%- from "hyperadmin_reports/charts/frame.html" import chart_frame -%}
 
 {%- macro value_cell(cell, start, num, extra='') -%}
 {%- set classes = ('ha-num ' if num or cell.kind in ('num', 'zero')) ~ ('ha-xtab__start ' if start) ~ ('ha-xtab__zero ' if cell.kind == 'zero') ~ extra -%}
@@ -61,6 +62,13 @@
         {%- if bucket.note %}
         <span class="ha-report-controls__auto" id="report-period-note" data-testid="report-period-note">{{ icon('info', 'ha-icon--sm') }}<span>{{ bucket.note }}</span></span>
         {%- endif %}
+    </div>
+    {%- endif %}
+    {%- if chart %}
+    {#- Lazy chart: the skeleton frame requests the fragment on load and is replaced by it.
+        The fragment gets the page's query string, so chart and grid share period and filters. -#}
+    <div class="ha-report-chart" data-testid="report-chart" hx-get="{{ chart.url }}{{ chart.query }}" hx-trigger="load" hx-swap="outerHTML">
+        {{ chart_frame(chart.placeholder, state="loading") }}
     </div>
     {%- endif %}
     <div class="ha-table-wrapper ha-xtab-wrap" data-testid="report-grid" tabindex="0" role="region"
