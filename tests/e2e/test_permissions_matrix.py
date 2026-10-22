@@ -243,12 +243,12 @@ def test_rejected_cells_are_marked_and_the_whole_save_is_refused(
     # Then
     alert = page.get_by_test_id("pmatrix-rejected-banner")
     expect(alert).to_be_visible()
-    expect(alert).to_contain_text("1 change wasn’t saved.")
+    expect(alert).to_contain_text("1 change wasn\u2019t saved.")
     expect(alert).to_contain_text("You can only grant permissions you have yourself:")
     expect(alert.get_by_role("listitem")).to_have_text(["Delete orders"])
     # And
     expect(_cell(page, "order", "delete_order")).to_have_accessible_description(
-        "Not saved: you don’t have this permission yourself"
+        "Not saved: you don\u2019t have this permission yourself"
     )
     expect(_cell(page, "invoice", "view_invoice")).to_have_accessible_description("")
     # And
