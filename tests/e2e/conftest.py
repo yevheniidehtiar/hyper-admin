@@ -417,6 +417,19 @@ def plugin_base_url(e2e_port: int) -> Iterator[str]:
 
 
 @pytest.fixture
+def olap_reporting_base_url(e2e_port: int) -> Iterator[str]:
+    """Start the OLAP report app (:mod:`tests.e2e.apps.olap_reporting`) and yield the base URL.
+
+    Seeds superuser ``alice`` and permissionless ``bob`` (both ``secret123``).
+    """
+    proc, base = _spawn_uvicorn("tests.e2e.apps.olap_reporting", e2e_port)
+    try:
+        yield base
+    finally:
+        _terminate(proc)
+
+
+@pytest.fixture
 def report_charts_base_url(e2e_port: int) -> Iterator[str]:
     """Start the chart-report app (:mod:`tests.e2e.apps.report_charts`) and yield the base URL."""
     proc, base = _spawn_uvicorn("tests.e2e.apps.report_charts", e2e_port, ready_path="/host")
