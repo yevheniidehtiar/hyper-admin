@@ -32,7 +32,10 @@ _DEFAULT_E2E_WORKERS = 4
 # Each xdist worker owns a disjoint block of localhost ports for its test
 # servers, so two workers can never race for the same port (a free port picked
 # from the OS could be handed to both before either server binds it).
-_PORT_RANGE_START = 18000
+# ``E2E_PORT_RANGE_START=<port>`` moves the whole range: two checkouts running
+# the suite at once on one machine must not share it, or a server from the
+# other checkout can win the bind race and answer this checkout's tests.
+_PORT_RANGE_START = int(os.environ.get("E2E_PORT_RANGE_START", "18000"))
 _PORTS_PER_WORKER = 250
 
 
