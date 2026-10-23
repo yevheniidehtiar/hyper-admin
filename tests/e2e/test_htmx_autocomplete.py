@@ -125,8 +125,8 @@ def test_dependent_fk_forwards_parent_via_hx_include(
     expect(variant_search).to_be_enabled()
     variant_select = page.get_by_test_id("autocomplete-select-variant_id")
     expect(variant_select).to_be_enabled()
-    expect(variant_select.locator("option")).to_have_count(1)
-    assert _option_labels(variant_select) == ["Blue"]
+    # The placeholder is also a single option, so wait for the swapped label itself.
+    expect(variant_select.locator("option")).to_have_text(["Blue"])
     # And the field says why it changed
     expect(page.get_by_text("Cleared because the supplier changed.")).to_be_visible()
 
