@@ -2,7 +2,7 @@
 type: story
 id: st-v054-olap-04
 title: "test(e2e): report scenarios via Playwright"
-status: todo
+status: in-review
 priority: high
 assignee: null
 labels:
