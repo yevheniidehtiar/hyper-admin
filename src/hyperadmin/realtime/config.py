@@ -5,6 +5,7 @@ from __future__ import annotations
 from pydantic import BaseModel, ConfigDict, Field
 
 from hyperadmin.realtime.presence import DEFAULT_PRESENCE_TTL, InMemoryPresence, PresenceBackend
+from hyperadmin.realtime.presence_redis import RedisPresence
 
 
 class RealtimeSettings(BaseModel):
@@ -63,8 +64,19 @@ class RealtimeSettings(BaseModel):
         ),
     )
 
+    presence_redis_url: str | None = Field(
+        default=None,
+        description=(
+            "Convenience selector for multi-worker deployments: when set (and no "
+            "explicit ``presence`` backend is given) presence is stored in Redis at "
+            "this URL via ``RedisPresence`` (``[redis]`` extra)."
+        ),
+    )
+
     def resolve_presence(self) -> PresenceBackend:
-        """The configured ``presence`` backend, or a fresh ``InMemoryPresence``."""
+        """The configured ``presence`` backend, else Redis (when a URL is set), else in-memory."""
         if self.presence is not None:
             return self.presence
+        if self.presence_redis_url is not None:
+            return RedisPresence(self.presence_redis_url, default_ttl=self.presence_ttl)
         return InMemoryPresence(default_ttl=self.presence_ttl)
