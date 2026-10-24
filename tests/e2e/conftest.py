@@ -1,4 +1,3 @@
-import itertools
 import os
 import signal
 import socket
@@ -6,7 +5,8 @@ import subprocess
 import sys
 import tempfile
 import time
-from collections.abc import Iterator
+import uuid
+from collections.abc import Callable, Iterator
 from contextlib import closing
 from http import HTTPStatus
 from pathlib import Path
@@ -29,14 +29,12 @@ _SERVER_TIMEOUT = 30
 # for the CPU count: four by default, ``E2E_WORKERS=<n>`` overrides it.
 _DEFAULT_E2E_WORKERS = 4
 
-# Each xdist worker owns a disjoint block of localhost ports for its test
-# servers, so two workers can never race for the same port (a free port picked
-# from the OS could be handed to both before either server binds it).
-# ``E2E_PORT_RANGE_START=<port>`` moves the whole range: two checkouts running
-# the suite at once on one machine must not share it, or a server from the
-# other checkout can win the bind race and answer this checkout's tests.
-_PORT_RANGE_START = int(os.environ.get("E2E_PORT_RANGE_START", "18000"))
-_PORTS_PER_WORKER = 250
+# Header every test server stamps on all responses (uvicorn ``--header``) with
+# this session's random token. Readiness only accepts a server that echoes it,
+# so a foreign server on the port (another worktree's suite) is never used.
+_TOKEN_HEADER = "X-E2E-Token"
+_SPAWN_ATTEMPTS = 3
+_SESSION_TOKEN = ""
 
 
 def pytest_xdist_auto_num_workers(config: pytest.Config) -> int:
@@ -79,110 +77,153 @@ def _tail(log: Any, lines: int = 40) -> str:
     return "".join(log.readlines()[-lines:])
 
 
-def _worker_index(worker_id: str) -> int:
-    """Map an xdist worker id (``gw3``) to its index; ``master`` (no xdist) is 0."""
-    return int(worker_id[2:]) if worker_id.startswith("gw") else 0
+def _free_port() -> int:
+    """Ask the OS for a free port (bind to 0) and return it.
 
-
-def _port_is_free(port: int) -> bool:
-    """Whether ``port`` can be bound on every interface right now.
-
-    No ``SO_REUSEADDR``: a port still in ``TIME_WAIT`` from the previous test
-    server counts as taken, so the next server never fights its predecessor.
+    The OS hands out ephemeral ports system-wide, so concurrent processes and
+    worktrees do not get the same one. The port is released before uvicorn binds
+    it; ``_spawn_uvicorn`` covers that small window (retry + identity check).
     """
     with closing(socket.socket(socket.AF_INET, socket.SOCK_STREAM)) as s:
-        try:
-            s.bind(("", port))
-        except OSError:
-            return False
-        return True
+        s.bind(("", 0))
+        return int(s.getsockname()[1])
 
 
-@pytest.fixture(scope="session")
-def _e2e_port_pool(worker_id: str) -> Iterator[int]:
-    """Cycle through this worker's own block of ports (see ``_PORT_RANGE_START``)."""
-    start = _PORT_RANGE_START + _worker_index(worker_id) * _PORTS_PER_WORKER
-    return itertools.cycle(range(start, start + _PORTS_PER_WORKER))
+@pytest.fixture(scope="session", autouse=True)
+def _e2e_token() -> str:
+    """Random per-session identity token every test server must echo."""
+    global _SESSION_TOKEN  # noqa: PLW0603
+    _SESSION_TOKEN = uuid.uuid4().hex
+    return _SESSION_TOKEN
 
 
 @pytest.fixture
-def e2e_port(_e2e_port_pool: Iterator[int]) -> int:
-    """Provide a free localhost port, from this worker's block, per test function."""
-    for _ in range(_PORTS_PER_WORKER):
-        port = next(_e2e_port_pool)
-        if _port_is_free(port):
-            return port
-    raise RuntimeError(f"no free port left in this worker's block of {_PORTS_PER_WORKER}")
+def e2e_port() -> int:
+    """Provide a free localhost port, chosen by the OS, per test function."""
+    return _free_port()
+
+
+def _terminate(proc: subprocess.Popen) -> None:
+    if proc.poll() is None:
+        try:
+            if os.name == "nt":
+                proc.terminate()
+            else:
+                proc.send_signal(signal.SIGTERM)
+        except Exception:
+            pass
+        try:
+            proc.wait(timeout=5)
+        except Exception:
+            proc.kill()
+
+
+def _log_tail(log_path: str) -> str:
+    with open(log_path) as log:
+        return _tail(log)
+
+
+def _probe(
+    requests: Any, proc: subprocess.Popen, base: str, ready_path: str, log_path: str
+) -> bool | None:
+    """One readiness probe. True: ready. None: our server exited. False: not yet.
+
+    Raises when something other than our own server answers on the port.
+    """
+    if proc.poll() is not None:
+        return None
+    try:
+        r = requests.get(base + ready_path, timeout=0.5)
+    except Exception:
+        return False
+    if r.headers.get(_TOKEN_HEADER) != _SESSION_TOKEN:
+        try:  # our server may have lost the bind race: give it a moment to exit
+            proc.wait(timeout=2)
+            return None
+        except subprocess.TimeoutExpired:
+            pass
+        _terminate(proc)
+        raise RuntimeError(
+            f"Foreign server on {base}: it does not echo this run's {_TOKEN_HEADER} "
+            f"token, so it is not the test server this session started. Refusing to "
+            f"use it.\n{_log_tail(log_path)}"
+        )
+    return r.status_code == HTTPStatus.OK
+
+
+def _spawn_uvicorn(
+    module_path: str,
+    port: int | None = None,
+    ready_path: str = "/admin/login",
+    extra_env: dict[str, str] | None = None,
+):
+    """Spawn ``uvicorn module_path:app`` and block until it answers ``ready_path`` with 200.
+
+    Readiness requires this session's identity header, so a foreign server is
+    never mistaken for ours. If the port was taken in the gap between choosing
+    and binding it, the server is respawned on a fresh OS-chosen port. Returns
+    ``(proc, base_url)`` (the port may differ from the requested one).
+
+    ``extra_env`` is merged over the inherited environment (e.g. to set a
+    ``HYPERADMIN_*`` setting for one fixture app only).
+    """
+    pytest.importorskip("uvicorn")
+    requests = pytest.importorskip("requests")  # type: ignore[assignment]
+
+    env = os.environ.copy()
+    env["E2E_TESTING"] = "1"
+    env.update(extra_env or {})
+    for attempt in range(_SPAWN_ATTEMPTS):
+        use_port = port if (port is not None and attempt == 0) else _free_port()
+        cmd = [
+            sys.executable,
+            "-m",
+            "uvicorn",
+            f"{module_path}:app",
+            "--host",
+            "0.0.0.0",
+            "--port",
+            str(use_port),
+            "--log-level",
+            "warning",
+            "--header",
+            f"{_TOKEN_HEADER}:{_SESSION_TOKEN}",
+        ]
+        # Output goes to a temp file, not a PIPE: an unread pipe fills (~64 KB) and
+        # blocks the server mid-run. The parent's handle closes; the child keeps its own.
+        fd, log_path = tempfile.mkstemp(prefix="hyperadmin-e2e-", suffix=".log")
+        with os.fdopen(fd, "w") as log:
+            proc = subprocess.Popen(cmd, stdout=log, stderr=subprocess.STDOUT, env=env, text=True)
+
+        base = f"http://localhost:{use_port}"
+        deadline = time.time() + _SERVER_TIMEOUT
+        while time.time() < deadline:
+            state = _probe(requests, proc, base, ready_path, log_path)
+            if state:
+                return proc, base
+            if state is None:
+                break
+            time.sleep(0.3)
+        else:
+            _terminate(proc)
+            raise RuntimeError(
+                f"Server {module_path} did not start within {_SERVER_TIMEOUT}s\n"
+                f"{_log_tail(log_path)}"
+            )
+    raise RuntimeError(
+        f"Server {module_path} could not bind a port in {_SPAWN_ATTEMPTS} attempts\n"
+        f"{_log_tail(log_path)}"
+    )
 
 
 @pytest.fixture
 def demo_base_url(e2e_port: int) -> Iterator[str]:
-    """Start the demo_app via uvicorn in a subprocess and yield base URL.
-
-    This fixture gracefully skips if optional dependencies are missing
-    and attempts a clean shutdown after the test.
-    """
-    # Optional dependencies: skip if missing
-    pytest.importorskip("uvicorn")
-    requests = pytest.importorskip("requests")  # type: ignore[assignment]
-
-    cmd = [
-        sys.executable,
-        "-m",
-        "uvicorn",
-        "examples.simple.main:app",
-        "--host",
-        "0.0.0.0",
-        "--port",
-        str(e2e_port),
-        "--log-level",
-        "warning",
-    ]
-
-    env = os.environ.copy()
-    env["E2E_TESTING"] = "1"
-
-    # A temp file, not a PIPE: an unread pipe fills (~64 KB) and blocks the server mid-run.
-    with tempfile.TemporaryFile(mode="w+") as server_log:
-        proc = subprocess.Popen(
-            cmd,
-            stdout=server_log,
-            stderr=subprocess.STDOUT,
-            env=env,
-            text=True,
-        )
-
-        base = f"http://localhost:{e2e_port}"
-
-        try:
-            # Wait for server readiness
-            deadline = time.time() + _SERVER_TIMEOUT
-            last_err: Exception | None = None
-            while time.time() < deadline:
-                try:
-                    r = requests.get(base + "/", timeout=0.5)
-                    if r.status_code == HTTPStatus.OK:
-                        break
-                except Exception as e:
-                    last_err = e
-                time.sleep(0.3)
-            else:
-                raise RuntimeError(f"Server did not start: {last_err}\n{_tail(server_log)}")
-
-            yield base
-        finally:
-            if proc.poll() is None:
-                try:
-                    if os.name == "nt":
-                        proc.terminate()
-                    else:
-                        proc.send_signal(signal.SIGTERM)
-                except Exception:
-                    pass
-                try:
-                    proc.wait(timeout=5)
-                except Exception:
-                    proc.kill()
+    """Start the demo_app (:mod:`examples.simple.main`) via uvicorn and yield the base URL."""
+    proc, base = _spawn_uvicorn("examples.simple.main", e2e_port, ready_path="/")
+    try:
+        yield base
+    finally:
+        _terminate(proc)
 
 
 @pytest.fixture
@@ -200,63 +241,11 @@ def mfa_base_url(e2e_port: int) -> Iterator[str]:
     needs the admin session), for Playwright to drive the OTP flow
     deterministically.
     """
-    pytest.importorskip("uvicorn")
-    requests = pytest.importorskip("requests")  # type: ignore[assignment]
-
-    cmd = [
-        sys.executable,
-        "-m",
-        "uvicorn",
-        "tests.e2e._mfa_app:app",
-        "--host",
-        "0.0.0.0",
-        "--port",
-        str(e2e_port),
-        "--log-level",
-        "warning",
-    ]
-
-    env = os.environ.copy()
-    env["E2E_TESTING"] = "1"
-
-    proc = subprocess.Popen(
-        cmd,
-        stdout=subprocess.DEVNULL,  # an unread PIPE fills (~64 KB) and blocks the server
-        stderr=subprocess.DEVNULL,
-        env=env,
-        text=True,
-    )
-
-    base = f"http://localhost:{e2e_port}"
-
+    proc, base = _spawn_uvicorn("tests.e2e._mfa_app", e2e_port)
     try:
-        deadline = time.time() + _SERVER_TIMEOUT
-        last_err: Exception | None = None
-        while time.time() < deadline:
-            try:
-                r = requests.get(base + "/admin/login", timeout=0.5)
-                if r.status_code == HTTPStatus.OK:
-                    break
-            except Exception as e:
-                last_err = e
-            time.sleep(0.3)
-        else:
-            raise RuntimeError(f"MFA server did not start: {last_err}")
-
         yield base
     finally:
-        if proc.poll() is None:
-            try:
-                if os.name == "nt":
-                    proc.terminate()
-                else:
-                    proc.send_signal(signal.SIGTERM)
-            except Exception:
-                pass
-            try:
-                proc.wait(timeout=5)
-            except Exception:
-                proc.kill()
+        _terminate(proc)
 
 
 @pytest.fixture
@@ -266,129 +255,11 @@ def auth_base_url(e2e_port: int) -> Iterator[str]:
     The app seeds superuser ``alice / secret123`` on startup.
     Auth middleware redirects unauthenticated requests to ``/admin/login``.
     """
-    pytest.importorskip("uvicorn")
-    requests = pytest.importorskip("requests")  # type: ignore[assignment]
-
-    cmd = [
-        sys.executable,
-        "-m",
-        "uvicorn",
-        "tests.e2e._auth_app:app",
-        "--host",
-        "0.0.0.0",
-        "--port",
-        str(e2e_port),
-        "--log-level",
-        "warning",
-    ]
-
-    env = os.environ.copy()
-    env["E2E_TESTING"] = "1"
-
-    proc = subprocess.Popen(
-        cmd,
-        stdout=subprocess.DEVNULL,  # an unread PIPE fills (~64 KB) and blocks the server
-        stderr=subprocess.DEVNULL,
-        env=env,
-        text=True,
-    )
-
-    base = f"http://localhost:{e2e_port}"
-
+    proc, base = _spawn_uvicorn("tests.e2e._auth_app", e2e_port)
     try:
-        deadline = time.time() + _SERVER_TIMEOUT
-        last_err: Exception | None = None
-        while time.time() < deadline:
-            try:
-                r = requests.get(base + "/admin/login", timeout=0.5)
-                if r.status_code == HTTPStatus.OK:
-                    break
-            except Exception as e:
-                last_err = e
-            time.sleep(0.3)
-        else:
-            raise RuntimeError(f"Auth server did not start: {last_err}")
-
         yield base
     finally:
-        if proc.poll() is None:
-            try:
-                if os.name == "nt":
-                    proc.terminate()
-                else:
-                    proc.send_signal(signal.SIGTERM)
-            except Exception:
-                pass
-            try:
-                proc.wait(timeout=5)
-            except Exception:
-                proc.kill()
-
-
-def _spawn_uvicorn(
-    module_path: str,
-    port: int,
-    ready_path: str = "/admin/login",
-    extra_env: dict[str, str] | None = None,
-):
-    """Spawn ``uvicorn module_path:app`` and block until ``ready_path`` returns 200.
-
-    ``extra_env`` is merged over the inherited environment (e.g. to set a
-    ``HYPERADMIN_*`` setting for one fixture app only).
-    """
-    pytest.importorskip("uvicorn")
-    requests = pytest.importorskip("requests")  # type: ignore[assignment]
-
-    cmd = [
-        sys.executable,
-        "-m",
-        "uvicorn",
-        f"{module_path}:app",
-        "--host",
-        "0.0.0.0",
-        "--port",
-        str(port),
-        "--log-level",
-        "warning",
-    ]
-    env = os.environ.copy()
-    env["E2E_TESTING"] = "1"
-    env.update(extra_env or {})
-    # Output goes to a temp file, not a PIPE: an unread pipe fills (~64 KB) and
-    # blocks the server mid-run. The parent's handle closes; the child keeps its own.
-    fd, log_path = tempfile.mkstemp(prefix="hyperadmin-e2e-", suffix=".log")
-    with os.fdopen(fd, "w") as log:
-        proc = subprocess.Popen(cmd, stdout=log, stderr=subprocess.STDOUT, env=env, text=True)
-
-    base = f"http://localhost:{port}"
-    deadline = time.time() + _SERVER_TIMEOUT
-    last_err: Exception | None = None
-    while time.time() < deadline:
-        try:
-            r = requests.get(base + ready_path, timeout=0.5)
-            if r.status_code == HTTPStatus.OK:
-                return proc, base
-        except Exception as e:
-            last_err = e
-        time.sleep(0.3)
-    proc.kill()
-    with open(log_path) as log:
-        raise RuntimeError(f"Server did not start: {last_err}\n{_tail(log)}")
-
-
-def _terminate(proc: subprocess.Popen) -> None:
-    if proc.poll() is None:
-        try:
-            if os.name == "nt":
-                proc.terminate()
-            else:
-                proc.send_signal(signal.SIGTERM)
-        except Exception:
-            pass
-        try:
-            proc.wait(timeout=5)
-        except Exception:
-            proc.kill()
+        _terminate(proc)
 
 
 @pytest.fixture
@@ -509,67 +380,18 @@ def object_perm_base_url(e2e_port: int, tmp_path: Path) -> Iterator[str]:
     ``request.state.user.id`` for non-superusers — keeping each enforcement
     layer isolated to its own model so a single scenario tests one rule.
     """
-    pytest.importorskip("uvicorn")
-    requests = pytest.importorskip("requests")  # type: ignore[assignment]
-
-    cmd = [
-        sys.executable,
-        "-m",
-        "uvicorn",
-        "tests.e2e._object_perm_app:app",
-        "--host",
-        "0.0.0.0",
-        "--port",
-        str(e2e_port),
-        "--log-level",
-        "warning",
-    ]
-
-    env = os.environ.copy()
-    env["E2E_TESTING"] = "1"
     # Each subprocess gets its own DB file (under the test's own tmp_path, so
     # parallel workers never share one) and tests never see stale data from a
     # previously-run server.
-    env["HYPERADMIN_E2E_OBJPERM_DB"] = str(tmp_path / "objperm.db")
-
-    proc = subprocess.Popen(
-        cmd,
-        stdout=subprocess.DEVNULL,  # an unread PIPE fills (~64 KB) and blocks the server
-        stderr=subprocess.DEVNULL,
-        env=env,
-        text=True,
+    proc, base = _spawn_uvicorn(
+        "tests.e2e._object_perm_app",
+        e2e_port,
+        extra_env={"HYPERADMIN_E2E_OBJPERM_DB": str(tmp_path / "objperm.db")},
     )
-
-    base = f"http://localhost:{e2e_port}"
-
     try:
-        deadline = time.time() + _SERVER_TIMEOUT
-        last_err: Exception | None = None
-        while time.time() < deadline:
-            try:
-                r = requests.get(base + "/admin/login", timeout=0.5)
-                if r.status_code == HTTPStatus.OK:
-                    break
-            except Exception as e:
-                last_err = e
-            time.sleep(0.3)
-        else:
-            raise RuntimeError(f"Object-perm server did not start: {last_err}")
-
         yield base
     finally:
-        if proc.poll() is None:
-            try:
-                if os.name == "nt":
-                    proc.terminate()
-                else:
-                    proc.send_signal(signal.SIGTERM)
-            except Exception:
-                pass
-            try:
-                proc.wait(timeout=5)
-            except Exception:
-                proc.kill()
+        _terminate(proc)
 
 
 @pytest.fixture
@@ -603,3 +425,24 @@ def autocomplete_base_url(e2e_port: int) -> Iterator[str]:
         yield base
     finally:
         _terminate(proc)
+
+
+@pytest.fixture
+def start_server(e2e_port: int) -> Iterator[Callable[..., str]]:
+    """Return ``start(module_path, ready_path=..., extra_env=...) -> base_url`` for ad-hoc apps.
+
+    For test modules that own a fixture app: the server gets this session's
+    identity token and is terminated at teardown.
+    """
+    procs: list[subprocess.Popen] = []
+
+    def start(module_path: str, ready_path: str = "/admin/login", **kwargs: Any) -> str:
+        proc, base = _spawn_uvicorn(module_path, e2e_port, ready_path=ready_path, **kwargs)
+        procs.append(proc)
+        return base
+
+    try:
+        yield start
+    finally:
+        for proc in procs:
+            _terminate(proc)

@@ -6,86 +6,21 @@ via the create form, and uploaded filenames appear on the detail view.
 
 from __future__ import annotations
 
-import os
 import re
-import signal
-import subprocess
-import sys
-import time
-from http import HTTPStatus
 from typing import TYPE_CHECKING
 
 import pytest
 from playwright.sync_api import Page, expect
 
 if TYPE_CHECKING:
-    from collections.abc import Iterator
+    from collections.abc import Callable
     from pathlib import Path
-
-_IN_CONTAINER = os.environ.get("IS_SANDBOX") == "1"
-_SERVER_TIMEOUT = 30 if _IN_CONTAINER else 15
 
 
 @pytest.fixture
-def upload_base_url(e2e_port: int) -> Iterator[str]:
-    """Start the upload test app via uvicorn and yield the base URL."""
-    pytest.importorskip("uvicorn")
-    requests = pytest.importorskip("requests")  # type: ignore[assignment]
-
-    cmd = [
-        sys.executable,
-        "-m",
-        "uvicorn",
-        "tests.e2e._upload_app:app",
-        "--host",
-        "0.0.0.0",
-        "--port",
-        str(e2e_port),
-        "--log-level",
-        "warning",
-    ]
-
-    env = os.environ.copy()
-    env["E2E_TESTING"] = "1"
-
-    proc = subprocess.Popen(
-        cmd,
-        stdout=subprocess.DEVNULL,  # an unread PIPE fills (~64 KB) and blocks the server
-        stderr=subprocess.DEVNULL,
-        env=env,
-        text=True,
-    )
-
-    base = f"http://localhost:{e2e_port}"
-
-    try:
-        deadline = time.time() + _SERVER_TIMEOUT
-        last_err: Exception | None = None
-        while time.time() < deadline:
-            try:
-                r = requests.get(base + "/", timeout=0.5)
-                if r.status_code == HTTPStatus.OK:
-                    break
-            except Exception as e:
-                last_err = e
-            time.sleep(0.3)
-        else:
-            raise RuntimeError(f"Upload server did not start: {last_err}")
-
-        yield base
-    finally:
-        if proc.poll() is None:
-            try:
-                if os.name == "nt":
-                    proc.terminate()
-                else:
-                    proc.send_signal(signal.SIGTERM)
-            except Exception:
-                pass
-            try:
-                proc.wait(timeout=5)
-            except Exception:
-                proc.kill()
+def upload_base_url(start_server: Callable[..., str]) -> str:
+    """Start the upload test app via uvicorn and return the base URL."""
+    return start_server("tests.e2e._upload_app", ready_path="/")
 
 
 @pytest.fixture
