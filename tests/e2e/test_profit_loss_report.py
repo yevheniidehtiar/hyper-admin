@@ -1,12 +1,6 @@
 """E2E tests for the ERP Profit & Loss report page."""
 
-import os
-import signal
-import subprocess
-import sys
-import time
-from collections.abc import Iterator
-from http import HTTPStatus
+from collections.abc import Callable
 from typing import Any
 
 import pytest
@@ -25,79 +19,10 @@ def _erp_login(page: Page, base_url: str) -> None:
     expect(page).to_have_url(base_url + "/admin/")
 
 
-# ERP app performs DB creation + permission sync + data seeding on startup,
-# which takes longer than the simple demo app; parallel workers add load.
-_SERVER_TIMEOUT = 30
-
-
 @pytest.fixture
-def erp_base_url(e2e_port: int) -> Iterator[str]:
-    """Start the ERP demo app via uvicorn in a subprocess and yield base URL."""
-    pytest.importorskip("uvicorn")
-    requests = pytest.importorskip("requests")  # type: ignore[assignment]
-
-    port = e2e_port
-
-    cmd = [
-        sys.executable,
-        "-m",
-        "uvicorn",
-        "examples.erp.main:app",
-        "--host",
-        "0.0.0.0",
-        "--port",
-        str(port),
-        "--log-level",
-        "warning",
-    ]
-
-    env = os.environ.copy()
-    env["E2E_TESTING"] = "1"
-
-    proc = subprocess.Popen(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        env=env,
-        text=True,
-    )
-
-    base = f"http://localhost:{port}"
-
-    try:
-        deadline = time.time() + _SERVER_TIMEOUT
-        last_err: Exception | None = None
-        while time.time() < deadline:
-            # If the subprocess already exited, report its stderr immediately
-            if proc.poll() is not None:
-                _stdout, _stderr = proc.communicate()
-                raise RuntimeError(
-                    f"ERP server process exited with code {proc.returncode}:\n{_stderr}"
-                )
-            try:
-                r = requests.get(base + "/", timeout=0.5)
-                if r.status_code == HTTPStatus.OK:
-                    break
-            except Exception as e:
-                last_err = e
-            time.sleep(0.3)
-        else:
-            raise RuntimeError(f"ERP server did not start within {_SERVER_TIMEOUT}s: {last_err}")
-
-        yield base
-    finally:
-        if proc.poll() is None:
-            try:
-                if os.name == "nt":
-                    proc.terminate()
-                else:
-                    proc.send_signal(signal.SIGTERM)
-            except Exception:
-                pass
-            try:
-                proc.wait(timeout=5)
-            except Exception:
-                proc.kill()
+def erp_base_url(start_server: Callable[..., str]) -> str:
+    """Start the ERP demo app (DB creation + seeding on startup) and return the base URL."""
+    return start_server("examples.erp.main", ready_path="/")
 
 
 def test_profit_loss_report_loads(page: Page, erp_base_url: str) -> None:
