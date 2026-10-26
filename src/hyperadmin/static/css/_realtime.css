@@ -33,3 +33,9 @@
   0%, 100% { opacity: 1; }
   50%      { opacity: 0.4; }
 }
+
+/* Presence banner on the edit page: `.ha-banner` is display:flex, which beats
+   the UA [hidden] rule, so the "nobody else is here" state needs this. */
+.ha-presence-banner[hidden] {
+  display: none;
+}

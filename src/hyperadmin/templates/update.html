@@ -11,6 +11,7 @@
 {%- endblock -%}
 
 {%- block form_body -%}
+    {%- include "components/presence_banner.html" -%}
     {%- if form.fieldset_groups|length > 1 or (form.fieldset_groups|length == 1 and form.fieldset_groups[0].name) -%}
         {%- for group in form.fieldset_groups -%}
             {%- include "components/fieldset.html" -%}

@@ -1,0 +1,28 @@
+{#-
+    Presence banner (design system: components/Presence): tells an editor who
+    else is on this record. Rendered hidden; the realtime script
+    (static/js/realtime-status.js) sends heartbeats over the connection-status
+    WebSocket, receives the record's roster and fills the text, so it stays
+    hidden when realtime is off, the socket is down, or nobody else is here.
+
+    Usage (needs model_name, item, pk_attr in context):
+        {%- include "components/presence_banner.html" -%}
+-#}
+{%- from "components/_icons.html" import icon -%}
+{%- if realtime_enabled -%}
+{%- set presence_self = request.state.user_key if request.state.user_key is defined else (request.state.user.id if request.state.user else '') -%}
+<div class="ha-banner ha-banner--info ha-presence-banner" id="presence-banner" role="status" hidden
+     data-testid="presence-banner"
+     data-presence-model="{{ model_name|lower }}"
+     data-presence-pk="{{ item|ha_pk(pk_attr|default('id')) }}"
+     data-presence-mode="editing"
+     data-presence-self="{{ presence_self }}"
+     data-msg-viewing-one="{{ _('{names} is also viewing this record.') }}"
+     data-msg-viewing-many="{{ _('{names} are also viewing this record.') }}"
+     data-msg-editing-one="{{ _('{names} is also editing this record.') }}"
+     data-msg-editing-many="{{ _('{names} are also editing this record.') }}"
+     data-msg-more="{{ _('+{count} more') }}">
+    {{ icon('info') }}
+    <p class="ha-banner__text" data-presence-text></p>
+</div>
+{%- endif -%}
