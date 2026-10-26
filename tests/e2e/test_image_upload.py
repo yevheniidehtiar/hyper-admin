@@ -129,7 +129,7 @@ def test_keyboard_key_opens_picker(create_page: Page, key: str) -> None:
     # When the user presses the key
     # Then the file picker opens
     with create_page.expect_file_chooser():
-        create_page.keyboard.press(key)
+        zone.press(key)
 
 
 def test_invalid_type_shows_inline_error(create_page: Page) -> None:
