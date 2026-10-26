@@ -384,6 +384,13 @@ type = "simple"
     { cmd = "pytest -n auto tests/e2e" },
   ]
 
+  [tool.poe.tasks."test:e2e:qualification"]
+  help = "Run the upstream-readiness qualification suite against examples/full-demo"
+  sequence = [
+    { shell = "playwright install chromium" },
+    { cmd = "pytest -n auto tests/e2e/test_qualification.py" },
+  ]
+
   [tool.poe.tasks."test:e2e:fast"]
   help = "Run end-to-end tests with Playwright (fast with screenshots)"
   sequence = [
