@@ -17,7 +17,26 @@
 
     {%- include "components/search_input.html" -%}
 
+    {%- set sidebar_filters = filter_groups|default([])|rejectattr("filter.template", "equalto", "components/filters/select.html")|list -%}
+    {%- set use_sidebar = sidebar_filters|length > 0 -%}
+    {%- if use_sidebar -%}
+    <div class="ha-filterlayout" x-data="{ filtersOpen: false }">
+        <div class="ha-filterlayout__grid">
+            <div class="ha-filterlayout__main" style="min-inline-size:0">
+                <button class="ha-btn ha-filterlayout__toggle" type="button" aria-controls="filter-sidebar-t"
+                        :aria-expanded="filtersOpen" @click="filtersOpen = !filtersOpen" style="margin-block-end:12px">
+                    {{ icon('sliders-horizontal', 'ha-icon--sm') }}{{ _("Filters") }}{% if applied_filters %} <span class="ha-count">{{ applied_filters|length }}</span>{% endif %}
+                </button>
+                {%- if applied_filters %}
+                <div class="ha-chips" aria-label="{{ _('Applied filters') }}" data-testid="applied-filters" style="margin-block-end:12px">
+                    {%- for chip in applied_filters %}
+                    <span class="ha-chip"><span class="ha-chip__text">{{ chip.label }}: {{ chip.value }}</span><a href="{{ chip.clear_href }}" aria-label="{{ _('Remove filter %(label)s', label=chip.label|lower) }}">{{ icon('x', 'ha-icon--sm') }}</a></span>
+                    {%- endfor %}
+                </div>
+                {%- endif %}
+    {%- else -%}
     {%- include "components/filter_bar.html" -%}
+    {%- endif -%}
 
     <div id="inline-edit-status"
          class="ha-visually-hidden"
@@ -41,4 +60,10 @@
             {%- include "components/table.html" -%}
         {%- endblock -%}
     </div>
+    {%- if use_sidebar %}
+            </div>
+            {%- include "components/filter_sidebar.html" -%}
+        </div>
+    </div>
+    {%- endif %}
 {%- endblock -%}

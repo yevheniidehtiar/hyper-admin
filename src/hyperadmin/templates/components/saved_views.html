@@ -1,0 +1,61 @@
+{#- My views (SavedViews design): the user's saved filter sets, rendered with the page.
+    Context: saved_views_enabled, saved_views (id, name, href, active, delete_url),
+    current_query, saved_views_url. Rename and the "filters changed" box need
+    server endpoints that do not exist yet, so they are not rendered. -#}
+{%- from "components/_icons.html" import icon -%}
+{%- if saved_views_enabled -%}
+<section class="ha-views" aria-labelledby="saved-views-h" data-testid="saved-views" x-data="{ saving: false }">
+    <div class="ha-views__head">
+        <h3 id="saved-views-h">{{ _("My views") }}</h3>
+        <button class="ha-btn ha-btn--sm ha-btn--ghost" type="button" data-testid="save-view-btn"
+                :aria-expanded="saving" aria-controls="saved-view-save-form"
+                @click="saving = !saving; if (saving) $nextTick(() => $refs.viewName.focus())">
+            {{ icon('plus', 'ha-icon--sm') }}{{ _("Save view") }}
+        </button>
+    </div>
+    {#- The POST <form> itself lives in filter_sidebar.html, outside the filter form (forms cannot nest);
+        these controls join it through the form attribute. -#}
+    <div class="ha-view__edit" x-show="saving" x-cloak data-testid="saved-view-form" @keydown.escape="saving = false">
+        <div class="ha-field">
+            <label class="ha-label" for="saved-view-name">{{ _("Name") }}</label>
+            <input class="ha-input" type="text" id="saved-view-name" name="name" form="saved-view-save-form" x-ref="viewName" required maxlength="255" autocomplete="off">
+        </div>
+        <div class="ha-row">
+            <button class="ha-btn ha-btn--sm ha-btn--ghost" type="button" @click="saving = false">{{ _("Cancel") }}</button>
+            <button class="ha-btn ha-btn--sm ha-btn-primary" type="submit" form="saved-view-save-form" data-testid="saved-view-submit">{{ _("Save view") }}</button>
+        </div>
+    </div>
+    {%- if saved_views %}
+    <ul class="ha-views__list" aria-labelledby="saved-views-h">
+        {%- for view in saved_views %}
+        <li class="ha-view" id="saved-view-row-{{ view.id }}">
+            <a class="ha-view__link" href="{{ view.href }}"{% if view.active %} aria-current="true"{% endif %} title="{{ view.name }}" data-testid="saved-view-{{ view.id }}">
+                {{ icon('bookmark', 'ha-icon--sm') }}<span>{{ view.name }}</span>{{ icon('check', 'ha-icon--sm ha-view__tick') }}
+                {%- if view.active %}<span class="ha-sr-only">{{ _("(active)") }}</span>{% endif %}
+            </a>
+            <details class="ha-view__more">
+                <summary class="ha-btn ha-btn--icon" aria-label="{{ _('Actions for view %(name)s', name=view.name) }}">{{ icon('ellipsis', 'ha-icon--sm') }}</summary>
+                <div class="ha-menu">
+                    <button class="ha-menu__item ha-menu__item--danger" type="button"
+                            onclick="this.closest('li').querySelector('dialog').showModal()">
+                        {{ icon('trash-2') }}<span class="ha-menu__text"><span>{{ _("Delete…") }}</span></span>
+                    </button>
+                </div>
+            </details>
+            <dialog class="ha-dialog" role="alertdialog" aria-labelledby="saved-view-delete-{{ view.id }}-t" data-testid="saved-view-delete-dialog">
+                <h4 id="saved-view-delete-{{ view.id }}-t">{{ _("Delete the view “%(name)s”?", name=view.name) }}</h4>
+                <p>{{ _("Only the saved filters go. No rows change.") }}</p>
+                <div class="ha-row">
+                    <button class="ha-btn ha-btn--sm" type="button" autofocus onclick="this.closest('dialog').close()">{{ _("Cancel") }}</button>
+                    <button class="ha-btn ha-btn--sm ha-btn--danger" type="button" data-testid="saved-view-delete-{{ view.id }}"
+                            hx-delete="{{ view.delete_url }}" hx-params="none" hx-target="#saved-view-row-{{ view.id }}" hx-swap="outerHTML">{{ _("Delete view") }}</button>
+                </div>
+            </dialog>
+        </li>
+        {%- endfor %}
+    </ul>
+    {%- else %}
+    <p class="ha-views__empty">{{ _("Save the filters you use often. They show up here, only for you.") }}</p>
+    {%- endif %}
+</section>
+{%- endif -%}
