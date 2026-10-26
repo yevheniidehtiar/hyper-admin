@@ -61,6 +61,7 @@
                 class="ha-dropzone__zone"
                 :class="{ 'ha-dropzone__zone--over': over, 'ha-dropzone__zone--error': error }"
                 data-testid="upload-dropzone"
+                x-init="$nextTick(() => $el.setAttribute('data-ready', 'true'))"
                 aria-describedby="{{ field.name }}-dropzone-status"
                 @click="$refs.input.click()"
                 @dragover.prevent="over = true"

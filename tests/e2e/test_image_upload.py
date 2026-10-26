@@ -46,6 +46,8 @@ def upload_base_url(start_server: Callable[..., str]) -> str:
 def create_page(page: Page, upload_base_url: str) -> Page:
     page.goto(f"{upload_base_url}/admin/document/create")
     expect(page.get_by_test_id("model-form")).to_be_visible()
+    # Alpine has bound the zone's handlers once it marks itself ready
+    expect(page.get_by_test_id("upload-dropzone")).to_have_attribute("data-ready", "true")
     return page
 
 
