@@ -254,13 +254,6 @@ def test_h12_filter_sidebar_and_saved_view(page: Page, full_demo_base_url: str) 
     assert _row_numbers(page) == ["ORD-4", "ORD-5"]
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "list/detail thumbnails land with nxt up-list "
-        "(story featviews-integrate-thumbnails..., #409); remove this marker there"
-    ),
-)
 def test_h13_jpeg_upload_thumbnail(page: Page, full_demo_base_url: str, tmp_path: Path) -> None:
     """
     Scenario: a JPEG uploaded on a product renders as a thumbnail in the list
