@@ -1,7 +1,7 @@
 """Minimal auth + realtime HyperAdmin app for E2E lifecycle tests.
 
 Started by the ``realtime_base_url`` fixture via uvicorn subprocess.
-Seeds a superuser ``alice / secret123`` on startup. The heartbeat interval
+Seeds superusers ``alice`` and ``bob`` (both ``secret123``) on startup. The heartbeat interval
 is intentionally short (1 s) so tests don't wait for the production default
 of 15 s.
 """
@@ -32,17 +32,18 @@ engine = create_async_engine(
 
 async def _seed_superuser() -> None:
     async with AsyncSession(engine) as session:
-        result = await session.execute(select(User).where(User.username == "alice"))
-        if not result.scalar_one_or_none():
-            session.add(
-                User(
-                    username="alice",
-                    email="alice@example.com",
-                    password_hash=hash_password("secret123"),
-                    is_superuser=True,
+        for username in ("alice", "bob"):
+            result = await session.execute(select(User).where(User.username == username))
+            if not result.scalar_one_or_none():
+                session.add(
+                    User(
+                        username=username,
+                        email=f"{username}@example.com",
+                        password_hash=hash_password("secret123"),
+                        is_superuser=True,
+                    )
                 )
-            )
-            await session.commit()
+        await session.commit()
 
 
 @asynccontextmanager

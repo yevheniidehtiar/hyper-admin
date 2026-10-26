@@ -43,6 +43,78 @@
     dot.classList.add(CLASS_MAP[state] || CLASS_MAP.disconnected);
   }
 
+  /*
+   * Presence banner on the edit page (components/presence_banner.html).
+   * Sends {"type":"presence","model","pk","mode"} over the shared WebSocket on
+   * open and every HEARTBEAT_MS, a "leave" frame on unload, and renders the
+   * roster frames the server pushes back (own user dropped). With no banner
+   * on the page every entry point is a no-op.
+   */
+  var PRESENCE_HEARTBEAT_MS = 8000;
+  var PRESENCE_MAX_NAMES = 3;
+
+  function Presence(el) {
+    this.el = el;
+    this.ws = null;
+    this.timer = null;
+  }
+  Presence.prototype.frame = function (mode) {
+    var d = this.el.dataset;
+    return JSON.stringify({ type: "presence", model: d.presenceModel, pk: d.presencePk, mode: mode });
+  };
+  Presence.prototype.send = function (mode) {
+    if (this.ws && this.ws.readyState === 1) this.ws.send(this.frame(mode));
+  };
+  Presence.prototype.attach = function (ws) {
+    var self = this;
+    self.ws = ws;
+    self.send(self.el.dataset.presenceMode);
+    if (self.timer) clearInterval(self.timer);
+    self.timer = setInterval(function () { self.send(self.el.dataset.presenceMode); }, PRESENCE_HEARTBEAT_MS);
+  };
+  Presence.prototype.detach = function () {
+    if (this.timer) {
+      clearInterval(this.timer);
+      this.timer = null;
+    }
+    this.ws = null;
+    this.render([]);
+  };
+  Presence.prototype.leave = function () {
+    this.send("leave");
+  };
+  Presence.prototype.onMessage = function (event) {
+    if (typeof event.data !== "string") return;
+    var msg;
+    try { msg = JSON.parse(event.data); } catch (e) { return; }
+    var d = this.el.dataset;
+    if (!msg || msg.type !== "presence" || msg.model !== d.presenceModel || String(msg.pk) !== d.presencePk) return;
+    var others = (msg.users || []).filter(function (u) { return String(u.user_id) !== d.presenceSelf; });
+    this.render(others);
+  };
+  Presence.prototype.render = function (others) {
+    var el = this.el;
+    var text = el.querySelector("[data-presence-text]");
+    if (!others.length) {
+      el.hidden = true;
+      if (text) text.textContent = "";
+      return;
+    }
+    var d = el.dataset;
+    var editing = others.some(function (u) { return u.mode === "editing"; });
+    var names = others.slice(0, PRESENCE_MAX_NAMES).map(function (u) { return u.display_name; });
+    var extra = others.length - names.length;
+    var joined = names.join(", ");
+    if (extra > 0) joined += " " + d.msgMore.replace("{count}", extra);
+    var key = (editing ? "msgEditing" : "msgViewing") + (others.length > 1 ? "Many" : "One");
+    if (text) text.textContent = d[key].replace("{names}", joined);
+    el.classList.toggle("ha-banner--warning", editing);
+    el.classList.toggle("ha-banner--info", !editing);
+    el.hidden = false;
+  };
+
+  var presence = null;
+
   function Channel(opts) {
     this.name = opts.name;
     this.open = opts.open;             // () => handle
@@ -122,8 +194,15 @@
       open: function () { return new WebSocket(wsUrl); },
       close: function (h) { try { h.close(); } catch (e) { /* ignore */ } },
       bind: function (h, cb) {
-        h.onopen = cb.onOpen;
-        h.onclose = cb.onClose;
+        h.onopen = function () {
+          cb.onOpen();
+          if (presence) presence.attach(h);
+        };
+        h.onclose = function () {
+          if (presence) presence.detach();
+          cb.onClose();
+        };
+        h.onmessage = function (event) { if (presence) presence.onMessage(event); };
         h.onerror = function () { /* onclose follows */ };
       },
     });
@@ -152,6 +231,10 @@
     window.__rt = fresh;
   };
   RealtimeClient.prototype.dispose = function () {
+    if (presence) {
+      presence.leave();
+      presence.detach();
+    }
     this.sse.dispose();
     this.ws.dispose();
     this.state = STATES.DISCONNECTED;
@@ -159,6 +242,8 @@
   };
 
   function bootstrap() {
+    var banner = document.querySelector('[data-testid="presence-banner"]');
+    presence = banner ? new Presence(banner) : null;
     var client = new RealtimeClient();
     window.__rt = client;
     setDot(STATES.RECONNECTING);
