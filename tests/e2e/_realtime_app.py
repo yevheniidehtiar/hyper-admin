@@ -6,6 +6,7 @@ is intentionally short (1 s) so tests don't wait for the production default
 of 15 s.
 """
 
+import os
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -68,6 +69,15 @@ admin = Admin(
     auth_backend=backend,
     permission_checker=ModelPermissionChecker(engine=engine),
     permission_registry=PermissionSyncService(engine=engine),
-    realtime=RealtimeSettings(heartbeat_interval=1.0, enable_test_endpoints=True),
+    realtime=RealtimeSettings(
+        heartbeat_interval=1.0,
+        enable_test_endpoints=True,
+        # ``E2E_PRESENCE_TTL`` shrinks the presence TTL so expiry tests don't wait 30 s.
+        **(
+            {"presence_ttl": float(os.environ["E2E_PRESENCE_TTL"])}
+            if "E2E_PRESENCE_TTL" in os.environ
+            else {}
+        ),
+    ),
 )
 admin.mount(path="/admin")

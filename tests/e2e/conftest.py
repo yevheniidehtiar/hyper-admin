@@ -278,6 +278,18 @@ def realtime_base_url(e2e_port: int) -> Iterator[str]:
 
 
 @pytest.fixture
+def realtime_short_ttl_base_url(e2e_port: int) -> Iterator[str]:
+    """Realtime app whose presence TTL is 2 s (``E2E_PRESENCE_TTL``), for expiry tests."""
+    proc, base = _spawn_uvicorn(
+        "tests.e2e._realtime_app", e2e_port, extra_env={"E2E_PRESENCE_TTL": "2"}
+    )
+    try:
+        yield base
+    finally:
+        _terminate(proc)
+
+
+@pytest.fixture
 def plugin_base_url(e2e_port: int) -> Iterator[str]:
     """Start the demo-plugin app (:mod:`tests.e2e.apps.plugin_registry`) and yield the base URL.
 
