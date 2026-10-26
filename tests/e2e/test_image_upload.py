@@ -115,18 +115,19 @@ def test_click_opens_file_picker(create_page: Page) -> None:
     assert chooser.value.is_multiple() is False
 
 
-def test_keyboard_enter_and_space_open_picker(create_page: Page) -> None:
+@pytest.mark.parametrize("key", ["Enter", "Space"])
+def test_keyboard_key_opens_picker(create_page: Page, key: str) -> None:
     """Scenario: keyboard accessibility for the drop zone."""
+    # Given the zone is a button focused via keyboard
     zone = create_page.get_by_test_id("upload-dropzone")
     assert zone.evaluate("el => el.tagName") == "BUTTON"
+    zone.focus()
+    expect(zone).to_be_focused()
 
-    for key in ("Enter", "Space"):
-        # Given the zone is focused via keyboard
-        zone.focus()
-        # When the user presses the key
-        # Then the file picker opens
-        with create_page.expect_file_chooser():
-            create_page.keyboard.press(key)
+    # When the user presses the key
+    # Then the file picker opens
+    with create_page.expect_file_chooser():
+        create_page.keyboard.press(key)
 
 
 def test_invalid_type_shows_inline_error(create_page: Page) -> None:
