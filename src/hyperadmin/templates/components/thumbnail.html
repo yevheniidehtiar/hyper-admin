@@ -1,0 +1,8 @@
+{#- A lazy-loaded thumbnail <img> with a file-icon fallback.
+    Inputs: thumb_src (URL), thumb_label (alt text), thumb_size (px, default 40).
+    The icon sits beside the image and replaces it if the thumbnail 404s. -#}
+{%- from "components/_icons.html" import icon -%}
+{%- set size = thumb_size|default(40) -%}
+<img src="{{ thumb_src }}" alt="{{ thumb_label }}" loading="lazy" width="{{ size }}" height="{{ size }}"
+     class="ha-thumb ha-thumb--{{ size }}" data-testid="thumbnail"
+     onerror="this.hidden=true;this.nextElementSibling.hidden=false" /><span class="ha-thumb-fallback" hidden data-testid="thumbnail-fallback">{{ icon('file-text') }}</span>

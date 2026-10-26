@@ -4,11 +4,12 @@ import logging
 import os
 from typing import Any
 
-from fastapi import HTTPException, Request
+from fastapi import HTTPException, Query, Request
 from starlette.datastructures import UploadFile as StarletteUpload
 from starlette.responses import RedirectResponse, Response
 
 from hyperadmin.core.storage_paths import resolve_storage_path, storage_root
+from hyperadmin.uploads.images import PLACEHOLDER_THUMBNAIL, generate_thumbnail
 from hyperadmin.uploads.storage import is_remote_storage, remote_file_name, remote_file_url
 from hyperadmin.views.dynamic.base import DynamicModelViewBase
 from hyperadmin.views.dynamic.helpers import (
@@ -18,6 +19,9 @@ from hyperadmin.views.uploads import file_download_response, unique_upload_name
 from hyperadmin.views.urls import admin_url_for
 
 logger = logging.getLogger(__name__)
+
+#: Bounding boxes of the ``?thumb=`` variants of the file route.
+THUMBNAIL_SIZES: dict[str, tuple[int, int]] = {"list": (40, 40), "detail": (200, 200)}
 
 
 class FileViewMixin(DynamicModelViewBase):
@@ -91,6 +95,7 @@ class FileViewMixin(DynamicModelViewBase):
         request: Request,
         item_id: Any,
         field_name: str,
+        thumb: str | None = Query(None),
     ) -> Response:
         """Stream the file stored in ``field_name`` of one record.
 
@@ -98,6 +103,10 @@ class FileViewMixin(DynamicModelViewBase):
 
         Requires ``view`` on the model. The record is loaded under the
         request's queryset filter and must pass the object ``view`` check.
+        ``?thumb=list`` (40x40) or ``?thumb=detail`` (200x200) serves a cached
+        thumbnail of an image field instead of the original; any other variant is
+        a 422, and a field with no thumbnail (not an image, remote storage, or an
+        unreadable file) is a 404 so the caller can fall back to a file icon.
         Returns 404 unless ``field_name`` is a non-sensitive file field whose
         stored name resolves to an existing file inside the storage root. The
         response policy (``nosniff``, ``CSP: sandbox``, attachment unless an
@@ -125,7 +134,24 @@ class FileViewMixin(DynamicModelViewBase):
         if path is None or not path.is_file():
             raise HTTPException(status_code=404, detail="File not found")
         stored_name = value.name if hasattr(value, "name") else str(value)
+        if thumb is not None:
+            path = self._thumbnail_path(field_name, stored_name, thumb)
         return file_download_response(path, stored_name)
+
+    def _thumbnail_path(self, field_name: str, stored_name: str, variant: str) -> Any:
+        """Resolve the cached thumbnail of an image field, or raise 404/422."""
+        size = THUMBNAIL_SIZES.get(variant)
+        if size is None:
+            raise HTTPException(status_code=422, detail=f"Unknown thumbnail size: {variant!r}")
+        if field_name not in self._get_image_fields():
+            raise HTTPException(status_code=404, detail="File not found")
+        name = generate_thumbnail(self.storage, stored_name, size)
+        thumb_path = (
+            None if name == PLACEHOLDER_THUMBNAIL else resolve_storage_path(self.storage, name)
+        )
+        if thumb_path is None:
+            raise HTTPException(status_code=404, detail="File not found")
+        return thumb_path
 
     @_request_scoped
     async def delete_file_view(

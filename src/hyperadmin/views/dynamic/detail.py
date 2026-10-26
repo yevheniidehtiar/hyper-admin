@@ -52,6 +52,7 @@ class DetailViewMixin(FileViewMixin):
             "model_name_lower": self._model_name_lower,
             "file_fields": file_fields,
             "file_urls": file_urls,
+            "thumb_urls": self._thumbnail_urls(request, item_id, item_data, "detail"),
             "file_labels": {name: download_name(item_data[name]) for name in file_urls},
             "pk_attr": self.pk.attr,
             "panels": await self._visible_panels(request, item, item_id),

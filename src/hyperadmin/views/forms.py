@@ -190,8 +190,11 @@ class FileInputWidget(HtmxWidget):
 class ImagePreviewWidget(FileInputWidget):
     """``ImageType`` widget: drag-and-drop zone with an instant client-side preview."""
 
-    def __init__(self, current_file: str | None = None) -> None:
+    thumbnail_url: str | None
+
+    def __init__(self, current_file: str | None = None, thumbnail_url: str | None = None) -> None:
         super().__init__(is_image=True, current_file=current_file)
+        self.thumbnail_url = thumbnail_url
         object.__setattr__(self, "template_path", "widgets/image_input.html")
 
 

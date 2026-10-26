@@ -34,6 +34,7 @@ from hyperadmin.core.sensitive import (
     sensitive_field_names,
     sensitive_overrides_scope,
 )
+from hyperadmin.uploads.storage import is_remote_storage
 from hyperadmin.views.forms import (
     InlineFormset,
 )
@@ -429,6 +430,43 @@ class DynamicModelViewBase:
             if isinstance(meta, FileFieldMeta):
                 result.add(name)
         return result
+
+    def _get_image_fields(self) -> set[str]:
+        """Return the set of field names backed by ``ImageType`` columns."""
+        from hyperadmin.core.uploads import FileFieldMeta  # noqa: PLC0415
+
+        result: set[str] = set()
+        for name, fi in self.model.model_fields.items():
+            meta = classify_field(fi, self.model)
+            if isinstance(meta, FileFieldMeta) and meta.is_image:
+                result.add(name)
+        return result
+
+    def _thumbnail_urls(
+        self,
+        request: Request,
+        item_id: Any,
+        item_data: dict[str, Any],
+        variant: str,
+        fields: set[str] | None = None,
+    ) -> dict[str, str]:
+        """Map each non-empty image field to its ``variant`` thumbnail URL.
+
+        Empty for a remote storage: thumbnails are cut from local files only.
+        """
+        if not self.storage or is_remote_storage(self.storage):
+            return {}
+        route_name = f"{self._model_name_lower}-file"
+        image_fields = self._get_image_fields() if fields is None else fields
+        return {
+            name: str(
+                admin_url_for(
+                    request, route_name, item_id=item_id, field_name=name
+                ).include_query_params(thumb=variant)
+            )
+            for name in sorted(image_fields)
+            if item_data.get(name)
+        }
 
     def _list_path(self, request: Request) -> str:
         """The list URL's path for this request (``root_path`` and mount prefix included)."""
