@@ -1,0 +1,31 @@
+{#- Filter sidebar (FilterSidebar design): the FilterBar form as a side panel.
+    Context: filter_groups (rendered partials), applied_filters, search_query,
+    plus the saved-views context. Applying swaps only the table body
+    (hx-target #model-list-body) and pushes the URL; without JavaScript the
+    form is a plain GET. -#}
+{%- from "components/_icons.html" import icon -%}
+{%- set list_url = url_for(model_name|lower ~ '-list') -%}
+<aside class="ha-filterside" :class="{ 'is-open': filtersOpen }" aria-labelledby="filter-sidebar-t" data-testid="filter-sidebar">
+    <form method="get" action="{{ list_url }}" role="search" aria-labelledby="filter-sidebar-t" style="display:contents"
+          hx-get="{{ list_url }}" hx-target="#{{ list_body_id }}" hx-swap="outerHTML" hx-push-url="true">
+        {%- if search_query %}<input type="hidden" name="search" value="{{ search_query }}">{% endif %}
+        <div class="ha-filterside__head">
+            <h2 id="filter-sidebar-t">{{ icon('sliders-horizontal', 'ha-icon--sm') }}{{ _("Filters") }}{% if applied_filters %} <span class="ha-count" data-testid="filter-count">{{ applied_filters|length }}</span>{% endif %}</h2>
+            <a class="ha-btn ha-btn--sm ha-btn--ghost" href="{{ list_url }}" data-testid="filters-reset">{{ icon('rotate-ccw', 'ha-icon--sm') }}{{ _("Reset") }}</a>
+        </div>
+        <div class="ha-filterside__body">
+            {%- include "components/saved_views.html" -%}
+            {%- for group in filter_groups %}{{ group.html }}{% endfor %}
+        </div>
+        <div class="ha-filterside__foot">
+            <a class="ha-btn ha-btn--sm ha-btn--ghost" href="{{ list_url }}" data-testid="filters-clear">{{ _("Clear all") }}</a>
+            <button class="ha-btn ha-btn-primary" type="submit" data-testid="filter-apply-btn">{{ _("Apply filters") }}</button>
+        </div>
+    </form>
+    {%- if saved_views_enabled %}
+    <form id="saved-view-save-form" method="post" action="{{ saved_views_url }}">
+        {{ csrf_input() if csrf_input is defined }}
+        <input type="hidden" name="querystring" value="{{ current_query }}">
+    </form>
+    {%- endif %}
+</aside>
