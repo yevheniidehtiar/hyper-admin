@@ -8,6 +8,7 @@
     <div class="ha-dropzone"
          x-data="{
              over: false, preview: null, error: '', warn: '',
+             uploading: false, pct: 0, loaded: 0, total: 0, failed: false,
              take(files) {
                  this.error = ''; this.warn = '';
                  if (!files.length) { return; }
@@ -23,13 +24,39 @@
                  if (this.preview) { URL.revokeObjectURL(this.preview); }
                  this.preview = URL.createObjectURL(file);
              },
+             fmt(n) {
+                 return n >= 1048576 ? (n / 1048576).toFixed(1) + ' MB' : (n / 1024).toFixed(1) + ' KB';
+             },
+             resetProgress() {
+                 this.uploading = false; this.failed = false;
+                 this.pct = 0; this.loaded = 0; this.total = 0;
+             },
+             progress(detail) {
+                 if (!$refs.input.files.length || !detail.lengthComputable) { return; }
+                 this.uploading = true; this.failed = false;
+                 this.loaded = detail.loaded; this.total = detail.total;
+                 this.pct = Math.round(detail.loaded / detail.total * 100);
+             },
+             networkError() {
+                 if (!$refs.input.files.length) { return; }
+                 this.uploading = false; this.failed = true;
+             },
+             retry() {
+                 this.resetProgress();
+                 htmx.trigger($refs.input.closest('form'), 'submit');
+             },
              clear() {
+                 this.resetProgress();
                  if (this.preview) { URL.revokeObjectURL(this.preview); }
                  this.preview = null; this.error = ''; this.warn = '';
                  $refs.input.value = '';
              }
          }"
-         @paste="take($event.clipboardData.files)">
+         @paste="take($event.clipboardData.files)"
+         @htmx:xhr:progress.window="progress($event.detail)"
+         @htmx:after-request.camel.window="if (!failed) { uploading = false; }"
+         @htmx:send-error.camel.window="networkError()"
+         @htmx:response-error.camel.window="$event.detail.xhr.status === 0 ? networkError() : (uploading = false)">
         <button type="button"
                 class="ha-dropzone__zone"
                 :class="{ 'ha-dropzone__zone--over': over, 'ha-dropzone__zone--error': error }"
@@ -49,10 +76,23 @@
                x-ref="input"
                data-testid="{{- field.name -}}-file-input"
                aria-invalid="{{- 'true' if field.errors else 'false' -}}"
-               @change="$el.files.length ? (error = '', warn = '', show($el.files[0])) : clear()" />
+               @change="$el.files.length ? (error = '', warn = '', resetProgress(), show($el.files[0])) : clear()" />
         <span id="{{ field.name }}-dropzone-status" class="ha-sr-only" role="status" x-text="over ? '{{ _('Release to upload') }}' : ''"></span>
         <p class="ha-dropzone__error" role="alert" x-show="error" x-text="error" x-cloak></p>
         <p class="ha-dropzone__warn" role="status" x-show="warn" x-text="warn" x-cloak></p>
+        <div class="ha-progress" :class="pct >= 100 && !failed ? 'ha-progress--success' : (failed ? 'ha-progress--danger' : '')"
+             data-testid="upload-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100"
+             :aria-valuenow="pct" x-show="uploading || failed" x-cloak>
+            <div class="ha-progress__head">
+                <span class="ha-progress__label">{{ _('Uploading') }}</span>
+                <span class="ha-progress__value" x-text="fmt(loaded) + ' / ' + fmt(total) + ' (' + pct + '%)'"></span>
+            </div>
+            <div class="ha-progress__track"><div class="ha-progress__bar" :style="'--value:' + pct + '%'"></div></div>
+        </div>
+        <div class="ha-dropzone__error" role="alert" x-show="failed" x-cloak>
+            <span>{{ _('Upload failed — check your connection') }}</span>
+            <button type="button" class="ha-btn ha-btn--ghost ha-btn--sm" data-testid="upload-retry" @click="retry()">{{ _('Retry') }}</button>
+        </div>
         <template x-if="preview">
             <div class="ha-dropzone__preview">
                 <img :src="preview" alt="{{ _('Selected image preview') }}" data-testid="upload-preview" />
