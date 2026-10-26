@@ -187,6 +187,14 @@ class FileInputWidget(HtmxWidget):
         self.current_file = current_file
 
 
+class ImagePreviewWidget(FileInputWidget):
+    """``ImageType`` widget: drag-and-drop zone with an instant client-side preview."""
+
+    def __init__(self, current_file: str | None = None) -> None:
+        super().__init__(is_image=True, current_file=current_file)
+        object.__setattr__(self, "template_path", "widgets/image_input.html")
+
+
 class RelationSelectWidget(HtmxWidget):
     """Widget for a single FK relation field — supports preload and lazy (HTMX) strategies."""
 
@@ -509,7 +517,9 @@ class PydanticForm:
 
             raw_meta = _classify_field(field, self.model)
             if isinstance(raw_meta, FileFieldMeta):
-                return FileInputWidget(is_image=raw_meta.is_image)
+                if raw_meta.is_image:
+                    return ImagePreviewWidget()
+                return FileInputWidget()
             if isinstance(raw_meta, SelectFieldMeta):
                 meta = raw_meta
                 choices_url = f"{self.choices_base_url}/{name}" if self.choices_base_url else ""

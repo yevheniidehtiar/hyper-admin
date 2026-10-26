@@ -1,0 +1,63 @@
+{%- from "components/_macros.html" import field_wrapper -%}
+{%- call field_wrapper(field) -%}
+    {%- if widget.current_file -%}
+    <div class="ha-file-current" data-testid="{{ field.name }}-current-file">
+        <span>Current: {{ widget.current_file }}</span>
+    </div>
+    {%- endif -%}
+    <div class="ha-dropzone"
+         x-data="{
+             over: false, preview: null, error: '', warn: '',
+             take(files) {
+                 this.error = ''; this.warn = '';
+                 if (!files.length) { return; }
+                 if (files.length > 1) { this.warn = '{{ _('Only one file allowed') }}'; }
+                 const file = files[0];
+                 if (!file.type.startsWith('image/')) { this.error = '{{ _('File type not allowed') }}'; return; }
+                 const dt = new DataTransfer();
+                 dt.items.add(file);
+                 $refs.input.files = dt.files;
+                 this.show(file);
+             },
+             show(file) {
+                 if (this.preview) { URL.revokeObjectURL(this.preview); }
+                 this.preview = URL.createObjectURL(file);
+             },
+             clear() {
+                 if (this.preview) { URL.revokeObjectURL(this.preview); }
+                 this.preview = null; this.error = ''; this.warn = '';
+                 $refs.input.value = '';
+             }
+         }"
+         @paste="take($event.clipboardData.files)">
+        <button type="button"
+                class="ha-dropzone__zone"
+                :class="{ 'ha-dropzone__zone--over': over, 'ha-dropzone__zone--error': error }"
+                data-testid="upload-dropzone"
+                aria-describedby="{{ field.name }}-dropzone-status"
+                @click="$refs.input.click()"
+                @dragover.prevent="over = true"
+                @dragleave.prevent="over = false"
+                @drop.prevent="over = false; take($event.dataTransfer.files)"
+                x-text="over ? '{{ _('Release to upload') }}' : '{{ _('Drop image here or click to select') }}'">{{ _('Drop image here or click to select') }}</button>
+        <input id="{{- field.name -}}"
+               name="{{- field.name -}}"
+               type="file"
+               accept="image/*"
+               class="ha-sr-only"
+               tabindex="-1"
+               x-ref="input"
+               data-testid="{{- field.name -}}-file-input"
+               aria-invalid="{{- 'true' if field.errors else 'false' -}}"
+               @change="$el.files.length ? (error = '', warn = '', show($el.files[0])) : clear()" />
+        <span id="{{ field.name }}-dropzone-status" class="ha-sr-only" role="status" x-text="over ? '{{ _('Release to upload') }}' : ''"></span>
+        <p class="ha-dropzone__error" role="alert" x-show="error" x-text="error" x-cloak></p>
+        <p class="ha-dropzone__warn" role="status" x-show="warn" x-text="warn" x-cloak></p>
+        <template x-if="preview">
+            <div class="ha-dropzone__preview">
+                <img :src="preview" alt="{{ _('Selected image preview') }}" data-testid="upload-preview" />
+                <button type="button" class="ha-btn ha-btn--ghost ha-btn--sm" @click="clear()">{{ _('Remove') }}</button>
+            </div>
+        </template>
+    </div>
+{%- endcall -%}
