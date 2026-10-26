@@ -9,7 +9,7 @@ from fastapi_storages.integrations.sqlalchemy import FileType, ImageType
 from sqlalchemy import Column
 from sqlmodel import Field, SQLModel
 
-from hyperadmin.views.forms import FileInputWidget, PydanticForm
+from hyperadmin.views.forms import FileInputWidget, ImagePreviewWidget, PydanticForm
 
 # ---------------------------------------------------------------------------
 # Test model
@@ -86,3 +86,24 @@ def test_pick_widget_returns_text_input_for_plain_str() -> None:
     field_map = {f.name: f for f in form.fields}
     widget = field_map["name"].widget
     assert not isinstance(widget, FileInputWidget)
+
+
+# ---------------------------------------------------------------------------
+# ImagePreviewWidget
+# ---------------------------------------------------------------------------
+
+
+def test_image_preview_widget_template_and_flags() -> None:
+    """Scenario: the image widget is an image FileInputWidget with its own template."""
+    widget = ImagePreviewWidget(current_file="a.png")
+    assert isinstance(widget, FileInputWidget)
+    assert widget.is_image is True
+    assert widget.current_file == "a.png"
+    assert widget.template_path == "widgets/image_input.html"
+
+
+def test_pick_widget_returns_image_preview_for_imagetype() -> None:
+    """Scenario: an ImageType column gets the drag-drop widget, FileType keeps the plain one."""
+    field_map = {f.name: f for f in PydanticForm(WidgetFileModel).fields}
+    assert isinstance(field_map["photo"].widget, ImagePreviewWidget)
+    assert type(field_map["document"].widget) is FileInputWidget

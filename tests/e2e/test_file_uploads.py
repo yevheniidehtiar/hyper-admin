@@ -57,7 +57,7 @@ def test_file_input_renders_for_file_field(
 
     # And the cover_image field also has a file input
     cover_input = page.get_by_test_id("cover_image-file-input")
-    expect(cover_input).to_be_visible()
+    expect(cover_input).to_be_attached()
     expect(cover_input).to_have_attribute("type", "file")
 
 

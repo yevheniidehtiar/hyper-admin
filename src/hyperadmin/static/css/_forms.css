@@ -580,3 +580,63 @@ input[type="file"].ha-input {
     border: 1px solid CanvasText;
   }
 }
+
+/* Image upload drop zone (widgets/image_input.html) */
+.ha-dropzone__zone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 100%;
+  min-block-size: calc(var(--ha-target-min) * 2);
+  padding: var(--ha-space-4);
+  font: inherit;
+  color: var(--ha-color-text-muted);
+  background-color: var(--ha-surface-base);
+  border: 2px dashed var(--ha-color-border-strong);
+  border-radius: var(--ha-radius-md);
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.ha-dropzone__zone:hover,
+.ha-dropzone__zone--over {
+  border-color: var(--ha-color-primary);
+  background-color: var(--ha-color-primary-soft);
+  color: var(--ha-color-text-strong);
+}
+
+.ha-dropzone__zone--error {
+  border-color: var(--ha-color-danger-text);
+}
+
+.ha-dropzone__error {
+  margin: var(--ha-space-2) 0 0;
+  color: var(--ha-color-danger-text);
+}
+
+.ha-dropzone__warn {
+  margin: var(--ha-space-2) 0 0;
+  color: var(--ha-color-warning-text);
+}
+
+.ha-dropzone__preview {
+  display: flex;
+  align-items: center;
+  gap: var(--ha-space-3);
+  margin-block-start: var(--ha-space-3);
+}
+
+.ha-dropzone__preview img {
+  max-inline-size: 160px;
+  max-block-size: 160px;
+  border: var(--ha-border-width) solid var(--ha-color-border);
+  border-radius: var(--ha-radius-md);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ha-dropzone__zone {
+    transition: none;
+  }
+}
