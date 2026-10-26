@@ -2,6 +2,10 @@
 {%- call field_wrapper(field) -%}
     {%- if widget.current_file -%}
     <div class="ha-file-current" data-testid="{{ field.name }}-current-file">
+        {%- if widget.thumbnail_url -%}
+        {%- set thumb_src = widget.thumbnail_url -%}{%- set thumb_label = field.label|default(field.name) -%}{%- set thumb_size = 200 -%}
+        {%- include "components/thumbnail.html" -%}
+        {%- endif -%}
         <span>Current: {{ widget.current_file }}</span>
     </div>
     {%- endif -%}

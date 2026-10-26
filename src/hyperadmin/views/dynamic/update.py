@@ -15,10 +15,12 @@ from hyperadmin.views.dynamic.helpers import (
 from hyperadmin.views.dynamic.inline import InlineViewMixin
 from hyperadmin.views.dynamic.relations import RelationViewMixin
 from hyperadmin.views.forms import (
+    ImagePreviewWidget,
     InlineFormset,
     PydanticForm,
 )
 from hyperadmin.views.htmx import HtmxTemplateResponse
+from hyperadmin.views.uploads import download_name
 from hyperadmin.views.urls import admin_url_for
 
 logger = logging.getLogger(__name__)
@@ -26,6 +28,22 @@ logger = logging.getLogger(__name__)
 
 class UpdateViewMixin(RelationViewMixin, InlineViewMixin):
     """Update form rendering, submission and deletion."""
+
+    def _show_current_images(
+        self, request: Request, item_id: Any, form: PydanticForm, item: Any
+    ) -> None:
+        """Give each image widget the stored file's name and 200x200 thumbnail URL."""
+        widgets: dict[str, ImagePreviewWidget] = {}
+        stored: dict[str, str] = {}
+        for field in form.fields:
+            val = getattr(item, field.name, None)
+            if isinstance(field.widget, ImagePreviewWidget) and val:
+                widgets[field.name] = field.widget
+                stored[field.name] = val.name if hasattr(val, "name") else str(val)
+        urls = self._thumbnail_urls(request, item_id, stored, "detail", set(stored))
+        for name, widget in widgets.items():
+            widget.current_file = download_name(stored[name])
+            widget.thumbnail_url = urls.get(name)
 
     @_request_scoped
     async def update_form_view(
@@ -68,6 +86,8 @@ class UpdateViewMixin(RelationViewMixin, InlineViewMixin):
             form_fields=getattr(self.options, "form_fields", None) or None,
             **self._form_pk_kwargs(create=False),
         )
+
+        self._show_current_images(request, item_id, form, item)
 
         if errors:
             form.bind(values or {})

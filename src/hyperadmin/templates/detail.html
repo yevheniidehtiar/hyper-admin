@@ -13,6 +13,12 @@
             <dd class="ha-field-value">
                 {%- if file_fields is defined and key in file_fields and value -%}
                     {%- if file_urls is defined and key in file_urls -%}
+                    {%- if thumb_urls is defined and key in thumb_urls -%}
+                    <a href="{{ file_urls[key] }}" target="_blank" rel="noopener" class="ha-thumb-link" data-testid="{{ key }}-thumbnail-link">
+                        {%- set thumb_src = thumb_urls[key] -%}{%- set thumb_label = field_labels[key] if field_labels is defined and key in field_labels else key.replace('_', ' ').title() -%}{%- set thumb_size = 200 -%}
+                        {%- include "components/thumbnail.html" -%}
+                    </a><br />
+                    {%- endif -%}
                     <a href="{{ file_urls[key] }}" target="_blank" rel="noopener" class="ha-file-link" data-testid="{{ key }}-download">{{ file_labels[key] if file_labels is defined and key in file_labels else value }}</a>
                     {%- else -%}
                     {{- value -}}

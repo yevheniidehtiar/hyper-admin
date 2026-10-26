@@ -635,6 +635,24 @@ input[type="file"].ha-input {
   border-radius: var(--ha-radius-md);
 }
 
+/* Stored-image thumbnails (list cell 40px, detail 200px, form preview). */
+.ha-thumb {
+  display: inline-block;
+  object-fit: cover;
+  max-inline-size: 100%;
+  border: var(--ha-border-width) solid var(--ha-color-border);
+  border-radius: var(--ha-radius-md);
+  vertical-align: middle;
+}
+
+.ha-thumb--200 {
+  object-fit: contain;
+}
+
+.ha-thumb-link {
+  display: inline-block;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ha-dropzone__zone {
     transition: none;

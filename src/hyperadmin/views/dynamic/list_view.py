@@ -237,8 +237,15 @@ class ListViewMixin(SavedViewsMixin):
         pushed = self._period_default_query(explicit, query, binding)
         return _ListFilters(parsed, explicit, binding, conditions, pushed)
 
-    def _list_rows(self, items: list[Any], file_fields: set[str]) -> list[dict[str, Any]]:
-        """``column_list`` cells per item, plus ``_pk`` (and ``id`` for custom templates)."""
+    def _list_rows(
+        self, items: list[Any], file_fields: set[str], request: Request | None = None
+    ) -> list[dict[str, Any]]:
+        """``column_list`` cells per item, plus ``_pk`` (and ``id`` for custom templates).
+
+        With a ``request``, each row also carries ``_thumbs``: the 40x40 thumbnail
+        URL of every image column that has a stored file.
+        """
+        image_fields = set(self.column_list) & self._get_image_fields() if request else set()
         rows: list[dict[str, Any]] = []
         for item in items:
             row: dict[str, Any] = {}
@@ -254,6 +261,10 @@ class ListViewMixin(SavedViewsMixin):
                         val = get_display_name(val)
                     row[field] = val
             row["_pk"] = self.pk.value_of(item)
+            if request is not None:
+                row["_thumbs"] = self._thumbnail_urls(
+                    request, row["_pk"], row, "list", image_fields
+                )
             # Custom templates still read ``item.id`` on int-id models.
             if hasattr(item, "id"):
                 row["id"] = item.id
@@ -372,7 +383,7 @@ class ListViewMixin(SavedViewsMixin):
             }
 
         file_fields = self._get_file_fields()
-        rows = self._list_rows(items, file_fields)
+        rows = self._list_rows(items, file_fields, request)
 
         # Get filter metadata if list_filter is configured. Skipped when the
         # list query failed: relation filters query the database again, and a

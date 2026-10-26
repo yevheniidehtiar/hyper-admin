@@ -20,7 +20,7 @@
             {%- if list_editable and field in list_editable and field != pk_attr|default('id') -%}
                 {%- include "components/inline_cell.html" -%}
             {%- else -%}
-                <td class="ha-table-cell" data-label="{{ cell_label }}">{%- if item[field] is none -%}<span class="ha-text-muted">&mdash;</span>{%- else -%}{{- item[field]|ha_display -}}{%- endif -%}</td>
+                <td class="ha-table-cell" data-label="{{ cell_label }}">{%- if item[field] is none -%}<span class="ha-text-muted">&mdash;</span>{%- elif item._thumbs is defined and field in item._thumbs -%}{%- set thumb_src = item._thumbs[field] -%}{%- set thumb_label = cell_label -%}{%- set thumb_size = 40 -%}{%- include "components/thumbnail.html" -%}{%- else -%}{{- item[field]|ha_display -}}{%- endif -%}</td>
             {%- endif -%}
         {%- endfor -%}
         <td class="ha-table-cell ha-table-cell-center" data-label="{{ _('Actions') }}">
