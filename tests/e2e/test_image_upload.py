@@ -170,3 +170,64 @@ def test_picker_selection_shows_preview_and_remove_clears(
     expect(create_page.get_by_test_id("cover_image-file-input")).to_have_js_property(
         "files.length", 0
     )
+
+
+_PROGRESS_JS = """
+() => document.querySelector('form').dispatchEvent(new CustomEvent('htmx:xhr:progress', {
+  bubbles: true, detail: {lengthComputable: true, loaded: 2097152, total: 5242880}
+}))
+"""
+
+
+def test_progress_bar_shows_bytes_transferred(create_page: Page, png_file: Path) -> None:
+    """Scenario: progress bar shows bytes transferred."""
+    # Given a file is selected and the progress bar is hidden
+    create_page.get_by_test_id("cover_image-file-input").set_input_files(str(png_file))
+    progress = create_page.get_by_test_id("upload-progress")
+    expect(progress).to_be_hidden()
+
+    # When 2MB of 5MB have been transferred
+    create_page.evaluate(_PROGRESS_JS)
+
+    # Then the label reports bytes and percentage
+    expect(progress).to_be_visible()
+    expect(progress).to_have_attribute("aria-valuenow", "40")
+    expect(progress).to_contain_text("2.0 MB / 5.0 MB (40%)")
+
+
+def test_network_error_shows_retry_that_resends_file(create_page: Page, png_file: Path) -> None:
+    """Scenario: network error shows Retry; Retry re-sends the same file."""
+    # Given the create request fails at network level the first time
+    calls: list[str] = []
+    bodies: list[str] = []
+
+    def handler(route):
+        calls.append(route.request.method)
+        bodies.append(
+            route.request.post_data_buffer.decode("latin-1")
+            if route.request.post_data_buffer
+            else ""
+        )
+        if len(calls) == 1:
+            route.abort("connectionfailed")
+        else:
+            route.continue_()
+
+    create_page.route("**/admin/document", handler)
+    create_page.get_by_test_id("cover_image-file-input").set_input_files(str(png_file))
+
+    # When the form is submitted
+    create_page.get_by_role("button", name="Create").click()
+
+    # Then an error and a Retry button are shown
+    expect(create_page.get_by_text("Upload failed — check your connection")).to_be_visible()
+    retry = create_page.get_by_test_id("upload-retry")
+    expect(retry).to_be_visible()
+
+    # When Retry is clicked
+    retry.click()
+
+    # Then the request is sent again with the file still attached
+    expect(retry).to_be_hidden()
+    assert len(calls) == 2
+    assert all('filename="pixel.png"' in b for b in bodies)
