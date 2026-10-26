@@ -41,7 +41,7 @@ dependencies = [
   "aiosqlite>=0.22.1",  # async SQLite driver for zero-config demo mode (sqlite+aiosqlite default URL)
   "greenlet>=1.0.1; python_version < '3.13'",  # SQLAlchemy asyncio bridge
   "greenlet>=3.1.0; python_version == '3.13'",  # SQLAlchemy asyncio bridge
-  "greenlet>=3.2.0; python_version >= '3.14'",  # 3.2.0 is the first release with CPython 3.14 wheels
+  "greenlet>=3.2.4; python_version >= '3.14'",  # first release built against the frozen 3.14 ABI (3.2.0-3.2.2 have no cp314 wheels)
   "pillow>=12.2.0",  # needed by fastapi-storages ImageType for image upload fields
   "typing-extensions>=4.14.1",
   "typer>=0.12",  # `hyperadmin` management CLI
