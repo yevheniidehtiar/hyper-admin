@@ -13,14 +13,14 @@ labels:
   - frontend
 estimate: null
 epic_ref:
-  id: ep-v058-byoa-01
+  id: ep-v056-fl-01
 created_at: 2026-09-28T00:00:00Z
-updated_at: 2026-10-08T00:00:00Z
+updated_at: 2026-10-27T00:00:00Z
 ---
 
-## Deferred (2026-10-08)
+## Moved (2026-10-27)
 
-Moved to follow-up milestone per Owner decision 8 (recorded in the SDD on 2026-10-08). Not part of the v0.5.8 critical path; do not start this story in v0.5.8.
+Deferred out of v0.5.8 by Owner decision 8 (recorded in the SDD on 2026-10-08) and now moved to the v0.5.6 filter-library epic, where `FilterDef` compiles down to the same `FilterCondition`. Originally st-v058-byoa-47.
 
 ## Summary
 
@@ -65,4 +65,4 @@ Scenario: filter error shown
 
 ## Parent
 
-- Epic: `epic-v058-bring-your-own-app` (v0.5.8 — Bring Your Own App)
+- Epic: `epic-v056-filter-library` (v0.5.6 — Detail Panels & Filter Library)
