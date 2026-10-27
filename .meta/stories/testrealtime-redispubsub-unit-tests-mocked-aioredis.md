@@ -2,7 +2,7 @@
 type: story
 id: TKeRz1E0Nw8B
 title: "test(realtime): RedisPubSub unit tests (mocked aioredis)"
-status: in-review
+status: done
 priority: medium
 assignee: null
 labels:

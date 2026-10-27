@@ -2,7 +2,7 @@
 type: story
 id: fY2baq9AS-fH
 title: "test(unit): plugin discovery, disable mechanism, dispatch isolation"
-status: in-review
+status: done
 priority: high
 assignee: null
 labels:

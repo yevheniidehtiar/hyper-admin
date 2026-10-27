@@ -2,7 +2,7 @@
 type: story
 id: st-v054-olap-02
 title: "feat(reports): source dispatcher and fact-table cache seam"
-status: in-review
+status: done
 priority: high
 assignee: null
 labels:

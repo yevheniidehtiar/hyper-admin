@@ -2,7 +2,7 @@
 type: story
 id: st-v054-olap-01
 title: "feat(reports): aggregates, crosstab, time-bucketing core"
-status: in-review
+status: done
 priority: high
 assignee: null
 labels:

@@ -2,7 +2,7 @@
 type: story
 id: st-v054-charts-03
 title: "feat(views+e2e): chart fragment route + Playwright suite"
-status: in-review
+status: done
 priority: high
 assignee: null
 labels:

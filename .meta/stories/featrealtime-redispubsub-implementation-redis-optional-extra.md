@@ -2,7 +2,7 @@
 type: story
 id: v4wIz4uDwDKp
 title: "feat(realtime): RedisPubSub implementation + [redis] optional extra"
-status: in-review
+status: done
 priority: medium
 assignee: null
 labels:

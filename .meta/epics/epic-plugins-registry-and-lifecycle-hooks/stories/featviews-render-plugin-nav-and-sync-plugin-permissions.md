@@ -2,7 +2,7 @@
 type: story
 id: yusamPwe9nTn
 title: "feat(views): render plugin nav entries in the sidebar and sync plugin permissions"
-status: in-review
+status: done
 priority: high
 assignee: null
 labels:

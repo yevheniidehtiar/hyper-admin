@@ -2,7 +2,7 @@
 type: story
 id: X0iESCETqvl-
 title: "feat(core): wire plugin discovery, pages, static and templates into Admin"
-status: in-review
+status: done
 priority: high
 assignee: null
 labels:

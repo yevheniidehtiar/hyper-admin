@@ -2,7 +2,7 @@
 type: story
 id: qLiduVMFCQew
 title: "feat(core): add Plugin protocol and PluginRegistry module"
-status: in-review
+status: done
 priority: high
 assignee: null
 labels:

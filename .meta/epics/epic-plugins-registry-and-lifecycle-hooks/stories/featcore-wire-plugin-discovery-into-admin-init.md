@@ -2,7 +2,7 @@
 type: story
 id: UExbEq_t2pV_
 title: "feat(core): wire plugin discovery into Admin.__init__"
-status: in-review
+status: done
 priority: high
 assignee: null
 labels:

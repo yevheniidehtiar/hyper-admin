@@ -2,7 +2,7 @@
 type: story
 id: l_CHWhc2Un-c
 title: "feat(core): plugin UI-seam registration API and typed settings"
-status: in-review
+status: done
 priority: high
 assignee: null
 labels:
