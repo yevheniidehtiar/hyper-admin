@@ -188,9 +188,9 @@ def test_h6_dependent_fk_autocomplete_and_popup(page: Page, full_demo_base_url: 
     # When she picks supplier 43 (Acme Packaging)
     page.get_by_test_id("autocomplete-select-supplier_id").select_option("43")
 
-    # Then the variant list holds only Red
+    # Then the variant list holds only Red (after the blank option)
     variants = page.get_by_test_id("autocomplete-select-variant_id")
-    expect(variants.locator("option")).to_have_text(["Red"])
+    expect(variants.locator("option")).to_have_text(["---------", "Red"])
 
     # When she creates a supplier from the "+" popup
     page.get_by_role("button", name="Add supplier").click()

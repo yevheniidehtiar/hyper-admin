@@ -95,7 +95,9 @@ def test_fk_field_renders_autocomplete_widget_by_default(
     with page.expect_request(_is_choices_request(SUPPLIER_CHOICES, "q=ac")) as request_info:
         search.fill("ac")
     assert request_info.value.method == "GET"
-    expect(select.locator("option")).to_have_count(2)
+    # And the two matches keep the blank option, so "no value" stays selectable
+    expect(select.locator("option")).to_have_count(3)
+    assert _option_labels(select)[0] == "---------"
 
 
 def test_dependent_fk_forwards_parent_via_hx_include(
@@ -125,8 +127,8 @@ def test_dependent_fk_forwards_parent_via_hx_include(
     expect(variant_search).to_be_enabled()
     variant_select = page.get_by_test_id("autocomplete-select-variant_id")
     expect(variant_select).to_be_enabled()
-    # The placeholder is also a single option, so wait for the swapped label itself.
-    expect(variant_select.locator("option")).to_have_text(["Blue"])
+    # The blank option is kept ahead of the swapped-in label.
+    expect(variant_select.locator("option")).to_have_text(["---------", "Blue"])
     # And the field says why it changed
     expect(page.get_by_text("Cleared because the supplier changed.")).to_be_visible()
 
@@ -253,8 +255,8 @@ def test_display_template_renders_custom_option_rows(
 
     # Then each matching row is rendered with the display template
     select = page.get_by_test_id("autocomplete-select-supplier_id")
-    expect(select.locator("option")).to_have_count(2)
-    assert _option_labels(select) == ["Acme — Paris", "Acme Packaging — Lyon"]
+    expect(select.locator("option")).to_have_count(3)
+    assert _option_labels(select) == ["---------", "Acme — Paris", "Acme Packaging — Lyon"]
     # And the clear button appears now that the input has text
     expect(page.get_by_role("button", name="Clear supplier")).to_be_visible()
 
