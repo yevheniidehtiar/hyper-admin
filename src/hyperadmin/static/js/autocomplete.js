@@ -191,11 +191,41 @@
     setStatus(parts(widget), widget.getAttribute("data-text-searching") || "Searching");
   });
 
+  // The choices fragment replaces every <option>; remember the chosen one so a search
+  // that no longer lists it does not silently change the submitted value.
+  document.addEventListener("htmx:beforeSwap", function (event) {
+    var select = event.target;
+    if (!select.hasAttribute || !select.hasAttribute("data-ha-autocomplete-select")) return;
+    var chosen = select.selectedOptions && select.selectedOptions[0];
+    select.haChosen =
+      chosen && chosen.value !== "" ? { value: chosen.value, label: chosen.textContent } : null;
+  });
+
   document.addEventListener("htmx:afterSwap", function (event) {
     var select = event.target;
     if (!select.closest || !select.hasAttribute("data-ha-autocomplete-select")) return;
     var widget = select.closest(WIDGET);
-    if (widget) announceResults(parts(widget));
+    if (!widget) return;
+    announceResults(parts(widget));
+    var chosen = select.haChosen;
+    select.haChosen = null;
+    if (select.multiple) return;
+    var found = null;
+    for (var i = 0; chosen && i < select.options.length; i++) {
+      if (select.options[i].value === chosen.value) found = select.options[i];
+    }
+    select.insertAdjacentHTML("afterbegin", BLANK_OPTION);
+    if (found) {
+      found.selected = true;
+    } else if (chosen) {
+      var kept = document.createElement("option");
+      kept.value = chosen.value;
+      kept.textContent = chosen.label;
+      kept.selected = true;
+      select.options[0].after(kept);
+    } else {
+      select.selectedIndex = 0;
+    }
   });
 
   document.addEventListener("hyperadminPopupCreated", function (event) {

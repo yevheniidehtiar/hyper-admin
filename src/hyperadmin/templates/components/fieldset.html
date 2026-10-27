@@ -20,7 +20,7 @@
     {%- if group.description -%}
     <p class="ha-fieldset-description" x-show="open">{{ group.description }}</p>
     {%- endif -%}
-    <div x-show="open" x-collapse class="{{ form.layout_css_class }}">
+    <div x-show="open" class="{{ form.layout_css_class }}">
         {%- for field in group.fields -%}
             {%- set widget = field.widget -%}
             {%- include field.widget.template_path -%}

@@ -20,11 +20,19 @@
                    aria-label="{{ form_field.label }}"
                    {%- if form_field.value %} checked{% endif -%}>
         {%- elif form_field and form_field.widget.template_path == 'widgets/select_input.html' -%}
-            {# Reuse select with pre-filled value via a minimal inline rendering #}
             <select id="inline-{{ field }}-{{ item_token }}"
                     name="{{ field }}"
                     class="ha-input ha-input-inline"
                     aria-label="{{ form_field.label }}">
+                {%- if form_field.widget.choices is defined and form_field.widget.choices -%}
+                    {%- for choice in form_field.widget.choices -%}
+                        <option value="{{- choice.value -}}" {%- if choice.selected or form_field.is_selected(choice.value) %} selected{% endif -%}>{{- choice.label -}}</option>
+                    {%- endfor -%}
+                {%- else -%}
+                    {%- for choice in form_field.model_field.annotation -%}
+                        <option value="{{- choice.value -}}" {%- if form_field.is_selected(choice.value) %} selected{% endif -%}>{{- choice.name -}}</option>
+                    {%- endfor -%}
+                {%- endif -%}
             </select>
         {%- elif form_field and form_field.widget.template_path == 'widgets/number_input.html' -%}
             <input id="inline-{{ field }}-{{ item_token }}"

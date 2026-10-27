@@ -10,6 +10,8 @@ See ``docs/specs/inline-cell-editing.md`` for the BDD scenarios.
 
 from __future__ import annotations
 
+import enum
+
 import anyio
 import pytest
 from fastapi import FastAPI
@@ -24,6 +26,11 @@ from hyperadmin.core.options import AdminOptions
 from hyperadmin.core.registry import site
 
 
+class WidgetKind(str, enum.Enum):
+    SMALL = "small"
+    LARGE = "large"
+
+
 class WidgetThing(SQLModel, table=True):
     __tablename__ = "test_widget_thing_inline"
     id: int | None = Field(default=None, primary_key=True)
@@ -31,11 +38,12 @@ class WidgetThing(SQLModel, table=True):
     description: str = ""
     price: float = 0.0
     is_active: bool = True
+    kind: WidgetKind = WidgetKind.SMALL
 
 
 class WidgetThingAdmin(ModelAdmin):
     adapter_class = SQLModelAdapter
-    list_editable = ["name", "is_active"]
+    list_editable = ["name", "is_active", "kind"]
 
 
 class ReadOnlyThing(SQLModel, table=True):
@@ -105,7 +113,7 @@ def test_modeladmin_class_attribute_is_merged_into_options() -> None:
     site._registry = {}
     site.register(WidgetThing, WidgetThingAdmin)
     admin_class = site._registry[WidgetThing]
-    assert admin_class.options.list_editable == ["name", "is_active"]
+    assert admin_class.options.list_editable == ["name", "is_active", "kind"]
 
 
 # ---------------------------------------------------------------------------
@@ -131,6 +139,23 @@ def test_inline_routes_absent_when_list_editable_empty() -> None:
 # ---------------------------------------------------------------------------
 # Views: GET inline edit form
 # ---------------------------------------------------------------------------
+
+
+def test_inline_editor_for_choice_field_lists_options_and_saves() -> None:
+    """
+    Scenario: inline-editing a choice field
+      Given a row whose ``kind`` is an enum cell
+      When  the editor opens
+      Then  the select lists every choice with the current one selected
+      And   saving a different choice succeeds
+    """
+    client = _make_client()
+    html = client.get("/admin/widgetthing/1/inline/kind").text
+    assert '<option value="small" selected>Small</option>' in html
+    assert 'value="large"' in html
+    saved = client.post("/admin/widgetthing/1/inline/kind", data={"kind": "large"})
+    assert saved.status_code == 200
+    assert "large" in saved.text.lower()
 
 
 def test_get_inline_edit_form_renders_editor_with_current_value() -> None:

@@ -8,6 +8,7 @@ from fastapi import Request
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.exc import SQLAlchemyError
 from sqlmodel import Field, SQLModel
+from starlette.datastructures import QueryParams
 
 from hyperadmin.core.adapters import BaseAdapter
 from hyperadmin.core.filtering import FilterCondition
@@ -351,7 +352,7 @@ async def test_list_view_with_filters(view_instance, mock_request, mock_template
     """Test list view with filter parameters (only list_filter fields are honoured)."""
     view_instance.options.list_filter = ["is_active", "color"]
     # Mock query params
-    mock_request.query_params = {"filter_is_active": "true", "filter_color": "red"}
+    mock_request.query_params = QueryParams({"filter_is_active": "true", "filter_color": "red"})
 
     # Mock the adapter
     mock_list = AsyncMock(return_value=([], 0))

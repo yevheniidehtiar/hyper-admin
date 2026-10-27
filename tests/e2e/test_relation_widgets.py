@@ -113,7 +113,7 @@ def test_city_autocomplete_search_filters_options(page: Page, demo_base_url: str
     # When the user types part of a country name
     page.get_by_test_id("autocomplete-country_id").fill("fra")
 
-    # Then only the matching country is offered
+    # Then only the matching country is offered, after the blank option
     options = page.get_by_test_id("autocomplete-select-country_id").locator("option")
-    expect(options).to_have_count(1)
-    expect(options.first).to_have_text("France")
+    expect(options).to_have_count(2)
+    expect(options.nth(1)).to_have_text("France")

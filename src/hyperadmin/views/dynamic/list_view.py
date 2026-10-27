@@ -166,7 +166,9 @@ class ListViewMixin(SavedViewsMixin):
                 fields.append(name)
         if not fields:
             return {}
-        metadata = await build_filter_metadata(self.model, fields, self.adapter)
+        metadata = await build_filter_metadata(
+            self.model, fields, self.adapter, self._applied_filter_values(request, fields)
+        )
         return {entry["name"]: entry["choices"] for entry in metadata}
 
     async def _filter_groups(

@@ -355,7 +355,18 @@ class DynamicModelViewBase:
             and f in allowed
             and await self._may_view_related(request, self._relation_target_for_field(f))
         ]
-        return await build_filter_metadata(self.model, fields, self.adapter)
+        return await build_filter_metadata(
+            self.model, fields, self.adapter, self._applied_filter_values(request, fields)
+        )
+
+    @staticmethod
+    def _applied_filter_values(request: Request, fields: list[str]) -> dict[str, list[str]]:
+        """Raw filter values in the query string, keyed by field (``filter_x`` and ``x__in``)."""
+        params = request.query_params
+        return {
+            f: [v for v in [*params.getlist(f"filter_{f}"), *params.getlist(f"{f}__in")] if v]
+            for f in fields
+        }
 
     @functools.cached_property
     def _sensitive_fields(self) -> frozenset[str]:

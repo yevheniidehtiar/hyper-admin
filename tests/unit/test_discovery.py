@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from sqlmodel import Field, Relationship, SQLModel
 
 from hyperadmin.adapters.sqlmodel import SQLModelAdapter
-from hyperadmin.core.discovery import build_filter_metadata
+from hyperadmin.core.discovery import FK_FILTER_CHOICE_LIMIT, build_filter_metadata
 
 # ---------------------------------------------------------------------------
 # Story scenario (st-v058-byoa-23)
@@ -87,3 +87,33 @@ async def test_fk_filter_skips_items_with_no_usable_pk_value(engine, monkeypatch
     metadata = await build_filter_metadata(DiscoveryProduct, ["category_id"], product_adapter)
 
     assert metadata[0]["choices"] == [{"value": str(category.id), "label": "Widgets"}]
+
+
+@pytest.mark.anyio
+async def test_fk_filter_is_capped_but_keeps_applied_selection(engine) -> None:
+    """
+    Scenario: FK filter on a large related table
+      Given more related rows than ``FK_FILTER_CHOICE_LIMIT``
+      When  filter metadata is built with one applied selection past the cap
+      Then  only the cap plus that selection is listed, not the whole table
+    """
+    category_adapter = SQLModelAdapter(DiscoveryCategory, engine)
+    ids = [uuid.uuid4() for _ in range(FK_FILTER_CHOICE_LIMIT + 20)]
+    for i, category_id in enumerate(ids):
+        await category_adapter.create({"id": category_id, "name": f"Cat {i:03d}"})
+    product_adapter = SQLModelAdapter(DiscoveryProduct, engine)
+
+    plain = await build_filter_metadata(DiscoveryProduct, ["category_id"], product_adapter)
+    assert len(plain[0]["choices"]) == FK_FILTER_CHOICE_LIMIT
+
+    listed = {c["value"] for c in plain[0]["choices"]}
+    outside = next(str(i) for i in ids if str(i) not in listed)
+    picked = await build_filter_metadata(
+        DiscoveryProduct,
+        ["category_id"],
+        product_adapter,
+        {"category_id": [outside, next(iter(listed)), str(uuid.uuid4())]},
+    )
+    values = [c["value"] for c in picked[0]["choices"]]
+    assert len(values) == FK_FILTER_CHOICE_LIMIT + 1
+    assert outside in values
