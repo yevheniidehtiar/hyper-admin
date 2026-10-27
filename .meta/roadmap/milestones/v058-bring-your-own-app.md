@@ -2,7 +2,7 @@
 type: milestone
 id: v058-byoa-01
 title: "v0.5.8 — Bring Your Own App (dogfood-1)"
-status: todo
+status: in_progress
 created_at: 2026-09-28T00:00:00Z
 updated_at: 2026-09-28T00:00:00Z
 ---

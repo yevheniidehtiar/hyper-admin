@@ -2,7 +2,7 @@
 type: epic
 id: ep-v058-byoa-01
 title: "epic(core): Bring Your Own App — mount into an existing FastAPI app without taking over"
-status: todo
+status: in_progress
 priority: critical
 owner: null
 labels:
