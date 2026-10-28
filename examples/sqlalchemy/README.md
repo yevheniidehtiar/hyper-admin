@@ -23,4 +23,4 @@ The first run creates `sqlalchemy_app.db` in the working directory; delete it to
 | Nullable string | Projects -> `note` (optional) |
 | FK relation | Projects -> `org_id` select |
 | `server_default` timestamp | `created_at`, filled by the database |
-| Sensitive column | Orgs -> `api_token` (masked on detail, write-only in forms) |
+| Sensitive column | Orgs -> `api_token` (hidden on detail, write-only in forms) |
