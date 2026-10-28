@@ -578,7 +578,12 @@ class PydanticForm:
     @staticmethod
     def _is_auto_now_field(field: FieldInfo) -> bool:
         if isinstance(field, FieldInfo):
-            sa_column_kwargs = getattr(field, "sa_column_kwargs", None)
+            # SQLModel keeps the column kwargs on the FieldInfo; schemas generated for plain
+            # SQLAlchemy models carry the same hint in json_schema_extra.
+            extra = field.json_schema_extra if isinstance(field.json_schema_extra, dict) else {}
+            sa_column_kwargs = getattr(field, "sa_column_kwargs", None) or extra.get(
+                "sa_column_kwargs"
+            )
             if (
                 sa_column_kwargs
                 and isinstance(sa_column_kwargs, dict)
