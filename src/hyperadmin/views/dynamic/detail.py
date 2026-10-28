@@ -9,6 +9,7 @@ from starlette.responses import Response, StreamingResponse
 
 from hyperadmin.core.display import get_display_name
 from hyperadmin.core.panels import PanelDef, panel_permission_codename
+from hyperadmin.core.schema import dump_instance
 from hyperadmin.views.dynamic.files import FileViewMixin
 from hyperadmin.views.dynamic.helpers import (
     _as_attachment,
@@ -36,7 +37,7 @@ class DetailViewMixin(FileViewMixin):
         await self._check_object_permission(request, item, "view")
 
         file_fields = self._get_file_fields()
-        item_data = self._without_sensitive(item.model_dump())
+        item_data = self._without_sensitive(dump_instance(item))
         for fname in file_fields - self._sensitive_fields:
             val = getattr(item, fname, None)
             if val is not None:

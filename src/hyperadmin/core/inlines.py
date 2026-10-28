@@ -5,6 +5,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from hyperadmin.core.schema import schema_for
+
 
 @dataclass(slots=True)
 class InlineModelSpec:
@@ -53,5 +55,5 @@ class InlineModelSpec:
         """
         if self.fields:
             return self.fields
-        model_fields = getattr(self.model, "model_fields", {})
+        model_fields = schema_for(self.model).model_fields
         return [name for name in model_fields if name not in (pk_attr, self.fk_field)]

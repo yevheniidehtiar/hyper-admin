@@ -19,6 +19,7 @@ from sqlalchemy import inspect as sa_inspect
 from sqlalchemy.sql.sqltypes import Text
 from sqlmodel import SQLModel
 
+from hyperadmin.core.schema import schema_for
 from hyperadmin.core.sensitive import sensitive_field_names
 
 if TYPE_CHECKING:
@@ -92,7 +93,7 @@ def get_field_metadata(model: type[SQLModel]) -> dict[str, FieldMeta]:
 
 def _get_python_type(model: type[SQLModel], field_name: str) -> type:
     """Resolve the Python type of a model field, unwrapping Optional."""
-    model_fields = getattr(model, "model_fields", {})
+    model_fields = schema_for(model).model_fields
     field_info = model_fields.get(field_name)
     if field_info is None:
         return object

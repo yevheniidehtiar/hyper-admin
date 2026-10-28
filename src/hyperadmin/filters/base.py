@@ -28,6 +28,7 @@ from urllib.parse import urlencode
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from hyperadmin.core.filtering import FILTER_PARAM_PREFIX, parse_filter_params
+from hyperadmin.core.schema import schema_for
 
 if TYPE_CHECKING:
     from hyperadmin.core.choices import ChoiceItem
@@ -227,8 +228,10 @@ class FilterDef(ABC):
         fail to coerce are dropped, like any other bad querystring input.
         """
         binding = binding or FilterBinding()
-        model_fields = getattr(binding.model, "model_fields", None)
-        declared = isinstance(model_fields, Mapping) and self.field in model_fields
+        try:
+            declared = self.field in schema_for(binding.model).model_fields
+        except TypeError:  # no model bound, or a class the registry has no schema for
+            declared = False
         raw_params = {
             f"{FILTER_PARAM_PREFIX}{self.field}{'__' + suffix if suffix else ''}": value
             for suffix, value in params.items()

@@ -28,6 +28,7 @@ from hyperadmin.core.options import AdminOptions
 from hyperadmin.core.panels import PanelDef, resolve_panels
 from hyperadmin.core.primary_key import InvalidPrimaryKey, PrimaryKeyInfo
 from hyperadmin.core.registry import site
+from hyperadmin.core.schema import dump_instance, schema_for
 from hyperadmin.core.sensitive import (
     is_sensitive,
     is_text_annotation,
@@ -223,7 +224,7 @@ class DynamicModelViewBase:
         owners = {name for name, rel in fk_to_rel.items() if rel == rel_name} | {rel_name}
         dependent_fields = getattr(self.options, "dependent_fields", None) or {}
         relation_filters = getattr(self.options, "relation_filters", None) or {}
-        model_fields = getattr(self.model, "model_fields", {})
+        model_fields = schema_for(self.model).model_fields
         keys: set[str] = set()
         for name in owners:
             if dependent_fields.get(name):
@@ -261,12 +262,11 @@ class DynamicModelViewBase:
 
     @staticmethod
     def _stored_values(item: Any) -> dict[str, Any]:
-        """The stored field values of ``item`` (``model_dump()``, else ``__dict__``)."""
-        initial_func = getattr(item, "model_dump", None)
-        return cast(
-            "dict[str, Any]",
-            initial_func() if callable(initial_func) else dict(getattr(item, "__dict__", {})),
-        )
+        """The stored field values of ``item`` (schema dump, else ``__dict__``)."""
+        try:
+            return dump_instance(item)
+        except TypeError:  # not a model the schema registry knows (e.g. a plain record)
+            return dict(getattr(item, "__dict__", {}))
 
     def _form_datetime_kwargs(self, request: Request) -> dict[str, Any]:
         """``PydanticForm`` datetime options: the request's display timezone and column kinds."""
@@ -386,7 +386,7 @@ class DynamicModelViewBase:
         select cannot, so these fields are left out of the edit form entirely
         and always keep their stored value on update.
         """
-        model_fields = self.model.model_fields
+        model_fields = schema_for(self.model).model_fields
         return sorted(
             name
             for name in self._sensitive_fields
@@ -401,7 +401,7 @@ class DynamicModelViewBase:
         """
         opaque = set(self._opaque_sensitive_fields)
         for name in self._sensitive_fields:
-            if name not in self.model.model_fields:
+            if name not in schema_for(self.model).model_fields:
                 continue
             if name in opaque or data.get(name) in (None, ""):
                 data[name] = getattr(existing, name, None)
@@ -412,7 +412,7 @@ class DynamicModelViewBase:
         Explicit :class:`FilterDef` entries read their own querystring keys
         (see :meth:`_explicit_filters`) and are not part of this set.
         """
-        model_fields = getattr(self.model, "model_fields", {})
+        model_fields = schema_for(self.model).model_fields
         return {
             f
             for f in (getattr(self.options, "list_filter", None) or [])
@@ -421,14 +421,14 @@ class DynamicModelViewBase:
 
     def _sortable_fields(self) -> set[str]:
         """Fields ``sort_by`` may target: displayed, real, non-sensitive model fields."""
-        model_fields = getattr(self.model, "model_fields", {})
+        model_fields = schema_for(self.model).model_fields
         return {
             f for f in self.column_list if f in model_fields and f not in self._sensitive_fields
         }
 
     def _default_sort_field(self) -> str:
         """The first non-sensitive model field (the pk attribute when there is none)."""
-        model_fields = getattr(self.model, "model_fields", {})
+        model_fields = schema_for(self.model).model_fields
         return next((f for f in model_fields if f not in self._sensitive_fields), self.pk.attr)
 
     def _get_file_fields(self) -> set[str]:
@@ -436,7 +436,7 @@ class DynamicModelViewBase:
         from hyperadmin.core.uploads import FileFieldMeta  # noqa: PLC0415
 
         result: set[str] = set()
-        for name, fi in self.model.model_fields.items():
+        for name, fi in schema_for(self.model).model_fields.items():
             meta = classify_field(fi, self.model)
             if isinstance(meta, FileFieldMeta):
                 result.add(name)
@@ -447,7 +447,7 @@ class DynamicModelViewBase:
         from hyperadmin.core.uploads import FileFieldMeta  # noqa: PLC0415
 
         result: set[str] = set()
-        for name, fi in self.model.model_fields.items():
+        for name, fi in schema_for(self.model).model_fields.items():
             meta = classify_field(fi, self.model)
             if isinstance(meta, FileFieldMeta) and meta.is_image:
                 result.add(name)
