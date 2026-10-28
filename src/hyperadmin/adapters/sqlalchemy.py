@@ -76,7 +76,7 @@ class SQLAlchemyAdapter(BaseAdapter):
                 conditions.append(getattr(self.model, key) == value)
             query = select(self.model).where(and_(*conditions))
             result = await session.execute(query)
-            return result.scalar_one_or_none()
+            return result.unique().scalar_one_or_none()
 
     async def list(
         self,
@@ -137,7 +137,7 @@ class SQLAlchemyAdapter(BaseAdapter):
             total_count = total_count_result.scalar_one()
 
             items_result = await session.execute(paginated_items_query)
-            items = items_result.scalars().all()
+            items = items_result.unique().scalars().all()
 
             return list(items), total_count
 
@@ -210,7 +210,7 @@ class SQLAlchemyAdapter(BaseAdapter):
             for key, value in queryset_filters.items():
                 query = query.where(getattr(self.model, key) == value)
             result = await session.execute(query)
-            db_obj = result.scalar_one_or_none()
+            db_obj = result.unique().scalar_one_or_none()
 
             if not db_obj:
                 return []
@@ -291,7 +291,7 @@ class SQLAlchemyAdapter(BaseAdapter):
 
             query = query.offset(offset).limit(limit)
             result = await session.execute(query)
-            items = result.scalars().all()
+            items = result.unique().scalars().all()
 
         return [
             ChoiceItem(

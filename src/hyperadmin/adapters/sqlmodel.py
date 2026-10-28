@@ -86,7 +86,7 @@ class SQLModelAdapter(BaseAdapter):
             for key, value in queryset_filters.items():
                 query = query.where(getattr(self.model, key) == value)
             result = await session.execute(query)
-            return result.scalar_one_or_none()
+            return result.unique().scalar_one_or_none()
 
     async def list(
         self,
@@ -161,7 +161,7 @@ class SQLModelAdapter(BaseAdapter):
 
             # Get the rows
             results = await session.execute(query)
-            return list(results.scalars().all()), total_count
+            return list(results.unique().scalars().all()), total_count
 
     def _detect_search_fields(self) -> builtins.list[str]:
         """Detect non-sensitive string columns on the model for search fallback."""
@@ -261,7 +261,7 @@ class SQLModelAdapter(BaseAdapter):
             for key, value in queryset_filters.items():
                 query = query.where(getattr(self.model, key) == value)
             result = await session.execute(query)
-            db_obj = result.scalar_one_or_none()
+            db_obj = result.unique().scalar_one_or_none()
             if db_obj:
                 return getattr(db_obj, field)
             return []
@@ -334,7 +334,7 @@ class SQLModelAdapter(BaseAdapter):
 
             query = query.offset(offset).limit(limit)
             result = await session.execute(query)
-            items = result.scalars().all()
+            items = result.unique().scalars().all()
 
         return [
             ChoiceItem(
