@@ -2,8 +2,10 @@ from sqlalchemy.orm import DeclarativeBase, DeclarativeBaseNoMeta, DeclarativeMe
 from sqlmodel import SQLModel
 
 from hyperadmin.adapters.registry import adapter_registry
+from hyperadmin.adapters.schema import build_sqlalchemy_schema, is_sqlalchemy_mapped
 from hyperadmin.adapters.sqlalchemy import SQLAlchemyAdapter
 from hyperadmin.adapters.sqlmodel import SQLModelAdapter
+from hyperadmin.core.schema import schema_registry
 
 # Primary-key / datetime-kind introspection (hyperadmin.adapters.introspection) is
 # consumed through BaseAdapter.pk / BaseAdapter.datetime_kind() per the SDD, not
@@ -21,3 +23,6 @@ adapter_registry.register(SQLModel, SQLModelAdapter)
 adapter_registry.register(DeclarativeBase, SQLAlchemyAdapter)
 adapter_registry.register(DeclarativeBaseNoMeta, SQLAlchemyAdapter)
 adapter_registry.register(DeclarativeMeta, SQLAlchemyAdapter)
+
+# Plain SQLAlchemy models have no ``model_fields``; their schema is built from the mapper.
+schema_registry.register(is_sqlalchemy_mapped, build_sqlalchemy_schema)
