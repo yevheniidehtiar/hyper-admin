@@ -16,6 +16,7 @@ from pydantic.fields import FieldInfo
 from hyperadmin.core.choices import ChoiceItem
 from hyperadmin.core.display import get_enum_label
 from hyperadmin.core.primary_key import DEFAULT_PK, InvalidPrimaryKey, PrimaryKeyInfo
+from hyperadmin.core.schema import dump_instance, schema_for
 from hyperadmin.core.sensitive import effective_sensitive_field_names
 from hyperadmin.core.timezones import (
     annotation_datetime_kind,
@@ -597,14 +598,14 @@ class PydanticForm:
         """
         return frozenset(
             name
-            for name, field in self.model.model_fields.items()
+            for name, field in schema_for(self.model).model_fields.items()
             if self._is_auto_now_field(field)
         )
 
     def _build_all_fields(self) -> dict[str, FormField]:
         """Build all eligible form fields as a name->FormField mapping."""
         field_map: dict[str, FormField] = {}
-        for name, field in self.model.model_fields.items():
+        for name, field in schema_for(self.model).model_fields.items():
             if self.include and name not in self.include:
                 continue
             if name in self.exclude:
@@ -734,7 +735,7 @@ class PydanticForm:
         instance: BaseModel | None = None
         errs: dict[str, ErrorList] = {}
         try:
-            instance = self.model.model_validate(cleaned_data)
+            instance = schema_for(self.model).model_validate(cleaned_data)
         except ValidationError as e:
             for error in e.errors():
                 loc = error["loc"][0]
@@ -835,7 +836,7 @@ class InlineFormset:
     @property
     def field_labels(self) -> list[str]:
         """Return human-readable labels for each display field."""
-        model_fields = getattr(self.spec.model, "model_fields", {})
+        model_fields = schema_for(self.spec.model).model_fields
         labels = []
         for name in self.display_fields:
             fi = model_fields.get(name)
@@ -855,7 +856,7 @@ class InlineFormset:
         self, index: int, values: dict[str, Any] | None = None, pk: Any = None
     ) -> InlineFormRow:
         """Build a single ``InlineFormRow`` for the given index."""
-        model_fields = getattr(self.spec.model, "model_fields", {})
+        model_fields = schema_for(self.spec.model).model_fields
         vals = values or {}
         sensitive = self.sensitive_fields
         fields: list[FormField] = []
@@ -884,7 +885,7 @@ class InlineFormset:
         """Populate rows from existing related model instances."""
         self.rows = []
         for i, inst in enumerate(instances):
-            vals = inst.model_dump() if hasattr(inst, "model_dump") else {}
+            vals = dump_instance(inst)
             pk = self.pk.value_of(inst)
             self.rows.append(self._build_row(i, values=vals, pk=pk))
         # Add extra empty rows
@@ -968,14 +969,14 @@ class InlineFormset:
                 data[self.spec.fk_field] = parent_pk
 
             # Clean empty strings to None for optional fields
-            model_fields = getattr(self.spec.model, "model_fields", {})
+            model_fields = schema_for(self.spec.model).model_fields
             for field_name, val in list(data.items()):
                 fi = model_fields.get(field_name)
                 if fi and not fi.is_required() and val == "":
                     data[field_name] = None
 
             try:
-                instance = self.spec.model.model_validate(data)
+                instance = schema_for(self.spec.model).model_validate(data)
                 result = instance.model_dump()
                 if "_pk" in row:
                     result["_pk"] = row["_pk"]

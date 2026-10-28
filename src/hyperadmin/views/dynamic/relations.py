@@ -13,6 +13,7 @@ from hyperadmin.core.choices import ChoiceItem, SelectFieldMeta
 from hyperadmin.core.display import get_display_name
 from hyperadmin.core.fields import classify_field
 from hyperadmin.core.registry import site
+from hyperadmin.core.schema import schema_for
 from hyperadmin.views.dynamic.form_data import FormDataMixin
 from hyperadmin.views.dynamic.helpers import (
     _MAX_CHOICES_LIMIT,
@@ -58,7 +59,7 @@ class RelationViewMixin(FormDataMixin):
         # for get_choices() and the HTMX URL.
         fk_to_rel = self._fk_to_relation()
 
-        for name, field_info in self.model.model_fields.items():
+        for name, field_info in schema_for(self.model).model_fields.items():
             if field_names and name not in field_names:
                 continue
             raw_meta = classify_field(field_info, self.model)
@@ -270,7 +271,10 @@ class RelationViewMixin(FormDataMixin):
                 return get_display_name(instance)
         try:
             return template.format(
-                **{name: getattr(instance, name, "") for name in instance.model_fields}
+                **{
+                    name: getattr(instance, name, "")
+                    for name in schema_for(type(instance)).model_fields
+                }
             )
         except Exception:
             logger.warning(

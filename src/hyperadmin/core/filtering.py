@@ -31,6 +31,7 @@ from typing import Annotated, Any, Literal, Union, get_args, get_origin
 
 from pydantic import AwareDatetime, NaiveDatetime
 
+from hyperadmin.core.schema import schema_for
 from hyperadmin.core.timezones import DateTimeKind, parse_datetime_input
 
 logger = logging.getLogger(__name__)
@@ -373,7 +374,10 @@ def parse_filter_params(
         The conditions, the active raw values and per-field error messages. A
         value that cannot be coerced drops its condition and records an error.
     """
-    model_fields = getattr(model, "model_fields", None)
+    try:
+        model_fields: Mapping[str, Any] | None = schema_for(model).model_fields
+    except TypeError:  # no model, or a class the registry has no schema for
+        model_fields = None
     result = ParsedFilters()
     for (name, op), raws in _collect_raw_values(params, set(allowed), frozenset(ops)).items():
         if not raws:

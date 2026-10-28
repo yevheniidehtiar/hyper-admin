@@ -5,6 +5,7 @@ from typing import Any, Union, get_args, get_origin
 from sqlalchemy import inspect as sa_inspect
 
 from hyperadmin.core.display import get_display_name, get_enum_label
+from hyperadmin.core.schema import schema_for
 
 logger = logging.getLogger(__name__)
 
@@ -66,10 +67,11 @@ async def build_filter_metadata(
     """
     metadata = []
     for field_name in field_names:
-        if field_name not in model.model_fields:
+        model_fields = schema_for(model).model_fields
+        if field_name not in model_fields:
             continue
 
-        field = model.model_fields[field_name]
+        field = model_fields[field_name]
         label = getattr(field, "title", None) or field_name.replace("_", " ").title()
 
         ann = getattr(field, "annotation", None)

@@ -18,6 +18,7 @@ from hyperadmin.core.fieldsets import FieldsetSpec
 from hyperadmin.core.inlines import InlineModelSpec
 from hyperadmin.core.layouts import FormLayout
 from hyperadmin.core.panels import PanelDef
+from hyperadmin.core.schema import schema_for
 
 
 class RelationDependency(BaseModel):
@@ -287,7 +288,7 @@ class AdminOptions(BaseModel):
         if not self.relation_filters:
             return
 
-        field_names = set(getattr(model, "model_fields", {}).keys()) | {
+        field_names = set(schema_for(model).model_fields.keys()) | {
             attr for attr in dir(model) if not attr.startswith("_")
         }
         for child, dep in self.relation_filters.items():

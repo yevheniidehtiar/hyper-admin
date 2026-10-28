@@ -11,6 +11,7 @@ from hyperadmin.core.adapters import (
     scoped_queryset_filters,
 )
 from hyperadmin.core.primary_key import InvalidPrimaryKey
+from hyperadmin.core.schema import dump_instance, schema_for
 from hyperadmin.core.sensitive import (
     is_text_annotation,
 )
@@ -59,7 +60,7 @@ class InlineViewMixin(FormDataMixin):
         related = await self.adapter.get_related(pk=parent_pk, field=formset.spec.relationship_name)
         child_pk = self.adapter.for_model(formset.spec.model).pk
         by_pk = {child_pk.value_of(child): child for child in related or []}
-        model_fields = getattr(formset.spec.model, "model_fields", {})
+        model_fields = schema_for(formset.spec.model).model_fields
         for row in existing_rows:
             try:
                 child = by_pk.get(child_pk.parse(row["_pk"]))
@@ -178,7 +179,7 @@ class InlineViewMixin(FormDataMixin):
         """
         if field in self.pk.attrs:
             return False
-        if field not in self.model.model_fields:
+        if field not in schema_for(self.model).model_fields:
             return False
         return field in (self.options.list_editable or [])
 
@@ -256,7 +257,7 @@ class InlineViewMixin(FormDataMixin):
         # with the per-row update form. We seed it with the current row dump
         # and only override the edited field — ensures min_length/required etc.
         # apply identically.
-        current = item.model_dump() if hasattr(item, "model_dump") else dict(item.__dict__)
+        current = dump_instance(item)
         merged = dict(current)
         merged[field] = raw_value
 

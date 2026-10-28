@@ -7,6 +7,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, Any, Union, get_args, get_origin
 
 from hyperadmin.core.choices import SelectFieldMeta
+from hyperadmin.core.schema import schema_for
 from hyperadmin.core.uploads import FileFieldMeta
 
 
@@ -101,8 +102,7 @@ def classify_field(
 
 def _find_field_name(field_info: FieldInfo, model_cls: type) -> str | None:
     """Return the field name by identity-matching *field_info* in *model_cls.model_fields*."""
-    model_fields = getattr(model_cls, "model_fields", {})
-    for name, fi in model_fields.items():
+    for name, fi in schema_for(model_cls).model_fields.items():
         if fi is field_info:
             return name
     return None

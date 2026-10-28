@@ -20,12 +20,15 @@ This module is a pure utility: it MUST NOT import from ``views/``, ``auth/`` or
 
 from __future__ import annotations
 
+import contextlib
 import re
 import types
 from collections.abc import Callable, Iterator, Mapping
 from contextlib import contextmanager
 from contextvars import ContextVar
 from typing import Any, Union, get_args, get_origin
+
+from hyperadmin.core.schema import schema_for
 
 #: The JSON-schema-extra key that marks a field as sensitive (see module docstring).
 SENSITIVE_MARKER = "hyperadmin_sensitive"
@@ -85,7 +88,10 @@ def sensitive_field_names(model: Any, overrides: Mapping[str, bool] | None = Non
     Considers the model's Pydantic ``model_fields`` and, for ORM models, its
     mapped column keys (columns that are not exposed as Pydantic fields).
     """
-    fields: dict[str, Any] = dict(getattr(model, "model_fields", {}) or {})
+    fields: dict[str, Any] = {}
+    # An arbitrary class (e.g. a display-only record) has no schema to read.
+    with contextlib.suppress(TypeError):
+        fields.update(schema_for(model).model_fields)
     try:
         from sqlalchemy import inspect as sa_inspect  # noqa: PLC0415
 

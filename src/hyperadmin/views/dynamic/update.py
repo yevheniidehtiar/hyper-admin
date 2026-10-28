@@ -8,6 +8,7 @@ from sqlalchemy.exc import IntegrityError
 from starlette.responses import RedirectResponse, Response
 
 from hyperadmin.core.display import get_display_name
+from hyperadmin.core.schema import schema_for
 from hyperadmin.views.dynamic.helpers import (
     _integrity_error_to_field_errors,
     _request_scoped,
@@ -118,7 +119,7 @@ class UpdateViewMixin(RelationViewMixin, InlineViewMixin):
             "errors": errors or {},
             "inline_formsets": inline_formsets or [],
             # Legacy keys for compatibility
-            "fields": list(self.model.model_fields.keys()),
+            "fields": list(schema_for(self.model).model_fields.keys()),
         }
         template_name = self._get_template_name("update")
         return HtmxTemplateResponse(self.templates).render(
