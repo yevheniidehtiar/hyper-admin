@@ -22,6 +22,7 @@ from hyperadmin.core.filtering import (
     parse_filter_params,
 )
 from hyperadmin.core.filters_compat import LegacyFieldFilter, collect_filters
+from hyperadmin.core.schema import schema_for
 from hyperadmin.filters.base import FilterBinding, FilterDef, FilterRenderContext, clear_href
 from hyperadmin.filters.choice import MultiChoiceFilter
 from hyperadmin.filters.date import CurrentPeriodDefault
@@ -153,7 +154,7 @@ class ListViewMixin(SavedViewsMixin):
         self, request: Request, explicit: list[FilterDef]
     ) -> dict[str, Sequence[ChoiceItem]]:
         """Prefetched options keyed by field, for the explicit filters that list rows or values."""
-        model_fields = getattr(self.model, "model_fields", {})
+        model_fields = schema_for(self.model).model_fields
         fields: list[str] = []
         for filter_def in explicit:
             name = filter_def.field

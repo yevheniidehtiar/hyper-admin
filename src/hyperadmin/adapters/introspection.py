@@ -21,6 +21,7 @@ from sqlalchemy.types import TypeDecorator
 
 from hyperadmin.core.filtering import coerce_filter_value
 from hyperadmin.core.primary_key import PrimaryKeyInfo
+from hyperadmin.core.schema import schema_for
 
 if TYPE_CHECKING:
     from hyperadmin.core.timezones import DateTimeKind
@@ -43,8 +44,8 @@ def _unwrap_optional(annotation: Any) -> Any:
 
 
 def _model_field_annotation(model: Any, attr: str) -> Any:
-    model_fields = getattr(model, "model_fields", None)
-    if isinstance(model_fields, dict) and attr in model_fields:
+    model_fields = schema_for(model).model_fields
+    if attr in model_fields:
         return model_fields[attr].annotation
     return None
 
@@ -61,8 +62,8 @@ def _resolve_python_type(model: Any, attr: str, column: Any) -> type:
 
 
 def _has_non_none_default(model: Any, attr: str) -> bool:
-    model_fields = getattr(model, "model_fields", None)
-    if not isinstance(model_fields, dict) or attr not in model_fields:
+    model_fields = schema_for(model).model_fields
+    if attr not in model_fields:
         return False
     field_info = model_fields[attr]
     if getattr(field_info, "default_factory", None) is not None:

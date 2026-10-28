@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Protocol, cast
 
 from hyperadmin.core.primary_key import DEFAULT_PK, InvalidPrimaryKey, PrimaryKeyInfo
+from hyperadmin.core.schema import schema_for
 from hyperadmin.core.timezones import annotation_datetime_kind
 
 if TYPE_CHECKING:
@@ -242,8 +243,11 @@ class BaseAdapter(ABC):
         ``"aware"``, any other datetime is ``"naive"`` and non-datetime or unknown
         fields return ``None``. ORM adapters override this with column introspection.
         """
-        model_fields = getattr(self.model, "model_fields", None)
-        if not isinstance(model_fields, dict) or field not in model_fields:
+        try:
+            model_fields = schema_for(self.model).model_fields
+        except TypeError:  # a model class the schema registry does not know
+            return None
+        if field not in model_fields:
             return None
         return annotation_datetime_kind(model_fields[field].annotation)
 

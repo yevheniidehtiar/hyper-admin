@@ -18,6 +18,7 @@ from hyperadmin.core.display import get_display_name
 from hyperadmin.core.filtering import FilterCondition, normalize_filters
 from hyperadmin.core.inlines import InlineModelSpec
 from hyperadmin.core.primary_key import InvalidPrimaryKey
+from hyperadmin.core.schema import schema_for
 from hyperadmin.core.sensitive import effective_sensitive_field_names
 
 if TYPE_CHECKING:
@@ -142,7 +143,13 @@ class SQLAlchemyAdapter(BaseAdapter):
             return list(items), total_count
 
     async def create(self, data: dict[str, Any]) -> Any:
-        db_obj = self.model.model_validate(data)
+        # SQLModel validates through its own class; plain mapped classes take the data as is
+        # (the form already validated it against the generated schema).
+        db_obj = (
+            schema_for(self.model).model_validate(data)
+            if issubclass(self.model, SQLModel)
+            else self.model(**data)
+        )
         async with self._session() as session:
             session.add(db_obj)
             await session.commit()
