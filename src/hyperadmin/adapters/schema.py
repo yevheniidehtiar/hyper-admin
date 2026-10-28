@@ -13,7 +13,7 @@ from __future__ import annotations
 import inspect
 import logging
 import types
-from typing import Annotated, Any, Union, get_args, get_origin, get_type_hints
+from typing import Any, Union, get_args, get_origin, get_type_hints
 
 from pydantic import BaseModel, ConfigDict, Field, create_model
 from sqlalchemy import Column, ColumnDefault, Integer, String
@@ -56,8 +56,6 @@ def _mapped_hints(model: type) -> dict[str, Any]:
 def _strip_none(annotation: Any) -> Any:
     """Remove ``None`` from an optional union, leaving the other members."""
     origin = get_origin(annotation)
-    if origin is Annotated:
-        return _strip_none(get_args(annotation)[0])
     if origin is Union or origin is types.UnionType:
         members = tuple(arg for arg in get_args(annotation) if arg is not type(None))
         if len(members) == 1:

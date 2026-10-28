@@ -5,7 +5,7 @@ import logging
 import types
 import uuid
 from datetime import datetime
-from typing import Any, Union, get_args, get_origin
+from typing import Annotated, Any, Union, get_args, get_origin
 
 import pytest
 from pydantic import BaseModel, ValidationError
@@ -107,6 +107,7 @@ class Member(Base):
     org: Mapped[Org] = relationship(back_populates="members")
     full_name: Mapped[str] = mapped_column(String(30))
     both: Mapped[str | None] = mapped_column(String(5), nullable=False)
+    tagged: Mapped[Annotated[str, "tag"]] = mapped_column(String(5))
     union: Mapped[int | str] = mapped_column(Integer)
 
 
@@ -309,6 +310,16 @@ def test_nullable_decides_optionality_over_annotation(org_schema: type[BaseModel
     member = build_sqlalchemy_schema(Member)
     assert member.model_fields["both"].is_required()
     assert _ann(member, "both") is str
+
+
+def test_annotated_mapped_type_is_unwrapped() -> None:
+    """
+    Scenario: Annotated metadata inside Mapped[...] is stripped
+      Given Mapped[Annotated[str, "tag"]] over a NOT NULL column
+      When  the schema is built
+      Then  the annotation is str
+    """
+    assert _ann(build_sqlalchemy_schema(Member), "tagged") is str
 
 
 def test_union_annotation_preserved() -> None:
