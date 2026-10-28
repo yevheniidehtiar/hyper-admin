@@ -19,9 +19,13 @@ class AdapterRegistry:
 
     def find_adapter_for_model(self, model_class: Any) -> type[BaseAdapter]:
         """
-        Finds a suitable adapter for a given model class by checking its MRO.
+        Finds a suitable adapter for a given model class.
+
+        The model's MRO is checked first, then its metaclass's MRO: legacy
+        ``declarative_base()`` models only carry ``DeclarativeMeta`` as their
+        metaclass, never as a base class.
         """
-        for base in model_class.__mro__:
+        for base in (*model_class.__mro__, *type(model_class).__mro__):
             if base in self._registry:
                 return self._registry[base]
         raise AdapterNotFoundError(
