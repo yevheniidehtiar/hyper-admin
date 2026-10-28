@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Author | Claude Code |
-| Status | Draft |
+| Status | Approved |
 | Issue | #719 |
 | Milestone | — (dogfood epic #701) |
 | Created | 2026-10-28 |
@@ -272,12 +272,12 @@ with the suite as proof.
 
 ## Open Questions
 
-- [ ] **Public surface:** re-export `schema_for` / `SchemaRegistry` from `hyperadmin.core` (proposed),
-      or keep them internal until a third-party adapter needs them?
-- [ ] **Example app for P4:** add a plain-SQLAlchemy section to `examples/full-demo` (proposed), or a
-      new `examples/sqlalchemy/`?
-- [ ] **Read-only computed attributes:** confirm hybrids and `column_property` stay out of scope here
-      (proposed follow-up issue).
+- [x] **Public surface:** re-export `schema_for` / `SchemaRegistry` from `hyperadmin.core`.
+      Resolved: yes, and `schema_registry` too, so third-party adapters can register builders.
+- [x] **Example app for P4:** a new `examples/sqlalchemy/` app (#730), not a section of
+      `examples/full-demo`.
+- [x] **Read-only computed attributes:** hybrids and `column_property` stay out of scope here
+      (follow-up #731).
 
 ## Decision Log
 
@@ -289,3 +289,6 @@ with the suite as proof.
 | `Mapped[...]` annotation before `python_type` | Preserves enums and precise types behind `TypeDecorator`s (Polar `StringEnum`) | `python_type` only: loses enums, raises on many custom types |
 | Columns only, relationships excluded | Matches SQLModel `model_fields`; relation widgets already come from FK columns + mapper inspection | Synthesising relationship fields: diverges from SQLModel and doubles relation handling |
 | Regression guard as a source-scanning unit test | Cheap and explicit; stops the assumption creeping back | A ruff custom rule: no plugin infra for that today |
+| Re-export `schema_for`, `SchemaRegistry`, `schema_registry` from `hyperadmin.core` | Third-party adapters need the registry to plug in without a `core/` change (CONSTITUTION §5) | Keep internal until a third-party adapter asks |
+| P4 example is a new `examples/sqlalchemy/` app (#730) | Keeps the plain-SQLAlchemy demo isolated from the SQLModel full demo and its hotspot files | A section inside `examples/full-demo` |
+| Hybrids and `column_property` out of scope (#731) | Read-only computed attributes are a separate display concern; columns-only keeps this change small | Include them as read-only fields now |
