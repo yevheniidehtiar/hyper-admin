@@ -31,6 +31,7 @@ from hyperadmin.core.panels import (
     resolve_panels,
 )
 from hyperadmin.core.primary_key import DEFAULT_PK, InvalidPrimaryKey, PrimaryKeyInfo
+from hyperadmin.core.schema import SchemaRegistry, schema_for, schema_registry
 from hyperadmin.core.timezones import utc_now
 
 __all__ = [
@@ -54,6 +55,7 @@ __all__ = [
     "PaginationMeta",
     "PanelDef",
     "PrimaryKeyInfo",
+    "SchemaRegistry",
     "SelectFieldMeta",
     "action",
     "classify_field",
@@ -68,5 +70,7 @@ __all__ = [
     "panel",
     "panel_permission_codename",
     "resolve_panels",
+    "schema_for",
+    "schema_registry",
     "utc_now",
 ]
