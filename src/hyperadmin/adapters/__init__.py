@@ -1,4 +1,4 @@
-from sqlalchemy.orm import DeclarativeMeta
+from sqlalchemy.orm import DeclarativeBase, DeclarativeBaseNoMeta, DeclarativeMeta
 from sqlmodel import SQLModel
 
 from hyperadmin.adapters.registry import adapter_registry
@@ -16,4 +16,8 @@ __all__ = [
 ]
 
 adapter_registry.register(SQLModel, SQLModelAdapter)
+# SQLAlchemy 2.0 declarative bases are matched through the model's MRO; legacy
+# ``declarative_base()`` models through their ``DeclarativeMeta`` metaclass.
+adapter_registry.register(DeclarativeBase, SQLAlchemyAdapter)
+adapter_registry.register(DeclarativeBaseNoMeta, SQLAlchemyAdapter)
 adapter_registry.register(DeclarativeMeta, SQLAlchemyAdapter)
