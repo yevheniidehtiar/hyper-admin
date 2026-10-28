@@ -59,6 +59,9 @@ def test_csrf_injection_ships_with_enforcement(page: Page, object_perm_base_url:
     # Then the request carries X-CSRF-Token and succeeds
     assert response.request.headers.get("x-csrf-token")
     assert response.status == 200
+    # And the HX-Redirect to the list lands before the next navigation starts; going
+    # straight to the detail page races it and aborts with net::ERR_ABORTED on slow runners
+    expect(page).to_have_url(f"{object_perm_base_url}/admin/order")
     page.goto(f"{object_perm_base_url}/admin/order/20")
     expect(page.get_by_role("heading", name="bob-order-B (edited)")).to_be_visible()
 
