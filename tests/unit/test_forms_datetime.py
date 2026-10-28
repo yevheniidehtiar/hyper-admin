@@ -21,8 +21,9 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, NaiveDatetime
-from sqlalchemy import DateTime
+from sqlalchemy import DateTime, String, func
 from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlmodel import Field as SQLField
 from sqlmodel import SQLModel, select
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -485,6 +486,34 @@ def test_utc_now_hidden() -> None:
     assert "touched_at" not in names
     assert names == ["title"]
     assert form.auto_now_field_names == frozenset({"created_at", "touched_at"})
+
+
+class _SABase(DeclarativeBase):
+    pass
+
+
+class SAStamped(_SABase):
+    __tablename__ = "sa_stamped"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column(String(50))
+    created_at: Mapped[datetime] = mapped_column(server_default=func.now())
+    updated_at: Mapped[datetime | None] = mapped_column(onupdate=func.now())
+
+
+def test_server_stamped_sqlalchemy_columns_hidden() -> None:
+    """
+    Scenario: server-stamped columns of a plain SQLAlchemy model are hidden
+      Given a DeclarativeBase model with a server_default and an onupdate column
+      When  the form is built
+      Then  both columns are excluded, as for SQLModel sa_column_kwargs
+    """
+    # Given / When
+    form = PydanticForm(SAStamped)
+
+    # Then
+    assert [f.name for f in form.fields] == ["title"]
+    assert form.auto_now_field_names == frozenset({"created_at", "updated_at"})
 
 
 # ---------------------------------------------------------------------------
