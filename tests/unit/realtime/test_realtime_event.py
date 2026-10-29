@@ -8,7 +8,13 @@ from uuid import UUID
 
 import pytest
 
-from hyperadmin.realtime import InMemoryPubSub, PrimaryKey, RealtimeAction, RealtimeEvent
+from hyperadmin.realtime import (
+    InMemoryPubSub,
+    PrimaryKey,
+    RealtimeAction,
+    RealtimeEvent,
+    crud_channel,
+)
 
 ARTICLE_UUID = UUID("12345678-1234-5678-1234-567812345678")
 
@@ -25,6 +31,7 @@ def test_event_fields() -> None:
         "pk",
         "action",
         "html_fragment",
+        "actor_id",
     ]
     assert RealtimeEvent("article", 1, RealtimeAction.DELETED).html_fragment is None
 
@@ -48,6 +55,7 @@ def test_to_bytes_serialises_json_with_string_pk(pk: PrimaryKey, expected: str) 
         "pk": expected,
         "action": "updated",
         "html_fragment": "<tr>x</tr>",
+        "actor_id": None,
     }
 
 
@@ -91,3 +99,51 @@ async def test_event_travels_over_pubsub() -> None:
         received = RealtimeEvent.from_bytes(await anext(messages))
     assert received.pk == str(ARTICLE_UUID)
     assert received.html_fragment == "<tr></tr>"
+
+
+def test_actor_id_round_trips() -> None:
+    """
+    Scenario: actor_id survives serialisation
+      Given an event carrying actor_id "alice"
+      When  it is serialised and parsed back
+      Then  the parsed event has actor_id "alice"
+    """
+    event = RealtimeEvent("article", "1", RealtimeAction.UPDATED, actor_id="alice")
+    assert json.loads(event.to_bytes())["actor_id"] == "alice"
+    assert RealtimeEvent.from_bytes(event.to_bytes()).actor_id == "alice"
+
+
+def test_payload_without_actor_id_parses_to_none() -> None:
+    """
+    Scenario: an old payload without actor_id still parses
+      Given a payload produced before actor_id existed
+      When  it is parsed
+      Then  actor_id is None
+    """
+    payload = b'{"model_name": "a", "pk": "1", "action": "created", "html_fragment": null}'
+    assert RealtimeEvent.from_bytes(payload).actor_id is None
+    null_payload = b'{"model_name": "a", "pk": "1", "action": "created", "actor_id": null}'
+    assert RealtimeEvent.from_bytes(null_payload).actor_id is None
+
+
+def test_non_string_actor_id_is_rejected() -> None:
+    """
+    Scenario: a non-string actor_id is malformed
+      Given a payload whose actor_id is a number
+      When  it is parsed
+      Then  ValueError is raised
+    """
+    payload = b'{"model_name": "a", "pk": "1", "action": "created", "actor_id": 5}'
+    with pytest.raises(ValueError, match="actor_id"):
+        RealtimeEvent.from_bytes(payload)
+
+
+def test_crud_channel_lowercases_model_and_applies_prefix() -> None:
+    """
+    Scenario: the CRUD channel name is derived from the model
+      Given model "Article"
+      When  crud_channel is called with and without a prefix
+      Then  the default prefix is "hyperadmin:" and the model name is lowercased
+    """
+    assert crud_channel("Article") == "hyperadmin:crud:article"
+    assert crud_channel("Article", "app1:") == "app1:crud:article"
