@@ -174,6 +174,8 @@ class InMemoryTaskBackend:
 
     async def list_tasks(self, flt: TaskFilter, page: int, per_page: int) -> Page[TaskRecord]:
         """Return one page (1-based) of tasks matching ``flt``, newest first."""
+        if page < 1 or per_page < 1:
+            raise TasksBackendError(f"page and per_page must be >= 1, got {page} and {per_page}")
         matching = [
             t
             for t in self._ordered_tasks()

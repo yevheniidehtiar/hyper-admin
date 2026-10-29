@@ -72,7 +72,7 @@ repos:
       - id: mypy
         name: mypy
         entry: uv run mypy
-        args: [src, plugins/hyperadmin-reports/src]
+        args: [src, plugins/hyperadmin-reports/src, plugins/hyperadmin-tasks/src]
         language: system
         types: [python]
         pass_filenames: false
@@ -85,7 +85,7 @@ repos:
         pass_filenames: false
       - id: test-unit
         name: unit tests
-        entry: uv run pytest -vv -q -n auto --dist loadgroup tests/unit plugins/hyperadmin-reports/tests
+        entry: uv run pytest -vv -q -n auto --dist loadgroup tests/unit plugins/hyperadmin-reports/tests plugins/hyperadmin-tasks/tests
         language: system
         pass_filenames: false
         stages: [pre-push]
