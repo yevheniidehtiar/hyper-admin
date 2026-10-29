@@ -152,7 +152,9 @@ def build_sqlalchemy_schema(model: type) -> type[BaseModel]:
     )
     fields: dict[str, Any] = {}
     for prop in mapper.column_attrs:
-        if prop.key.startswith("_"):
+        # Deferred columns are declared "not loaded by default" (search vectors, blobs): reading
+        # them on a row whose session has closed raises DetachedInstanceError.
+        if prop.key.startswith("_") or prop.deferred:
             continue
         resolved = _column_for(prop)
         if resolved is None:

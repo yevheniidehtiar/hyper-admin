@@ -15,7 +15,7 @@ from typing import Any
 import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy import JSON, DateTime, Enum, ForeignKey, String, func, select
+from sqlalchemy import JSON, DateTime, Enum, ForeignKey, String, Text, func, select
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -111,6 +111,13 @@ class E2ERaw(Base):
     blob = mapped_column(OpaqueDecorator(), nullable=True)
 
 
+class E2EDocument(Base):
+    __tablename__ = "e2e_document"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    title: Mapped[str] = mapped_column(String(50))
+    search_text: Mapped[str | None] = mapped_column(Text, nullable=True, deferred=True)
+
+
 class E2ESqlModel(SQLModel, table=True):
     __tablename__ = "e2e_sqlmodel_row"
     id: int | None = Field(default=None, primary_key=True)
@@ -143,7 +150,7 @@ async def engine() -> AsyncIterator[AsyncEngine]:
 async def client(engine: AsyncEngine) -> AsyncIterator[AsyncClient]:
     app = FastAPI()
     admin = Admin(app=app, engine=engine, settings=HyperAdminSettings(create_tables=False))
-    for model in (E2EOrg, E2EProject, E2EAccount, E2ECard, E2ERaw):
+    for model in (E2EOrg, E2EProject, E2EAccount, E2ECard, E2ERaw, E2EDocument):
         site.register(model, _Admin)
     admin.mount(path="/admin")
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://testserver") as c:
@@ -422,3 +429,28 @@ async def test_fk_column_renders_a_relation_select_with_target_rows(
     choices = await client.get(choices_url.group(1), params={"q": "Acm"})
     assert choices.status_code == 200
     assert "Acme" in choices.text
+
+
+async def test_deferred_columns_are_left_out_of_list_and_edit(
+    client: AsyncClient, engine: AsyncEngine
+) -> None:
+    """
+    Scenario: deferred columns are left out of list and edit
+      Given a model whose search_text column is mapped with deferred=True and one row
+      When  its list page and edit form are requested
+      Then  both return 200 without loading search_text on the detached row
+      And   search_text is not offered as a column or a form field
+    """
+    # Given
+    await _add(engine, E2EDocument(title="Handbook", search_text="handbook"))
+
+    # When
+    listing = await client.get("/admin/e2edocument")
+    edit = await client.get("/admin/e2edocument/1/edit")
+
+    # Then
+    assert listing.status_code == 200
+    assert "Handbook" in listing.text
+    assert edit.status_code == 200
+    assert 'name="search_text"' not in edit.text
+    assert "search_text" not in schema_for(E2EDocument).model_fields

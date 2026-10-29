@@ -181,7 +181,10 @@ For each `ColumnProperty` in `inspect(model).column_attrs` that maps exactly one
 | Sensitive | Untouched. `core/sensitive.py` already inspects ORM columns by name |
 
 Excluded: relationships (FK columns stand in for them), `hybrid_property`, `column_property` over
-SQL expressions, composite/synonym attributes, deferred `column_property` with multiple columns.
+SQL expressions, composite/synonym attributes, deferred `column_property` with multiple columns,
+and deferred columns (`mapped_column(..., deferred=True)`, e.g. Polar's `TSVECTOR` search vectors):
+they are not loaded with the row, so reading them after the session closes raises
+`DetachedInstanceError` (found in the Polar re-run, #703).
 
 The generated class is `create_model(f"{model.__name__}Schema", __config__=ConfigDict(from_attributes=True, arbitrary_types_allowed=True), **fields)`.
 It is cached in a `WeakKeyDictionary` keyed by model class, so a test that re-declares a model doesn't
