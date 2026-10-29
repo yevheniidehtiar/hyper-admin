@@ -1,7 +1,7 @@
 """A column annotated with a SQLAlchemy type class still gets a Python field type (#772)."""
 
 import uuid
-from typing import Any
+from typing import Annotated, Any, ClassVar
 
 from sqlalchemy import CHAR, TypeDecorator
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
@@ -42,6 +42,27 @@ def test_column_annotated_with_a_type_decorator_uses_the_column_python_type() ->
 
     assert fields["id"].annotation is str
     assert fields["owner"].annotation == (str | None)
+
+
+class Gadget(_Base):
+    """Names a class that does not exist at runtime, as a TYPE_CHECKING-only import does."""
+
+    __tablename__ = "decorated_gadget"
+
+    id: Mapped[Annotated[Guid, mapped_column(info={"filterable": True})]] = mapped_column(
+        Guid, primary_key=True, default=uuid.uuid4
+    )
+    hint_only: ClassVar["MissingAtRuntime"]  # noqa: F821
+
+
+def test_type_decorator_annotation_survives_unresolvable_forward_references() -> None:
+    """
+    Scenario: the fallback hints keep Annotated wrappers around the SQLAlchemy type
+      Given a model whose hints cannot be resolved and whose id is Mapped[Annotated[Guid, ...]]
+      When  the schema is built
+      Then  the id field's annotation is str
+    """
+    assert build_sqlalchemy_schema(Gadget).model_fields["id"].annotation is str
 
 
 def test_primary_key_of_a_type_decorator_column_builds_a_type_adapter() -> None:
