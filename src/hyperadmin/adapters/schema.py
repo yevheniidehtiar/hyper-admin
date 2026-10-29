@@ -22,7 +22,7 @@ from sqlalchemy.inspection import inspect as sa_inspect
 from sqlalchemy.orm import ColumnProperty, Mapped, Mapper
 from sqlalchemy.sql.sqltypes import JSON
 from sqlalchemy.sql.sqltypes import Enum as SAEnum
-from sqlalchemy.types import TypeDecorator
+from sqlalchemy.types import TypeDecorator, TypeEngine
 
 logger = logging.getLogger(__name__)
 
@@ -76,12 +76,18 @@ def _is_optional(annotation: Any) -> bool:
     return (origin is Union or origin is types.UnionType) and type(None) in get_args(annotation)
 
 
+def _is_sa_type(annotation: Any) -> bool:
+    """Whether ``annotation`` is a SQLAlchemy type class such as a ``TypeDecorator``."""
+    return isinstance(annotation, type) and issubclass(annotation, TypeEngine)
+
+
 def _resolve_annotation(model: type, key: str, column: Column[Any], hints: dict[str, Any]) -> Any:
     """Pick the field annotation: ``Mapped[X]`` first, then the column's Python type."""
     hint = hints.get(key)
     if get_origin(hint) is Mapped:
         args = get_args(hint)
-        if args and not isinstance(args[0], str):
+        # ``Mapped[GUID]`` names a SQLAlchemy type, not a Python one: use the column's.
+        if args and not isinstance(args[0], str) and not _is_sa_type(_strip_none(args[0])):
             return _strip_none(args[0])
     sa_type = column.type
     if isinstance(sa_type, JSON):
