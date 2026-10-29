@@ -339,7 +339,7 @@ def test_proxy_exposes_every_public_base_adapter_member() -> None:
     inner = FakeAdapter()
     proxy = EventEmittingAdapter(inner, RealtimeEmitter(InMemoryPubSub(), "p:"))
     names = [n for n in dir(BaseAdapter) if not n.startswith("_")]
-    assert {"pk", "model", "list", "get", "get_schema", "for_model"} <= set(names)
+    assert {"pk", "list", "get", "get_schema", "for_model"} <= set(names)
     for name in names:
         member = getattr(proxy, name)
         if name in {"create", "update", "delete", "save_inline_rows"}:

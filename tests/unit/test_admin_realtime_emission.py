@@ -103,7 +103,11 @@ def test_mount_collects_notification_models() -> None:
       Then  only the opted-in lowercased model name is tracked
     """
     site.register(AwNote, _Admin, options=AdminOptions())
-    site.register(AwQuiet, _Admin, options=AdminOptions(realtime_notifications=False))
+    site.register(
+        AwQuiet,
+        type("_QuietAdmin", (_Admin,), {}),
+        options=AdminOptions(realtime_notifications=False),
+    )
     admin = _admin(RealtimeSettings(pubsub=InMemoryPubSub()))
     admin.mount("/admin")
     assert admin._notification_models == {"awnote"}

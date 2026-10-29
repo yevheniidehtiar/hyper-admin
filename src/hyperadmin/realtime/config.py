@@ -4,8 +4,11 @@ from __future__ import annotations
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from hyperadmin.realtime.events import DEFAULT_CHANNEL_PREFIX
 from hyperadmin.realtime.presence import DEFAULT_PRESENCE_TTL, InMemoryPresence, PresenceBackend
 from hyperadmin.realtime.presence_redis import RedisPresence
+from hyperadmin.realtime.pubsub import InMemoryPubSub, PubSubBackend
+from hyperadmin.realtime.pubsub_redis import RedisPubSub
 
 
 class RealtimeSettings(BaseModel):
@@ -72,6 +75,45 @@ class RealtimeSettings(BaseModel):
             "this URL via ``RedisPresence`` (``[redis]`` extra)."
         ),
     )
+
+    pubsub: PubSubBackend | None = Field(
+        default=None,
+        description=(
+            "Pub/sub backend that fans CRUD events out to every worker. ``None`` "
+            "(default) resolves to the zero-config ``InMemoryPubSub``; pass a "
+            "``RedisPubSub`` (``[redis]`` extra) for multi-worker deployments."
+        ),
+    )
+    pubsub_redis_url: str | None = Field(
+        default=None,
+        description=(
+            "Convenience selector for multi-worker deployments: when set (and no "
+            "explicit ``pubsub`` backend is given) events travel over Redis at "
+            "this URL via ``RedisPubSub`` (``[redis]`` extra)."
+        ),
+    )
+    channel_prefix: str = Field(
+        default=DEFAULT_CHANNEL_PREFIX,
+        description=(
+            "Prefix of every CRUD pub/sub channel (``<prefix>crud:<model>``). Set "
+            "it to isolate several apps sharing one Redis."
+        ),
+    )
+    notifications: bool = Field(
+        default=True,
+        description=(
+            "Default for emitting CRUD events from every model's write paths. "
+            "``AdminOptions.realtime_notifications`` overrides it per model."
+        ),
+    )
+
+    def resolve_pubsub(self) -> PubSubBackend:
+        """The configured ``pubsub`` backend, else Redis (when a URL is set), else in-memory."""
+        if self.pubsub is not None:
+            return self.pubsub
+        if self.pubsub_redis_url is not None:
+            return RedisPubSub(self.pubsub_redis_url)
+        return InMemoryPubSub()
 
     def resolve_presence(self) -> PresenceBackend:
         """The configured ``presence`` backend, else Redis (when a URL is set), else in-memory."""

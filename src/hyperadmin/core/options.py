@@ -245,6 +245,12 @@ class AdminOptions(BaseModel):
         )
         ```
     """
+    realtime_notifications: bool | None = None
+    """Per-model override for real-time CRUD notifications.
+
+    ``True`` / ``False`` override ``RealtimeSettings.notifications`` for this
+    model; ``None`` (default) follows it. Ignored when ``Admin(realtime=None)``.
+    """
 
     @field_validator("list_filter")
     @classmethod

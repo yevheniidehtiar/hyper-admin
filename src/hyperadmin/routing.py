@@ -16,12 +16,15 @@ from hyperadmin.core.actions import ActionDef, collect_actions
 from hyperadmin.core.display import get_field_label
 from hyperadmin.core.introspection import infer_list_display, infer_list_filter, infer_search_fields
 from hyperadmin.core.options import AdminOptions
+from hyperadmin.realtime.emitting import EventEmittingAdapter, notifications_enabled
 from hyperadmin.views.dynamic import DynamicModelView
 from hyperadmin.views.route import make_admin_route_class
 from hyperadmin.views.template_filters import register_template_filters
 
 if TYPE_CHECKING:
     from hyperadmin.core.adapters import SessionFactory
+    from hyperadmin.realtime.config import RealtimeSettings
+    from hyperadmin.realtime.emitting import RealtimeEmitter
 
 logger = logging.getLogger(__name__)
 
@@ -117,6 +120,8 @@ def create_admin_router(  # noqa: PLR0912, PLR0913, PLR0915, PLR0917
     route_class: type[APIRoute] = APIRoute,
     session_factory: "SessionFactory | None" = None,
     debug: bool = False,
+    realtime_emitter: "RealtimeEmitter | None" = None,
+    realtime_settings: "RealtimeSettings | None" = None,
 ) -> APIRouter:
     """Creates an APIRouter for a given model with the specified admin options."""
     router = APIRouter(route_class=route_class)
@@ -127,7 +132,15 @@ def create_admin_router(  # noqa: PLR0912, PLR0913, PLR0915, PLR0917
     adapter_kwargs: dict[str, Any] = {"engine": engine}
     if session_factory is not None:
         adapter_kwargs["session_factory"] = session_factory
-    adapter = admin_instance.adapter_class(model, **adapter_kwargs)
+    adapter: Any = admin_instance.adapter_class(model, **adapter_kwargs)
+    if realtime_emitter is None:
+        if options.realtime_notifications is True:
+            logger.info(
+                "%s sets realtime_notifications=True but realtime is disabled; ignoring",
+                model.__name__,
+            )
+    elif realtime_settings is not None and notifications_enabled(options, realtime_settings):
+        adapter = EventEmittingAdapter(adapter, realtime_emitter)
     pk = adapter.pk
 
     # Composite keys (BYOA SDD A.5 point 4): item-scoped routes are never
@@ -444,6 +457,8 @@ class HyperAdminRouter:
         *,
         debug: bool = False,
         route_class: type[APIRoute] | None = None,
+        realtime_emitter: "RealtimeEmitter | None" = None,
+        realtime_settings: "RealtimeSettings | None" = None,
     ):
         self.engine = engine
         self.debug = debug
@@ -453,6 +468,9 @@ class HyperAdminRouter:
         self.permission_checker = permission_checker
         self.storage = storage
         self.session_factory = session_factory
+        self.realtime_emitter = realtime_emitter
+        self.realtime_settings = realtime_settings
+        self.notification_models: set[str] = set()
         # Enable global whitespace trimming
         templates.env.trim_blocks = True
         templates.env.lstrip_blocks = True
@@ -530,8 +548,16 @@ class HyperAdminRouter:
                 route_class=route_class,
                 session_factory=self.session_factory,
                 debug=self.debug,
+                realtime_emitter=self.realtime_emitter,
+                realtime_settings=self.realtime_settings,
             )
             self.routers.append(router)
+            if (
+                self.realtime_emitter is not None
+                and self.realtime_settings is not None
+                and notifications_enabled(options, self.realtime_settings)
+            ):
+                self.notification_models.add(model.__name__.lower())
 
             model_name = model.__name__
             # Resolve nav label: prefer verbose_name_plural / verbose_name
