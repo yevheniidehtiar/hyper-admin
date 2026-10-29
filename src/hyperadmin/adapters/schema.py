@@ -10,6 +10,7 @@ plain ``DeclarativeBase`` model has no ``model_fields``, so this module generate
 
 from __future__ import annotations
 
+import importlib
 import inspect
 import logging
 import types
@@ -38,7 +39,13 @@ def _base_hints(base: type) -> dict[str, Any]:
     try:
         return get_type_hints(base, include_extras=False)
     except Exception:
-        raw = inspect.get_annotations(base)
+        try:
+            raw = inspect.get_annotations(base)
+        except NameError:
+            # Python 3.14 evaluates annotations lazily: a relationship typed with a class
+            # imported only under TYPE_CHECKING raises here instead of staying a string.
+            annotationlib = importlib.import_module("annotationlib")  # exists on 3.14 only
+            raw = annotationlib.get_annotations(base, format=annotationlib.Format.FORWARDREF)
         return {k: v for k, v in raw.items() if not isinstance(v, str)}
 
 
