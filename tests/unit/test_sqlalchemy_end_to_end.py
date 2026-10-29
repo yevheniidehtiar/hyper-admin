@@ -116,6 +116,7 @@ class E2EDocument(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     title: Mapped[str] = mapped_column(String(50))
     search_text: Mapped[str | None] = mapped_column(Text, nullable=True, deferred=True)
+    search_key: Mapped[str | None] = mapped_column(String(50), nullable=True, deferred=True)
 
 
 class E2ESqlModel(SQLModel, table=True):
@@ -436,13 +437,13 @@ async def test_deferred_columns_are_left_out_of_list_and_edit(
 ) -> None:
     """
     Scenario: deferred columns are left out of list and edit
-      Given a model whose search_text column is mapped with deferred=True and one row
+      Given a model with deferred Text and String columns and one row
       When  its list page and edit form are requested
       Then  both return 200 without loading search_text on the detached row
-      And   search_text is not offered as a column or a form field
+      And   neither column is offered as a list column, search field or form field
     """
     # Given
-    await _add(engine, E2EDocument(title="Handbook", search_text="handbook"))
+    await _add(engine, E2EDocument(title="Handbook", search_text="handbook", search_key="hb"))
 
     # When
     listing = await client.get("/admin/e2edocument")
@@ -454,3 +455,6 @@ async def test_deferred_columns_are_left_out_of_list_and_edit(
     assert edit.status_code == 200
     assert 'name="search_text"' not in edit.text
     assert "search_text" not in schema_for(E2EDocument).model_fields
+    assert 'name="search_key"' not in edit.text
+    assert "search_key" not in schema_for(E2EDocument).model_fields
+    assert (await client.get("/admin/e2edocument?q=hand")).status_code == 200
