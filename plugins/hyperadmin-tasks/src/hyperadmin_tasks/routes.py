@@ -9,11 +9,14 @@ auth every page is open, as model views are.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 from starlette.responses import Response  # noqa: TC002 - FastAPI resolves the return annotation
+
+if TYPE_CHECKING:
+    from hyperadmin_tasks.lifecycle import BackendLifecycle
 
 #: Permission to see the task pages.
 VIEW_PERMISSION = "view_tasks"
@@ -35,8 +38,11 @@ async def can_view(admin: Any, request: Request) -> bool:
     return user is not None and bool(await checker.has_permission(user, VIEW_PERMISSION))
 
 
-def build_router(admin: Any) -> APIRouter:
-    """The tasks page router; ``admin`` is read per request, so it may be half-built here."""
+def build_router(admin: Any, lifecycle: BackendLifecycle) -> APIRouter:
+    """The tasks page router; ``admin`` is read per request, so it may be half-built here.
+
+    Pages start the backend on first use through ``lifecycle``.
+    """
     router = APIRouter()
 
     @router.get("/", name="tasks-dashboard", response_class=HTMLResponse)
@@ -48,6 +54,7 @@ def build_router(admin: Any) -> APIRouter:
                 {"codename": VIEW_PERMISSION, "permission_name": "Can view tasks"},
                 status_code=403,
             )
+        await lifecycle.ensure_started()
         return admin.templates.TemplateResponse(request, "tasks/dashboard.html", {})
 
     return router
