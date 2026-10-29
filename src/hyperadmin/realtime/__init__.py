@@ -13,7 +13,13 @@ Subscribing to events / fan-out lives in the PubSub stories (see
 """
 
 from hyperadmin.realtime.config import RealtimeSettings
-from hyperadmin.realtime.events import PrimaryKey, RealtimeAction, RealtimeEvent
+from hyperadmin.realtime.events import (
+    DEFAULT_CHANNEL_PREFIX,
+    PrimaryKey,
+    RealtimeAction,
+    RealtimeEvent,
+    crud_channel,
+)
 from hyperadmin.realtime.presence import (
     DEFAULT_PRESENCE_TTL,
     InMemoryPresence,
@@ -26,6 +32,7 @@ from hyperadmin.realtime.pubsub import InMemoryPubSub, PubSubBackend
 from hyperadmin.realtime.registry import ConnectionRegistry, RealtimeConnection
 
 __all__ = [
+    "DEFAULT_CHANNEL_PREFIX",
     "DEFAULT_PRESENCE_TTL",
     "ConnectionRegistry",
     "InMemoryPresence",
@@ -39,5 +46,6 @@ __all__ = [
     "RealtimeConnection",
     "RealtimeEvent",
     "RealtimeSettings",
+    "crud_channel",
     "presence_channel",
 ]

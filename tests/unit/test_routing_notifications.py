@@ -129,7 +129,11 @@ def test_router_records_notification_models(tmp_path: Path) -> None:
       Then  notification_models holds only the lowercased opted-in model name
     """
     site.register(RnGadget, _Admin, options=AdminOptions())
-    site.register(RnSprocket, _Admin, options=AdminOptions(realtime_notifications=False))
+    site.register(
+        RnSprocket,
+        type("_SprocketAdmin", (_Admin,), {}),
+        options=AdminOptions(realtime_notifications=False),
+    )
     router = HyperAdminRouter(
         engine=create_async_engine("sqlite+aiosqlite://"),
         templates=Jinja2Templates(directory=str(tmp_path)),

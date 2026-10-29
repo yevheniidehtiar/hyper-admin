@@ -26,7 +26,8 @@ from hyperadmin.core.plugins import PluginRegistry
 from hyperadmin.core.settings import HyperAdminSettings
 from hyperadmin.core.storage_paths import storage_root
 from hyperadmin.discover import discover_admin_modules
-from hyperadmin.realtime import ConnectionRegistry, RealtimeSettings
+from hyperadmin.realtime import ConnectionRegistry, RealtimeEvent, RealtimeSettings
+from hyperadmin.realtime.emitting import RealtimeEmitter
 from hyperadmin.realtime.sse import make_sse_handler
 from hyperadmin.realtime.ws import make_ws_handler
 
@@ -164,6 +165,13 @@ class Admin:
         self._realtime_registry: ConnectionRegistry | None = (
             ConnectionRegistry() if realtime is not None else None
         )
+        self._realtime_pubsub = realtime.resolve_pubsub() if realtime is not None else None
+        self._realtime_emitter: RealtimeEmitter | None = (
+            RealtimeEmitter(self._realtime_pubsub, realtime.channel_prefix)
+            if realtime is not None and self._realtime_pubsub is not None
+            else None
+        )
+        self._notification_models: set[str] = set()
 
         self._validate_secret_key()
 
@@ -403,6 +411,20 @@ class Admin:
         """``Lifecycle``'s ``drain`` callable: a no-op when realtime is disabled."""
         if self._realtime_registry is not None:
             await self._realtime_registry.drain()
+        if self._realtime_emitter is not None:
+            await self._realtime_emitter.drain()
+        if self._realtime_pubsub is not None:
+            await self._realtime_pubsub.close()
+
+    def publish_event(self, event: RealtimeEvent) -> None:
+        """Publish a custom CRUD event; a no-op unless realtime and notifications are enabled."""
+        if (
+            self._realtime_emitter is None
+            or event.model_name.lower() not in self._notification_models
+        ):
+            logger.debug("Dropping realtime event for %s (not enabled)", event.model_name)
+            return
+        self._realtime_emitter.schedule(event)
 
     # ── Public lifecycle API (SDD C.2) ─────────────────────────────────────
 
@@ -473,8 +495,11 @@ class Admin:
             session_factory=self.session_factory,
             debug=self.settings.debug,
             route_class=self.router.route_class,
+            realtime_emitter=self._realtime_emitter,
+            realtime_settings=self.realtime,
         )
         admin_router.generate_routes()
+        self._notification_models = admin_router.notification_models
         routers = admin_router.get_routers()
         for router in routers:
             self.router.include_router(router)
@@ -736,7 +761,9 @@ class Admin:
 
             ws_auth = BridgeWebSocketAuth(self.auth)
         origin_allowed = make_websocket_origin_check(self.settings.csrf_trusted_origins)
-        ws_handler = make_ws_handler(registry, settings, ws_auth, origin_allowed)
+        ws_handler = make_ws_handler(
+            registry, settings, ws_auth, origin_allowed, pubsub=self._realtime_pubsub
+        )
         # On the admin router, so it lands under the prefix in both mount modes
         # (and inside the namespace in isolated mode).
         self.router.add_websocket_route("/realtime/ws", ws_handler, name="admin-realtime-ws")

@@ -17,7 +17,14 @@ from enum import Enum
 from typing import Union
 from uuid import UUID
 
+DEFAULT_CHANNEL_PREFIX = "hyperadmin:"
+
 PrimaryKey = Union[str, int, UUID]  # noqa: UP007 - runtime alias must work on Python 3.10
+
+
+def crud_channel(model_name: str, prefix: str = DEFAULT_CHANNEL_PREFIX) -> str:
+    """Pub/sub channel carrying CRUD events for ``model_name`` (lowercased)."""
+    return f"{prefix}crud:{model_name.lower()}"
 
 
 class RealtimeAction(str, Enum):
@@ -36,6 +43,7 @@ class RealtimeEvent:
     pk: PrimaryKey
     action: RealtimeAction
     html_fragment: str | None = None
+    actor_id: str | None = None
 
     def to_dict(self) -> dict[str, str | None]:
         """JSON-safe mapping; ``pk`` is stringified, ``action`` is its value."""
@@ -44,6 +52,7 @@ class RealtimeEvent:
             "pk": str(self.pk),
             "action": self.action.value,
             "html_fragment": self.html_fragment,
+            "actor_id": self.actor_id,
         }
 
     def to_bytes(self) -> bytes:
@@ -59,6 +68,10 @@ class RealtimeEvent:
         model_name = data.get("model_name")
         pk = data.get("pk")
         html_fragment = data.get("html_fragment")
+        actor_id = data.get("actor_id")
+        if actor_id is not None and not isinstance(actor_id, str):
+            msg = "RealtimeEvent 'actor_id' must be a string or null"
+            raise ValueError(msg)
         if not isinstance(model_name, str) or not model_name:
             msg = "RealtimeEvent payload needs a non-empty string 'model_name'"
             raise ValueError(msg)
@@ -73,6 +86,7 @@ class RealtimeEvent:
             pk=pk,
             action=RealtimeAction(data.get("action")),
             html_fragment=html_fragment,
+            actor_id=actor_id,
         )
 
     @classmethod
