@@ -1,0 +1,26 @@
+[build-system]  # https://docs.astral.sh/uv/concepts/projects/config/#build-systems
+requires = ["hatchling>=1.32.4"]
+build-backend = "hatchling.build"
+
+[project]  # https://packaging.python.org/en/latest/specifications/pyproject-toml/
+name = "hyperadmin-tasks"
+version = "0.1.0"
+description = "First-party HyperAdmin plugin: background task queue dashboard."
+readme = "README.md"
+authors = [
+  { name = "Yevhenii Dehtiar", email = "yevhenii.dehtiar@gmail.com" },
+]
+license = { text = "MIT" }
+requires-python = ">=3.11,<4.0"
+dependencies = [
+  "hyper-admin",
+]
+
+[project.entry-points."hyperadmin.plugins"]
+tasks = "hyperadmin_tasks.plugin:TasksPlugin"
+
+[tool.uv.sources]
+hyper-admin = { workspace = true }
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/hyperadmin_tasks"]

@@ -13,6 +13,7 @@ resolution-markers = [
 members = [
     "hyper-admin",
     "hyperadmin-reports",
+    "hyperadmin-tasks",
 ]
 
 [[package]]
@@ -2001,6 +2002,7 @@ s3 = [
 dev = [
     { name = "faker" },
     { name = "hyperadmin-reports" },
+    { name = "hyperadmin-tasks" },
 ]
 
 [package.metadata]
@@ -2072,6 +2074,7 @@ provides-extras = ["dev", "redis", "s3", "loadtest"]
 dev = [
     { name = "faker", specifier = ">=40.41.0" },
     { name = "hyperadmin-reports", editable = "plugins/hyperadmin-reports" },
+    { name = "hyperadmin-tasks", editable = "plugins/hyperadmin-tasks" },
 ]
 
 [[package]]
@@ -2088,6 +2091,17 @@ requires-dist = [
     { name = "hyper-admin", editable = "." },
     { name = "openpyxl", specifier = ">=3.1.2" },
 ]
+
+[[package]]
+name = "hyperadmin-tasks"
+version = "0.1.0"
+source = { editable = "plugins/hyperadmin-tasks" }
+dependencies = [
+    { name = "hyper-admin" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "hyper-admin", editable = "." }]
 
 [[package]]
 name = "identify"
