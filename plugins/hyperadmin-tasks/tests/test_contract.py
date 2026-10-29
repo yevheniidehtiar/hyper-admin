@@ -18,6 +18,7 @@ from hyperadmin_tasks.backend import (
     ScheduleRecord,
     TaskFilter,
     TaskRecord,
+    TasksBackendError,
     TaskState,
     WorkerRecord,
     require_capability,
@@ -62,6 +63,8 @@ class _StubBackend:
         ]
 
     async def list_tasks(self, flt: TaskFilter, page: int, per_page: int) -> Page[TaskRecord]:
+        if page < 1 or per_page < 1:
+            raise TasksBackendError("page and per_page must be >= 1")
         matching = [
             t
             for t in self._tasks.values()

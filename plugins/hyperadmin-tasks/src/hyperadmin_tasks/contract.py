@@ -255,6 +255,19 @@ class TaskBackendContract:
         page = await backend.list_tasks(TaskFilter(), 99, 4)
         assert page.items == []
 
+    @pytest.mark.parametrize(("page", "per_page"), [(0, 4), (-1, 4), (1, 0), (1, -5)])
+    async def test_invalid_pagination_is_rejected(
+        self, backend: TaskBackend, page: int, per_page: int
+    ) -> None:
+        """
+        Scenario: page and per_page below one are rejected
+          Given nine seeded tasks
+          When  list_tasks is called with page 0, page -1, per_page 0 or a negative per_page
+          Then  TasksBackendError is raised
+        """
+        with pytest.raises(TasksBackendError):
+            await backend.list_tasks(TaskFilter(), page, per_page)
+
     async def test_get_task_returns_task_with_attempts(self, backend: TaskBackend) -> None:
         """
         Scenario: task detail includes attempts
