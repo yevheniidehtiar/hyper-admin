@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Author | Claude Code |
-| Status | Draft |
+| Status | Approved |
 | Issue | #739 (epic `epic-plugin-tasks-foundation`) |
 | Milestone | v0.8.1 — Tasks plugin (pgtask, experimental) |
 | Created | 2026-10-29 |
@@ -211,8 +211,11 @@ docs and its version range is pinned to pgtask's minor version.
 
 ## Open Questions
 
-- [ ] Do the plugin seams expose an async startup/shutdown hook for opening and closing the
+- [x] Do the plugin seams expose an async startup/shutdown hook for opening and closing the
       adapter's pool? If not, a minimal `feat(core)` seam PR is needed (story T1.6, conditional).
+      Resolved 2026-10-29: no core seam. The plugin starts the backend lazily on first use from
+      its routes (`BackendLifecycle`) and ships `hyperadmin_tasks.lifespan(admin)` for hosts that
+      want eager start and a clean `backend.shutdown()`.
 - [ ] Are the pgtask administrator SQL functions for retry, cancel and queue pause public and stable?
       The docs name `put_schedule` but not the cancel and retry functions. If they aren't, call the
       Python client and pass the actor header.
@@ -229,5 +232,6 @@ docs and its version range is pinned to pgtask's minor version.
 | Thin `TaskBackend` port with pgtask as the first adapter | pgtask is pre-alpha; contain churn and allow other backends later | Bind directly to pgtask; ship multiple backends in v1 |
 | Admin-native UI instead of embedding `pgtask-web` | `pgtask-web` is a separate binary with proxy-header auth and cannot be mounted | Reverse-proxy `pgtask-web` under `/admin` |
 | Read via observer views, act via the administrator role | Least privilege and native audit trail | Single owner DSN |
+| Backend lifecycle owned by the plugin: lazy `startup()` on first route use plus `hyperadmin_tasks.lifespan(admin)` | Core has no async plugin startup seam and the owner asked to start without a core change | `feat(core)` async startup/shutdown seam PR first |
 | HTMX polling for refresh | No new infrastructure; matches existing patterns | SSE through the `realtime/` pubsub |
 | Integration and monitoring only | Keep core task-agnostic (CONSTITUTION §4, §7) | Offload core exports and bulk actions |

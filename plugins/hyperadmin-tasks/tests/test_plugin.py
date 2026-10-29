@@ -160,3 +160,21 @@ def test_dashboard_without_user_is_unauthorized(engine: AsyncEngine) -> None:
       Then  response is 401
     """
     assert _client(engine, bridge=True).get("/admin/tasks/").status_code == 401
+
+
+def test_dashboard_starts_backend_lazily(engine: AsyncEngine) -> None:
+    """
+    Scenario: the dashboard route starts the backend on first use
+      Given an admin whose tasks backend has not started
+      When  GET /admin/tasks/ is served
+      Then  the lifecycle reports the backend started
+    """
+    app = FastAPI()
+    admin = Admin(app, engine=engine, settings=HyperAdminSettings(secret_key="tasks-test-secret"))
+    admin.mount("/admin")
+    lifecycle = admin.plugins["tasks"].lifecycle  # type: ignore[attr-defined]
+    client = TestClient(app, follow_redirects=False)
+
+    assert not lifecycle.started
+    assert client.get("/admin/tasks/").status_code == 200
+    assert lifecycle.started

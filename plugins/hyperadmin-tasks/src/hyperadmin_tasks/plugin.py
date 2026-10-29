@@ -10,7 +10,10 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, ClassVar
 
+from hyperadmin_tasks.lifecycle import BackendLifecycle
 from hyperadmin_tasks.routes import VIEW_PERMISSION, build_router
+from hyperadmin_tasks.selection import select_backend
+from hyperadmin_tasks.settings import TasksSettings
 
 TEMPLATES_DIR = Path(__file__).parent / "templates"
 #: Admin-relative prefix of the task pages.
@@ -25,12 +28,22 @@ class TasksPlugin:
     """The ``tasks`` plugin: a background task queue dashboard for HyperAdmin."""
 
     name: ClassVar[str] = "tasks"
+    settings_model: ClassVar[type[TasksSettings]] = TasksSettings
+
+    #: Backend lifecycle routes and :func:`hyperadmin_tasks.lifespan` go through; set on register.
+    lifecycle: BackendLifecycle
 
     def on_register(self, admin: Any) -> None:
-        """Contribute templates, the dashboard page, the nav entry and permissions."""
+        """Build the backend, then contribute templates, the page, the nav entry, permissions.
+
+        Raises ``TasksBackendError`` when the configured backend cannot be built; the plugin
+        registry then logs it and skips the plugin.
+        """
         plugins = admin.plugins
+        settings: TasksSettings = plugins.settings(self.name) or TasksSettings()
+        self.lifecycle = BackendLifecycle(select_backend(settings))
         plugins.add_template_dir(self, TEMPLATES_DIR)
-        plugins.add_page(self, build_router(admin), prefix=PAGE_PREFIX)
+        plugins.add_page(self, build_router(admin, self.lifecycle), prefix=PAGE_PREFIX)
         plugins.add_nav_entry(
             self,
             label="Dashboard",
