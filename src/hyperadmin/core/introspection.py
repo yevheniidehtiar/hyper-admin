@@ -63,7 +63,12 @@ def get_field_metadata(model: type[SQLModel]) -> dict[str, FieldMeta]:
         # The mapped attribute key, not ``col.key`` (the Column object's own key,
         # which is the column/db name and can differ, e.g. a remapped
         # ``sa_column=Column("id", ...)`` field mapped under attribute ``id_``).
-        name = mapper.get_property_by_column(col).key
+        prop = mapper.get_property_by_column(col)
+        # Deferred columns are not loaded with the row; listing or searching them by default
+        # would read an unloaded attribute after the session closes.
+        if prop.deferred:
+            continue
+        name = prop.key
         ann = _get_python_type(model, name)
 
         is_pk = col.primary_key
