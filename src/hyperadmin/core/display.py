@@ -4,6 +4,7 @@ from enum import Enum
 from typing import Any
 
 from pydantic import BaseModel
+from sqlalchemy.exc import SQLAlchemyError
 from sqlmodel import SQLModel
 
 from hyperadmin.core.sensitive import effective_sensitive_field_names
@@ -140,10 +141,13 @@ def get_display_name(instance: Any, *, pk_attr: str = "id") -> str:
     for attr in ("name", "title", "label", "username", "email"):
         if attr in sensitive:
             continue
-        if hasattr(instance, attr):
-            val = getattr(instance, attr)
-            if val is not None and val != "":
-                return str(val)
+        try:
+            val = getattr(instance, attr, None)
+        except SQLAlchemyError:
+            # A lazy relationship of that name on a row whose session has closed.
+            continue
+        if val is not None and val != "":
+            return str(val)
 
     # Fallback to PK
     pk = getattr(instance, pk_attr, None)
