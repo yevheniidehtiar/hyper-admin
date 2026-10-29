@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING, Union, get_args, get_origin
 from typing import Any as _Any
 
 from sqlalchemy import inspect as sa_inspect
-from sqlalchemy.sql.sqltypes import Text
+from sqlalchemy.sql.sqltypes import JSON, Text
 from sqlmodel import SQLModel
 
 from hyperadmin.core.schema import schema_for
@@ -125,13 +125,13 @@ _LONG_TEXT_NAMES = {"bio", "description", "body", "content", "notes", "text", "s
 
 
 def _is_long_text(model: type[SQLModel], field_name: str) -> bool:
-    """Check if a column uses SQL Text type or has a long-text name."""
+    """Check if a column uses SQL Text or JSON type, or has a long-text name."""
     if field_name in _LONG_TEXT_NAMES:
         return True
     try:
         mapper: _Any = sa_inspect(model)
         col = mapper.columns.get(field_name)
-        if col is not None and isinstance(col.type, Text):
+        if col is not None and isinstance(col.type, Text | JSON):
             return True
     except Exception:
         return False

@@ -1,3 +1,4 @@
+import json
 import re
 from enum import Enum
 from typing import Any
@@ -150,3 +151,18 @@ def get_display_name(instance: Any, *, pk_attr: str = "id") -> str:
         return f"{cls.__name__} ({pk})"
 
     return f"{cls.__name__} object"
+
+
+def preview_structured(value: Any, limit: int = 80) -> Any:
+    """One-line preview of a dict or list for a list cell; any other value passes through.
+
+    A JSON column can hold a whole document (a chat transcript, a flow graph), and a list
+    cell printing it in full makes the page megabytes long. A list of enum members is left
+    for ``ha_display``, which renders it as labels.
+    """
+    if isinstance(value, list) and value and all(isinstance(v, Enum) for v in value):
+        return value
+    if not isinstance(value, dict | list):
+        return value
+    text = json.dumps(value, ensure_ascii=False, default=str, separators=(", ", ": "))
+    return text if len(text) <= limit else text[: limit - 1].rstrip() + "…"

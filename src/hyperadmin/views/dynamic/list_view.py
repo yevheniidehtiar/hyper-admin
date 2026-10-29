@@ -15,7 +15,7 @@ from starlette.responses import RedirectResponse
 
 from hyperadmin.core.choices import ChoiceItem
 from hyperadmin.core.discovery import build_filter_metadata
-from hyperadmin.core.display import get_display_name
+from hyperadmin.core.display import get_display_name, preview_structured
 from hyperadmin.core.filtering import (
     FilterCondition,
     ParsedFilters,
@@ -262,7 +262,7 @@ class ListViewMixin(SavedViewsMixin):
                     elif isinstance(val, BaseModel):
                         # A related row: never its default __str__ (prints secrets).
                         val = get_display_name(val)
-                    row[field] = val
+                    row[field] = preview_structured(val)
             row["_pk"] = self.pk.value_of(item)
             if request is not None:
                 row["_thumbs"] = self._thumbnail_urls(
