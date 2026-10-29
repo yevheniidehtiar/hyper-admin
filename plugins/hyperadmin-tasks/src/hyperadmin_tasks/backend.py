@@ -147,18 +147,22 @@ class TaskBackend(Protocol):
 
     async def list_queues(self) -> list[QueueStats]:
         """Return counters for every queue."""
+        raise NotImplementedError
 
     async def list_tasks(self, flt: TaskFilter, page: int, per_page: int) -> Page[TaskRecord]:
         """Return one page of tasks matching ``flt``."""
+        raise NotImplementedError
 
     async def get_task(self, task_id: str) -> tuple[TaskRecord, list[AttemptRecord]] | None:
         """Return a task with its attempts, or ``None`` when it does not exist."""
 
     async def list_workers(self) -> list[WorkerRecord]:
         """Return known workers (requires ``Capability.WORKERS``)."""
+        raise NotImplementedError
 
     async def list_schedules(self) -> list[ScheduleRecord]:
         """Return recurring schedules (requires ``Capability.SCHEDULES``)."""
+        raise NotImplementedError
 
     async def retry_task(self, task_id: str, *, actor: str) -> None:
         """Re-enqueue a failed task (requires ``Capability.RETRY``)."""
