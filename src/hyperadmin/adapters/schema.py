@@ -14,7 +14,7 @@ import importlib
 import inspect
 import logging
 import types
-from typing import Any, Union, get_args, get_origin, get_type_hints
+from typing import Annotated, Any, Union, get_args, get_origin, get_type_hints
 
 from pydantic import BaseModel, ConfigDict, Field, create_model
 from sqlalchemy import Column, ColumnDefault, Integer, String
@@ -87,8 +87,13 @@ def _resolve_annotation(model: type, key: str, column: Column[Any], hints: dict[
     if get_origin(hint) is Mapped:
         args = get_args(hint)
         # ``Mapped[GUID]`` names a SQLAlchemy type, not a Python one: use the column's.
-        if args and not isinstance(args[0], str) and not _is_sa_type(_strip_none(args[0])):
-            return _strip_none(args[0])
+        # The unresolved-hints fallback keeps ``Annotated[T, mapped_column(...)]`` wrapped;
+        # ``get_type_hints`` strips it.
+        inner = _strip_none(args[0]) if args else None
+        if get_origin(inner) is Annotated:
+            inner = _strip_none(get_args(inner)[0])
+        if args and not isinstance(args[0], str) and not _is_sa_type(inner):
+            return inner
     sa_type = column.type
     if isinstance(sa_type, JSON):
         return dict | list | Any
