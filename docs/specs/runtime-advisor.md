@@ -233,6 +233,24 @@ class Advisor:
 
 `AdminOptions.advisor_ignore: set[str] = set()` silences codes for one model.
 
+### Relationship to existing work
+
+The advisor **detects and explains**; the v0.7 epics **fix**. Neither depends on the other to ship, and a fix retires the matching advice.
+
+| Existing work | Milestone | Responsibility | Advisor interaction |
+|---|---|---|---|
+| #211 A1 configurable `selectinload` | v0.7.0a | Stops loading every relation on every list | HA-R040/R041 (relationship loading) are retired when A1 ships and the default changes |
+| #211 A2 `search_fields` | v0.7.0a (done in both adapters) | Lets the developer narrow search | HA-R004 recommends it today |
+| #211 A3 count cache + approximate count | v0.7.0a | Removes the repeated `count(*)` cost | HA-R002 (slow count) recommends `count_cache_ttl` / approximate count "when available", and is retired once the default makes the count cheap |
+| #213 `estimate_row_count()`, FK preload threshold, filter-metadata cache | v0.7.0a | Fixes slow filter and choice loading | HA-R050 (choices) points at the threshold option; retired once the default is safe |
+| Keyset cursor pagination | v0.7.0b | Removes the deep-`OFFSET` cost | HA-R003 recommends cursor mode "when available"; the warning is kept only for lists left in offset mode |
+| Locust load tests, synthetic data | v0.7.1 | Offline measurement before release | The advisor is the always-on runtime counterpart; the load tests can assert that no advisor warning fires on the seeded dataset |
+| Logfire plugin (RFC) | v0.8 | Tracing and dashboards | The advisor works alone; its `Advice` records can be forwarded to the plugin later |
+
+**Retirement rule.** Every diagnosis code lists the story that fixes its cause. When that story ships and its default makes the cause impossible (not merely opt-in), the same PR removes the code, its tests and its docs entry, so the advisor never reports a problem the framework has already solved. A code whose fix is opt-in stays, and its message names the option. Codes are never renumbered.
+
+**Delivery order.** The v0.7.0a fixes land first; the advisor ships against the codebase as it is then, so it never has to carry advice for a problem fixed in the same release.
+
 ## Edge Cases & Error Handling
 
 - **Never breaks a request.** The middleware, `observe` and the static checks catch every exception and log it at `DEBUG`. A failure to read a body chunk never alters the response.
@@ -270,4 +288,5 @@ Backward compatible; no migration. It adds one ASGI middleware, log lines and se
 | Static checks at mount, runtime checks lazily | Mount must not touch the database; some problems only show with real data volume | Probe row counts at mount (a count per model at startup is the problem we warn about) |
 | Standard logger `hyperadmin.advisor` | Works with existing log config and the logfire plugin; precedent in `routing.py` | Print to stdout; a custom hook system |
 | Dedupe per (model, code) per process | Avoids log spam on busy admins | Rate limit by time (more state, harder to test) |
+| Fix first, advise second; retire advice when the default fixes the cause (2026-10-30) | The advisor must not warn about problems the framework already solves; keeps the code list short | Keeping all codes forever (stale advice); building the advisor first (it would ship advice that is removed one release later) |
 | Budgets as settings | The right numbers differ by hardware and database | Hard-coded constants |
