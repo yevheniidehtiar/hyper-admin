@@ -1,4 +1,4 @@
-# SDD: Runtime Advisor (actionable performance warnings)
+# SDD: Runtime Advisor (per-view performance budgets with actionable warnings)
 
 | Field | Value |
 |---|---|
@@ -25,13 +25,16 @@ Scale tests on 1M and 10M-row tables (SQLite and Postgres) showed that the slow 
 
 Nothing tells the developer. The admin is simply slow, and the cause and the fix are found by profiling. The remedies are partly in place (`search_fields`) and partly planned (#211: count cache and cursor pagination; #213: `estimate_row_count()`), but a developer only turns them on if they know they need them.
 
+Typical healthy numbers from the same runs, at the default page size of 10: list pages were 15–120 ms and 38–80 KB; detail pages 3–10 ms. A tight budget separates healthy from unhealthy cleanly.
+
 ## Goals
 
-- Log **one actionable warning per (model, case)** the first time a problem is detected, naming the model, the measurement and the concrete fix.
-- Two detectors: **static** checks at mount (inspect models and mappers, no database access) and **runtime** checks (read timings the adapter already measures, no extra queries).
-- Zero cost when healthy; negligible cost always (two clock reads per list request).
+- Give each kind of view a **budget** (time, and for lists also response size). When a view exceeds its budget repeatedly, log **one actionable warning per (model, case)** naming the model, the measurement and the concrete fix.
+- On a breach, **diagnose** the cause from data the request already produced (count time, items time, offset, sort, search, response size) and recommend the matching fix.
+- Static checks at mount that need no traffic: inspect models and mappers, no database access.
+- Negligible cost always (clock reads, a body-length counter); no extra queries.
 - Off switch (`HYPERADMIN_ADVISOR=off`) and per-model silencing (`advisor_ignore`).
-- Recommendations name only options that exist; planned options are marked as such.
+- Recommendations name only options that exist; planned options are marked "when available".
 
 ## Non-Goals
 
@@ -39,18 +42,38 @@ Nothing tells the developer. The admin is simply slow, and the cause and the fix
 - `EXPLAIN` or any additional database query.
 - A UI health panel or banner (possible later; the `Advice` records make it easy).
 - Metrics export or tracing (the logfire plugin covers observability).
-- Advising on non-list views (detail, create, edit) in this iteration.
+- Client-side or network timing: budgets cover server time only.
 
 ## BDD Scenarios
 
 The scenarios are the ones in #779; each maps to one unit test.
 
 ```
-Scenario: a slow search on a large table produces one warning with a fix
-  Given a model with 1M+ rows and several inferred string search columns
-  When  a search request takes longer than the slow-query threshold
-  Then  one warning with code HA-R004 is logged naming the model, the duration and the row count
-  And   repeating the request does not log it again
+Scenario: a repeatedly slow search on a large table warns once with a fix
+  Given a list view with a 200 ms budget and a model with 1M rows
+  When  two search requests each take longer than 200 ms
+  Then  one warning with code HA-R004 is logged naming the model, the duration and the matching row count
+  And   a third slow request does not log it again
+
+Scenario: a single slow request does not warn
+  Given the same list view
+  When  only one request exceeds its budget (a cold first hit)
+  Then  no warning is logged
+
+Scenario: an oversized list page recommends fewer rows or columns
+  Given a list view with a 100 KB budget
+  When  two list responses are larger than 100 KB
+  Then  a warning with code HA-R020 is logged recommending a smaller page_size or fewer list_display columns
+
+Scenario: a slow detail page is flagged
+  Given a detail view with a 50 ms budget
+  When  two detail requests take longer than 50 ms
+  Then  a warning with code HA-R030 is logged
+
+Scenario: a deep offset is named as the cause
+  Given a list request over budget whose offset is at least 100000
+  When  the breach is diagnosed
+  Then  the warning is HA-R003 and recommends filters (cursor pagination when available)
 
 Scenario: an unindexed default sort is flagged at mount
   Given a registered model whose default sort column has no index and is not the primary key
@@ -62,24 +85,14 @@ Scenario: a wide inferred search is flagged at mount
   When  the admin is mounted
   Then  a warning with code HA-S002 recommends setting search_fields
 
-Scenario: a slow count recommends the count options
-  Given a list request whose count query takes longer than the count threshold
-  When  the list page is served
-  Then  a warning with code HA-R001 is logged
-
-Scenario: a deep offset is flagged
-  Given a list request whose offset exceeds the deep-offset threshold
-  When  the page is served
-  Then  a warning with code HA-R003 is logged
-
 Scenario: the advisor can be turned off
   Given HYPERADMIN_ADVISOR=off
-  When  slow or misconfigured models are used
+  When  views exceed their budgets
   Then  no advisor warning is logged
 
 Scenario: a code can be silenced per model
   Given AdminOptions(advisor_ignore={"HA-R004"}) on a model
-  When  a slow search occurs on that model
+  When  slow searches occur on that model
   Then  no HA-R004 warning is logged for it
 ```
 
@@ -87,22 +100,60 @@ Scenario: a code can be silenced per model
 
 ### Architecture
 
+New feature package `src/hyperadmin/advisor/`:
+
 ```
-core/advisor.py          Advice, Observation, check registry, once-per-(model, code) dedupe, emit
-   ▲            ▲
-   │ static     │ runtime
-core/app.py     adapters/sqlalchemy.py, adapters/sqlmodel.py
-(mount hook)    (time the count and items queries, report an Observation)
+advisor/records.py     Advice, Observation (frozen dataclasses)
+advisor/checks.py      static checks and the breach diagnosis (pure functions)
+advisor/middleware.py  pure-ASGI middleware: times the request, counts body bytes, reports
+advisor/__init__.py    Advisor (breach counter, once-only dedupe, emit)
+
+core/app.py            one mount hook: add the middleware, run static checks
+adapters/sqlalchemy.py, adapters/sqlmodel.py
+                       record count_ms / items_ms / offset / sort / searched for the request
 ```
 
-- `core/advisor.py` is pure logic: no I/O except the logger, no import of `adapters/` or `views/` (dependency flows into `core`, never out).
-- Static checks run once from `Admin.mount()` over the registered models, using `core/introspection` and SQLAlchemy mapper metadata (`Column.index`, `Table.indexes`, `primary_key`).
-- Runtime checks: the adapters already run a count query and an items query in `list()`. They wrap each in `time.perf_counter()` and pass an `Observation(model, total, count_ms, items_ms, offset, page_size, sort_field, searched)` to `advisor.observe(...)`. The advisor decides; the adapter never raises because of it (`observe` swallows its own errors).
-- Emission goes to the logger `hyperadmin.advisor` at `WARNING`, so it appears in the console and in any log pipeline without new plumbing. Existing precedent: the composite-key warning in `routing.py`.
+- **Request timing and size live in the middleware** because neither is visible inside an adapter: it wraps the app, notes the start time, sums `http.response.body` bytes, and on completion hands the advisor a `RequestFacts(route_kind, model, ms, bytes)`.
+- **Adapter facts.** `list()` already runs a count query and an items query. It wraps each in `time.perf_counter()` and stores `QueryFacts(count_ms, items_ms, total, offset, sort_field, searched)` in a request-scoped `ContextVar`. The middleware merges it when the response completes. No signature change to `BaseAdapter.list()`.
+- **Route kind.** The middleware classifies a request from the matched route name and method (`list`, `detail`, `form`, `write`, `choices`, `other`), which the dynamic router already names consistently (`{model}-detail`, `{model}-update-form`, ...).
+- `advisor/` imports `core/` for introspection and `AdminOptions`; `core/app.py` imports `advisor/` at the one mount hook. No import goes the other way, and `adapters/` only writes to the `ContextVar` defined in `advisor/records.py`.
+- Emission goes to the logger `hyperadmin.advisor` at `WARNING`, so it appears in the console and in any log pipeline. Existing precedent: the composite-key warning in `routing.py`.
 
-### Checks
+### Budgets
 
-Static (at mount, no database access):
+A request breaches when it exceeds the time budget **or** the size budget of its route kind. Defaults:
+
+| Route kind | Time | Response size | Notes |
+|---|---|---|---|
+| `list` (page, sort, search and filter requests all land here) | 200 ms | 100 KB | healthy default page: 15–120 ms, 38–80 KB |
+| `detail` | 50 ms | 250 KB* | healthy: 3–10 ms |
+| `form` (create / edit GET)* | 100 ms | 250 KB* | |
+| `write` (POST / PUT / PATCH / DELETE)* | 300 ms | n/a | |
+| `choices` (relation autocomplete, typed search)* | 100 ms | 20 KB* | fires on keystrokes |
+| `other` (dashboard, index, anything else)* | 500 ms | 250 KB* | |
+
+\* proposed; the list and detail figures are the ones requested, the rest follow the same logic and are open for review.
+
+A breach counts toward a warning only when it is the **second** breach of the same `(model, route kind)` since process start (see Edge Cases). The first request to every route is excluded entirely, as warm-up.
+
+### Diagnosis (what the warning says)
+
+A breaching `list` request is classified in this order, using the facts already collected:
+
+| Code | Condition | Recommendation |
+|---|---|---|
+| HA-R003 | `offset ≥ 100_000` | the database reads past every skipped row; add filters (cursor pagination when available, #211) |
+| HA-R004 | the request was a search and `items_ms` is over half the request time | set `search_fields` to the one or two columns people search; on Postgres add a `pg_trgm` GIN index; on SQLite no index can serve a substring search |
+| HA-R001 | `count_ms ≥ 100` and over half the request time | narrow the default filters; when available, use the count cache and the approximate count (#211, #213) |
+| HA-R002 | `items_ms ≥ 100`, not a search, and a sort field in play | index the sort column, or sort by an indexed column |
+| HA-R020 | the size budget was breached (time was fine) | lower `page_size`, drop wide columns from `list_display`; JSON and long text are already shortened |
+| HA-R010 | none of the above (the time is neither count nor items) | likely relationship loading or rendering; review the model's relationships (selectinload options when available, #211) |
+
+`detail` and `form` breaches give HA-R030 and HA-R031: *the page is over budget; check relationship loading and any expensive property on the model.* `write`, `choices` and `other` breaches give a short generic warning (HA-R040, HA-R050, HA-R060) naming the budget and the measurement.
+
+The "rows" figure in a message is the **matching** row count (the filtered total the page already computed), and the message says "matching" when a search or filter was active.
+
+### Static checks (at mount, no database access)
 
 | Code | Trigger | Recommendation |
 |---|---|---|
@@ -111,19 +162,10 @@ Static (at mount, no database access):
 | HA-S003 | the default sort column is not the primary key and has no index | add an index to that column, or reorder the model fields so an indexed column is first |
 | HA-S004 | a column's annotation and its SQLAlchemy type disagree (for example `str` over `Boolean`) | fix the annotation; the field is otherwise searched and rendered as the wrong type |
 
-Runtime (from the adapter timings; `total` is the count the list already computed):
-
-| Code | Trigger (defaults) | Recommendation |
-|---|---|---|
-| HA-R001 | `count_ms ≥ 500` | narrow the default filters; when available, enable the count cache and the approximate count (#211, #213) |
-| HA-R002 | `items_ms ≥ 1000`, no search, and `total ≥ 100_000` | the sort column probably has no index: index it, or sort by an indexed column |
-| HA-R003 | `offset ≥ 100_000` | the database reads past every skipped row, so cost grows with the offset; when available, use cursor pagination (#211); until then, add filters |
-| HA-R004 | a search request with `items_ms ≥ 1000` and `total ≥ 100_000` | set `search_fields` to fewer columns; on Postgres add a `pg_trgm` GIN index on the column; on SQLite there is no substring index, so narrow the search |
-
-Message format (one record, two lines):
+Message format (one record, three lines):
 
 ```
-[HA-R004] Recipe: search took 10.8 s on ~4.2M rows.
+[HA-R004] Recipe: search took 10.8 s (budget 200 ms) on ~4.2M matching rows.
   Fix: set search_fields=["name"] on this model, or add a pg_trgm GIN index (Postgres).
   Silence: advisor_ignore={"HA-R004"} or HYPERADMIN_ADVISOR=off
 ```
@@ -134,33 +176,29 @@ No data model changes.
 
 ### API / Protocol Changes
 
-New module `hyperadmin.core.advisor`:
-
 ```python
 @dataclass(frozen=True, slots=True)
 class Advice:
     code: str          # "HA-R004"
     model: str
-    problem: str       # what was measured
+    problem: str       # what was measured, with the budget
     fix: str           # what to do
 
 @dataclass(frozen=True, slots=True)
-class Observation:
-    model: str
-    total: int
+class QueryFacts:      # written by the adapter into a request-scoped ContextVar
     count_ms: float
     items_ms: float
+    total: int
     offset: int
-    page_size: int
-    searched: bool
     sort_field: str | None
+    searched: bool
 
 class Advisor:
-    def check_models(self, models, options_for) -> list[Advice]: ...   # static, at mount
-    def observe(self, obs: Observation) -> Advice | None: ...          # runtime, once per (model, code)
+    def check_models(self, models, options_for) -> list[Advice]: ...        # static, at mount
+    def observe(self, route_kind, model, ms, nbytes, facts) -> Advice | None  # runtime
 ```
 
-`BaseAdapter.list()` gains no signature change; the two adapters call `advisor.observe(...)` after their existing queries. The advisor instance is reachable from the adapter via the `Admin` instance already passed to it. Nothing is added to `__init__.py` exports in this iteration (`Advice` stays internal until a UI panel needs it).
+`BaseAdapter.list()` signature is unchanged. Nothing is added to `__init__.py` exports in this iteration (`Advice` stays internal until a UI panel needs it).
 
 ### Configuration Changes
 
@@ -169,42 +207,46 @@ class Advisor:
 | Setting | Default | Meaning |
 |---|---|---|
 | `advisor` | `"warn"` | `"warn"` or `"off"` |
-| `advisor_count_ms` | `500` | HA-R001 threshold |
-| `advisor_query_ms` | `1000` | HA-R002 and HA-R004 threshold |
-| `advisor_min_rows` | `100_000` | minimum table size for R002 and R004 |
+| `advisor_budgets` | the table above | per route kind `{"list": {"ms": 200, "kb": 100}, ...}`; override single keys |
+| `advisor_breaches` | `2` | breaches of one `(model, route kind)` before the first warning |
 | `advisor_deep_offset` | `100_000` | HA-R003 threshold |
 
 `AdminOptions.advisor_ignore: set[str] = set()` silences codes for one model.
 
 ## Edge Cases & Error Handling
 
-- **Never breaks a request.** `observe` and the static checks catch every exception and log it at `DEBUG`.
-- **Dedupe.** One warning per `(model, code)` per process, held in a set guarded by a lock. A restart logs it again, by design.
-- **Cold cache.** The first request after a restart is often slow only because of a cold database cache. The runtime checks therefore need the measurement to exceed the threshold **and** the table to be large (`advisor_min_rows`), so a slow first hit on a small table never warns.
-- **Estimate accuracy.** `total` is the count the page already computed, so it is exact for the filtered set, and a warning's "rows" figure refers to the filtered rows, not the table. The message says "matching rows" when a filter or search was active.
-- **Tests and CI.** The test suite builds its own `Advisor` or sets `advisor="off"`, so existing tests are not noisy.
-- **Multiple workers.** Each process warns once; there is no cross-process coordination.
+- **Never breaks a request.** The middleware, `observe` and the static checks catch every exception and log it at `DEBUG`. A failure to read a body chunk never alters the response.
+- **Warm-up.** In the five scale-test runs up to 1M rows, the first model requested (a table of at most a few thousand rows) was among the five slowest requests every time, and the slowest in four of them (230–370 ms): lazy schema build, template compilation, cold database cache. The first request per `(model, route kind)` is therefore ignored, and a warning needs `advisor_breaches` (default 2) breaches. A one-off slow request never warns.
+- **Dedupe.** One warning per `(model, code)` per process, in a set guarded by a lock. A restart logs it again, by design.
+- **Tight budgets, noisy hardware.** A busy or slow CI machine can breach 200 ms legitimately. The advisor is off in the project's own test suite (`advisor="off"`), and the budgets are settings so slower environments can relax them.
+- **Streaming responses.** Size is summed from `http.response.body` chunks as they pass; nothing is buffered.
+- **Multiple workers.** Each process warns on its own; there is no cross-process coordination.
 - **Static checks on exotic models.** A model whose mapper cannot be inspected is skipped silently (DEBUG log).
 
 ## Migration & Backward Compatibility
 
-Backward compatible; no migration. It adds log lines (a behaviour change only for log consumers) and settings with defaults. Default is `"warn"` because the value is in telling people who have not thought about it (see Open Questions).
+Backward compatible; no migration. It adds one ASGI middleware, log lines and settings with defaults. Default is `"warn"` (decided with the maintainer: the audience is people who do not know they need it). A deployment that cannot tolerate the extra middleware can set `HYPERADMIN_ADVISOR=off`, in which case the middleware is not installed at all.
 
 ## Open Questions
 
-1. **Default on or off?** Recommendation: **on** (`"warn"`), since the audience is people who do not know they need it, and it logs at most a handful of lines per model per process. Alternative: on only when `debug=True`.
-2. **Thresholds.** 500 ms count, 1000 ms query, 100k rows, 100k offset come from the scale tests on one laptop. Are these the right defaults, or should the thresholds scale with `page_size`?
-3. **HA-S003 recommendation wording** depends on whether a default-sort option is added to `AdminOptions` (today the default is "first model field"). If a `default_sort` option is added in #211, the fix text should name it. Until then the text says "index the column or reorder the fields".
-4. **Scope of static checks.** Include a check for `list_filter` columns without an index (a likely fifth static code)?
-5. **UI surface.** Should a later iteration show `Advice` records in an admin "health" panel? Out of scope here; the data shape allows it.
+1. **Budgets beyond list and detail.** The `form`, `write`, `choices` and `other` figures are proposals. Which should change?
+2. **Size budgets beyond the list.** Is a 250 KB catch-all for the other HTML views reasonable, or should only lists have a size budget?
+3. **Breach count.** Two breaches before warning removes warm-up noise but delays the first warning on a quiet admin. Is 2 right, or 3?
+4. **Query count.** Counting SQL statements per request (a SQLAlchemy `before_cursor_execute` hook) would let `detail`/`form` breaches name an N+1 pattern ("47 queries for one page"). Worth adding as HA-R032 in this iteration, or later?
+5. **HA-S003 wording** depends on whether a `default_sort` option is added in #211. Until then the text says "index the column or reorder the fields".
+6. **Static check for `list_filter` columns without an index** (a likely fifth static code)?
+7. **UI surface.** Should a later iteration show `Advice` records in an admin "health" panel?
 
 ## Decision Log
 
 | Decision | Rationale | Alternatives considered |
 |---|---|---|
+| Per-view budgets (time and size) as the trigger, diagnosis second | Matches what a user feels ("this page is slow or heavy"); needs no table-size guess; the cause is then read from data the request already produced | Row-count gates and per-query thresholds (miss slow pages caused by rendering and relationships; need a count to decide anything) |
+| A request-level middleware | Total time and response size are not visible inside an adapter | Wrap each view handler (touches every view, and misses non-dynamic views) |
+| Warn on the second breach, ignore the first request | Measured warm-up noise on every run | Warn immediately (false positives on every restart); a warm-up timer (state and timing sensitivity) |
 | Report only, never change behaviour | Safe to turn on everywhere; keeps remedies explicit and reviewable | Auto-narrow the search or auto-switch to cursor paging (surprising, and changes results) |
-| Reuse timings the adapter already measures | No extra queries, no `EXPLAIN` cost or permission issues | `EXPLAIN` the query (accurate, but extra round trip, per-dialect output) |
-| Static checks at mount, runtime checks lazily | Mount must not touch the database; some problems only show with real data volume | Probe row counts at mount (a count per model at startup is the problem we are warning about) |
+| Reuse timings the adapter already measures | No extra queries, no `EXPLAIN` cost or permission issues | `EXPLAIN` the query (accurate, but an extra round trip with per-dialect output) |
+| Static checks at mount, runtime checks lazily | Mount must not touch the database; some problems only show with real data volume | Probe row counts at mount (a count per model at startup is the problem we warn about) |
 | Standard logger `hyperadmin.advisor` | Works with existing log config and the logfire plugin; precedent in `routing.py` | Print to stdout; a custom hook system |
 | Dedupe per (model, code) per process | Avoids log spam on busy admins | Rate limit by time (more state, harder to test) |
-| Thresholds as settings | The right numbers differ by hardware and database | Hard-coded constants |
+| Budgets as settings | The right numbers differ by hardware and database | Hard-coded constants |
