@@ -249,8 +249,8 @@ Backward compatible; no migration. It adds one ASGI middleware, log lines and se
 
 ## Open Questions
 
-1. **Budgets beyond list and detail.** The `form`, `write`, `choices` and `other` figures are proposals. Which should change?
-2. **Size budgets beyond the list.** Is a 250 KB catch-all for the other HTML views reasonable, or should only lists have a size budget?
+1. ~~**Budgets beyond list and detail.**~~ Resolved 2026-10-30: the proposed `form`, `write`, `bulk`, `choices` and `other` figures are accepted as defaults (they are settings, so they can be tuned after real use).
+2. ~~**Size budgets beyond the list.**~~ Resolved 2026-10-30: the 250 KB catch-all for the other HTML views stays.
 3. **Breach count.** Two breaches before warning removes warm-up noise but delays the first warning on a quiet admin. Is 2 right, or 3?
 4. **Query count.** Counting SQL statements per request (a SQLAlchemy `before_cursor_execute` hook) would let `detail`/`form` breaches name an N+1 pattern ("47 queries for one page"). Worth adding as HA-R032 in this iteration, or later?
 5. **HA-S003 wording** depends on whether a `default_sort` option is added in #211. Until then the text says "index the column or reorder the fields".
