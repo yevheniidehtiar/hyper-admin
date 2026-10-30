@@ -42,7 +42,7 @@ Typical healthy numbers from the same runs, at the default page size of 10: list
 - `EXPLAIN` or any additional database query.
 - A UI health panel or banner (possible later; the `Advice` records make it easy).
 - Metrics export or tracing (the logfire plugin covers observability).
-- Client-side or network timing: budgets cover server time only.
+- Client-side or network timing: budgets cover server handling time only (time waiting on the request body is subtracted).
 
 ## BDD Scenarios
 
@@ -74,6 +74,21 @@ Scenario: a deep offset is named as the cause
   Given a list request over budget whose offset is at least 100000
   When  the breach is diagnosed
   Then  the warning is HA-R003 and recommends filters (cursor pagination when available)
+
+Scenario: a slow file upload is not held to the write budget
+  Given a multipart request that saves a file and takes longer than 300 ms to handle
+  When  it completes repeatedly
+  Then  no warning is logged
+
+Scenario: time spent receiving the request body is not counted
+  Given a write whose handler takes 50 ms but whose client sends the body over 2 s
+  When  it completes
+  Then  the measured time is about 50 ms and no warning is logged
+
+Scenario: login hashing is not flagged
+  Given a password login that takes 400 ms because of the password hash
+  When  it completes repeatedly
+  Then  no warning is logged
 
 Scenario: an unindexed default sort is flagged at mount
   Given a registered model whose default sort column has no index and is not the primary key
@@ -115,7 +130,7 @@ adapters/sqlalchemy.py, adapters/sqlmodel.py
 
 - **Request timing and size live in the middleware** because neither is visible inside an adapter: it wraps the app, notes the start time, sums `http.response.body` bytes, and on completion hands the advisor a `RequestFacts(route_kind, model, ms, bytes)`.
 - **Adapter facts.** `list()` already runs a count query and an items query. It wraps each in `time.perf_counter()` and stores `QueryFacts(count_ms, items_ms, total, offset, sort_field, searched)` in a request-scoped `ContextVar`. The middleware merges it when the response completes. No signature change to `BaseAdapter.list()`.
-- **Route kind.** The middleware classifies a request from the matched route name and method (`list`, `detail`, `form`, `write`, `choices`, `other`), which the dynamic router already names consistently (`{model}-detail`, `{model}-update-form`, ...).
+- **Route kind.** The middleware classifies a request from the matched route name, the method and the `Content-Type` (`list`, `detail`, `form`, `write`, `upload`, `bulk`, `choices`, `auth`, `other`). Route names are already consistent in the dynamic router (`{model}-detail`, `{model}-update-form`, ...); a `multipart/form-data` write is an `upload`, and the auth package's routes are `auth`.
 - `advisor/` imports `core/` for introspection and `AdminOptions`; `core/app.py` imports `advisor/` at the one mount hook. No import goes the other way, and `adapters/` only writes to the `ContextVar` defined in `advisor/records.py`.
 - Emission goes to the logger `hyperadmin.advisor` at `WARNING`, so it appears in the console and in any log pipeline. Existing precedent: the composite-key warning in `routing.py`.
 
@@ -128,11 +143,16 @@ A request breaches when it exceeds the time budget **or** the size budget of its
 | `list` (page, sort, search and filter requests all land here) | 200 ms | 100 KB | healthy default page: 15–120 ms, 38–80 KB |
 | `detail` | 50 ms | 250 KB* | healthy: 3–10 ms |
 | `form` (create / edit GET)* | 100 ms | 250 KB* | |
-| `write` (POST / PUT / PATCH / DELETE)* | 300 ms | n/a | |
+| `write` (non-multipart POST / PUT / PATCH / DELETE)* | 300 ms | n/a | |
+| `upload` (multipart request: file or image fields)* | none | n/a | thumbnailing and storage writes are legitimately slow; opt in per budget |
+| `bulk` (bulk actions on selected rows)* | 1000 ms | n/a | scales with the selection |
 | `choices` (relation autocomplete, typed search)* | 100 ms | 20 KB* | fires on keystrokes |
+| `auth` (login, logout, password and MFA routes)* | none | n/a | password hashing is slow by design |
 | `other` (dashboard, index, anything else)* | 500 ms | 250 KB* | |
 
-\* proposed; the list and detail figures are the ones requested, the rest follow the same logic and are open for review.
+\* proposed; the list and detail figures are the ones requested, the rest follow the same logic and are open for review. A budget of `none` is never checked; setting a number in `advisor_budgets` opts that kind in.
+
+**Server time only.** The middleware wraps `receive()` and subtracts the time the app spends waiting for the request body, so a slow client uploading over a slow link never counts against the budget. What remains is time spent handling the request.
 
 A breach counts toward a warning only when it is the **second** breach of the same `(model, route kind)` since process start (see Edge Cases). The first request to every route is excluded entirely, as warm-up.
 
@@ -149,7 +169,7 @@ A breaching `list` request is classified in this order, using the facts already 
 | HA-R020 | the size budget was breached (time was fine) | lower `page_size`, drop wide columns from `list_display`; JSON and long text are already shortened |
 | HA-R010 | none of the above (the time is neither count nor items) | likely relationship loading or rendering; review the model's relationships (selectinload options when available, #211) |
 
-`detail` and `form` breaches give HA-R030 and HA-R031: *the page is over budget; check relationship loading and any expensive property on the model.* `write`, `choices` and `other` breaches give a short generic warning (HA-R040, HA-R050, HA-R060) naming the budget and the measurement.
+`detail` and `form` breaches give HA-R030 and HA-R031: *the page is over budget; check relationship loading and any expensive property on the model.* `write`, `bulk`, `choices` and `other` breaches give a short generic warning (HA-R040, HA-R041, HA-R050, HA-R060) naming the budget and the measurement. `upload` and `auth` have no budget by default, so they never warn unless a budget is set.
 
 The "rows" figure in a message is the **matching** row count (the filtered total the page already computed), and the message says "matching" when a search or filter was active.
 
@@ -243,6 +263,7 @@ Backward compatible; no migration. It adds one ASGI middleware, log lines and se
 |---|---|---|
 | Per-view budgets (time and size) as the trigger, diagnosis second | Matches what a user feels ("this page is slow or heavy"); needs no table-size guess; the cause is then read from data the request already produced | Row-count gates and per-query thresholds (miss slow pages caused by rendering and relationships; need a count to decide anything) |
 | A request-level middleware | Total time and response size are not visible inside an adapter | Wrap each view handler (touches every view, and misses non-dynamic views) |
+| Subtract time spent waiting on the request body; uploads and auth routes get no time budget | A slow client link is not a server problem; image processing and password hashing are slow on purpose, and a flat write budget would flag healthy requests | A single higher write budget (still wrong for a 50 MB upload, and hides real slow writes); excluding all writes (misses slow validation and hooks) |
 | Warn on the second breach, ignore the first request | Measured warm-up noise on every run | Warn immediately (false positives on every restart); a warm-up timer (state and timing sensitivity) |
 | Report only, never change behaviour | Safe to turn on everywhere; keeps remedies explicit and reviewable | Auto-narrow the search or auto-switch to cursor paging (surprising, and changes results) |
 | Reuse timings the adapter already measures | No extra queries, no `EXPLAIN` cost or permission issues | `EXPLAIN` the query (accurate, but an extra round trip with per-dialect output) |
