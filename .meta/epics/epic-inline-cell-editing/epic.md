@@ -4,7 +4,7 @@ id: epic-inline-cell-editing
 title: "Epic: Inline Cell Editing in List View (v0.5.0 close-out)"
 status: done
 priority: medium
-owner: claude-code
+owner: null
 labels:
   - enhancement
   - frontend
