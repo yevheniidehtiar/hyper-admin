@@ -18,7 +18,7 @@ from collections.abc import Awaitable, Callable, Sequence
 from typing import TYPE_CHECKING, Any, Protocol, cast
 
 import psycopg
-from psycopg.rows import dict_row
+from psycopg.rows import DictRow, dict_row
 
 from hyperadmin_tasks.backend import (
     AttemptRecord,
@@ -269,7 +269,10 @@ def _parse_id(value: str, kind: str) -> uuid.UUID:
 
 
 async def _open(dsn: str) -> _Connection:
-    return await psycopg.AsyncConnection.connect(dsn, autocommit=True, row_factory=dict_row)
+    conn = await psycopg.AsyncConnection[DictRow].connect(
+        dsn, autocommit=True, row_factory=dict_row
+    )
+    return cast("_Connection", conn)
 
 
 def create_backend(settings: TasksSettings) -> PgTaskBackend:
