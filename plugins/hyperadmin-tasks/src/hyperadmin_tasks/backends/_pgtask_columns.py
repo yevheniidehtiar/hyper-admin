@@ -259,3 +259,102 @@ def schedule_from_row(row: Row) -> ScheduleRecord:
         misfire_policy=row["misfire_policy"],
         paused=row["paused_at"] is not None,
     )
+
+
+#: The pgtask releases this adapter is written against (the ``pgtask`` extra's requirement).
+PGTASK_REQUIREMENT = "pgtask>=0.4,<0.5"
+
+#: Storage protocol versions (inclusive) spoken by ``PGTASK_REQUIREMENT``; the database is
+#: compatible when its ``storage_protocol_range()`` overlaps this range (pgtask's own rule).
+SUPPORTED_PROTOCOL: tuple[int, int] = (1, 2)
+
+PROTOCOL_RANGE_SQL = "SELECT minimum, maximum FROM pgtask.storage_protocol_range()"
+
+#: View columns visible to the connected role (the observer role can read every view).
+VIEW_COLUMNS_SQL = (
+    "SELECT table_name, column_name FROM information_schema.columns "
+    "WHERE table_schema = 'pgtask' AND table_name = ANY(%s)"
+)
+
+#: Columns read from each observer view (kept next to the SQL that reads them).
+REQUIRED_COLUMNS: dict[str, frozenset[str]] = {
+    "queue_overview": frozenset({"name", "paused_at", "running_count", "ready_count"}),
+    "task_view": frozenset(
+        {
+            "id",
+            "queue_name",
+            "task_name",
+            "state",
+            "priority",
+            "attempt",
+            "max_attempts",
+            "created_at",
+            "run_at",
+            "completed_at",
+            "payload",
+            "result",
+            "error",
+            "parent_task_id",
+        }
+    ),
+    "attempt_view": frozenset(
+        {"task_id", "attempt", "worker_id", "state", "started_at", "finished_at", "error"}
+    ),
+    "worker_view": frozenset({"id", "queue_name", "heartbeat_at", "live"}),
+    "worker_capability_view": frozenset({"worker_id", "task_name"}),
+    "schedule_view": frozenset(
+        {
+            "id",
+            "kind",
+            "interval_milliseconds",
+            "cron_expression",
+            "misfire_policy",
+            "queue_name",
+            "task_name",
+            "next_run_at",
+            "paused_at",
+            "name",
+        }
+    ),
+}
+
+NOT_MIGRATED_MESSAGE = (
+    "the pgtask schema is not installed or too old in this database; run `pgtask migrate` "
+    "(with the owner role) and restart"
+)
+
+
+def protocol_error(rows: list[Row]) -> str | None:
+    """Return why the database's protocol range is unusable, or ``None`` when it overlaps."""
+    minimum, maximum = int(rows[0]["minimum"]), int(rows[0]["maximum"])
+    low, high = SUPPORTED_PROTOCOL
+    if minimum <= high and low <= maximum:
+        return None
+    return (
+        f"the database speaks pgtask storage protocol {minimum}..{maximum} but this plugin "
+        f"supports {low}..{high} ({PGTASK_REQUIREMENT}); align the plugin's pgtask version "
+        "with the one that migrated the database"
+    )
+
+
+def missing_columns(rows: list[Row]) -> dict[str, list[str]]:
+    """Return the required columns absent from ``rows`` (``VIEW_COLUMNS_SQL`` output)."""
+    present: dict[str, set[str]] = defaultdict(set)
+    for row in rows:
+        present[row["table_name"]].add(row["column_name"])
+    return {
+        view: sorted(required - present[view])
+        for view, required in REQUIRED_COLUMNS.items()
+        if required - present[view]
+    }
+
+
+def column_drift_error(missing: dict[str, list[str]]) -> str:
+    """Render the ``missing_columns`` result as one actionable message."""
+    detail = "; ".join(
+        f"pgtask.{view}: {', '.join(cols)}" for view, cols in sorted(missing.items())
+    )
+    return (
+        f"pgtask observer views lack columns this plugin reads ({detail}); the installed pgtask "
+        f"is outside the supported range {PGTASK_REQUIREMENT}"
+    )

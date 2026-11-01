@@ -66,9 +66,19 @@ class PgTaskBackend:
         self._lock = asyncio.Lock()
 
     async def startup(self) -> None:
-        """Open the observer connection; fails fast on a bad DSN or an unreachable server."""
+        """Open the observer connection and probe the pgtask schema once.
+
+        Fails fast with ``TasksBackendError`` on a bad DSN, an unreachable server, an unmigrated
+        database, an incompatible storage protocol or drifted observer-view columns.
+        """
         async with self._lock:
-            await self._ensure_connection()
+            connection = await self._ensure_connection()
+            try:
+                await self._probe(connection)
+            except TasksBackendError:
+                self._connection = None
+                await connection.close()
+                raise
 
     async def shutdown(self) -> None:
         """Close the observer connection."""
@@ -152,6 +162,29 @@ class PgTaskBackend:
                 return await cursor.fetchall()
             except psycopg.Error as exc:
                 raise TasksBackendError(f"pgtask query failed: {exc}") from exc
+
+    async def _probe(self, connection: _Connection) -> None:
+        """Check the storage protocol range and the observer-view columns (startup only)."""
+        try:
+            cursor = await connection.execute(columns.PROTOCOL_RANGE_SQL)
+            protocol = await cursor.fetchall()
+        except (psycopg.errors.InvalidSchemaName, psycopg.errors.UndefinedFunction) as exc:
+            raise TasksBackendError(columns.NOT_MIGRATED_MESSAGE) from exc
+        except psycopg.Error as exc:
+            raise TasksBackendError(f"pgtask compatibility probe failed: {exc}") from exc
+        problem = columns.protocol_error(protocol)
+        if problem is not None:
+            raise TasksBackendError(problem)
+        try:
+            cursor = await connection.execute(
+                columns.VIEW_COLUMNS_SQL, [list(columns.REQUIRED_COLUMNS)]
+            )
+            present = await cursor.fetchall()
+        except psycopg.Error as exc:
+            raise TasksBackendError(f"pgtask compatibility probe failed: {exc}") from exc
+        missing = columns.missing_columns(present)
+        if missing:
+            raise TasksBackendError(columns.column_drift_error(missing))
 
 
 async def _open(dsn: str) -> _Connection:
