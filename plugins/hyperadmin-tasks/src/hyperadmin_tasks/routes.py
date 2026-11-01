@@ -16,8 +16,8 @@ from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 from starlette.responses import Response  # noqa: TC002 - FastAPI resolves the return annotation
 
-from hyperadmin_tasks.backend import Capability, QueueStats
-from hyperadmin_tasks.presenters import format_age
+from hyperadmin_tasks.backend import Capability, QueueStats, TaskFilter, TaskState
+from hyperadmin_tasks.presenters import STATE_PILL_KIND, Pagination, format_age, list_url
 from hyperadmin_tasks.settings import TasksSettings
 
 if TYPE_CHECKING:
@@ -61,6 +61,19 @@ async def _load_overview(lifecycle: BackendLifecycle) -> dict[str, Any]:
     return {"queues": [_queue_row(queue) for queue in queues], "workers": workers, "error": False}
 
 
+def _parse_page(raw: str) -> int:
+    """The 1-based page number in ``raw``; anything that is not a positive integer is page 1."""
+    return int(raw) if raw.isdecimal() and int(raw) > 0 else 1
+
+
+def _parse_state(raw: str) -> TaskState | None:
+    """The task state named by ``raw``, or ``None`` when it names none (filter is ignored)."""
+    try:
+        return TaskState(raw)
+    except ValueError:
+        return None
+
+
 def _queue_row(queue: QueueStats) -> dict[str, Any]:
     return {"stats": queue, "oldest_ready": format_age(queue.oldest_ready_age)}
 
@@ -96,5 +109,62 @@ def build_router(
             else "tasks/dashboard.html"
         )
         return admin.templates.TemplateResponse(request, template, context)
+
+    @router.get("/list", name="tasks-list", response_class=HTMLResponse)
+    async def tasks_list(
+        request: Request,
+        queue: str = "",
+        state: str = "",
+        name: str = "",
+        q: str = "",
+        page: str = "1",
+    ) -> Response:
+        if not await can_view(admin, request):
+            return await forbidden(request)
+        state_filter = _parse_state(state)
+        filters = {
+            "queue": queue,
+            "state": state_filter.value if state_filter else "",
+            "name": name,
+            "q": q,
+        }
+        number = _parse_page(page)
+        context: dict[str, Any] = {
+            "filters": filters,
+            "states": list(TaskState),
+            "queues": [],
+            "rows": [],
+            "pagination": None,
+            "prev_url": None,
+            "next_url": None,
+            "error": False,
+        }
+        try:
+            backend = await lifecycle.ensure_started()
+            queue_names = [stats.name for stats in await backend.list_queues()]
+            result = await backend.list_tasks(
+                TaskFilter(
+                    queue=queue or None,
+                    state=state_filter,
+                    name=name or None,
+                    id_query=q or None,
+                ),
+                number,
+                config.page_size,
+            )
+        except Exception:  # the backend is third-party; any failure becomes the inline banner
+            logger.warning("tasks backend failed while listing tasks", exc_info=True)
+            context["error"] = True
+            return admin.templates.TemplateResponse(request, "tasks/task_list.html", context)
+        pagination = Pagination(result.page, result.per_page, len(result.items), result.total)
+        base = request.url.path
+        context.update(
+            queues=queue_names,
+            rows=[{"task": task, "pill": STATE_PILL_KIND[task.state]} for task in result.items],
+            pagination=pagination,
+            prev_url=list_url(base, filters, number - 1) if pagination.has_previous else None,
+            next_url=list_url(base, filters, number + 1) if pagination.has_next else None,
+        )
+        return admin.templates.TemplateResponse(request, "tasks/task_list.html", context)
 
     return router

@@ -88,7 +88,7 @@ def test_dashboard_shows_active_worker_count(
     """
     html = make_client(seed_backend()).get("/admin/tasks/").text
 
-    assert 'data-testid="tasks-workers-active">Active workers: 1</p>' in html
+    assert 'data-testid="tasks-workers-active">Active workers: 1</span>' in html
 
 
 def test_dashboard_hides_workers_without_capability(

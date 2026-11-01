@@ -12,9 +12,10 @@
     {%- if error %}
     {{ banner(_("The task backend is unreachable."), kind='danger', detail=_("Queue statistics cannot be loaded right now."), testid='tasks-backend-error') }}
     {%- else %}
-    {%- if workers is not none %}
-    <p class="ha-caption ha-muted" data-testid="tasks-workers-active">{{ _("Active workers") }}: {{ workers }}</p>
-    {%- endif %}
+    <p class="ha-caption ha-muted">
+        {%- if workers is not none %}<span data-testid="tasks-workers-active">{{ _("Active workers") }}: {{ workers }}</span> · {% endif -%}
+        <a href="{{ url_for('tasks-list') }}" data-testid="tasks-all-link">{{ _("All tasks") }}</a>
+    </p>
     {%- if queues %}
     <div class="ha-table-wrapper">
         <table class="ha-table" data-testid="tasks-queue-table" aria-label="{{ _('Queues') }}">
@@ -33,7 +34,8 @@
                 {%- set queue = row.stats %}
                 <tr data-testid="tasks-queue-row">
                     <th scope="row">
-                        {{- queue.name -}}
+                        <a href="{{ url_for('tasks-list') }}?queue={{ queue.name | urlencode }}" data-testid="tasks-queue-link">{{ queue.name }}</a>
+                        {{- '' -}}
                         {%- if queue.paused %} {{ pill(_("Paused"), 'warning', testid='tasks-queue-paused') }}{% endif -%}
                     </th>
                     <td class="ha-num" data-testid="tasks-queue-ready">{{ queue.ready }}</td>
