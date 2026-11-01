@@ -1,0 +1,48 @@
+{#- Workers: who is processing work. Context: rows ([{worker, last_seen}]), error (bool). -#}
+{%- extends "base.html" -%}
+{%- from "components/banner.html" import banner -%}
+{%- from "components/pill.html" import pill -%}
+
+{%- block title -%}{{ _("Workers") }} | {{ site_title | default("HyperAdmin") }}{%- endblock -%}
+
+{%- block content -%}
+    <header class="ha-page-header" data-testid="page-header">
+        <h1 class="ha-h1">{{ _("Workers") }}</h1>
+        <div class="ha-page-header-actions">
+            <a class="ha-btn" href="{{ url_for('tasks-dashboard') }}" data-testid="tasks-dashboard-link">{{ _("Dashboard") }}</a>
+        </div>
+    </header>
+    {%- if error %}
+    {{ banner(_("The task backend is unreachable."), kind='danger', detail=_("Workers cannot be listed right now."), testid='tasks-backend-error') }}
+    {%- elif rows %}
+    <div class="ha-table-wrapper">
+        <table class="ha-table" data-testid="tasks-workers-table" aria-label="{{ _('Workers') }}">
+            <thead>
+                <tr>
+                    <th scope="col">{{ _("ID") }}</th>
+                    <th scope="col">{{ _("Queues") }}</th>
+                    <th scope="col">{{ _("Task names") }}</th>
+                    <th scope="col" class="ha-num">{{ _("Concurrency") }}</th>
+                    <th scope="col">{{ _("Last seen") }}</th>
+                    <th scope="col">{{ _("Health") }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {%- for row in rows %}
+                {%- set worker = row.worker %}
+                <tr data-testid="tasks-worker-row">
+                    <th scope="row" class="ha-mono">{{ worker.id }}</th>
+                    <td>{{ worker.queues | join(", ") }}</td>
+                    <td>{{ worker.task_names | join(", ") }}</td>
+                    <td class="ha-num">{{ worker.concurrency }}</td>
+                    <td>{{ row.last_seen }}</td>
+                    <td>{% if worker.healthy %}{{ pill(_("healthy"), 'success', testid='tasks-worker-health') }}{% else %}{{ pill(_("unhealthy"), 'danger', testid='tasks-worker-health') }}{% endif %}</td>
+                </tr>
+                {%- endfor %}
+            </tbody>
+        </table>
+    </div>
+    {%- else %}
+    <p class="ha-text-muted" data-testid="tasks-workers-empty">{{ _("No workers have reported in.") }}</p>
+    {%- endif %}
+{%- endblock -%}

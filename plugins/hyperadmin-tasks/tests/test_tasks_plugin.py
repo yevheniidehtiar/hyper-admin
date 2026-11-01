@@ -71,7 +71,7 @@ def test_tasks_plugin_registers_seams() -> None:
       Given a PluginRegistry used as admin.plugins
       When  TasksPlugin is registered
       Then  its template dir holds the dashboard template
-      And   the /tasks page and a "Tasks" nav entry gated on view_tasks are contributed
+      And   the /tasks page and "Tasks" nav entries (the memory backend has every capability) gated on view_tasks are contributed
       And   the view_tasks and manage_tasks permissions are declared
     """
     registry = PluginRegistry()
@@ -82,8 +82,10 @@ def test_tasks_plugin_registers_seams() -> None:
     assert (template_dir.path / "tasks/dashboard.html").is_file()
     (page,) = registry.pages
     assert page.prefix == "/tasks"
-    (nav,) = registry.nav_entries
-    assert (nav.section, nav.url_name, nav.permission) == ("Tasks", "tasks-dashboard", "view_tasks")
+    assert [(n.section, n.url_name, n.permission) for n in registry.nav_entries] == [
+        ("Tasks", name, "view_tasks")
+        for name in ("tasks-dashboard", "tasks-workers", "tasks-schedules")
+    ]
     assert [p.codename for p in registry.permissions] == ["view_tasks", "manage_tasks"]
 
 

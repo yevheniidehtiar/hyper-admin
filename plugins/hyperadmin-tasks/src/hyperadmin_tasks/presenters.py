@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import UTC
 from math import ceil
 from typing import TYPE_CHECKING
 from urllib.parse import urlencode
@@ -10,7 +11,7 @@ from urllib.parse import urlencode
 from hyperadmin_tasks.backend import TaskState
 
 if TYPE_CHECKING:
-    from datetime import timedelta
+    from datetime import datetime, timedelta
 
 _MINUTE = 60
 _HOUR = 3600
@@ -41,6 +42,14 @@ def format_age(age: timedelta | None) -> str | None:
     if seconds < _DAY:
         return f"{seconds // _HOUR}h {seconds % _HOUR // _MINUTE}m"
     return f"{seconds // _DAY}d {seconds % _DAY // _HOUR}h"
+
+
+def format_utc(moment: datetime | None) -> str | None:
+    """``moment`` as ``YYYY-MM-DD HH:MM:SS UTC`` (naive values are taken as UTC)."""
+    if moment is None:
+        return None
+    utc = moment.replace(tzinfo=UTC) if moment.tzinfo is None else moment.astimezone(UTC)
+    return f"{utc:%Y-%m-%d %H:%M:%S} UTC"
 
 
 def list_url(base: str, params: dict[str, str], page: int) -> str:
