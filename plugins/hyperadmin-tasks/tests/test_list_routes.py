@@ -356,3 +356,36 @@ def test_list_requires_view_tasks(tmp_path: Path) -> None:
     assert denied.status_code == 403
     assert 'data-testid="tasks-forbidden"' in denied.text
     assert allowed.status_code == 200
+
+
+def test_page_past_the_end_redirects_to_last_page(
+    make_client: ClientFactory, make_task: TaskFactory, now: datetime
+) -> None:
+    """
+    Scenario: the user is not stranded on an empty page after tasks vanish
+      Given 3 failed or succeeded tasks that fit on one page
+      When  the user opens page 9 with state=failed
+      Then  a 303 sends them to the last page, keeping the filter
+    """
+    client = make_client(_seeded(make_task, now))
+
+    response = client.get("/admin/tasks/list?state=failed&page=9")
+
+    assert response.status_code == 303
+    assert response.headers["location"] == "/admin/tasks/list?state=failed"
+
+
+def test_uncounted_page_past_the_end_steps_back_one(
+    make_client: ClientFactory, make_task: TaskFactory, now: datetime
+) -> None:
+    """
+    Scenario: an uncounted backend steps back one page
+      Given a backend that cannot count and 3 tasks
+      When  the user opens page 5
+      Then  a 303 sends them to page 4
+    """
+    client = make_client(_seeded(make_task, now, _UncountedBackend(clock=lambda: now)))
+
+    response = client.get("/admin/tasks/list?page=5")
+
+    assert response.headers["location"] == "/admin/tasks/list?page=4"

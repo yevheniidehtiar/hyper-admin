@@ -24,6 +24,7 @@ from hyperadmin_tasks.backend import (
     ScheduleRecord,
     TaskFilter,
     TaskRecord,
+    TasksBackendError,
     TaskState,
     WorkerRecord,
 )
@@ -261,16 +262,25 @@ def _add_action_routes(router: APIRouter, admin: Any, lifecycle: BackendLifecycl
 
     async def perform(
         request: Request,
+        capability: Capability,
         run: Callable[[TaskBackend, str], Awaitable[None]],
         page: str,
         ok_notice: str,
         **page_params: str,
     ) -> Response:
-        if not await can_manage(admin, request):
+        denied = not await can_manage(admin, request)
+        if denied and "HX-Request" not in request.headers:
             return await _forbidden(admin, request, MANAGE_PERMISSION, "Can manage tasks")
         try:
-            await run(await lifecycle.ensure_started(), _actor(request))
-            notice = ok_notice
+            if denied:
+                # HTMX swaps no 4xx body, so a boosted form gets a redirect carrying a flash
+                notice = "forbidden"
+            else:
+                backend = await lifecycle.ensure_started()
+                if capability not in backend.capabilities:
+                    raise TasksBackendError(f"backend lacks {capability.value}")
+                await run(backend, _actor(request))
+                notice = ok_notice
         except Exception:  # the backend is third-party; any failure becomes the error flash
             logger.warning("tasks backend action failed", exc_info=True)
             notice = "failed"
@@ -281,6 +291,7 @@ def _add_action_routes(router: APIRouter, admin: Any, lifecycle: BackendLifecycl
     async def tasks_retry(request: Request, task_id: str) -> Response:
         return await perform(
             request,
+            Capability.RETRY,
             lambda b, actor: b.retry_task(task_id, actor=actor),
             "tasks-detail",
             "retried",
@@ -291,43 +302,48 @@ def _add_action_routes(router: APIRouter, admin: Any, lifecycle: BackendLifecycl
     async def tasks_cancel(request: Request, task_id: str) -> Response:
         return await perform(
             request,
+            Capability.CANCEL,
             lambda b, actor: b.cancel_task(task_id, actor=actor),
             "tasks-detail",
             "cancelled",
             task_id=task_id,
         )
 
-    @router.post("/queues/{name}/pause", name="tasks-queue-pause")
+    @router.post("/queues/{name:path}/pause", name="tasks-queue-pause")
     async def tasks_queue_pause(request: Request, name: str) -> Response:
         return await perform(
             request,
+            Capability.PAUSE_QUEUE,
             lambda b, actor: b.set_queue_paused(name, True, actor=actor),
             "tasks-dashboard",
             "queue-paused",
         )
 
-    @router.post("/queues/{name}/resume", name="tasks-queue-resume")
+    @router.post("/queues/{name:path}/resume", name="tasks-queue-resume")
     async def tasks_queue_resume(request: Request, name: str) -> Response:
         return await perform(
             request,
+            Capability.PAUSE_QUEUE,
             lambda b, actor: b.set_queue_paused(name, False, actor=actor),
             "tasks-dashboard",
             "queue-resumed",
         )
 
-    @router.post("/schedules/{schedule_id}/pause", name="tasks-schedule-pause")
+    @router.post("/schedules/{schedule_id:path}/pause", name="tasks-schedule-pause")
     async def tasks_schedule_pause(request: Request, schedule_id: str) -> Response:
         return await perform(
             request,
+            Capability.PAUSE_SCHEDULE,
             lambda b, actor: b.set_schedule_paused(schedule_id, True, actor=actor),
             "tasks-schedules",
             "schedule-paused",
         )
 
-    @router.post("/schedules/{schedule_id}/resume", name="tasks-schedule-resume")
+    @router.post("/schedules/{schedule_id:path}/resume", name="tasks-schedule-resume")
     async def tasks_schedule_resume(request: Request, schedule_id: str) -> Response:
         return await perform(
             request,
+            Capability.PAUSE_SCHEDULE,
             lambda b, actor: b.set_schedule_paused(schedule_id, False, actor=actor),
             "tasks-schedules",
             "schedule-resumed",
@@ -351,6 +367,9 @@ def build_router(
     @router.get("/", name="tasks-dashboard", response_class=HTMLResponse)
     async def tasks_dashboard(request: Request) -> Response:
         if not await can_view(admin, request):
+            if request.query_params.get("partial") == "1":
+                # a 403 body is never swapped in by the poll: reload the whole page instead
+                return Response(headers={"HX-Redirect": request.url.path})
             return await forbidden(request)
         context = await _load_overview(lifecycle, await can_manage(admin, request))
         context["refresh_seconds"] = config.refresh_seconds
@@ -409,6 +428,11 @@ def build_router(
             return admin.templates.TemplateResponse(request, "tasks/task_list.html", context)
         pagination = Pagination(result.page, result.per_page, len(result.items), result.total)
         base = request.url.path
+        if number > 1 and not result.items:
+            # past the last page (tasks were deleted or pruned): land on the last one
+            last = pagination.total_pages
+            target = min(last, number - 1) if last else number - 1
+            return RedirectResponse(list_url(base, filters, target), status_code=303)
         context.update(
             queues=queue_names,
             rows=[{"task": task, "pill": STATE_PILL_KIND[task.state]} for task in result.items],

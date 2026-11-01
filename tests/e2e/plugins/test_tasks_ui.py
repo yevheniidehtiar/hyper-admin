@@ -16,6 +16,11 @@ def _login(page: Page, base_url: str, username: str) -> None:
     expect(page).to_have_url(f"{base_url}/admin/")
 
 
+def _csrf_token(page: Page) -> str:
+    """The CSRF token the current page carries in its meta tag."""
+    return str(page.evaluate("document.querySelector('meta[name=csrf-token]').content"))
+
+
 def _confirm_next_dialog(page: Page, seen: list[str]) -> None:
     """Accept the next confirmation dialog, recording its message in ``seen``."""
 
@@ -186,7 +191,7 @@ def test_view_only_user_cannot_post_an_action(page: Page, tasks_base_url: str) -
     # Given the viewer is signed in on the task page, so the page carries a valid CSRF token
     _login(page, tasks_base_url, "viewer")
     page.goto(f"{tasks_base_url}/admin/tasks/t/F1")
-    token = page.locator('meta[name="csrf-token"]').get_attribute("content") or ""
+    token = _csrf_token(page)
 
     # When the viewer POSTs the retry URL directly
     response = page.request.post(
@@ -204,7 +209,7 @@ def test_backend_refusal_shows_an_error_message(page: Page, tasks_base_url: str)
     # Given alice has the detail page of pending task P1 open
     _login(page, tasks_base_url, "alice")
     page.goto(f"{tasks_base_url}/admin/tasks/t/P1")
-    token = page.locator('meta[name="csrf-token"]').get_attribute("content") or ""
+    token = _csrf_token(page)
 
     # When the task is retried although it is not retryable (a race with another operator)
     response = page.request.post(

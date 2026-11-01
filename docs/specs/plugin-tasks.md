@@ -77,7 +77,7 @@ Scenario: failed task is retried from the admin
 
 Scenario: actions are hidden when the backend lacks the capability
   Given a backend whose capabilities exclude CANCEL
-  When  the user opens a running task's detail page
+  When  the user opens a pending task's detail page
   Then  no "Cancel" button is rendered
 
 Scenario: incompatible pgtask storage protocol fails fast
