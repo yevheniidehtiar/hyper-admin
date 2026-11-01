@@ -244,6 +244,11 @@ class HyperAdminSettings(BaseSettings):
     #: IANA zone used to enter and display timezone-aware datetimes.
     timezone: str = "UTC"
 
+    # ── Performance ───────────────────────────────────────────────────────────
+    #: Most list totals the built-in count cache keeps; the least recently used go first.
+    #: Only used by models that set ``AdminOptions.count_cache_ttl``.
+    count_cache_max_entries: int = Field(default=1024, ge=1)
+
     # ── Internationalization ──────────────────────────────────────────────────
     default_locale: str = "en"
     supported_locales: list[str] = Field(default_factory=lambda: list(_DEFAULT_SUPPORTED_LOCALES))
