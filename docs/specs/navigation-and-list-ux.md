@@ -53,6 +53,7 @@ None of it is implemented yet. This SDD turns those specs into an implementable 
 - Column show/hide, a density toggle, and remembering list state when you come back from a record.
 - Undo-after-delete or soft delete.
 - Reordering pins by drag and drop. Pins are listed in the order they were pinned.
+- A "Create …" shortcut in the palette's empty state (owner, 2026-11-01: not now). Per-model "New …" actions on search results stay in scope.
 - A sidebar more than two levels deep (AppShell "Don't").
 
 ## BDD Scenarios
@@ -249,7 +250,7 @@ class NavPin(SQLModel, table=True):
     created_at: datetime = Field(default_factory=utc_now, sa_type=UTCNaiveDateTime)
 ```
 
-`NavPinService(engine=None, session_factory=None)` has `list_for(user_key) -> list[str]`, `pin(user_key, target)` (idempotent) and `unpin(user_key, target)` (idempotent). It allows at most `MAX_PINS = 20` per user; a 21st pin raises `PinLimitError`, which the view turns into a toast.
+`NavPinService(engine=None, session_factory=None)` has `list_for(user_key) -> list[str]`, `pin(user_key, target)` (idempotent) and `unpin(user_key, target)` (idempotent). It allows at most `settings.nav_pins_max` pins per user (default 20); one more raises `PinLimitError`, which the view turns into a toast.
 
 ### API / Protocol Changes
 
@@ -402,6 +403,7 @@ haShortcuts.register({ keys: "j", description, handler, scope: "list", single: t
 |---|---|---|---|
 | `HyperAdmin(...)` keyword-only | `nav_groups` | `Sequence[NavGroup] = ()` | nav-01 |
 | ModelView / ModelAdmin class | `nav_group`, `nav_order`, `icon` (documented) | see Data Model | nav-01 |
+| `HyperAdminSettings` | `nav_pins_max` (`HYPERADMIN_NAV_PINS_MAX`) | `int = 20`, `ge=1` | nav-03 |
 | `AdminOptions` | `warn_unsaved_changes` | `bool = True` | kbd-01 |
 
 `nav_groups` goes on the constructor, not on `HyperAdminSettings`: the settings class is for scalar env-driven values ("All scalar configuration lives here"), and a list of objects does not belong in env vars. `disabled_plugins` is the precedent.
@@ -426,7 +428,8 @@ These are added to the CLAUDE.md reference table by the story that introduces th
 | Auth disabled (no `user_key`) | Pins feature off: no toggles, no Pinned group, pin routes not registered. The palette still works without the Pinned section |
 | Pin target model unregistered later, or plugin disabled | Row ignored at render; the stale row is deleted on the user's next pin or unpin |
 | User loses `view_<model>` | Pinned entry hidden (permission filter at render); the pin row is kept, so it reappears if access returns |
-| 21st pin | `PinLimitError` → 409 plus error toast "You can pin up to 20 pages" |
+| Pin beyond `nav_pins_max` | `PinLimitError` → 409 plus error toast "You can pin up to {n} pages" |
+| `nav_pins_max` lowered below a user's pin count | Existing pins all still render; new pins are refused until the user is under the limit |
 | Pin POST race (double click) | Unique constraint; the service treats IntegrityError as already pinned (idempotent) |
 | Cookie `ha-nav-collapsed` holds unknown slugs | Ignored |
 | Cookie or localStorage unavailable | Groups render from `NavGroup.collapsed`; no recents; shortcuts default on |
@@ -456,9 +459,7 @@ These are added to the CLAUDE.md reference table by the story that introduces th
 
 ## Open Questions
 
-- [ ] Milestone position: right after v0.5.8 (proposed), or after v0.5.5 finishes?
-- [ ] Should the palette's empty state also offer "Create …" for the current model's list page? (Proposed: yes, as the first option on a list page.)
-- [ ] `MAX_PINS = 20`: acceptable, or make it a setting?
+- [ ] Milestone position: right after v0.5.8 (proposed). v0.5.5 is already done.
 
 ## Decision Log
 
@@ -474,4 +475,6 @@ These are added to the CLAUDE.md reference table by the story that introduces th
 | One shared dialog included once | One focus-managed element; triggers stay tiny | A dialog per row (DOM bloat on 100-row pages) |
 | `nav_groups` on the `HyperAdmin` constructor | Settings are scalar and env-driven; `disabled_plugins` is the precedent | `HyperAdminSettings.nav_groups` |
 | Group falls back to `app_label` | Apps that already pass `app_label` get domain groups for free | No fallback (everything ungrouped until configured) |
+| Pin limit 20 by default, configurable as `HyperAdminSettings.nav_pins_max` | Owner decision (2026-11-01). A scalar, so it belongs in settings (env `HYPERADMIN_NAV_PINS_MAX`) | Hard-coded `MAX_PINS` constant |
+| No "Create …" in the palette's empty state | Owner decision (2026-11-01): not now | First option on list pages |
 | Shortcut registry with an off switch for single keys | WCAG 2.1.4; one place for the palette, forms and lists | Per-feature key handlers (current `_base.html` handler) |

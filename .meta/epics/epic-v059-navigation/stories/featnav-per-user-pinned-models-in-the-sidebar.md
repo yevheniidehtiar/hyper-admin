@@ -28,7 +28,7 @@ Add the `navigation/` package with `NavPin` (`hyperadmin_nav_pin`) and `NavPinSe
 
 - **New:** `src/hyperadmin/navigation/__init__.py`, `navigation/pins.py`
 - **New:** `src/hyperadmin/views/nav_pins.py`, `templates/components/nav_pinned.html`
-- **Modified:** `src/hyperadmin/templates/_sidebar.html`, `src/hyperadmin/core/app.py`
+- **Modified:** `src/hyperadmin/templates/_sidebar.html`, `src/hyperadmin/core/app.py`, `src/hyperadmin/core/settings.py`
 - **Modified:** `docs/guides/existing-app.md`
 - **New:** `tests/unit/test_nav_pins.py`, `tests/e2e/test_nav_pins.py`
 
@@ -59,8 +59,8 @@ Scenario: unknown or forbidden pin targets return 404
   When  alice POSTs target="secretmodel"
   Then  the response is 404
 
-Scenario: the 21st pin is refused
-  Given alice has 20 pins
+Scenario: a pin beyond the limit is refused
+  Given nav_pins_max is 20 (default) and alice has 20 pins
   When  alice pins another page
   Then  the response is 409 and an error toast explains the limit
 
@@ -72,6 +72,7 @@ Scenario: no auth means no pins
 
 ## Acceptance Criteria
 
+- [ ] `HyperAdminSettings.nav_pins_max: int = 20` (`ge=1`, env `HYPERADMIN_NAV_PINS_MAX`) documented in the settings reference
 - [ ] Table joins `hyperadmin_*` metadata on import (`init-db`, `auth.metadata()`)
 - [ ] Missing table: logged once, feature hidden, no 500 (same guard as saved views)
 - [ ] Double POST is idempotent (unique constraint handled)
