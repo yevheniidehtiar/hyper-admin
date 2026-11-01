@@ -47,6 +47,7 @@ async def _codenames(engine, username: str) -> set[str]:
         return set(rows.scalars().all())
 
 
+@pytest.mark.anyio
 async def test_seeding_creates_demo_demo2_and_demo_ro(demo_engine) -> None:
     """
     Scenario: seeding creates the three hosted-demo accounts
@@ -61,6 +62,7 @@ async def test_seeding_creates_demo_demo2_and_demo_ro(demo_engine) -> None:
     assert names == {"demo", "demo2", "demo_ro"}
 
 
+@pytest.mark.anyio
 async def test_demo_and_demo2_share_permissions_without_auth_models(demo_engine) -> None:
     """
     Scenario: demo and demo2 hold the same non-auth permissions
@@ -75,6 +77,7 @@ async def test_demo_and_demo2_share_permissions_without_auth_models(demo_engine)
     assert not {code for code in demo if code.endswith(("_user", "_group"))}
 
 
+@pytest.mark.anyio
 async def test_demo_ro_has_only_view_permissions_of_non_auth_models(demo_engine) -> None:
     """
     Scenario: demo_ro is read-only
@@ -86,6 +89,7 @@ async def test_demo_ro_has_only_view_permissions_of_non_auth_models(demo_engine)
     assert await _codenames(demo_engine, "demo_ro") == {"view_invoice", "view_contact"}
 
 
+@pytest.mark.anyio
 async def test_seeding_is_idempotent(demo_engine) -> None:
     """
     Scenario: seeding twice changes nothing

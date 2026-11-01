@@ -43,6 +43,7 @@ services:
     environment:
       DATABASE_URL: postgresql://hyperadmin:hyperadmin@postgres:5432/erp
       HYPERADMIN_SECRET_KEY: loadtest-secret-key
+      DEMO_REALTIME: "0"
     # 3 uvicorn workers. The app lifespan creates tables + the admin/admin superuser and seeds
     # the demo dataset on startup; load bulk data afterwards via `hyperadmin seed` (see header).
     command:

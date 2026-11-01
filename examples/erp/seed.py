@@ -47,6 +47,15 @@ AUTH_MODELS = (User, Group, Permission, UserGroup, UserPermission, GroupPermissi
 DEMO_USERNAME = "demo"
 DEMO_PASSWORD = "demo"  # noqa: S105 - public credentials of the hosted demo
 
+# Public accounts of the hosted demo: (username, password, view_only).
+# ``demo`` and ``demo2`` share permissions so two visitors can watch each other's edits
+# live; ``demo_ro`` is read-only (only ``view_*`` on non-auth models).
+DEMO_ACCOUNTS = (
+    (DEMO_USERNAME, DEMO_PASSWORD, False),
+    ("demo2", "demo2", False),
+    ("demo_ro", "demo_ro", True),
+)
+
 
 async def seed_db():  # noqa: PLR0915
     async with AsyncSession(engine, expire_on_commit=False) as session:
@@ -404,26 +413,15 @@ async def _seed_field_showcase(session: AsyncSession, suppliers: list[Contact]) 
 
 
 async def seed_demo_user() -> None:
-    """Create the public ``demo`` account of the hosted demo (idempotent).
+    """Create the public accounts of the hosted demo (idempotent).
 
-    It is not a superuser: it holds every synced permission except those on the
-    built-in auth models, so visitors can use the whole app but cannot change
-    users, groups, permissions or passwords. Run after permissions are synced.
+    None is a superuser: ``demo`` and ``demo2`` hold every synced permission except those
+    on the built-in auth models, so visitors can use the whole app but cannot change
+    users, groups, permissions or passwords; ``demo_ro`` holds only the ``view_*`` ones.
+    Run after permissions are synced.
     """
     auth_names = {model.__name__.lower() for model in AUTH_MODELS}
     async with AsyncSession(engine, expire_on_commit=False) as session:
-        existing = await session.execute(select(User).where(User.username == DEMO_USERNAME))
-        if existing.first():
-            return
-        demo_user = User(
-            username=DEMO_USERNAME,
-            email="demo@example.com",
-            password_hash=hash_password(DEMO_PASSWORD),
-            first_name="Demo",
-            last_name="Visitor",
-        )
-        session.add(demo_user)
-        await session.flush()
         permissions = (
             (
                 await session.execute(
@@ -433,12 +431,28 @@ async def seed_demo_user() -> None:
             .scalars()
             .all()
         )
-        session.add_all(
-            UserPermission(user_id=demo_user.id, permission_id=permission.id)
-            for permission in permissions
-        )
-        await session.commit()
-        logger.info("  Created demo user (demo / demo) with %d ERP permissions", len(permissions))
+        for username, password, view_only in DEMO_ACCOUNTS:
+            existing = await session.execute(select(User).where(User.username == username))
+            if existing.first():
+                continue
+            user = User(
+                username=username,
+                email=f"{username}@example.com",
+                password_hash=hash_password(password),
+                first_name="Demo",
+                last_name="Visitor",
+            )
+            session.add(user)
+            await session.flush()
+            granted = [p for p in permissions if not view_only or p.codename.startswith("view_")]
+            session.add_all(UserPermission(user_id=user.id, permission_id=p.id) for p in granted)
+            await session.commit()
+            logger.info(
+                "  Created demo user (%s / %s) with %d ERP permissions",
+                username,
+                password,
+                len(granted),
+            )
 
 
 async def bulk_seed_erp(

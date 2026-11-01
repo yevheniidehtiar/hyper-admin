@@ -66,6 +66,36 @@ uv run fastapi dev examples/erp/main.py
 
 ---
 
+## Realtime
+
+Realtime notifications are on by default: when someone creates, edits or deletes a record,
+every other open list of that model re-fetches and highlights the changed row. The ledger
+models (`JournalEntry`, `JournalLine`) opt out with `realtime_notifications=False`, because
+invoices and bills write them as a side effect. Set `DEMO_REALTIME=0` to turn the whole layer
+off (the load-test stack does this).
+
+**Local (one process).** `uv run fastapi dev examples/erp/main.py` keeps pub/sub and presence
+in memory. Open two browser windows on the same list, edit a record in one, and watch the
+other update.
+
+**Compose (two workers, Redis, PostgreSQL).** `docker compose -f examples/erp/docker-compose.yml up --build`
+starts `postgres:16`, `redis:7-alpine` and the app with `uvicorn --workers 2`. With `REDIS_URL`
+set, pub/sub and presence go through Redis, so an event published by one worker reaches sockets
+held by the other. To see the fan-out, open two windows (use a private window for the second one
+so the load balancer is likelier to hand it to the other worker), edit an invoice in one, and
+check that the Invoices list in the other re-fetches. If Redis is down, the app keeps serving
+requests and only logs warnings; events are not delivered across workers until it is back.
+
+**Hosted demo.** With `HYPERADMIN_DEMO=1` the login page lists three public accounts:
+
+| Account | Password | Use |
+|---|---|---|
+| `demo` | `demo` | Full ERP access except users, groups and permissions |
+| `demo2` | `demo2` | Same permissions as `demo`: sign in from a second window to watch live updates |
+| `demo_ro` | `demo_ro` | Read-only: only `view_*` permissions, still receives live updates |
+
+---
+
 ## Screenshot
 
 <!-- TODO: replace with actual screenshot after first run -->

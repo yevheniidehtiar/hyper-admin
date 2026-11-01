@@ -1,11 +1,49 @@
-version: '3.8'
-
 services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: hyperadmin
+      POSTGRES_PASSWORD: hyperadmin
+      POSTGRES_DB: erp
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hyperadmin -d erp"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   erp_app:
     build:
       context: ../../
       dockerfile: examples/erp/Dockerfile
+    # Two uvicorn workers share Redis pub/sub and presence, so a change made through one
+    # worker reaches the sockets held by the other.
+    command:
+      - uv
+      - run
+      - uvicorn
+      - examples.erp.main:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --workers
+      - "2"
     ports:
       - "8000:8000"
     environment:
       - ENVIRONMENT=production
+      - DATABASE_URL=postgresql://hyperadmin:hyperadmin@postgres:5432/erp
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy

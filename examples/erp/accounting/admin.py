@@ -5,6 +5,7 @@ from typing import ClassVar
 from examples.erp.accounting.models import Account, JournalEntry, JournalLine
 from hyperadmin.adapters.sqlmodel import SQLModelAdapter
 from hyperadmin.core.model import ModelAdmin
+from hyperadmin.core.options import AdminOptions
 from hyperadmin.core.registry import site
 
 
@@ -18,11 +19,15 @@ class AccountAdmin(ModelAdmin):
 class JournalEntryAdmin(ModelAdmin):
     adapter_class = SQLModelAdapter
     list_display: ClassVar[list[str]] = ["id", "date_posted", "description"]
+    # Ledger rows are written as a side effect of invoices and bills: keep them out of
+    # realtime notifications so only the business documents notify subscribers.
+    options: ClassVar[AdminOptions] = AdminOptions(realtime_notifications=False)
 
 
 class JournalLineAdmin(ModelAdmin):
     adapter_class = SQLModelAdapter
     list_display: ClassVar[list[str]] = ["entry", "account", "debit", "credit"]
+    options: ClassVar[AdminOptions] = AdminOptions(realtime_notifications=False)
 
 
 site.register(Account, AccountAdmin)
