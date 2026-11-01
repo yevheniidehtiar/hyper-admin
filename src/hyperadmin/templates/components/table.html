@@ -7,7 +7,7 @@
     {%- set rt_plural = model_name[:-1] ~ 'ies' if rt_consonant_y else (model_name ~ 'es' if rt_last in ['s', 'x'] else model_name ~ 's') -%}
 {%- endif -%}
 <div id="model-list" class="ha-table-wrapper"
-     {%- if rt_hook %} data-realtime-model="{{ model_name|lower }}" data-realtime-label="{{ model_name }}" data-realtime-label-plural="{{ rt_plural }}"{% endif %}>
+     {%- if rt_hook %} data-testid="realtime-hook" data-realtime-model="{{ model_name|lower }}" data-realtime-label="{{ model_name }}" data-realtime-label-plural="{{ rt_plural }}"{% endif %}>
     {%- include "components/list_error.html" -%}
     {%- if bulk_actions -%}
         {%- include "components/bulk_toolbar.html" -%}

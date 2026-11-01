@@ -35,7 +35,7 @@ if TYPE_CHECKING:
 
 APP = "tests.e2e.apps.realtime_notifications"
 ARTICLES = "/admin/article"
-HOOK = "[data-realtime-model]"
+HOOK = "realtime-hook"
 NEWEST_FIRST = f"{ARTICLES}?sort_by=id&sort_direction=desc"
 # Debounce (300 ms) + request + swap, with slack for a loaded CI box.
 LIVE_MS = 8_000
@@ -211,7 +211,7 @@ def test_create_by_another_user_refreshes_the_list_and_shows_a_toast(
         # (newest first: the new row lands on page 1 of the default 10-row page size)
         alice_list = _open_list(alice, notif_url, NEWEST_FIRST)
         bob_list = _open_list(bob, notif_url, NEWEST_FIRST)
-        expect(bob_list.locator(HOOK)).to_have_count(1)
+        expect(bob_list.get_by_test_id(HOOK)).to_have_count(1)
         expect(alice_list.get_by_test_id("realtime-status")).to_have_attribute(
             "data-realtime-self", "1"
         )
@@ -425,7 +425,7 @@ def test_only_selected_models_notify(browser: Browser, optin_url: str) -> None:
     with _sessions(browser, optin_url, "alice", "bob") as ((alice, bob), errors):
         article_list = _open_list(bob, optin_url, NEWEST_FIRST)
         comment_list = _open_list(bob, optin_url, "/admin/comment")
-        expect(article_list.locator(HOOK)).to_have_count(1)
+        expect(article_list.get_by_test_id(HOOK)).to_have_count(1)
         # And a hand-made subscription to the Comment channel stays silent
         _forge(comment_list, optin_url, "comment")
 
@@ -436,7 +436,7 @@ def test_only_selected_models_notify(browser: Browser, optin_url: str) -> None:
         # Then the Article list refreshes live
         expect(_row(article_list, article_pk)).to_contain_text("Opted in", timeout=LIVE_MS)
         # And the Comment list has no hook and does not change
-        expect(comment_list.locator(HOOK)).to_have_count(0)
+        expect(comment_list.get_by_test_id(HOOK)).to_have_count(0)
         comment_list.wait_for_timeout(QUIET_MS)
         expect(comment_list.get_by_text("Not announced")).to_have_count(0)
         # And nothing was published on the Comment channel
@@ -518,8 +518,8 @@ def test_no_subscription_attempt_without_view_permission(browser: Browser, notif
         home.wait_for_timeout(QUIET_MS)
 
         # Then no page renders a subscription hook
-        expect(home.locator(HOOK)).to_have_count(0)
-        expect(forbidden.locator(HOOK)).to_have_count(0)
+        expect(home.get_by_test_id(HOOK)).to_have_count(0)
+        expect(forbidden.get_by_test_id(HOOK)).to_have_count(0)
         # And her sockets send no subscribe frame
         assert _sent_subscribes(home) == []
         assert _sent_subscribes(forbidden) == []
@@ -574,7 +574,7 @@ def test_realtime_disabled_is_a_no_op(browser: Browser, off_url: str) -> None:
 
         # Then bob's list renders no hook, no status widget and never changes by itself
         bob_list.wait_for_timeout(QUIET_MS)
-        expect(bob_list.locator(HOOK)).to_have_count(0)
+        expect(bob_list.get_by_test_id(HOOK)).to_have_count(0)
         expect(bob_list.get_by_test_id("realtime-status")).to_have_count(0)
         expect(_row(bob_list, pk)).to_have_count(0)
         expect(_toast(bob_list)).to_have_count(0)
