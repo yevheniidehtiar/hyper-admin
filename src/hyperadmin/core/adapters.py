@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+import logging
 from abc import ABC, abstractmethod
-from collections.abc import Callable, Iterator, Mapping, Sequence
+from collections.abc import Awaitable, Callable, Iterator, Mapping, Sequence
 from contextlib import AbstractAsyncContextManager, contextmanager
 from contextvars import ContextVar
 from dataclasses import dataclass
@@ -16,12 +17,16 @@ if TYPE_CHECKING:
 
     from starlette.requests import Request
 
+    from hyperadmin.core.cache import CountCache
     from hyperadmin.core.choices import ChoiceItem
     from hyperadmin.core.filtering import FilterCondition
     from hyperadmin.core.inlines import InlineModelSpec
     from hyperadmin.core.timezones import DateTimeKind
 
     QuerysetFilter = Callable[["Request | None"], dict[str, Any]]
+
+
+logger = logging.getLogger(__name__)
 
 
 class AsyncSessionLike(Protocol):
@@ -197,6 +202,10 @@ class BaseAdapter(ABC):
     #: Primary-key codec for ``model``. ORM adapters replace it with an introspected
     #: value; third-party adapters inherit the historical ``int id`` default.
     pk: PrimaryKeyInfo = DEFAULT_PK
+    #: Where list totals are cached, and for how long. Set by the router from
+    #: ``AdminOptions.count_cache_ttl``; ``0`` (the default) disables caching.
+    count_cache: CountCache | None = None
+    count_cache_ttl: int = 0
 
     def __init__(
         self, model: Any, engine: Any = None, *, session_factory: SessionFactory | None = None
@@ -216,6 +225,51 @@ class BaseAdapter(ABC):
         engine-only construction path.
         """
         return open_session(self.engine, self.session_factory)
+
+    async def _cached_count(
+        self,
+        compute: Callable[[], Awaitable[int]],
+        *,
+        filters: Sequence[FilterCondition],
+        search: str | None,
+        search_fields: Sequence[str] | None,
+        queryset_filters: Mapping[str, Any],
+    ) -> int:
+        """Return the list total, served from :attr:`count_cache` while fresh.
+
+        ``page``, ``page_size`` and ordering do not change a total, so they are not
+        part of the key. A query whose values cannot be hashed bypasses the cache.
+        """
+        cache = self.count_cache
+        if cache is None or self.count_cache_ttl <= 0:
+            return await compute()
+        key = (
+            self._count_cache_model_key(),
+            tuple(filters),
+            search or "",
+            tuple(search_fields) if search and search_fields is not None else None,
+            tuple(sorted(queryset_filters.items())),
+        )
+        try:
+            hash(key)
+        except TypeError:
+            logger.debug("count cache bypassed for %s: unhashable filter value", key[0])
+            return await compute()
+        cached = await cache.get(key)
+        if cached is not None:
+            return cached
+        total = await compute()
+        await cache.set(key, total, self.count_cache_ttl)
+        return total
+
+    def _count_cache_model_key(self) -> str:
+        """Module-qualified so same-named models in different modules never share entries."""
+        return f"{self.model.__module__}.{self.model.__qualname__}"
+
+    async def invalidate_count_cache(self) -> None:
+        """Drop this model's cached totals; call it after writes made outside the adapter."""
+        if self.count_cache is not None:
+            await self.count_cache.invalidate_model(self._count_cache_model_key())
 
     def for_model(self, model: Any) -> BaseAdapter:
         """Return a new adapter of this same class for ``model``.
