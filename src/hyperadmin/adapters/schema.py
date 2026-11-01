@@ -81,6 +81,25 @@ def _is_sa_type(annotation: Any) -> bool:
     return isinstance(annotation, type) and issubclass(annotation, TypeEngine)
 
 
+def _prefer_column_scalar(annotation: Any, column: Column[Any]) -> Any:
+    """Return ``annotation``, unless it says ``str`` over a bool, int or float column.
+
+    ``Mapped[str | None] = mapped_column(Boolean)`` is a mis-annotation seen in real
+    apps. Trusting it makes the field text: searched with ``ILIKE`` (an error on
+    Postgres) and shown as a text input. A numeric or boolean column keeps its own type;
+    the caller applies nullability.
+    """
+    if annotation is not str:
+        return annotation
+    try:
+        column_type = column.type.python_type
+    except NotImplementedError:
+        return annotation
+    if column_type not in (bool, int, float):
+        return annotation
+    return column_type
+
+
 def _resolve_annotation(model: type, key: str, column: Column[Any], hints: dict[str, Any]) -> Any:
     """Pick the field annotation: ``Mapped[X]`` first, then the column's Python type."""
     hint = hints.get(key)
@@ -93,7 +112,7 @@ def _resolve_annotation(model: type, key: str, column: Column[Any], hints: dict[
         if get_origin(inner) is Annotated:
             inner = _strip_none(get_args(inner)[0])
         if args and not isinstance(args[0], str) and not _is_sa_type(inner):
-            return inner
+            return _prefer_column_scalar(inner, column)
     sa_type = column.type
     if isinstance(sa_type, JSON):
         return dict | list | Any
