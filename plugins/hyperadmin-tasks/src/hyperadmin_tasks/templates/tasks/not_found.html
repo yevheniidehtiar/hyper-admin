@@ -1,0 +1,15 @@
+{#- The tasks plugin's own 404 card. Context: heading, text. -#}
+{%- extends "base.html" -%}
+{%- from "components/_icons.html" import icon -%}
+
+{%- block title -%}{{ heading }} | {{ site_title | default("HyperAdmin") }}{%- endblock -%}
+
+{%- block content -%}
+    <section class="ha-card ha-empty" data-testid="tasks-not-found" aria-labelledby="tasks-not-found-title">
+        <span class="ha-empty-glyph">{{ icon('search') }}</span>
+        <p class="ha-error-code ha-mono">{{ _("Error") }} 404</p>
+        <h1 id="tasks-not-found-title" class="ha-h3">{{ heading }}</h1>
+        <p class="ha-empty-text">{{ text }}</p>
+        <a class="ha-btn" href="{{ url_for('tasks-list') }}" data-testid="tasks-back-to-list">{{ _("Back to task list") }}</a>
+    </section>
+{%- endblock -%}

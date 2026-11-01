@@ -17,7 +17,13 @@ from fastapi.responses import HTMLResponse
 from starlette.responses import Response  # noqa: TC002 - FastAPI resolves the return annotation
 
 from hyperadmin_tasks.backend import Capability, QueueStats, TaskFilter, TaskState
-from hyperadmin_tasks.presenters import STATE_PILL_KIND, Pagination, format_age, list_url
+from hyperadmin_tasks.presenters import (
+    STATE_PILL_KIND,
+    Pagination,
+    format_age,
+    format_utc,
+    list_url,
+)
 from hyperadmin_tasks.settings import TasksSettings
 
 if TYPE_CHECKING:
@@ -166,5 +172,59 @@ def build_router(
             next_url=list_url(base, filters, number + 1) if pagination.has_next else None,
         )
         return admin.templates.TemplateResponse(request, "tasks/task_list.html", context)
+
+    async def not_found(request: Request, heading: str, text: str) -> Response:
+        return admin.templates.TemplateResponse(
+            request,
+            "tasks/not_found.html",
+            {"heading": heading, "text": text},
+            status_code=404,
+        )
+
+    async def supports(capability: Capability) -> bool:
+        return capability in (await lifecycle.ensure_started()).capabilities
+
+    @router.get("/workers", name="tasks-workers", response_class=HTMLResponse)
+    async def tasks_workers(request: Request) -> Response:
+        if not await can_view(admin, request):
+            return await forbidden(request)
+        context: dict[str, Any] = {"rows": [], "error": False}
+        try:
+            if not await supports(Capability.WORKERS):
+                return await not_found(
+                    request, "Workers are not available", "This backend does not report workers."
+                )
+            workers = await lifecycle.backend.list_workers()
+        except Exception:  # the backend is third-party; any failure becomes the inline banner
+            logger.warning("tasks backend failed while listing workers", exc_info=True)
+            context["error"] = True
+            return admin.templates.TemplateResponse(request, "tasks/workers.html", context)
+        context["rows"] = [
+            {"worker": worker, "last_seen": format_utc(worker.last_seen_at)} for worker in workers
+        ]
+        return admin.templates.TemplateResponse(request, "tasks/workers.html", context)
+
+    @router.get("/schedules", name="tasks-schedules", response_class=HTMLResponse)
+    async def tasks_schedules(request: Request) -> Response:
+        if not await can_view(admin, request):
+            return await forbidden(request)
+        context: dict[str, Any] = {"rows": [], "error": False}
+        try:
+            if not await supports(Capability.SCHEDULES):
+                return await not_found(
+                    request,
+                    "Schedules are not available",
+                    "This backend does not report schedules.",
+                )
+            schedules = await lifecycle.backend.list_schedules()
+        except Exception:  # the backend is third-party; any failure becomes the inline banner
+            logger.warning("tasks backend failed while listing schedules", exc_info=True)
+            context["error"] = True
+            return admin.templates.TemplateResponse(request, "tasks/schedules.html", context)
+        context["rows"] = [
+            {"schedule": schedule, "next_run": format_utc(schedule.next_run_at)}
+            for schedule in schedules
+        ]
+        return admin.templates.TemplateResponse(request, "tasks/schedules.html", context)
 
     return router

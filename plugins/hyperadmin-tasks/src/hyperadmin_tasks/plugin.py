@@ -10,6 +10,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, ClassVar
 
+from hyperadmin_tasks.backend import Capability
 from hyperadmin_tasks.lifecycle import BackendLifecycle
 from hyperadmin_tasks.routes import VIEW_PERMISSION, build_router
 from hyperadmin_tasks.selection import select_backend
@@ -22,6 +23,13 @@ PAGE_PREFIX = "/tasks"
 NAV_SECTION = "Tasks"
 #: Permission to act on tasks, queues and schedules.
 MANAGE_PERMISSION = "manage_tasks"
+
+#: Pages that only exist when the backend has the capability: (capability, label, route, icon,
+#: nav order).
+_OPTIONAL_PAGES: tuple[tuple[Capability, str, str, str, int], ...] = (
+    (Capability.WORKERS, "Workers", "tasks-workers", "users", 20),
+    (Capability.SCHEDULES, "Schedules", "tasks-schedules", "clock", 30),
+)
 
 
 class TasksPlugin:
@@ -53,5 +61,18 @@ class TasksPlugin:
             section=NAV_SECTION,
             testid="nav-tasks-dashboard",
         )
+        capabilities = self.lifecycle.backend.capabilities
+        for capability, label, url_name, icon, order in _OPTIONAL_PAGES:
+            if capability in capabilities:
+                plugins.add_nav_entry(
+                    self,
+                    label=label,
+                    url_name=url_name,
+                    icon=icon,
+                    permission=VIEW_PERMISSION,
+                    section=NAV_SECTION,
+                    order=order,
+                    testid=f"nav-{url_name}",
+                )
         plugins.add_permission(self, VIEW_PERMISSION, name="Can view tasks")
         plugins.add_permission(self, MANAGE_PERMISSION, name="Can manage tasks")
