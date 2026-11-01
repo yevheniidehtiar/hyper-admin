@@ -309,7 +309,7 @@ class _PresenceSession:
     async def handle(self, text: str) -> None:
         try:
             data = json.loads(text)
-        except ValueError:
+        except (ValueError, RecursionError):
             return
         if not isinstance(data, dict) or data.get("type") != "presence":
             return
@@ -405,7 +405,7 @@ class _NotificationSession:
     async def handle(self, text: str) -> None:
         try:
             data = json.loads(text)
-        except ValueError:
+        except (ValueError, RecursionError):
             return
         if not isinstance(data, dict):
             return
@@ -431,9 +431,17 @@ class _NotificationSession:
     async def _may_follow(self, model: str) -> bool:
         if self._authorize is None:
             return False
-        if model not in self._allowed:
-            self._allowed[model] = bool(await self._authorize(self._user, model))
-        return self._allowed[model]
+        if self._allowed.get(model):
+            return True
+        try:
+            allowed = bool(await self._authorize(self._user, model))
+        except Exception:
+            logger.debug("authorize failed for %s; treating as denied", model, exc_info=True)
+            return False
+        if allowed:
+            # Only grants are cached: denials for arbitrary names must not grow memory.
+            self._allowed[model] = True
+        return allowed
 
     async def close(self) -> None:
         await self._follows.close()

@@ -789,3 +789,37 @@ msgstr "Елемент успішно створено"
 msgid "Item updated successfully"
 msgstr "Елемент успішно оновлено"
 
+
+#: src/hyperadmin/templates/components/toast.html:19
+#, python-brace-format
+msgid "{actor} changed {count} {model}"
+msgid_plural "{actor} changed {count} {model}"
+msgstr[0] "{actor} змінив(ла) {count} {model}"
+msgstr[1] "{actor} змінив(ла) {count} {model}"
+msgstr[2] "{actor} змінив(ла) {count} {model}"
+
+#: src/hyperadmin/templates/components/toast.html:20
+#, python-brace-format
+msgid "{count} person"
+msgid_plural "{count} people"
+msgstr[0] "{count} особа"
+msgstr[1] "{count} особи"
+msgstr[2] "{count} осіб"
+
+#: src/hyperadmin/templates/components/toast.html:30
+#, python-brace-format
+msgid "{actor} created {model} #{pk}"
+msgstr "{actor} створив(ла) {model} #{pk}"
+
+#: src/hyperadmin/templates/components/toast.html:31
+#, python-brace-format
+msgid "{actor} deleted {model} #{pk}"
+msgstr "{actor} видалив(ла) {model} #{pk}"
+
+#: src/hyperadmin/templates/components/toast.html:32
+msgid "Someone"
+msgstr "Хтось"
+
+#: src/hyperadmin/templates/components/toast.html:33
+msgid "List changed: refresh"
+msgstr "Список змінено: оновити"

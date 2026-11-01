@@ -213,6 +213,58 @@ def test_authorize_is_cached_and_duplicates_ignored() -> None:
     assert h.calls == [(1, "article")]
 
 
+def test_deeply_nested_frame_does_not_crash_the_socket() -> None:
+    """
+    Scenario: a pathologically nested frame is ignored
+      Given a socket
+      When  it sends a frame nested deeper than the JSON parser allows
+      Then  the socket stays open and keeps answering
+    """
+    h = _Harness()
+    with h.client.websocket_connect("/ws") as ws:
+        ws.send_text("[" * 200_000)
+        _wait_subscribed(h, ws)
+    assert h.calls == []
+
+
+def test_authorize_failure_is_treated_as_denied() -> None:
+    """
+    Scenario: an authorizer error denies the subscription without closing the socket
+      Given an authorizer that raises
+      When  the socket subscribes to article
+      Then  the socket stays open and receives no article events
+    """
+    pubsub = InMemoryPubSub()
+
+    async def boom(user: Any, model: str) -> bool:
+        raise RuntimeError("db down")
+
+    handler = make_ws_handler(
+        ConnectionRegistry(), RealtimeSettings(), _Auth(), pubsub=pubsub, authorize=boom
+    )
+    client = TestClient(Starlette(routes=[WebSocketRoute("/ws", handler)]))
+    with client, client.websocket_connect("/ws") as ws:
+        ws.send_json(_sub("article"))
+        for _ in range(2):
+            ws.send_json({"type": "presence", "model": "x", "pk": "1", "mode": "viewing"})
+            assert ws.receive_json()["type"] == "presence"
+
+
+def test_denials_are_not_cached() -> None:
+    """
+    Scenario: denied names do not accumulate per-socket state
+      Given the authorizer only permits article
+      When  the socket subscribes to the same unknown model twice
+      Then  authorize is consulted each time, and grants stay cached
+    """
+    h = _Harness()
+    with h.client.websocket_connect("/ws") as ws:
+        ws.send_json(_sub("ghost"))
+        ws.send_json(_sub("ghost"))
+        _wait_subscribed(h, ws)
+    assert h.calls == [(1, "ghost"), (1, "ghost")]
+
+
 def test_subscription_cap() -> None:
     """
     Scenario: a socket follows at most MAX_NOTIFICATION_CHANNELS models

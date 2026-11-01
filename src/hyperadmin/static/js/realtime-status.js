@@ -131,6 +131,8 @@
   var NOTIFY_DEBOUNCE_MS = 300;
   var TOAST_MS = 4000;
   var FLASH_MS = 1500;
+  var NOTIFY_MAX_WAIT_MS = 2000;
+  var NOTIFY_MAX_EVENTS = 100;
   var PLURAL_FALLBACK = "other";
 
   function Notifications() {
@@ -183,12 +185,17 @@
     document.body.dispatchEvent(new CustomEvent("ha:crud", { detail: msg }));
     var buf = this.buffers[msg.model] || (this.buffers[msg.model] = { events: [], timer: null, stale: false });
     buf.events.push(msg);
+    if (buf.events.length > NOTIFY_MAX_EVENTS) buf.events.shift();
     var self = this;
+    var now = Date.now();
+    if (!buf.first) buf.first = now;
     if (buf.timer) clearTimeout(buf.timer);
+    // Debounce, but never wait longer than NOTIFY_MAX_WAIT_MS from the first buffered event.
+    var wait = Math.max(0, Math.min(NOTIFY_DEBOUNCE_MS, buf.first + NOTIFY_MAX_WAIT_MS - now));
     buf.timer = setTimeout(function () {
       buf.timer = null;
       self.settle(msg.model);
-    }, NOTIFY_DEBOUNCE_MS);
+    }, wait);
   };
   Notifications.prototype.workInProgress = function () {
     return !!document.querySelector(".ha-inline-editor, input[name=ids][form=bulk-action-form]:checked");
@@ -217,6 +224,7 @@
     var buf = this.buffers[model];
     var events = buf.events;
     buf.events = [];
+    buf.first = 0;
     buf.stale = false;
     this.hidePillIfIdle();
     var self = this;
@@ -431,17 +439,19 @@
       open: function () { return new WebSocket(wsUrl); },
       close: function (h) { try { h.close(); } catch (e) { /* ignore */ } },
       bind: function (h, cb) {
+        // A superseded socket (after restart()) must not detach or feed the new one.
         h.onopen = function () {
           cb.onOpen();
           if (presence) presence.attach(h);
           notifications.attach(h);
         };
         h.onclose = function () {
-          if (presence) presence.detach();
-          notifications.detach();
+          if (presence && presence.ws === h) presence.detach();
+          if (notifications.ws === h) notifications.detach();
           cb.onClose();
         };
         h.onmessage = function (event) {
+          if (notifications.ws !== h) return;
           if (presence) presence.onMessage(event);
           notifications.onMessage(event);
         };
