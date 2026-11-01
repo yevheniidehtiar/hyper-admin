@@ -69,11 +69,11 @@ def test_dashboard_lists_queues(make_client: ClientFactory, seed_backend: Backen
 
     assert html.count('data-testid="tasks-queue-row"') == 2
     assert 'data-testid="tasks-queue-table"' in html
-    assert '<td class="ha-num" data-testid="tasks-queue-ready">1</td>' in html
-    assert '<td class="ha-num" data-testid="tasks-queue-running">1</td>' in html
-    assert '<td class="ha-num" data-testid="tasks-queue-scheduled">1</td>' in html
-    assert '<td class="ha-num" data-testid="tasks-queue-failed">1</td>' in html
-    assert '<td class="ha-num" data-testid="tasks-queue-oldest">12m</td>' in html
+    assert '<td class="ha-table-cell ha-num" data-testid="tasks-queue-ready">1</td>' in html
+    assert '<td class="ha-table-cell ha-num" data-testid="tasks-queue-running">1</td>' in html
+    assert '<td class="ha-table-cell ha-num" data-testid="tasks-queue-scheduled">1</td>' in html
+    assert '<td class="ha-table-cell ha-num" data-testid="tasks-queue-failed">1</td>' in html
+    assert '<td class="ha-table-cell ha-num" data-testid="tasks-queue-oldest">12m</td>' in html
     assert 'data-testid="tasks-queue-oldest">—</td>' in html
 
 

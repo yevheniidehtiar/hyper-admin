@@ -3,17 +3,18 @@
     ({% from "tasks/_actions.html" import action_form, flash with context %}) so the CSRF input
     can read the request.
 
-    action_form(url, label, testid, confirm, danger): a POST-only form with one button. It is
-    boosted by HTMX (hx-confirm asks first) and degrades to a plain form post without scripts.
+    action_form(url, label, testid, confirm, danger, small): a POST-only form with one button. It
+    is boosted by HTMX (hx-confirm asks first) and degrades to a plain form post without scripts.
+    Table rows use the compact button; page headers pass small=False to match their links.
     flash(): the banner for the ?notice= code an action redirected back with. Only known codes
     render, and their text is fixed here, so a crafted URL cannot put its own words on the page.
 -#}
 {%- from "components/banner.html" import banner -%}
 
-{%- macro action_form(url, label, testid, confirm, danger=False) -%}
-<form method="post" action="{{ url }}" class="ha-inline-form" hx-boost="true" hx-confirm="{{ confirm }}">
+{%- macro action_form(url, label, testid, confirm, danger=False, small=True) -%}
+<form method="post" action="{{ url }}" class="ha-row-actions" hx-boost="true" hx-confirm="{{ confirm }}">
     {{ csrf_input() if csrf_input is defined }}
-    <button type="submit" class="ha-btn ha-btn--sm{% if danger %} ha-btn-danger{% endif %}" data-testid="{{ testid }}">{{ label }}</button>
+    <button type="submit" class="ha-btn {{ 'ha-btn-danger' if danger else 'ha-btn-action' }}{% if small %} ha-btn-sm{% endif %}" data-testid="{{ testid }}">{{ label }}</button>
 </form>
 {%- endmacro -%}
 

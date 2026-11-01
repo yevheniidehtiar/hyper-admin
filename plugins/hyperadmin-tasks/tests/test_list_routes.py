@@ -261,7 +261,7 @@ def test_filter_inputs_have_labels(make_client: ClientFactory) -> None:
         ("tasks-name-filter", "Task name"),
         ("tasks-search-input", "Task ID"),
     ):
-        assert f'<label for="{field}">{label}</label>' in html
+        assert f'<label class="ha-label" for="{field}">{label}</label>' in html
         assert f'id="{field}"' in html
 
 

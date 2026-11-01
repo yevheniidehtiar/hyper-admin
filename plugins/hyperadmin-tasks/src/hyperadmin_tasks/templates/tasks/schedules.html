@@ -10,7 +10,7 @@
     <header class="ha-page-header" data-testid="page-header">
         <h1 class="ha-h1">{{ _("Schedules") }}</h1>
         <div class="ha-page-header-actions">
-            <a class="ha-btn" href="{{ url_for('tasks-dashboard') }}" data-testid="tasks-dashboard-link">{{ _("Dashboard") }}</a>
+            <a class="ha-btn ha-btn-action" href="{{ url_for('tasks-dashboard') }}" data-testid="tasks-dashboard-link">{{ _("Dashboard") }}</a>
         </div>
     </header>
     {{ flash() }}
@@ -20,32 +20,32 @@
     <div class="ha-table-wrapper">
         <table class="ha-table" data-testid="tasks-schedules-table" aria-label="{{ _('Schedules') }}">
             <thead>
-                <tr>
-                    <th scope="col">{{ _("ID") }}</th>
-                    <th scope="col">{{ _("Task") }}</th>
-                    <th scope="col">{{ _("Queue") }}</th>
-                    <th scope="col">{{ _("Cron") }}</th>
-                    <th scope="col">{{ _("Next run (UTC)") }}</th>
-                    <th scope="col">{{ _("Misfire policy") }}</th>
-                    <th scope="col">{{ _("Status") }}</th>
+                <tr class="ha-table-header">
+                    <th class="ha-table-th" scope="col">{{ _("ID") }}</th>
+                    <th class="ha-table-th" scope="col">{{ _("Task") }}</th>
+                    <th class="ha-table-th" scope="col">{{ _("Queue") }}</th>
+                    <th class="ha-table-th" scope="col">{{ _("Cron") }}</th>
+                    <th class="ha-table-th" scope="col">{{ _("Next run (UTC)") }}</th>
+                    <th class="ha-table-th" scope="col">{{ _("Misfire policy") }}</th>
+                    <th class="ha-table-th" scope="col">{{ _("Status") }}</th>
                     {%- if can.pause_schedule %}
-                    <th scope="col">{{ _("Actions") }}</th>
+                    <th class="ha-table-th ha-table-th-center" scope="col">{{ _("Actions") }}</th>
                     {%- endif %}
                 </tr>
             </thead>
-            <tbody>
+            <tbody class="ha-table-body">
                 {%- for row in rows %}
                 {%- set schedule = row.schedule %}
-                <tr data-testid="tasks-schedule-row">
-                    <th scope="row" class="ha-mono">{{ schedule.id }}</th>
-                    <td>{{ schedule.task_name }}</td>
-                    <td>{{ schedule.queue }}</td>
-                    <td class="ha-mono">{{ schedule.cron }}</td>
-                    <td>{{ row.next_run or "-" }}</td>
-                    <td>{{ schedule.misfire_policy }}</td>
-                    <td>{% if schedule.paused %}{{ pill(_("paused"), 'warning', testid='tasks-schedule-state') }}{% else %}{{ pill(_("active"), 'success', testid='tasks-schedule-state') }}{% endif %}</td>
+                <tr class="ha-table-row" data-testid="tasks-schedule-row">
+                    <th scope="row" class="ha-table-cell ha-mono">{{ schedule.id }}</th>
+                    <td class="ha-table-cell">{{ schedule.task_name }}</td>
+                    <td class="ha-table-cell">{{ schedule.queue }}</td>
+                    <td class="ha-table-cell ha-mono">{{ schedule.cron }}</td>
+                    <td class="ha-table-cell">{{ row.next_run or "-" }}</td>
+                    <td class="ha-table-cell">{{ schedule.misfire_policy }}</td>
+                    <td class="ha-table-cell">{% if schedule.paused %}{{ pill(_("paused"), 'warning', testid='tasks-schedule-state') }}{% else %}{{ pill(_("active"), 'success', testid='tasks-schedule-state') }}{% endif %}</td>
                     {%- if can.pause_schedule %}
-                    <td>
+                    <td class="ha-table-cell ha-table-cell-center">
                         {%- if schedule.paused %}
                         {{ action_form(url_for('tasks-schedule-resume', schedule_id=schedule.id), _("Resume"), 'tasks-schedule-resume-btn', _("Resume schedule %(id)s?", id=schedule.id)) }}
                         {%- else %}
