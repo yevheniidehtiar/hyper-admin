@@ -4,10 +4,21 @@ from __future__ import annotations
 
 from typing import Any
 
+from sqlalchemy import literal
 from sqlalchemy.sql.sqltypes import Enum, String
 from sqlmodel import AutoString
 
 from hyperadmin.core.sensitive import effective_sensitive_field_names
+
+
+def contains_clause(column: Any, text: str) -> Any:
+    """Return a case-insensitive substring match of ``text`` on ``column``.
+
+    The pattern is bound as a plain ``String``. Left to itself SQLAlchemy coerces it to the
+    column's type, which runs a ``TypeDecorator``'s bind processor on free text: a validating
+    or encrypting type then raises, or compares against the wrong value.
+    """
+    return column.ilike(literal(f"%{text}%", String))
 
 
 def detect_search_columns(model: Any, mapper: Any) -> list[str]:
