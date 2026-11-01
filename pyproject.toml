@@ -162,7 +162,7 @@ warn_unreachable = true
 [tool.basedpyright]  # https://docs.basedpyright.com/latest/configuration/config-files/
 typeCheckingMode = "standard"
 include = ["src", "plugins/*/src"]
-pythonVersion = "3.10"
+pythonVersion = "3.11"
 reportAny = false  # Too much noise for now
 
 [tool.pytest.ini_options]  # https://docs.pytest.org/en/latest/reference/reference.html#ini-options-ref
@@ -323,7 +323,7 @@ type = "simple"
 
   [tool.poe.tasks.typecheck]
   help = "Run basedpyright type checker"
-  cmd = "basedpyright src plugins/hyperadmin-reports/src"
+  cmd = "basedpyright src plugins/hyperadmin-reports/src plugins/hyperadmin-tasks/src"
 
   [tool.poe.tasks.lint]
   help = "Lint this package"
