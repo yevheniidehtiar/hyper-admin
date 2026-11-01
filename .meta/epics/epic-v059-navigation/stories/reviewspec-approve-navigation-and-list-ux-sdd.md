@@ -20,7 +20,7 @@ updated_at: 2026-11-01T00:00:00Z
 
 ## Summary
 
-**Human gate.** Review and approve the Navigation & List UX design doc before any implementation story starts. Answer the Open Questions (milestone position, palette empty-state create, `MAX_PINS`) or accept the proposals, then set the SDD status to `Approved`.
+**Human gate.** Review and approve the Navigation & List UX design doc before any implementation story starts. Confirm the milestone position (the only open question; the pin limit and the palette empty state were decided on 2026-11-01), then set the SDD status to `Approved`.
 
 **Spec:** [`docs/specs/navigation-and-list-ux.md`](../../../../docs/specs/navigation-and-list-ux.md)
 
