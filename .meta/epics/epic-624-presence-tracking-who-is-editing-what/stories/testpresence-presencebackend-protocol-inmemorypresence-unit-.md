@@ -2,7 +2,7 @@
 type: story
 id: X0tH_LblgJPQ
 title: "test(presence): PresenceBackend protocol + InMemoryPresence unit tests"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -18,7 +18,7 @@ github:
   last_sync_hash: sha256:18dfb4a4aacb6037ec6ee0a5c9fcc90ec8ad29dd0988e3e706f48e30475d9938
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-03-29T07:00:52Z
-updated_at: 2026-03-29T07:00:52Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Context

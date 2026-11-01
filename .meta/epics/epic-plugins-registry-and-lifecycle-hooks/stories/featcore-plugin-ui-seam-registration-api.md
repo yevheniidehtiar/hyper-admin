@@ -2,7 +2,7 @@
 type: story
 id: l_CHWhc2Un-c
 title: "feat(core): plugin UI-seam registration API and typed settings"
-status: in-review
+status: done
 priority: high
 assignee: null
 labels:
@@ -14,7 +14,7 @@ estimate: null
 epic_ref:
   id: um1zqB0-b2AZ
 created_at: 2026-10-18T00:00:00Z
-updated_at: 2026-10-18T00:00:00Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Summary

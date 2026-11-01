@@ -2,7 +2,7 @@
 type: story
 id: jYfHoBBIF499
 title: "feat(uploads): add thumbnail generation helper using Pillow"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -19,7 +19,7 @@ github:
   last_sync_hash: sha256:454720dc972e17e59953953d60f8a6f82afe542ae53d5e5b9e4759f73e7d9900
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-03-31T21:16:35Z
-updated_at: 2026-03-31T21:16:35Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Context

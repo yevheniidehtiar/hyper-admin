@@ -2,7 +2,7 @@
 type: story
 id: st-v057-pmx-04
 title: "feat(examples): full-demo umbrella app + qualification E2E suite"
-status: todo
+status: done
 priority: high
 assignee: null
 labels:
@@ -15,7 +15,7 @@ estimate: null
 epic_ref:
   id: ep-v057-pmx-01
 created_at: 2026-05-11T00:00:00Z
-updated_at: 2026-05-11T00:00:00Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Summary

@@ -2,7 +2,7 @@
 type: story
 id: GmWCokj4PqVc
 title: "feat(presence): Heartbeat handler + presence broadcasts in ConnectionManager"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -19,7 +19,7 @@ github:
   last_sync_hash: sha256:ec01b27a62e1ac5295d5e60ecf9c569a322be8bcb2dcc7ca61b779b1de4f0a29
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-03-29T07:01:37Z
-updated_at: 2026-03-29T07:01:37Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Context

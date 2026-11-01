@@ -2,7 +2,7 @@
 type: story
 id: qgi3H0Wq3ZKV
 title: "feat(views): integrate thumbnails into image preview and list/detail views"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -20,7 +20,7 @@ github:
   last_sync_hash: sha256:b7fb13c804703e0a5d242ae18822f2c31db5fca3a37263f224662e84a7777a69
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-03-31T21:17:42Z
-updated_at: 2026-03-31T21:17:43Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Context

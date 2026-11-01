@@ -2,9 +2,9 @@
 type: milestone
 id: v055-bulk-ac-01
 title: v0.5.5 — Bulk Actions & Autocomplete
-status: in_progress
+status: done
 created_at: 2026-05-10T00:00:00Z
-updated_at: 2026-09-28T00:00:00Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 **Roadmap position 2/16 (2026-09-28 re-cut).** Finish what is half-merged: #559/#560/#563/#566 and the H2 polish (#561) are on develop; the list-view bulk toolbar, `AutocompleteWidget` template and Playwright suites remain.

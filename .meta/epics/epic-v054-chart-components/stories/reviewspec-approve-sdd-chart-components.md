@@ -2,7 +2,7 @@
 type: story
 id: st-v054-charts-00
 title: "review(spec): approve SDD for chart components"
-status: todo
+status: done
 priority: high
 assignee: null
 labels:
@@ -15,7 +15,7 @@ estimate: null
 epic_ref:
   id: ep-v054-charts-01
 created_at: 2026-05-11T00:00:00Z
-updated_at: 2026-10-17T00:00:00Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Summary

@@ -2,7 +2,7 @@
 type: epic
 id: ep-v054-charts-01
 title: "epic(widgets): chart components bound to ReportView"
-status: todo
+status: done
 priority: high
 owner: null
 labels:
@@ -15,7 +15,7 @@ labels:
 milestone_ref:
   id: 8DidH5NiN6cP
 created_at: 2026-05-11T00:00:00Z
-updated_at: 2026-05-11T00:00:00Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Overview

@@ -2,7 +2,7 @@
 type: story
 id: uA2sSfp4itit
 title: "test: unit tests for configurable search_fields in adapter"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -20,7 +20,7 @@ github:
   last_sync_hash: sha256:10ebcbf54928cbfc4e0f3429bc2f22bacdf35db59252c0a164ec902ad75fc063
   synced_at: 2026-04-07T17:23:23.790Z
 created_at: 2026-03-27T00:39:18Z
-updated_at: 2026-03-29T18:26:29Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Context

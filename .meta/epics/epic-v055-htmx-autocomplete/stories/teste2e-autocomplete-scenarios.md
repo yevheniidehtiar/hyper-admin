@@ -2,7 +2,7 @@
 type: story
 id: st-v055-ac-04
 title: "test(e2e): HTMX autocomplete scenarios via Playwright"
-status: todo
+status: done
 priority: high
 assignee: null
 labels:
@@ -15,7 +15,7 @@ estimate: null
 epic_ref:
   id: ep-v055-ac-01
 created_at: 2026-05-10T00:00:00Z
-updated_at: 2026-05-10T00:00:00Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Summary

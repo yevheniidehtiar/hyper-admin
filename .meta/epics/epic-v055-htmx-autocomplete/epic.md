@@ -2,7 +2,7 @@
 type: epic
 id: ep-v055-ac-01
 title: "epic(views): HTMX FK/M2M autocomplete with dependent filtering and inline create"
-status: in_progress
+status: done
 priority: high
 owner: null
 labels:
@@ -15,7 +15,7 @@ labels:
 milestone_ref:
   id: v055-bulk-ac-01
 created_at: 2026-05-10T00:00:00Z
-updated_at: 2026-09-28T00:00:00Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Overview

@@ -2,7 +2,7 @@
 type: story
 id: PocktBXkhK5j
 title: "test(plugin-tasks): reusable TaskBackend contract test suite"
-status: backlog
+status: done
 priority: high
 assignee: null
 labels:
@@ -17,7 +17,7 @@ github:
   issue_number: 745
   repo: yevheniidehtiar/hyper-admin
 created_at: 2026-10-29T00:00:00Z
-updated_at: 2026-10-29T00:00:00Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Context

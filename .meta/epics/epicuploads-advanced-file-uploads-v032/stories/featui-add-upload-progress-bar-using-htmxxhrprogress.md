@@ -2,7 +2,7 @@
 type: story
 id: MfkSCZJGaaFR
 title: "feat(ui): add upload progress bar using htmx:xhr:progress"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -20,7 +20,7 @@ github:
   last_sync_hash: sha256:4f1bcd8047abe54ce0618dbd2dcdc63f31a844c2c645777f2ff320ca0e87e04d
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-03-31T21:17:03Z
-updated_at: 2026-03-31T21:17:03Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Context

@@ -2,7 +2,7 @@
 type: epic
 id: MxA3yEbHFb9t
 title: "Epic 6.2.1: WebSocket Infrastructure & PubSub Backends"
-status: in_progress
+status: done
 priority: medium
 owner: null
 labels:
@@ -16,7 +16,7 @@ github:
   last_sync_hash: sha256:0f986f1a5da15205ca3e94daccc4678d5dcb2c88b130e8283c56fff4d2cb0d97
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-03-29T07:02:09Z
-updated_at: 2026-09-28T00:00:00Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Overview

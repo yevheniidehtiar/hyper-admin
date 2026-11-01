@@ -2,7 +2,7 @@
 type: story
 id: uKSG-lCQo2tp
 title: "feat(ui): enhance drag-and-drop with visual feedback and keyboard shortcuts"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -20,7 +20,7 @@ github:
   last_sync_hash: sha256:d0bdfd4c5057cae3e41d3c6eb1f14fd52b598e655b7f994915f57e0aa06d4c76
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-03-31T21:16:50Z
-updated_at: 2026-03-31T21:16:50Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Context

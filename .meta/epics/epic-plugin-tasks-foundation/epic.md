@@ -2,7 +2,7 @@
 type: epic
 id: M437OCoW6YMr
 title: "epic(plugin-tasks): hyperadmin-tasks foundation — TaskBackend port, in-memory backend, contract suite"
-status: backlog
+status: in_progress
 priority: high
 owner: null
 labels:
@@ -17,7 +17,7 @@ github:
   issue_number: 739
   repo: yevheniidehtiar/hyper-admin
 created_at: 2026-10-29T00:00:00Z
-updated_at: 2026-10-29T00:00:00Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Overview

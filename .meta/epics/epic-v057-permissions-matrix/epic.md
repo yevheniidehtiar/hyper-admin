@@ -2,7 +2,7 @@
 type: epic
 id: ep-v057-pmx-01
 title: "epic(permissions): tabular permission-matrix UI + examples/full-demo umbrella"
-status: todo
+status: done
 priority: high
 owner: null
 labels:
@@ -15,7 +15,7 @@ labels:
 milestone_ref:
   id: v057-pmx-01
 created_at: 2026-05-11T00:00:00Z
-updated_at: 2026-05-11T00:00:00Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Overview

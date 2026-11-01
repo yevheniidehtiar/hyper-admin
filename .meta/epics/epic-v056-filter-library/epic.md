@@ -2,7 +2,7 @@
 type: epic
 id: ep-v056-fl-01
 title: "epic(filters): filter library with saved views"
-status: todo
+status: done
 priority: high
 owner: null
 labels:
@@ -15,7 +15,7 @@ labels:
 milestone_ref:
   id: v056-dpfl-01
 created_at: 2026-05-11T00:00:00Z
-updated_at: 2026-05-11T00:00:00Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Overview

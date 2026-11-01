@@ -2,7 +2,7 @@
 type: story
 id: st-v054-charts-03
 title: "feat(views+e2e): chart fragment route + Playwright suite"
-status: in-review
+status: done
 priority: high
 assignee: null
 labels:
@@ -16,7 +16,7 @@ estimate: null
 epic_ref:
   id: ep-v054-charts-01
 created_at: 2026-05-11T00:00:00Z
-updated_at: 2026-05-11T00:00:00Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Summary

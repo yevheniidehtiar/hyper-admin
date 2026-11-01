@@ -2,7 +2,7 @@
 type: story
 id: eLoLEQAPznGy
 title: "test(presence): RedisPresence unit tests (mocked aioredis)"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -18,7 +18,7 @@ github:
   last_sync_hash: sha256:cf5f593383c11ce53d00ee8f43648a81c58c2f74a7562bd071bde57def540cae
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-03-29T07:01:10Z
-updated_at: 2026-03-29T07:01:10Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Context

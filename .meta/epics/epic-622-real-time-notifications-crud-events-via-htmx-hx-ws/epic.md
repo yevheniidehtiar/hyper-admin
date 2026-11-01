@@ -2,7 +2,7 @@
 type: epic
 id: s7b6Ksi2ENu4
 title: "Epic 6.2.2: Real-Time Notifications (CRUD Events via HTMX hx-ws)"
-status: todo
+status: in_progress
 priority: medium
 owner: null
 labels:
@@ -16,7 +16,7 @@ github:
   last_sync_hash: sha256:5e2a28b5ccf936398c4f8287e0e593ca3b2f315188cd24d915abc1ccb601e9ad
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-03-29T07:02:19Z
-updated_at: 2026-09-28T00:00:00Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Overview

@@ -11,9 +11,8 @@ labels:
   - dx
   - size:M
 milestone_ref:
-  id: v055-bulk-ac-01
 created_at: 2026-10-18T00:00:00Z
-updated_at: 2026-10-18T00:00:00Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Overview

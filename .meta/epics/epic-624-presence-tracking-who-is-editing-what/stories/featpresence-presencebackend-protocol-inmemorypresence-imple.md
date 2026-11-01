@@ -2,7 +2,7 @@
 type: story
 id: MiyBvGJCR6aP
 title: "feat(presence): PresenceBackend protocol + InMemoryPresence implementation"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -19,7 +19,7 @@ github:
   last_sync_hash: sha256:67bd99368f2c7e0c7c2033dc1e3600daa720d4dea758c71191d3a0aa03ea970d
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-03-29T07:01:03Z
-updated_at: 2026-03-29T07:01:03Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Context

@@ -2,7 +2,7 @@
 type: story
 id: QWzNA81Jovue
 title: "feat(core): implement app-level hook dispatcher with failure isolation"
-status: in-review
+status: done
 priority: high
 assignee: null
 labels:
@@ -14,7 +14,7 @@ estimate: null
 epic_ref:
   id: um1zqB0-b2AZ
 created_at: 2026-05-05T00:00:00Z
-updated_at: 2026-10-18T00:00:00Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Summary
