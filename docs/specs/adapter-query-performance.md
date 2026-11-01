@@ -3,11 +3,11 @@
 | Field | Value |
 |---|---|
 | Author | Claude Code |
-| Status | Draft |
+| Status | In Review |
 | Issue | #211 |
 | Milestone | v0.7.0 — High-Volume & High-Load Scalability |
 | Created | 2026-05-05 |
-| Last updated | 2026-05-05 |
+| Last updated | 2026-11-01 |
 
 ---
 
@@ -78,8 +78,10 @@ All goals are individually deliverable and pairwise composable.
   code or in-memory caches.
 - **Replacing `BaseAdapter.list()` signature.** This SDD adds `list_paginated()` alongside
   `list()` and deprecates the latter; signature collapse is deferred to v1.0.
-- **Approximate row counts (PG `pg_class.reltuples` / `EXPLAIN`).** Owned by the sibling epic
-  (filter-choice scalability — `BaseAdapter.estimate_row_count()`); A3 here is exact-but-cached.
+- **Computing the estimate.** `BaseAdapter.estimate_row_count()` (PG `pg_class.reltuples`) is
+  owned by the sibling epic (filter-choice scalability). A3 here only *consumes* it for the
+  unfiltered list total (see "A3 — estimated total" below); every filtered count stays
+  exact-but-cached.
 
 ## BDD Scenarios
 
@@ -162,6 +164,29 @@ Scenario: create/update/delete invalidates the model's count cache
   When  adapter.create({...}) is called
   Then  all cache entries scoped to Product are evicted
   And   the next list() issues a fresh COUNT(*)
+
+Scenario: a large unfiltered table uses the estimate instead of COUNT(*)
+  Given AdminOptions(count_estimate_threshold=1_000_000)
+  And   estimate_row_count() returns 4_200_000
+  When  list() is called with no search, filters or queryset_filters
+  Then  no COUNT(*) query is issued
+  And   the result has total=4_200_000 and total_is_estimate=True
+
+Scenario: a filtered list always uses the exact count
+  Given the same options and estimate
+  When  list() is called with search="tomato"
+  Then  an exact COUNT(*) is issued for the filtered query
+  And   total_is_estimate is False
+
+Scenario: a table below the threshold stays exact
+  Given count_estimate_threshold=1_000_000 and estimate_row_count() returns 12_000
+  When  list() is called with no filters
+  Then  an exact COUNT(*) is issued
+
+Scenario: an adapter that cannot estimate falls back to the exact count
+  Given count_estimate_threshold is set and estimate_row_count() returns None
+  When  list() is called with no filters
+  Then  an exact (cached) COUNT(*) is issued
 ```
 
 ### A4 — Keyset cursor pagination (#226, #227, #228, #229, #230)
@@ -364,6 +389,26 @@ when `count_cache_ttl > 0`. Adapters call `cache.invalidate_model(self.model.__q
 inside `create()`, `update()`, `delete()`. A `BaseAdapter.invalidate_count_cache()` hook lets
 applications clear manually after bulk operations they performed outside the adapter.
 
+##### A3 — estimated total for unfiltered lists (added 2026-11-01)
+
+Scale tests on 1M and 10M-row tables showed the default list page (no search, no filter) costs
+one multi-second `count(*)` on large tables, even when the page query itself is fast. A TTL
+cache only helps from the second hit. When `count_estimate_threshold` is set and the request
+has **no** search, filters or `queryset_filters`, `list()` calls `estimate_row_count()` first:
+
+- estimate `>= count_estimate_threshold` → use it as `total`, with `total_is_estimate=True`;
+  no `count(*)` is issued.
+- otherwise, or when the adapter cannot estimate (`None`, e.g. SQLite) → exact count, cached
+  per `count_cache_ttl` as before.
+
+Any request with search, filters or tenant filters always uses the exact (cached) count, because
+the table estimate says nothing about a filtered subset. The list template renders an estimated
+total as `~4.2M` and disables the "last page" link (page numbers stay exact up to the data).
+
+The exact count path also drops the `select count(*) from (select ...)` subquery wrapper
+(`adapters/sqlmodel.py:154`) when the query has no joins or `DISTINCT`, and counts the table
+directly; a subquery wrapper blocks the cheaper plans some databases have for plain counts.
+
 #### A4 — Keyset cursor pagination
 
 New `ListResult` dataclass (replaces the `(items, total)` tuple for paginated paths):
@@ -422,6 +467,7 @@ New / clarified `AdminOptions` fields:
 | `auto_select_related` | `bool` | `False` | BC | When `True`, view layer derives `list_select_related` from dotted entries in `column_list`. |
 | `search_fields` | `list[str] \| None` | `None` (existing) | BC | Was a parity bug in `SQLAlchemyAdapter` (silently ignored). After A2, both adapters honour it. |
 | `count_cache_ttl` | `int` (seconds) | `0` | BC | `0` = caching disabled. Must be >= 0. |
+| `count_estimate_threshold` | `int \| None` | `None` | BC | `None` = always exact. When set, an unfiltered list total at or above it uses `estimate_row_count()` instead of `count(*)`. Must be > 0. |
 | `pagination_mode` | `Literal["offset", "cursor"]` | `"offset"` | BC | `"cursor"` opts into keyset pagination. |
 
 New global on `Admin()` / `HyperAdminSettings`:
@@ -489,7 +535,7 @@ the new heuristic ("string columns minus PK") is functionally identical to the o
 **minus the PK** — operators rarely want to ILIKE-search numeric PKs anyway. Documented in
 the upgrade notes.
 
-### A3 — fully BC (default `count_cache_ttl=0` disables caching)
+### A3 — fully BC (default `count_cache_ttl=0` disables caching; `count_estimate_threshold=None` keeps exact totals)
 
 ### A4 — fully BC (default `pagination_mode="offset"`)
 
@@ -525,6 +571,15 @@ cursor mode until they override.
       cleaner but third-party adapters benefit from a stable shim. **Proposal:** decide at
       v0.9 retro based on third-party adapter survey.
 
+- [ ] **Default for `count_estimate_threshold`.** *(added 2026-11-01)* `None` (always exact)
+      keeps totals unchanged for every existing deployment, but means nobody benefits until they
+      set it. **Proposal:** `None` in v0.7.0 for BC (the displayed total changes from `4,200,001`
+      to `~4.2M`); the runtime advisor's slow-count warning recommends the option by name;
+      revisit a default of `1_000_000` for v0.8.
+- [ ] **Stale estimates.** `reltuples` is only refreshed by `VACUUM`/`ANALYZE`; right after a
+      bulk load it can be 0. **Proposal:** treat an estimate `<= 0` as "cannot estimate" and fall
+      back to the exact count.
+
 These must be settled before Status → Approved.
 
 ## Decision Log
@@ -540,6 +595,7 @@ These must be settled before Status → Approved.
 | `pagination_mode="offset"` default | Cursor changes pagination URL semantics; flipping default would break every bookmarked admin URL. | Default cursor (rejected — observable URL change) |
 | `ListResult` dataclass alongside tuple shape | Lets us evolve the response without re-breaking the tuple contract; `total: None` is the natural cursor-mode signal. | Reuse tuple `(items, total)` with sentinel (rejected — `(items, -1)` is uglier than `total: None`) |
 | Versioned cursor (`v: 1` field) | Forward-compat — we will tighten the shape (signing, additional sort cols) without breaking deployed cursors. | Bare base64 of `(pk, sort_col)` (rejected — no upgrade path) |
+| Estimate only for unfiltered lists, opt-in threshold (2026-11-01) | Dogfood scale tests: the unfiltered default page is the common slow count; a table estimate says nothing about a filtered subset, and a few records of error do not matter at millions of rows. Matches the maintainer's Django practice (`reltuples` after a few million rows, short-lived exact count below). | Estimate for filtered counts (wrong numbers); always estimate (changes totals for everyone); cache only (first hit still slow) |
 | `count()` and `estimate_row_count()` coexist | Two different trade-offs (exact-with-filters vs approximate-without). One method can't be both. | Single overloaded method (rejected — confusing call site) |
 | `core/cache.py` module shared with epic #213 | Both epics need a generic TTL cache; one module avoids duplication. The module is owned by #213's SDD; this SDD declares only the consumer-facing `CountCache` Protocol shape. | Two separate cache modules (rejected — duplicate eviction logic) |
 | Deprecate `list()` in v0.7.0, remove in v1.0 | One-cycle deprecation respects third-party adapter authors and is the project's stated semver discipline. | Hard-remove in v0.7.0 (rejected — too aggressive for a `0.x.0` minor) |
