@@ -15,7 +15,10 @@ admin = Admin(app, engine=engine)
 admin.mount("/admin")
 
 # Auto-discover admin.py files in your app packages
-admin = Admin(app, engine=engine, discover_apps=["myapp", "otherapp"])
+from hyperadmin.core.settings import HyperAdminSettings
+
+settings = HyperAdminSettings(discover_apps=["myapp", "otherapp"])
+admin = Admin(app, engine=engine, settings=settings)
 admin.mount("/admin")
 ```
 
@@ -25,9 +28,28 @@ admin.mount("/admin")
 |-----------|------|---------|-------------|
 | `app` | `FastAPI` | required | The FastAPI application instance |
 | `engine` | `AsyncEngine` | built-in SQLite | Async SQLAlchemy engine |
-| `discover_apps` | `list[str] \| None` | `None` | Module paths to auto-discover `admin.py` in |
+| `settings` | `HyperAdminSettings` | read from `HYPERADMIN_*` env vars | Every setting in the next table |
+| `session_factory` | `async_sessionmaker` | `None` | Keyword-only. Use the host's own session factory instead of, or as well as, `engine` |
+| `auth` | `ExternalAuth` | `None` | Keyword-only. Bring your own auth; see [Bring Your Own Auth](../guides/external-auth.md) |
+| `auth_backend`, `permission_checker`, `permission_registry` | | `None` | Custom auth backend and permission services |
+| `storage` | `StorageBackend` | `None` | Storage for file and image uploads (local or S3-compatible) |
+| `otp_service` | | `None` | Email-OTP service for MFA |
+| `realtime` | `RealtimeSettings` | `None` | SSE / WebSocket and pub/sub configuration |
+| `disabled_plugins` | `Iterable[str]` | `()` | Keyword-only. Plugin names to skip, for example `["tasks"]` |
+| `plugin_settings` | `Mapping[str, Mapping]` | `None` | Keyword-only. Settings for each plugin, by plugin name |
+
+## Settings
+
+Pass these through `HyperAdminSettings(...)`, or set them as environment variables with the
+`HYPERADMIN_` prefix (for example `HYPERADMIN_CREATE_TABLES=true`). They are not `Admin()`
+keyword arguments.
+
+| Setting | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `discover_apps` | `list[str]` | `[]` | Packages whose `admin.py` modules are imported |
+| `auto_discover` | `bool` | `False` | Register every SQLModel `table=True` model found, with smart defaults |
 | `create_tables` | `bool` | `False` | Create every SQLModel table in `admin.startup()`. In demo mode (no `engine=`/`session_factory=`), tables are created automatically only for SQLite URLs. Otherwise use `admin.create_tables(scope=...)` or `hyperadmin init-db` |
-| `template_dirs` | `list[str] \| None` | `None` | Extra Jinja2 template search paths |
+| `template_dirs` | `list[str]` | `[]` | Extra Jinja2 template search paths |
 | `mount_mode` | `"isolated" \| "router"` | `"isolated"` | `"isolated"` mounts the admin as a private sub-application (see below). `"router"` is the deprecated legacy mode, removed in 0.6 |
 | `route_namespace` | `str` | `"hyperadmin"` | Name of the admin mount; admin route names resolve as `hyperadmin:user-list` |
 | `session_cookie` | `str` | `"hyperadmin_session"` | Name of the admin's session cookie (built-in auth). Its `Path` is the admin path |

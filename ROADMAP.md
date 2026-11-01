@@ -26,10 +26,22 @@ per-milestone scope lives in [`docs/roadmap.md`](docs/roadmap.md).
 | v0.5.0 — Advanced UX | UI polish, dark mode, inline cell editing |
 | v0.5.1 — Object Permissions & MFA | `ObjectPermissionChecker`, `get_queryset` row-level security, email-OTP MFA |
 
-Also on `develop` ahead of their milestones: H2 inline row-error highlighting,
-bulk-action endpoint and `@action` bulk/form params, relation config + create-popup
-view, SSE/WebSocket connection foundation, `JsonApiAdapter` protocol, synthetic
-data generator.
+Also on `develop` ahead of their milestones (the milestones stay open until their remaining
+stories and real-app proof are done):
+
+- **v0.5.8:** isolated mount, PK-agnostic routes, `session_factory=`, `ExternalAuth`, CSRF,
+  and plain SQLAlchemy 2.0 / 2.1 models via a mapper-built schema. Proven on Polar, Langflow,
+  Mealie and Open WebUI without changing their models
+  ([Compatibility & Performance](https://yevheniidehtiar.github.io/hyper-admin/compatibility/)).
+- **v0.5.5:** bulk-action toolbar and endpoint, autocomplete widget, create popup.
+- **v0.5.6:** tabbed detail panels (PDF streaming), filter library, filter sidebar, saved views.
+- **v0.5.7:** permissions matrix with audit trail, `examples/full-demo/` qualification suite.
+- **v0.5.4:** `hyperadmin-reports` plugin: crosstab, SVG charts, CSV / XLSX export.
+- **v0.3.2:** S3 storage, thumbnails, EXIF, drag-and-drop, upload progress and retry.
+- **v0.6.0b / v0.6.1:** in-memory and Redis pub/sub, CRUD events, presence banner.
+- **v0.8.0:** plugin registry; `hyperadmin-tasks` scaffold.
+- **v0.7.1:** synthetic data generator and Locust suite.
+- `JsonApiAdapter` protocol.
 
 ---
 

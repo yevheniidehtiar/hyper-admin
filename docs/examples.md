@@ -1,27 +1,25 @@
 # Examples
 
-Three runnable example apps ship with HyperAdmin.
+Five runnable example apps ship with HyperAdmin.
 
 ## simple — Basic CRUD
 
-Shows a single-model admin with auto-discovery and async SQLite.
+Shows a small admin (users, countries, cities, uploads) wired through `discover_apps` and async SQLite.
 
 ```python
-# examples/simple/main.py
+# examples/simple/main.py (excerpt)
 from fastapi import FastAPI
 from sqlalchemy.ext.asyncio import create_async_engine
-from sqlmodel import SQLModel, Field
-from hyperadmin.main import Admin
+from hyperadmin import Admin
+from hyperadmin.core.settings import HyperAdminSettings
 
 engine = create_async_engine("sqlite+aiosqlite:///simple_app.db")
 
-class User(SQLModel, table=True):
-    id: int | None = Field(default=None, primary_key=True)
-    name: str
-    email: str
+# examples/simple/admin.py registers the models; discover_apps imports it
+settings = HyperAdminSettings(discover_apps=["examples.simple"])
 
-app = FastAPI()
-admin = Admin(app, engine=engine, discover_apps=["examples.simple"])
+app = FastAPI(lifespan=lifespan)  # the lifespan creates and seeds the tables
+admin = Admin(app, engine=engine, settings=settings, storage=upload_storage)
 admin.mount("/admin")
 ```
 
@@ -100,6 +98,45 @@ Open [http://localhost:8000/admin/](http://localhost:8000/admin/) and sign in as
     The seeded `ada` and `grace` accounts have published passwords, and the fallback secrets are
     public. Delete the accounts and set real secrets before deploying anything built from this
     example.
+
+---
+
+## sqlalchemy — Plain SQLAlchemy 2.0
+
+HyperAdmin on a plain SQLAlchemy 2.0 `DeclarativeBase`, with no SQLModel. The models are
+registered explicitly, and HyperAdmin builds each model's form and list schema from its
+mapper. It shows enums (`SAEnum` and an enum behind a `TypeDecorator`), a JSON column, a foreign
+key, a `server_default` timestamp and a sensitive column that is hidden on the detail page.
+
+**Run locally:**
+
+```bash
+uv sync --all-extras
+uv run uvicorn examples.sqlalchemy.main:app
+```
+
+Open [http://localhost:8000/admin/](http://localhost:8000/admin/)
+
+---
+
+## full-demo — Every feature together
+
+One app that exercises the features together, with framework-neutral models (`Supplier`,
+`Variant`, `Product`, `Order`, `OrderItem`, `Invoice`): inline rows with per-row errors, bulk
+actions, detail panels with a PDF, the filter sidebar and saved views, a dependent
+foreign key with a "+" popup, image uploads, a report with a chart and CSV / XLSX export, and
+the permissions matrix. A Playwright qualification suite (`uv run poe test:e2e:qualification`)
+checks each of them.
+
+**Run locally:**
+
+```bash
+uv sync --all-extras
+uv run examples/full-demo/main.py
+```
+
+Open [http://localhost:8000/admin/](http://localhost:8000/admin/) and sign in as `alice` /
+`secret123` (superuser), or as `viewer` / `secret123` (limited permissions).
 
 ---
 

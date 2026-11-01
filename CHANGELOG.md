@@ -10,6 +10,32 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
 ## [Unreleased]
 
 ### Added
+- **Plain SQLAlchemy models** (#719, #725–#730). Models built on SQLAlchemy 2.0
+  `DeclarativeBase` or the legacy `declarative_base()` register with
+  `site.register(Model)`, with no SQLModel base class. HyperAdmin builds a Pydantic schema
+  from the mapper (`hyperadmin.core.schema_for` / `dump_instance`), and every view reads
+  fields through it. New `examples/sqlalchemy/` app with a Playwright smoke test.
+  Auto-discovery still finds SQLModel models only (#716).
+- **Compatibility & Performance docs page** (`docs/compatibility.md`): supported stacks,
+  results of running HyperAdmin unmodified on Polar, Langflow, Mealie and Open WebUI
+  (epic #701), timings on 237,757 rows, and known limitations.
+- **Live CRUD notifications through an adapter proxy and shared pub/sub** (#311).
+- **Presence**: `PresenceBackend` with in-memory and Redis implementations, WebSocket
+  heartbeat and the "someone else is editing" banner (#323–#328).
+- **Detail panels and filter library** (v0.5.6): `PanelDef` / `@panel` tabbed panels with lazy
+  loading and `pdf_stream_panel`; the `hyperadmin.filters` package with six built-in filters,
+  the filter sidebar and per-user saved views.
+- **Permissions matrix** (v0.5.7): model × action grid for each group, conflict handling,
+  audit trail, object-permission popover; `examples/full-demo/` with a qualification suite.
+- **Reports plugin** (v0.5.4): `hyperadmin-reports` with aggregates, crosstab, time bucketing,
+  report pages, server-rendered SVG charts and CSV / XLSX streaming exports.
+- **Advanced uploads** (v0.3.2): S3-compatible storage (`[s3]` extra), image metadata, EXIF
+  auto-rotation, cached thumbnails in preview, list and detail views, drag-and-drop, upload
+  progress and retry.
+- **Bulk-action toolbar and autocomplete widget** in the list and form views (v0.5.5).
+- **Plugin registry** wired into `Admin` (pages, static files, templates, navigation,
+  permissions, hooks; `disabled_plugins=` / `plugin_settings=`), and the `hyperadmin-tasks`
+  plugin scaffold (`TaskBackend` port, `InMemoryTaskBackend`, `TasksSettings`).
 - **Design system Wave 1 building blocks** (`docs/design/system/components/`):
   Menu, Combobox (async, single and multiple), Progress, Banner and Popover
   / Tooltip, each with guidelines, every state in a live preview (light,
@@ -25,6 +51,25 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
   "Wave 2" section of `components/bundle.css`. Six more Lucide icons
   (`bookmark`, `external-link`, `history`, `rotate-ccw`, `shield-check`,
   `sliders-horizontal`) available through `icon(name)`.
+
+### Fixed
+- SQLAlchemy 2.0 declarative models now get an adapter (#715).
+- Joined-eager collection loads are de-duplicated (#718).
+- Deferred columns are left out of generated schemas and inferred list and search fields (#719).
+- JSON columns stay out of default list columns and show a one-line preview in list cells (#767).
+- Schemas build on Python 3.14 when relationship types are imported only under
+  `TYPE_CHECKING` (#770).
+- Columns annotated with a SQLAlchemy `TypeDecorator` work in detail and edit views (#772).
+- `get_display_name` skips attributes that can't load on a detached row (#773).
+
+### Documentation
+- README and docs list the shipped features, supported stacks and real-app results.
+- Fixed code samples that called `Admin()` with settings that are not constructor
+  arguments (`discover_apps=`, `template_dirs=`): these go through `HyperAdminSettings`.
+- Replaced the `ModelView` attribute table, which listed attributes HyperAdmin never read,
+  with the `ModelAdmin` / `AdminOptions` fields.
+- Quickstarts pass `create_tables=True`, because tables are no longer created by default.
+- Install lines use the distribution name `hyper-admin`.
 
 ## [0.5.0a1] - not yet published
 
