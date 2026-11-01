@@ -25,6 +25,7 @@ from hyperadmin.auth.permissions import ModelPermissionChecker, PermissionSyncSe
 from hyperadmin.auth.session import SessionAuthBackend
 from hyperadmin.core.app import Admin
 from hyperadmin.core.settings import HyperAdminSettings
+from hyperadmin.realtime import RealtimeSettings
 
 _HERE = Path(__file__).resolve().parent
 
@@ -40,6 +41,22 @@ engine = create_async_engine(
 
 register_all()
 register_reports()
+
+
+def _realtime_settings() -> RealtimeSettings | None:
+    """Realtime on by default; ``DEMO_REALTIME=0`` turns it off, ``REDIS_URL`` moves it to Redis.
+
+    Notifications are off globally: only ``OrderAdmin`` and ``ProductAdmin`` opt in.
+    """
+    if os.environ.get("DEMO_REALTIME", "1") == "0":
+        return None
+    redis_url = os.environ.get("REDIS_URL")
+    return RealtimeSettings(
+        notifications=False,
+        pubsub_redis_url=redis_url,
+        presence_redis_url=redis_url,
+        enable_test_endpoints=bool(os.environ.get("E2E_TESTING")),
+    )
 
 
 @asynccontextmanager
@@ -65,6 +82,7 @@ admin = Admin(
     permission_checker=ModelPermissionChecker(engine=engine),
     permission_registry=PermissionSyncService(engine=engine),
     storage=upload_storage,
+    realtime=_realtime_settings(),
 )
 admin.mount(path="/admin")
 
