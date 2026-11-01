@@ -2,7 +2,7 @@
 type: epic
 id: M437OCoW6YMr
 title: "epic(plugin-tasks): hyperadmin-tasks foundation — TaskBackend port, in-memory backend, contract suite"
-status: in_progress
+status: done
 priority: high
 owner: null
 labels:

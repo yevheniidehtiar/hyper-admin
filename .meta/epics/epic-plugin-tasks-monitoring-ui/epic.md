@@ -2,7 +2,7 @@
 type: epic
 id: PWKqpZ5lCyfD
 title: "epic(plugin-tasks): Flower-lite monitoring UI — dashboard, tasks, workers, schedules, actions"
-status: backlog
+status: done
 priority: medium
 owner: null
 labels:
@@ -18,7 +18,7 @@ github:
   repo: yevheniidehtiar/hyper-admin
   synced_at: 2026-11-01T00:00:00Z
 created_at: 2026-10-29T00:00:00Z
-updated_at: 2026-10-29T00:00:00Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Overview
