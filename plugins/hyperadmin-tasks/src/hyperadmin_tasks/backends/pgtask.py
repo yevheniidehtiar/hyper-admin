@@ -103,7 +103,17 @@ class PgTaskBackend:
                 raise
         if self._admin_connector is not None:
             async with self._admin_lock:
-                await self._ensure_admin_connection(self._admin_connector)
+                try:
+                    await self._ensure_admin_connection(self._admin_connector)
+                except TasksBackendError:
+                    await self._close_observer()
+                    raise
+
+    async def _close_observer(self) -> None:
+        async with self._lock:
+            connection, self._connection = self._connection, None
+            if connection is not None and not connection.closed:
+                await connection.close()
 
     async def shutdown(self) -> None:
         """Close the observer and administrator connections."""
@@ -263,7 +273,11 @@ async def _open(dsn: str) -> _Connection:
 
 
 def create_backend(settings: TasksSettings) -> PgTaskBackend:
-    """Build the adapter from settings; ``observer_dsn`` falls back to ``dsn`` with a warning."""
+    """Build the adapter from settings; ``observer_dsn`` falls back to ``dsn`` with a warning.
+
+    ``dsn`` is the administrator-role DSN: setting it enables the audited actions, so it must
+    carry the pgtask administrator role. Without a separate ``observer_dsn`` it also serves reads.
+    """
     dsn = settings.observer_dsn
     if dsn is None:
         if settings.dsn is None:
