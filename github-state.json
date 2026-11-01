@@ -2270,24 +2270,6 @@
       "synced_at": "2026-04-07T17:23:23.788Z",
       "github_milestone_number": 16
     },
-    "99CTiIt2Wnd1": {
-      "local_hash": "sha256:f7de6b45b84954c587486c14a646ff79b4b32af019f29b84f299a58f7a7933a1",
-      "remote_hash": "sha256:f7de6b45b84954c587486c14a646ff79b4b32af019f29b84f299a58f7a7933a1",
-      "synced_at": "2026-04-07T17:23:23.788Z",
-      "github_milestone_number": 17
-    },
-    "u7FfchwTlMzT": {
-      "local_hash": "sha256:544292d93f837701969743d34615b0ec8c07e1d5a009d0c5a8fe48ec4d78bd6f",
-      "remote_hash": "sha256:544292d93f837701969743d34615b0ec8c07e1d5a009d0c5a8fe48ec4d78bd6f",
-      "synced_at": "2026-04-07T17:23:23.788Z",
-      "github_milestone_number": 21
-    },
-    "8DidH5NiN6cP": {
-      "local_hash": "sha256:3ba2173be78db3e6aff2215a420cdcbde415e8c1df238076ede716c87e2712ed",
-      "remote_hash": "sha256:3ba2173be78db3e6aff2215a420cdcbde415e8c1df238076ede716c87e2712ed",
-      "synced_at": "2026-04-07T17:23:23.788Z",
-      "github_milestone_number": 22
-    },
     "EnCx0HBhFy40": {
       "local_hash": "sha256:d80bda4607ae2a00fe282edf834d163335eaafb15d58ad2d93c074820d43a235",
       "remote_hash": "sha256:d80bda4607ae2a00fe282edf834d163335eaafb15d58ad2d93c074820d43a235",
@@ -2311,12 +2293,6 @@
       "remote_hash": "sha256:75477fec68b5fd41939df72a4d84fc6f4cdc55ce417f33811984f431dac03a1a",
       "synced_at": "2026-04-07T17:23:23.789Z",
       "github_milestone_number": 9
-    },
-    "XnHVJphQRoMf": {
-      "local_hash": "sha256:38e5d6cb0f66885c2caf2342bda847f266131f0d82b1fce6272005c0481244c2",
-      "remote_hash": "sha256:38e5d6cb0f66885c2caf2342bda847f266131f0d82b1fce6272005c0481244c2",
-      "synced_at": "2026-04-07T17:23:23.789Z",
-      "github_milestone_number": 18
     },
     "iOTodDwZehp2": {
       "local_hash": "",
