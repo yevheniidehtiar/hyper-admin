@@ -11,17 +11,20 @@ site.register(Product)
 
 # In main.py
 from hyperadmin import Admin
-admin = Admin(app, engine=engine, discover_apps=["myapp"])
+from hyperadmin.core.settings import HyperAdminSettings
+admin = Admin(app, engine=engine, settings=HyperAdminSettings(discover_apps=["myapp"]))
 admin.mount("/admin")  # picks up Product automatically
 ```
 
-Alternatively, use `ModelView` subclassing — it calls `site.register()` for you via `__init_subclass__`:
+To configure a model, pass a `ModelAdmin` subclass as the second argument:
 
 ```python
-from hyperadmin.views.dynamic import ModelView
+from hyperadmin.core.model import ModelAdmin
 
-class ProductAdmin(ModelView, model=Product):
-    pass  # registered automatically at import time
+class ProductAdmin(ModelAdmin):
+    list_display = ["name", "price"]
+
+site.register(Product, ProductAdmin)
 ```
 
 ## Admin

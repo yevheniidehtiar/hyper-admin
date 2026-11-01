@@ -4,10 +4,11 @@ This tutorial will guide you through the process of setting up HyperAdmin and cu
 
 ## 1. Installation
 
-First, install HyperAdmin and its dependencies:
+First, install HyperAdmin. It is in pre-release, so pin the version. The distribution is
+`hyper-admin`; the import name is `hyperadmin`:
 
 ```bash
-pip install hyperadmin
+pip install hyper-admin==0.5.0a1
 ```
 
 ## 2. Basic Setup
@@ -16,9 +17,11 @@ Here's how to create a simple admin interface for your FastAPI application.
 
 ```python
 from fastapi import FastAPI
-from sqlmodel import Field, SQLModel, create_engine
-from hyperadmin.main import Admin
+from sqlalchemy.ext.asyncio import create_async_engine
+from sqlmodel import Field, SQLModel
+from hyperadmin import Admin
 from hyperadmin.core.registry import site
+from hyperadmin.core.settings import HyperAdminSettings
 
 # 1. Define your models
 class Product(SQLModel, table=True):
@@ -27,8 +30,10 @@ class Product(SQLModel, table=True):
     price: float
 
 # 2. Create a FastAPI app and an admin instance
+engine = create_async_engine("sqlite+aiosqlite:///app.db")
 app = FastAPI()
-admin = Admin(app=app)
+# create_tables=True is for a first run; use your own migrations in production
+admin = Admin(app, engine=engine, settings=HyperAdminSettings(create_tables=True))
 
 # 3. Register your models
 site.register(Product)

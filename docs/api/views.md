@@ -1,34 +1,52 @@
 # Views
 
-## ModelView class attributes
+## Configuring a model's admin
 
-When subclassing `ModelView`, these class-level attributes control the generated admin UI:
-
-| Attribute | Type | Description |
-|-----------|------|-------------|
-| `column_list` | `list` | Fields shown as columns in the list view |
-| `column_details_list` | `list` | Fields shown on the detail page |
-| `column_searchable_list` | `list` | Fields searched when using the search box |
-| `column_sortable_list` | `list` | Fields that render a sort link in the list header |
-| `column_filters` | `list` | Fields available as filter dropdowns |
-| `form_columns` | `list` | Fields included in create/edit forms |
-| `icon` | `str` | Sidebar icon name (from the icon set) |
-| `name_plural` | `str` | Human-readable plural name shown in the sidebar |
-
-Example:
+Configure a model with `AdminOptions`, a `ModelAdmin` subclass, or both. Pass either one to
+`site.register()`:
 
 ```python
-from hyperadmin.views.dynamic import ModelView
+from typing import ClassVar
+
+from hyperadmin.core.model import ModelAdmin
+from hyperadmin.core.options import AdminOptions
+from hyperadmin.core.registry import site
 from myapp.models import User
 
-class UserAdmin(ModelView, model=User):
-    column_list = [User.username, User.email, User.is_active]
-    column_searchable_list = [User.username, User.email]
-    column_sortable_list = [User.username, User.created_at]
-    form_columns = [User.username, User.email, User.first_name, User.last_name]
-    icon = "person"
-    name_plural = "Users"
+
+class UserAdmin(ModelAdmin):
+    verbose_name_plural = "People"
+    list_display: ClassVar[list[str]] = ["username", "email", "is_active"]
+    search_fields: ClassVar[list[str]] = ["username", "email"]
+    list_filter: ClassVar[list[str]] = ["is_active"]
+
+
+site.register(User, UserAdmin)
+
+# or, with options only
+site.register(User, options=AdminOptions(list_display=["username", "email"], can_delete=False))
 ```
+
+A `ModelAdmin` subclass can declare `list_display`, `search_fields`, `list_filter` and
+`list_editable` as class attributes. Every other option goes in `AdminOptions`, and explicit
+`options=` always wins.
+
+| `AdminOptions` field | What it controls |
+|-----------|-------------|
+| `can_create`, `can_edit`, `can_delete`, `can_list`, `can_detail` | Which pages and actions exist (all `True` by default) |
+| `list_display` | Columns in the list view. Inferred when unset; JSON columns are left out |
+| `search_fields` | Columns the search box matches |
+| `list_filter` | Filters in the filter sidebar: field names or `FilterDef`s from `hyperadmin.filters` |
+| `list_editable` | Columns editable inline in the list view |
+| `saved_views_enabled` | Per-user saved views in the filter sidebar |
+| `sensitive_fields` | Opt fields in or out of sensitive-field hiding (`{"secret_name": False}`) |
+| `form_fields`, `form_layout`, `fieldsets` | Which fields the forms show, and how they are laid out |
+| `inlines` | Related rows edited on the parent's form |
+| `dependent_fields` | Selects whose choices depend on another field |
+| `relation_filters`, `relation_display`, `use_autocomplete_widget` | How foreign-key choices are filtered, labelled and searched |
+| `object_permission_checker` | Object-level permission checks for each row |
+| `panels` | Tabbed panels on the detail page (see `hyperadmin.core.panels.panel`) |
+| `realtime_notifications` | Opt the model into live CRUD notifications |
 
 ## DynamicModelView
 

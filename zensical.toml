@@ -17,6 +17,7 @@ nav = [
     { "File Uploads" = "guides/file-uploads.md" },
     { "Existing FastAPI App" = "guides/existing-app.md" },
     { "Bring Your Own Auth" = "guides/external-auth.md" },
+    { "Compatibility & Performance" = "compatibility.md" },
     { "Examples" = [
       { "Overview" = "examples.md" },
       { "ERP (Bookkeeping)" = "examples/erp.md" },
@@ -117,3 +118,6 @@ pymdownx.superfences.custom_fences = [
 pymdownx.tabbed.alternate_style = true
 tables = {}
 pymdownx.highlight = {}
+
+[project.markdown_extensions.mdx_include]
+base_path = "."

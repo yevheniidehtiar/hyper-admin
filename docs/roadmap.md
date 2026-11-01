@@ -57,12 +57,35 @@ and stories live under `.meta/epics/`.
 
 ### Landed ahead of their milestones
 
-- H2 inline formset row-level error highlighting (v0.5.5)
-- `@action` bulk/form parameters and the bulk-action endpoint with per-row outcomes (v0.5.5)
-- `relation_filters` / `relation_display` options and the create-popup view (v0.5.5)
-- SSE + WebSocket connection foundation with `ConnectionRegistry` (v0.6.0b)
+These features are merged on `develop`, but their milestones are still open: each one closes
+when its remaining stories, demo or real-app proof are done.
+
+- **Bring your own app (v0.5.8):** isolated sub-application mount; int, UUID and `str` primary
+  keys; `session_factory=`; `ExternalAuth`; CSRF; no DDL by default; a guide and the
+  `examples/byoa/` app. **Plain SQLAlchemy 2.0 / 2.1 models** work through a schema built from
+  the mapper (`schema_for`), with an `examples/sqlalchemy/` app.
+- **Real-app proof (dogfood):** Polar, Langflow, Mealie and Open WebUI run unmodified and
+  every model's pages render; see [Compatibility & Performance](compatibility.md)
+- **Bulk actions & autocomplete (v0.5.5):** list-view checkbox column and action toolbar,
+  bulk-action endpoint with a result for each row, `@action` bulk / form parameters, autocomplete
+  widget, create popup, `relation_filters` / `relation_display`, inline-row error highlighting
+- **Detail panels & filter library (v0.5.6):** `@panel` tabbed detail panels with lazy loading
+  and a streamed PDF panel; six built-in filters, the filter sidebar and per-user saved views
+- **Permissions matrix (v0.5.7):** model × action grid with conflict handling and an audit trail;
+  `examples/full-demo/` and its qualification suite
+- **Reporting & charts (v0.5.4):** the `hyperadmin-reports` plugin with aggregates, crosstab and
+  time bucketing, report pages, server-rendered SVG charts and CSV / XLSX export
+- **Advanced file uploads (v0.3.2):** S3-compatible storage, thumbnails, EXIF auto-rotation,
+  drag-and-drop preview, upload progress and retry
+- **Real-time (v0.6.0b):** `PubSubBackend` (in-memory and Redis), `RealtimeEvent`, CRUD events
+  emitted through an adapter proxy, SSE and WebSocket transport
+- **Presence (v0.6.1):** in-memory and Redis presence backends, WebSocket heartbeat and the
+  "someone else is editing" banner
+- **Plugins (v0.8.0):** plugin registry wired into `Admin` (pages, static files, templates,
+  navigation, permissions, hooks); `hyperadmin-tasks` plugin scaffold (v0.8.1)
+- **Load testing (v0.7.1):** synthetic data generator (`hyperadmin seed`) and Locust suite with
+  baselines and a CI smoke run
 - `JsonApiAdapter` / `ListEnvelope` protocol (JSON REST API)
-- Synthetic data generator (`hyperadmin seed`) (v0.7.1)
 
 ---
 
@@ -77,7 +100,7 @@ Make HyperAdmin a guest in someone else's app.
 - **Your models / engine** — plain SQLAlchemy 2.0 `DeclarativeBase` models; reuse the host `AsyncEngine` / sessionmaker
 - **Your auth** — bring-your-own-auth adapter mapping the host's user/session to admin permissions
 - A "10-minute" guide and an example app with Alembic, UUID keys and its own auth
-- **Dogfood-1:** the milestone closes only after the admin runs on a real existing app and blocking gaps are fixed
+- **Dogfood-1:** the milestone closes only after the admin runs on a real existing app and blocking gaps are fixed. Status: runs on four open-source apps (see [Compatibility & Performance](compatibility.md)); open gaps are auto-discovery for plain SQLAlchemy models (#716) and hybrid / `column_property` columns (#731)
 
 ### 2. v0.5.5 — Bulk Actions & Autocomplete (finish)
 

@@ -21,7 +21,9 @@ A complete, runnable version of everything below is in
 
 You need:
 
-- a FastAPI app with SQLModel models (int, UUID or natural `str` primary keys all work);
+- a FastAPI app with SQLModel models or plain SQLAlchemy 2.0 / 2.1 models
+  (`DeclarativeBase` or the legacy `declarative_base()`); int, UUID and natural `str`
+  primary keys all work;
 - an async SQLAlchemy engine (`sqlite+aiosqlite`, `postgresql+asyncpg`, ...) or an
   `async_sessionmaker` built on it;
 - a FastAPI dependency that returns the current user, or `None` for an anonymous
@@ -91,6 +93,33 @@ site.register(Project, ProjectAdmin)
 
 Register models before `admin.mount()`: the routes are built when the admin is
 mounted.
+
+Plain SQLAlchemy models register the same way. HyperAdmin builds each model's form
+and list schema from its mapper, so the models need no Pydantic base class:
+
+```python
+import uuid
+
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+
+
+class Base(DeclarativeBase):
+    pass
+
+
+class Customer(Base):
+    __tablename__ = "customers"
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    name: Mapped[str]
+
+
+site.register(Customer)
+```
+
+`auto_discover` finds SQLModel models only, so register plain SQLAlchemy models
+explicitly ([#716](https://github.com/yevheniidehtiar/hyper-admin/issues/716)).
+[Compatibility & Performance](../compatibility.md) lists the column types and
+SQLAlchemy versions that are tested.
 
 Primary keys are detected from the SQLAlchemy mapper, so `int`, `uuid.UUID`
 and natural `str` keys work in every view, form, inline, bulk action and popup.
