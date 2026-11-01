@@ -30,7 +30,7 @@ from hyperadmin.discover import discover_admin_modules
 from hyperadmin.realtime import ConnectionRegistry, RealtimeEvent, RealtimeSettings
 from hyperadmin.realtime.emitting import RealtimeEmitter
 from hyperadmin.realtime.sse import make_sse_handler
-from hyperadmin.realtime.ws import make_ws_handler
+from hyperadmin.realtime.ws import make_ws_handler, ws_http_fallback
 
 if TYPE_CHECKING:
     from collections.abc import Iterable, Mapping
@@ -774,6 +774,13 @@ class Admin:
         # On the admin router, so it lands under the prefix in both mount modes
         # (and inside the namespace in isolated mode).
         self.router.add_websocket_route("/realtime/ws", ws_handler, name="admin-realtime-ws")
+        self.router.add_api_route(
+            "/realtime/ws",
+            ws_http_fallback,
+            methods=["GET"],
+            include_in_schema=False,
+            name="admin-realtime-ws-http",
+        )
 
     async def _authorize_notification_subscription(self, user: Any, model_name: str) -> bool:
         """Whether ``user`` may follow CRUD notifications of ``model_name`` over the WebSocket.
