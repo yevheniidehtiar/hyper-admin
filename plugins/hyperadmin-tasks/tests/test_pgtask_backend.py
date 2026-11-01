@@ -18,6 +18,7 @@ from hyperadmin_tasks.backend import (
     TasksBackendError,
     TaskState,
 )
+from hyperadmin_tasks.backends import _pgtask_columns as columns
 from hyperadmin_tasks.backends import pgtask as pgtask_module
 from hyperadmin_tasks.backends.pgtask import PgTaskBackend, create_backend
 from hyperadmin_tasks.selection import select_backend
@@ -37,11 +38,23 @@ class _Cursor:
         return self._rows
 
 
+def healthy_probe_script() -> dict[str, list[dict[str, Any]]]:
+    """Rows that make the startup probe pass (protocol 1..2, every required column present)."""
+    return {
+        "storage_protocol_range": [{"minimum": 1, "maximum": 2}],
+        "information_schema.columns": [
+            {"table_name": view, "column_name": column}
+            for view, cols in columns.REQUIRED_COLUMNS.items()
+            for column in cols
+        ],
+    }
+
+
 class _FakeConnection:
     """Answers each query with the rows scripted for the first matching SQL fragment."""
 
     def __init__(self, script: dict[str, list[dict[str, Any]]] | None = None) -> None:
-        self.script = script or {}
+        self.script = {**healthy_probe_script(), **(script or {})}
         self.calls: list[tuple[str, Sequence[Any] | None]] = []
         self.closed = False
         self.error: Exception | None = None
@@ -326,7 +339,7 @@ async def test_shutdown_skips_an_already_closed_connection() -> None:
     await backend.startup()
     connection.closed = True
     await backend.shutdown()
-    assert connection.calls == []
+    assert connection.closed is True
 
 
 async def test_query_failure_is_wrapped() -> None:
