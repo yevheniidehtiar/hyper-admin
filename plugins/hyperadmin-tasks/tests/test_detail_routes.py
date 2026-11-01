@@ -122,7 +122,7 @@ def test_scheduled_task_with_parent_and_attempt_gaps(
     assert '/admin/tasks/t/P1" data-testid="tasks-parent-link">P1</a>' in html
     assert "Run at" in html
     assert "&#34;ok&#34;: 1" in html
-    assert '<td class="ha-mono">-</td>' in html
+    assert '<td class="ha-table-cell ha-mono">-</td>' in html
 
 
 def test_large_payload_is_truncated_with_expand_control(

@@ -21,34 +21,34 @@
     <div class="ha-table-wrapper">
         <table class="ha-table" data-testid="tasks-queue-table" aria-label="{{ _('Queues') }}">
             <thead>
-                <tr>
-                    <th scope="col">{{ _("Queue") }}</th>
-                    <th scope="col" class="ha-num">{{ _("Ready") }}</th>
-                    <th scope="col" class="ha-num">{{ _("Running") }}</th>
-                    <th scope="col" class="ha-num">{{ _("Scheduled") }}</th>
-                    <th scope="col" class="ha-num">{{ _("Failed") }}</th>
-                    <th scope="col" class="ha-num">{{ _("Oldest ready") }}</th>
+                <tr class="ha-table-header">
+                    <th class="ha-table-th" scope="col">{{ _("Queue") }}</th>
+                    <th scope="col" class="ha-table-th ha-num">{{ _("Ready") }}</th>
+                    <th scope="col" class="ha-table-th ha-num">{{ _("Running") }}</th>
+                    <th scope="col" class="ha-table-th ha-num">{{ _("Scheduled") }}</th>
+                    <th scope="col" class="ha-table-th ha-num">{{ _("Failed") }}</th>
+                    <th scope="col" class="ha-table-th ha-num">{{ _("Oldest ready") }}</th>
                     {%- if can.pause_queue %}
-                    <th scope="col">{{ _("Actions") }}</th>
+                    <th class="ha-table-th ha-table-th-center" scope="col">{{ _("Actions") }}</th>
                     {%- endif %}
                 </tr>
             </thead>
-            <tbody>
+            <tbody class="ha-table-body">
                 {%- for row in queues %}
                 {%- set queue = row.stats %}
-                <tr data-testid="tasks-queue-row">
-                    <th scope="row">
+                <tr class="ha-table-row" data-testid="tasks-queue-row">
+                    <th class="ha-table-cell" scope="row">
                         <a href="{{ url_for('tasks-list') }}?queue={{ queue.name | urlencode }}" data-testid="tasks-queue-link">{{ queue.name }}</a>
                         {{- '' -}}
                         {%- if queue.paused %} {{ pill(_("Paused"), 'warning', testid='tasks-queue-paused') }}{% endif -%}
                     </th>
-                    <td class="ha-num" data-testid="tasks-queue-ready">{{ queue.ready }}</td>
-                    <td class="ha-num" data-testid="tasks-queue-running">{{ queue.running }}</td>
-                    <td class="ha-num" data-testid="tasks-queue-scheduled">{{ queue.scheduled }}</td>
-                    <td class="ha-num" data-testid="tasks-queue-failed">{{ queue.failed }}</td>
-                    <td class="ha-num" data-testid="tasks-queue-oldest">{{ row.oldest_ready if row.oldest_ready else "—" }}</td>
+                    <td class="ha-table-cell ha-num" data-testid="tasks-queue-ready">{{ queue.ready }}</td>
+                    <td class="ha-table-cell ha-num" data-testid="tasks-queue-running">{{ queue.running }}</td>
+                    <td class="ha-table-cell ha-num" data-testid="tasks-queue-scheduled">{{ queue.scheduled }}</td>
+                    <td class="ha-table-cell ha-num" data-testid="tasks-queue-failed">{{ queue.failed }}</td>
+                    <td class="ha-table-cell ha-num" data-testid="tasks-queue-oldest">{{ row.oldest_ready if row.oldest_ready else "—" }}</td>
                     {%- if can.pause_queue %}
-                    <td>
+                    <td class="ha-table-cell ha-table-cell-center">
                         {%- if queue.paused %}
                         {{ action_form(url_for('tasks-queue-resume', name=queue.name), _("Resume"), 'tasks-queue-resume-btn', _("Resume queue %(name)s?", name=queue.name)) }}
                         {%- else %}

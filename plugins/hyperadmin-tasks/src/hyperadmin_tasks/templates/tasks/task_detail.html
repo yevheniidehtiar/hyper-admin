@@ -33,12 +33,12 @@
         <h1 class="ha-h1">{{ _("Task") }}{% if task %} <span class="ha-mono">{{ task.id }}</span>{% endif %}</h1>
         <div class="ha-page-header-actions">
             {%- if task and can.retry %}
-            {{ action_form(url_for('tasks-retry', task_id=task.id), _("Retry"), 'tasks-retry-btn', _("Retry task %(id)s?", id=task.id)) }}
+            {{ action_form(url_for('tasks-retry', task_id=task.id), _("Retry"), 'tasks-retry-btn', _("Retry task %(id)s?", id=task.id), small=False) }}
             {%- endif %}
             {%- if task and can.cancel %}
-            {{ action_form(url_for('tasks-cancel', task_id=task.id), _("Cancel"), 'tasks-cancel-btn', _("Cancel task %(id)s?", id=task.id), danger=True) }}
+            {{ action_form(url_for('tasks-cancel', task_id=task.id), _("Cancel"), 'tasks-cancel-btn', _("Cancel task %(id)s?", id=task.id), danger=True, small=False) }}
             {%- endif %}
-            <a class="ha-btn" href="{{ url_for('tasks-list') }}" data-testid="tasks-back-to-list">{{ _("Back to task list") }}</a>
+            <a class="ha-btn ha-btn-action" href="{{ url_for('tasks-list') }}" data-testid="tasks-back-to-list">{{ _("Back to task list") }}</a>
         </div>
     </header>
     {{ flash() }}
@@ -46,32 +46,34 @@
     {{ banner(_("The task backend is unreachable."), kind='danger', detail=_("This task cannot be loaded right now."), testid='tasks-backend-error') }}
     {%- else %}
     <div data-testid="tasks-detail">
-        <dl class="ha-card">
+        <section class="ha-card" aria-label="{{ _('Task') }}">
+        <dl class="ha-dl">
             <dt>{{ _("State") }}</dt>
-            <dd>{{ pill(task.state.value, pill_kind, testid='tasks-detail-state') }}</dd>
+            <dd class="ha-field-value">{{ pill(task.state.value, pill_kind, testid='tasks-detail-state') }}</dd>
             <dt>{{ _("Queue") }}</dt>
-            <dd data-testid="tasks-detail-queue">{{ task.queue }}</dd>
+            <dd class="ha-field-value" data-testid="tasks-detail-queue">{{ task.queue }}</dd>
             <dt>{{ _("Name") }}</dt>
-            <dd data-testid="tasks-detail-name">{{ task.name }}</dd>
+            <dd class="ha-field-value" data-testid="tasks-detail-name">{{ task.name }}</dd>
             <dt>{{ _("Priority") }}</dt>
-            <dd>{{ task.priority }}</dd>
+            <dd class="ha-field-value">{{ task.priority }}</dd>
             <dt>{{ _("Attempt") }}</dt>
-            <dd>{{ task.attempt }}/{{ task.max_attempts }}</dd>
+            <dd class="ha-field-value">{{ task.attempt }}/{{ task.max_attempts }}</dd>
             <dt>{{ _("Created") }}</dt>
-            <dd>{{ created }}</dd>
+            <dd class="ha-field-value">{{ created }}</dd>
             {%- if run_at %}
             <dt>{{ _("Run at") }}</dt>
-            <dd>{{ run_at }}</dd>
+            <dd class="ha-field-value">{{ run_at }}</dd>
             {%- endif %}
             {%- if finished %}
             <dt>{{ _("Finished") }}</dt>
-            <dd>{{ finished }}</dd>
+            <dd class="ha-field-value">{{ finished }}</dd>
             {%- endif %}
             {%- if task.parent_id %}
             <dt>{{ _("Parent") }}</dt>
-            <dd><a class="ha-mono" href="{{ url_for('tasks-detail', task_id=task.parent_id) }}" data-testid="tasks-parent-link">{{ task.parent_id }}</a></dd>
+            <dd class="ha-field-value"><a class="ha-mono" href="{{ url_for('tasks-detail', task_id=task.parent_id) }}" data-testid="tasks-parent-link">{{ task.parent_id }}</a></dd>
             {%- endif %}
         </dl>
+        </section>
         {%- if task.error %}
         <section class="ha-card" data-testid="tasks-error" role="alert" aria-label="{{ _('Error') }}">
             <h2 class="ha-h3">{{ _("Error") }}</h2>
@@ -86,25 +88,25 @@
             <div class="ha-table-wrapper">
                 <table class="ha-table" data-testid="tasks-attempts-table" aria-label="{{ _('Attempts') }}">
                     <thead>
-                        <tr>
-                            <th scope="col" class="ha-num">{{ _("#") }}</th>
-                            <th scope="col">{{ _("Worker") }}</th>
-                            <th scope="col">{{ _("Started") }}</th>
-                            <th scope="col">{{ _("Finished") }}</th>
-                            <th scope="col">{{ _("Outcome") }}</th>
-                            <th scope="col">{{ _("Error") }}</th>
+                        <tr class="ha-table-header">
+                            <th scope="col" class="ha-table-th ha-num">{{ _("#") }}</th>
+                            <th class="ha-table-th" scope="col">{{ _("Worker") }}</th>
+                            <th class="ha-table-th" scope="col">{{ _("Started") }}</th>
+                            <th class="ha-table-th" scope="col">{{ _("Finished") }}</th>
+                            <th class="ha-table-th" scope="col">{{ _("Outcome") }}</th>
+                            <th class="ha-table-th" scope="col">{{ _("Error") }}</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody class="ha-table-body">
                         {%- for row in attempts %}
                         {%- set attempt = row.attempt %}
-                        <tr data-testid="tasks-attempt-row">
-                            <th scope="row" class="ha-num">{{ attempt.number }}</th>
-                            <td class="ha-mono">{{ attempt.worker_id or "-" }}</td>
-                            <td>{{ row.started }}</td>
-                            <td>{{ row.finished or "-" }}</td>
-                            <td>{{ attempt.outcome }}</td>
-                            <td>{{ attempt.error or "" }}</td>
+                        <tr class="ha-table-row" data-testid="tasks-attempt-row">
+                            <th scope="row" class="ha-table-cell ha-num">{{ attempt.number }}</th>
+                            <td class="ha-table-cell ha-mono">{{ attempt.worker_id or "-" }}</td>
+                            <td class="ha-table-cell">{{ row.started }}</td>
+                            <td class="ha-table-cell">{{ row.finished or "-" }}</td>
+                            <td class="ha-table-cell">{{ attempt.outcome }}</td>
+                            <td class="ha-table-cell">{{ attempt.error or "" }}</td>
                         </tr>
                         {%- endfor %}
                     </tbody>

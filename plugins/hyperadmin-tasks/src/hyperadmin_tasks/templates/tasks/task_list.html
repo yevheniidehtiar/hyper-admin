@@ -15,37 +15,41 @@
     <header class="ha-page-header" data-testid="page-header">
         <h1 class="ha-h1">{{ _("Task list") }}</h1>
         <div class="ha-page-header-actions">
-            <a class="ha-btn" href="{{ url_for('tasks-dashboard') }}" data-testid="tasks-dashboard-link">{{ _("Dashboard") }}</a>
+            <a class="ha-btn ha-btn-action" href="{{ url_for('tasks-dashboard') }}" data-testid="tasks-dashboard-link">{{ _("Dashboard") }}</a>
         </div>
     </header>
     <form method="get" action="{{ url_for('tasks-list') }}" class="ha-filter-bar" role="search" data-testid="tasks-filters">
-        <div class="ha-field">
-            <label for="tasks-queue-filter">{{ _("Queue") }}</label>
-            <select id="tasks-queue-filter" name="queue" class="ha-select" data-testid="tasks-queue-filter">
-                <option value="">{{ _("All queues") }}</option>
-                {%- for queue_name in queues %}
-                <option value="{{ queue_name }}"{% if queue_name == filters.queue %} selected{% endif %}>{{ queue_name }}</option>
-                {%- endfor %}
-            </select>
+        <div class="ha-filter-container">
+            <div class="ha-form-group ha-filter-group">
+                <label class="ha-label" for="tasks-queue-filter">{{ _("Queue") }}</label>
+                <select id="tasks-queue-filter" name="queue" class="ha-select" data-testid="tasks-queue-filter">
+                    <option value="">{{ _("All queues") }}</option>
+                    {%- for queue_name in queues %}
+                    <option value="{{ queue_name }}"{% if queue_name == filters.queue %} selected{% endif %}>{{ queue_name }}</option>
+                    {%- endfor %}
+                </select>
+            </div>
+            <div class="ha-form-group ha-filter-group">
+                <label class="ha-label" for="tasks-state-filter">{{ _("State") }}</label>
+                <select id="tasks-state-filter" name="state" class="ha-select" data-testid="tasks-state-filter">
+                    <option value="">{{ _("All states") }}</option>
+                    {%- for state in states %}
+                    <option value="{{ state.value }}"{% if state.value == filters.state %} selected{% endif %}>{{ state.value }}</option>
+                    {%- endfor %}
+                </select>
+            </div>
+            <div class="ha-form-group ha-filter-group">
+                <label class="ha-label" for="tasks-name-filter">{{ _("Task name") }}</label>
+                <input id="tasks-name-filter" type="text" name="name" value="{{ filters.name }}" class="ha-input" data-testid="tasks-name-filter">
+            </div>
+            <div class="ha-form-group ha-filter-group">
+                <label class="ha-label" for="tasks-search-input">{{ _("Task ID") }}</label>
+                <input id="tasks-search-input" type="search" name="q" value="{{ filters.q }}" class="ha-input" data-testid="tasks-search-input">
+            </div>
+            <div class="ha-filter-clear">
+                <button type="submit" class="ha-btn ha-btn-primary" data-testid="tasks-filter-apply">{{ _("Apply filters") }}</button>
+            </div>
         </div>
-        <div class="ha-field">
-            <label for="tasks-state-filter">{{ _("State") }}</label>
-            <select id="tasks-state-filter" name="state" class="ha-select" data-testid="tasks-state-filter">
-                <option value="">{{ _("All states") }}</option>
-                {%- for state in states %}
-                <option value="{{ state.value }}"{% if state.value == filters.state %} selected{% endif %}>{{ state.value }}</option>
-                {%- endfor %}
-            </select>
-        </div>
-        <div class="ha-field">
-            <label for="tasks-name-filter">{{ _("Task name") }}</label>
-            <input id="tasks-name-filter" type="text" name="name" value="{{ filters.name }}" class="ha-input" data-testid="tasks-name-filter">
-        </div>
-        <div class="ha-field">
-            <label for="tasks-search-input">{{ _("Task ID") }}</label>
-            <input id="tasks-search-input" type="search" name="q" value="{{ filters.q }}" class="ha-input" data-testid="tasks-search-input">
-        </div>
-        <button type="submit" class="ha-btn ha-btn-primary" data-testid="tasks-filter-apply">{{ _("Apply filters") }}</button>
     </form>
     {%- if error %}
     {{ banner(_("The task backend is unreachable."), kind='danger', detail=_("Tasks cannot be listed right now."), testid='tasks-backend-error') }}
@@ -53,25 +57,25 @@
     <div class="ha-table-wrapper">
         <table class="ha-table" data-testid="tasks-list-table" aria-label="{{ _('Tasks') }}">
             <thead>
-                <tr>
-                    <th scope="col">{{ _("ID") }}</th>
-                    <th scope="col">{{ _("Queue") }}</th>
-                    <th scope="col">{{ _("Name") }}</th>
-                    <th scope="col">{{ _("State") }}</th>
-                    <th scope="col" class="ha-num">{{ _("Attempt") }}</th>
-                    <th scope="col">{{ _("Created") }}</th>
+                <tr class="ha-table-header">
+                    <th class="ha-table-th" scope="col">{{ _("ID") }}</th>
+                    <th class="ha-table-th" scope="col">{{ _("Queue") }}</th>
+                    <th class="ha-table-th" scope="col">{{ _("Name") }}</th>
+                    <th class="ha-table-th" scope="col">{{ _("State") }}</th>
+                    <th scope="col" class="ha-table-th ha-num">{{ _("Attempt") }}</th>
+                    <th class="ha-table-th" scope="col">{{ _("Created") }}</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody class="ha-table-body">
                 {%- for row in rows %}
                 {%- set task = row.task %}
-                <tr data-testid="tasks-list-row">
-                    <th scope="row" class="ha-mono"><a href="{{ url_for('tasks-detail', task_id=task.id) }}" data-testid="tasks-row-link">{{ task.id }}</a></th>
-                    <td>{{ task.queue }}</td>
-                    <td>{{ task.name }}</td>
-                    <td>{{ pill(task.state.value, row.pill, testid='tasks-row-state') }}</td>
-                    <td class="ha-num">{{ task.attempt }}/{{ task.max_attempts }}</td>
-                    <td>{{ task.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                <tr class="ha-table-row" data-testid="tasks-list-row">
+                    <th scope="row" class="ha-table-cell ha-mono"><a href="{{ url_for('tasks-detail', task_id=task.id) }}" data-testid="tasks-row-link">{{ task.id }}</a></th>
+                    <td class="ha-table-cell">{{ task.queue }}</td>
+                    <td class="ha-table-cell">{{ task.name }}</td>
+                    <td class="ha-table-cell">{{ pill(task.state.value, row.pill, testid='tasks-row-state') }}</td>
+                    <td class="ha-table-cell ha-num">{{ task.attempt }}/{{ task.max_attempts }}</td>
+                    <td class="ha-table-cell">{{ task.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
                 </tr>
                 {%- endfor %}
             </tbody>
