@@ -111,6 +111,13 @@ SCHEDULES_SQL = (
 )
 
 
+#: pgtask's public administrator functions; each returns whether anything changed and writes
+#: ``pgtask.administrator_audit`` with the actor passed as the last argument.
+ADMIN_RETRY_SQL = "SELECT pgtask.admin_retry_task(%s, %s) AS changed"
+ADMIN_CANCEL_SQL = "SELECT pgtask.admin_cancel_task(%s, %s) AS changed"
+ADMIN_SCHEDULE_PAUSED_SQL = "SELECT pgtask.admin_set_schedule_paused(%s, %s, %s) AS changed"
+
+
 def tasks_page_sql(flt: TaskFilter, page: int, per_page: int) -> tuple[str, list[Any]]:
     """Return the SQL and bind parameters of one page of tasks matching ``flt``."""
     where, params = task_where(flt)
