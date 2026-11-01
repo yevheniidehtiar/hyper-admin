@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+from hyperadmin.core.cache import InMemoryTTLCache
 from hyperadmin.core.introspection import (
     discover_sqlmodel_models,
     infer_list_display,
@@ -497,6 +498,7 @@ class Admin:
             route_class=self.router.route_class,
             realtime_emitter=self._realtime_emitter,
             realtime_settings=self.realtime,
+            count_cache=InMemoryTTLCache(self.settings.count_cache_max_entries),
         )
         admin_router.generate_routes()
         self._notification_models = admin_router.notification_models

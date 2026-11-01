@@ -319,3 +319,40 @@ async def test_the_option_reaches_the_list_view(engine: AsyncEngine) -> None:
     finally:
         site._registry = {}
     assert log.statements == 1
+
+
+async def test_the_cache_size_comes_from_settings(engine: AsyncEngine) -> None:
+    """
+    Scenario: count_cache_max_entries bounds the admin's cache
+      Given settings with count_cache_max_entries=1
+      When  two different list totals are cached for one model
+      Then  only the most recent stays, so the first is counted again
+    """
+    site._registry = {}
+    app = FastAPI()
+    admin = Admin(
+        app=app,
+        engine=engine,
+        settings=HyperAdminSettings(create_tables=False, count_cache_max_entries=1),
+    )
+    site.register(CachedProduct, options=AdminOptions(count_cache_ttl=30))
+    admin.mount(path="/admin")
+    log = CountLog(engine)
+    try:
+        async with AsyncClient(transport=ASGITransport(app=app), base_url="http://t") as client:
+            await client.get("/admin/cachedproduct")
+            await client.get("/admin/cachedproduct?search=zzz")
+            await client.get("/admin/cachedproduct")
+    finally:
+        site._registry = {}
+    assert log.statements == 3
+
+
+def test_cache_size_setting_must_be_positive() -> None:
+    """
+    Scenario: the cache cannot be sized to zero
+      When  count_cache_max_entries=0 is configured
+      Then  validation fails
+    """
+    with pytest.raises(ValueError, match="count_cache_max_entries"):
+        HyperAdminSettings(count_cache_max_entries=0)
