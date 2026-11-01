@@ -2100,8 +2100,17 @@ dependencies = [
     { name = "hyper-admin" },
 ]
 
+[package.optional-dependencies]
+pgtask = [
+    { name = "pgtask" },
+]
+
 [package.metadata]
-requires-dist = [{ name = "hyper-admin", editable = "." }]
+requires-dist = [
+    { name = "hyper-admin", editable = "." },
+    { name = "pgtask", marker = "extra == 'pgtask'", specifier = ">=0.4,<0.5" },
+]
+provides-extras = ["pgtask"]
 
 [[package]]
 name = "identify"
@@ -3283,6 +3292,23 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/5a/82/42f767fc1c1143d6fd36efb827202a2d997a375e160a71eb2888a925aac1/pathspec-1.1.1.tar.gz", hash = "sha256:17db5ecd524104a120e173814c90367a96a98d07c45b2e10c2f3919fff91bf5a", size = 135180, upload-time = "2026-04-27T01:46:08.907Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f1/d9/7fb5aa316bc299258e68c73ba3bddbc499654a07f151cba08f6153988714/pathspec-1.1.1-py3-none-any.whl", hash = "sha256:a00ce642f577bf7f473932318056212bc4f8bfdf53128c78bbd5af0b9b20b189", size = 57328, upload-time = "2026-04-27T01:46:07.06Z" },
+]
+
+[[package]]
+name = "pgtask"
+version = "0.4.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "opentelemetry-api" },
+    { name = "psycopg" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/74/85/645b268f8f6b15400b5a3baa4901e963703a870d19c0cdee5858918b726e/pgtask-0.4.0.tar.gz", hash = "sha256:6264fa78c75f3d0f169ecdd5b5ce08090c9393cce7eaa0e1c738f5818f3cd562", size = 239318, upload-time = "2026-10-07T02:00:03.448Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e8/35/6888ba8ce26ff85a4242a10f67c7db7a9e2a04ab665fdf7ab5f02d2310c2/pgtask-0.4.0-cp310-abi3-macosx_10_12_x86_64.whl", hash = "sha256:6b0dbe2ff788ddb0dabaf3b378b8b15b7fe11d6980384daf0cae96207a6f23f7", size = 4309193, upload-time = "2026-10-07T01:59:54.266Z" },
+    { url = "https://files.pythonhosted.org/packages/15/cc/c429c63be8503e8d251e3f9dda24e502cb81003cfd086d5e24b459e5fcb7/pgtask-0.4.0-cp310-abi3-macosx_11_0_arm64.whl", hash = "sha256:633536d8df80cff48eedb8b7ca987020d880033ba093fcf547d8beb29548507d", size = 4164677, upload-time = "2026-10-07T01:59:56.294Z" },
+    { url = "https://files.pythonhosted.org/packages/0a/8a/662120bedf4ebb7adaecbf2b79bd31d0fa28ee4229a6e3733fea87b86b4f/pgtask-0.4.0-cp310-abi3-manylinux_2_28_aarch64.whl", hash = "sha256:4872defd7be392381899e1b5e9d640d46f99121d0c4e394acbef8b46c9bec7da", size = 4580446, upload-time = "2026-10-07T01:59:58.021Z" },
+    { url = "https://files.pythonhosted.org/packages/ef/6c/1d86cf8c641340efd6c561a5367d443cd554cdf06c51f445582c4450bbe5/pgtask-0.4.0-cp310-abi3-manylinux_2_28_x86_64.whl", hash = "sha256:bb13b2980ae90054eeb87a76374fc7776fdac8b515eed70901576382f10e4e10", size = 4592066, upload-time = "2026-10-07T01:59:59.683Z" },
+    { url = "https://files.pythonhosted.org/packages/a7/b6/93767ff61a2cae27c0717c32c559eec066d368684161054e006d8d0471b7/pgtask-0.4.0-cp310-abi3-win_amd64.whl", hash = "sha256:e094b497acdc8eac3a39fd39094e8b26b8a50a657b3baf16ec43e4e4669750d4", size = 3873577, upload-time = "2026-10-07T02:00:01.399Z" },
 ]
 
 [[package]]

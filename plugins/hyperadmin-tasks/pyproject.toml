@@ -16,6 +16,11 @@ dependencies = [
   "hyper-admin",
 ]
 
+[project.optional-dependencies]
+pgtask = [
+  "pgtask>=0.4,<0.5",
+]
+
 [project.entry-points."hyperadmin.plugins"]
 tasks = "hyperadmin_tasks.plugin:TasksPlugin"
 
