@@ -16,17 +16,30 @@ from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 from starlette.responses import Response  # noqa: TC002 - FastAPI resolves the return annotation
 
-from hyperadmin_tasks.backend import Capability, QueueStats, TaskFilter, TaskState
+from hyperadmin_tasks.backend import (
+    AttemptRecord,
+    Capability,
+    QueueStats,
+    ScheduleRecord,
+    TaskFilter,
+    TaskRecord,
+    TaskState,
+    WorkerRecord,
+)
 from hyperadmin_tasks.presenters import (
     STATE_PILL_KIND,
     Pagination,
     format_age,
     format_utc,
     list_url,
+    render_json,
 )
 from hyperadmin_tasks.settings import TasksSettings
 
 if TYPE_CHECKING:
+    from collections.abc import Awaitable, Callable
+
+    from hyperadmin_tasks.backend import TaskBackend
     from hyperadmin_tasks.lifecycle import BackendLifecycle
 
 logger = logging.getLogger(__name__)
@@ -84,6 +97,110 @@ def _queue_row(queue: QueueStats) -> dict[str, Any]:
     return {"stats": queue, "oldest_ready": format_age(queue.oldest_ready_age)}
 
 
+def _worker_rows(workers: list[WorkerRecord]) -> list[dict[str, Any]]:
+    return [{"worker": w, "last_seen": format_utc(w.last_seen_at)} for w in workers]
+
+
+def _schedule_rows(schedules: list[ScheduleRecord]) -> list[dict[str, Any]]:
+    return [{"schedule": s, "next_run": format_utc(s.next_run_at)} for s in schedules]
+
+
+def _detail_context(task: TaskRecord, attempts: list[AttemptRecord], full: str) -> dict[str, Any]:
+    """Template context of the detail page; ``full`` names the JSON block to show untruncated."""
+    return {
+        "task": task,
+        "attempts": [
+            {
+                "attempt": attempt,
+                "started": format_utc(attempt.started_at),
+                "finished": format_utc(attempt.finished_at),
+            }
+            for attempt in attempts
+        ],
+        "pill_kind": STATE_PILL_KIND[task.state],
+        "payload": render_json(task.payload, full=full == "payload"),
+        "result": render_json(task.result, full=full == "result"),
+        "created": format_utc(task.created_at),
+        "run_at": format_utc(task.run_at),
+        "finished": format_utc(task.finished_at),
+        "error": False,
+    }
+
+
+async def _forbidden(admin: Any, request: Request) -> Response:
+    return admin.templates.TemplateResponse(
+        request,
+        "tasks/forbidden.html",
+        {"codename": VIEW_PERMISSION, "permission_name": "Can view tasks"},
+        status_code=403,
+    )
+
+
+async def _not_found(admin: Any, request: Request, heading: str, text: str) -> Response:
+    return admin.templates.TemplateResponse(
+        request, "tasks/not_found.html", {"heading": heading, "text": text}, status_code=404
+    )
+
+
+def _add_inventory_routes(router: APIRouter, admin: Any, lifecycle: BackendLifecycle) -> None:
+    """Add the workers, schedules and task detail pages to ``router``."""
+
+    async def inventory(
+        request: Request,
+        capability: Capability,
+        noun: str,
+        load: Callable[[TaskBackend], Awaitable[list[Any]]],
+        rows: Callable[[list[Any]], list[dict[str, Any]]],
+    ) -> Response:
+        if not await can_view(admin, request):
+            return await _forbidden(admin, request)
+        template = f"tasks/{noun}.html"
+        try:
+            backend = await lifecycle.ensure_started()
+            if capability not in backend.capabilities:
+                return await _not_found(
+                    admin,
+                    request,
+                    f"{noun.capitalize()} are not available",
+                    f"This backend does not report {noun}.",
+                )
+            context: dict[str, Any] = {"rows": rows(await load(backend)), "error": False}
+        except Exception:  # the backend is third-party; any failure becomes the inline banner
+            logger.warning("tasks backend failed while listing %s", noun, exc_info=True)
+            context = {"rows": [], "error": True}
+        return admin.templates.TemplateResponse(request, template, context)
+
+    @router.get("/workers", name="tasks-workers", response_class=HTMLResponse)
+    async def tasks_workers(request: Request) -> Response:
+        return await inventory(
+            request, Capability.WORKERS, "workers", lambda b: b.list_workers(), _worker_rows
+        )
+
+    @router.get("/schedules", name="tasks-schedules", response_class=HTMLResponse)
+    async def tasks_schedules(request: Request) -> Response:
+        return await inventory(
+            request, Capability.SCHEDULES, "schedules", lambda b: b.list_schedules(), _schedule_rows
+        )
+
+    @router.get("/t/{task_id}", name="tasks-detail", response_class=HTMLResponse)
+    async def tasks_detail(request: Request, task_id: str, full: str = "") -> Response:
+        if not await can_view(admin, request):
+            return await _forbidden(admin, request)
+        try:
+            found = await (await lifecycle.ensure_started()).get_task(task_id)
+        except Exception:  # the backend is third-party; any failure becomes the inline banner
+            logger.warning("tasks backend failed while loading a task", exc_info=True)
+            return admin.templates.TemplateResponse(
+                request, "tasks/task_detail.html", {"task": None, "error": True}
+            )
+        if found is None:
+            return await _not_found(
+                admin, request, "Task not found", "It never existed, or retention has removed it."
+            )
+        context = _detail_context(*found, full)
+        return admin.templates.TemplateResponse(request, "tasks/task_detail.html", context)
+
+
 def build_router(
     admin: Any, lifecycle: BackendLifecycle, settings: TasksSettings | None = None
 ) -> APIRouter:
@@ -96,12 +213,7 @@ def build_router(
     config = settings or TasksSettings()
 
     async def forbidden(request: Request) -> Response:
-        return admin.templates.TemplateResponse(
-            request,
-            "tasks/forbidden.html",
-            {"codename": VIEW_PERMISSION, "permission_name": "Can view tasks"},
-            status_code=403,
-        )
+        return await _forbidden(admin, request)
 
     @router.get("/", name="tasks-dashboard", response_class=HTMLResponse)
     async def tasks_dashboard(request: Request) -> Response:
@@ -173,58 +285,6 @@ def build_router(
         )
         return admin.templates.TemplateResponse(request, "tasks/task_list.html", context)
 
-    async def not_found(request: Request, heading: str, text: str) -> Response:
-        return admin.templates.TemplateResponse(
-            request,
-            "tasks/not_found.html",
-            {"heading": heading, "text": text},
-            status_code=404,
-        )
-
-    async def supports(capability: Capability) -> bool:
-        return capability in (await lifecycle.ensure_started()).capabilities
-
-    @router.get("/workers", name="tasks-workers", response_class=HTMLResponse)
-    async def tasks_workers(request: Request) -> Response:
-        if not await can_view(admin, request):
-            return await forbidden(request)
-        context: dict[str, Any] = {"rows": [], "error": False}
-        try:
-            if not await supports(Capability.WORKERS):
-                return await not_found(
-                    request, "Workers are not available", "This backend does not report workers."
-                )
-            workers = await lifecycle.backend.list_workers()
-        except Exception:  # the backend is third-party; any failure becomes the inline banner
-            logger.warning("tasks backend failed while listing workers", exc_info=True)
-            context["error"] = True
-            return admin.templates.TemplateResponse(request, "tasks/workers.html", context)
-        context["rows"] = [
-            {"worker": worker, "last_seen": format_utc(worker.last_seen_at)} for worker in workers
-        ]
-        return admin.templates.TemplateResponse(request, "tasks/workers.html", context)
-
-    @router.get("/schedules", name="tasks-schedules", response_class=HTMLResponse)
-    async def tasks_schedules(request: Request) -> Response:
-        if not await can_view(admin, request):
-            return await forbidden(request)
-        context: dict[str, Any] = {"rows": [], "error": False}
-        try:
-            if not await supports(Capability.SCHEDULES):
-                return await not_found(
-                    request,
-                    "Schedules are not available",
-                    "This backend does not report schedules.",
-                )
-            schedules = await lifecycle.backend.list_schedules()
-        except Exception:  # the backend is third-party; any failure becomes the inline banner
-            logger.warning("tasks backend failed while listing schedules", exc_info=True)
-            context["error"] = True
-            return admin.templates.TemplateResponse(request, "tasks/schedules.html", context)
-        context["rows"] = [
-            {"schedule": schedule, "next_run": format_utc(schedule.next_run_at)}
-            for schedule in schedules
-        ]
-        return admin.templates.TemplateResponse(request, "tasks/schedules.html", context)
+    _add_inventory_routes(router, admin, lifecycle)
 
     return router

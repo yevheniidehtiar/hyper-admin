@@ -1,0 +1,111 @@
+{#-
+    Task detail: state, payload, result / error, attempts timeline and parent link.
+    Payloads, results and errors are untrusted data: every value is auto-escaped, never |safe.
+
+    Context: task (TaskRecord | none), error (bool), pill, attempts ([{attempt, started,
+    finished}]), payload / result (JsonView | none), created / run_at / finished (text | none).
+-#}
+{%- extends "base.html" -%}
+{%- from "components/banner.html" import banner -%}
+{%- from "components/pill.html" import pill -%}
+
+{%- macro json_block(view, kind, label, testid) -%}
+    <section class="ha-card" data-testid="{{ testid }}" aria-label="{{ label }}">
+        <h2 class="ha-h3">{{ label }}</h2>
+        {%- if view %}
+        <pre class="ha-mono" tabindex="0">{{ view.text }}</pre>
+        {%- if view.truncated %}
+        <p class="ha-text-muted" data-testid="{{ testid }}-truncated">{{ _("Preview truncated to 64 KiB of %(size)s bytes.", size=view.size) }}
+            <a href="{{ url_for('tasks-detail', task_id=task.id) }}?full={{ kind }}" data-testid="{{ testid }}-expand">{{ _("Show full %(label)s", label=label | lower) }}</a>
+        </p>
+        {%- endif %}
+        {%- else %}
+        <p class="ha-text-muted">{{ _("None.") }}</p>
+        {%- endif %}
+    </section>
+{%- endmacro -%}
+
+{%- block title -%}{{ _("Task") }} {{ task.id if task else "" }} | {{ site_title | default("HyperAdmin") }}{%- endblock -%}
+
+{%- block content -%}
+    <header class="ha-page-header" data-testid="page-header">
+        <h1 class="ha-h1">{{ _("Task") }}{% if task %} <span class="ha-mono">{{ task.id }}</span>{% endif %}</h1>
+        <div class="ha-page-header-actions">
+            <a class="ha-btn" href="{{ url_for('tasks-list') }}" data-testid="tasks-back-to-list">{{ _("Back to task list") }}</a>
+        </div>
+    </header>
+    {%- if error %}
+    {{ banner(_("The task backend is unreachable."), kind='danger', detail=_("This task cannot be loaded right now."), testid='tasks-backend-error') }}
+    {%- else %}
+    <div data-testid="tasks-detail">
+        <dl class="ha-card">
+            <dt>{{ _("State") }}</dt>
+            <dd>{{ pill(task.state.value, pill_kind, testid='tasks-detail-state') }}</dd>
+            <dt>{{ _("Queue") }}</dt>
+            <dd data-testid="tasks-detail-queue">{{ task.queue }}</dd>
+            <dt>{{ _("Name") }}</dt>
+            <dd data-testid="tasks-detail-name">{{ task.name }}</dd>
+            <dt>{{ _("Priority") }}</dt>
+            <dd>{{ task.priority }}</dd>
+            <dt>{{ _("Attempt") }}</dt>
+            <dd>{{ task.attempt }}/{{ task.max_attempts }}</dd>
+            <dt>{{ _("Created") }}</dt>
+            <dd>{{ created }}</dd>
+            {%- if run_at %}
+            <dt>{{ _("Run at") }}</dt>
+            <dd>{{ run_at }}</dd>
+            {%- endif %}
+            {%- if finished %}
+            <dt>{{ _("Finished") }}</dt>
+            <dd>{{ finished }}</dd>
+            {%- endif %}
+            {%- if task.parent_id %}
+            <dt>{{ _("Parent") }}</dt>
+            <dd><a class="ha-mono" href="{{ url_for('tasks-detail', task_id=task.parent_id) }}" data-testid="tasks-parent-link">{{ task.parent_id }}</a></dd>
+            {%- endif %}
+        </dl>
+        {%- if task.error %}
+        <section class="ha-card" data-testid="tasks-error" role="alert" aria-label="{{ _('Error') }}">
+            <h2 class="ha-h3">{{ _("Error") }}</h2>
+            <pre class="ha-mono" tabindex="0">{{ task.error }}</pre>
+        </section>
+        {%- endif %}
+        {{ json_block(payload, 'payload', _("Payload"), 'tasks-payload') }}
+        {{ json_block(result, 'result', _("Result"), 'tasks-result') }}
+        <section class="ha-card" aria-label="{{ _('Attempts') }}">
+            <h2 class="ha-h3">{{ _("Attempts") }}</h2>
+            {%- if attempts %}
+            <div class="ha-table-wrapper">
+                <table class="ha-table" data-testid="tasks-attempts-table" aria-label="{{ _('Attempts') }}">
+                    <thead>
+                        <tr>
+                            <th scope="col" class="ha-num">{{ _("#") }}</th>
+                            <th scope="col">{{ _("Worker") }}</th>
+                            <th scope="col">{{ _("Started") }}</th>
+                            <th scope="col">{{ _("Finished") }}</th>
+                            <th scope="col">{{ _("Outcome") }}</th>
+                            <th scope="col">{{ _("Error") }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {%- for row in attempts %}
+                        {%- set attempt = row.attempt %}
+                        <tr data-testid="tasks-attempt-row">
+                            <th scope="row" class="ha-num">{{ attempt.number }}</th>
+                            <td class="ha-mono">{{ attempt.worker_id or "-" }}</td>
+                            <td>{{ row.started }}</td>
+                            <td>{{ row.finished or "-" }}</td>
+                            <td>{{ attempt.outcome }}</td>
+                            <td>{{ attempt.error or "" }}</td>
+                        </tr>
+                        {%- endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {%- else %}
+            <p class="ha-text-muted" data-testid="tasks-attempts-empty">{{ _("No attempts yet.") }}</p>
+            {%- endif %}
+        </section>
+    </div>
+    {%- endif %}
+{%- endblock -%}
