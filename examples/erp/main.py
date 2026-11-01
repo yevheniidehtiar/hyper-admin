@@ -12,6 +12,7 @@ from hyperadmin import Admin
 from hyperadmin.auth.permissions import ModelPermissionChecker, PermissionSyncService
 from hyperadmin.auth.session import SessionAuthBackend
 from hyperadmin.core.settings import HyperAdminSettings
+from hyperadmin.realtime import RealtimeSettings
 
 # Hosted public demo: seeds a limited ``demo`` account and shows its credentials on the
 # login page (the superuser password then comes from HYPERADMIN_ADMIN_PASSWORD).
@@ -87,6 +88,19 @@ settings = HyperAdminSettings(
     debug=bool(os.environ.get("HYPERADMIN_DEBUG", "")),
 )
 
+
+def _realtime_settings() -> RealtimeSettings | None:
+    """Realtime config of the demo: on by default, ``DEMO_REALTIME=0`` turns it off.
+
+    Without ``REDIS_URL`` pub/sub and presence stay in memory (one process). With it, both
+    go through Redis so several uvicorn workers fan events out to each other.
+    """
+    if os.environ.get("DEMO_REALTIME") == "0":
+        return None
+    redis_url = os.environ.get("REDIS_URL")
+    return RealtimeSettings(pubsub_redis_url=redis_url, presence_redis_url=redis_url)
+
+
 admin = Admin(
     app,
     engine=engine,
@@ -95,10 +109,16 @@ admin = Admin(
     permission_checker=permission_checker,
     permission_registry=permission_registry,
     storage=showcase_storage,
+    realtime=_realtime_settings(),
 )
 
 # Credentials prefilled on the login page (examples/erp/templates/login.html).
 admin.templates.env.globals["login_hint"] = ("demo", "demo") if DEMO_MODE else ("admin", "admin")
+if DEMO_MODE:
+    admin.templates.env.globals["login_hint_accounts"] = (
+        ("demo2", "demo2", "watch live updates in a second window"),
+        ("demo_ro", "demo_ro", "read-only"),
+    )
 
 # Store admin on app state so custom views can access it (e.g. for templates)
 app.state.admin = admin

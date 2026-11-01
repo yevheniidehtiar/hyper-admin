@@ -12,6 +12,13 @@
         <img class="ha-login-mark" src="{{ url_for('static', path='/img/hyperadmin-mark.svg') }}" alt="" width="40" height="40">
         <h1 class="ha-login-title">ERP Admin</h1>
         <p class="ha-text-muted">Sign in with {{ login_hint[0] }} / {{ login_hint[1] }}</p>
+        {%- if login_hint_accounts is defined -%}
+        <ul class="ha-text-muted" data-testid="login-hint-accounts">
+            {%- for username, password, note in login_hint_accounts %}
+            <li>{{ username }} / {{ password }} — {{ note }}</li>
+            {%- endfor %}
+        </ul>
+        {%- endif -%}
 
         {%- if error -%}
         <div class="ha-alert ha-alert-error" data-testid="login-error">
