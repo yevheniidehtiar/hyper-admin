@@ -43,7 +43,7 @@ class TasksPlugin:
         settings: TasksSettings = plugins.settings(self.name) or TasksSettings()
         self.lifecycle = BackendLifecycle(select_backend(settings))
         plugins.add_template_dir(self, TEMPLATES_DIR)
-        plugins.add_page(self, build_router(admin, self.lifecycle), prefix=PAGE_PREFIX)
+        plugins.add_page(self, build_router(admin, self.lifecycle, settings), prefix=PAGE_PREFIX)
         plugins.add_nav_entry(
             self,
             label="Dashboard",
