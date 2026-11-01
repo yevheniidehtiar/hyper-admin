@@ -216,9 +216,16 @@ docs and its version range is pinned to pgtask's minor version.
       Resolved 2026-10-29: no core seam. The plugin starts the backend lazily on first use from
       its routes (`BackendLifecycle`) and ships `hyperadmin_tasks.lifespan(admin)` for hosts that
       want eager start and a clean `backend.shutdown()`.
-- [ ] Are the pgtask administrator SQL functions for retry, cancel and queue pause public and stable?
-      The docs name `put_schedule` but not the cancel and retry functions. If they aren't, call the
-      Python client and pass the actor header.
+- [x] Are the pgtask administrator SQL functions for retry, cancel and queue pause public and stable?
+      Resolved 2026-11-01 from the pgtask 0.4.0 source (`sql_surface.txt`, `0001_initial.sql`):
+      `pgtask.admin_retry_task(uuid, actor)`, `admin_cancel_task(uuid, actor)` and
+      `admin_set_schedule_paused(uuid, paused, actor)` are public, granted to the administrator
+      role and covered by pgtask's SQL-surface baseline test; each returns whether anything
+      changed and writes `administrator_audit` with the actor. There is no `admin_` queue pause:
+      `set_queue_paused(name, paused)` is public but takes no actor and writes no audit row (the
+      audit `action` check admits only `task.cancel`, `task.retry`, `schedule.pause`,
+      `schedule.resume`). No Python-client fallback is needed. The adapter therefore advertises
+      `RETRY`, `CANCEL` and `PAUSE_SCHEDULE` (with an administrator DSN) and omits `PAUSE_QUEUE`.
 - [ ] Should the plugin carry its own audit log in addition to `pgtask.administrator_audit`? The
       recommendation is no for v1.
 - [ ] Root extra `hyper-admin[tasks]`, or a separate install only? The recommendation is a separate
@@ -232,6 +239,7 @@ docs and its version range is pinned to pgtask's minor version.
 | Thin `TaskBackend` port with pgtask as the first adapter | pgtask is pre-alpha; contain churn and allow other backends later | Bind directly to pgtask; ship multiple backends in v1 |
 | Admin-native UI instead of embedding `pgtask-web` | `pgtask-web` is a separate binary with proxy-header auth and cannot be mounted | Reverse-proxy `pgtask-web` under `/admin` |
 | Read via observer views, act via the administrator role | Least privilege and native audit trail | Single owner DSN |
+| pgtask adapter omits `PAUSE_QUEUE`; retry, cancel and schedule pause call the public `admin_*` SQL functions on the administrator DSN | Only `admin_*` functions record the actor in `administrator_audit`; pgtask's `set_queue_paused` is unaudited, which would break the audited-actor guarantee. Capabilities are set to what pgtask can do audited; the Python client is not needed | Call `set_queue_paused` unaudited; add a plugin-side audit log for queue pauses (see the audit-log open question); use the Python client |
 | Backend lifecycle owned by the plugin: lazy `startup()` on first route use plus `hyperadmin_tasks.lifespan(admin)` | Core has no async plugin startup seam and the owner asked to start without a core change | `feat(core)` async startup/shutdown seam PR first |
 | HTMX polling for refresh | No new infrastructure; matches existing patterns | SSE through the `realtime/` pubsub |
 | Integration and monitoring only | Keep core task-agnostic (CONSTITUTION §4, §7) | Offload core exports and bulk actions |
