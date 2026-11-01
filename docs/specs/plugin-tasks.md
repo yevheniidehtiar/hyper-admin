@@ -7,7 +7,7 @@
 | Issue | #739 (epic `epic-plugin-tasks-foundation`) |
 | Milestone | v0.8.1 — Tasks plugin (pgtask, experimental) |
 | Created | 2026-10-29 |
-| Last updated | 2026-10-29 |
+| Last updated | 2026-11-01 |
 
 ---
 
@@ -226,11 +226,14 @@ docs and its version range is pinned to pgtask's minor version.
       audit `action` check admits only `task.cancel`, `task.retry`, `schedule.pause`,
       `schedule.resume`). No Python-client fallback is needed. The adapter therefore advertises
       `RETRY`, `CANCEL` and `PAUSE_SCHEDULE` (with an administrator DSN) and omits `PAUSE_QUEUE`.
-- [ ] Should the plugin carry its own audit log in addition to `pgtask.administrator_audit`? The
-      recommendation is no for v1.
+- [x] Should the plugin carry its own audit log in addition to `pgtask.administrator_audit`?
+      Resolved 2026-11-01 by the owner: no. Actions rely on the backend's own audit trail
+      (`pgtask.administrator_audit` for the pgtask adapter); queue pause stays unsupported there
+      until pgtask offers an audited variant.
 - [ ] Root extra `hyper-admin[tasks]`, or a separate install only? The recommendation is a separate
       install, matching `hyperadmin-reports`.
-- [ ] HTMX polling vs. pubsub/SSE refresh. Polling is used for v1; SSE through `realtime/` is v2.
+- [x] HTMX polling vs. pubsub/SSE refresh. Resolved 2026-11-01 by the owner: HTMX polling for
+      v1 (shipped in #754); SSE through `realtime/` is v2.
 
 ## Decision Log
 
@@ -241,5 +244,6 @@ docs and its version range is pinned to pgtask's minor version.
 | Read via observer views, act via the administrator role | Least privilege and native audit trail | Single owner DSN |
 | pgtask adapter omits `PAUSE_QUEUE`; retry, cancel and schedule pause call the public `admin_*` SQL functions on the administrator DSN | Only `admin_*` functions record the actor in `administrator_audit`; pgtask's `set_queue_paused` is unaudited, which would break the audited-actor guarantee. Capabilities are set to what pgtask can do audited; the Python client is not needed | Call `set_queue_paused` unaudited; add a plugin-side audit log for queue pauses (see the audit-log open question); use the Python client |
 | Backend lifecycle owned by the plugin: lazy `startup()` on first route use plus `hyperadmin_tasks.lifespan(admin)` | Core has no async plugin startup seam and the owner asked to start without a core change | `feat(core)` async startup/shutdown seam PR first |
+| No plugin-side audit log in v1 | The backend's own audit (`pgtask.administrator_audit`) already records the actor; a second log would duplicate it | Plugin audit table for every action |
 | HTMX polling for refresh | No new infrastructure; matches existing patterns | SSE through the `realtime/` pubsub |
 | Integration and monitoring only | Keep core task-agnostic (CONSTITUTION §4, §7) | Offload core exports and bulk actions |
