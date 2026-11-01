@@ -762,11 +762,29 @@ class Admin:
             ws_auth = BridgeWebSocketAuth(self.auth)
         origin_allowed = make_websocket_origin_check(self.settings.csrf_trusted_origins)
         ws_handler = make_ws_handler(
-            registry, settings, ws_auth, origin_allowed, pubsub=self._realtime_pubsub
+            registry,
+            settings,
+            ws_auth,
+            origin_allowed,
+            pubsub=self._realtime_pubsub,
+            authorize=self._authorize_notification_subscription,
         )
         # On the admin router, so it lands under the prefix in both mount modes
         # (and inside the namespace in isolated mode).
         self.router.add_websocket_route("/realtime/ws", ws_handler, name="admin-realtime-ws")
+
+    async def _authorize_notification_subscription(self, user: Any, model_name: str) -> bool:
+        """Whether ``user`` may follow CRUD notifications of ``model_name`` over the WebSocket.
+
+        The model must have notifications enabled and the user must hold the same
+        ``view_<model>`` permission the list page checks (always true without auth).
+        """
+        name = model_name.lower()
+        if name not in self._notification_models:
+            return False
+        if self.permission_checker is None:
+            return True
+        return bool(await self.permission_checker.has_permission(user, f"view_{name}"))
 
     def _register_locale_route(self, path: str) -> None:
         """Register the POST /locale route for the locale switcher."""
@@ -1168,6 +1186,9 @@ class Admin:
             self.auth.logout_url if self.auth is not None else None
         )
         self.templates.env.globals["realtime_enabled"] = self.realtime is not None
+        self.templates.env.globals["realtime_notification_models"] = frozenset(
+            self._notification_models
+        )
         self.templates.env.globals["theme"] = self.settings.theme
         self.templates.env.globals["site_title"] = self.settings.site_title
         self.templates.env.globals["site_header"] = self.settings.site_header

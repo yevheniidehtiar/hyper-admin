@@ -64,6 +64,7 @@ from starlette.requests import HTTPConnection
 from starlette.websockets import WebSocket, WebSocketDisconnect, WebSocketState
 
 from hyperadmin.realtime.config import RealtimeSettings
+from hyperadmin.realtime.events import RealtimeEvent, crud_channel
 from hyperadmin.realtime.presence import (
     PresenceBackend,
     PresenceEntry,
@@ -79,6 +80,7 @@ WS_CLOSE_UNAUTHORIZED = 4401
 WS_CLOSE_GOING_AWAY = 1001
 
 MAX_PRESENCE_CHANNELS: Final = 20
+MAX_NOTIFICATION_CHANNELS: Final = 20
 _MAX_FIELD_LEN: Final = 200
 _PRESENCE_MODES: Final = ("viewing", "editing")
 
@@ -90,6 +92,8 @@ def make_ws_handler(
     origin_allowed: Callable[[HTTPConnection], bool] | None = None,
     presence: PresenceBackend | None = None,
     pubsub: PubSubBackend | None = None,
+    *,
+    authorize: Callable[[Any, str], Awaitable[bool]] | None = None,
 ) -> Callable[[WebSocket], Awaitable[None]]:
     """Return a Starlette WebSocket handler bound to the supplied collaborators.
 
@@ -101,6 +105,10 @@ def make_ws_handler(
     ``origin_allowed`` vets the handshake before it is accepted and before any
     auth runs; a refused handshake is rejected (closed while still connecting)
     with ``WS_CLOSE_UNAUTHORIZED``.
+
+    ``authorize(user, model_name)`` decides whether a user may follow a model's CRUD
+    notifications (``{"type": "subscribe", "model": ...}`` frames); ``None``
+    refuses every subscription. Results are cached per socket and model.
 
     ``presence`` defaults to ``settings.resolve_presence()`` (resolved once, so
     every socket shares one backend) and ``pubsub`` to a process-local
@@ -139,7 +147,11 @@ def make_ws_handler(
         session = _PresenceSession(
             websocket, presence, pubsub, str(user_key), _display_name(user, user_key)
         )
+        notifications = _NotificationSession(
+            websocket, pubsub, settings.channel_prefix, user, authorize
+        )
         websocket.state.presence_session = session
+        websocket.state.notification_session = notifications
         heartbeat = asyncio.create_task(_heartbeat_loop(websocket, settings))
         try:
             await _receive_loop(websocket)
@@ -150,6 +162,7 @@ def make_ws_handler(
             with contextlib.suppress(asyncio.CancelledError):
                 await heartbeat
             await session.close()
+            await notifications.close()
             await registry.unregister(conn)
             if websocket.client_state != WebSocketState.DISCONNECTED:
                 with contextlib.suppress(RuntimeError):
@@ -169,8 +182,9 @@ async def _heartbeat_loop(websocket: WebSocket, settings: RealtimeSettings) -> N
 
 
 async def _receive_loop(websocket: WebSocket) -> None:
-    """Read frames until the peer disconnects, routing text frames to the presence session."""
+    """Read frames until the peer disconnects, routing text frames to the sessions."""
     session: _PresenceSession = websocket.state.presence_session
+    notifications: _NotificationSession = websocket.state.notification_session
     while True:
         message = await websocket.receive()
         if message["type"] == "websocket.disconnect":
@@ -178,6 +192,7 @@ async def _receive_loop(websocket: WebSocket) -> None:
         text = message.get("text")
         if text is not None:
             await session.handle(text)
+            await notifications.handle(text)
 
 
 def _display_name(user: Any, user_key: Hashable) -> str:
@@ -220,12 +235,57 @@ def _valid_field(value: object) -> str | None:
 
 @dataclass(frozen=True, eq=False)
 class _Follow:
-    """One followed record: its fan-out subscription and forwarding task."""
+    """One followed channel: its fan-out subscription and forwarding task."""
 
     model: str
     pk: str
     stack: contextlib.AsyncExitStack
     task: asyncio.Task[None]
+
+
+class _Follows:
+    """The channels one socket follows, each forwarded to the socket as text frames."""
+
+    def __init__(
+        self,
+        websocket: WebSocket,
+        pubsub: PubSubBackend,
+        render: Callable[[bytes], str | None] = lambda payload: payload.decode(),
+    ) -> None:
+        self._ws = websocket
+        self._pubsub = pubsub
+        self._render = render
+        self._items: dict[str, _Follow] = {}
+
+    def __contains__(self, channel: str) -> bool:
+        return channel in self._items
+
+    def __len__(self) -> int:
+        return len(self._items)
+
+    async def follow(self, channel: str, model: str, pk: str) -> None:
+        stack = contextlib.AsyncExitStack()
+        messages = await stack.enter_async_context(self._pubsub.subscribe(channel))
+        task = asyncio.create_task(self._forward(messages))
+        self._items[channel] = _Follow(model, pk, stack, task)
+
+    async def unfollow(self, channel: str) -> _Follow:
+        follow = self._items.pop(channel)
+        follow.task.cancel()
+        await follow.stack.aclose()
+        return follow
+
+    async def close(self) -> list[tuple[str, _Follow]]:
+        """Unfollow everything; return what was followed."""
+        channels = list(self._items)
+        return [(channel, await self.unfollow(channel)) for channel in channels]
+
+    async def _forward(self, messages: Any) -> None:
+        with contextlib.suppress(RuntimeError, WebSocketDisconnect):
+            async for payload in messages:
+                text = self._render(payload)
+                if text is not None:
+                    await self._ws.send_text(text)
 
 
 class _PresenceSession:
@@ -244,7 +304,7 @@ class _PresenceSession:
         self._pubsub = pubsub
         self._user_id = user_id
         self._display_name = display_name
-        self._follows: dict[str, _Follow] = {}
+        self._follows = _Follows(websocket, pubsub)
 
     async def handle(self, text: str) -> None:
         try:
@@ -269,30 +329,21 @@ class _PresenceSession:
             if len(self._follows) >= MAX_PRESENCE_CHANNELS:
                 return
             # Subscribe before publishing so the sender sees its own roster.
-            stack = contextlib.AsyncExitStack()
-            messages = await stack.enter_async_context(self._pubsub.subscribe(channel))
-            task = asyncio.create_task(self._forward(messages))
-            self._follows[channel] = _Follow(model, pk, stack, task)
+            await self._follows.follow(channel, model, pk)
         await self._presence.set_presence(
             channel, self._user_id, display_name=self._display_name, mode=mode
         )
         await self._publish(channel, model, pk)
 
     async def _leave(self, channel: str) -> None:
-        follow = self._follows.get(channel)
-        if follow is None:
+        if channel not in self._follows:
             return
         # Unsubscribe first so the roster below is sent exactly once, directly.
-        await self._unfollow(channel)
+        follow = await self._follows.unfollow(channel)
         await self._presence.remove_presence(channel, self._user_id)
         payload = await self._publish(channel, follow.model, follow.pk)
         with contextlib.suppress(RuntimeError, WebSocketDisconnect):
             await self._ws.send_text(payload.decode())
-
-    async def _unfollow(self, channel: str) -> None:
-        follow = self._follows.pop(channel)
-        follow.task.cancel()
-        await follow.stack.aclose()
 
     async def _publish(self, channel: str, model: str, pk: str) -> bytes:
         entries = await self._presence.get_presence(channel)
@@ -300,15 +351,88 @@ class _PresenceSession:
         await self._pubsub.publish(channel, payload)
         return payload
 
-    async def _forward(self, messages: Any) -> None:
-        with contextlib.suppress(RuntimeError, WebSocketDisconnect):
-            async for payload in messages:
-                await self._ws.send_text(payload.decode())
-
     async def close(self) -> None:
         """Remove this socket's presence everywhere and tell the remaining viewers."""
-        for channel, follow in list(self._follows.items()):
-            await self._unfollow(channel)
+        for channel, follow in await self._follows.close():
             with contextlib.suppress(Exception):
                 await self._presence.remove_presence(channel, self._user_id)
                 await self._publish(channel, follow.model, follow.pk)
+
+
+def _crud_frame(payload: bytes) -> str | None:
+    """Client frame for a CRUD pubsub payload, or ``None`` when it is malformed."""
+    try:
+        event = RealtimeEvent.from_bytes(payload)
+    except ValueError:
+        logger.debug("skipping malformed CRUD payload")
+        return None
+    return json.dumps(
+        {
+            "type": "crud",
+            "model": event.model_name.lower(),
+            "pk": str(event.pk),
+            "action": event.action.value,
+            "actor_id": event.actor_id,
+        },
+        separators=(",", ":"),
+    )
+
+
+class _NotificationSession:
+    """CRUD-notification subscriptions of one socket.
+
+    Client frames: ``{"type": "subscribe", "model": "article"}`` and
+    ``{"type": "unsubscribe", "model": "article"}``. A subscription that is not
+    allowed (unknown/disabled model, denied permission, duplicate, over the cap)
+    is ignored silently so the socket reveals nothing about what exists.
+    """
+
+    def __init__(
+        self,
+        websocket: WebSocket,
+        pubsub: PubSubBackend,
+        prefix: str,
+        user: Any,
+        authorize: Callable[[Any, str], Awaitable[bool]] | None,
+    ) -> None:
+        self._prefix = prefix
+        self._user = user
+        self._authorize = authorize
+        self._allowed: dict[str, bool] = {}
+        self._follows = _Follows(websocket, pubsub, _crud_frame)
+
+    async def handle(self, text: str) -> None:
+        try:
+            data = json.loads(text)
+        except ValueError:
+            return
+        if not isinstance(data, dict):
+            return
+        kind = data.get("type")
+        model = _valid_field(data.get("model"))
+        if kind not in ("subscribe", "unsubscribe") or model is None:
+            return
+        model = model.lower()
+        channel = crud_channel(model, self._prefix)
+        if kind == "unsubscribe":
+            if channel in self._follows:
+                await self._follows.unfollow(channel)
+            return
+        if channel in self._follows:
+            logger.debug("ignoring duplicate subscribe for %s", model)
+        elif len(self._follows) >= MAX_NOTIFICATION_CHANNELS:
+            logger.debug("ignoring subscribe for %s: channel cap reached", model)
+        elif not await self._may_follow(model):
+            logger.debug("ignoring subscribe for %s: not permitted", model)
+        else:
+            await self._follows.follow(channel, model, "")
+
+    async def _may_follow(self, model: str) -> bool:
+        if self._authorize is None:
+            return False
+        if model not in self._allowed:
+            self._allowed[model] = bool(await self._authorize(self._user, model))
+        return self._allowed[model]
+
+    async def close(self) -> None:
+        await self._follows.close()
