@@ -8,7 +8,7 @@ from sqlalchemy.orm import selectinload
 from sqlmodel import SQLModel, select
 
 from hyperadmin.adapters._filter_clause import build_clauses
-from hyperadmin.adapters._search import detect_search_columns
+from hyperadmin.adapters._search import contains_clause, detect_search_columns
 from hyperadmin.adapters.introspection import coerce_column_value, introspect_primary_key
 from hyperadmin.adapters.introspection import datetime_kind as _introspect_datetime_kind
 from hyperadmin.core.adapters import BaseAdapter, SessionFactory, scoped_queryset_filters
@@ -139,7 +139,7 @@ class SQLModelAdapter(BaseAdapter):
                     for field_name in fields_to_search:
                         col = getattr(self.model, field_name, None)
                         if col is not None:
-                            conditions.append(col.ilike(f"%{search}%"))
+                            conditions.append(contains_clause(col, search))
                     if conditions:
                         query = query.where(or_(*conditions))
 
@@ -325,7 +325,7 @@ class SQLModelAdapter(BaseAdapter):
                     for name in detect_search_columns(target_model, target_inspector)
                 ]
                 if str_cols:
-                    query = query.where(or_(*[c.ilike(f"%{q}%") for c in str_cols[:3]]))
+                    query = query.where(or_(*[contains_clause(c, q) for c in str_cols[:3]]))
 
             # Row scoping of the target model's admin (tenant / RLS) always applies.
             for key, value in scoped_queryset_filters(target_model).items():
