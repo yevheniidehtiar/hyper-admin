@@ -2,7 +2,7 @@
 type: epic
 id: Y-nzspSqDFUM
 title: "Epic 6.2.4: Presence Tracking — Who Is Editing What"
-status: todo
+status: done
 priority: medium
 owner: null
 labels:
@@ -16,7 +16,7 @@ github:
   last_sync_hash: sha256:f730517c0390ff399a54fbc1b72498f10a9734813d4c8dd868346ea7d16dc6a9
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-03-29T07:02:37Z
-updated_at: 2026-03-29T07:02:37Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Overview

@@ -2,7 +2,7 @@
 type: story
 id: st-v056-fl-03
 title: "feat(templates+e2e): filter sidebar, saved views panel, E2E suite"
-status: todo
+status: done
 priority: high
 assignee: null
 labels:
@@ -16,7 +16,7 @@ estimate: null
 epic_ref:
   id: ep-v056-fl-01
 created_at: 2026-05-11T00:00:00Z
-updated_at: 2026-05-11T00:00:00Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Summary

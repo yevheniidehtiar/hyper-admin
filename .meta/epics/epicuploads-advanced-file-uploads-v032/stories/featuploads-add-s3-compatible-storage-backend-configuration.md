@@ -2,7 +2,7 @@
 type: story
 id: B0PpsEj89D7_
 title: "feat(uploads): add S3-compatible storage backend configuration"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -19,7 +19,7 @@ github:
   last_sync_hash: sha256:205b4a78480b733ab09a38f0f55a4fcd70b06108cc027708a5cc892204ca81cb
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-03-31T21:15:56Z
-updated_at: 2026-03-31T21:15:56Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Context

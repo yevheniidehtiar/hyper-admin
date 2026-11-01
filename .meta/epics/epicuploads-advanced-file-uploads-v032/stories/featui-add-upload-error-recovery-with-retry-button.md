@@ -2,7 +2,7 @@
 type: story
 id: 9MRyFKoOWDFM
 title: "feat(ui): add upload error recovery with retry button"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -20,7 +20,7 @@ github:
   last_sync_hash: sha256:a3b1130383004ae71985e275be341656257df40abed83dac4a0109106df59d0f
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-03-31T21:17:15Z
-updated_at: 2026-03-31T21:17:16Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Context

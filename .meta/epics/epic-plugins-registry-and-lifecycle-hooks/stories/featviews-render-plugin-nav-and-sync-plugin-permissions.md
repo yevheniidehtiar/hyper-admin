@@ -2,7 +2,7 @@
 type: story
 id: yusamPwe9nTn
 title: "feat(views): render plugin nav entries in the sidebar and sync plugin permissions"
-status: in-review
+status: done
 priority: high
 assignee: null
 labels:
@@ -15,7 +15,7 @@ estimate: null
 epic_ref:
   id: um1zqB0-b2AZ
 created_at: 2026-10-18T00:00:00Z
-updated_at: 2026-10-20T00:00:00Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Summary

@@ -2,7 +2,7 @@
 type: epic
 id: tIHHxFEv8ZzJ
 title: "epic(uploads): Advanced File Uploads -- v0.3.2"
-status: todo
+status: done
 priority: medium
 owner: null
 labels:
@@ -16,7 +16,7 @@ github:
   last_sync_hash: sha256:63b92429d38400e7981e5dcc69ac89f31bfc3c73b6ebf1b33b601907383fad32
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-03-31T21:17:53Z
-updated_at: 2026-03-31T21:17:54Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Overview

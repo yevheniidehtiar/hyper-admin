@@ -2,7 +2,7 @@
 type: story
 id: oiacEcVht2ZZ
 title: "feat(presence): presence_banner.html + update.html integration"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -20,7 +20,7 @@ github:
   last_sync_hash: sha256:5033bc3ee57116e30b19b89df3d8604cd56d7110c0b2922fe261406e754fb606
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-03-29T07:01:49Z
-updated_at: 2026-03-29T07:01:49Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Context

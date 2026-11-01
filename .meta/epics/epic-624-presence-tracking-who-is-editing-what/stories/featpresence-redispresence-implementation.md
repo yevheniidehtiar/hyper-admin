@@ -2,7 +2,7 @@
 type: story
 id: 27LtJO8VZo1K
 title: "feat(presence): RedisPresence implementation"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -19,7 +19,7 @@ github:
   last_sync_hash: sha256:d804120bb15a7bd074e5a20ccc1b6686a5312fc7086462200061cfa222a30173
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-03-29T07:01:19Z
-updated_at: 2026-03-29T07:01:19Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Context

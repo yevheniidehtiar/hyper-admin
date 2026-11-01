@@ -2,7 +2,7 @@
 type: story
 id: tvvNBBBLGFl9
 title: "feat(uploads): extract image metadata and auto-rotate based on EXIF"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -19,7 +19,7 @@ github:
   last_sync_hash: sha256:802a86a99bfc483c71b3c8fbc08bc69c2960197c5012d431be07d88548d73dd3
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-03-31T21:17:30Z
-updated_at: 2026-03-31T21:17:30Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Context

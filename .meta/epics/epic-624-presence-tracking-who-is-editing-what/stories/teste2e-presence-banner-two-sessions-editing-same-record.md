@@ -2,7 +2,7 @@
 type: story
 id: lumgZ4nHvw1O
 title: "test(e2e): Presence banner — two sessions editing same record"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -18,7 +18,7 @@ github:
   last_sync_hash: sha256:d3f2a89f8fbfe52002e2ceb42ee3aa52e85e25a788dda347bb6c9e1747f14671
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-03-29T07:01:59Z
-updated_at: 2026-03-29T07:01:59Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Context

@@ -2,7 +2,7 @@
 type: story
 id: E8NRyOoojhfa
 title: "feat(adapters): implement configurable search_fields in both adapters"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -19,7 +19,7 @@ github:
   last_sync_hash: sha256:464d6da0f0ac74f2e2adba78701c06dbfc521fcf9e8b5039bf3d202a972086b1
   synced_at: 2026-04-07T17:23:23.790Z
 created_at: 2026-03-27T00:39:30Z
-updated_at: 2026-03-29T18:26:27Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Context

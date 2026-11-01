@@ -2,7 +2,7 @@
 type: story
 id: 8YPmlZneWMQ8
 title: "feat(views): create ImagePreviewWidget with drag-and-drop zone"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -21,7 +21,7 @@ github:
   last_sync_hash: sha256:5e787807ae030784b66e99bd42a394ed14f4c3e4820237b12e07bbbcb248c3b6
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-03-31T21:16:18Z
-updated_at: 2026-03-31T21:16:19Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Context

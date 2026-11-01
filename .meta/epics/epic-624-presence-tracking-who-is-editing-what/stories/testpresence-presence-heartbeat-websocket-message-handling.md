@@ -2,7 +2,7 @@
 type: story
 id: mNIY24c8b4Mx
 title: "test(presence): Presence heartbeat WebSocket message handling"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -18,7 +18,7 @@ github:
   last_sync_hash: sha256:ac40ed17fa848c018df34250197ae4dccba728c10fca609ac42a07c77e5de302
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-03-29T07:01:28Z
-updated_at: 2026-03-29T07:01:28Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Context

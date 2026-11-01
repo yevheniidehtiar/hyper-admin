@@ -3,14 +3,14 @@ type: milestone
 id: 1U5Neu25VVR2
 title: v0.6.1 — Presence
 target_date: 2026-07-15T00:00:00Z
-status: in_progress
+status: done
 github:
   milestone_id: 12
   repo: yevheniidehtiar/hyper-admin
   last_sync_hash: sha256:0d6421cdf8daddf4c1f6cec4a96d8630a7ad3ab97ceb698f74126b97462678a4
   synced_at: 2026-04-07T17:23:23.788Z
 created_at: 2026-03-29T06:57:28Z
-updated_at: 2026-09-28T00:00:00Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 **Roadmap position 12/16 (2026-09-28 re-cut).** Presence (who is viewing/editing) on top of v0.6.0b pub/sub. Epic 6.2.4 (#333).
