@@ -21,15 +21,12 @@ class CountCache(Protocol):
 
     async def get(self, key: tuple[Hashable, ...]) -> int | None:
         """Return the cached total, or ``None`` when absent or expired."""
-        ...
 
     async def set(self, key: tuple[Hashable, ...], value: int, ttl: int) -> None:
         """Store ``value`` for ``ttl`` seconds."""
-        ...
 
     async def invalidate_model(self, model_qualname: str) -> None:
         """Drop every entry whose ``key[0]`` is ``model_qualname``."""
-        ...
 
 
 class InMemoryTTLCache:
