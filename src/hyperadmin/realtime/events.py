@@ -44,6 +44,7 @@ class RealtimeEvent:
     action: RealtimeAction
     html_fragment: str | None = None
     actor_id: str | None = None
+    actor_name: str | None = None
 
     def to_dict(self) -> dict[str, str | None]:
         """JSON-safe mapping; ``pk`` is stringified, ``action`` is its value."""
@@ -53,6 +54,7 @@ class RealtimeEvent:
             "action": self.action.value,
             "html_fragment": self.html_fragment,
             "actor_id": self.actor_id,
+            "actor_name": self.actor_name,
         }
 
     def to_bytes(self) -> bytes:
@@ -69,8 +71,12 @@ class RealtimeEvent:
         pk = data.get("pk")
         html_fragment = data.get("html_fragment")
         actor_id = data.get("actor_id")
+        actor_name = data.get("actor_name")
         if actor_id is not None and not isinstance(actor_id, str):
             msg = "RealtimeEvent 'actor_id' must be a string or null"
+            raise ValueError(msg)
+        if actor_name is not None and not isinstance(actor_name, str):
+            msg = "RealtimeEvent 'actor_name' must be a string or null"
             raise ValueError(msg)
         if not isinstance(model_name, str) or not model_name:
             msg = "RealtimeEvent payload needs a non-empty string 'model_name'"
@@ -87,6 +93,7 @@ class RealtimeEvent:
             action=RealtimeAction(data.get("action")),
             html_fragment=html_fragment,
             actor_id=actor_id,
+            actor_name=actor_name,
         )
 
     @classmethod

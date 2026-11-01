@@ -18,6 +18,7 @@
         {% if realtime_enabled %}
         <span class="ha-rt-dot is-disconnected"
               data-testid="realtime-status"
+              {%- if request.state.user_key is defined %} data-realtime-self="{{ request.state.user_key }}"{% endif %}
               role="status"
               aria-live="polite"
               title="{{ _('Real-time connection status') }}"></span>

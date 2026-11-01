@@ -36,6 +36,7 @@ if TYPE_CHECKING:
 APP = "tests.e2e.apps.realtime_notifications"
 ARTICLES = "/admin/article"
 HOOK = "[data-realtime-model]"
+NEWEST_FIRST = f"{ARTICLES}?sort_by=id&sort_direction=desc"
 # Debounce (300 ms) + request + swap, with slack for a loaded CI box.
 LIVE_MS = 8_000
 # How long to watch for something that must NOT happen.
@@ -185,7 +186,8 @@ def _forge(page: Page, base_url: str, model: str) -> None:
 
 
 def _forged_frames(page: Page) -> list[dict[str, Any]]:
-    return [json.loads(raw) for raw in page.evaluate("window.__forged")]
+    """JSON frames the forged socket received; the plain-text heartbeat is not a frame."""
+    return [json.loads(raw) for raw in page.evaluate("window.__forged") if raw.startswith("{")]
 
 
 def _sent_subscribes(page: Page) -> list[str]:
@@ -206,8 +208,9 @@ def test_create_by_another_user_refreshes_the_list_and_shows_a_toast(
     """
     # Given alice (A) and bob (B) both have the Article list open
     with _sessions(browser, notif_url, "alice", "bob") as ((alice, bob), errors):
-        alice_list = _open_list(alice, notif_url)
-        bob_list = _open_list(bob, notif_url)
+        # (newest first: the new row lands on page 1 of the default 10-row page size)
+        alice_list = _open_list(alice, notif_url, NEWEST_FIRST)
+        bob_list = _open_list(bob, notif_url, NEWEST_FIRST)
         expect(bob_list.locator(HOOK)).to_have_count(1)
         expect(alice_list.get_by_test_id("realtime-status")).to_have_attribute(
             "data-realtime-self", "1"
@@ -372,7 +375,7 @@ def test_hidden_tab_defers_the_refresh(browser: Browser, notif_url: str) -> None
     """
     # Given bob's list is open and the tab reports itself hidden
     with _sessions(browser, notif_url, "alice", "bob") as ((alice, bob), errors):
-        bob_list = _open_list(bob, notif_url)
+        bob_list = _open_list(bob, notif_url, NEWEST_FIRST)
         bob_list.evaluate(
             """() => {
               Object.defineProperty(document, "visibilityState",
@@ -420,7 +423,7 @@ def test_only_selected_models_notify(browser: Browser, optin_url: str) -> None:
     """
     # Given only ArticleAdmin opted in; bob has both lists open
     with _sessions(browser, optin_url, "alice", "bob") as ((alice, bob), errors):
-        article_list = _open_list(bob, optin_url)
+        article_list = _open_list(bob, optin_url, NEWEST_FIRST)
         comment_list = _open_list(bob, optin_url, "/admin/comment")
         expect(article_list.locator(HOOK)).to_have_count(1)
         # And a hand-made subscription to the Comment channel stays silent

@@ -32,6 +32,7 @@ def test_event_fields() -> None:
         "action",
         "html_fragment",
         "actor_id",
+        "actor_name",
     ]
     assert RealtimeEvent("article", 1, RealtimeAction.DELETED).html_fragment is None
 
@@ -56,6 +57,7 @@ def test_to_bytes_serialises_json_with_string_pk(pk: PrimaryKey, expected: str) 
         "action": "updated",
         "html_fragment": "<tr>x</tr>",
         "actor_id": None,
+        "actor_name": None,
     }
 
 
@@ -147,3 +149,18 @@ def test_crud_channel_lowercases_model_and_applies_prefix() -> None:
     """
     assert crud_channel("Article") == "hyperadmin:crud:article"
     assert crud_channel("Article", "app1:") == "app1:crud:article"
+
+
+def test_actor_name_round_trips_and_is_validated() -> None:
+    """
+    Scenario: actor_name survives serialisation and must be text
+      Given an event carrying actor_name "Alice"
+      When  it is serialised and parsed
+      Then  the parsed event has actor_name "Alice"
+      And   a non-string actor_name is rejected
+    """
+    event = RealtimeEvent("article", "1", RealtimeAction.UPDATED, actor_name="Alice")
+    assert RealtimeEvent.from_bytes(event.to_bytes()).actor_name == "Alice"
+    bad = {**event.to_dict(), "actor_name": 5}
+    with pytest.raises(ValueError, match="actor_name"):
+        RealtimeEvent.from_dict(bad)

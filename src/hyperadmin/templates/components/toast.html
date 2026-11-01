@@ -1,0 +1,36 @@
+{#-
+    Live-notification toast and strings (static/js/realtime-status.js).
+
+    Included by components/table.html inside the list root, only when the model
+    has CRUD notifications enabled. Holds:
+      - a <template> the script clones into .ha-toast-container (role=status,
+        auto-dismissed by the script after 4 s);
+      - the localized message strings as JSON. Plural messages are rendered for
+        one representative number per CLDR plural category; the script picks
+        the category with Intl.PluralRules and fills the {placeholders}.
+
+    Context: model_name (unused here, the labels live on the list root).
+-#}
+{%- from "components/_icons.html" import icon -%}
+{%- set rt_reps = {'zero': 0, 'one': 1, 'two': 2, 'few': 3, 'many': 11, 'other': 100} -%}
+{%- set rt_summary = {} -%}
+{%- set rt_people = {} -%}
+{%- for rt_cat, rt_n in rt_reps.items() -%}
+    {%- set _ = rt_summary.update({rt_cat: ngettext('{actor} changed {count} {model}', '{actor} changed {count} {model}', rt_n)}) -%}
+    {%- set _ = rt_people.update({rt_cat: ngettext('{count} person', '{count} people', rt_n)}) -%}
+{%- endfor -%}
+<template data-realtime-toast-template>
+    <div class="ha-toast ha-alert-success" role="status" aria-live="polite" data-testid="realtime-toast">
+        {{ icon('info') }}
+        <div class="ha-toast-body"><span data-toast-text></span></div>
+        <button type="button" class="ha-toast-close" aria-label="{{ _('Close') }}">{{ icon('x', 'ha-icon-sm') }}</button>
+    </div>
+</template>
+<script type="application/json" data-realtime-strings>{{ {
+    'created': _('{actor} created {model} #{pk}'),
+    'deleted': _('{actor} deleted {model} #{pk}'),
+    'someone': _('Someone'),
+    'pill': _('List changed: refresh'),
+    'summary': rt_summary,
+    'people': rt_people,
+}|tojson }}</script>

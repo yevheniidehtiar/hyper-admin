@@ -373,6 +373,7 @@ def _crud_frame(payload: bytes) -> str | None:
             "pk": str(event.pk),
             "action": event.action.value,
             "actor_id": event.actor_id,
+            "actor": event.actor_name,
         },
         separators=(",", ":"),
     )

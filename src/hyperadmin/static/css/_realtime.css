@@ -39,3 +39,39 @@
 .ha-presence-banner[hidden] {
   display: none;
 }
+
+/* Live list notifications (static/js/realtime-status.js). A row another user
+   changed fades from a highlight to its normal background; users who ask for
+   less motion get no animation (the data-realtime-flash attribute remains). */
+@keyframes ha-row-flash {
+  from { background-color: var(--ha-color-warning-soft); }
+  to   { background-color: transparent; }
+}
+
+.ha-row-flash > td {
+  animation: ha-row-flash 1500ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ha-row-flash > td {
+    animation: none;
+  }
+}
+
+/* "List changed: refresh" pill, shown in the toast region when a re-fetch
+   would discard work in progress (open cell editor, ticked rows). */
+.ha-rt-pill {
+  align-self: flex-end;
+  padding: var(--ha-space-2) var(--ha-space-4);
+  background-color: var(--ha-surface-overlay);
+  color: var(--ha-color-text-strong);
+  border: var(--ha-border-width) solid var(--ha-color-border-light);
+  border-radius: var(--ha-radius-pill);
+  box-shadow: var(--ha-shadow-xl);
+  font: inherit;
+  cursor: pointer;
+}
+
+.ha-rt-pill:hover {
+  background-color: var(--ha-surface-hover);
+}

@@ -4,8 +4,8 @@
 {%- from "components/_icons.html" import icon -%}
 <tbody id="model-list-body" class="ha-table-body" data-testid="list-body">
     {%- for item in items -%}
-    <tr class="ha-table-row" data-testid="list-row">
-        {%- set item_pk = item|ha_pk(pk_attr|default('id')) -%}
+    {%- set item_pk = item|ha_pk(pk_attr|default('id')) -%}
+    <tr class="ha-table-row" data-testid="list-row" data-pk="{{ item_pk }}">
         {%- if bulk_actions -%}
         <td class="ha-table-cell ha-col-check" data-label="{{ _('Select') }}">
             <label class="ha-check">
