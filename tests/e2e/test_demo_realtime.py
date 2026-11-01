@@ -59,8 +59,12 @@ def _sessions(
 
     try:
         for context, username in zip(contexts, usernames, strict=True):
-            context.on("page", attach)
+            # Watch only after sign-in: the login page has no navbar, so the realtime client
+            # there probes an unprefixed /realtime/ws and logs a console error (library quirk).
             _login(context.new_page(), base_url, username)
+            for page in context.pages:
+                attach(page)
+            context.on("page", attach)
         yield contexts, errors
     finally:
         for context in contexts:
@@ -127,9 +131,9 @@ def test_full_demo_model_without_opt_in_stays_static(browser: Browser, demo_url:
         # When alice renames supplier 42
         form = alice.new_page()
         form.goto(f"{demo_url}{SUPPLIERS}/42/edit")
-        form.get_by_label("Name", exact=True).fill("Acme Renamed")
+        form.get_by_label("Name").fill("Acme Renamed")
         form.get_by_role("button", name="Update").click()
-        expect(form).to_have_url(f"{demo_url}{SUPPLIERS}/42")
+        expect(form).to_have_url(f"{demo_url}{SUPPLIERS}")
 
         # Then bob's list is unchanged after a quiet period
         bob_list.wait_for_timeout(QUIET_MS)

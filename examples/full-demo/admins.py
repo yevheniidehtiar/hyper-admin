@@ -39,6 +39,7 @@ class ProductAdmin(ModelAdmin):
             )
         },
         relation_display={"supplier_id": "{name} — {city}"},
+        realtime_notifications=True,
     )
 
 
@@ -70,6 +71,7 @@ class OrderAdmin(ModelAdmin):
                 path_resolver=lambda _order: SAMPLE_PDF,
             ),
         ],
+        realtime_notifications=True,
     )
 
     @panel(label="History", icon="clock")
