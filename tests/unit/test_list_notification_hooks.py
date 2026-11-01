@@ -107,7 +107,7 @@ def test_list_root_carries_the_subscription_hook_and_row_pks() -> None:
 
     assert 'data-realtime-model="hookparty"' in html
     assert 'data-realtime-label="HookParty"' in html
-    assert 'data-realtime-label-plural="HookParties"' in html
+    assert 'data-realtime-label-plural="Hook parties"' in html
     assert re.search(r'<tr class="ha-table-row" data-testid="list-row" data-pk="1"', html)
     assert "data-realtime-toast-template" in html
     assert 'data-testid="realtime-toast"' in html
@@ -116,14 +116,14 @@ def test_list_root_carries_the_subscription_hook_and_row_pks() -> None:
 
 @pytest.mark.parametrize(
     ("path", "plural"),
-    [("hookcategory", "HookCategories"), ("hookday", "HookDays")],
+    [("hookcategory", "Hook categories"), ("hookday", "Hook days")],
 )
 def test_plural_label_follows_english_rules(path: str, plural: str) -> None:
     """
-    Scenario: the summary toast names the plural of the model
+    Scenario: the summary toast names the model's verbose plural
       Given a model named HookCategory (consonant + y) or HookDay (vowel + y)
       When  its list page is rendered
-      Then  the plural label is HookCategories / HookDays
+      Then  the plural label is ModelAdmin.get_verbose_name_plural(): "Hook categories" / "Hook days"
     """
     html = _client(RealtimeSettings()).get(f"/admin/{path}").text
 

@@ -1,13 +1,8 @@
 {%- from "components/_icons.html" import icon -%}
-{%- set rt_hook = realtime_notification_models is defined and model_name|lower in realtime_notification_models -%}
-{%- if rt_hook -%}
-    {#- English plural of the model name for the "changed N Articles" summary toast. -#}
-    {%- set rt_last = model_name[-1:] -%}
-    {%- set rt_consonant_y = rt_last == 'y' and model_name[-2:-1]|lower not in ['a', 'e', 'i', 'o', 'u'] -%}
-    {%- set rt_plural = model_name[:-1] ~ 'ies' if rt_consonant_y else (model_name ~ 'es' if rt_last in ['s', 'x'] else model_name ~ 's') -%}
-{%- endif -%}
+{%- set rt_labels = realtime_notification_models.get(model_name|lower) if realtime_notification_models is defined else none -%}
+{%- set rt_hook = rt_labels is not none -%}
 <div id="model-list" class="ha-table-wrapper"
-     {%- if rt_hook %} data-testid="realtime-hook" data-realtime-model="{{ model_name|lower }}" data-realtime-label="{{ model_name }}" data-realtime-label-plural="{{ rt_plural }}"{% endif %}>
+     {%- if rt_hook %} data-testid="realtime-hook" data-realtime-model="{{ model_name|lower }}" data-realtime-label="{{ rt_labels[0] }}" data-realtime-label-plural="{{ rt_labels[1] }}"{% endif %}>
     {%- include "components/list_error.html" -%}
     {%- if bulk_actions -%}
         {%- include "components/bulk_toolbar.html" -%}
