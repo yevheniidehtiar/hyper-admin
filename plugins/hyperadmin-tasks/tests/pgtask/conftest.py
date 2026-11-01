@@ -312,7 +312,7 @@ def pytest_configure(config: pytest.Config) -> None:
 
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
     """Mark every test collected under this directory with ``pgtask``."""
-    here = os.path.dirname(__file__)
+    here = os.path.dirname(__file__) + os.sep
     for item in items:
         if str(item.path).startswith(here):
             item.add_marker(pytest.mark.pgtask)

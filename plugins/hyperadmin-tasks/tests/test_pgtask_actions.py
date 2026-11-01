@@ -219,16 +219,19 @@ async def test_admin_connect_failure_fails_startup() -> None:
       Given an administrator connector that cannot connect
       When  startup is called
       Then  TasksBackendError says the administrator connection failed
+      And   the observer connection is closed, not leaked
     """
 
     async def administer() -> _FakeConnection:
         raise psycopg.OperationalError("refused")
 
+    observer = _FakeConnection()
     backend = PgTaskBackend(
-        "observer-dsn", connector=lambda: _async(_FakeConnection()), admin_connector=administer
+        "observer-dsn", connector=lambda: _async(observer), admin_connector=administer
     )
     with pytest.raises(TasksBackendError, match="as administrator"):
         await backend.startup()
+    assert observer.closed is True
 
 
 async def test_admin_dsn_uses_the_default_autocommit_connector(

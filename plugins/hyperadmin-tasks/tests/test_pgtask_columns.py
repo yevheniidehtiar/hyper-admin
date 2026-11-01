@@ -200,6 +200,49 @@ def test_schedule_from_row_renders_cron_and_interval() -> None:
     assert (interval.cron, interval.paused) == ("every 1.5s", True)
 
 
+def test_schedule_from_row_without_cron_or_interval_shows_kind() -> None:
+    """
+    Scenario: a schedule with neither cron nor interval does not crash
+      Given a schedule_view row with NULL cron_expression and interval_milliseconds
+      When  schedule_from_row maps it
+      Then  the kind is shown, or "-" when the kind is missing
+    """
+    row = {
+        "id": "s1",
+        "task_name": "app.report",
+        "queue_name": "default",
+        "next_run_at": NOW,
+        "misfire_policy": "skip",
+        "paused_at": None,
+        "cron_expression": None,
+        "interval_milliseconds": None,
+        "kind": "once",
+    }
+    assert columns.schedule_from_row(row).cron == "once"
+    assert columns.schedule_from_row(row | {"kind": None}).cron == "-"
+
+
+def test_protocol_error_without_rows_asks_to_migrate() -> None:
+    """
+    Scenario: an empty protocol range is reported
+      Given storage_protocol_range() returned no rows
+      When  protocol_error inspects them
+      Then  the not-migrated message is returned instead of raising IndexError
+    """
+    assert columns.protocol_error([]) == columns.NOT_MIGRATED_MESSAGE
+
+
+def test_succeeded_count_is_bounded_to_the_recent_window() -> None:
+    """
+    Scenario: succeeded counter is recent only
+      Given the per-queue aggregate query
+      When  its SQL is inspected
+      Then  succeeded tasks are limited to the recent window and states are cast to text
+    """
+    assert "completed_at > now() - interval '24 hours'" in columns.QUEUE_TASK_COUNTS_SQL
+    assert "ELSE state::text END AS state" in columns.TASK_STATE_SQL
+
+
 def test_task_where_without_filters_is_empty() -> None:
     """
     Scenario: no filters

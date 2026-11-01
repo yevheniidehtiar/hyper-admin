@@ -50,7 +50,7 @@ NATIVE_STATES: dict[str, TaskState] = {
 
 #: A pending task whose ``run_at`` lies in the future is reported as ``scheduled``.
 TASK_STATE_SQL = (
-    "CASE WHEN state = 'pending' AND run_at > now() THEN 'scheduled' ELSE state END AS state"
+    "CASE WHEN state = 'pending' AND run_at > now() THEN 'scheduled' ELSE state::text END AS state"
 )
 
 #: SQL predicate per normalised state. pgtask has no ``sleeping`` state (durable sleeps are
@@ -77,10 +77,13 @@ QUEUES_SQL = (
 )
 
 #: ``queue_overview`` lacks failed / succeeded / scheduled counters; they come from ``task_view``.
+#: ``succeeded_count`` only covers the last ``RECENT_WINDOW`` so it matches ``succeeded_recent``.
+RECENT_WINDOW = "24 hours"
 QUEUE_TASK_COUNTS_SQL = (
     "SELECT queue_name, "
     "count(*) FILTER (WHERE state = 'failed') AS failed_count, "
-    "count(*) FILTER (WHERE state = 'succeeded') AS succeeded_count, "
+    "count(*) FILTER (WHERE state = 'succeeded' "
+    "AND completed_at > now() - interval '" + RECENT_WINDOW + "') AS succeeded_count, "
     "count(*) FILTER (WHERE state = 'pending' AND run_at > now()) AS scheduled_count, "
     "now() - min(run_at) FILTER (WHERE state = 'pending' AND run_at <= now()) AS oldest_ready "
     "FROM " + TASK_VIEW + " GROUP BY queue_name"
@@ -256,7 +259,8 @@ def schedule_from_row(row: Row) -> ScheduleRecord:
     """Map one ``schedule_view`` row; interval schedules are rendered as ``every <n>s``."""
     cron = row["cron_expression"]
     if cron is None:
-        cron = f"every {row['interval_milliseconds'] / 1000:g}s"
+        interval = row["interval_milliseconds"]
+        cron = f"every {interval / 1000:g}s" if interval is not None else str(row["kind"] or "-")
     return ScheduleRecord(
         id=row["id"],
         task_name=row["task_name"],
@@ -333,6 +337,8 @@ NOT_MIGRATED_MESSAGE = (
 
 def protocol_error(rows: list[Row]) -> str | None:
     """Return why the database's protocol range is unusable, or ``None`` when it overlaps."""
+    if not rows:
+        return NOT_MIGRATED_MESSAGE
     minimum, maximum = int(rows[0]["minimum"]), int(rows[0]["maximum"])
     low, high = SUPPORTED_PROTOCOL
     if minimum <= high and low <= maximum:
