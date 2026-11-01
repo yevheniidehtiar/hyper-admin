@@ -12,7 +12,7 @@ from typing import Any, ClassVar
 
 from hyperadmin_tasks.backend import Capability
 from hyperadmin_tasks.lifecycle import BackendLifecycle
-from hyperadmin_tasks.routes import VIEW_PERMISSION, build_router
+from hyperadmin_tasks.routes import MANAGE_PERMISSION, VIEW_PERMISSION, build_router
 from hyperadmin_tasks.selection import select_backend
 from hyperadmin_tasks.settings import TasksSettings
 
@@ -21,8 +21,6 @@ TEMPLATES_DIR = Path(__file__).parent / "templates"
 PAGE_PREFIX = "/tasks"
 #: Sidebar section the task links live in.
 NAV_SECTION = "Tasks"
-#: Permission to act on tasks, queues and schedules.
-MANAGE_PERMISSION = "manage_tasks"
 
 #: Pages that only exist when the backend has the capability: (capability, label, route, icon,
 #: nav order).
