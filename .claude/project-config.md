@@ -14,11 +14,12 @@ PRs are still managed via `gh pr` (gitpm does not handle PRs).
 ### GitPM CLI
 
 ```bash
-GITPM_CLI="${GITPM_DIR:-/tmp/gitpm-install}/packages/cli/dist/index.js"
-
-# Or use the wrapper script:
+# Pinned npm release (@gitpm/cli + @gitpm/sync-github), same versions as CI:
 ./scripts/gitpm.sh <command> [args...]
 ```
+
+`push` and `sync` are refused locally: the GitPM Sync workflow (`.github/workflows/gitpm-sync.yml`)
+owns them.
 
 ### .meta/ Directory Structure
 
@@ -98,17 +99,20 @@ bun "$GITPM_CLI" push --meta-dir .meta --token "$GITHUB_TOKEN"
 bun "$GITPM_CLI" pull --meta-dir .meta --token "$GITHUB_TOKEN"
 
 # Validate .meta/ tree integrity
-bun "$GITPM_CLI" validate --meta-dir .meta
+./scripts/gitpm.sh validate
 ```
 
 ### Sync Workflow
 
 ```
-Agent reads .meta/ → edits story frontmatter → commits .meta/ changes
-  → runs `gitpm push` to sync status/labels/assignee back to GitHub
+Agent reads .meta/ → edits story frontmatter → runs `./scripts/gitpm.sh validate`
+  → commits .meta/ changes → PR (CI validates + previews the sync)
+  → merge to develop → GitPM Sync workflow pushes status/labels/assignee to GitHub
 ```
 
-After bulk edits (e.g., plan-to-issues), always run `gitpm push` once at the end.
+Do not run `gitpm push` yourself, even after bulk edits: CI keeps the sync state on the
+`gitpm-state` branch, and a local push can create duplicate issues. The first live sync, and any
+re-run, is started from Actions > GitPM Sync > Run workflow (untick `dry_run`).
 
 ---
 
@@ -127,7 +131,7 @@ epic because the second PR will conflict.
 3. Edit epic.md: status → in_progress, assignee → claude-code
 4. Commit + push + open PR (squash-merge, auto-merge enabled)
 5. WAIT for PR to merge into develop
-6. After merge: gitpm push → sync status + labels to GitHub
+6. After merge: the GitPM Sync workflow syncs status + labels to GitHub
 7. NOW the agent may begin implementing the epic's stories
 ```
 

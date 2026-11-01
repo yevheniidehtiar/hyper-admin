@@ -90,10 +90,10 @@ All label and project board mutations happen **automatically** — never deferre
 | Event | .meta/ status | GitHub label sync |
 |---|---|---|
 | Agent claims story | `in_progress` | Add `in-progress`, remove `ready` |
-| Planning gate fails | `in_progress` + `needs-clarification` label | Sync via `gitpm push` |
-| Blocker hit (draft PR) | `in_progress` + `blocked` label | Sync via `gitpm push` |
+| Planning gate fails | `in_progress` + `needs-clarification` label | Synced by CI after merge |
+| Blocker hit (draft PR) | `in_progress` + `blocked` label | Synced by CI after merge |
 | PR created | `in_review` | Add `review` label to PR |
-| PR merged | `done` | Sync via `gitpm push` |
+| PR merged | `done` | Synced by CI after merge |
 
 Update the `.meta/` story file frontmatter directly, then sync labels to GitHub:
 

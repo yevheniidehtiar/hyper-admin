@@ -195,10 +195,15 @@ Agents read/write `.meta/` directly instead of using `gh issue` or GitHub Projec
 PRs are still managed via `gh pr`. See `.claude/project-config.md` for full reference.
 
 ```bash
-./scripts/gitpm.sh validate                        # Validate .meta/ tree
-./scripts/gitpm.sh pull --token "$GITHUB_TOKEN"    # Pull from GitHub
-./scripts/gitpm.sh push --token "$GITHUB_TOKEN"    # Push to GitHub
+./scripts/gitpm.sh validate                        # Validate .meta/ tree (run before committing .meta/)
+./scripts/gitpm.sh status                          # Progress across milestones and epics
 ```
+
+Never run `gitpm push` or `gitpm sync` locally. After a `.meta/` change merges to `develop`,
+the **GitPM Sync** workflow (`.github/workflows/gitpm-sync.yml`) pushes it to GitHub issues and
+milestones, keeping its sync state on the `gitpm-state` branch. PRs that touch `.meta/` get a
+validation check and a dry-run preview. `.meta/` is the source of truth: edits made only on
+GitHub are overwritten the next time that entity changes.
 
 ## Key Files
 
