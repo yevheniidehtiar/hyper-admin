@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from datetime import UTC
 from math import ceil
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from urllib.parse import urlencode
 
 from hyperadmin_tasks.backend import TaskState
@@ -16,6 +17,9 @@ if TYPE_CHECKING:
 _MINUTE = 60
 _HOUR = 3600
 _DAY = 86400
+
+#: Largest JSON text (in UTF-8 bytes) shown inline before the preview is cut.
+PREVIEW_LIMIT = 64 * 1024
 
 #: Pill kind (see ``components/pill.html``) per task state.
 STATE_PILL_KIND: dict[TaskState, str] = {
@@ -50,6 +54,30 @@ def format_utc(moment: datetime | None) -> str | None:
         return None
     utc = moment.replace(tzinfo=UTC) if moment.tzinfo is None else moment.astimezone(UTC)
     return f"{utc:%Y-%m-%d %H:%M:%S} UTC"
+
+
+@dataclass(frozen=True)
+class JsonView:
+    """Pretty-printed JSON for display; ``truncated`` previews hold only the first bytes."""
+
+    text: str
+    truncated: bool
+    size: int
+
+
+def render_json(value: Any, *, full: bool = False) -> JsonView | None:
+    """``value`` as indented JSON, cut to :data:`PREVIEW_LIMIT` bytes unless ``full``.
+
+    ``None`` stays ``None``; values JSON cannot represent are shown by their ``str()``. The
+    text is plain data: templates escape it, it is never marked safe.
+    """
+    if value is None:
+        return None
+    text = json.dumps(value, indent=2, ensure_ascii=False, default=str)
+    encoded = text.encode()
+    if full or len(encoded) <= PREVIEW_LIMIT:
+        return JsonView(text, False, len(encoded))
+    return JsonView(encoded[:PREVIEW_LIMIT].decode(errors="ignore"), True, len(encoded))
 
 
 def list_url(base: str, params: dict[str, str], page: int) -> str:

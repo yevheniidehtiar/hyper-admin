@@ -52,7 +52,11 @@ def _seeded(
 
 
 def _ids(html: str, ids: list[str]) -> list[str]:
-    return [task_id for task_id in ids if f'class="ha-mono">{task_id}</th>' in html]
+    return [
+        task_id
+        for task_id in ids
+        if f'/admin/tasks/t/{task_id}" data-testid="tasks-row-link">{task_id}</a></th>' in html
+    ]
 
 
 def test_filter_by_state_persists_in_url(
@@ -150,8 +154,8 @@ def test_paginates_with_page_size(
     assert 'data-testid="pagination-prev"' not in first
     assert 'href="/admin/tasks/list?page=2"' in first
     assert second.count('data-testid="tasks-list-row"') == 50
-    assert "t051</th>" in second
-    assert "t100</th>" in second
+    assert "t051</a></th>" in second
+    assert "t100</a></th>" in second
     assert "Showing 51 to 100 of 120 results" in second
     assert "Page 2 of 3" in second
     assert 'href="/admin/tasks/list"' in second

@@ -66,7 +66,7 @@
                 {%- for row in rows %}
                 {%- set task = row.task %}
                 <tr data-testid="tasks-list-row">
-                    <th scope="row" class="ha-mono">{{ task.id }}</th>
+                    <th scope="row" class="ha-mono"><a href="{{ url_for('tasks-detail', task_id=task.id) }}" data-testid="tasks-row-link">{{ task.id }}</a></th>
                     <td>{{ task.queue }}</td>
                     <td>{{ task.name }}</td>
                     <td>{{ pill(task.state.value, row.pill, testid='tasks-row-state') }}</td>
