@@ -1,0 +1,109 @@
+{#-
+    Task list: filters (queue, state, name, id search), the table and pagination.
+    Filters are a plain GET form, so they persist in the URL.
+
+    Context: filters ({queue, state, name, q}), queues ([name]), states ([TaskState]),
+    rows ([{task, pill}]), pagination (Pagination | none), prev_url / next_url, error (bool).
+-#}
+{%- extends "base.html" -%}
+{%- from "components/banner.html" import banner -%}
+{%- from "components/pill.html" import pill -%}
+
+{%- block title -%}{{ _("Task list") }} | {{ site_title | default("HyperAdmin") }}{%- endblock -%}
+
+{%- block content -%}
+    <header class="ha-page-header" data-testid="page-header">
+        <h1 class="ha-h1">{{ _("Task list") }}</h1>
+        <div class="ha-page-header-actions">
+            <a class="ha-btn" href="{{ url_for('tasks-dashboard') }}" data-testid="tasks-dashboard-link">{{ _("Dashboard") }}</a>
+        </div>
+    </header>
+    <form method="get" action="{{ url_for('tasks-list') }}" class="ha-filter-bar" role="search" data-testid="tasks-filters">
+        <div class="ha-field">
+            <label for="tasks-queue-filter">{{ _("Queue") }}</label>
+            <select id="tasks-queue-filter" name="queue" class="ha-select" data-testid="tasks-queue-filter">
+                <option value="">{{ _("All queues") }}</option>
+                {%- for queue_name in queues %}
+                <option value="{{ queue_name }}"{% if queue_name == filters.queue %} selected{% endif %}>{{ queue_name }}</option>
+                {%- endfor %}
+            </select>
+        </div>
+        <div class="ha-field">
+            <label for="tasks-state-filter">{{ _("State") }}</label>
+            <select id="tasks-state-filter" name="state" class="ha-select" data-testid="tasks-state-filter">
+                <option value="">{{ _("All states") }}</option>
+                {%- for state in states %}
+                <option value="{{ state.value }}"{% if state.value == filters.state %} selected{% endif %}>{{ state.value }}</option>
+                {%- endfor %}
+            </select>
+        </div>
+        <div class="ha-field">
+            <label for="tasks-name-filter">{{ _("Task name") }}</label>
+            <input id="tasks-name-filter" type="text" name="name" value="{{ filters.name }}" class="ha-input" data-testid="tasks-name-filter">
+        </div>
+        <div class="ha-field">
+            <label for="tasks-search-input">{{ _("Task ID") }}</label>
+            <input id="tasks-search-input" type="search" name="q" value="{{ filters.q }}" class="ha-input" data-testid="tasks-search-input">
+        </div>
+        <button type="submit" class="ha-btn ha-btn-primary" data-testid="tasks-filter-apply">{{ _("Apply filters") }}</button>
+    </form>
+    {%- if error %}
+    {{ banner(_("The task backend is unreachable."), kind='danger', detail=_("Tasks cannot be listed right now."), testid='tasks-backend-error') }}
+    {%- elif rows %}
+    <div class="ha-table-wrapper">
+        <table class="ha-table" data-testid="tasks-list-table" aria-label="{{ _('Tasks') }}">
+            <thead>
+                <tr>
+                    <th scope="col">{{ _("ID") }}</th>
+                    <th scope="col">{{ _("Queue") }}</th>
+                    <th scope="col">{{ _("Name") }}</th>
+                    <th scope="col">{{ _("State") }}</th>
+                    <th scope="col" class="ha-num">{{ _("Attempt") }}</th>
+                    <th scope="col">{{ _("Created") }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {%- for row in rows %}
+                {%- set task = row.task %}
+                <tr data-testid="tasks-list-row">
+                    <th scope="row" class="ha-mono">{{ task.id }}</th>
+                    <td>{{ task.queue }}</td>
+                    <td>{{ task.name }}</td>
+                    <td>{{ pill(task.state.value, row.pill, testid='tasks-row-state') }}</td>
+                    <td class="ha-num">{{ task.attempt }}/{{ task.max_attempts }}</td>
+                    <td>{{ task.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                </tr>
+                {%- endfor %}
+            </tbody>
+        </table>
+    </div>
+    <nav aria-label="{{ _('Pagination') }}">
+        <div class="ha-pagination">
+            <div class="ha-pagination-info" data-testid="pagination-info">
+                {%- if pagination.total is not none -%}
+                {{ _("Showing %(start)s to %(end)s of %(total)s results", start=pagination.start_index, end=pagination.end_index, total=pagination.total) }}
+                {%- else -%}
+                {{ _("Showing %(start)s to %(end)s", start=pagination.start_index, end=pagination.end_index) }}
+                {%- endif -%}
+            </div>
+            <div class="ha-pagination-controls">
+                {%- if prev_url %}
+                <a href="{{ prev_url }}" class="ha-pagination-btn" data-testid="pagination-prev">{{ _("Previous") }}</a>
+                {%- endif %}
+                <div class="ha-pagination-page" data-testid="pagination-page" aria-current="page">
+                    {%- if pagination.total_pages is not none -%}
+                    {{ _("Page %(page)s of %(pages)s", page=pagination.page, pages=pagination.total_pages) }}
+                    {%- else -%}
+                    {{ _("Page %(page)s", page=pagination.page) }}
+                    {%- endif -%}
+                </div>
+                {%- if next_url %}
+                <a href="{{ next_url }}" class="ha-pagination-btn" data-testid="pagination-next">{{ _("Next") }}</a>
+                {%- endif %}
+            </div>
+        </div>
+    </nav>
+    {%- else %}
+    <p class="ha-text-muted" data-testid="tasks-list-empty">{{ _("No tasks match these filters.") }}</p>
+    {%- endif %}
+{%- endblock -%}
