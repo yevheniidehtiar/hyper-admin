@@ -786,6 +786,23 @@ class Admin:
             return True
         return bool(await self.permission_checker.has_permission(user, f"view_{name}"))
 
+    def _notification_model_labels(self) -> dict[str, tuple[Any, Any]]:
+        """Map each notifying model's slug to its (singular, plural) verbose names.
+
+        The names stay lazy, so toasts render them in the request locale.
+        """
+        from hyperadmin.core.registry import site
+
+        labels: dict[str, tuple[Any, Any]] = {}
+        for model, admin_class in site._registry.items():
+            slug = model.__name__.lower()
+            if slug in self._notification_models:
+                labels[slug] = (
+                    admin_class.get_verbose_name(model),
+                    admin_class.get_verbose_name_plural(model),
+                )
+        return labels
+
     def _register_locale_route(self, path: str) -> None:
         """Register the POST /locale route for the locale switcher."""
         from starlette.requests import Request
@@ -1186,8 +1203,8 @@ class Admin:
             self.auth.logout_url if self.auth is not None else None
         )
         self.templates.env.globals["realtime_enabled"] = self.realtime is not None
-        self.templates.env.globals["realtime_notification_models"] = frozenset(
-            self._notification_models
+        self.templates.env.globals["realtime_notification_models"] = (
+            self._notification_model_labels()
         )
         self.templates.env.globals["theme"] = self.settings.theme
         self.templates.env.globals["site_title"] = self.settings.site_title
