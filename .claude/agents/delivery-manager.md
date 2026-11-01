@@ -27,10 +27,8 @@ grep -rl 'issue_number: <N>' .meta/stories/ .meta/epics/*/stories/ 2>/dev/null
 ### 2. Pull Request Monitoring & Coordination
 - Watch for PRs opened by the Claude Code bot (author: `claude-code[bot]` or PRs created via `CLAUDE_GH_TOKEN`).
 - **Epic lock PRs** (`lock(meta):` or `release(meta):` in title): fast-track these — they only touch `.meta/` files.
-  After merge, immediately run `gitpm push` to sync status/labels to GitHub:
-  ```bash
-  bun "$GITPM_CLI" push --meta-dir .meta --token "$GITHUB_TOKEN"
-  ```
+  After merge, the GitPM Sync workflow syncs status/labels to GitHub; check that its run on
+  `develop` is green (`gh run list --workflow gitpm-sync.yml --branch develop --limit 1`).
 - **Implementation PRs**: Upon detecting a new agent-opened PR:
   a. Verify the PR references a tracked story (check `.meta/` by issue number).
   b. Check PR description completeness (title, linked issue, summary).

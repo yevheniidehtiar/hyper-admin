@@ -67,8 +67,8 @@ Project state is stored as plain-text YAML/Markdown files in `.meta/` — git-na
 └── sync/                      # GitHub sync config + state
 ```
 
-All agents read from and write to `.meta/` files directly. Changes are synced to GitHub
-via `gitpm push`. See `.claude/project-config.md` for full reference.
+All agents read from and write to `.meta/` files directly. When a change merges to `develop`,
+the GitPM Sync workflow (`.github/workflows/gitpm-sync.yml`) pushes it to GitHub. See `.claude/project-config.md` for full reference.
 
 ## GitHub Features Utilised
 
@@ -78,9 +78,9 @@ via `gitpm push`. See `.claude/project-config.md` for full reference.
 | Sub-issues | GA (April 2025) | Epic → Story hierarchy (mirrored in `.meta/epics/*/stories/`) |
 | Issue dependencies | GA (August 2025) | `blocked_by` / `blocking` between stories |
 | Milestones | Stable | Group stories into releases (stored in `.meta/roadmap/milestones/`) |
-| Labels | Stable | Size, agent tier, area — synced via `gitpm push` |
+| Labels | Stable | Size, agent tier, area — synced by the GitPM Sync workflow |
 | PRs | Stable | Still managed via `gh pr` (gitpm does not handle PRs) |
-| `gitpm push/pull/sync` | **Implemented** | Bidirectional sync between `.meta/` and GitHub Issues |
+| GitPM Sync workflow | **Implemented** | `.meta/` → GitHub issues and milestones after every merge to `develop`; dry-run preview on PRs |
 
 ## Autonomous Team Orchestration
 

@@ -51,7 +51,7 @@ in `.claude/project-config.md`:
 3. Commit + push + open PR with auto-merge
 4. **WAIT for merge** — poll until `state == MERGED`
 5. If merge conflict → epic is taken → pick next epic
-6. After merge: `gitpm push` to sync status/labels to GitHub
+6. After merge: the GitPM Sync workflow syncs status/labels to GitHub (do not run `gitpm push`)
 7. Proceed to Phase 3
 
 ## Phase 3: Story Dispatch
@@ -101,7 +101,7 @@ When all stories in the locked epic reach `status: done`:
 1. Create a release PR: `meta/release-<epic-slug>`
 2. Edit `epic.md`: `status: done`, remove `locked_at` / `locked_by`
 3. Merge the release PR
-4. `gitpm push` to sync to GitHub
+4. The GitPM Sync workflow syncs it to GitHub after the merge
 
 ## Limits
 

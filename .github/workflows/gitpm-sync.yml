@@ -1,0 +1,142 @@
+name: GitPM Sync
+
+# Pushes .meta/ (stories, epics, milestones) to GitHub issues and milestones with gitpm.
+#
+# - Pull requests that touch .meta/: validate the tree and preview the sync (no writes).
+# - Merges to develop that touch .meta/: push to GitHub, once the state branch exists.
+# - Manual run (workflow_dispatch): preview by default; untick "dry_run" for a live sync.
+#   The first live sync must be started this way: it creates the state branch.
+#
+# .meta/ is the source of truth: edits made only on GitHub are overwritten the next time that
+# entity changes in .meta/. Sync state (entity id -> issue number, content hashes) lives on the
+# unprotected `gitpm-state` branch, because CI cannot commit to develop.
+
+on:
+  push:
+    branches: [develop]
+    paths:
+      - ".meta/**"
+      - ".github/workflows/gitpm-sync.yml"
+      - "scripts/gitpm_merge_state.mjs"
+  pull_request:
+    branches: [develop]
+    paths:
+      - ".meta/**"
+      - ".github/workflows/gitpm-sync.yml"
+      - "scripts/gitpm_merge_state.mjs"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Preview only: no GitHub writes, state branch untouched"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+# Live syncs run one at a time, in merge order; previews for a PR replace each other.
+concurrency:
+  group: ${{ github.event_name == 'pull_request' && format('gitpm-preview-{0}', github.ref) || 'gitpm-sync-live' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  GITPM_CLI_VERSION: "0.1.15"
+  GITPM_GITHUB_VERSION: "0.1.12"
+  STATE_BRANCH: gitpm-state
+  STATE_FILE: .meta/sync/github-state.json
+
+jobs:
+  sync:
+    name: Sync .meta to GitHub
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write  # push the state branch
+      issues: write    # create/update issues and milestones
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+
+      - name: Install gitpm
+        run: |
+          npm install --no-save --no-audit --no-fund --prefix "$RUNNER_TEMP/gitpm" \
+            "@gitpm/cli@${GITPM_CLI_VERSION}" "@gitpm/sync-github@${GITPM_GITHUB_VERSION}"
+          cp scripts/gitpm_merge_state.mjs "$RUNNER_TEMP/gitpm/"
+          echo "$RUNNER_TEMP/gitpm/node_modules/.bin" >> "$GITHUB_PATH"
+
+      - name: Validate .meta
+        run: gitpm validate
+
+      - name: Restore sync state
+        id: state
+        run: |
+          if git fetch --quiet --depth=1 origin "$STATE_BRANCH"; then
+            git show FETCH_HEAD:github-state.json > "$STATE_FILE"
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Choose mode
+        id: mode
+        env:
+          EVENT: ${{ github.event_name }}
+          DRY_RUN_INPUT: ${{ inputs.dry_run }}
+          HAS_STATE: ${{ steps.state.outputs.exists }}
+        run: |
+          mode=dry
+          if [ "$EVENT" = "workflow_dispatch" ] && [ "$DRY_RUN_INPUT" = "false" ]; then
+            mode=live
+          elif [ "$EVENT" = "push" ] && [ "$HAS_STATE" = "true" ]; then
+            mode=live
+          elif [ "$EVENT" = "push" ]; then
+            echo "::notice::No ${STATE_BRANCH} branch yet: previewing only. Start the first live sync with Actions > GitPM Sync > Run workflow, dry_run unticked."
+          fi
+          echo "mode=$mode" >> "$GITHUB_OUTPUT"
+          echo "Sync mode: $mode"
+
+      - name: Push .meta to GitHub (${{ steps.mode.outputs.mode }})
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MODE: ${{ steps.mode.outputs.mode }}
+        run: |
+          flags=(--yes)
+          [ "$MODE" = "dry" ] && flags+=(--dry-run)
+          set -o pipefail
+          gitpm push "${flags[@]}" --token "$GH_TOKEN" 2>&1 | tee "$RUNNER_TEMP/push.log"
+          {
+            echo "### GitPM sync (${MODE})"
+            echo '```'
+            sed -E 's/\x1B\[[0-9;]*[A-Za-z]//g' "$RUNNER_TEMP/push.log" | grep -v -E '^- ' || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Runs even when the push failed part-way, so issues it already created are never
+      # created a second time by the next run.
+      - name: Save sync state
+        if: always() && steps.mode.outputs.mode == 'live'
+        run: |
+          node "$RUNNER_TEMP/gitpm/gitpm_merge_state.mjs" .meta
+          dir="$RUNNER_TEMP/state"
+          if git fetch --quiet --depth=1 origin "$STATE_BRANCH"; then
+            git worktree add --quiet -B "$STATE_BRANCH" "$dir" FETCH_HEAD
+          else
+            git worktree add --quiet --orphan -b "$STATE_BRANCH" "$dir"
+            printf '%s\n' "# gitpm sync state" "" \
+              "Written by .github/workflows/gitpm-sync.yml. Do not edit or merge this branch." \
+              > "$dir/README.md"
+          fi
+          cp "$STATE_FILE" "$dir/github-state.json"
+          cd "$dir"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "State unchanged."
+            exit 0
+          fi
+          git -c user.name="github-actions[bot]" \
+              -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+              commit --quiet -m "chore(gitpm): sync state after ${GITHUB_SHA::7}"
+          git push --quiet origin "HEAD:${STATE_BRANCH}"

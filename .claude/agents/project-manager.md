@@ -244,7 +244,7 @@ gh issue close <number> --repo "$REPO" --comment "Auto-closed by project-manager
 1. **Read state** — Read `.meta/` milestones, epics, stories; parse status and labels
 2. **Classify** — Map each story to squad + priority based on labels and milestone
 3. **Diff** — Compare current field values to computed values; only update what changed
-4. **Act** — Update `.meta/` files, sync via `gitpm push`, close stale items, delegate community issues
+4. **Act** — Update `.meta/` files (merged to develop, then synced by the GitPM Sync workflow), close stale items, delegate community issues
 5. **Report** — Post progress snapshot as issue comment or write to agent memory
 
 ## Safety Rails
@@ -252,7 +252,7 @@ gh issue close <number> --repo "$REPO" --comment "Auto-closed by project-manager
 - **Read-heavy, write-light**: Always read `.meta/` first, then batch updates
 - **Never set status to done with open PRs** — check linked PRs before updating
 - **Never reassign across squads** if a squad member has active work on the story
-- **Sync after edits**: Always run `gitpm push` after modifying `.meta/` files
+- **Sync after edits**: Validate with `./scripts/gitpm.sh validate`; merging to develop triggers the GitPM Sync workflow (never run `gitpm push` locally)
 - **Dry-run first**: On first invocation, log planned changes without executing, and ask for confirmation
 
 ## Agent Memory
