@@ -152,8 +152,17 @@ class SQLModelAdapter(BaseAdapter):
 
             # Get total count
             count_query = select(func.count()).select_from(query.subquery())
-            total_count_result = await session.execute(count_query)
-            total_count = total_count_result.scalar_one()
+
+            async def compute_total() -> int:
+                return (await session.execute(count_query)).scalar_one()
+
+            total_count = await self._cached_count(
+                compute_total,
+                filters=normalize_filters(filters),
+                search=search,
+                search_fields=search_fields,
+                queryset_filters=queryset_filters,
+            )
 
             # Apply pagination
             offset = (page - 1) * page_size
@@ -181,6 +190,7 @@ class SQLModelAdapter(BaseAdapter):
             db_obj = self.model(**data)
             session.add(db_obj)
             await session.commit()
+            await self.invalidate_count_cache()
             await session.refresh(db_obj)
             return db_obj
 
@@ -211,6 +221,7 @@ class SQLModelAdapter(BaseAdapter):
                     setattr(db_obj, key, value)
                 session.add(db_obj)
                 await session.commit()
+                await self.invalidate_count_cache()
                 await session.refresh(db_obj)
             return db_obj
 
@@ -231,6 +242,7 @@ class SQLModelAdapter(BaseAdapter):
             if db_obj:
                 await session.delete(db_obj)
                 await session.commit()
+                await self.invalidate_count_cache()
 
     async def get_related(self, pk: Any, field: str) -> builtins.list[Any]:
         """

@@ -245,6 +245,15 @@ class AdminOptions(BaseModel):
         )
         ```
     """
+    count_cache_ttl: int = Field(default=0, ge=0)
+    """Seconds to cache this model's list total; ``0`` (default) always counts.
+
+    A list request issues ``count(*)`` for the pagination total, which can take
+    seconds on a table with millions of rows. With a positive TTL the total is
+    reused for identical filters and search, and dropped when the adapter creates,
+    updates or deletes a row of this model. Rows written elsewhere show up in the
+    total once the TTL passes.
+    """
     realtime_notifications: bool | None = None
     """Per-model override for real-time CRUD notifications.
 

@@ -13,6 +13,7 @@ from sqlmodel import SQLModel
 from starlette.convertors import CONVERTOR_TYPES, Convertor, register_url_convertor
 
 from hyperadmin.core.actions import ActionDef, collect_actions
+from hyperadmin.core.cache import CountCache, InMemoryTTLCache
 from hyperadmin.core.display import get_field_label
 from hyperadmin.core.introspection import infer_list_display, infer_list_filter, infer_search_fields
 from hyperadmin.core.options import AdminOptions
@@ -122,6 +123,7 @@ def create_admin_router(  # noqa: PLR0912, PLR0913, PLR0915, PLR0917
     debug: bool = False,
     realtime_emitter: "RealtimeEmitter | None" = None,
     realtime_settings: "RealtimeSettings | None" = None,
+    count_cache: CountCache | None = None,
 ) -> APIRouter:
     """Creates an APIRouter for a given model with the specified admin options."""
     router = APIRouter(route_class=route_class)
@@ -133,6 +135,9 @@ def create_admin_router(  # noqa: PLR0912, PLR0913, PLR0915, PLR0917
     if session_factory is not None:
         adapter_kwargs["session_factory"] = session_factory
     adapter: Any = admin_instance.adapter_class(model, **adapter_kwargs)
+    if options.count_cache_ttl > 0:
+        adapter.count_cache = count_cache
+        adapter.count_cache_ttl = options.count_cache_ttl
     if realtime_emitter is None:
         if options.realtime_notifications is True:
             logger.info(
@@ -459,6 +464,7 @@ class HyperAdminRouter:
         route_class: type[APIRoute] | None = None,
         realtime_emitter: "RealtimeEmitter | None" = None,
         realtime_settings: "RealtimeSettings | None" = None,
+        count_cache: CountCache | None = None,
     ):
         self.engine = engine
         self.debug = debug
@@ -470,6 +476,7 @@ class HyperAdminRouter:
         self.session_factory = session_factory
         self.realtime_emitter = realtime_emitter
         self.realtime_settings = realtime_settings
+        self.count_cache: CountCache = count_cache or InMemoryTTLCache()
         self.notification_models: set[str] = set()
         # Enable global whitespace trimming
         templates.env.trim_blocks = True
@@ -550,6 +557,7 @@ class HyperAdminRouter:
                 debug=self.debug,
                 realtime_emitter=self.realtime_emitter,
                 realtime_settings=self.realtime_settings,
+                count_cache=self.count_cache,
             )
             self.routers.append(router)
             if (
