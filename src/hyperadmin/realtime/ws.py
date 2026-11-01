@@ -54,13 +54,16 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import functools
 import json
 import logging
 from collections.abc import Awaitable, Callable, Hashable
 from dataclasses import dataclass
 from typing import Any, Final
 
-from starlette.requests import HTTPConnection
+from starlette.exceptions import HTTPException
+from starlette.requests import HTTPConnection, Request
+from starlette.responses import PlainTextResponse, Response
 from starlette.websockets import WebSocket, WebSocketDisconnect, WebSocketState
 
 from hyperadmin.realtime.config import RealtimeSettings
@@ -83,6 +86,33 @@ MAX_PRESENCE_CHANNELS: Final = 20
 MAX_NOTIFICATION_CHANNELS: Final = 20
 _MAX_FIELD_LEN: Final = 200
 _PRESENCE_MODES: Final = ("viewing", "editing")
+
+WS_UNSUPPORTED_MESSAGE: Final = (
+    "HyperAdmin realtime: the ASGI server passed a WebSocket upgrade request to the app as "
+    "plain HTTP, so it has no WebSocket support. Live notifications and presence will not "
+    "connect. With uvicorn, install `uvicorn[standard]` (or `websockets` / `wsproto`)."
+)
+
+
+@functools.cache
+def _warn_ws_unsupported() -> None:
+    """Log ``WS_UNSUPPORTED_MESSAGE`` once per process."""
+    logger.warning(WS_UNSUPPORTED_MESSAGE)
+
+
+async def ws_http_fallback(request: Request) -> Response:
+    """HTTP GET on the WebSocket path: explain a server that cannot upgrade.
+
+    Servers without a WebSocket library (plain ``uvicorn``) deliver the upgrade
+    request as HTTP. Answer it with 426 and log the cause once per process; a
+    GET that does not ask for an upgrade stays a 404.
+    """
+    if request.headers.get("upgrade", "").lower() != "websocket":
+        raise HTTPException(status_code=404)
+    _warn_ws_unsupported()
+    return PlainTextResponse(
+        WS_UNSUPPORTED_MESSAGE, status_code=426, headers={"Upgrade": "websocket"}
+    )
 
 
 def make_ws_handler(
