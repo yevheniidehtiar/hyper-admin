@@ -3,11 +3,11 @@
 | Field | Value |
 |---|---|
 | Author | Claude Code |
-| Status | Draft |
+| Status | Approved (2026-11-01) |
 | Issue | #213 |
 | Milestone | v0.7.0 — High-Volume & High-Load Scalability |
 | Created | 2026-05-05 |
-| Last updated | 2026-05-05 |
+| Last updated | 2026-11-01 |
 
 ---
 
@@ -276,19 +276,24 @@ async def estimate_row_count(self) -> int:
     async with self.engine.connect() as conn:
         # Use parameterized regclass cast — never f-string the table name into SQL.
         result = await conn.execute(
-            text("SELECT reltuples::bigint FROM pg_class WHERE oid = :tbl::regclass"),
+            text("SELECT reltuples::bigint FROM pg_class WHERE oid = CAST(:tbl AS regclass)"),
             {"tbl": table},
         )
         row = result.scalar_one_or_none()
-        if row is None or row < 0:
-            # reltuples = -1 on never-analyzed tables; fall back to exact count.
+        if row is None or row <= 0:
+            # reltuples is -1 (PG14+) or 0 (older) on never-analyzed tables, and 0 right
+            # after a bulk load; fall back to the exact count.
             result = await conn.execute(text(f"SELECT COUNT(*) FROM {quoted(table)}"))
             return int(result.scalar_one())
         return int(row)
 ```
 
 The `quoted(table)` step uses SQLAlchemy's `Identifier`-equivalent quoting via
-`sa.sql.quoted_name(table, quote=True)` — never raw f-string interpolation. SQLite uses a
+`sa.sql.quoted_name(table, quote=True)` — never raw f-string interpolation. The `regclass`
+parameter is the schema-qualified, quoted name (`Model.__table__.fullname`) so a table in a
+non-default schema resolves, and plain SQLAlchemy models (no `__tablename__` on the class
+body) work too. The cast is written `CAST(:tbl AS regclass)`: the `:tbl::regclass` shorthand
+is mis-parsed by SQLAlchemy's bind-parameter scanner. SQLite uses a
 plain `SELECT COUNT(*)` (it has no row-estimate catalog and reference tables on SQLite are
 small enough that the linear scan is acceptable for dev workflows). MySQL is deliberately not
 implemented: the default `NotImplementedError` triggers the safe-preload fallback for any
@@ -441,25 +446,39 @@ bound matches the API used (`TTLCache.maxsize`, `TTLCache.ttl`).
 
 ## Open Questions
 
-- [ ] **MySQL `estimate_row_count` implementation.** `information_schema.TABLES.TABLE_ROWS`
+- [x] **MySQL `estimate_row_count` implementation.** *(Resolved 2026-11-01: (b).)* `information_schema.TABLES.TABLE_ROWS`
       is the obvious source on MySQL/MariaDB but is famously inaccurate on InnoDB (off by
       orders of magnitude on busy tables). Two options:
       (a) ship the InnoDB approximation now with a documented caveat; or
       (b) leave the stub raising `NotImplementedError` and file a follow-up.
       **Proposal:** (b) — defer until a concrete user reports needing it, since the safe
       fallback (assume small, preload) preserves correctness.
-- [ ] **`filter_cache_ttl=0` semantics: short-circuit vs immediate-expire?** Current proposal
+- [x] **`filter_cache_ttl=0` semantics: short-circuit vs immediate-expire?** Current proposal
       is short-circuit (skip lookup and write entirely). Alternative is to set TTL=0 on the
       cache and rely on `cachetools`' eviction. Short-circuit is preferable: it is one fewer
       hash op, makes the disabled path obviously zero-overhead, and prevents the cache from
       ever holding entries an operator believes are disabled. **Proposal:** short-circuit.
-- [ ] **Should `filter_cache_ttl` also gate per-relation FK option fetches?**
+- [x] **Should `filter_cache_ttl` also gate per-relation FK option fetches?**
       `build_filter_metadata` itself calls `target_adapter.list(page_size=1000)` per FK; the
       proposed cache wraps the *outer* function so all FK fetches are amortised together. A
       finer-grained cache (per FK target) would help models that share FK targets across
       filters. **Proposal:** ship the outer cache only; revisit if profiling shows benefit.
 
-These must be settled (or explicitly deferred) before Status → Approved.
+All three proposals accepted by the maintainer on 2026-11-01.
+
+**Interplay with #211 (A3, added 2026-11-01).** `adapter-query-performance.md` also calls
+`estimate_row_count()`, for the unfiltered list total. That caller needs to know whether an
+estimate really exists, so SQLite (which falls back to an exact `COUNT(*)` here, fine for the
+small-table preload decision) must not look like an estimate there. Resolution: the SQLite and
+fallback paths keep returning an exact count, and the list-total caller only uses the value when
+the adapter reports it is an estimate (`BaseAdapter.estimates_row_count: bool`, `True` on the
+Postgres implementation only, `False` by default).
+
+**Dependency.** `cachetools` ships in its own dependency PR before the cache implementation
+(see `.claude/rules/conflict-avoidance.md`). `core/cache.py` already exists from the #211 count
+cache; the filter-metadata cache reuses `InMemoryTTLCache` instead of adding a second class, so
+`cachetools` is only needed if its `TTLCache` is preferred; the implementation PR decides and
+states why.
 
 ## Decision Log
 
