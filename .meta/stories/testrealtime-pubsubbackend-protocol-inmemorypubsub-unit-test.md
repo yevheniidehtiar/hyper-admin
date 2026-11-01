@@ -2,7 +2,7 @@
 type: story
 id: GHy3YZTKE9I2
 title: "test(realtime): PubSubBackend protocol + InMemoryPubSub unit tests"
-status: in_review
+status: done
 priority: medium
 assignee: null
 labels:
@@ -18,7 +18,7 @@ github:
   last_sync_hash: sha256:a63b3d4878e464079e2dfd57d607032db609c32d6a6023bad1862551cf0e3e6a
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-03-29T06:57:43Z
-updated_at: 2026-09-28T00:00:00Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Context

@@ -2,7 +2,7 @@
 type: epic
 id: 5RQIGVbDMSTJ
 title: "roadmap: The Definitive Python Admin Framework — v0.2 → v1.0"
-status: todo
+status: cancelled
 priority: medium
 owner: null
 labels:
@@ -14,7 +14,7 @@ github:
   last_sync_hash: sha256:6c23686e27fbf5739f18f06c90b450b198bd1eefb3b9532e5acdde8f61bbf261
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-03-27T08:59:20Z
-updated_at: 2026-04-06T18:09:27Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 # HyperAdmin Roadmap — Living Index

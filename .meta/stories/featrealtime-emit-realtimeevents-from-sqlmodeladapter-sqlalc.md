@@ -2,7 +2,7 @@
 type: story
 id: 17PRSaONlqPv
 title: "feat(realtime): Emit RealtimeEvents from SQLModelAdapter + SQLAlchemyAdapter"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -19,7 +19,7 @@ github:
   last_sync_hash: sha256:84eb1ebc1b0b5fdb79614a39480289f23153a88d8d045373875c1890097a7d21
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-03-29T06:59:02Z
-updated_at: 2026-09-28T00:00:00Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Context

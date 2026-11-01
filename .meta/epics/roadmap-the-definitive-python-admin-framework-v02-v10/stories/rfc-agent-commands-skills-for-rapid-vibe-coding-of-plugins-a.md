@@ -2,7 +2,7 @@
 type: story
 id: GxY-a8jTOBVT
 title: "RFC: Agent commands & skills for rapid vibe coding of plugins and custom solutions"
-status: todo
+status: cancelled
 priority: medium
 assignee: null
 labels:
@@ -18,7 +18,7 @@ github:
   last_sync_hash: sha256:c51f5e044522c050a7a7d4c2c72234e3f814a8e3654f3d8a49db87594da54138
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-03-27T09:06:13Z
-updated_at: 2026-03-27T09:06:13Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Summary

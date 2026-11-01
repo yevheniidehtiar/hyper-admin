@@ -2,7 +2,7 @@
 type: story
 id: 6sCxAqjz9bSj
 title: "chore: triage 179 stale todo issues — close obsolete, prioritize active"
-status: todo
+status: cancelled
 priority: medium
 assignee: null
 labels:
@@ -16,7 +16,7 @@ github:
   last_sync_hash: sha256:7219337d2f59c96e91c80dfd4b5ddf97248cfdedae8366bf8b310cfe7128121c
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-04-05T09:50:22Z
-updated_at: 2026-04-05T09:50:22Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Problem

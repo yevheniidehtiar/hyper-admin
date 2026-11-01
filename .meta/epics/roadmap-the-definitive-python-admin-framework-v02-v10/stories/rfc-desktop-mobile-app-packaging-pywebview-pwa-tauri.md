@@ -2,7 +2,7 @@
 type: story
 id: 4Xs8Y1cO4Uny
 title: "RFC: Desktop & mobile app packaging (PyWebView, PWA, Tauri)"
-status: todo
+status: cancelled
 priority: medium
 assignee: null
 labels:
@@ -17,7 +17,7 @@ github:
   last_sync_hash: sha256:be15db12065d5adf95cbac7166e8d3cb18746268a67fd510439d6a0b9bbfcfe6
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-03-27T09:03:09Z
-updated_at: 2026-03-27T09:03:09Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Summary
