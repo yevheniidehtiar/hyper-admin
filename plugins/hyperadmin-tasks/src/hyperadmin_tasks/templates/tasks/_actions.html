@@ -25,6 +25,7 @@
         'queue-resumed': ('success', _("The queue was resumed.")),
         'schedule-paused': ('success', _("The schedule was paused.")),
         'schedule-resumed': ('success', _("The schedule was resumed.")),
+        'forbidden': ('danger', _("You are not allowed to manage tasks.")),
         'failed': ('danger', _("The action could not be completed. The task backend refused it or is unreachable; reload and check the current state.")),
     } -%}
     {%- set notice = notices.get(request.query_params.get('notice', '')) -%}

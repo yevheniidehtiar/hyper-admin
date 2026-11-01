@@ -388,3 +388,107 @@ def test_missing_capability_action_flashes_error(make_client: ClientFactory, now
     response = client.post("/admin/tasks/queues/default/pause")
 
     assert response.headers["location"] == "/admin/tasks/?notice=failed"
+
+
+def test_queue_and_schedule_names_with_slashes_route(
+    make_client: ClientFactory, now: datetime, make_task: TaskFactory
+) -> None:
+    """
+    Scenario: an odd queue or schedule name does not break the pages
+      Given a queue "eu/east" and a schedule "ops/nightly"
+      When  a user opens the dashboard and the schedules page and pauses both
+      Then  the pages render and each action reaches the backend with the full name
+    """
+    store = InMemoryTaskBackend(clock=lambda: now)
+    store.seed(
+        [make_task("T1", queue="eu/east")],
+        schedules=[
+            ScheduleRecord(
+                id="ops/nightly", task_name="app.job", queue="eu/east", cron="0 3 * * *",
+                misfire_policy="skip",
+            )
+        ],
+    )  # fmt: skip
+    client = make_client(store)
+
+    dashboard = client.get("/admin/tasks/")
+    schedules = client.get("/admin/tasks/schedules")
+    queue = client.post("/admin/tasks/queues/eu/east/pause")
+    schedule = client.post("/admin/tasks/schedules/ops/nightly/pause")
+
+    assert dashboard.status_code == schedules.status_code == 200
+    assert queue.headers["location"] == "/admin/tasks/?notice=queue-paused"
+    assert schedule.headers["location"] == "/admin/tasks/schedules?notice=schedule-paused"
+    assert ("pause_queue", "eu/east", "anonymous") in store.audit
+    assert ("pause_schedule", "ops/nightly", "anonymous") in store.audit
+
+
+def test_forged_action_for_missing_capability_never_reaches_backend(
+    make_client: ClientFactory, now: datetime, make_task: TaskFactory
+) -> None:
+    """
+    Scenario: a forged retry against a backend without RETRY
+      Given a backend whose capabilities exclude RETRY
+      When  a user POSTs a retry for a failed task
+      Then  the error flash is shown and the backend was not called
+    """
+    calls: list[str] = []
+
+    class _Spy(InMemoryTaskBackend):
+        async def retry_task(self, task_id: str, *, actor: str) -> None:
+            calls.append(task_id)
+
+    store = _Spy({Capability.CANCEL}, clock=lambda: now)
+    store.seed([make_task("F1", state=TaskState.FAILED)])
+    client = make_client(store)
+
+    response = client.post("/admin/tasks/t/F1/retry")
+
+    assert response.headers["location"] == "/admin/tasks/t/F1?notice=failed"
+    assert calls == []
+
+
+def test_boosted_action_without_permission_redirects_with_flash(
+    auth_client: TestClient, backend: InMemoryTaskBackend
+) -> None:
+    """
+    Scenario: a viewer's boosted form post gets visible feedback
+      Given a view_tasks-only user
+      When  an HTMX request POSTs a retry
+      Then  a 303 back to the task carries the forbidden notice and the page shows it
+    """
+    headers = {**_csrf(auth_client, _VIEWER), "HX-Request": "true"}
+
+    response = auth_client.post("/admin/tasks/t/F1/retry", headers=headers)
+
+    assert response.status_code == 303
+    assert response.headers["location"] == "/admin/tasks/t/F1?notice=forbidden"
+    page = auth_client.get(response.headers["location"], headers=_VIEWER).text
+    assert "not allowed to manage tasks" in page
+    assert backend.audit == []
+
+
+def test_dashboard_poll_without_permission_redirects_the_page(
+    tmp_path: Path, backend: InMemoryTaskBackend
+) -> None:
+    """
+    Scenario: the dashboard poll loses its permission
+      Given a signed-in user whose view_tasks was revoked
+      When  the HTMX poll requests the partial
+      Then  an HX-Redirect to the dashboard is returned instead of an unswappable 403
+    """
+    app = FastAPI()
+    admin = Admin(
+        app,
+        engine=create_async_engine(f"sqlite+aiosqlite:///{tmp_path / 'revoked.db'}"),
+        settings=HyperAdminSettings(secret_key="tasks-test-secret"),
+        auth=ExternalAuth(get_user=_get_user, has_permission=lambda user, codename: False),
+    )
+    admin.mount("/admin")
+    admin.plugins["tasks"].lifecycle.backend = backend  # type: ignore[attr-defined]
+    client = TestClient(app, follow_redirects=False)
+
+    response = client.get("/admin/tasks/?partial=1", headers={**_VIEWER, "HX-Request": "true"})
+
+    assert response.status_code == 200
+    assert response.headers["HX-Redirect"] == "/admin/tasks/"
