@@ -49,12 +49,21 @@ SCHEDULE_ID = "sched-nightly"
 
 @dataclass(frozen=True)
 class ContractSeed:
-    """Data a backend must hold when the contract tests run (task ids are unique)."""
+    """Data a backend must hold when the contract tests run (task ids are unique).
+
+    Ids are free-form: a backend whose native ids are generated (UUIDs, ...) overrides the
+    ``contract_seed`` fixture with a seed carrying those ids. The tests find their subjects by
+    role: the first pending task, the first failed task, the third task and the first schedule.
+    """
 
     tasks: list[TaskRecord]
     attempts: dict[str, list[AttemptRecord]] = field(default_factory=dict)
     workers: list[WorkerRecord] = field(default_factory=list)
     schedules: list[ScheduleRecord] = field(default_factory=list)
+
+    def first_id(self, state: TaskState) -> str:
+        """Return the id of the first seeded task in ``state``."""
+        return next(t.id for t in self.tasks if t.state is state)
 
 
 def _task(
@@ -202,15 +211,18 @@ class TaskBackendContract:
         expected = {t.id for t in contract_seed.tasks if t.name == "app.report"}
         assert {t.id for t in page.items} == expected
 
-    async def test_filter_by_id_query(self, backend: TaskBackend) -> None:
+    async def test_filter_by_id_query(
+        self, backend: TaskBackend, contract_seed: ContractSeed
+    ) -> None:
         """
         Scenario: filtering by id query
           Given tasks with distinct ids
-          When  list_tasks is filtered by id_query "task-0003"
+          When  list_tasks is filtered by the full id of the third seeded task
           Then  exactly that task is returned
         """
-        page = await backend.list_tasks(TaskFilter(id_query="task-0003"), 1, 100)
-        assert [t.id for t in page.items] == ["task-0003"]
+        target = contract_seed.tasks[2].id
+        page = await backend.list_tasks(TaskFilter(id_query=target), 1, 100)
+        assert [t.id for t in page.items] == [target]
 
     async def test_filters_combine(self, backend: TaskBackend, contract_seed: ContractSeed) -> None:
         """
@@ -268,30 +280,36 @@ class TaskBackendContract:
         with pytest.raises(TasksBackendError):
             await backend.list_tasks(TaskFilter(), page, per_page)
 
-    async def test_get_task_returns_task_with_attempts(self, backend: TaskBackend) -> None:
+    async def test_get_task_returns_task_with_attempts(
+        self, backend: TaskBackend, contract_seed: ContractSeed
+    ) -> None:
         """
         Scenario: task detail includes attempts
           Given a failed task with three attempts
           When  get_task is called with its id
           Then  the task and its attempts in order are returned
         """
-        found = await backend.get_task(FAILED_ID)
+        failed_id = contract_seed.first_id(TaskState.FAILED)
+        found = await backend.get_task(failed_id)
         assert found is not None
         task, attempts = found
-        assert task.id == FAILED_ID
+        assert task.id == failed_id
         assert task.state is TaskState.FAILED
         assert [a.number for a in attempts] == [1, 2, 3]
 
-    async def test_get_task_without_attempts_returns_empty_list(self, backend: TaskBackend) -> None:
+    async def test_get_task_without_attempts_returns_empty_list(
+        self, backend: TaskBackend, contract_seed: ContractSeed
+    ) -> None:
         """
         Scenario: task without attempts
           Given a pending task that never ran
           When  get_task is called with its id
           Then  the task is returned with no attempts
         """
-        found = await backend.get_task(PENDING_ID)
+        pending_id = contract_seed.first_id(TaskState.PENDING)
+        found = await backend.get_task(pending_id)
         assert found is not None
-        assert found[0].id == PENDING_ID
+        assert found[0].id == pending_id
         assert found[1] == []
 
     async def test_get_task_unknown_id_returns_none(self, backend: TaskBackend) -> None:
@@ -347,7 +365,9 @@ class TaskBackendContract:
         with pytest.raises(TasksBackendError):
             await backend.list_schedules()
 
-    async def test_retry_task_makes_failed_task_pending(self, backend: TaskBackend) -> None:
+    async def test_retry_task_makes_failed_task_pending(
+        self, backend: TaskBackend, contract_seed: ContractSeed
+    ) -> None:
         """
         Scenario: retry contract
           Given a failed task
@@ -355,12 +375,15 @@ class TaskBackendContract:
           Then  the task's state becomes pending
         """
         self._require(backend, Capability.RETRY)
-        await backend.retry_task(FAILED_ID, actor=ACTOR)
-        found = await backend.get_task(FAILED_ID)
+        failed_id = contract_seed.first_id(TaskState.FAILED)
+        await backend.retry_task(failed_id, actor=ACTOR)
+        found = await backend.get_task(failed_id)
         assert found is not None
         assert found[0].state is TaskState.PENDING
 
-    async def test_retry_without_capability_raises(self, backend: TaskBackend) -> None:
+    async def test_retry_without_capability_raises(
+        self, backend: TaskBackend, contract_seed: ContractSeed
+    ) -> None:
         """
         Scenario: retry without capability
           Given a backend lacking the retry capability
@@ -369,9 +392,11 @@ class TaskBackendContract:
         """
         self._require_lacking(backend, Capability.RETRY)
         with pytest.raises(TasksBackendError):
-            await backend.retry_task(FAILED_ID, actor=ACTOR)
+            await backend.retry_task(contract_seed.first_id(TaskState.FAILED), actor=ACTOR)
 
-    async def test_cancel_task_makes_pending_task_cancelled(self, backend: TaskBackend) -> None:
+    async def test_cancel_task_makes_pending_task_cancelled(
+        self, backend: TaskBackend, contract_seed: ContractSeed
+    ) -> None:
         """
         Scenario: cancel contract
           Given a pending task
@@ -379,12 +404,15 @@ class TaskBackendContract:
           Then  the task's state becomes cancelled
         """
         self._require(backend, Capability.CANCEL)
-        await backend.cancel_task(PENDING_ID, actor=ACTOR)
-        found = await backend.get_task(PENDING_ID)
+        pending_id = contract_seed.first_id(TaskState.PENDING)
+        await backend.cancel_task(pending_id, actor=ACTOR)
+        found = await backend.get_task(pending_id)
         assert found is not None
         assert found[0].state is TaskState.CANCELLED
 
-    async def test_cancel_without_capability_raises(self, backend: TaskBackend) -> None:
+    async def test_cancel_without_capability_raises(
+        self, backend: TaskBackend, contract_seed: ContractSeed
+    ) -> None:
         """
         Scenario: cancel without capability
           Given a backend lacking the cancel capability
@@ -393,7 +421,7 @@ class TaskBackendContract:
         """
         self._require_lacking(backend, Capability.CANCEL)
         with pytest.raises(TasksBackendError):
-            await backend.cancel_task(PENDING_ID, actor=ACTOR)
+            await backend.cancel_task(contract_seed.first_id(TaskState.PENDING), actor=ACTOR)
 
     async def test_pause_and_resume_queue(self, backend: TaskBackend) -> None:
         """
@@ -421,7 +449,9 @@ class TaskBackendContract:
         with pytest.raises(TasksBackendError):
             await backend.set_queue_paused("default", True, actor=ACTOR)
 
-    async def test_pause_and_resume_schedule(self, backend: TaskBackend) -> None:
+    async def test_pause_and_resume_schedule(
+        self, backend: TaskBackend, contract_seed: ContractSeed
+    ) -> None:
         """
         Scenario: schedule pause and resume
           Given an active schedule
@@ -429,14 +459,17 @@ class TaskBackendContract:
           Then  list_schedules reports the schedule paused then not paused
         """
         self._require(backend, Capability.PAUSE_SCHEDULE)
-        await backend.set_schedule_paused(SCHEDULE_ID, True, actor=ACTOR)
+        schedule_id = contract_seed.schedules[0].id
+        await backend.set_schedule_paused(schedule_id, True, actor=ACTOR)
         paused = {s.id: s.paused for s in await backend.list_schedules()}
-        assert paused[SCHEDULE_ID] is True
-        await backend.set_schedule_paused(SCHEDULE_ID, False, actor=ACTOR)
+        assert paused[schedule_id] is True
+        await backend.set_schedule_paused(schedule_id, False, actor=ACTOR)
         resumed = {s.id: s.paused for s in await backend.list_schedules()}
-        assert resumed[SCHEDULE_ID] is False
+        assert resumed[schedule_id] is False
 
-    async def test_pause_schedule_without_capability_raises(self, backend: TaskBackend) -> None:
+    async def test_pause_schedule_without_capability_raises(
+        self, backend: TaskBackend, contract_seed: ContractSeed
+    ) -> None:
         """
         Scenario: schedule pause without capability
           Given a backend lacking the pause_schedule capability
@@ -445,4 +478,4 @@ class TaskBackendContract:
         """
         self._require_lacking(backend, Capability.PAUSE_SCHEDULE)
         with pytest.raises(TasksBackendError):
-            await backend.set_schedule_paused(SCHEDULE_ID, True, actor=ACTOR)
+            await backend.set_schedule_paused(contract_seed.schedules[0].id, True, actor=ACTOR)
