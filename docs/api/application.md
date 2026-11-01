@@ -34,7 +34,7 @@ admin.mount("/admin")
 | `auth_backend`, `permission_checker`, `permission_registry` | | `None` | Custom auth backend and permission services |
 | `storage` | `StorageBackend` | `None` | Storage for file and image uploads (local or S3-compatible) |
 | `otp_service` | | `None` | Email-OTP service for MFA |
-| `realtime` | `RealtimeSettings` | `None` | SSE / WebSocket and pub/sub configuration |
+| `realtime` | `RealtimeSettings` | `None` | SSE / WebSocket and pub/sub configuration; see [Realtime](../guides/realtime.md) |
 | `disabled_plugins` | `Iterable[str]` | `()` | Keyword-only. Plugin names to skip, for example `["tasks"]` |
 | `plugin_settings` | `Mapping[str, Mapping]` | `None` | Keyword-only. Settings for each plugin, by plugin name |
 
