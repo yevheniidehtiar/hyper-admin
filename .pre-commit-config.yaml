@@ -79,7 +79,7 @@ repos:
       - id: basedpyright
         name: basedpyright
         entry: uv run basedpyright
-        args: [src, plugins/hyperadmin-reports/src]
+        args: [src, plugins/hyperadmin-reports/src, plugins/hyperadmin-tasks/src]
         language: system
         types: [python]
         pass_filenames: false
