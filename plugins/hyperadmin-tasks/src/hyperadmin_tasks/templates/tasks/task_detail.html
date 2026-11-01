@@ -8,6 +8,7 @@
 {%- extends "base.html" -%}
 {%- from "components/banner.html" import banner -%}
 {%- from "components/pill.html" import pill -%}
+{%- from "tasks/_actions.html" import action_form, flash with context -%}
 
 {%- macro json_block(view, kind, label, testid) -%}
     <section class="ha-card" data-testid="{{ testid }}" aria-label="{{ label }}">
@@ -31,9 +32,16 @@
     <header class="ha-page-header" data-testid="page-header">
         <h1 class="ha-h1">{{ _("Task") }}{% if task %} <span class="ha-mono">{{ task.id }}</span>{% endif %}</h1>
         <div class="ha-page-header-actions">
+            {%- if task and can.retry %}
+            {{ action_form(url_for('tasks-retry', task_id=task.id), _("Retry"), 'tasks-retry-btn', _("Retry task %(id)s?", id=task.id)) }}
+            {%- endif %}
+            {%- if task and can.cancel %}
+            {{ action_form(url_for('tasks-cancel', task_id=task.id), _("Cancel"), 'tasks-cancel-btn', _("Cancel task %(id)s?", id=task.id), danger=True) }}
+            {%- endif %}
             <a class="ha-btn" href="{{ url_for('tasks-list') }}" data-testid="tasks-back-to-list">{{ _("Back to task list") }}</a>
         </div>
     </header>
+    {{ flash() }}
     {%- if error %}
     {{ banner(_("The task backend is unreachable."), kind='danger', detail=_("This task cannot be loaded right now."), testid='tasks-backend-error') }}
     {%- else %}

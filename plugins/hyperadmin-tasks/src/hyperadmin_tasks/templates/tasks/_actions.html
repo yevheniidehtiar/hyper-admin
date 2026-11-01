@@ -1,0 +1,34 @@
+{#-
+    Action controls and the flash banner shared by the task pages. Import with context
+    ({% from "tasks/_actions.html" import action_form, flash with context %}) so the CSRF input
+    can read the request.
+
+    action_form(url, label, testid, confirm, danger): a POST-only form with one button. It is
+    boosted by HTMX (hx-confirm asks first) and degrades to a plain form post without scripts.
+    flash(): the banner for the ?notice= code an action redirected back with. Only known codes
+    render, and their text is fixed here, so a crafted URL cannot put its own words on the page.
+-#}
+{%- from "components/banner.html" import banner -%}
+
+{%- macro action_form(url, label, testid, confirm, danger=False) -%}
+<form method="post" action="{{ url }}" class="ha-inline-form" hx-boost="true" hx-confirm="{{ confirm }}">
+    {{ csrf_input() if csrf_input is defined }}
+    <button type="submit" class="ha-btn ha-btn--sm{% if danger %} ha-btn-danger{% endif %}" data-testid="{{ testid }}">{{ label }}</button>
+</form>
+{%- endmacro -%}
+
+{%- macro flash() -%}
+    {%- set notices = {
+        'retried': ('success', _("The task was queued for retry.")),
+        'cancelled': ('success', _("The task was cancelled.")),
+        'queue-paused': ('success', _("The queue was paused.")),
+        'queue-resumed': ('success', _("The queue was resumed.")),
+        'schedule-paused': ('success', _("The schedule was paused.")),
+        'schedule-resumed': ('success', _("The schedule was resumed.")),
+        'failed': ('danger', _("The action could not be completed. The task backend refused it or is unreachable; reload and check the current state.")),
+    } -%}
+    {%- set notice = notices.get(request.query_params.get('notice', '')) -%}
+    {%- if notice %}
+    {{ banner(notice[1], kind=notice[0], testid='tasks-flash-' ~ notice[0]) }}
+    {%- endif %}
+{%- endmacro -%}

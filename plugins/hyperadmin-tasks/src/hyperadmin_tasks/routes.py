@@ -14,8 +14,9 @@ from typing import TYPE_CHECKING, Any
 
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
-from starlette.responses import Response  # noqa: TC002 - FastAPI resolves the return annotation
+from starlette.responses import RedirectResponse, Response
 
+from hyperadmin.views.urls import admin_url_for
 from hyperadmin_tasks.backend import (
     AttemptRecord,
     Capability,
@@ -27,6 +28,8 @@ from hyperadmin_tasks.backend import (
     WorkerRecord,
 )
 from hyperadmin_tasks.presenters import (
+    CANCELLABLE_STATES,
+    RETRYABLE_STATES,
     STATE_PILL_KIND,
     Pagination,
     format_age,
@@ -46,6 +49,8 @@ logger = logging.getLogger(__name__)
 
 #: Permission to see the task pages.
 VIEW_PERMISSION = "view_tasks"
+#: Permission to act on tasks, queues and schedules.
+MANAGE_PERMISSION = "manage_tasks"
 
 
 def _permission_checker(admin: Any) -> Any:
@@ -55,16 +60,40 @@ def _permission_checker(admin: Any) -> Any:
     return admin.permission_checker
 
 
-async def can_view(admin: Any, request: Request) -> bool:
-    """Whether the request's user holds ``view_tasks``."""
+async def _has_permission(admin: Any, request: Request, codename: str) -> bool:
     checker = _permission_checker(admin)
     if checker is None:
         return True
     user = getattr(request.state, "user", None)
-    return user is not None and bool(await checker.has_permission(user, VIEW_PERMISSION))
+    return user is not None and bool(await checker.has_permission(user, codename))
 
 
-async def _load_overview(lifecycle: BackendLifecycle) -> dict[str, Any]:
+async def can_view(admin: Any, request: Request) -> bool:
+    """Whether the request's user holds ``view_tasks``."""
+    return await _has_permission(admin, request, VIEW_PERMISSION)
+
+
+async def can_manage(admin: Any, request: Request) -> bool:
+    """Whether the request's user holds ``manage_tasks``."""
+    return await _has_permission(admin, request, MANAGE_PERMISSION)
+
+
+def _actor(request: Request) -> str:
+    """The name the backend records for an action: the signed-in user's display name."""
+    return str(getattr(request.state, "user_display", "") or "anonymous")
+
+
+def _action_flags(manage: bool, backend: TaskBackend) -> dict[str, bool]:
+    """Which action controls to render: the user may manage and the backend can do it."""
+    return {
+        "retry": manage and Capability.RETRY in backend.capabilities,
+        "cancel": manage and Capability.CANCEL in backend.capabilities,
+        "pause_queue": manage and Capability.PAUSE_QUEUE in backend.capabilities,
+        "pause_schedule": manage and Capability.PAUSE_SCHEDULE in backend.capabilities,
+    }
+
+
+async def _load_overview(lifecycle: BackendLifecycle, manage: bool = False) -> dict[str, Any]:
     """Queue stats and the active-worker count; a failing backend yields ``error`` instead."""
     try:
         backend = await lifecycle.ensure_started()
@@ -76,8 +105,13 @@ async def _load_overview(lifecycle: BackendLifecycle) -> dict[str, Any]:
         )
     except Exception:  # the backend is third-party; any failure becomes the inline banner
         logger.warning("tasks backend failed while loading the dashboard", exc_info=True)
-        return {"queues": [], "workers": None, "error": True}
-    return {"queues": [_queue_row(queue) for queue in queues], "workers": workers, "error": False}
+        return {"queues": [], "workers": None, "can": {}, "error": True}
+    return {
+        "queues": [_queue_row(queue) for queue in queues],
+        "workers": workers,
+        "can": _action_flags(manage, backend),
+        "error": False,
+    }
 
 
 def _parse_page(raw: str) -> int:
@@ -105,7 +139,9 @@ def _schedule_rows(schedules: list[ScheduleRecord]) -> list[dict[str, Any]]:
     return [{"schedule": s, "next_run": format_utc(s.next_run_at)} for s in schedules]
 
 
-def _detail_context(task: TaskRecord, attempts: list[AttemptRecord], full: str) -> dict[str, Any]:
+def _detail_context(
+    task: TaskRecord, attempts: list[AttemptRecord], full: str, can: dict[str, bool]
+) -> dict[str, Any]:
     """Template context of the detail page; ``full`` names the JSON block to show untruncated."""
     return {
         "task": task,
@@ -123,15 +159,24 @@ def _detail_context(task: TaskRecord, attempts: list[AttemptRecord], full: str) 
         "created": format_utc(task.created_at),
         "run_at": format_utc(task.run_at),
         "finished": format_utc(task.finished_at),
+        "can": {
+            "retry": can["retry"] and task.state in RETRYABLE_STATES,
+            "cancel": can["cancel"] and task.state in CANCELLABLE_STATES,
+        },
         "error": False,
     }
 
 
-async def _forbidden(admin: Any, request: Request) -> Response:
+async def _forbidden(
+    admin: Any,
+    request: Request,
+    codename: str = VIEW_PERMISSION,
+    permission_name: str = "Can view tasks",
+) -> Response:
     return admin.templates.TemplateResponse(
         request,
         "tasks/forbidden.html",
-        {"codename": VIEW_PERMISSION, "permission_name": "Can view tasks"},
+        {"codename": codename, "permission_name": permission_name},
         status_code=403,
     )
 
@@ -164,10 +209,14 @@ def _add_inventory_routes(router: APIRouter, admin: Any, lifecycle: BackendLifec
                     f"{noun.capitalize()} are not available",
                     f"This backend does not report {noun}.",
                 )
-            context: dict[str, Any] = {"rows": rows(await load(backend)), "error": False}
+            context: dict[str, Any] = {
+                "rows": rows(await load(backend)),
+                "can": _action_flags(await can_manage(admin, request), backend),
+                "error": False,
+            }
         except Exception:  # the backend is third-party; any failure becomes the inline banner
             logger.warning("tasks backend failed while listing %s", noun, exc_info=True)
-            context = {"rows": [], "error": True}
+            context = {"rows": [], "can": {}, "error": True}
         return admin.templates.TemplateResponse(request, template, context)
 
     @router.get("/workers", name="tasks-workers", response_class=HTMLResponse)
@@ -187,7 +236,8 @@ def _add_inventory_routes(router: APIRouter, admin: Any, lifecycle: BackendLifec
         if not await can_view(admin, request):
             return await _forbidden(admin, request)
         try:
-            found = await (await lifecycle.ensure_started()).get_task(task_id)
+            backend = await lifecycle.ensure_started()
+            found = await backend.get_task(task_id)
         except Exception:  # the backend is third-party; any failure becomes the inline banner
             logger.warning("tasks backend failed while loading a task", exc_info=True)
             return admin.templates.TemplateResponse(
@@ -197,8 +247,91 @@ def _add_inventory_routes(router: APIRouter, admin: Any, lifecycle: BackendLifec
             return await _not_found(
                 admin, request, "Task not found", "It never existed, or retention has removed it."
             )
-        context = _detail_context(*found, full)
+        can = _action_flags(await can_manage(admin, request), backend)
+        context = _detail_context(*found, full, can)
         return admin.templates.TemplateResponse(request, "tasks/task_detail.html", context)
+
+
+def _add_action_routes(router: APIRouter, admin: Any, lifecycle: BackendLifecycle) -> None:
+    """Add the POST-only retry / cancel / pause / resume routes to ``router``.
+
+    The admin's route class enforces CSRF before a handler runs. Each action answers with a 303
+    to the page it was started from, carrying a ``notice`` code the page renders as a flash.
+    """
+
+    async def perform(
+        request: Request,
+        run: Callable[[TaskBackend, str], Awaitable[None]],
+        page: str,
+        ok_notice: str,
+        **page_params: str,
+    ) -> Response:
+        if not await can_manage(admin, request):
+            return await _forbidden(admin, request, MANAGE_PERMISSION, "Can manage tasks")
+        try:
+            await run(await lifecycle.ensure_started(), _actor(request))
+            notice = ok_notice
+        except Exception:  # the backend is third-party; any failure becomes the error flash
+            logger.warning("tasks backend action failed", exc_info=True)
+            notice = "failed"
+        target = admin_url_for(request, page, **page_params).include_query_params(notice=notice)
+        return RedirectResponse(f"{target.path}?{target.query}", status_code=303)
+
+    @router.post("/t/{task_id}/retry", name="tasks-retry")
+    async def tasks_retry(request: Request, task_id: str) -> Response:
+        return await perform(
+            request,
+            lambda b, actor: b.retry_task(task_id, actor=actor),
+            "tasks-detail",
+            "retried",
+            task_id=task_id,
+        )
+
+    @router.post("/t/{task_id}/cancel", name="tasks-cancel")
+    async def tasks_cancel(request: Request, task_id: str) -> Response:
+        return await perform(
+            request,
+            lambda b, actor: b.cancel_task(task_id, actor=actor),
+            "tasks-detail",
+            "cancelled",
+            task_id=task_id,
+        )
+
+    @router.post("/queues/{name}/pause", name="tasks-queue-pause")
+    async def tasks_queue_pause(request: Request, name: str) -> Response:
+        return await perform(
+            request,
+            lambda b, actor: b.set_queue_paused(name, True, actor=actor),
+            "tasks-dashboard",
+            "queue-paused",
+        )
+
+    @router.post("/queues/{name}/resume", name="tasks-queue-resume")
+    async def tasks_queue_resume(request: Request, name: str) -> Response:
+        return await perform(
+            request,
+            lambda b, actor: b.set_queue_paused(name, False, actor=actor),
+            "tasks-dashboard",
+            "queue-resumed",
+        )
+
+    @router.post("/schedules/{schedule_id}/pause", name="tasks-schedule-pause")
+    async def tasks_schedule_pause(request: Request, schedule_id: str) -> Response:
+        return await perform(
+            request,
+            lambda b, actor: b.set_schedule_paused(schedule_id, True, actor=actor),
+            "tasks-schedules",
+            "schedule-paused",
+        )
+
+    @router.post("/schedules/{schedule_id}/resume", name="tasks-schedule-resume")
+    async def tasks_schedule_resume(request: Request, schedule_id: str) -> Response:
+        return await perform(
+            request,
+            lambda b, actor: b.set_schedule_paused(schedule_id, False, actor=actor),
+            "tasks-schedules",
+            "schedule-resumed",
+        )
 
 
 def build_router(
@@ -219,7 +352,7 @@ def build_router(
     async def tasks_dashboard(request: Request) -> Response:
         if not await can_view(admin, request):
             return await forbidden(request)
-        context = await _load_overview(lifecycle)
+        context = await _load_overview(lifecycle, await can_manage(admin, request))
         context["refresh_seconds"] = config.refresh_seconds
         template = (
             "tasks/_queue_stats.html"
@@ -286,5 +419,6 @@ def build_router(
         return admin.templates.TemplateResponse(request, "tasks/task_list.html", context)
 
     _add_inventory_routes(router, admin, lifecycle)
+    _add_action_routes(router, admin, lifecycle)
 
     return router

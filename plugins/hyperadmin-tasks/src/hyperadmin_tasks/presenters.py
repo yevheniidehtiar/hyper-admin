@@ -34,6 +34,12 @@ STATE_PILL_KIND: dict[TaskState, str] = {
 }
 
 
+#: States a task can be retried from, and cancelled from; the retry / cancel buttons show only
+#: for these.
+RETRYABLE_STATES = frozenset({TaskState.FAILED, TaskState.CANCELLED})
+CANCELLABLE_STATES = frozenset({TaskState.PENDING, TaskState.SCHEDULED})
+
+
 def format_age(age: timedelta | None) -> str | None:
     """Compact text for an age ("45s", "12m", "3h 5m", "2d 4h"); ``None`` stays ``None``."""
     if age is None:

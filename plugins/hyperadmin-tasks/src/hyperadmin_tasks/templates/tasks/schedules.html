@@ -2,6 +2,7 @@
 {%- extends "base.html" -%}
 {%- from "components/banner.html" import banner -%}
 {%- from "components/pill.html" import pill -%}
+{%- from "tasks/_actions.html" import action_form, flash with context -%}
 
 {%- block title -%}{{ _("Schedules") }} | {{ site_title | default("HyperAdmin") }}{%- endblock -%}
 
@@ -12,6 +13,7 @@
             <a class="ha-btn" href="{{ url_for('tasks-dashboard') }}" data-testid="tasks-dashboard-link">{{ _("Dashboard") }}</a>
         </div>
     </header>
+    {{ flash() }}
     {%- if error %}
     {{ banner(_("The task backend is unreachable."), kind='danger', detail=_("Schedules cannot be listed right now."), testid='tasks-backend-error') }}
     {%- elif rows %}
@@ -26,6 +28,9 @@
                     <th scope="col">{{ _("Next run (UTC)") }}</th>
                     <th scope="col">{{ _("Misfire policy") }}</th>
                     <th scope="col">{{ _("Status") }}</th>
+                    {%- if can.pause_schedule %}
+                    <th scope="col">{{ _("Actions") }}</th>
+                    {%- endif %}
                 </tr>
             </thead>
             <tbody>
@@ -39,6 +44,15 @@
                     <td>{{ row.next_run or "-" }}</td>
                     <td>{{ schedule.misfire_policy }}</td>
                     <td>{% if schedule.paused %}{{ pill(_("paused"), 'warning', testid='tasks-schedule-state') }}{% else %}{{ pill(_("active"), 'success', testid='tasks-schedule-state') }}{% endif %}</td>
+                    {%- if can.pause_schedule %}
+                    <td>
+                        {%- if schedule.paused %}
+                        {{ action_form(url_for('tasks-schedule-resume', schedule_id=schedule.id), _("Resume"), 'tasks-schedule-resume-btn', _("Resume schedule %(id)s?", id=schedule.id)) }}
+                        {%- else %}
+                        {{ action_form(url_for('tasks-schedule-pause', schedule_id=schedule.id), _("Pause"), 'tasks-schedule-pause-btn', _("Pause schedule %(id)s? It stops creating tasks.", id=schedule.id)) }}
+                        {%- endif %}
+                    </td>
+                    {%- endif %}
                 </tr>
                 {%- endfor %}
             </tbody>

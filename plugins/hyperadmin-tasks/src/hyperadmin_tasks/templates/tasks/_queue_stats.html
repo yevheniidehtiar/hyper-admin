@@ -7,6 +7,7 @@
 -#}
 {%- from "components/banner.html" import banner -%}
 {%- from "components/pill.html" import pill -%}
+{%- from "tasks/_actions.html" import action_form, flash with context -%}
 <div id="tasks-queue-stats" data-testid="tasks-queue-stats"
      {%- if refresh_seconds > 0 %} hx-get="{{ url_for('tasks-dashboard') }}?partial=1" hx-trigger="every {{ refresh_seconds }}s" hx-swap="outerHTML"{% endif %}>
     {%- if error %}
@@ -27,6 +28,9 @@
                     <th scope="col" class="ha-num">{{ _("Scheduled") }}</th>
                     <th scope="col" class="ha-num">{{ _("Failed") }}</th>
                     <th scope="col" class="ha-num">{{ _("Oldest ready") }}</th>
+                    {%- if can.pause_queue %}
+                    <th scope="col">{{ _("Actions") }}</th>
+                    {%- endif %}
                 </tr>
             </thead>
             <tbody>
@@ -43,6 +47,15 @@
                     <td class="ha-num" data-testid="tasks-queue-scheduled">{{ queue.scheduled }}</td>
                     <td class="ha-num" data-testid="tasks-queue-failed">{{ queue.failed }}</td>
                     <td class="ha-num" data-testid="tasks-queue-oldest">{{ row.oldest_ready if row.oldest_ready else "—" }}</td>
+                    {%- if can.pause_queue %}
+                    <td>
+                        {%- if queue.paused %}
+                        {{ action_form(url_for('tasks-queue-resume', name=queue.name), _("Resume"), 'tasks-queue-resume-btn', _("Resume queue %(name)s?", name=queue.name)) }}
+                        {%- else %}
+                        {{ action_form(url_for('tasks-queue-pause', name=queue.name), _("Pause"), 'tasks-queue-pause-btn', _("Pause queue %(name)s? Its ready tasks stop being picked up.", name=queue.name)) }}
+                        {%- endif %}
+                    </td>
+                    {%- endif %}
                 </tr>
                 {%- endfor %}
             </tbody>
