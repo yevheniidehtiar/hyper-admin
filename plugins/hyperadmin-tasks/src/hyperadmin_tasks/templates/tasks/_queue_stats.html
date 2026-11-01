@@ -1,0 +1,53 @@
+{#-
+    Queue counters fragment. It is the auto-refresh unit: when refresh_seconds > 0 its root
+    re-fetches itself (?partial=1) with HTMX and swaps itself, so the trigger survives the swap.
+
+    Context: queues ([{stats: QueueStats, oldest_ready: str | none}]), workers (int | none),
+    error (bool), refresh_seconds (int).
+-#}
+{%- from "components/banner.html" import banner -%}
+{%- from "components/pill.html" import pill -%}
+<div id="tasks-queue-stats" data-testid="tasks-queue-stats"
+     {%- if refresh_seconds > 0 %} hx-get="{{ url_for('tasks-dashboard') }}?partial=1" hx-trigger="every {{ refresh_seconds }}s" hx-swap="outerHTML"{% endif %}>
+    {%- if error %}
+    {{ banner(_("The task backend is unreachable."), kind='danger', detail=_("Queue statistics cannot be loaded right now."), testid='tasks-backend-error') }}
+    {%- else %}
+    {%- if workers is not none %}
+    <p class="ha-caption ha-muted" data-testid="tasks-workers-active">{{ _("Active workers") }}: {{ workers }}</p>
+    {%- endif %}
+    {%- if queues %}
+    <div class="ha-table-wrapper">
+        <table class="ha-table" data-testid="tasks-queue-table" aria-label="{{ _('Queues') }}">
+            <thead>
+                <tr>
+                    <th scope="col">{{ _("Queue") }}</th>
+                    <th scope="col" class="ha-num">{{ _("Ready") }}</th>
+                    <th scope="col" class="ha-num">{{ _("Running") }}</th>
+                    <th scope="col" class="ha-num">{{ _("Scheduled") }}</th>
+                    <th scope="col" class="ha-num">{{ _("Failed") }}</th>
+                    <th scope="col" class="ha-num">{{ _("Oldest ready") }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {%- for row in queues %}
+                {%- set queue = row.stats %}
+                <tr data-testid="tasks-queue-row">
+                    <th scope="row">
+                        {{- queue.name -}}
+                        {%- if queue.paused %} {{ pill(_("Paused"), 'warning', testid='tasks-queue-paused') }}{% endif -%}
+                    </th>
+                    <td class="ha-num" data-testid="tasks-queue-ready">{{ queue.ready }}</td>
+                    <td class="ha-num" data-testid="tasks-queue-running">{{ queue.running }}</td>
+                    <td class="ha-num" data-testid="tasks-queue-scheduled">{{ queue.scheduled }}</td>
+                    <td class="ha-num" data-testid="tasks-queue-failed">{{ queue.failed }}</td>
+                    <td class="ha-num" data-testid="tasks-queue-oldest">{{ row.oldest_ready if row.oldest_ready else "—" }}</td>
+                </tr>
+                {%- endfor %}
+            </tbody>
+        </table>
+    </div>
+    {%- else %}
+    <p class="ha-text-muted" data-testid="tasks-queues-empty">{{ _("No queues yet.") }}</p>
+    {%- endif %}
+    {%- endif %}
+</div>

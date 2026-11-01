@@ -1,6 +1,5 @@
-{#- Placeholder tasks dashboard; the foundation scaffold only proves the plugin wiring. -#}
+{#- Tasks dashboard: per-queue counters. Context: queues, workers, error, refresh_seconds. -#}
 {%- extends "base.html" -%}
-{%- from "components/_icons.html" import icon -%}
 
 {%- block title -%}{{ _("Tasks") }} | {{ site_title | default("HyperAdmin") }}{%- endblock -%}
 
@@ -8,8 +7,7 @@
     <header class="ha-page-header" data-testid="page-header">
         <h1 class="ha-h1">{{ _("Tasks") }}</h1>
     </header>
-    <section class="ha-card ha-empty" data-testid="tasks-dashboard">
-        <span class="ha-empty-glyph">{{ icon('list-checks') }}</span>
-        <p class="ha-empty-text">{{ _("The task dashboard is coming soon.") }}</p>
+    <section data-testid="tasks-dashboard" aria-label="{{ _('Queues') }}">
+        {%- include "tasks/_queue_stats.html" -%}
     </section>
 {%- endblock -%}
