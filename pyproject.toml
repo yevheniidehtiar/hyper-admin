@@ -101,6 +101,11 @@ dev = [
 redis = [
   "redis>=5.0.1",  # RedisPubSub (realtime/pubsub_redis.py); 5.0.1 adds the asyncio aclose() API
 ]
+realtime = [
+  # WebSocket library for the ASGI server: plain uvicorn picks it up automatically, and
+  # without one /admin/realtime/ws never connects (presence and live notifications).
+  "websockets>=13.0",
+]
 s3 = [
   # S3StorageBackend (uploads/storage.py). fastapi-storages' own floor is 1.25, but its
   # botocore (1.28) imports the `cgi` module, removed in Python 3.13; 1.26's botocore does not.
