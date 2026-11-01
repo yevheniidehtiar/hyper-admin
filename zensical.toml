@@ -17,6 +17,7 @@ nav = [
     { "File Uploads" = "guides/file-uploads.md" },
     { "Existing FastAPI App" = "guides/existing-app.md" },
     { "Bring Your Own Auth" = "guides/external-auth.md" },
+    { "Realtime" = "guides/realtime.md" },
     { "Compatibility & Performance" = "compatibility.md" },
     { "Examples" = [
       { "Overview" = "examples.md" },
