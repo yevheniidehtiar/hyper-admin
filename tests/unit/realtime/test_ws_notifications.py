@@ -61,7 +61,9 @@ class _Harness:
         self.client.__enter__()  # exposes the portal used by publish()
 
     def publish(self, model: str, pk: Any, action: RealtimeAction, actor: str | None = "7") -> None:
-        event = RealtimeEvent(model, pk, action, actor_id=actor)
+        event = RealtimeEvent(
+            model, pk, action, actor_id=actor, actor_name=None if actor is None else "Ada"
+        )
         self.client.portal.call(self.pubsub.publish, crud_channel(model), event.to_bytes())  # type: ignore[union-attr]
 
 
@@ -111,6 +113,7 @@ def test_subscribe_forwards_crud_events() -> None:
         "pk": "5",
         "action": "created",
         "actor_id": "7",
+        "actor": "Ada",
     }
 
 

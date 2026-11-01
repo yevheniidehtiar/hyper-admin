@@ -72,12 +72,18 @@ class RealtimeEmitter:
             await asyncio.gather(*self._pending, return_exceptions=True)
 
 
-def _actor_id() -> str | None:
+def _actor() -> tuple[str | None, str | None]:
+    """``(user_key, display name)`` of the request behind the write, else ``(None, None)``."""
     scope = current_queryset_scope()
     if scope is None:
-        return None
-    user_key = getattr(getattr(scope.request, "state", None), "user_key", None)
-    return None if user_key is None else str(user_key)
+        return None, None
+    state = getattr(scope.request, "state", None)
+    user_key = getattr(state, "user_key", None)
+    display = getattr(state, "user_display", None)
+    return (
+        None if user_key is None else str(user_key),
+        display if isinstance(display, str) and display else None,
+    )
 
 
 class EventEmittingAdapter:
@@ -96,11 +102,13 @@ class EventEmittingAdapter:
     def _emit(self, action: RealtimeAction, pk: Any, *, from_instance: bool = False) -> None:
         inner = object.__getattribute__(self, "_ha_inner")
         try:
+            actor_id, actor_name = _actor()
             event = RealtimeEvent(
                 model_name=inner.model.__name__,
                 pk=inner.pk.to_str(getattr(pk, inner.pk.attr) if from_instance else pk),
                 action=action,
-                actor_id=_actor_id(),
+                actor_id=actor_id,
+                actor_name=actor_name,
             )
         except Exception:
             logger.debug("Could not build %s event; skipping", action.value, exc_info=True)

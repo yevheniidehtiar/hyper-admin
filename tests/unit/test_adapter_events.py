@@ -72,7 +72,7 @@ async def _next(messages: Any) -> RealtimeEvent:
 
 
 def _request(user_key: str) -> Any:
-    return SimpleNamespace(state=SimpleNamespace(user_key=user_key))
+    return SimpleNamespace(state=SimpleNamespace(user_key=user_key, user_display=user_key.title()))
 
 
 async def test_create_update_delete_emit_events_with_pk_and_actor(
@@ -104,6 +104,7 @@ async def test_create_update_delete_emit_events_with_pk_and_actor(
     assert {e.pk for e in events} == {str(board.id)}
     assert {e.model_name for e in events} == {"EvBoard"}
     assert {e.actor_id for e in events} == {"alice"}
+    assert {e.actor_name for e in events} == {"Alice"}
 
 
 async def test_actor_is_none_outside_a_request(adapter_cls: Any, engine: Any) -> None:
