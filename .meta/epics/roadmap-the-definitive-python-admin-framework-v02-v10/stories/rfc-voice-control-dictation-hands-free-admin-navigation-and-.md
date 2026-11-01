@@ -2,7 +2,7 @@
 type: story
 id: ZrFJ781mKteh
 title: "RFC: Voice control & dictation — hands-free admin navigation and data entry"
-status: todo
+status: cancelled
 priority: medium
 assignee: null
 labels:
@@ -18,7 +18,7 @@ github:
   last_sync_hash: sha256:3c9c0d820bae0eb88d5c94c3d3c125b890f02e00b8c166612ee284d50f518189
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-03-27T09:03:58Z
-updated_at: 2026-03-29T06:05:41Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Summary

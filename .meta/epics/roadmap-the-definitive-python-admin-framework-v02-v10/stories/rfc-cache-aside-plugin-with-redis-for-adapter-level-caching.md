@@ -2,7 +2,7 @@
 type: story
 id: YfHG9fyjThjm
 title: "RFC: Cache-aside plugin with Redis for adapter-level caching"
-status: todo
+status: cancelled
 priority: medium
 assignee: null
 labels:
@@ -18,7 +18,7 @@ github:
   last_sync_hash: sha256:ddd44a965ae15cf496b0127c0890c2ed19e732d2d840f5324c3e0273447d4e15
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-03-27T09:02:15Z
-updated_at: 2026-03-27T09:02:15Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Summary

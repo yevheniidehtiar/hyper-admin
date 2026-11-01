@@ -2,7 +2,7 @@
 type: story
 id: O8CoSleSDeVP
 title: "test(realtime): CRUD event emission from adapters"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -18,7 +18,7 @@ github:
   last_sync_hash: sha256:d283ec555ebaf5d9e1ee62eb71f6ea7860272778e919572207c4bc0b2f356b4b
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-03-29T06:58:53Z
-updated_at: 2026-09-28T00:00:00Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Context

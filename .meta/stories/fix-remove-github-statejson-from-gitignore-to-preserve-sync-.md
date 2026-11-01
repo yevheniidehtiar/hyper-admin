@@ -2,7 +2,7 @@
 type: story
 id: OvZ4f6_PqV9o
 title: "fix: remove github-state.json from .gitignore to preserve sync state"
-status: todo
+status: cancelled
 priority: medium
 assignee: null
 labels:
@@ -15,7 +15,7 @@ github:
   last_sync_hash: sha256:ce332c8f831cca604be7852e73020b852c8fd984350db79e2a14b787ab7acb33
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-04-05T09:50:22Z
-updated_at: 2026-04-05T09:50:22Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Problem

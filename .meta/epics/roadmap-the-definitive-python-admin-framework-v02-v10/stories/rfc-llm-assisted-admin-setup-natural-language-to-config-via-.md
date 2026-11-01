@@ -2,7 +2,7 @@
 type: story
 id: 01iQcyfIvwbm
 title: "RFC: LLM-assisted admin setup — natural language to config via small local models"
-status: todo
+status: cancelled
 priority: medium
 assignee: null
 labels:
@@ -18,7 +18,7 @@ github:
   last_sync_hash: sha256:6444896ed76e224d6ef3d70db4032f3ae6a74abc2e9c0dac85d4b358d816d40d
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-03-27T09:10:36Z
-updated_at: 2026-03-27T09:10:36Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Summary

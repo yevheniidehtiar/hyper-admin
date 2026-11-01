@@ -1,7 +1,7 @@
 ---
 type: story
 id: Efx_RpqPnhlF
-title: "docs(plugin-tasks): plugin docs page, role setup and "Coming from Celery" guide"
+title: 'docs(plugin-tasks): plugin docs page, role setup and "Coming from Celery" guide'
 status: backlog
 priority: medium
 assignee: null
@@ -17,6 +17,7 @@ epic_ref:
 github:
   issue_number: 761
   repo: yevheniidehtiar/hyper-admin
+  synced_at: 2026-11-01T00:00:00Z
 created_at: 2026-10-29T00:00:00Z
 updated_at: 2026-10-29T00:00:00Z
 ---

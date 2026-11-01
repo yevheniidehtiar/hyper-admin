@@ -2,7 +2,7 @@
 type: story
 id: 10AXkENiLUfB
 title: "chore: link 195 orphan stories to their parent epics"
-status: todo
+status: cancelled
 priority: medium
 assignee: null
 labels:
@@ -16,7 +16,7 @@ github:
   last_sync_hash: sha256:acf6196704f3917a3d48cbd72374b5a59354b91149a4ebbffe2db7291dcd4b39
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-04-05T09:50:23Z
-updated_at: 2026-04-05T09:50:23Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Problem

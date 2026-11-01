@@ -2,7 +2,7 @@
 type: story
 id: LHFfddBb6ZRr
 title: "refactor(core): post-v0.3.0 code quality — bug fixes, CONSTITUTION compliance, dedup"
-status: todo
+status: cancelled
 priority: medium
 assignee: null
 labels:
@@ -15,7 +15,7 @@ github:
   last_sync_hash: sha256:43a70a5469d58ee9ac5f49c8eb79238de9122436697cff8784035fc745cc579e
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-03-31T21:34:11Z
-updated_at: 2026-03-31T21:34:11Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Context

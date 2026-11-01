@@ -2,7 +2,7 @@
 type: story
 id: JSnUsUcWNc_N
 title: "test(realtime): RealtimeEvent dataclass unit tests"
-status: in-review
+status: done
 priority: medium
 assignee: null
 labels:
@@ -18,7 +18,7 @@ github:
   last_sync_hash: sha256:635e04d6c1ad7667faba0c7986843b0e673f6227b91e9c68cfc83a7b2ccc83e3
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-03-29T06:58:36Z
-updated_at: 2026-09-28T00:00:00Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Context

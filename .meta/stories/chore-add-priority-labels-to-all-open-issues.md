@@ -2,7 +2,7 @@
 type: story
 id: Lw6vtSrWcVBp
 title: "chore: add priority labels to all open issues"
-status: todo
+status: cancelled
 priority: medium
 assignee: null
 labels:
@@ -16,7 +16,7 @@ github:
   last_sync_hash: sha256:8b080994aee475eb680959f7f3fba5e3f75a35464689e27dcb848a9c8164a1a5
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-04-05T09:50:22Z
-updated_at: 2026-04-05T09:50:22Z
+updated_at: 2026-11-01T00:00:00Z
 ---
 
 ## Problem
