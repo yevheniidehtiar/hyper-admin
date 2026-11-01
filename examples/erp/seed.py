@@ -448,9 +448,8 @@ async def seed_demo_user() -> None:
             session.add_all(UserPermission(user_id=user.id, permission_id=p.id) for p in granted)
             await session.commit()
             logger.info(
-                "  Created demo user (%s / %s) with %d ERP permissions",
+                "  Created demo user %s with %d ERP permissions",
                 username,
-                password,
                 len(granted),
             )
 
