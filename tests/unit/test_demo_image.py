@@ -65,3 +65,14 @@ def test_render_rebuilds_when_a_workspace_member_changes() -> None:
     missing = [d for d in _workspace_member_dirs() if d not in watched]
 
     assert not missing, f"render.yaml buildFilter does not watch: {missing}"
+
+
+def test_hosted_demo_installs_a_websocket_capable_uvicorn() -> None:
+    """
+    Scenario: the hosted demo can accept realtime WebSocket connections
+      Given the hosted demo image installs uvicorn on top of `uv sync --no-editable`
+      When  a signed-in browser opens /admin/realtime/ws
+      Then  uvicorn has a WebSocket library, so the upgrade is not answered with 404
+    """
+    dockerfile = (ROOT / "deploy" / "demo" / "Dockerfile").read_text()
+    assert re.search(r"uvicorn\[standard\]|\bwebsockets\b|\bwsproto\b", dockerfile)
