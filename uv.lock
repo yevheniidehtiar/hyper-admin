@@ -1991,6 +1991,9 @@ loadtest = [
     { name = "psycopg", extra = ["binary"] },
     { name = "rich" },
 ]
+realtime = [
+    { name = "websockets" },
+]
 redis = [
     { name = "redis" },
 ]
@@ -2066,9 +2069,10 @@ requires-dist = [
     { name = "typing-extensions", specifier = ">=4.14.1" },
     { name = "tzdata", marker = "sys_platform == 'win32'" },
     { name = "uvicorn", extras = ["standard"], marker = "extra == 'dev'", specifier = ">=0.20.0" },
+    { name = "websockets", marker = "extra == 'realtime'", specifier = ">=13.0" },
     { name = "zensical", marker = "extra == 'dev'", specifier = ">=0.0.69" },
 ]
-provides-extras = ["dev", "redis", "s3", "loadtest"]
+provides-extras = ["dev", "redis", "realtime", "s3", "loadtest"]
 
 [package.metadata.requires-dev]
 dev = [
