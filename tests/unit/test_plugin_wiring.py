@@ -542,9 +542,10 @@ def test_plugin_nav_entry_shows_for_permitted_users_only(demo: None) -> None:
 
     assert 'data-testid="sidebar-plugin-demo-demo-index"' in page
     assert 'href="/admin/demo/"' in page
-    assert ">Reports</h3>" in page
+    assert 'data-testid="nav-group-reports"' in page
+    assert '<span class="ha-nav-group__label">Reports</span>' in page
     assert "sidebar-plugin-demo" not in hidden
-    assert ">Reports</h3>" not in hidden
+    assert 'data-testid="nav-group-reports"' not in hidden
 
 
 def test_plugin_nav_marks_the_current_page(demo: None) -> None:
@@ -586,7 +587,7 @@ def test_unresolvable_nav_entry_is_skipped(
     assert page.status_code == 200
     assert "Broken" not in page.text
     assert 'data-testid="sidebar-plugin-nav-admin-dashboard"' in page.text
-    assert ">Plugins</h3>" in page.text
+    assert '<span class="ha-nav-group__label">Plugins</span>' in page.text
     assert [s["title"] for s in admin.templates.env.globals["plugin_nav"]] == [None]
 
 

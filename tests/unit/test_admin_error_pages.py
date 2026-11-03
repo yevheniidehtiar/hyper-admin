@@ -103,15 +103,16 @@ def test_sidebar_hides_models_the_user_cannot_view() -> None:
     page = _client(_User()).get("/admin/", headers=HTML)
 
     assert page.status_code == 200
-    assert 'href="/admin/errpagevisible"' in page.text
+    assert 'data-testid="nav-errpagevisible"' in page.text
+    assert 'data-testid="nav-errpagehidden"' not in page.text
     assert 'href="/admin/errpagehidden"' not in page.text
 
 
 def test_superuser_sidebar_lists_every_model() -> None:
     page = _client(_User(is_superuser=True)).get("/admin/", headers=HTML)
 
-    assert 'href="/admin/errpagevisible"' in page.text
-    assert 'href="/admin/errpagehidden"' in page.text
+    assert 'data-testid="nav-errpagevisible"' in page.text
+    assert 'data-testid="nav-errpagehidden"' in page.text
 
 
 def test_forbidden_page_renders_inside_the_admin_layout() -> None:

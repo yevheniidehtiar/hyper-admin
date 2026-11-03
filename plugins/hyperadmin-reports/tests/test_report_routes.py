@@ -324,7 +324,7 @@ def test_index_lists_only_reports_the_user_may_view(engine: AsyncEngine) -> None
     assert "Orders by SKU" not in cards
     assert 'data-testid="sidebar-plugin-reports-reports-index"' in allowed.text
     assert 'data-testid="nav-report-orders-revenue"' in allowed.text
-    assert ">Reports</h3>" in allowed.text
+    assert 'data-testid="nav-group-reports"' in allowed.text
     assert 'data-testid="report-index-empty"' in denied.text
     assert 'data-testid="report-index"' not in denied.text
 

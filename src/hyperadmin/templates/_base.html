@@ -127,7 +127,7 @@
         <header role="banner">
             {% block navbar %}{% include "_navbar.html" %}{% endblock %}
         </header>
-        <div class="ha-layout">
+        <div class="ha-layout" data-collapsed="{{ 'true' if sidebar_rail is defined and sidebar_rail() else 'false' }}">
             {% block sidebar %}{% include "_sidebar.html" %}{% endblock %}
             <main id="main-content" role="main" tabindex="-1" class="ha-content">
                 {% block content %}{% endblock %}

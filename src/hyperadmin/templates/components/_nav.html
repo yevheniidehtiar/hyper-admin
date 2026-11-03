@@ -1,0 +1,29 @@
+{#-
+    Sidebar nav item macros (AppShell, docs/design/system/components/AppShell/README.md).
+    Import with context, they read admin_prefix and the nav_* globals:
+
+        {%- from "components/_nav.html" import nav_link with context -%}
+-#}
+{%- from "components/_icons.html" import icon, icon_paths -%}
+
+{#- item.icon is a Lucide name from static/icons, or any icon-font class (legacy). -#}
+{%- macro nav_icon(item) -%}
+{%- if item.icon in icon_paths -%}
+{{ icon(item.icon) }}
+{%- elif item.icon -%}
+<i class="{{ item.icon }}" aria-hidden="true"></i>
+{%- endif -%}
+{%- endmacro -%}
+
+{#- testid=false for a second copy of the link (the Pinned group), so test ids stay unique. -#}
+{%- macro nav_link(item, testid=true) -%}
+<a href="{{ admin_prefix }}{{ item.url }}"
+   class="ha-nav-item ha-sidebar-link"
+   {%- if testid %} data-testid="{{ item.testid }}"{% endif %}
+   title="{{ item.label }}"
+   @click="sidebarOpen = false"{% if nav_is_active(item) %}
+   aria-current="page"{% endif %}>
+    {{- nav_icon(item) -}}
+    <span class="ha-nav-item__label">{{ item.label }}</span>
+</a>
+{%- endmacro -%}
