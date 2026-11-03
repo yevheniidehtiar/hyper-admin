@@ -16,6 +16,7 @@ from hyperadmin.core.actions import ActionDef, collect_actions
 from hyperadmin.core.cache import CountCache, InMemoryTTLCache
 from hyperadmin.core.display import get_field_label
 from hyperadmin.core.introspection import infer_list_display, infer_list_filter, infer_search_fields
+from hyperadmin.core.navigation import ModelNavSource, build_nav_tree, model_nav_label
 from hyperadmin.core.options import AdminOptions
 from hyperadmin.realtime.emitting import EventEmittingAdapter, notifications_enabled
 from hyperadmin.views.dynamic import DynamicModelView
@@ -478,6 +479,8 @@ class HyperAdminRouter:
         self.realtime_settings = realtime_settings
         self.count_cache: CountCache = count_cache or InMemoryTTLCache()
         self.notification_models: set[str] = set()
+        #: Registered models in registry order, for the sidebar nav tree.
+        self.nav_sources: list[ModelNavSource] = []
         # Enable global whitespace trimming
         templates.env.trim_blocks = True
         templates.env.lstrip_blocks = True
@@ -494,10 +497,11 @@ class HyperAdminRouter:
         from hyperadmin.core.registry import site
 
         self.routers = []
+        self.nav_sources = []
         # model -> ModelAdmin instance, shared by every view so cross-model
         # lookups (choices target get_queryset) use the registered admin.
         admin_instances: dict[Any, Any] = {}
-        nav_items: list[dict[str, str]] = []
+        nav_items: list[dict[str, Any]] = []
         route_class = self.route_class
 
         # Add the main admin dashboard route
@@ -568,20 +572,11 @@ class HyperAdminRouter:
                 self.notification_models.add(model.__name__.lower())
 
             model_name = model.__name__
-            # Resolve nav label: prefer verbose_name_plural / verbose_name
-            # (which may be LazyProxy instances) over the legacy name_plural /
-            # name attributes.  Do NOT call str() here — lazy strings must
-            # remain lazy so they render in the request locale at template time.
-            legacy_name_plural = getattr(admin_class, "name_plural", None)
-            if legacy_name_plural:
-                nav_name = legacy_name_plural
-            elif hasattr(admin_class, "get_verbose_name_plural"):
-                nav_name = admin_class.get_verbose_name_plural(model)
-            else:
-                nav_name = getattr(admin_class, "name", model_name) + "s"
+            self.nav_sources.append(ModelNavSource(model, admin_class, options))
             nav_items.append(
                 {
-                    "name": nav_name,
+                    # Kept lazy, so it renders in the request locale.
+                    "name": model_nav_label(model, admin_class),
                     "url": f"/{model_name.lower()}",
                     "icon": getattr(admin_class, "icon", ""),
                     # The sidebar hides the entry from users without this permission.
@@ -590,6 +585,8 @@ class HyperAdminRouter:
             )
 
         self.templates.env.globals["nav_items"] = nav_items
+        # HyperAdmin.mount() rebuilds it with the plugin entries and nav_groups.
+        self.templates.env.globals["nav_tree"] = build_nav_tree(self.nav_sources, ())
 
     def get_admin_dashboard_view(self):
         from hyperadmin.views.dynamic import admin_dashboard

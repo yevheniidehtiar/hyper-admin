@@ -10,6 +10,11 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
 ## [Unreleased]
 
 ### Added
+- **Sidebar groups and icons, data layer** (v0.5.9, st-v059-nav-01). `NavGroup` and
+  `Admin(nav_groups=[...])`, plus `nav_group`, `nav_order` and a documented `icon` on
+  `ModelAdmin`. The new `nav_tree` template global groups models (falling back to
+  `app_label`) and merges plugin sections into the group with the same label. `nav_items`
+  keeps its shape. 24 Lucide icons added for domains and navigation.
 - **Plain SQLAlchemy models** (#719, #725–#730). Models built on SQLAlchemy 2.0
   `DeclarativeBase` or the legacy `declarative_base()` register with
   `site.register(Model)`, with no SQLModel base class. HyperAdmin builds a Pydantic schema

@@ -38,3 +38,7 @@ site.register(Product, ProductAdmin)
 ## AdminOptions
 
 ::: hyperadmin.core.options.AdminOptions
+
+## NavGroup
+
+::: hyperadmin.core.navigation.NavGroup

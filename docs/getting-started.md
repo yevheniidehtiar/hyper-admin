@@ -140,6 +140,44 @@ site.register(Invoice, options=AdminOptions(
 ))
 ```
 
+### Sidebar groups and icons
+
+Group models by domain and give each one an icon on its admin class:
+
+```python
+from hyperadmin import Admin, NavGroup
+from hyperadmin.core.model import ModelAdmin
+
+
+class InvoiceAdmin(ModelAdmin):
+    nav_group = "Accounting"  # sidebar group; plain or gettext_lazy label
+    nav_order = 1  # position inside the group; ties sort by label
+    icon = "receipt"  # a Lucide name from hyperadmin/static/icons
+
+
+site.register(Invoice, InvoiceAdmin)
+
+admin = Admin(
+    app,
+    engine=engine,
+    nav_groups=[
+        NavGroup("Sales", icon="shopping-cart", order=0),
+        NavGroup("Accounting", icon="receipt", order=1, collapsed=True),
+    ],
+)
+```
+
+- Without `nav_group`, a model joins the group named by the `app_label` it was registered with,
+  and otherwise the unnamed group at the top of the sidebar.
+- Plugin pages join the group whose label matches their section.
+- `nav_groups` sets the order, icon and initial collapsed state of groups. Groups you do not
+  declare still appear, after the declared ones, sorted by label.
+- A model without `icon` gets the generic `layout-grid` icon.
+
+!!! note
+    The grouped, collapsible sidebar ships during v0.5.9. Until it lands, the sidebar is still
+    a flat list and these settings only prepare the groups.
+
 ### Override templates
 
 Provide custom template directories searched before the built-in ones:
