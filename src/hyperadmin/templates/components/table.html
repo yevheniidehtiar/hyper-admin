@@ -1,4 +1,5 @@
 {%- from "components/_icons.html" import icon -%}
+{%- import "components/_row_access.html" as rows with context -%}
 {%- set rt_labels = realtime_notification_models.get(model_name|lower) if realtime_notification_models is defined else none -%}
 {%- set rt_hook = rt_labels is not none -%}
 <div id="model-list" class="ha-table-wrapper"
@@ -23,7 +24,9 @@
                 {%- for field in fields -%}
                     {%- include "components/sortable_header.html" -%}
                 {%- endfor -%}
-                <th class="ha-table-th ha-table-th-center" scope="col">{{ _("Actions") }}</th>
+                {%- if rows.end_cell -%}
+                <th class="ha-table-th ha-table-th-center ha-col-end" scope="col"><span class="ha-sr-only">{{ _("Actions") }}</span></th>
+                {%- endif -%}
             </tr>
         </thead>
         {%- include "components/table_body.html" -%}

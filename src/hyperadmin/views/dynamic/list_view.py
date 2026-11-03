@@ -243,7 +243,7 @@ class ListViewMixin(SavedViewsMixin):
     def _list_rows(
         self, items: list[Any], file_fields: set[str], request: Request | None = None
     ) -> list[dict[str, Any]]:
-        """``column_list`` cells per item, plus ``_pk`` (and ``id`` for custom templates).
+        """``column_list`` cells per item, plus ``_pk``, ``_label`` and ``id`` (custom templates).
 
         With a ``request``, each row also carries ``_thumbs``: the 40x40 thumbnail
         URL of every image column that has a stored file.
@@ -264,6 +264,8 @@ class ListViewMixin(SavedViewsMixin):
                         val = get_display_name(val)
                     row[field] = preview_structured(val)
             row["_pk"] = self.pk.value_of(item)
+            # The record's name for row-control labels ("Delete ORD-1042").
+            row["_label"] = get_display_name(item, pk_attr=self.pk.attr)
             if request is not None:
                 row["_thumbs"] = self._thumbnail_urls(
                     request, row["_pk"], row, "list", image_fields

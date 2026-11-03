@@ -193,8 +193,7 @@ def test_action_buttons_present(page: Page, demo_base_url: str) -> None:
         return
 
     first_row = rows.first
-    expect(first_row.get_by_test_id("row-view-link")).to_be_visible()
-    expect(first_row.get_by_test_id("row-edit-link")).to_be_visible()
+    expect(first_row.get_by_test_id("row-link")).to_be_visible()
     expect(first_row.get_by_test_id("row-delete-btn")).to_be_visible()
 
 

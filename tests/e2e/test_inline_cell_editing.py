@@ -14,12 +14,12 @@ def _first_user_row_id(page: Page) -> str:
     """Return the first User row's primary key as a string.
 
     The test seed creates users in a fixed order (Alice first), so the cell
-    test ids are derived deterministically. We read the id from the View
-    link's href to avoid hard-coding it.
+    test ids are derived deterministically. We read the id from the row
+    link's href (``/admin/user/<pk>/edit``) to avoid hard-coding it.
     """
-    view = page.get_by_test_id("row-view-link").first
-    href = view.get_attribute("href") or ""
-    return href.rsplit("/", 1)[-1]
+    link = page.get_by_test_id("row-link").first
+    href = link.get_attribute("href") or ""
+    return href.removesuffix("/edit").rsplit("/", 1)[-1]
 
 
 def test_editable_cell_renders_an_edit_affordance(page: Page, demo_base_url: str) -> None:

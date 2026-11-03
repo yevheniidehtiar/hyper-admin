@@ -132,6 +132,23 @@ class DynamicModelViewBase:
                 return
         raise HTTPException(status_code=403, detail="Permission denied")
 
+    async def _record_actions(self, request: Request) -> dict[str, bool]:
+        """Which record-page links this user gets: Edit, View and Delete (st-v059-list-02).
+
+        Gated like the list rows: the page option and the model-level
+        permission. The page each link opens still runs its own object check.
+        """
+        model = self._model_name_lower
+        options = self.options
+        return {
+            "user_can_edit": options.can_edit
+            and await self._has_permission(request, f"change_{model}"),
+            "user_can_view": options.can_detail
+            and await self._has_permission(request, f"view_{model}"),
+            "user_can_delete": options.can_delete
+            and await self._has_permission(request, f"delete_{model}"),
+        }
+
     def _admin_for_model(self, model: Any) -> Any:
         """Return the registered ``ModelAdmin`` instance for ``model`` (or ``None``)."""
         if model is self.model:

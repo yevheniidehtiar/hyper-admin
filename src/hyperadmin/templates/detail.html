@@ -3,6 +3,28 @@
 
 {%- block detail_title -%}{{ item_name }}{%- endblock -%}
 
+{#- Edit and Delete (st-v059-list-02), gated like the list rows: the page
+    option plus the model-level permission (user_can_edit / user_can_delete). -#}
+{%- block detail_actions -%}
+    {%- set item_pk = item|ha_pk(pk_attr|default('id')) -%}
+    {%- if user_can_edit or user_can_delete -%}
+    <div class="ha-page-header-actions">
+        {%- if user_can_edit -%}
+        <a href="{{- url_for(model_name_lower ~ '-update-form', item_id=item_pk) -}}" class="ha-btn ha-btn-secondary" data-testid="detail-edit-link">
+            {{- icon('pencil') }}{{ _("Edit") -}}
+        </a>
+        {%- endif -%}
+        {%- if user_can_delete -%}
+        <button type="button" class="ha-btn ha-btn--ghost ha-btn--danger-icon" data-testid="detail-delete-btn"
+                hx-delete="{{- url_for(model_name_lower ~ '-delete', item_id=item_pk) -}}"
+                hx-confirm="{{ _('Are you sure you want to delete this item?') }}">
+            {{- icon('trash-2') }}{{ _("Delete") -}}
+        </button>
+        {%- endif -%}
+    </div>
+    {%- endif -%}
+{%- endblock -%}
+
 {%- block detail_fields -%}
     {%- set field_list -%}
         <dl class="ha-dl">

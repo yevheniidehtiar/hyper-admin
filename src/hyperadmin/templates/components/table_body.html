@@ -1,11 +1,20 @@
 {#- The list rows alone (filter library SDD): the fragment an HTMX filter
     request swaps in place of the current <tbody>, keeping the header,
-    sidebar and pager where they are. Included by components/table.html. -#}
+    sidebar and pager where they are. Included by components/table.html.
+
+    Rows (st-v059-list-02): the title cell is a <th scope="row"> holding the
+    row link (data-testid="row-link") to the edit page for users who may
+    change the record, the detail page otherwise; CSS stretches it over the
+    whole row, and the checkbox, inline-edit cells, links inside cells and the
+    delete button sit above it. -#}
 {%- from "components/_icons.html" import icon -%}
+{%- import "components/_row_access.html" as rows with context -%}
 <tbody id="model-list-body" class="ha-table-body" data-testid="list-body">
     {%- for item in items -%}
     {%- set item_pk = item|ha_pk(pk_attr|default('id')) -%}
-    <tr class="ha-table-row" data-testid="list-row" data-pk="{{ item_pk }}">
+    {%- set item_label = item._label if item._label is defined else item_pk -%}
+    {%- set row_url = url_for(rows.url_name, item_id=item_pk) if rows.target else none -%}
+    <tr class="ha-table-row{{ ' ha-table-row--link' if row_url }}" data-testid="list-row" data-pk="{{ item_pk }}">
         {%- if bulk_actions -%}
         <td class="ha-table-cell ha-col-check" data-label="{{ _('Select') }}">
             <label class="ha-check">
@@ -20,18 +29,27 @@
             {%- if list_editable and field in list_editable and field != pk_attr|default('id') -%}
                 {%- include "components/inline_cell.html" -%}
             {%- else -%}
-                <td class="ha-table-cell" data-label="{{ cell_label }}">{%- if item[field] is none -%}<span class="ha-text-muted">&mdash;</span>{%- elif item._thumbs is defined and field in item._thumbs -%}{%- set thumb_src = item._thumbs[field] -%}{%- set thumb_label = cell_label -%}{%- set thumb_size = 40 -%}{%- include "components/thumbnail.html" -%}{%- else -%}{{- item[field]|ha_display -}}{%- endif -%}</td>
+                {%- set cell_value -%}{%- if item[field] is none -%}<span class="ha-text-muted">&mdash;</span>{%- elif item._thumbs is defined and field in item._thumbs -%}{%- set thumb_src = item._thumbs[field] -%}{%- set thumb_label = cell_label -%}{%- set thumb_size = 40 -%}{%- include "components/thumbnail.html" -%}{%- else -%}{{- item[field]|ha_display -}}{%- endif -%}{%- endset -%}
+                {%- if field == rows.title_field -%}
+                <th class="ha-table-cell ha-table-title" scope="row" data-label="{{ cell_label }}">
+                    {%- if row_url -%}
+                    <a class="ha-row-link" href="{{ row_url }}" data-testid="row-link">
+                        {{- cell_value -}}
+                        {%- if item[field] is none %}<span class="ha-sr-only">{{ item_label }}</span>{% endif -%}
+                    </a>
+                    {%- else -%}
+                    {{- cell_value -}}
+                    {%- endif -%}
+                </th>
+                {%- else -%}
+                <td class="ha-table-cell" data-label="{{ cell_label }}">{{- cell_value -}}</td>
+                {%- endif -%}
             {%- endif -%}
         {%- endfor -%}
-        <td class="ha-table-cell ha-table-cell-center" data-label="{{ _('Actions') }}">
+        {%- if rows.end_cell -%}
+        <td class="ha-table-cell ha-table-cell-center ha-col-end" data-label="{{ _('Actions') }}">
             <div class="ha-row-actions">
-            {%- if can_detail is not defined or can_detail -%}
-            <a href="{{- url_for(model_name|lower ~ '-detail', item_id=item_pk) -}}" class="ha-action-link" data-testid="row-view-link">{{ icon('eye') }}{{ _("View") }}</a>
-            {%- endif -%}
-            {%- if can_edit is not defined or can_edit -%}
-            <a href="{{- url_for(model_name|lower ~ '-update-form', item_id=item_pk) -}}" class="ha-action-link" data-testid="row-edit-link">{{ icon('pencil') }}{{ _("Edit") }}</a>
-            {%- endif -%}
-            {%- if can_delete is not defined or can_delete -%}
+            {%- if rows.may_delete -%}
             <button hx-delete="{{- url_for(model_name|lower ~ '-delete', item_id=item_pk) -}}"
                     hx-confirm="{{ _('Are you sure you want to delete this item?') }}"
                     hx-target="closest tr"
@@ -41,8 +59,15 @@
                 {{- icon('trash-2') }}{{ _("Delete") -}}
             </button>
             {%- endif -%}
+            {%- if rows.open_cell and row_url -%}
+            <a class="ha-row-link ha-row-open" href="{{ row_url }}" data-testid="row-link"
+               aria-label="{% trans name=item_label %}Open {{ name }}{% endtrans %}">
+                {{- icon('chevron-right', 'ha-icon--mirror') -}}
+            </a>
+            {%- endif -%}
             </div>
         </td>
+        {%- endif -%}
     </tr>
     {%- endfor -%}
 </tbody>

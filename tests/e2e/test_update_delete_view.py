@@ -9,7 +9,7 @@ def test_edit_link_navigates_to_update_form(page: Page, demo_base_url: str) -> N
     """Edit link in the list table opens the update form pre-filled with existing values."""
     page.goto(demo_base_url + "/admin/user")
 
-    page.get_by_test_id("list-row").first.get_by_test_id("row-edit-link").click()
+    page.get_by_test_id("list-row").first.get_by_test_id("row-link").click()
 
     expect(page).to_have_url(re.compile(r"/edit$"))
     expect(page.get_by_test_id("model-form")).to_be_visible()
@@ -20,7 +20,7 @@ def test_update_form_submits_successfully(page: Page, demo_base_url: str) -> Non
     """Submitting the update form with valid data saves and returns to the list."""
     page.goto(demo_base_url + "/admin/user")
 
-    page.get_by_test_id("list-row").first.get_by_test_id("row-edit-link").click()
+    page.get_by_test_id("list-row").first.get_by_test_id("row-link").click()
     expect(page.get_by_test_id("model-form")).to_be_visible()
 
     page.get_by_label("Name").fill("Alice Updated")
@@ -34,7 +34,7 @@ def test_update_form_shows_validation_errors(page: Page, demo_base_url: str) -> 
     """Submitting the update form with an empty required field shows inline errors."""
     page.goto(demo_base_url + "/admin/user")
 
-    page.get_by_test_id("list-row").first.get_by_test_id("row-edit-link").click()
+    page.get_by_test_id("list-row").first.get_by_test_id("row-link").click()
     expect(page.get_by_test_id("model-form")).to_be_visible()
 
     page.get_by_label("Name").fill("")

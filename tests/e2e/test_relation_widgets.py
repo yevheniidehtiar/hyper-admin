@@ -56,7 +56,7 @@ def test_city_update_form_preselects_current_country(page: Page, demo_base_url: 
     # Navigate to city list and click edit on the first row (London → UK)
     page.goto(demo_base_url + "/admin/city")
 
-    page.get_by_test_id("list-row").first.get_by_test_id("row-edit-link").click()
+    page.get_by_test_id("list-row").first.get_by_test_id("row-link").click()
     expect(page).to_have_url(re.compile(r"/edit$"))
     expect(page.get_by_test_id("model-form")).to_be_visible()
 

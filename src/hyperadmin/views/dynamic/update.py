@@ -108,6 +108,7 @@ class UpdateViewMixin(RelationViewMixin, InlineViewMixin):
                     existing_data[prefix] = list(related)
             inline_formsets = self._build_inline_formsets(existing_data, request=request)
 
+        is_htmx = request.headers.get("hx-request") is not None
         context = {
             "request": request,
             "pk_attr": self.pk.attr,
@@ -118,6 +119,8 @@ class UpdateViewMixin(RelationViewMixin, InlineViewMixin):
             "values": values or initial_values,
             "errors": errors or {},
             "inline_formsets": inline_formsets or [],
+            # View / Delete live outside form_body, which is all HTMX re-renders.
+            **({} if is_htmx else await self._record_actions(request)),
             # Legacy keys for compatibility
             "fields": list(schema_for(self.model).model_fields.keys()),
         }

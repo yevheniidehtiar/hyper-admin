@@ -1,7 +1,20 @@
 {%- extends "form_layout.html" -%}
+{%- from "components/_icons.html" import icon -%}
 
 {%- block form_title -%}
     {% trans item_name=item_name %}Update {{ item_name }}{% endtrans %}
+{%- endblock -%}
+
+{#- "View" goes to the detail page (st-v059-list-02) when it is enabled and the
+    user holds view_<model>. -#}
+{%- block form_header_actions -%}
+    {%- if user_can_view -%}
+    <div class="ha-page-header-actions">
+        <a href="{{- url_for(model_name|lower ~ '-detail', item_id=item|ha_pk(pk_attr|default('id'))) -}}" class="ha-btn ha-btn-secondary" data-testid="form-view-link">
+            {{- icon('eye') }}{{ _("View") -}}
+        </a>
+    </div>
+    {%- endif -%}
 {%- endblock -%}
 
 {%- block form_attributes -%}
@@ -39,5 +52,12 @@
         <a href="{{- url_for(model_name|lower ~ '-list') -}}" class="ha-cancel-link">
             {{ _("Cancel") }}
         </a>
+        {%- if user_can_delete -%}
+        <button type="button" class="ha-btn ha-btn--ghost ha-btn--danger-icon ha-form-actions__end" data-testid="form-delete-btn"
+                hx-delete="{{- url_for(model_name|lower ~ '-delete', item_id=item|ha_pk(pk_attr|default('id'))) -}}"
+                hx-confirm="{{ _('Are you sure you want to delete this item?') }}">
+            {{- icon('trash-2') }}{{ _("Delete") -}}
+        </button>
+        {%- endif -%}
     </div>
 {%- endblock -%}

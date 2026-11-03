@@ -283,7 +283,7 @@ MENU_ITEMS = [
         "href": "/edit",
         "icon": "pencil",
         "shortcut": "E",
-        "testid": "row-edit-link",
+        "testid": "menu-edit-link",
     },
     {
         "label": "Duplicate",
@@ -327,7 +327,7 @@ def test_menu_is_a_details_disclosure_with_real_links_and_forms(env: Environment
     assert '<div class="ha-popup ha-menu" aria-label="Actions" data-ha-align="start">' in html
     assert '<div class="ha-menu__label">Invoice INV-1</div>' in html
     # link with icon, shortcut and its view test id
-    assert '<a class="ha-menu__item" href="/edit" data-testid="row-edit-link">' in html
+    assert '<a class="ha-menu__item" href="/edit" data-testid="menu-edit-link">' in html
     assert (
         '<span class="ha-menu__text"><span>Edit</span></span><span class="ha-menu__end"><kbd class="ha-kbd">E</kbd></span></a>'
         in html
