@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 from sqlalchemy.orm import selectinload
 from sqlmodel import SQLModel, select
 
+from hyperadmin.adapters._estimate import estimate_table_rows
 from hyperadmin.adapters._filter_clause import build_clauses
 from hyperadmin.adapters._search import contains_clause, detect_search_columns
 from hyperadmin.adapters.introspection import coerce_column_value, introspect_primary_key
@@ -175,6 +176,14 @@ class SQLModelAdapter(BaseAdapter):
     def _detect_search_fields(self) -> builtins.list[str]:
         """Detect non-sensitive string columns on the model for search fallback."""
         return detect_search_columns(self.model, self.inspector)
+
+    async def estimate_row_count(self) -> int:
+        """Approximate whole-table row count; see :func:`estimate_table_rows`."""
+        async with self._session() as session:
+            rows, self.estimates_row_count = await estimate_table_rows(
+                session, self.model.__table__
+            )
+        return rows
 
     async def create(self, data: dict[str, Any]) -> Any:
         """

@@ -226,6 +226,22 @@ class BaseAdapter(ABC):
         """
         return open_session(self.engine, self.session_factory)
 
+    #: Whether the last :meth:`estimate_row_count` result was a planner estimate rather than
+    #: an exact count. Set by the call itself; callers that need an estimate read it after.
+    estimates_row_count: bool = False
+
+    async def estimate_row_count(self) -> int:
+        """Return an approximate row count for the whole table behind ``self.model``.
+
+        Distinct from a filtered ``count``: it ignores filters and queryset scoping, is
+        cheap (planner statistics where the database has them) and is advisory only. Used
+        to decide between preloading every option and lazy autocomplete.
+
+        The default raises :class:`NotImplementedError`, so adapters written before this
+        existed keep working: callers treat that as "unknown" and fall back to preloading.
+        """
+        raise NotImplementedError
+
     async def _cached_count(
         self,
         compute: Callable[[], Awaitable[int]],
