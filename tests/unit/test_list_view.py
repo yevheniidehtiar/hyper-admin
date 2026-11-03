@@ -403,3 +403,111 @@ async def test_filter_metadata_builder_enum(view_instance, anyio_backend):
     assert metadata[0]["choices"][0]["value"] == "red"
     assert metadata[0]["choices"][1]["value"] == "blue"
     assert [c["label"] for c in metadata[0]["choices"]] == ["Red", "Blue"]
+
+
+class _GrantedChecker:
+    """Permission checker granting a fixed set of codenames, recording every call."""
+
+    def __init__(self, *granted: str) -> None:
+        self.granted = set(granted)
+        self.calls: list[str] = []
+
+    async def has_permission(self, user, codename: str) -> bool:
+        self.calls.append(codename)
+        return codename in self.granted
+
+
+async def _list_context(mock_templates, mock_request, checker=None, **option_kwargs):
+    """Render the list view and return the template context."""
+    view = DynamicModelView(
+        adapter=MockAdapter(SampleModel, object()),
+        options=AdminOptions(**option_kwargs),
+        templates=mock_templates,
+        app_label="test",
+        permission_checker=checker,
+    )
+    view._get_template_name = MagicMock(side_effect=lambda name: f"{name}.html")
+    await view.list_view(
+        request=mock_request, page=1, page_size=10, search="", sort_by=None, sort_direction="asc"
+    )
+    return mock_templates.TemplateResponse.call_args[0][2]
+
+
+async def test_an_editors_rows_target_the_edit_page(mock_templates, mock_request, anyio_backend):
+    """
+    Scenario: an editor's rows target the edit page
+      Given alice holds change_samplemodel
+      When  alice requests the sample list
+      Then  the context has row_target="update"
+    """
+    checker = _GrantedChecker("view_samplemodel", "change_samplemodel", "delete_samplemodel")
+
+    context = await _list_context(mock_templates, mock_request, checker)
+
+    assert context["row_target"] == "update"
+    assert context["user_can_delete"] is True
+    # The view gate plus at most two row-access checks, never one per row.
+    assert len(checker.calls) <= 3
+    assert context["can_edit"] is True
+
+
+async def test_a_read_only_users_rows_target_the_detail_page(
+    mock_templates, mock_request, anyio_backend
+):
+    """
+    Scenario: a read-only user's rows target the detail page
+      Given bob holds view_samplemodel but not change_samplemodel
+      When  bob requests the sample list
+      Then  row_target is "detail" and user_can_delete is false
+    """
+    checker = _GrantedChecker("view_samplemodel")
+
+    context = await _list_context(mock_templates, mock_request, checker)
+
+    assert context["row_target"] == "detail"
+    assert context["user_can_delete"] is False
+
+
+async def test_can_edit_false_forces_detail_even_for_editors(
+    mock_templates, mock_request, anyio_backend
+):
+    """
+    Scenario: can_edit=False forces detail even for editors
+      Given AdminOptions(can_edit=False) and alice holds change_samplemodel
+      When  alice requests the list
+      Then  row_target is "detail"
+    """
+    checker = _GrantedChecker("view_samplemodel", "change_samplemodel")
+
+    context = await _list_context(mock_templates, mock_request, checker, can_edit=False)
+
+    assert context["row_target"] == "detail"
+    assert "change_samplemodel" not in checker.calls
+
+
+@pytest.mark.parametrize("can_delete", [True, False])
+async def test_no_auth_means_full_access(mock_templates, mock_request, can_delete, anyio_backend):
+    """
+    Scenario: no auth means full access
+      Given HyperAdmin without a permission checker
+      When  the list renders
+      Then  row_target is "update" and user_can_delete follows can_delete
+    """
+    context = await _list_context(mock_templates, mock_request, can_delete=can_delete)
+
+    assert context["row_target"] == "update"
+    assert context["user_can_delete"] is can_delete
+
+
+async def test_rows_have_no_target_without_edit_or_detail(
+    mock_templates, mock_request, anyio_backend
+):
+    """
+    Scenario: rows have no target when edit and detail are both disabled
+      Given AdminOptions(can_edit=False, can_detail=False)
+      When  the list renders
+      Then  row_target is None
+    """
+    context = await _list_context(mock_templates, mock_request, can_edit=False, can_detail=False)
+
+    assert context["row_target"] is None

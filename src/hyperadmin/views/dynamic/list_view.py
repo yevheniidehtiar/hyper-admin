@@ -291,6 +291,28 @@ class ListViewMixin(SavedViewsMixin):
         path = self._list_path(request)
         return "components/table_body.html", {"HX-Push-Url": f"{path}?{pushed}" if pushed else path}
 
+    async def _row_access(self, request: Request) -> tuple[str | None, bool]:
+        """Where a list row opens for this user, and whether they may delete rows.
+
+        Returns ``(row_target, user_can_delete)``: ``row_target`` is ``"update"``
+        when edits are enabled and the user holds ``change_<model>``, else
+        ``"detail"`` when the detail page is enabled, else ``None``. Callers
+        have already passed the ``view_<model>`` gate, so the detail branch needs
+        no extra check: at most two permission calls per render, never per row.
+        Object-level permissions stay with the page the row opens.
+        """
+        model = self._model_name_lower
+        if self.options.can_edit and await self._has_permission(request, f"change_{model}"):
+            row_target: str | None = "update"
+        elif self.options.can_detail:
+            row_target = "detail"
+        else:
+            row_target = None
+        can_delete = self.options.can_delete and await self._has_permission(
+            request, f"delete_{model}"
+        )
+        return row_target, can_delete
+
     @_request_scoped
     async def list_view(
         self,
@@ -411,6 +433,7 @@ class ListViewMixin(SavedViewsMixin):
             if group["chip"]
         ]
 
+        row_target, user_can_delete = await self._row_access(request)
         context = {
             "request": request,
             "pk_attr": self.pk.attr,
@@ -434,6 +457,8 @@ class ListViewMixin(SavedViewsMixin):
             "can_edit": self.options.can_edit,
             "can_delete": self.options.can_delete,
             "can_detail": self.options.can_detail,
+            "row_target": row_target,
+            "user_can_delete": user_can_delete,
             "file_fields": file_fields,
             "options": self.options,
             "list_editable": list(self.options.list_editable or []),
