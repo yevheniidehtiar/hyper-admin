@@ -57,6 +57,16 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
   (`bookmark`, `external-link`, `history`, `rotate-ccw`, `shield-check`,
   `sliders-horizontal`) available through `icon(name)`.
 
+### Changed
+- **Clickable list rows** (v0.5.9, st-v059-list-02). The View and Edit row buttons are gone:
+  the title cell (the first column that is not inline-editable) is a `<th scope="row">` link
+  that opens the edit page for users who may change the record and the detail page for
+  read-only users, and the whole row is clickable. The detail page gains Edit and Delete,
+  the edit page gains View and Delete. **Test ids:** `row-view-link` and `row-edit-link` are
+  removed; E2E suites that click them should use `row-link` (new: `detail-edit-link`,
+  `detail-delete-btn`, `form-view-link`, `form-delete-btn`). Hosts that override
+  `components/table_body.html` keep their own row buttons.
+
 ### Fixed
 - SQLAlchemy 2.0 declarative models now get an adapter (#715).
 - Joined-eager collection loads are de-duplicated (#718).

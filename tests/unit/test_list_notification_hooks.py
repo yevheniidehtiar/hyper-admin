@@ -108,7 +108,7 @@ def test_list_root_carries_the_subscription_hook_and_row_pks() -> None:
     assert 'data-realtime-model="hookparty"' in html
     assert 'data-realtime-label="HookParty"' in html
     assert 'data-realtime-label-plural="Hook parties"' in html
-    assert re.search(r'<tr class="ha-table-row" data-testid="list-row" data-pk="1"', html)
+    assert re.search(r'<tr class="ha-table-row[^"]*" data-testid="list-row" data-pk="1"', html)
     assert "data-realtime-toast-template" in html
     assert 'data-testid="realtime-toast"' in html
     assert 'role="status"' in html.split("data-realtime-toast-template")[1]

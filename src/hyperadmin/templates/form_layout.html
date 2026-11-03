@@ -2,7 +2,10 @@
 
 {%- block content -%}
     <div class="ha-container">
-        <h1 class="ha-page-title">{%- block form_title -%}{%- endblock -%}</h1>
+        <div class="ha-page-header" data-testid="page-header">
+            <h1 class="ha-page-title">{%- block form_title -%}{%- endblock -%}</h1>
+            {%- block form_header_actions -%}{%- endblock -%}
+        </div>
         <form id="{{- model_name|lower -}}-form" data-testid="model-form" enctype="multipart/form-data" {%- block form_attributes -%}{%- endblock -%}>
             <div id="{{- model_name|lower -}}-form-body" class="ha-card">
                 {%- block form_body -%}{%- endblock -%}

@@ -147,7 +147,7 @@ def test_int_id_links_unchanged(engine) -> None:
     Scenario: int-id links unchanged
       Given an int-id Product with id 7
       When  the list renders
-      Then  the View href is /admin/product/7
+      Then  the row link goes to /admin/product/7/edit
       And   the edit testid is cell-edit-name-7
     """
     _seed(engine, TplProduct(id=7, name="widget"))
@@ -155,8 +155,7 @@ def test_int_id_links_unchanged(engine) -> None:
 
     html = client.get("/admin/tplproduct").text
 
-    assert _href(html, "row-view-link").endswith("/admin/tplproduct/7")
-    assert _href(html, "row-edit-link").endswith("/admin/tplproduct/7/edit")
+    assert _href(html, "row-link").endswith("/admin/tplproduct/7/edit")
     assert 'data-testid="cell-edit-name-7"' in html
     assert 'data-testid="cell-name-7"' in html
     assert 'id="cell-tplproduct-7-name"' in html
@@ -167,7 +166,7 @@ def test_uuid_links_work(engine) -> None:
     """
     Scenario: UUID links work
       Given a UUID Document
-      When  View, Edit and Delete are followed
+      When  the row link, the edit page's View link and Delete are followed
       Then  each page returns 200
     """
     doc = TplDocument(name="spec")
@@ -176,8 +175,8 @@ def test_uuid_links_work(engine) -> None:
     html = client.get("/admin/tpldocument").text
     delete_url = _attr(html, "hx-delete", "row-delete-btn")
 
-    view = client.get(_href(html, "row-view-link"))
-    edit = client.get(_href(html, "row-edit-link"))
+    edit = client.get(_href(html, "row-link"))
+    view = client.get(_href(edit.text, "form-view-link"))
     delete = client.delete(delete_url)
 
     assert delete_url.endswith(f"/admin/tpldocument/{doc.id}")
@@ -242,7 +241,7 @@ def test_natural_key_list_links_and_tokens(engine) -> None:
     """
     Scenario: a natural key with spaces gets working links and safe testids
       Given a Country whose key is 'a b?c' and name is list-editable
-      When  the list renders and its View link is followed
+      When  the list renders and its row link is followed
       Then  the link percent-encodes the key and returns 200
       And   ids and testids use the hashed DOM token
       And   the pk column is never rendered as an inline-editable cell
@@ -256,9 +255,9 @@ def test_natural_key_list_links_and_tokens(engine) -> None:
     token = ha_dom_token("a b?c")
 
     html = client.get("/admin/tplcountry").text
-    view = client.get(_href(html, "row-view-link"))
+    view = client.get(_href(html, "row-link"))
 
-    assert _href(html, "row-view-link").endswith("/admin/tplcountry/a%20b%3Fc")
+    assert _href(html, "row-link").endswith("/admin/tplcountry/a%20b%3Fc/edit")
     assert view.status_code == 200
     assert f'data-testid="cell-edit-name-{token}"' in html
     assert f'id="cell-tplcountry-{token}-name"' in html

@@ -482,8 +482,9 @@ def test_order_pages_reflect_a_view_but_not_edit_group(page: Page, matrix_base_u
     page.goto(f"{matrix_base_url}/admin/order")
 
     # Then
-    expect(page.get_by_test_id("row-view-link")).to_have_count(2)
-    page.get_by_test_id("row-view-link").first.click()
+    expect(page.get_by_test_id("row-link")).to_have_count(2)
+    page.get_by_test_id("row-link").first.click()
+    expect(page).to_have_url(f"{matrix_base_url}/admin/order/1")
     expect(page.get_by_test_id("detail-fields")).to_be_visible()
     edit_form = page.goto(f"{matrix_base_url}/admin/order/1/edit")
     assert edit_form is not None

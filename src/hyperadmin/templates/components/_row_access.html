@@ -1,0 +1,26 @@
+{#- What a list row offers this user (st-v059-list-02), shared by the header in
+    components/table.html and the rows in components/table_body.html:
+
+        {%- import "components/_row_access.html" as rows with context -%}
+
+    - rows.target: "update", "detail" or none, from the view's row_target. A host
+      that renders the table without it gets the old defaults from can_edit /
+      can_detail.
+    - rows.may_delete: user_can_delete (or can_delete without it).
+    - rows.title_field: the first column that is not inline-editable; it becomes
+      the row's <th scope="row"> and holds the row link. None when every column
+      is editable.
+    - rows.open_cell: the end cell holds a chevron link (every column editable).
+    - rows.end_cell: whether the row has an end cell at all. -#}
+{%- set target = row_target if row_target is defined else ('update' if can_edit is not defined or can_edit else ('detail' if can_detail is not defined or can_detail else none)) -%}
+{%- set may_delete = user_can_delete if user_can_delete is defined else (can_delete is not defined or can_delete) -%}
+{%- set _ns = namespace(title=none) -%}
+{%- for field in fields if _ns.title is none -%}
+    {%- if not (list_editable and field in list_editable and field != pk_attr|default('id')) -%}
+        {%- set _ns.title = field -%}
+    {%- endif -%}
+{%- endfor -%}
+{%- set title_field = _ns.title -%}
+{%- set url_name = (model_name|lower) ~ ('-update-form' if target == 'update' else '-detail') -%}
+{%- set open_cell = target is not none and title_field is none -%}
+{%- set end_cell = may_delete or open_cell -%}

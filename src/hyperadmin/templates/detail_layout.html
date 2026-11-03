@@ -4,7 +4,10 @@
 
 {%- block content -%}
     <div class="ha-detail-container">
-        <h1 class="ha-page-title">{%- block detail_title -%}{%- endblock -%}</h1>
+        <div class="ha-page-header" data-testid="page-header">
+            <h1 class="ha-page-title">{%- block detail_title -%}{%- endblock -%}</h1>
+            {%- block detail_actions -%}{%- endblock -%}
+        </div>
         <div class="ha-detail-fields" data-testid="detail-fields">
             {%- block detail_fields -%}{%- endblock -%}
         </div>

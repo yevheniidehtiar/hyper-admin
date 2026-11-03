@@ -344,7 +344,7 @@ def test_composite_pk_list_page_returns_200_with_no_row_links():
     Scenario: composite list page with no row links
       Given a composite-pk model with one row
       When  GET /m (list) is requested
-      Then  the response is 200 with no view/edit/delete row links
+      Then  the response is 200 with no row link and no delete button
     """
     client, _app, engine = _mount(CompositePkWidget, options=AdminOptions(list_display=["a", "b"]))
 
@@ -367,6 +367,5 @@ def test_composite_pk_list_page_returns_200_with_no_row_links():
     # list_display=["a", "b"]; assert the seeded composite-key values render.
     assert ">1<" in response.text
     assert ">2<" in response.text
-    assert 'data-testid="row-view-link"' not in response.text
-    assert 'data-testid="row-edit-link"' not in response.text
+    assert 'data-testid="row-link"' not in response.text
     assert 'data-testid="row-delete-btn"' not in response.text

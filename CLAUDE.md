@@ -156,9 +156,12 @@ E2E tests use Playwright's accessibility-first locators. Query priority (highest
 | Sidebar `<aside>` | `sidebar` |
 | List table | `list-table` |
 | Each table row | `list-row` |
-| View action link | `row-view-link` |
-| Edit action link | `row-edit-link` |
+| Row link (title cell, or chevron when every column is editable) | `row-link` |
 | Delete action button | `row-delete-btn` |
+| Detail page Edit link | `detail-edit-link` |
+| Detail page Delete button | `detail-delete-btn` |
+| Edit page View link | `form-view-link` |
+| Edit page Delete button | `form-delete-btn` |
 | Search input | `search-input` |
 | Pagination info | `pagination-info` |
 | Pagination previous | `pagination-prev` |

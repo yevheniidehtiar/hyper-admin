@@ -57,6 +57,7 @@ class DetailViewMixin(FileViewMixin):
             "file_labels": {name: download_name(item_data[name]) for name in file_urls},
             "pk_attr": self.pk.attr,
             "panels": await self._visible_panels(request, item, item_id),
+            **await self._record_actions(request),
         }
         template_name = self._get_template_name("detail")
         return self.templates.TemplateResponse(request, template_name, context)

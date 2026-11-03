@@ -658,3 +658,27 @@ input[type="file"].ha-input {
     transition: none;
   }
 }
+
+/* ==========================================================================
+   Record delete (st-v059-list-02/03): a quiet button in the danger text
+   colour (icon-only in list rows, with a label on the detail and edit pages).
+   The solid ha-color-danger fill is reserved for the dialog's confirm.
+   ========================================================================== */
+
+.ha-btn.ha-btn--danger-icon {
+  color: var(--ha-color-danger-text);
+}
+
+.ha-btn.ha-btn--danger-icon:hover {
+  background-color: var(--ha-color-danger-soft);
+  color: var(--ha-color-danger-text);
+}
+
+/* The edit page's Delete sits at the end of the actions bar. */
+.ha-form-actions .ha-form-actions:has(> .ha-form-actions__end) {
+  flex: 1 1 auto;
+}
+
+.ha-form-actions__end {
+  margin-inline-start: auto;
+}
