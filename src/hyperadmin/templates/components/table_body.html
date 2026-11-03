@@ -6,8 +6,12 @@
     row link (data-testid="row-link") to the edit page for users who may
     change the record, the detail page otherwise; CSS stretches it over the
     whole row, and the checkbox, inline-edit cells, links inside cells and the
-    delete button sit above it. -#}
+    delete button sit above it.
+
+    Delete (st-v059-list-03): a ghost icon button, only for users who may
+    delete; it opens the shared confirm dialog (components/confirm_delete_dialog.html). -#}
 {%- from "components/_icons.html" import icon -%}
+{%- from "components/tooltip.html" import tip -%}
 {%- import "components/_row_access.html" as rows with context -%}
 <tbody id="model-list-body" class="ha-table-body" data-testid="list-body">
     {%- for item in items -%}
@@ -50,14 +54,14 @@
         <td class="ha-table-cell ha-table-cell-center ha-col-end" data-label="{{ _('Actions') }}">
             <div class="ha-row-actions">
             {%- if rows.may_delete -%}
-            <button hx-delete="{{- url_for(model_name|lower ~ '-delete', item_id=item_pk) -}}"
-                    hx-confirm="{{ _('Are you sure you want to delete this item?') }}"
-                    hx-target="closest tr"
-                    hx-swap="outerHTML"
-                    class="ha-action-delete"
-                    data-testid="row-delete-btn">
-                {{- icon('trash-2') }}{{ _("Delete") -}}
+            {%- call tip(_('Delete')) -%}
+            <button type="button" class="ha-btn ha-btn--icon ha-btn--ghost ha-btn--danger-icon" data-testid="row-delete-btn"
+                    aria-label="{% trans name=item_label %}Delete {{ name }}{% endtrans %}"
+                    data-ha-confirm-delete="{{- url_for(model_name|lower ~ '-delete', item_id=item_pk) -}}"
+                    data-ha-label="{{ item_label }}">
+                {{- icon('trash-2') -}}
             </button>
+            {%- endcall -%}
             {%- endif -%}
             {%- if rows.open_cell and row_url -%}
             <a class="ha-row-link ha-row-open" href="{{ row_url }}" data-testid="row-link"

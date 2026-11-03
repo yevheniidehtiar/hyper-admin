@@ -249,8 +249,10 @@ def test_delete_by_another_user_removes_the_row(browser: Browser, notif_url: str
         expect(_total(bob_list)).to_contain_text("of 42 results")
 
         # When alice deletes Article 5
-        alice_list.on("dialog", lambda dialog: dialog.accept())
         _row(alice_list, 5).get_by_test_id("row-delete-btn").click()
+        alice_list.get_by_test_id("dialog-confirm-delete").get_by_role(
+            "button", name="Delete"
+        ).click()
 
         # Then the row disappears from bob's list and the total drops by one
         expect(_row(bob_list, 5)).to_have_count(0, timeout=LIVE_MS)
@@ -322,8 +324,10 @@ def test_delete_by_another_user_shows_a_toast(browser: Browser, notif_url: str) 
         bob_list = _open_list(bob, notif_url)
 
         # When alice deletes Article 7
-        alice_list.on("dialog", lambda dialog: dialog.accept())
         _row(alice_list, 7).get_by_test_id("row-delete-btn").click()
+        alice_list.get_by_test_id("dialog-confirm-delete").get_by_role(
+            "button", name="Delete"
+        ).click()
 
         # Then bob sees the toast
         expect(_toast(bob_list)).to_have_text("alice deleted Article #7", timeout=LIVE_MS)

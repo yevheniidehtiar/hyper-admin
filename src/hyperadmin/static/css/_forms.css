@@ -682,3 +682,31 @@ input[type="file"].ha-input {
 .ha-form-actions__end {
   margin-inline-start: auto;
 }
+
+/* Shared delete confirmation (components/confirm_delete_dialog.html, st-v059-list-03). */
+.ha-dialog__glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 40px;
+  block-size: 40px;
+  flex: none;
+  border-radius: var(--ha-radius-pill);
+}
+
+.ha-dialog__glyph--danger {
+  background-color: var(--ha-color-danger-soft);
+  color: var(--ha-color-danger-text);
+}
+
+.ha-dialog::backdrop {
+  background-color: var(--ha-color-scrim);
+}
+
+.ha-confirm-delete .ha-dialog__head {
+  padding-block-end: var(--ha-space-6);
+}
+
+.ha-confirm-delete .ha-dialog__title {
+  overflow-wrap: anywhere;
+}

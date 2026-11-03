@@ -162,6 +162,7 @@ E2E tests use Playwright's accessibility-first locators. Query priority (highest
 | Detail page Delete button | `detail-delete-btn` |
 | Edit page View link | `form-view-link` |
 | Edit page Delete button | `form-delete-btn` |
+| Shared delete confirm dialog | `dialog-confirm-delete` |
 | Search input | `search-input` |
 | Pagination info | `pagination-info` |
 | Pagination previous | `pagination-prev` |
