@@ -254,6 +254,15 @@ class AdminOptions(BaseModel):
     updates or deletes a row of this model. Rows written elsewhere show up in the
     total once the TTL passes.
     """
+    filter_cache_ttl: int = Field(default=60, ge=0)
+    """Seconds to cache the related rows listed by this model's foreign-key filters.
+
+    Each foreign-key filter in ``list_filter`` lists the first rows of its related
+    table, and a list page would otherwise query that table on every render. With a
+    positive TTL the rows are reused, and dropped when the related model's adapter
+    creates, updates or deletes a row. Rows written elsewhere show up once the TTL
+    passes. ``0`` queries on every render.
+    """
     realtime_notifications: bool | None = None
     """Per-model override for real-time CRUD notifications.
 

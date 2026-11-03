@@ -135,9 +135,9 @@ def create_admin_router(  # noqa: PLR0912, PLR0913, PLR0915, PLR0917
     if session_factory is not None:
         adapter_kwargs["session_factory"] = session_factory
     adapter: Any = admin_instance.adapter_class(model, **adapter_kwargs)
-    if options.count_cache_ttl > 0:
-        adapter.count_cache = count_cache
-        adapter.count_cache_ttl = options.count_cache_ttl
+    adapter.count_cache = count_cache
+    adapter.count_cache_ttl = options.count_cache_ttl
+    adapter.filter_cache_ttl = options.filter_cache_ttl
     if realtime_emitter is None:
         if options.realtime_notifications is True:
             logger.info(

@@ -29,22 +29,38 @@ def _pk_choices(items: list[Any], pk: Any) -> list[dict[str, str]]:
     return choices
 
 
-async def _fk_choices(target_adapter: Any, selected: list[str]) -> list[dict[str, str]]:
-    """First ``FK_FILTER_CHOICE_LIMIT`` related rows plus any applied ``selected`` pks."""
+async def _first_fk_choices(target_adapter: Any, cache: Any, ttl: int) -> list[dict[str, str]]:
+    """The first ``FK_FILTER_CHOICE_LIMIT`` related rows as choices, cached for ``ttl`` seconds.
+
+    The cache key starts with the related model, so a write through that model's adapter
+    evicts it. Applied selections are not part of it: they differ per request.
+    """
+    key = (f"{target_adapter.model.__module__}.{target_adapter.model.__qualname__}", "fk-choices")
+    if cache is not None and ttl > 0:
+        cached = await cache.get(key)
+        if cached is not None:
+            return cached
     related_items, _ = await target_adapter.list(page_size=FK_FILTER_CHOICE_LIMIT)
-    listed = {
-        target_adapter.pk.to_str(pk_value)
-        for item in related_items
-        if (pk_value := target_adapter.pk.value_of(item)) is not None
-    }
+    choices = _pk_choices(related_items, target_adapter.pk)
+    if cache is not None and ttl > 0:
+        await cache.set(key, choices, ttl)
+    return choices
+
+
+async def _fk_choices(
+    target_adapter: Any, selected: list[str], *, cache: Any = None, ttl: int = 0
+) -> list[dict[str, str]]:
+    """First ``FK_FILTER_CHOICE_LIMIT`` related rows plus any applied ``selected`` pks."""
+    choices = [dict(choice) for choice in await _first_fk_choices(target_adapter, cache, ttl)]
+    listed = {choice["value"] for choice in choices}
     for raw in selected:
         if raw in listed:
             continue
         extra = await target_adapter.get(raw)
         if extra is not None:
-            related_items.append(extra)
+            choices.extend(_pk_choices([extra], target_adapter.pk))
             listed.add(raw)
-    return _pk_choices(related_items, target_adapter.pk)
+    return choices
 
 
 async def build_filter_metadata(
@@ -126,7 +142,10 @@ async def build_filter_metadata(
                     # which would break a session_factory=-only admin.
                     target_adapter = adapter.for_model(target_model)
                     choices = await _fk_choices(
-                        target_adapter, (selected or {}).get(field_name, [])
+                        target_adapter,
+                        (selected or {}).get(field_name, []),
+                        cache=getattr(adapter, "count_cache", None),
+                        ttl=getattr(adapter, "filter_cache_ttl", 0),
                     )
                     metadata.append(
                         {
