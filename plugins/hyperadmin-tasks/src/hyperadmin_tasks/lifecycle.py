@@ -6,8 +6,10 @@ import asyncio
 from contextlib import asynccontextmanager
 from typing import TYPE_CHECKING, Any
 
+from hyperadmin_tasks.integration import run_worker_in_lifespan
+
 if TYPE_CHECKING:
-    from collections.abc import AsyncIterator
+    from collections.abc import AsyncIterator, Iterable
 
     from hyperadmin_tasks.backend import TaskBackend
 
@@ -47,14 +49,19 @@ class BackendLifecycle:
 
 
 @asynccontextmanager
-async def lifespan(admin: Any) -> AsyncIterator[None]:
+async def lifespan(admin: Any, *, registries: Iterable[Any] | None = None) -> AsyncIterator[None]:
     """Start the tasks backend eagerly and shut it down on exit.
 
     Compose it in the host app's lifespan: ``async with hyperadmin_tasks.lifespan(admin): ...``.
+    With ``run_worker=True`` it also runs a pgtask worker for ``registries`` (pgtask
+    ``TaskRegistry`` objects; default: the ``registries`` setting) and drains it before the
+    backend shuts down.
     """
-    lifecycle: BackendLifecycle = admin.plugins["tasks"].lifecycle
+    plugin = admin.plugins["tasks"]
+    lifecycle: BackendLifecycle = plugin.lifecycle
     await lifecycle.ensure_started()
     try:
-        yield
+        async with run_worker_in_lifespan(plugin.settings, registries):
+            yield
     finally:
         await lifecycle.shutdown()

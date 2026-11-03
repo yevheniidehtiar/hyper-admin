@@ -66,6 +66,7 @@ class PgDatabase:
     owner_dsn: str
     observer_dsn: str
     administrator_dsn: str
+    worker_dsn: str
 
 
 def url_for(dsn: str, *, dbname: str | None = None, user: str | None = None, **kw: str) -> str:
@@ -142,6 +143,7 @@ def create_database(server_dsn: str, roles: PgRoles) -> PgDatabase:
         administrator_dsn=url_for(
             server_dsn, dbname=name, user=roles.administrator, password=roles.password
         ),
+        worker_dsn=url_for(server_dsn, dbname=name, user=roles.worker, password=roles.password),
     )
 
 
