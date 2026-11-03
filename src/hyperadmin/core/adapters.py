@@ -206,6 +206,9 @@ class BaseAdapter(ABC):
     #: ``AdminOptions.count_cache_ttl``; ``0`` (the default) disables caching.
     count_cache: CountCache | None = None
     count_cache_ttl: int = 0
+    #: How long the first rows of a related model are cached for this model's list filters.
+    #: Set by the router from ``AdminOptions.filter_cache_ttl``; ``0`` disables caching.
+    filter_cache_ttl: int = 0
 
     def __init__(
         self, model: Any, engine: Any = None, *, session_factory: SessionFactory | None = None
