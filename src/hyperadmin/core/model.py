@@ -115,6 +115,18 @@ class ModelAdmin:
     #: Defaults to the pluralised verbose name (see :meth:`get_verbose_name_plural`).
     verbose_name_plural: VerboseNameType | None = None
 
+    #: Sidebar icon: a Lucide name from ``static/icons`` (e.g. ``"receipt"``).
+    #: Empty shows the generic ``"layout-grid"`` icon; an icon-font class still renders.
+    icon: str = ""
+
+    #: Sidebar group label (plain or lazy). ``None`` falls back to the ``app_label``
+    #: passed to ``site.register``, then to the unnamed group at the top. Declare the
+    #: group's order and icon with ``HyperAdmin(nav_groups=[NavGroup(...)])``.
+    nav_group: VerboseNameType | None = None
+
+    #: Position inside the sidebar group; items with the same order sort by label.
+    nav_order: int = 0
+
     def __init__(self, model: Any) -> None:
         self.model = model
 

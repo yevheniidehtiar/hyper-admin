@@ -16,6 +16,7 @@ from fastapi.staticfiles import StaticFiles
 from jinja2 import ChoiceLoader, FileSystemLoader
 from starlette.routing import NoMatchFound
 
+from hyperadmin.core.navigation import ResolvedNavEntry, plugin_nav_item
 from hyperadmin.core.plugins import PluginError
 
 if TYPE_CHECKING:
@@ -137,14 +138,13 @@ def build_plugin_routes(
     return routes
 
 
-def resolve_plugin_nav(registry: PluginRegistry, router: Router) -> list[dict[str, Any]]:
-    """Group plugin nav entries into sidebar sections with admin-relative URLs.
+def resolve_plugin_nav_entries(registry: PluginRegistry, router: Router) -> list[ResolvedNavEntry]:
+    """Plugin nav entries with their admin-relative URLs, in registry order.
 
-    Each section is ``{"title": str | None, "items": [...]}`` (``None`` renders as
-    "Plugins"), in order of first appearance. An entry whose ``url_name`` does not
-    resolve on ``router`` is logged at ERROR and left out, so it cannot break pages.
+    An entry whose ``url_name`` does not resolve on ``router`` is logged at ERROR and
+    left out, so it cannot break pages.
     """
-    sections: dict[str | None, list[dict[str, Any]]] = {}
+    resolved: list[ResolvedNavEntry] = []
     for entry in registry.nav_entries:
         try:
             url = router.url_path_for(entry.url_name, **entry.url_params)
@@ -157,13 +157,26 @@ def resolve_plugin_nav(registry: PluginRegistry, router: Router) -> list[dict[st
                 extra={"plugin": entry.plugin},
             )
             continue
-        sections.setdefault(entry.section, []).append(
+        resolved.append(ResolvedNavEntry(entry=entry, url=str(url)))
+    return resolved
+
+
+def plugin_nav_sections(entries: list[ResolvedNavEntry]) -> list[dict[str, Any]]:
+    """The ``plugin_nav`` sidebar sections, for host templates that still read them.
+
+    Each section is ``{"title": str | None, "items": [...]}`` (``None`` renders as
+    "Plugins"), in order of first appearance.
+    """
+    sections: dict[str | None, list[dict[str, Any]]] = {}
+    for resolved in entries:
+        item = plugin_nav_item(resolved)
+        sections.setdefault(resolved.entry.section, []).append(
             {
-                "name": entry.label,
-                "url": str(url),
-                "icon": entry.icon or "",
-                "permission": entry.permission,
-                "testid": entry.testid or f"sidebar-plugin-{entry.plugin}-{entry.url_name}",
+                "name": item.label,
+                "url": item.url,
+                "icon": resolved.entry.icon or "",
+                "permission": item.permission,
+                "testid": item.testid,
             }
         )
     return [{"title": title, "items": items} for title, items in sections.items()]

@@ -16,12 +16,14 @@ from hyperadmin.core.introspection import (
     infer_search_fields,
 )
 from hyperadmin.core.lifecycle import Lifecycle, StartupGuardMiddleware
+from hyperadmin.core.navigation import ModelNavSource, NavGroup, build_nav_tree
 from hyperadmin.core.plugin_wiring import (
     build_plugin_routes,
     extend_template_loader,
     mount_plugin_static,
+    plugin_nav_sections,
     plugin_permission_rows,
-    resolve_plugin_nav,
+    resolve_plugin_nav_entries,
 )
 from hyperadmin.core.plugins import PluginRegistry
 from hyperadmin.core.settings import HyperAdminSettings
@@ -91,6 +93,7 @@ class Admin:
         auth: "ExternalAuth | None" = None,
         disabled_plugins: "Iterable[str]" = (),
         plugin_settings: "Mapping[str, Mapping[str, Any]] | None" = None,
+        nav_groups: "Iterable[NavGroup]" = (),
     ) -> None:
         """Initialise HyperAdmin and attach it to a FastAPI application.
 
@@ -133,6 +136,10 @@ class Admin:
             plugin_settings: Raw settings per plugin name, validated into each
                 plugin's ``settings_model`` before its ``on_register``. See
                 ``docs/specs/plugin-registry.md``.
+            nav_groups: Sidebar groups (``NavGroup``): their order, icon and default
+                collapse state. Models join a group through ``nav_group`` on their
+                admin class; undeclared groups still appear, after these. See
+                ``docs/specs/navigation-and-list-ux.md``.
 
         Raises:
             ValueError: ``auth`` is combined with ``auth_backend`` or
@@ -207,6 +214,8 @@ class Admin:
         if self.settings.discover_apps:
             discover_admin_modules(self.settings.discover_apps)
 
+        self.nav_groups: tuple[NavGroup, ...] = tuple(nav_groups)
+        self._nav_sources: list[ModelNavSource] = []
         # Assigned before loading: a plugin's on_register calls admin.plugins.add_*.
         # What plugins contribute is applied in mount().
         self.plugins = PluginRegistry()
@@ -501,6 +510,7 @@ class Admin:
             count_cache=InMemoryTTLCache(self.settings.count_cache_max_entries),
         )
         admin_router.generate_routes()
+        self._nav_sources = admin_router.nav_sources
         self._notification_models = admin_router.notification_models
         routers = admin_router.get_routers()
         for router in routers:
@@ -986,7 +996,11 @@ class Admin:
             )
         )
         extend_template_loader(self.templates.env, self.plugins)
-        self.templates.env.globals["plugin_nav"] = resolve_plugin_nav(self.plugins, self.router)
+        nav_entries = resolve_plugin_nav_entries(self.plugins, self.router)
+        self.templates.env.globals["plugin_nav"] = plugin_nav_sections(nav_entries)
+        self.templates.env.globals["nav_tree"] = build_nav_tree(
+            self._nav_sources, nav_entries, self.nav_groups
+        )
 
     def _auto_register_models(self) -> None:
         """Auto-register discovered SQLModel models with smart defaults.

@@ -3,11 +3,11 @@
 | Field | Value |
 |---|---|
 | Author | Claude Code |
-| Status | Draft |
+| Status | Approved |
 | Issue | — (stories in `.meta/epics/epic-v059-*`) |
 | Milestone | v0.5.9 — Navigation & List UX |
 | Created | 2026-11-01 |
-| Last updated | 2026-11-01 |
+| Last updated | 2026-11-03 |
 
 ---
 
@@ -459,7 +459,7 @@ These are added to the CLAUDE.md reference table by the story that introduces th
 
 ## Open Questions
 
-- [ ] Milestone position: right after v0.5.8 (proposed). v0.5.5 is already done.
+- [x] Milestone position: right after v0.5.8. Accepted with the approval of PR #795 (2026-11-01).
 
 ## Decision Log
 
