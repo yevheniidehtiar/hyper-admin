@@ -118,7 +118,7 @@ def test_dashboard_renders_with_nav_entry(engine: AsyncEngine) -> None:
 
     assert response.status_code == 200
     assert 'data-testid="tasks-dashboard"' in response.text
-    assert ">Tasks</h3>" in response.text
+    assert 'data-testid="nav-group-tasks"' in response.text
     assert 'data-testid="nav-tasks-dashboard"' in response.text
 
 

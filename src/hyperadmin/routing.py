@@ -20,6 +20,7 @@ from hyperadmin.core.navigation import ModelNavSource, build_nav_tree, model_nav
 from hyperadmin.core.options import AdminOptions
 from hyperadmin.realtime.emitting import EventEmittingAdapter, notifications_enabled
 from hyperadmin.views.dynamic import DynamicModelView
+from hyperadmin.views.navigation import register_nav_globals
 from hyperadmin.views.palette_context import register_palette_globals
 from hyperadmin.views.route import make_admin_route_class
 from hyperadmin.views.template_filters import register_template_filters
@@ -491,6 +492,7 @@ class HyperAdminRouter:
             datetime_format=datetime_format,
         )
         register_palette_globals(templates.env)
+        register_nav_globals(templates.env)
         self.templates = templates
         self.routers: list[APIRouter] = []
 

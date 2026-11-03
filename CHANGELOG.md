@@ -15,6 +15,15 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
   `ModelAdmin`. The new `nav_tree` template global groups models (falling back to
   `app_label`) and merges plugin sections into the group with the same label. `nav_items`
   keeps its shape. 24 Lucide icons added for domains and navigation.
+- **Grouped, collapsible sidebar with an icon rail** (v0.5.9, st-v059-nav-02). The sidebar
+  renders `nav_tree` with AppShell markup: a heading toggle per group, collapsed groups kept
+  in the `ha-nav-collapsed` cookie, a desktop icon rail (`ha-sidebar-rail` cookie), both
+  read on the server so the first paint is right. The active item matches by URL segment
+  (`/order/42/edit` activates Orders, not Order lines). Groups whose items the user may not
+  view are not rendered. Links appended to `nav_items` after `mount()` still show, in the
+  top group. New template globals `visible_nav_tree()`, `nav_collapsed_groups()`,
+  `sidebar_rail()` and `nav_is_active(item)`; test ids `nav-<key>`, `nav-group-<slug>`,
+  `sidebar-rail-toggle`.
 - **Plain SQLAlchemy models** (#719, #725–#730). Models built on SQLAlchemy 2.0
   `DeclarativeBase` or the legacy `declarative_base()` register with
   `site.register(Model)`, with no SQLModel base class. HyperAdmin builds a Pydantic schema

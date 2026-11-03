@@ -31,14 +31,164 @@
   padding: 0 var(--ha-space-3);
 }
 
-/* Heading of a plugin section, below the model links */
-.ha-sidebar-section-title {
+/* ==========================================================================
+   Nav groups (AppShell): an <h2> toggle button over a <ul> of items.
+   Collapsed state comes from the ha-nav-collapsed cookie on the server.
+   ========================================================================== */
+
+.ha-nav-group + .ha-nav-group {
+  margin-block-start: var(--ha-space-4);
+}
+
+.ha-nav-group__heading {
+  margin: 0 0 var(--ha-space-1);
   font-size: var(--ha-font-size-xs);
   line-height: 18px;
   font-weight: var(--ha-font-semibold);
-  color: var(--ha-color-text-muted);
-  margin: var(--ha-space-3) 0 var(--ha-space-1);
+}
+
+.ha-nav-group__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ha-space-2);
+  inline-size: 100%;
+  min-block-size: 28px;
   padding: 0 var(--ha-space-3);
+  color: var(--ha-color-text-muted);
+  font: inherit;
+  text-align: start;
+  background: none;
+  border: 0;
+  border-radius: var(--ha-radius-md);
+  cursor: pointer;
+}
+
+.ha-nav-group__toggle:hover {
+  color: var(--ha-color-text-strong);
+  background-color: var(--ha-surface-hover);
+}
+
+.ha-nav-group__chevron {
+  flex-shrink: 0;
+  transition: transform var(--ha-transition);
+}
+
+.ha-nav-group--collapsed .ha-nav-group__chevron {
+  transform: rotate(-90deg);
+}
+
+[dir="rtl"] .ha-nav-group--collapsed .ha-nav-group__chevron {
+  transform: rotate(90deg);
+}
+
+.ha-nav-group--collapsed > .ha-sidebar-nav {
+  display: none;
+}
+
+.ha-nav-item__label {
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The rail toggle shows on desktop only; the close button on mobile only. */
+.ha-sidebar-rail-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  min-inline-size: 36px;
+  min-block-size: 36px;
+  padding: 0;
+  margin-inline-start: auto;
+  color: var(--ha-color-text-muted);
+  background: none;
+  border: var(--ha-border-width) solid transparent;
+  border-radius: var(--ha-radius-md);
+  cursor: pointer;
+}
+
+.ha-sidebar-rail-toggle:hover {
+  background-color: var(--ha-surface-hover);
+  color: var(--ha-color-text-strong);
+}
+
+.ha-rail-icon--open,
+[data-collapsed="true"] .ha-rail-icon--close {
+  display: none;
+}
+
+[data-collapsed="true"] .ha-rail-icon--open {
+  display: inline-block;
+}
+
+@media (min-width: 768px) {
+  .ha-sidebar-rail-toggle {
+    display: inline-flex;
+  }
+
+  .ha-sidebar-title {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  /* --------------------------------------------------------------------
+     Icon rail: labels become screen-reader text (links keep their names
+     and a title tooltip), group headings become a divider, icons centre.
+     The rail width itself is in _responsive.css (a later layer).
+     -------------------------------------------------------------------- */
+  .ha-layout[data-collapsed="true"] .ha-sidebar-inner {
+    padding-inline: var(--ha-space-2);
+  }
+
+  .ha-layout[data-collapsed="true"] .ha-sidebar-header {
+    justify-content: center;
+  }
+
+  .ha-layout[data-collapsed="true"] .ha-sidebar-rail-toggle {
+    margin-inline-start: 0;
+  }
+
+  .ha-layout[data-collapsed="true"] .ha-nav-item__label {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  /* No toggle without a visible heading: the rail shows every item anyway. */
+  .ha-layout[data-collapsed="true"] .ha-nav-group__heading {
+    display: none;
+  }
+
+  .ha-layout[data-collapsed="true"] .ha-nav-group + .ha-nav-group {
+    margin-block-start: var(--ha-space-2);
+    padding-block-start: var(--ha-space-2);
+    border-block-start: var(--ha-border-width) solid var(--ha-color-border-light);
+  }
+
+  /* Every item stays reachable in the rail, collapsed groups included. */
+  .ha-layout[data-collapsed="true"] .ha-nav-group--collapsed > .ha-sidebar-nav {
+    display: flex;
+  }
+
+  .ha-layout[data-collapsed="true"] .ha-sidebar-link {
+    justify-content: center;
+    padding: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ha-nav-group__chevron {
+    transition: none;
+  }
 }
 
 .ha-sidebar-nav {

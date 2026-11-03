@@ -42,3 +42,10 @@
     width: var(--ha-sidebar-width);
   }
 }
+
+/* ---- Icon rail (>= 768px, _sidebar.css): the sidebar narrows to its icons ---- */
+@media (min-width: 768px) {
+  .ha-layout[data-collapsed="true"] > .ha-sidebar {
+    width: var(--ha-sidebar-width-collapsed);
+  }
+}

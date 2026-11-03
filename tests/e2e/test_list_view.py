@@ -21,8 +21,9 @@ def test_admin_navigation_structure(page: Page, demo_base_url: str) -> None:
 
     sidebar = page.get_by_test_id("sidebar")
     expect(sidebar).to_be_visible()
-    expect(sidebar.get_by_text("Menu")).to_be_visible()
+    expect(sidebar.get_by_test_id("sidebar-rail-toggle")).to_be_visible()
     expect(sidebar.get_by_role("link", name="Users")).to_be_visible()
+    expect(sidebar.get_by_test_id("nav-user")).to_have_attribute("aria-current", "page")
 
     expect(
         page.get_by_role("navigation", name="Main navigation").get_by_role(

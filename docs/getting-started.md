@@ -173,10 +173,9 @@ admin = Admin(
 - `nav_groups` sets the order, icon and initial collapsed state of groups. Groups you do not
   declare still appear, after the declared ones, sorted by label.
 - A model without `icon` gets the generic `layout-grid` icon.
-
-!!! note
-    The grouped, collapsible sidebar ships during v0.5.9. Until it lands, the sidebar is still
-    a flat list and these settings only prepare the groups.
+- Each group heading collapses its group, and the button at the top of the sidebar shrinks it
+  to an icon rail on wide screens. Both choices are kept in cookies, per browser.
+- Users only see the models they may view; a group with nothing visible is left out.
 
 ### Override templates
 

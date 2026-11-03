@@ -441,6 +441,7 @@ These are added to the CLAUDE.md reference table by the story that introduces th
 | Delete returns 409 (FK IntegrityError) | Dialog closes; the existing error toast explains it |
 | Dashboard (extends `_base.html`, no `base.html`) | Palette and shortcuts live in `_base.html` so they work there; the delete dialog lives in `base.html` (no deletes on the dashboard) |
 | Host overrides `_sidebar.html` | Their template keeps receiving `nav_items`; the new globals are additive |
+| Host appends to `nav_items` after `mount()` | An entry whose url matches no tree item renders in the unnamed group after its items, with its `icon` (or the fallback); its `permission` is honoured |
 | RTL | Rail and active bar use logical properties; `chevron-right` uses `.ha-icon--mirror` |
 
 ## Migration & Backward Compatibility

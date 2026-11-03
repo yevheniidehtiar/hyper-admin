@@ -8,8 +8,8 @@ render time, because it depends on the request.
 
 import logging
 import re
-from collections.abc import Iterable, Sequence
-from dataclasses import dataclass, field
+from collections.abc import Collection, Iterable, Mapping, Sequence
+from dataclasses import dataclass, field, replace
 from typing import TYPE_CHECKING, Any, NamedTuple, Union
 
 from hyperadmin.i18n import gettext_lazy
@@ -250,3 +250,86 @@ def _unique_slug(key: str | None, taken: set[str]) -> str:
         slug, n = f"{base}-{n}", n + 1
     taken.add(slug)
     return slug
+
+
+def legacy_nav_item(entry: Mapping[str, Any]) -> NavItem:
+    """A sidebar item for a ``nav_items`` dict a host appended after ``mount()``.
+
+    Its key and test id come from the URL: ``/reports/profit-loss`` gives the
+    key ``link:reports-profit-loss`` and the test id ``nav-reports-profit-loss``.
+    """
+    url = str(entry.get("url", ""))
+    slug = re.sub(r"[^a-z0-9]+", "-", url.casefold()).strip("-") or "link"
+    return NavItem(
+        key=f"link:{slug}",
+        label=entry.get("name") or url,
+        url=url,
+        icon=entry.get("icon") or FALLBACK_ICON,
+        permission=entry.get("permission") or None,
+        create_url=None,
+        create_permission=None,
+        order=0,
+        testid=f"nav-{slug}",
+    )
+
+
+def with_legacy_items(
+    tree: Sequence[NavGroupNode], nav_items: Iterable[Mapping[str, Any]]
+) -> tuple[NavGroupNode, ...]:
+    """Add the ``nav_items`` entries that are not in ``tree`` to its unnamed group.
+
+    Hosts used to append links to the flat ``nav_items`` global after
+    ``mount()``. An entry whose URL matches no tree item joins the unnamed group
+    at the top, after that group's own items, in the order it was appended.
+    """
+    known = {item.url for group in tree for item in group.items}
+    extras = tuple(
+        legacy_nav_item(entry) for entry in nav_items if str(entry.get("url", "")) not in known
+    )
+    if not extras:
+        return tuple(tree)
+    if tree and tree[0].slug == "":
+        first = tree[0]
+        return (replace(first, items=first.items + extras), *tree[1:])
+    return (NavGroupNode("", None, None, collapsed=False, items=extras), *tree)
+
+
+def filter_nav_tree(
+    tree: Iterable[NavGroupNode], permissions: Collection[str] | None
+) -> tuple[NavGroupNode, ...]:
+    """The groups and items a user holding ``permissions`` may see.
+
+    ``permissions`` is ``None`` for an unrestricted user (a superuser, or no
+    permission checker). An item without a ``permission`` is always shown; a
+    group left without items is dropped.
+    """
+    if permissions is None:
+        return tuple(tree)
+    visible = []
+    for group in tree:
+        items = tuple(
+            item for item in group.items if not item.permission or item.permission in permissions
+        )
+        if items:
+            visible.append(group if items == group.items else replace(group, items=items))
+    return tuple(visible)
+
+
+def find_nav_item(tree: Iterable[NavGroupNode], key: str) -> NavItem | None:
+    """The item whose pin key is ``key``, or ``None``."""
+    for group in tree:
+        for item in group.items:
+            if item.key == key:
+                return item
+    return None
+
+
+def is_active_nav_url(path: str, url: str) -> bool:
+    """Whether ``path`` is the page at ``url`` or below it, matched by whole segments.
+
+    ``/admin/order/42/edit`` is under ``/admin/order``; ``/admin/orderline`` is not.
+    """
+    base = url.rstrip("/")
+    if not base:
+        return path in {"", "/"}
+    return path == base or path.startswith(base + "/")
