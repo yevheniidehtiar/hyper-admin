@@ -15,6 +15,7 @@ import asyncio
 import logging
 import uuid
 from collections.abc import Awaitable, Callable, Sequence
+from importlib import import_module
 from typing import TYPE_CHECKING, Any, Protocol, cast
 
 import psycopg
@@ -303,7 +304,7 @@ def create_worker(dsn: str, registries: Sequence[Any], settings: TasksSettings) 
     ``TaskRegistry`` and for two registries on the same queue.
     """
     try:
-        import pgtask  # noqa: PLC0415  (the [pgtask] extra; the read adapter needs only psycopg)
+        pgtask: Any = import_module("pgtask")  # the [pgtask] extra; reads need only psycopg
     except ImportError as exc:
         raise TasksBackendError(
             f"the in-process worker needs pgtask; install hyperadmin-tasks[pgtask] ({exc})"
