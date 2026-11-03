@@ -111,10 +111,10 @@ def test_htmx_delete_carries_token(page: Page, object_perm_base_url: str) -> Non
     row = page.get_by_test_id("list-row").filter(has_text="bob-order-A")
     expect(row).to_have_count(1)
 
-    # When the delete button issues DELETE /admin/order/10
-    page.on("dialog", lambda dialog: dialog.accept())
+    # When the delete button issues DELETE /admin/order/10 (confirmed in the dialog)
+    row.get_by_test_id("row-delete-btn").click()
     with page.expect_response(lambda r: r.request.method == "DELETE") as response_info:
-        row.get_by_test_id("row-delete-btn").click()
+        page.get_by_test_id("dialog-confirm-delete").get_by_role("button", name="Delete").click()
     response = response_info.value
 
     # Then the response is 200
@@ -173,10 +173,10 @@ def test_stale_token_banner(page: Page, object_perm_base_url: str) -> None:
     page.context.add_cookies(stale)  # type: ignore[arg-type]
 
     # When an HTMX unsafe request gets 403 with X-HyperAdmin-CSRF
-    page.on("dialog", lambda dialog: dialog.accept())
     row = page.get_by_test_id("list-row").filter(has_text="bob-order-A")
+    row.get_by_test_id("row-delete-btn").click()
     with page.expect_response(lambda r: r.request.method == "DELETE") as response_info:
-        row.get_by_test_id("row-delete-btn").click()
+        page.get_by_test_id("dialog-confirm-delete").get_by_role("button", name="Delete").click()
     assert response_info.value.status == 403
     assert response_info.value.headers.get("x-hyperadmin-csrf") == "failed"
 

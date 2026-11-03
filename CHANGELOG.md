@@ -66,6 +66,14 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
   removed; E2E suites that click them should use `row-link` (new: `detail-edit-link`,
   `detail-delete-btn`, `form-view-link`, `form-delete-btn`). Hosts that override
   `components/table_body.html` keep their own row buttons.
+- **Delete confirms in a dialog** (v0.5.9, st-v059-list-03). The row Delete is a red ghost
+  icon button (`trash-2`, labelled "Delete {object}", tooltip), shown only to users who
+  may delete. It and the detail and edit pages' Delete open one shared
+  `components/confirm_delete_dialog.html` (`role="alertdialog"`, focus on Cancel,
+  `data-testid="dialog-confirm-delete"`) instead of the browser's `confirm()`, so E2E
+  suites that accept a native `page.on("dialog")` prompt should click the dialog's Delete
+  button instead. A refused delete (409 when other rows still reference the record) closes
+  the dialog and shows the error toast.
 
 ### Fixed
 - SQLAlchemy 2.0 declarative models now get an adapter (#715).

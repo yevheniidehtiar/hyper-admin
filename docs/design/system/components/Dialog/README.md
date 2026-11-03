@@ -1,6 +1,6 @@
 A modal for confirming destructive actions, resolving edit conflicts, and creating a related record in a popup.
 
-**Template:** `components/dialog.html` — a native `<dialog class="ha-dialog">` opened with `showModal()` (Alpine), so focus trapping, Esc to close and the backdrop (`ha-color-scrim`) come from the browser.
+**Template:** `components/dialog.html` (the shared delete confirmation ships as `components/confirm_delete_dialog.html`, opened by any `[data-ha-confirm-delete]` trigger through `static/js/confirm_delete.js`) — a native `<dialog class="ha-dialog">` opened with `showModal()` (Alpine), so focus trapping, Esc to close and the backdrop (`ha-color-scrim`) come from the browser.
 
 - Layout: head (status glyph, `ha-h3` title, one-paragraph description), optional body, foot on `ha-surface-base` with actions on the end side: cancel first, confirming action last.
 - **Confirm destructive:** `role="alertdialog"`, title is a question with the count ("Delete 3 invoices?"), description names what goes with it and that it cannot be undone; the confirm button repeats the verb and count on `ha-color-danger`. Initial focus on Cancel.

@@ -54,8 +54,8 @@
         </a>
         {%- if user_can_delete -%}
         <button type="button" class="ha-btn ha-btn--ghost ha-btn--danger-icon ha-form-actions__end" data-testid="form-delete-btn"
-                hx-delete="{{- url_for(model_name|lower ~ '-delete', item_id=item|ha_pk(pk_attr|default('id'))) -}}"
-                hx-confirm="{{ _('Are you sure you want to delete this item?') }}">
+                data-ha-confirm-delete="{{- url_for(model_name|lower ~ '-delete', item_id=item|ha_pk(pk_attr|default('id'))) -}}"
+                data-ha-label="{{ item_name }}">
             {{- icon('trash-2') }}{{ _("Delete") -}}
         </button>
         {%- endif -%}

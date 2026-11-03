@@ -45,26 +45,31 @@ def test_update_form_shows_validation_errors(page: Page, demo_base_url: str) -> 
 
 
 def test_delete_removes_item_from_list(page: Page, demo_base_url: str) -> None:
-    """Clicking Delete on a row removes it from the list."""
+    """Confirming Delete on a row in the confirm dialog removes it from the list."""
     page.goto(demo_base_url + "/admin/user")
 
     rows = page.get_by_test_id("list-row")
     initial_count = rows.count()
 
-    page.on("dialog", lambda d: d.accept())
     rows.last.get_by_test_id("row-delete-btn").click()
+    dialog = page.get_by_role("alertdialog")
+    expect(dialog).to_be_visible()
+    dialog.get_by_role("button", name="Delete").click()
 
     expect(rows).to_have_count(initial_count - 1)
 
 
 def test_delete_confirm_cancel_keeps_item(page: Page, demo_base_url: str) -> None:
-    """Dismissing the delete confirmation leaves the list unchanged."""
+    """Cancelling the delete confirmation dialog leaves the list unchanged."""
     page.goto(demo_base_url + "/admin/user")
 
     rows = page.get_by_test_id("list-row")
     initial_count = rows.count()
 
-    page.on("dialog", lambda d: d.dismiss())
     rows.last.get_by_test_id("row-delete-btn").click()
+    dialog = page.get_by_role("alertdialog")
+    expect(dialog).to_be_visible()
+    dialog.get_by_role("button", name="Cancel").click()
 
+    expect(dialog).to_be_hidden()
     expect(rows).to_have_count(initial_count)

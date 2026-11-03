@@ -1,0 +1,26 @@
+{#- The one shared delete confirmation (st-v059-list-03; design: components/Dialog,
+    "Confirm destructive"). Included once by base.html; static/js/confirm_delete.js
+    opens it for any trigger carrying data-ha-confirm-delete="<delete url>" and
+    data-ha-label="<object name>", and sends the DELETE with htmx.ajax from inside
+    <body hx-headers>, so the CSRF header applies. The server's HX-Redirect reloads
+    the page; a refusal (403 / 404 / 409) arrives as the usual error toast.
+
+    data-title-template is the translated "Delete {name}?"; the script fills in the
+    object name as text. -#}
+{%- from "components/_icons.html" import icon -%}
+<dialog class="ha-dialog ha-confirm-delete" id="ha-confirm-delete" role="alertdialog"
+        aria-labelledby="ha-confirm-delete-title" aria-describedby="ha-confirm-delete-desc"
+        data-testid="dialog-confirm-delete"
+        data-title-template="{{ _('Delete %(name)s?', name='{name}') }}">
+    <div class="ha-dialog__head">
+        <span class="ha-dialog__glyph ha-dialog__glyph--danger" aria-hidden="true">{{ icon('trash-2') }}</span>
+        <div>
+            <h2 class="ha-dialog__title" id="ha-confirm-delete-title">{{ _("Delete this record?") }}</h2>
+            <p class="ha-dialog__lede" id="ha-confirm-delete-desc">{{ _("This cannot be undone.") }}</p>
+        </div>
+    </div>
+    <div class="ha-dialog__foot">
+        <button type="button" class="ha-btn ha-btn-secondary" data-ha-confirm-cancel autofocus>{{ _("Cancel") }}</button>
+        <button type="button" class="ha-btn ha-btn--danger" data-ha-confirm-ok>{{ icon('trash-2') }}{{ _("Delete") }}</button>
+    </div>
+</dialog>

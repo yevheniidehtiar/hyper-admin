@@ -119,9 +119,9 @@ def test_e2e_htmx_delete_in_bridge_mode(page: Page, byoa_base_url: str) -> None:
     expect(row).to_have_count(1)
 
     # When the user deletes a row
-    page.on("dialog", lambda dialog: dialog.accept())
+    row.get_by_test_id("row-delete-btn").click()
     with page.expect_response(lambda r: r.request.method == "DELETE") as response_info:
-        row.get_by_test_id("row-delete-btn").click()
+        page.get_by_test_id("dialog-confirm-delete").get_by_role("button", name="Delete").click()
 
     # Then the row disappears
     assert response_info.value.status == HTTPStatus.OK

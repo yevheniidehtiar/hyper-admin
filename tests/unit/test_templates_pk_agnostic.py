@@ -173,7 +173,9 @@ def test_uuid_links_work(engine) -> None:
     _seed(engine, doc)
     client = _mount(engine, TplDocument)
     html = client.get("/admin/tpldocument").text
-    delete_url = _attr(html, "hx-delete", "row-delete-btn")
+    trigger = re.search(r'data-testid="row-delete-btn"[^>]*data-ha-confirm-delete="([^"]+)"', html)
+    assert trigger, "no confirm-delete trigger on row-delete-btn"
+    delete_url = trigger.group(1)
 
     edit = client.get(_href(html, "row-link"))
     view = client.get(_href(edit.text, "form-view-link"))

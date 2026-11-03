@@ -10,4 +10,7 @@
 <script src="{{ url_for('static', path='/js/primitives.js') }}" defer></script>
 <div id="ha-popup-root" class="ha-popup-root" role="dialog" aria-modal="true"
      aria-label="{{ _('Create') }}" data-testid="popup-root"></div>
+{#- The shared delete confirmation (st-v059-list-03) for the list, detail and edit pages. #}
+<script src="{{ url_for('static', path='/js/confirm_delete.js') }}" defer></script>
+{%- include "components/confirm_delete_dialog.html" %}
 {%- endblock %}

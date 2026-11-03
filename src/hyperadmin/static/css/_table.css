@@ -217,9 +217,11 @@
   z-index: calc(var(--ha-z-sticky) + 1);
 }
 
-.ha-table .ha-col-end {
-  width: 1%;
-  padding-inline: var(--ha-space-2);
+@media (min-width: 768px) {
+  .ha-table .ha-col-end {
+    width: 1%;
+    padding-inline: var(--ha-space-2);
+  }
 }
 
 /* Every column editable: a narrow chevron cell opens the record. */

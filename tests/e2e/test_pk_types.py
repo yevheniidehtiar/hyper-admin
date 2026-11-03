@@ -60,10 +60,10 @@ def test_uuid_crud(page: Page, pk_types_base_url: str) -> None:
     expect(page.get_by_test_id("list-row")).to_have_count(2)
 
     # When the user deletes the row via row-delete-btn
-    page.on("dialog", lambda d: d.accept())
     page.get_by_test_id("list-row").filter(has_text="Alpha edited").get_by_test_id(
         "row-delete-btn"
     ).click()
+    page.get_by_test_id("dialog-confirm-delete").get_by_role("button", name="Delete").click()
 
     # Then the row is gone from the list
     expect(page.get_by_test_id("list-row")).to_have_count(1)
