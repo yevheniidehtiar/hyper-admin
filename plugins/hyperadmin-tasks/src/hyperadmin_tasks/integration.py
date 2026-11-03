@@ -95,15 +95,16 @@ async def run_worker_in_lifespan(
         yield
         return
     worker = build_worker(settings, registries)
-    runner = asyncio.create_task(worker.run(), name="hyperadmin-tasks-worker")
-    runner.add_done_callback(_log_crash)
+    runner = asyncio.create_task(_run(worker), name="hyperadmin-tasks-worker")
     try:
         yield
     finally:
         worker.shutdown()
-        await asyncio.gather(runner, return_exceptions=True)
+        await runner
 
 
-def _log_crash(runner: asyncio.Task[None]) -> None:
-    if not runner.cancelled() and (exc := runner.exception()) is not None:
-        logger.error("in-process pgtask worker stopped", exc_info=exc)
+async def _run(worker: Worker) -> None:
+    try:
+        await worker.run()
+    except Exception:
+        logger.exception("in-process pgtask worker stopped")
