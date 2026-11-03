@@ -35,6 +35,7 @@ from hyperadmin_tasks.backend import (
 from hyperadmin_tasks.backends import _pgtask_columns as columns
 
 if TYPE_CHECKING:
+    from hyperadmin_tasks.integration import Worker
     from hyperadmin_tasks.settings import TasksSettings
 
 logger = logging.getLogger(__name__)
@@ -293,3 +294,29 @@ def create_backend(settings: TasksSettings) -> PgTaskBackend:
         )
         dsn = settings.dsn
     return PgTaskBackend(dsn, admin_dsn=settings.dsn)
+
+
+def create_worker(dsn: str, registries: Sequence[Any], settings: TasksSettings) -> Worker:
+    """Build (without connecting) a pgtask ``Worker`` that runs ``registries`` on ``dsn``.
+
+    Raises ``TasksBackendError`` when pgtask is not installed, for anything that is not a
+    ``TaskRegistry`` and for two registries on the same queue.
+    """
+    try:
+        import pgtask  # noqa: PLC0415  (the [pgtask] extra; the read adapter needs only psycopg)
+    except ImportError as exc:
+        raise TasksBackendError(
+            f"the in-process worker needs pgtask; install hyperadmin-tasks[pgtask] ({exc})"
+        ) from exc
+    for registry in registries:
+        if not isinstance(registry, pgtask.TaskRegistry):
+            raise TasksBackendError(f"{registry!r} is not a pgtask TaskRegistry")
+    try:
+        return pgtask.Worker(
+            dsn,
+            registries,
+            concurrency=settings.worker_concurrency,
+            shutdown_grace=settings.worker_shutdown_grace,
+        )
+    except ValueError as exc:
+        raise TasksBackendError(f"cannot build the pgtask worker: {exc}") from exc

@@ -38,6 +38,8 @@ class TasksPlugin:
 
     #: Backend lifecycle routes and :func:`hyperadmin_tasks.lifespan` go through; set on register.
     lifecycle: BackendLifecycle
+    #: Validated settings (the worker options are read by the lifespan); set on register.
+    settings: TasksSettings
 
     def on_register(self, admin: Any) -> None:
         """Build the backend, then contribute templates, the page, the nav entry, permissions.
@@ -47,6 +49,7 @@ class TasksPlugin:
         """
         plugins = admin.plugins
         settings: TasksSettings = plugins.settings(self.name) or TasksSettings()
+        self.settings = settings
         self.lifecycle = BackendLifecycle(select_backend(settings))
         plugins.add_template_dir(self, TEMPLATES_DIR)
         plugins.add_page(self, build_router(admin, self.lifecycle, settings), prefix=PAGE_PREFIX)

@@ -20,5 +20,13 @@ class TasksSettings(BaseSettings):
     refresh_seconds: int = 5
     #: Rows per page in task listings.
     page_size: int = 50
-    #: Whether the host runs a worker inside the admin process.
+    #: Whether ``hyperadmin_tasks.lifespan(admin)`` runs a pgtask worker inside the admin process.
     run_worker: bool = False
+    #: Worker-role connection string for the in-process worker; falls back to ``dsn``.
+    worker_dsn: str | None = None
+    #: ``"module:attr"`` path to the pgtask ``TaskRegistry`` (or a list of them) the worker runs.
+    registries: str | None = None
+    #: Handlers the in-process worker runs at once.
+    worker_concurrency: int = 10
+    #: Seconds running handlers get to finish on shutdown before they are cancelled.
+    worker_shutdown_grace: float = 30.0
