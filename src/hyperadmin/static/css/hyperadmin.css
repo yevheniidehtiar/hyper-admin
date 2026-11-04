@@ -19,6 +19,7 @@
 @import "_reset.css"         layer(reset);
 @import "_layout.css"        layer(layout);
 @import "_navbar.css"        layer(components);
+@import "_palette.css"       layer(components);
 @import "_sidebar.css"       layer(components);
 @import "_page-header.css"   layer(components);
 @import "_card.css"          layer(components);

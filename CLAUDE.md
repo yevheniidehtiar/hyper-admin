@@ -169,6 +169,10 @@ E2E tests use Playwright's accessibility-first locators. Query priority (highest
 | Pagination next | `pagination-next` |
 | Pagination current page | `pagination-page` |
 | Sort link (per field) | `sort-{field_name}` |
+| Command palette `<dialog>` | `command-palette` |
+| Palette search input | `palette-input` |
+| Palette result (each option) | `palette-result` |
+| Navbar "Search… ⌘K" button | `palette-trigger` |
 | Create New link | `create-link` |
 | Form (create/update) | `model-form` |
 | Field error list | `{field_name}-errors` |

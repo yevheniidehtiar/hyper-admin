@@ -1,0 +1,244 @@
+/* ==========================================================================
+   Command palette (st-v059-nav-04) — components/command_palette.html.
+   The design-system Combobox (docs/design/system/components/bundle.css:
+   listbox, option, match, group heading, foot) in a top-aligned native
+   <dialog>; the combobox control itself is in _forms.css. Plus the navbar
+   trigger "Search… ⌘K", which collapses to its icon below ha-bp-md.
+   ========================================================================== */
+
+.ha-palette {
+  inline-size: min(640px, 100% - 2 * var(--ha-space-4));
+  max-block-size: min(560px, 100% - 2 * var(--ha-space-8));
+  margin-block: 12vh auto;
+  margin-inline: auto;
+  padding: 0;
+  overflow: hidden;
+  color: var(--ha-color-text);
+  background-color: var(--ha-surface-overlay);
+  border: var(--ha-border-width) solid var(--ha-color-border-light);
+  border-radius: var(--ha-radius-xl);
+  box-shadow: var(--ha-shadow-xl);
+}
+
+.ha-palette[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.ha-palette__sprite {
+  display: none;
+}
+
+.ha-palette::backdrop {
+  background-color: var(--ha-color-scrim);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ha-palette[open] {
+    animation: ha-palette-in var(--ha-duration-fast) var(--ha-ease-default);
+  }
+}
+
+@keyframes ha-palette-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+.ha-palette__control {
+  padding: var(--ha-space-3);
+  border-block-end: var(--ha-border-width) solid var(--ha-color-border-light);
+}
+
+.ha-palette__control > .ha-icon:first-child {
+  inset-inline-start: calc(var(--ha-space-3) + 10px);
+}
+
+.ha-palette__control > .ha-input {
+  padding-inline-end: calc(var(--ha-space-3) + 40px);
+  font-size: var(--ha-font-size-base);
+}
+
+.ha-palette__control > .ha-combobox__tools {
+  inset-inline-end: calc(var(--ha-space-3) + var(--ha-space-2));
+}
+
+/* ---------- listbox (design-system Combobox) ---------- */
+
+.ha-palette__list {
+  flex: 1;
+  min-block-size: 0;
+  margin: 0;
+  padding: var(--ha-space-1) var(--ha-space-2) var(--ha-space-2);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.ha-palette__list:empty {
+  display: none;
+}
+
+.ha-palette .ha-listbox__group {
+  padding: var(--ha-space-2) var(--ha-space-3) var(--ha-space-1);
+  font-size: var(--ha-font-size-xs);
+  font-weight: var(--ha-font-semibold);
+  color: var(--ha-color-text-muted);
+  cursor: default;
+}
+
+.ha-palette .ha-option {
+  display: flex;
+  align-items: center;
+  gap: var(--ha-space-3);
+  min-block-size: var(--ha-target-min);
+  padding: var(--ha-space-2) var(--ha-space-3);
+  border-radius: var(--ha-radius-md);
+  color: var(--ha-color-text-strong);
+  cursor: pointer;
+}
+
+.ha-palette .ha-option > .ha-icon {
+  flex: none;
+  color: var(--ha-color-text-muted);
+}
+
+.ha-palette .ha-option:hover {
+  background-color: var(--ha-surface-hover);
+}
+
+/* Keyboard-active: tinted, with the focus-ring edge so it never relies on colour alone. */
+.ha-palette .ha-option.is-active {
+  background-color: var(--ha-surface-selected);
+  box-shadow: inset 2px 0 0 var(--ha-color-focus-ring);
+}
+
+[dir="rtl"] .ha-palette .ha-option.is-active {
+  box-shadow: inset -2px 0 0 var(--ha-color-focus-ring);
+}
+
+.ha-option__main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-inline-size: 0;
+}
+
+.ha-option__label,
+.ha-option__meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ha-option__meta {
+  font-size: var(--ha-font-size-xs);
+  line-height: 18px;
+  color: var(--ha-color-text-muted);
+}
+
+.ha-match {
+  background: none;
+  color: inherit;
+  font-weight: var(--ha-font-bold);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+/* The per-model "New …" action: Shift+Enter, or a click. */
+.ha-palette__new {
+  flex: none;
+  padding: var(--ha-space-1) var(--ha-space-2);
+  border-radius: var(--ha-radius-sm);
+  font-size: var(--ha-font-size-sm);
+  color: var(--ha-color-primary-text);
+  text-decoration: none;
+}
+
+.ha-palette__new:hover {
+  background-color: var(--ha-color-primary-soft);
+}
+
+.ha-palette .ha-listbox__state {
+  margin: 0;
+  padding: var(--ha-space-4);
+  color: var(--ha-color-text-muted);
+  font-size: var(--ha-font-size-sm);
+}
+
+.ha-palette .ha-listbox__foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ha-space-4);
+  padding: var(--ha-space-2) var(--ha-space-4);
+  border-block-start: var(--ha-border-width) solid var(--ha-color-border-light);
+  background-color: var(--ha-surface-base);
+  font-size: var(--ha-font-size-xs);
+  color: var(--ha-color-text-muted);
+}
+
+/* ---------- navbar trigger ---------- */
+
+.ha-palette-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ha-space-2);
+  min-inline-size: 44px;
+  min-block-size: 44px;
+  padding: 0;
+  font: inherit;
+  font-size: var(--ha-font-size-sm);
+  color: var(--ha-color-text-muted);
+  background: none;
+  border: var(--ha-border-width) solid transparent;
+  border-radius: var(--ha-radius-md);
+  cursor: pointer;
+}
+
+.ha-palette-trigger[hidden] {
+  display: none;
+}
+
+.ha-palette-trigger:hover {
+  color: var(--ha-color-text-strong);
+  background-color: var(--ha-surface-hover);
+}
+
+/* Below ha-bp-md only the icon shows; the text stays the accessible name. */
+.ha-palette-trigger > .ha-palette-trigger__text {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.ha-palette-trigger > .ha-palette-trigger__kbd {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .ha-palette-trigger {
+    min-inline-size: 13rem;
+    min-block-size: var(--ha-ctl-h);
+    justify-content: flex-start;
+    padding-inline: var(--ha-space-3) var(--ha-space-2);
+    background-color: var(--ha-surface-sunken);
+    border-color: var(--ha-color-border-light);
+  }
+
+  .ha-palette-trigger > .ha-palette-trigger__text {
+    position: static;
+    inline-size: auto;
+    block-size: auto;
+    clip-path: none;
+  }
+
+  .ha-palette-trigger > .ha-palette-trigger__kbd {
+    display: inline-flex;
+    margin-inline-start: auto;
+  }
+}

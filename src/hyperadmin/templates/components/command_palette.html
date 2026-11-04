@@ -1,0 +1,53 @@
+{#- Command palette (Cmd/Ctrl+K, st-v059-nav-04, docs/specs/navigation-and-list-ux.md).
+
+    A native <dialog> with the Combobox pattern: the input is role="combobox",
+    the results are a role="listbox" filled by static/js/palette.js from the
+    #ha-nav-data island. The island holds only what this user may open: the
+    nav tree is filtered by permission here, at render time, so forbidden models
+    never reach the page. Nothing renders without a signed-in user (login, MFA).
+-#}
+{%- from "components/_icons.html" import icon, icon_paths -%}
+{#- Pins come from the sidebar's nav_pinned_items() global (pins story) when it exists. -#}
+{%- set _pins = nav_pinned_items() if nav_pinned_items is defined else none -%}
+{%- set _palette = ha_nav_palette(_pins) if ha_nav_palette is defined else none -%}
+{%- if _palette is not none -%}
+{%- set _labels = {
+    "pinned": _("Pinned"),
+    "recent": _("Recent"),
+    "models": _("Models"),
+    "pages": _("Pages"),
+    "results": _("%(count)s results", count="{n}"),
+    "none": _("No results"),
+} -%}
+<script type="application/json" id="ha-nav-data">{{ _palette|tojson }}</script>
+<dialog id="ha-palette" class="ha-palette" data-testid="command-palette"
+        aria-label="{{ _('Search') }}" data-labels='{{ _labels|tojson }}'>
+    <div class="ha-combobox__control ha-palette__control">
+        {{ icon('search') }}
+        <input id="ha-palette-input" class="ha-input" type="text" role="combobox"
+               aria-expanded="true" aria-controls="ha-palette-list" aria-autocomplete="list"
+               autocomplete="off" spellcheck="false"
+               aria-label="{{ _('Search models and pages') }}"
+               placeholder="{{ _('Search models and pages…') }}"
+               data-testid="palette-input">
+        <span class="ha-combobox__tools"><kbd class="ha-kbd">Esc</kbd></span>
+    </div>
+    <div id="ha-palette-list" class="ha-listbox ha-palette__list" role="listbox"
+         aria-label="{{ _('Results') }}"></div>
+    <p class="ha-listbox__state ha-palette__empty" hidden>{{ _("No results") }}</p>
+    <p class="ha-sr-only" role="status" aria-live="polite" data-palette-status></p>
+    <div class="ha-listbox__foot ha-palette__foot" aria-hidden="true">
+        <span><kbd class="ha-kbd">↑</kbd> <kbd class="ha-kbd">↓</kbd> {{ _("move") }}</span>
+        <span><kbd class="ha-kbd">↵</kbd> {{ _("open") }}</span>
+        <span><kbd class="ha-kbd">⇧</kbd> <kbd class="ha-kbd">↵</kbd> {{ _("new") }}</span>
+    </div>
+    {#- One <symbol> per icon in use; palette.js draws rows with <use href="#ha-pi-…">. -#}
+    {%- set _icons = ["clock"] -%}
+    {%- for group in _palette.groups -%}{%- for item in group["items"] -%}
+    {%- if item.icon in icon_paths and item.icon not in _icons and _icons.append(item.icon) -%}{%- endif -%}
+    {%- endfor -%}{%- endfor %}
+    <svg class="ha-palette__sprite" width="0" height="0" hidden aria-hidden="true">
+        {%- for name in _icons %}<symbol id="ha-pi-{{ name }}" viewBox="0 0 24 24">{{ icon_paths[name] | safe }}</symbol>{% endfor -%}
+    </svg>
+</dialog>
+{%- endif -%}
