@@ -124,10 +124,12 @@
     var main = o.appendChild(el('span', 'ha-option__main'));
     highlight(main.appendChild(el('span', 'ha-option__label')), it.label, marks || []);
     if (it.group) main.appendChild(el('span', 'ha-option__meta')).textContent = it.group;
+    // Real links carry the targets; Enter clicks them (no script-built navigation).
+    o.haOpen = o.appendChild(el('a', '', { href: local(it.url) || '#', tabindex: '-1', hidden: '' }));
     if (local(it.create_url)) {
-      o.appendChild(el('a', 'ha-palette__new', { href: local(it.create_url), tabindex: '-1' })).textContent = it.create_label;
+      o.haNew = o.appendChild(el('a', 'ha-palette__new', { href: local(it.create_url), tabindex: '-1' }));
+      o.haNew.textContent = it.create_label;
     }
-    o.haItem = it;
     options.push(o);
     return o;
   }
@@ -191,10 +193,7 @@
   }
 
   function go(o, create) {
-    if (!o) return;
-    var it = o.haItem;
-    var url = local(create && it.create_url ? it.create_url : it.url);
-    if (url) window.location.assign(url);
+    if (o) (create && o.haNew || o.haOpen).click();
   }
 
   function open(from) {
