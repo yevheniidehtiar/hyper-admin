@@ -1,12 +1,15 @@
 """Navigation fixture app for E2E testing (v0.5.9, epic-v059-navigation).
 
-Started through the ``start_server`` fixture by ``tests/e2e/test_sidebar_groups.py``.
+Started through the ``start_server`` fixture by ``tests/e2e/test_sidebar_groups.py`` and
+``tests/e2e/test_nav_pins.py`` (``HYPERADMIN_NAV_PINS_MAX`` lowers the pin limit).
 Spec: ``docs/specs/navigation-and-list-ux.md``.
 
 Auth is on; every user's password is ``secret123``:
 
 * ``alice`` — superuser.
 * ``bob`` — may view orders, order lines and tags only (nothing in Accounting).
+* ``carol`` — may view orders and tags; she pinned Invoices and Orders before she lost
+  ``view_invoice`` (both pin rows are seeded).
 
 Models and groups (``nav_groups`` declares Sales first, then Accounting):
 
@@ -36,6 +39,7 @@ from hyperadmin.core.app import Admin
 from hyperadmin.core.model import ModelAdmin
 from hyperadmin.core.registry import site
 from hyperadmin.core.settings import HyperAdminSettings
+from hyperadmin.navigation import NavPin
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator
@@ -116,7 +120,11 @@ class TagAdmin(ModelAdmin):
 #: Model permissions of the non-superusers, by username.
 GRANTS: dict[str, tuple[str, ...]] = {
     "bob": ("view_order", "view_orderline", "view_tag"),
+    "carol": ("view_order", "view_tag"),
 }
+
+#: Pins seeded per username, in pin order.
+PINS: dict[str, tuple[str, ...]] = {"carol": ("invoice", "order")}
 
 
 async def _seed() -> None:
@@ -148,6 +156,8 @@ async def _seed() -> None:
             )
             for perm in perms:
                 session.add(UserPermission(user_id=user.id, permission_id=perm.id))
+            for target in PINS.get(name, ()):
+                session.add(NavPin(user_key=str(user.id), target=target))
         await session.commit()
 
 

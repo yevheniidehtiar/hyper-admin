@@ -249,6 +249,10 @@ class HyperAdminSettings(BaseSettings):
     #: Only used by models that set ``AdminOptions.count_cache_ttl``.
     count_cache_max_entries: int = Field(default=1024, ge=1)
 
+    # ── Navigation ────────────────────────────────────────────────────────────
+    #: Most sidebar pages one user may pin (built-in or bridge auth only).
+    nav_pins_max: int = Field(default=20, ge=1)
+
     # ── Internationalization ──────────────────────────────────────────────────
     default_locale: str = "en"
     supported_locales: list[str] = Field(default_factory=lambda: list(_DEFAULT_SUPPORTED_LOCALES))

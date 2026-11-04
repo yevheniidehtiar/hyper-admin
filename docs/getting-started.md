@@ -177,6 +177,14 @@ admin = Admin(
   to an icon rail on wide screens. Both choices are kept in cookies, per browser.
 - Users only see the models they may view; a group with nothing visible is left out.
 
+#### Pinned pages
+
+With auth configured, every sidebar item gets a pin button (on hover or focus). Pinned
+pages show in a "Pinned" group at the top of the sidebar, are stored per user in the
+`hyperadmin_nav_pin` table, and follow the user to any device. A user can pin up to
+`HyperAdminSettings.nav_pins_max` pages (20 by default). Pins of a page the user may no
+longer view stay stored but are hidden. Without auth there are no pins.
+
 ### Override templates
 
 Provide custom template directories searched before the built-in ones:

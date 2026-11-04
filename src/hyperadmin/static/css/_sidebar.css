@@ -93,6 +93,77 @@
   white-space: nowrap;
 }
 
+/* ==========================================================================
+   Pins: the Pinned group on top and a pin toggle at the end of each item,
+   shown on hover and focus (always on touch screens).
+   ========================================================================== */
+
+.ha-nav-group--pinned {
+  margin-block-end: var(--ha-space-4);
+}
+
+.ha-nav-group__heading--static {
+  padding: 0 var(--ha-space-3);
+  min-block-size: 28px;
+  display: flex;
+  align-items: center;
+  color: var(--ha-color-text-muted);
+}
+
+.ha-nav-row {
+  position: relative;
+}
+
+.ha-nav-row:has(.ha-nav-pin) > .ha-sidebar-link {
+  padding-inline-end: calc(var(--ha-space-3) + 28px);
+}
+
+.ha-nav-pin {
+  position: absolute;
+  inset-block-start: 50%;
+  inset-inline-end: var(--ha-space-1);
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 28px;
+  block-size: 28px;
+  padding: 0;
+  color: var(--ha-color-text-muted);
+  background: none;
+  border: 0;
+  border-radius: var(--ha-radius-md);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--ha-transition);
+}
+
+.ha-nav-row:hover > .ha-nav-pin,
+.ha-nav-row:focus-within > .ha-nav-pin {
+  opacity: 1;
+}
+
+.ha-nav-pin:hover {
+  color: var(--ha-color-text-strong);
+  background-color: var(--ha-surface-hover);
+}
+
+.ha-nav-pin[aria-pressed="true"] {
+  color: var(--ha-color-primary-text);
+}
+
+@media (hover: none) {
+  .ha-nav-pin {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ha-nav-pin {
+    transition: none;
+  }
+}
+
 /* The rail toggle shows on desktop only; the close button on mobile only. */
 .ha-sidebar-rail-toggle {
   display: none;
@@ -179,9 +250,20 @@
     display: flex;
   }
 
-  .ha-layout[data-collapsed="true"] .ha-sidebar-link {
+  .ha-layout[data-collapsed="true"] .ha-sidebar-link,
+  .ha-layout[data-collapsed="true"] .ha-nav-row:has(.ha-nav-pin) > .ha-sidebar-link {
     justify-content: center;
     padding: 0;
+  }
+
+  .ha-layout[data-collapsed="true"] .ha-nav-pin {
+    display: none;
+  }
+
+  .ha-layout[data-collapsed="true"] .ha-nav-group--pinned {
+    padding-block-end: var(--ha-space-2);
+    margin-block-end: var(--ha-space-2);
+    border-block-end: var(--ha-border-width) solid var(--ha-color-border-light);
   }
 }
 

@@ -11,18 +11,22 @@ depends on the user's permissions and on two cookies the sidebar script writes
 The cookies are read on the server, so the first paint is already right.
 :func:`register_nav_globals` adds the template globals below; other templates
 (the command palette, for one) reuse :func:`visible_nav_tree` for the same
-permission-filtered tree.
+permission-filtered tree and :func:`nav_pinned_items` for the user's pins.
 """
 
 from __future__ import annotations
 
-import re
 from typing import TYPE_CHECKING, Any
 from urllib.parse import unquote
 
 from jinja2 import pass_context
 
-from hyperadmin.core.navigation import filter_nav_tree, is_active_nav_url, with_legacy_items
+from hyperadmin.core.navigation import (
+    filter_nav_tree,
+    find_nav_item,
+    is_active_nav_url,
+    with_legacy_items,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Mapping
@@ -37,8 +41,8 @@ __all__ = [
     "NAV_COLLAPSED_COOKIE",
     "SIDEBAR_RAIL_COOKIE",
     "nav_collapsed_groups",
-    "nav_dom_id",
     "nav_is_active",
+    "nav_pinned_items",
     "register_nav_globals",
     "request_nav_tree",
     "sidebar_rail",
@@ -49,8 +53,6 @@ __all__ = [
 NAV_COLLAPSED_COOKIE = "ha-nav-collapsed"
 #: Cookie set to ``1`` while the desktop sidebar is an icon rail.
 SIDEBAR_RAIL_COOKIE = "ha-sidebar-rail"
-
-_DOM_UNSAFE = re.compile(r"[^A-Za-z0-9_-]")
 
 
 def _state(request: Any, name: str) -> Any:
@@ -116,15 +118,26 @@ def nav_is_active(context: Context, item: NavItem) -> bool:
     return is_active_nav_url(request.url.path, f"{prefix}{item.url}")
 
 
-def nav_dom_id(key: str) -> str:
-    """Template filter: ``key`` as a token safe in an element id and a CSS selector."""
-    return _DOM_UNSAFE.sub("-", key)
+@pass_context
+def nav_pinned_items(context: Context) -> list[NavItem] | None:
+    """Template global: the user's visible pins, in pin order; ``None`` while pins are off.
+
+    Pins are on for a request that carries ``request.state.nav_pins`` (the pin
+    keys ``views/nav_pins.py`` loads). A pin the user may not see, or whose
+    target is gone, is left out.
+    """
+    keys = _state(context.get("request"), "nav_pins")
+    if keys is None:
+        return None
+    tree = visible_nav_tree(context)
+    items = (find_nav_item(tree, key) for key in keys)
+    return [item for item in items if item is not None]
 
 
 def register_nav_globals(env: Environment) -> None:
-    """Add the sidebar's template globals and the ``ha_nav_id`` filter to ``env``."""
+    """Add the sidebar's template globals to ``env``."""
     env.globals["visible_nav_tree"] = visible_nav_tree
     env.globals["nav_collapsed_groups"] = nav_collapsed_groups
     env.globals["sidebar_rail"] = sidebar_rail
     env.globals["nav_is_active"] = nav_is_active
-    env.filters["ha_nav_id"] = nav_dom_id
+    env.globals["nav_pinned_items"] = nav_pinned_items

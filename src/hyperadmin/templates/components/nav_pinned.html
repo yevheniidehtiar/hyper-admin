@@ -1,0 +1,24 @@
+{#- The sidebar's Pinned group (st-v059-nav-03). Included by _sidebar.html and returned by
+    the pin endpoints (views/nav_pins.py) for HTMX to swap in; after a toggle the item's
+    button follows out of band. The slot stays in the DOM while the group is empty. -#}
+{%- from "components/_nav.html" import nav_link, nav_pin_toggle with context -%}
+{%- set pinned_items = nav_pinned_items() or [] -%}
+<div id="ha-nav-pinned" class="ha-nav-pinned-slot">
+    {%- if pinned_items %}
+    <div class="ha-nav-group ha-nav-group--pinned" data-testid="nav-pinned">
+        <h2 class="ha-nav-group__heading ha-nav-group__heading--static">
+            <span class="ha-nav-group__label">{{ _("Pinned") }}</span>
+        </h2>
+        <ul class="ha-sidebar-nav">
+            {%- for item in pinned_items %}
+            <li class="ha-nav-row">
+                {{ nav_link(item, testid=false) }}
+            </li>
+            {%- endfor %}
+        </ul>
+    </div>
+    {%- endif %}
+</div>
+{%- if toggled is defined %}
+{{ nav_pin_toggle(toggled, toggled.key in (request.state.nav_pins or []), oob=true) }}
+{%- endif %}

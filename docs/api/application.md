@@ -55,6 +55,7 @@ keyword arguments.
 | `session_cookie` | `str` | `"hyperadmin_session"` | Name of the admin's session cookie (built-in auth). Its `Path` is the admin path |
 | `session_max_age` | `int` | `1209600` | Session cookie lifetime in seconds (14 days) |
 | `session_same_site` | `"lax" \| "strict" \| "none"` | `"lax"` | `SameSite` attribute of the session cookie |
+| `nav_pins_max` | `int` | `20` | Most sidebar pages one user may pin (`HYPERADMIN_NAV_PINS_MAX`, at least 1). Pins need auth (built-in or `auth=`) and the `hyperadmin_nav_pin` table |
 | `cookie_secure` | `"auto" \| bool` | `"auto"` | `Secure` flag for every admin cookie. `"auto"` sets it when the request scheme is https, so plain-http development and `TestClient` keep working; set `true` in production behind a TLS proxy |
 
 ## Isolated mount

@@ -1,5 +1,5 @@
 {%- from "components/_icons.html" import icon -%}
-{%- from "components/_nav.html" import nav_link with context -%}
+{%- from "components/_nav.html" import nav_link, nav_pin_toggle with context -%}
 {#- AppShell grouped sidebar (docs/specs/navigation-and-list-ux.md, "UI details"). The
     tree is filtered by the user's permissions here; collapsed groups and the icon rail
     come from cookies, so the first paint is right. static/js/sidebar.js writes them.
@@ -8,6 +8,8 @@
 {%- set nav_groups_visible = visible_nav_tree() if _nav_ready else () -%}
 {%- set collapsed_groups = nav_collapsed_groups() if _nav_ready else () -%}
 {%- set rail = _nav_ready and sidebar_rail() -%}
+{#- Pins (st-v059-nav-03) are on when the request loaded the user's pin keys. -#}
+{%- set pin_keys = request.state.nav_pins if _nav_ready and nav_pinned_items() is not none else none -%}
 <aside id="sidebar"
        class="ha-sidebar"
        :class="{ 'ha-sidebar-mobile-open': sidebarOpen }"
@@ -41,6 +43,9 @@
             </button>
         </div>
         <nav aria-label="{{ _('Sidebar') }}">
+        {%- if pin_keys is not none %}
+        {% include "components/nav_pinned.html" %}
+        {%- endif %}
         {%- for group in nav_groups_visible %}
         {%- set is_collapsed = group.slug in collapsed_groups %}
         <div class="ha-nav-group{{ ' ha-nav-group--collapsed' if is_collapsed }}"
@@ -61,6 +66,9 @@
                 {%- for item in group.items %}
                 <li class="ha-nav-row">
                     {{ nav_link(item) }}
+                    {%- if pin_keys is not none %}
+                    {{ nav_pin_toggle(item, item.key in pin_keys) }}
+                    {%- endif %}
                 </li>
                 {%- endfor %}
             </ul>
