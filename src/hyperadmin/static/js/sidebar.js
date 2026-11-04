@@ -66,4 +66,18 @@
     var group = target.closest("[data-ha-nav-group]");
     if (group) toggleGroup(group);
   });
+
+  // A pin toggle is replaced (out of band) by the pin endpoint's response;
+  // give the focus back to its replacement so keyboard users stay in place.
+  var pendingPin = null;
+  document.addEventListener("htmx:beforeRequest", function (event) {
+    var elt = event.detail && event.detail.elt;
+    pendingPin = elt && elt.hasAttribute && elt.hasAttribute("data-ha-nav-pin") ? elt.id : null;
+  });
+  document.addEventListener("htmx:afterSettle", function () {
+    if (!pendingPin) return;
+    var replacement = document.getElementById(pendingPin);
+    pendingPin = null;
+    if (replacement && document.activeElement !== replacement) replacement.focus();
+  });
 })();

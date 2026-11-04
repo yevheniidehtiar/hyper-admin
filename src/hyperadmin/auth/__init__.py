@@ -141,6 +141,8 @@ def metadata() -> MetaData:
     # every mounted admin uses, in both auth modes; register it here too so
     # init-db and Alembic hosts see it without having imported the views.
     importlib.import_module("hyperadmin.filters.saved_views")
+    # The sidebar pins table (v0.5.9), used whenever auth is configured.
+    importlib.import_module("hyperadmin.navigation.pins")
     target = MetaData()
     for table in SQLModel.metadata.sorted_tables:
         if table.name.startswith(_TABLE_PREFIX):

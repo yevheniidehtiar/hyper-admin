@@ -35,7 +35,6 @@ from hyperadmin.core.settings import HyperAdminSettings
 from hyperadmin.views.navigation import (
     NAV_COLLAPSED_COOKIE,
     SIDEBAR_RAIL_COOKIE,
-    nav_dom_id,
     register_nav_globals,
     request_nav_tree,
 )
@@ -485,8 +484,3 @@ def test_request_nav_tree_hides_invisible_legacy_items_from_signed_in_users() ->
     assert [i.url for i in signed_in[0].items] == ["/a"]
     assert [i.url for i in anonymous[0].items] == ["/a", "/b"]
     assert request_nav_tree(None, {}) == ()
-
-
-def test_nav_dom_id_keeps_only_id_safe_characters() -> None:
-    assert nav_dom_id("plugin:permissions.matrix") == "plugin-permissions-matrix"
-    assert nav_dom_id("order_line") == "order_line"

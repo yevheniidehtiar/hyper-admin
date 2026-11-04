@@ -24,6 +24,14 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
   top group. New template globals `visible_nav_tree()`, `nav_collapsed_groups()`,
   `sidebar_rail()` and `nav_is_active(item)`; test ids `nav-<key>`, `nav-group-<slug>`,
   `sidebar-rail-toggle`.
+- **Pinned pages in the sidebar** (v0.5.9, st-v059-nav-03). With auth configured, each
+  user can pin models and plugin pages; they show in a "Pinned" group at the top of the
+  sidebar on every device. New `hyperadmin.navigation` package (`NavPin`, table
+  `hyperadmin_nav_pin`, and `NavPinService`), endpoints `POST {prefix}/nav/pins` and
+  `DELETE {prefix}/nav/pins/{target}`, and `HyperAdminSettings.nav_pins_max` (default 20,
+  `HYPERADMIN_NAV_PINS_MAX`). Pins are filtered by permission when the page renders. A
+  missing table is logged once and hides the feature. Template global
+  `nav_pinned_items()`; test ids `nav-pinned`, `nav-pin-<key>`.
 - **Plain SQLAlchemy models** (#719, #725–#730). Models built on SQLAlchemy 2.0
   `DeclarativeBase` or the legacy `declarative_base()` register with
   `site.register(Model)`, with no SQLModel base class. HyperAdmin builds a Pydantic schema

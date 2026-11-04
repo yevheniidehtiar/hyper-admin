@@ -334,6 +334,31 @@ endpoints unregistered as well. `user_key` is the stringified
 `request.state.user_key`, so saved views work for host users in bring-your-own-auth
 mode too.
 
+v0.5.9 adds one table for sidebar pins. It is part of `hyperadmin.auth.metadata()`, and of
+`SQLModel.metadata` once an admin with auth (built-in or `auth=`) is mounted:
+
+| Since | Table | Purpose |
+|---|---|---|
+| v0.5.9 | `hyperadmin_nav_pin` | one row per pinned sidebar page: `user_key`, `target` (`NavItem.key`: model slug or `plugin:<url_name>`), `created_at`; `(user_key, target)` unique |
+
+Written by hand:
+
+```python
+op.create_table(
+    "hyperadmin_nav_pin",
+    sa.Column("id", sa.Integer(), primary_key=True),
+    sa.Column("user_key", sa.String(255), nullable=False),
+    sa.Column("target", sa.String(255), nullable=False),
+    sa.Column("created_at", sa.DateTime(), nullable=False),
+    sa.UniqueConstraint("user_key", "target", name="uq_hyperadmin_nav_pin"),
+)
+op.create_index("ix_hyperadmin_nav_pin_user_key", "hyperadmin_nav_pin", ["user_key"])
+```
+
+The downgrade is `op.drop_table("hyperadmin_nav_pin")`. Until the table exists, the admin
+logs one warning and renders the sidebar without pins. `HyperAdminSettings.nav_pins_max`
+(default 20) caps the pins per user.
+
 `permissions_version` is the permission matrix's optimistic-concurrency stamp:
 every grid an operator loads carries the group's current value, and a save is
 only committed (and the stamp bumped, atomically with the permission rows) when

@@ -157,6 +157,8 @@ E2E tests use Playwright's accessibility-first locators. Query priority (highest
 | Sidebar nav link (model or plugin page) | `nav-{key}` (`NavItem.testid`, e.g. `nav-order`) |
 | Sidebar nav group | `nav-group-{slug}` |
 | Sidebar icon-rail toggle | `sidebar-rail-toggle` |
+| Sidebar Pinned group | `nav-pinned` |
+| Sidebar pin toggle (per item) | `nav-pin-{key}` (e.g. `nav-pin-order`) |
 | List table | `list-table` |
 | Each table row | `list-row` |
 | Row link (title cell, or chevron when every column is editable) | `row-link` |

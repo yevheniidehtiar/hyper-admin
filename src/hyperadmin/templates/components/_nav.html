@@ -27,3 +27,29 @@
     <span class="ha-nav-item__label">{{ item.label }}</span>
 </a>
 {%- endmacro -%}
+
+{#- Pin toggle of a sidebar item (st-v059-nav-03); oob=true when a pin endpoint returns it. -#}
+{%- macro nav_pin_toggle(item, pinned, oob=false) -%}
+{%- set label = _('Unpin %(label)s', label=item.label) if pinned else _('Pin %(label)s', label=item.label) -%}
+<button type="button"
+        class="ha-nav-pin"
+        id="ha-nav-pin-{{ item.key | replace(':', '-') | replace('.', '-') }}"
+        data-ha-nav-pin
+        data-testid="nav-pin-{{ item.key }}"
+        aria-pressed="{{ 'true' if pinned else 'false' }}"
+        aria-label="{{ label }}"
+        title="{{ label }}"
+        {%- if pinned %}
+        hx-delete="{{ admin_prefix }}/nav/pins/{{ item.key | urlencode }}"
+        {%- else %}
+        hx-post="{{ admin_prefix }}/nav/pins"
+        hx-vals='{{ {"target": item.key} | tojson }}'
+        {%- endif %}
+        hx-target="#ha-nav-pinned"
+        hx-swap="outerHTML"
+        {%- if oob %}
+        hx-swap-oob="true"
+        {%- endif %}>
+    {{- icon('pin-off' if pinned else 'pin', 'ha-icon--sm') -}}
+</button>
+{%- endmacro -%}

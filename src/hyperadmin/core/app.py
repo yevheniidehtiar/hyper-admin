@@ -46,6 +46,7 @@ if TYPE_CHECKING:
     from hyperadmin.core.csrf import EffectiveCsrfMode
     from hyperadmin.db import TableScope
     from hyperadmin.views.csrf import CsrfGuard
+    from hyperadmin.views.nav_pins import NavPins
 
 logger = logging.getLogger("hyperadmin")
 
@@ -216,6 +217,8 @@ class Admin:
 
         self.nav_groups: tuple[NavGroup, ...] = tuple(nav_groups)
         self._nav_sources: list[ModelNavSource] = []
+        #: Sidebar pins (``views/nav_pins.py``); set in mount() when auth is configured.
+        self._nav_pins: NavPins | None = None
         # Assigned before loading: a plugin's on_register calls admin.plugins.add_*.
         # What plugins contribute is applied in mount().
         self.plugins = PluginRegistry()
@@ -1132,13 +1135,32 @@ class Admin:
         """Dependencies the (protected) admin router is included with (SDD B.3).
 
         In bridge mode the host's ``get_user``, through ``build_admin_dependency``,
-        guards every admin route; otherwise there are none.
+        guards every admin route. With sidebar pins on, their loader runs after it,
+        once the request has a ``user_key``.
         """
-        if self.auth is None:
-            return []
-        from hyperadmin.auth.bridge import build_admin_dependency
+        dependencies: list[params.Depends] = []
+        if self.auth is not None:
+            from hyperadmin.auth.bridge import build_admin_dependency
 
-        return [Depends(build_admin_dependency(self.auth))]
+            dependencies.append(Depends(build_admin_dependency(self.auth)))
+        if self._nav_pins is not None:
+            dependencies.append(Depends(self._nav_pins.load))
+        return dependencies
+
+    def _register_nav_pins(self) -> None:
+        """Mount the sidebar pins (st-v059-nav-03) when auth gives requests a ``user_key``."""
+        if self._auth_mode is None:
+            return
+        from hyperadmin.navigation.pins import NavPinService
+        from hyperadmin.views.nav_pins import NavPins
+
+        service = NavPinService(
+            self.engine,
+            session_factory=self.session_factory,
+            max_pins=self.settings.nav_pins_max,
+        )
+        self._nav_pins = NavPins(service, self.templates)
+        self._nav_pins.register(self.router)
 
     def _build_csrf_guard(self) -> "CsrfGuard | None":
         """Build the CSRF check and its template globals; ``None`` when CSRF is off."""
@@ -1213,6 +1235,7 @@ class Admin:
         self._register_realtime_routes()
         self._register_views()
         self._apply_plugins()
+        self._register_nav_pins()
         self.templates.env.globals["admin_prefix"] = admin_prefix
         # Per-request override of the static global (SDD C.1): under a host
         # root_path, "{{ admin_prefix }}/..." links must carry it too.
