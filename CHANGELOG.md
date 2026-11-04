@@ -21,6 +21,13 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
   from the mapper (`hyperadmin.core.schema_for` / `dump_instance`), and every view reads
   fields through it. New `examples/sqlalchemy/` app with a Playwright smoke test.
   Auto-discovery still finds SQLModel models only (#716).
+- **Command palette** (v0.5.9, st-v059-nav-04). Cmd/Ctrl+K, or the "Search… ⌘K" navbar
+  button, opens a dialog that finds models, groups and plugin pages by name, lists recent
+  pages and records (localStorage `ha-recent`) and offers "New …" where the user may add.
+  It matches in the browser over a permission-filtered `ha-nav-data` island, so it sends no
+  request per keystroke. New `static/js/shortcuts.js` registry (`window.haShortcuts`) with an
+  off switch for single-key shortcuts (localStorage `ha-shortcuts`); `/` still focuses the
+  list search, while Cmd/Ctrl+K no longer does. New template global `ha_nav_palette()`.
 - **Compatibility & Performance docs page** (`docs/compatibility.md`): supported stacks,
   results of running HyperAdmin unmodified on Polar, Langflow, Mealie and Open WebUI
   (epic #701), timings on 237,757 rows, and known limitations.

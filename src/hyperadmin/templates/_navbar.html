@@ -15,6 +15,18 @@
             <span class="ha-navbar-brand-text">{{ site_title | default('HyperAdmin') }}</span>
         </a>
         <div class="ha-navbar-actions">
+        {#- Opens components/command_palette.html; palette.js unhides it, so without JS the sidebar stays the navigation. -#}
+        <button type="button"
+                class="ha-palette-trigger"
+                aria-haspopup="dialog"
+                aria-controls="ha-palette"
+                data-ha-palette-open
+                data-testid="palette-trigger"
+                hidden>
+            {{ icon('search') }}
+            <span class="ha-palette-trigger__text">{{ _("Search…") }}</span>
+            <kbd class="ha-kbd ha-palette-trigger__kbd" aria-hidden="true" data-ha-mod-k>Ctrl K</kbd>
+        </button>
         {% if realtime_enabled %}
         <span class="ha-rt-dot is-disconnected"
               data-testid="realtime-status"
