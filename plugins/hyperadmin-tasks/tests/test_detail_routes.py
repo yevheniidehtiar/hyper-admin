@@ -136,7 +136,12 @@ def test_large_payload_is_truncated_with_expand_control(
       And   following the expand control shows the whole payload
     """
     backend = InMemoryTaskBackend(clock=lambda: now)
-    backend.seed([make_task("T1", payload={"blob": "x" * (1024 * 1024)})])
+    backend.seed(
+        [
+            make_task("T1", payload={"blob": "x" * (1024 * 1024)}),
+            make_task("T2", payload={}),
+        ]
+    )
     client = make_client(backend)
 
     preview = client.get("/admin/tasks/t/T1").text
@@ -144,7 +149,9 @@ def test_large_payload_is_truncated_with_expand_control(
 
     assert 'data-testid="tasks-payload-truncated"' in preview
     assert '/admin/tasks/t/T1?full=payload" data-testid="tasks-payload-expand"' in preview
-    assert len(preview) < PREVIEW_LIMIT + 20_000
+    # Page chrome (sidebar, dialogs, palette data) grows with the admin; measure it.
+    chrome = len(client.get("/admin/tasks/t/T2").text)
+    assert len(preview) < chrome + PREVIEW_LIMIT + 5_000
     assert 'data-testid="tasks-payload-truncated"' not in expanded
     assert len(expanded) > 1024 * 1024
 
