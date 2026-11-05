@@ -32,6 +32,13 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
   `HYPERADMIN_NAV_PINS_MAX`). Pins are filtered by permission when the page renders. A
   missing table is logged once and hides the feature. Template global
   `nav_pinned_items()`; test ids `nav-pinned`, `nav-pin-<key>`.
+- **Built-in auth models in the "Access" sidebar group** (v0.5.9). User, Group and
+  Permission get their own icons and join the permission matrix in "Access" instead of the
+  unnamed top group. The `list-checks` icon is added for the tasks plugin's sidebar entry.
+- **ERP example shows the v0.5.9 navigation and list features** with sidebar groups, icons
+  and rendered screenshots (`scripts/erp_screenshots.py`). Its Profit & Loss report is now a
+  plugin page at `/admin/erp/profit-loss` (was `/admin/reports/profit-loss`) in the Reports
+  group.
 - **Plain SQLAlchemy models** (#719, #725–#730). Models built on SQLAlchemy 2.0
   `DeclarativeBase` or the legacy `declarative_base()` register with
   `site.register(Model)`, with no SQLModel base class. HyperAdmin builds a Pydantic schema
