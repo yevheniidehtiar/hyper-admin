@@ -333,3 +333,19 @@ def is_active_nav_url(path: str, url: str) -> bool:
     if not base:
         return path in {"", "/"}
     return path == base or path.startswith(base + "/")
+
+
+def active_nav_item(tree: Iterable[NavGroupNode], path: str) -> NavItem | None:
+    """The item whose page ``path`` (admin-relative) is on; the longest url wins.
+
+    Matching is :func:`is_active_nav_url`, so ``/order/42/edit`` is on ``/order``
+    and a root url (``/``) only matches ``/`` itself.
+    """
+    best: NavItem | None = None
+    for group in tree:
+        for item in group.items:
+            if is_active_nav_url(path, item.url) and (
+                best is None or len(item.url) > len(best.url)
+            ):
+                best = item
+    return best

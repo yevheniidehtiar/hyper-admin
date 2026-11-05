@@ -1,57 +1,44 @@
 """Command palette data (st-v059-nav-04, ``docs/specs/navigation-and-list-ux.md``).
 
-Pure functions over the ``nav_tree`` (``core/navigation.py``): which items one
-user may open, which item a page is on, and the JSON island the palette reads.
-The request-bound glue is ``views/palette_context.py``.
+Pure functions over the ``nav_tree`` (``core/navigation.py``): the "New …"
+actions one user may use and the JSON island the palette reads. Permission
+filtering, legacy ``nav_items`` links and the active item come from
+``core/navigation.py``, shared with the sidebar. The request-bound glue is
+``views/palette_context.py``.
 """
 
-from collections.abc import Callable, Iterable, Mapping, Sequence
+from collections.abc import Collection, Iterable, Mapping, Sequence
 from dataclasses import replace
 from typing import Any
 
 from hyperadmin.core.display import humanize_class_name
-from hyperadmin.core.navigation import NavGroupNode, NavItem
+from hyperadmin.core.navigation import NavGroupNode
 from hyperadmin.i18n import gettext
 
 
-def palette_tree(
-    tree: Iterable[NavGroupNode], has_perm: Callable[[str], bool]
+def palette_create_actions(
+    tree: Iterable[NavGroupNode], permissions: Collection[str] | None
 ) -> tuple[NavGroupNode, ...]:
-    """The part of ``tree`` one user may open.
+    """``tree`` with "New …" actions only where the user may add records.
 
-    Items whose ``permission`` the user lacks are dropped, and so are groups left
-    without items. ``create_url`` is cleared where the user lacks
-    ``create_permission``, so no "New …" action is offered there.
+    Run it on a tree already filtered by :func:`~hyperadmin.core.navigation.filter_nav_tree`:
+    ``create_url`` is cleared where the user lacks ``create_permission``.
+    ``permissions`` is ``None`` for an unrestricted user.
     """
-    nodes = []
-    for node in tree:
-        items = tuple(
-            item
-            if not item.create_permission or has_perm(item.create_permission)
-            else replace(item, create_url=None, create_permission=None)
-            for item in node.items
-            if not item.permission or has_perm(item.permission)
+    if permissions is None:
+        return tuple(tree)
+    return tuple(
+        replace(
+            node,
+            items=tuple(
+                item
+                if not item.create_permission or item.create_permission in permissions
+                else replace(item, create_url=None, create_permission=None)
+                for item in node.items
+            ),
         )
-        if items:
-            nodes.append(replace(node, items=items))
-    return tuple(nodes)
-
-
-def palette_item_for_path(tree: Iterable[NavGroupNode], path: str) -> NavItem | None:
-    """The item whose page ``path`` (admin-relative) is on: its url, or a page below it.
-
-    A segment match, so ``/order`` matches ``/order/42/edit`` but not
-    ``/orderline``; the root url ``/`` (a dashboard entry) matches only itself.
-    The longest url wins.
-    """
-    best: NavItem | None = None
-    for node in tree:
-        for item in node.items:
-            base = item.url.rstrip("/")
-            on_item = path == item.url or (bool(base) and path.startswith(base + "/"))
-            if on_item and (best is None or len(item.url) > len(best.url)):
-                best = item
-    return best
+        for node in tree
+    )
 
 
 def model_singular_label(model: Any, admin_class: Any) -> Any:
