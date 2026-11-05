@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncConnection, AsyncEngine, create_async_en
 from sqlmodel import SQLModel
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Mapping, Sequence
 
     from sqlalchemy import Table
     from sqlalchemy.engine import URL, Connection
@@ -30,14 +30,43 @@ sqlite_url = "sqlite+aiosqlite:///:memory:"
 #: ``Admin.create_tables(scope=)`` and the ``hyperadmin init-db`` CLI (SDD C.2).
 TableScope = Literal["hyperadmin", "all"]
 
-_default_engines: dict[str, AsyncEngine] = {}
+#: Pool arguments an in-memory SQLite engine cannot take: its ``StaticPool`` rejects the
+#: sizing ones, and recycling its single connection would drop the whole database.
+_QUEUE_POOL_KWARGS = frozenset(
+    {"pool_size", "max_overflow", "pool_timeout", "pool_recycle", "pool_use_lifo"}
+)
+
+_default_engines: dict[tuple[str, tuple[tuple[str, Any], ...]], AsyncEngine] = {}
+
+
+def build_engine(url: str | URL, engine_kwargs: Mapping[str, Any] | None = None) -> AsyncEngine:
+    """Create an async engine for ``url``, forwarding ``engine_kwargs`` to SQLAlchemy.
+
+    Pool arguments (``pool_size``, ``max_overflow``, ``pool_timeout``, ``pool_recycle``,
+    ``pool_use_lifo``) are dropped for an in-memory SQLite URL, whose ``StaticPool``
+    cannot take them, so one configuration works for tests and production alike.
+    Without ``engine_kwargs`` SQLAlchemy's own defaults apply (``pool_size=5``,
+    ``max_overflow=10``, ``pool_timeout=30``). For a production PostgreSQL behind
+    several workers, a starting point is ``pool_size=20, max_overflow=40,
+    pool_timeout=30, pool_pre_ping=True``; keep ``workers * (pool_size +
+    max_overflow)`` below the server's ``max_connections``.
+
+    Args:
+        url: The database URL.
+        engine_kwargs: Extra keyword arguments for ``create_async_engine``.
+    """
+    kwargs = dict(engine_kwargs or {})
+    if is_sqlite_memory_url(url):
+        kwargs = {key: value for key, value in kwargs.items() if key not in _QUEUE_POOL_KWARGS}
+    return create_async_engine(url, **kwargs)
 
 
 def get_default_engine(settings: HyperAdminSettings | None = None) -> AsyncEngine:
     """Return the demo-mode engine for ``settings.database_url``.
 
-    The engine is created on first use and cached per URL, so every caller
-    using the same URL (including an in-memory SQLite database) shares it.
+    The engine is built by :func:`build_engine` with the ``database_pool_*`` settings
+    on first use and cached per URL and pool configuration, so every caller using
+    the same URL (including an in-memory SQLite database) shares it.
 
     Args:
         settings: The settings to read ``database_url`` from. When ``None``, a
@@ -49,16 +78,26 @@ def get_default_engine(settings: HyperAdminSettings | None = None) -> AsyncEngin
 
         settings = HyperAdminSettings()
     url = settings.database_url
-    engine = _default_engines.get(url)
+    engine_kwargs = settings.database_engine_kwargs
+    key = (url, tuple(sorted(engine_kwargs.items())))
+    engine = _default_engines.get(key)
     if engine is None:
-        engine = create_async_engine(url, echo=False)
-        _default_engines[url] = engine
+        engine = build_engine(url, {"echo": False, **engine_kwargs})
+        _default_engines[key] = engine
     return engine
 
 
 def is_sqlite_url(url: str | URL) -> bool:
     """Return ``True`` when ``url`` points at a SQLite database (any driver)."""
     return make_url(url).get_backend_name() == "sqlite"
+
+
+def is_sqlite_memory_url(url: str | URL) -> bool:
+    """Return ``True`` when ``url`` points at an in-memory SQLite database."""
+    parsed = make_url(url)
+    if parsed.get_backend_name() != "sqlite":
+        return False
+    return parsed.database in (None, "", ":memory:") or parsed.query.get("mode") == "memory"
 
 
 def resolve_bind(session_factory: Any) -> AsyncEngine | AsyncConnection:
