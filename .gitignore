@@ -111,3 +111,6 @@ messages.pot
 # Visual-regression failure artefacts
 tests/e2e/snapshots/**/*.actual.png
 tests/e2e/snapshots/**/*.diff.png
+
+# UI/UX review screenshots (.claude/skills/ui-ux-review)
+.ux-review/
