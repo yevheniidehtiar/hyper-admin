@@ -16,8 +16,13 @@ Source: [`examples/erp/`](https://github.com/yevheniidehtiar/hyper-admin/tree/ma
   lines belong to journal entries. HyperAdmin handles all FK list/detail views out of the box.
 - **Built-in RBAC** — `hyperadmin.auth` is added as a discovered app; a `SessionAuthBackend` and
   `ModelPermissionChecker` guard every route.
-- **Custom report** — the Annual Profit & Loss view shows how to add a custom FastAPI router and
-  Jinja2 template that integrate with the admin sidebar and base layout.
+- **Custom report** — the Annual Profit & Loss view shows how to add a page of your own (a FastAPI
+  router and a Jinja2 template) inside the admin and link it from a sidebar group.
+- **Navigation** — models grouped by domain with icons, per-user pinned pages, a collapsible icon
+  rail and a <kbd>⌘K</kbd> command palette.
+- **Lists and forms** — rows that open on click, a red delete icon with a confirmation, keyboard
+  shortcuts (<kbd>j</kbd>/<kbd>k</kbd>, <kbd>x</kbd>, <kbd>c</kbd>, <kbd>?</kbd>) and a warning
+  before leaving a form with unsaved changes.
 - **Large seed dataset** — 100 contacts, 500+ invoices, 800+ bills give meaningful pagination,
   search, and sort behaviour under realistic load.
 
@@ -79,27 +84,85 @@ uv run fastapi dev examples/erp/main.py
 
 ---
 
-## Custom P&L report
+## Sidebar groups and icons
 
-The report extends HyperAdmin with a plain FastAPI `APIRouter`:
+Each admin class names its group, its position in it and its icon:
+
+```python
+# examples/erp/sales/admin.py (excerpt)
+class InvoiceAdmin(ModelAdmin):
+    nav_group = "Sales"
+    nav_order = 0
+    icon = "receipt"
+```
+
+`main.py` declares the groups' order, icon and whether they start collapsed:
 
 ```python
 # examples/erp/main.py (excerpt)
-admin.mount(path="/admin")
-
-# Include the report into the admin sub-app: it is served under /admin and
-# runs behind the admin login.
-admin.asgi_app.include_router(reports_router)
-
-admin.templates.env.globals["nav_items"].append(
-    {"name": "Profit & Loss Report", "url": "/reports/profit-loss", "icon": "ha-icon-chart"}
+admin = Admin(
+    app,
+    engine=engine,
+    ...,
+    nav_groups=[
+        NavGroup("Sales", icon="shopping-cart", order=0),
+        NavGroup("Purchases", icon="truck", order=1),
+        NavGroup("Accounting", icon="wallet", order=2),
+        NavGroup("Contacts", icon="users", order=3),
+        NavGroup("Reports", icon="bar-chart-3", order=4),
+        NavGroup("Field showcase", icon="sparkles", order=5, collapsed=True),
+        NavGroup("Tasks", icon="list-checks", order=6, collapsed=True),
+        NavGroup("Access", icon="shield-check", order=7, collapsed=True),
+    ],
 )
 ```
+
+The built-in Users, Groups and Permissions join "Access" next to the permission matrix.
+
+![Grouped sidebar with pinned Invoices and Accounts](../assets/screenshots/sidebar-groups-pinned.png)
+
+| | |
+|---|---|
+| ![Icon rail](../assets/screenshots/sidebar-rail.png) | ![Command palette](../assets/screenshots/command-palette.png) |
+| ![Delete confirmation](../assets/screenshots/delete-dialog.png) | ![Keyboard shortcuts](../assets/screenshots/shortcuts-overlay.png) |
+| ![Sticky save bar](../assets/screenshots/form-sticky-save-bar.png) | ![Dark mode](../assets/screenshots/list-rows-dark.png) |
+
+The screenshots are rendered from this example by `scripts/erp_screenshots.py`.
+
+---
+
+## Custom P&L report
+
+The report is a plain FastAPI `APIRouter`, contributed through the plugin API so it runs inside
+the admin (login, CSRF, locale, error pages) and gets a sidebar link:
+
+```python
+# examples/erp/reports/plugin.py (excerpt)
+class ErpPagesPlugin:
+    name = "erp"
+
+    def on_register(self, admin):
+        admin.plugins.add_page(self, router, prefix="/erp")
+        admin.plugins.add_nav_entry(
+            self,
+            label="Profit & Loss",
+            url_name="profit_loss_report",
+            icon="bar-chart-3",
+            section="Reports",
+        )
+
+
+# examples/erp/main.py, before admin.mount()
+admin.plugins.register(ErpPagesPlugin(), admin=admin)
+```
+
+`section="Reports"` places the link in the Reports group, next to the `hyperadmin-reports`
+pages when that plugin is installed.
 
 The template at `templates/reports/profit_loss.html` extends `{% extends "base.html" %}` so it
 inherits the sidebar, header, and HTMX bindings without any extra setup.
 
-Visit `/admin/reports/profit-loss?year=2024` (or leave `year` blank for the current year).
+Visit `/admin/erp/profit-loss?year=2024` (or leave `year` blank for the current year).
 
 ---
 
