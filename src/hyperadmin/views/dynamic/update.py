@@ -119,6 +119,7 @@ class UpdateViewMixin(RelationViewMixin, InlineViewMixin):
             "values": values or initial_values,
             "errors": errors or {},
             "inline_formsets": inline_formsets or [],
+            "warn_unsaved_changes": getattr(self.options, "warn_unsaved_changes", True),
             # View / Delete live outside form_body, which is all HTMX re-renders.
             **({} if is_htmx else await self._record_actions(request)),
             # Legacy keys for compatibility

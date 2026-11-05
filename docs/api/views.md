@@ -47,6 +47,7 @@ A `ModelAdmin` subclass can declare `list_display`, `search_fields`, `list_filte
 | `object_permission_checker` | Object-level permission checks for each row |
 | `panels` | Tabbed panels on the detail page (see `hyperadmin.core.panels.panel`) |
 | `realtime_notifications` | Opt the model into live CRUD notifications |
+| `warn_unsaved_changes` | Ask before leaving a create, edit or popup form with unsaved changes (`True` by default) |
 
 ## DynamicModelView
 

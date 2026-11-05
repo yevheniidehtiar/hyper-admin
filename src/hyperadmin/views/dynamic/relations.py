@@ -477,6 +477,7 @@ class RelationViewMixin(FormDataMixin):
             "values": values or {},
             "errors": errors or {},
             "post_url": post_url,
+            "warn_unsaved_changes": getattr(self.options, "warn_unsaved_changes", True),
         }
         return self.templates.TemplateResponse(
             request,

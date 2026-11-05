@@ -52,6 +52,13 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
   request per keystroke. New `static/js/shortcuts.js` registry (`window.haShortcuts`) with an
   off switch for single-key shortcuts (localStorage `ha-shortcuts`); `/` still focuses the
   list search, while Cmd/Ctrl+K no longer does. New template global `ha_nav_palette()`.
+- **Unsaved-changes guard, sticky save bar and Cmd/Ctrl+S** (v0.5.9, st-v059-kbd-01). New
+  `static/js/form_guard.js`: once a create, edit or popup create form has changes (inline
+  rows included), leaving the page or an htmx request that would replace the form asks
+  first. Saving never asks, and a delete from the edit page asks only in the delete dialog.
+  The form actions stick to the bottom of the screen (`data-testid="form-actions"`), and
+  Cmd/Ctrl+S submits the form. Turn the prompt off per model with
+  `AdminOptions(warn_unsaved_changes=False)`.
 - **Compatibility & Performance docs page** (`docs/compatibility.md`): supported stacks,
   results of running HyperAdmin unmodified on Polar, Langflow, Mealie and Open WebUI
   (epic #701), timings on 237,757 rows, and known limitations.

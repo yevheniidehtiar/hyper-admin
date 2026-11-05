@@ -269,6 +269,14 @@ class AdminOptions(BaseModel):
     ``True`` / ``False`` override ``RealtimeSettings.notifications`` for this
     model; ``None`` (default) follows it. Ignored when ``Admin(realtime=None)``.
     """
+    warn_unsaved_changes: bool = True
+    """Whether the create, edit and popup-create forms ask before unsaved changes are lost.
+
+    While a form has unsaved edits, leaving the page (a link, reload or closing
+    the tab) and HTMX requests that would replace the form ask first. Saving,
+    and confirming a delete, never ask. Set to ``False`` to turn this off for
+    the model. ``Cmd/Ctrl+S`` saves either way.
+    """
 
     @field_validator("list_filter")
     @classmethod

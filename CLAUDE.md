@@ -180,6 +180,7 @@ E2E tests use Playwright's accessibility-first locators. Query priority (highest
 | Navbar "Search… ⌘K" button | `palette-trigger` |
 | Create New link | `create-link` |
 | Form (create/update) | `model-form` |
+| Sticky form actions bar (create/update) | `form-actions` |
 | Field error list | `{field_name}-errors` |
 | Detail fields container | `detail-fields` |
 
