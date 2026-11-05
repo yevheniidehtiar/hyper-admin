@@ -1049,15 +1049,19 @@ class Admin:
         Called from ``mount()`` when :meth:`_should_register_auth_models` is true.
         Skips silently if a model is already registered.
         Each auth model gets its own admin class to avoid shared
-        class-level state on the default ``ModelAdmin``.
+        class-level state on the default ``ModelAdmin``. They join the sidebar's
+        "Access" group, next to the permission matrix.
         """
         from hyperadmin.auth.models import Group, Permission, User
         from hyperadmin.core.model import ModelAdmin
+        from hyperadmin.core.navigation import ACCESS_GROUP
         from hyperadmin.core.options import AdminOptions
         from hyperadmin.core.registry import site
 
         if User not in site._registry:
-            user_admin = type("UserAdmin", (ModelAdmin,), {})
+            user_admin = type(
+                "UserAdmin", (ModelAdmin,), {"nav_group": ACCESS_GROUP, "icon": "user"}
+            )
             site.register(
                 User,
                 admin_class=user_admin,
@@ -1067,10 +1071,18 @@ class Admin:
                 ),
             )
         if Group not in site._registry:
-            group_admin = type("GroupAdmin", (ModelAdmin,), {})
+            group_admin = type(
+                "GroupAdmin",
+                (ModelAdmin,),
+                {"nav_group": ACCESS_GROUP, "icon": "users", "nav_order": 1},
+            )
             site.register(Group, admin_class=group_admin)
         if Permission not in site._registry:
-            perm_admin = type("PermissionAdmin", (ModelAdmin,), {})
+            perm_admin = type(
+                "PermissionAdmin",
+                (ModelAdmin,),
+                {"nav_group": ACCESS_GROUP, "icon": "key-round", "nav_order": 2},
+            )
             site.register(
                 Permission,
                 admin_class=perm_admin,

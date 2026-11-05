@@ -319,3 +319,33 @@ def test_mount_publishes_nav_tree_with_groups_and_plugins() -> None:
             "permission": "view_nvticket",
         }
     ]
+
+
+@pytest.mark.usefixtures("_clean_registry")
+def test_built_in_auth_models_join_the_access_group() -> None:
+    """
+    Scenario: the built-in auth models are grouped with icons
+      Given HyperAdmin registers the built-in User, Group and Permission models
+      When  the admin is mounted
+      Then  the nav_tree has one "Access" group listing Users, Groups and Permissions
+      And   each item has its own icon instead of the fallback
+    """
+    admin = Admin(
+        FastAPI(),
+        engine=create_async_engine("sqlite+aiosqlite:///:memory:"),
+        settings=HyperAdminSettings(
+            create_tables=False,
+            secret_key="x" * 40,
+            plugins_enabled=False,
+            register_auth_models=True,
+        ),
+    )
+    admin.mount("/admin")
+
+    tree = admin.templates.env.globals["nav_tree"]
+    assert [str(node.label) for node in tree] == ["Access"]
+    assert [(item.key, item.icon) for item in tree[0].items] == [
+        ("user", "user"),
+        ("group", "users"),
+        ("permission", "key-round"),
+    ]
