@@ -234,6 +234,8 @@
   if (mac) document.querySelectorAll('[data-ha-mod-k]').forEach(function (k) { k.textContent = '⌘K'; });
   if (window.haShortcuts) {
     window.haShortcuts.register({ keys: 'mod+k', description: 'Search', handler: function () {
+      // Another modal (e.g. the delete confirmation) keeps the keyboard; don't stack on it.
+      if (!dlg.open && document.querySelector('dialog[open]')) return false;
       if (dlg.open) dlg.close(); else open();
     } });
   }
