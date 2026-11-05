@@ -32,7 +32,7 @@ class Invoice(SQLModel, table=True):
 
     @property
     def total_amount(self) -> float:
-        return sum(item.total_price for item in self.items)
+        return round(sum(item.total_price for item in self.items), 2)
 
     def __str__(self) -> str:
         return f"Invoice {self.number}"
@@ -51,7 +51,7 @@ class InvoiceItem(SQLModel, table=True):
 
     @property
     def total_price(self) -> float:
-        return self.quantity * self.unit_price
+        return round(self.quantity * self.unit_price, 2)
 
 
 class TaxRate(SQLModel, table=True):
