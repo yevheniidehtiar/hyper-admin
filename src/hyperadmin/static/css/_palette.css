@@ -242,3 +242,49 @@
     margin-inline-start: auto;
   }
 }
+
+/* ==========================================================================
+   Keyboard shortcuts overlay (components/shortcuts_overlay.html, st-v059-kbd-02):
+   a Dialog listing haShortcuts.list() by scope, keys as .ha-kbd, and the
+   single-key switch in the footer.
+   ========================================================================== */
+
+.ha-shortcuts {
+  inline-size: min(100%, 520px);
+}
+
+.ha-shortcuts__list {
+  display: grid;
+  gap: var(--ha-space-5);
+  max-block-size: 60vh;
+  overflow-y: auto;
+  padding: var(--ha-space-4) var(--ha-space-6) var(--ha-space-6);
+}
+
+.ha-shortcuts__list h3 {
+  margin: 0 0 var(--ha-space-2);
+  font-size: var(--ha-font-size-xs);
+  font-weight: var(--ha-font-semibold);
+  color: var(--ha-color-text-muted);
+}
+
+.ha-shortcuts__list dl {
+  display: grid;
+  grid-template-columns: minmax(5.5rem, max-content) 1fr;
+  gap: var(--ha-space-2) var(--ha-space-4);
+  align-items: center;
+  margin: 0;
+}
+
+.ha-shortcuts__list dt {
+  display: flex;
+  align-items: center;
+  gap: var(--ha-space-1);
+  color: var(--ha-color-text-muted);
+  font-size: var(--ha-font-size-xs);
+}
+
+.ha-shortcuts__list dd {
+  margin: 0;
+  color: var(--ha-color-text);
+}

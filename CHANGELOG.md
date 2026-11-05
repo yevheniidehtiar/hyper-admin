@@ -59,6 +59,11 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
   The form actions stick to the bottom of the screen (`data-testid="form-actions"`), and
   Cmd/Ctrl+S submits the form. Turn the prompt off per model with
   `AdminOptions(warn_unsaved_changes=False)`.
+- **List keyboard navigation and shortcuts overlay** (v0.5.9, st-v059-kbd-02). On lists, `j`/`k`
+  focus the next or previous row link, Enter opens it, `x` selects the focused row and `c`
+  opens the create form. `?` (or Cmd/Ctrl+/, which stays on) opens
+  `components/shortcuts_overlay.html` (`data-testid="shortcuts-overlay"`), which lists every
+  registered shortcut and holds the "Single-key shortcuts" switch (`shortcuts-toggle`).
 - **Compatibility & Performance docs page** (`docs/compatibility.md`): supported stacks,
   results of running HyperAdmin unmodified on Polar, Langflow, Mealie and Open WebUI
   (epic #701), timings on 237,757 rows, and known limitations.

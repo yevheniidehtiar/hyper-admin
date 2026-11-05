@@ -178,6 +178,8 @@ E2E tests use Playwright's accessibility-first locators. Query priority (highest
 | Palette search input | `palette-input` |
 | Palette result (each option) | `palette-result` |
 | Navbar "Search… ⌘K" button | `palette-trigger` |
+| Keyboard shortcuts `<dialog>` (`?`) | `shortcuts-overlay` |
+| Shortcuts overlay "Single-key shortcuts" switch | `shortcuts-toggle` |
 | Create New link | `create-link` |
 | Form (create/update) | `model-form` |
 | Sticky form actions bar (create/update) | `form-actions` |

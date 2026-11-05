@@ -187,14 +187,21 @@ longer view stay stored but are hidden. Without auth there are no pins.
 
 ### Keyboard shortcuts and unsaved changes
 
-On macOS, Cmd replaces Ctrl.
+Press `?` on any admin page to list the shortcuts. On macOS, Cmd replaces Ctrl.
 
 | Keys | Where | What it does |
 |---|---|---|
+| `?` or Ctrl+/ | everywhere | Show the shortcuts and the "Single-key shortcuts" switch |
 | Ctrl+K | everywhere | Open the command palette |
 | `/` | lists | Focus the search box |
+| `j` / `k` | lists | Focus the next / previous row; Enter opens it |
+| `x` | lists | Select the focused row for a bulk action |
+| `c` | lists | Create a new record |
 | Ctrl+S | forms | Save the form (or the open "+" popup form) |
 
+- Single-key shortcuts do nothing while you type in a field. The switch in the `?` overlay
+  turns them off in this browser (localStorage `ha-shortcuts`). Ctrl+K, Ctrl+S and Ctrl+/
+  keep working.
 - Create and edit forms keep Save in view at the bottom of the screen while you scroll.
 - When a form has unsaved changes, leaving the page asks first. Saving does not ask, and
   deleting the record from its edit page asks only in the delete dialog. Turn the prompt off
