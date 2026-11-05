@@ -73,7 +73,7 @@ Values tuned from the brief, so contrast holds: light `ha-color-primary` is #0F7
 - Inline SVG with `class="ha-icon"` and `stroke="currentColor"` so icons take the text colour. No icon font, no sprite request.
 - Decorative icons get `aria-hidden="true"`. An icon-only button gets an `aria-label` that names the action and the object: "Edit invoice INV-0142".
 - **Mirroring in RTL**: add `.ha-icon--mirror` to directional icons (chevrons, back and forward arrows, progress, "reply"). Never mirror checkmarks, media controls, clocks, charts' up/down deltas, sort arrows, or the logo.
-- `src/hyperadmin/static/icons/` holds the 69 icons the admin and the components use (`stroke="currentColor"`), inlined by the generated `icon(name)` macro; add more from the same pinned Lucide release (`lucide-static@0.460.0`) and rerun `scripts/generate_icon_macro.py`.
+- `src/hyperadmin/static/icons/` holds the 70 icons the admin and the components use (`stroke="currentColor"`), inlined by the generated `icon(name)` macro; add more from the same pinned Lucide release (`lucide-static@0.460.0`) and rerun `scripts/generate_icon_macro.py`.
 
 ## Logo
 
