@@ -20,6 +20,7 @@
 {%- set target_label = target.replace('_id', '').replace('_', ' ') -%}
 <div class="ha-dialog ha-popup-dialog" role="dialog" aria-modal="true" aria-labelledby="popup-form-title" tabindex="-1">
 <form method="post" action="{{ post_url }}" data-testid="popup-form"
+      {%- if warn_unsaved_changes|default(true) %} data-ha-guard="{{ _('You have unsaved changes. Leave this page?') }}"{% endif %}
       class="ha-popup-form" hx-post="{{ post_url }}" hx-target="closest .ha-dialog" hx-swap="outerHTML">
   {{ csrf_input() if csrf_input is defined }}
   <input type="hidden" name="target" value="{{ target }}" />

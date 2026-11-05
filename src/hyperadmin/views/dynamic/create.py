@@ -79,6 +79,7 @@ class CreateViewMixin(RelationViewMixin, InlineViewMixin):
             "values": values or {},
             "errors": errors or {},
             "inline_formsets": inline_formsets or [],
+            "warn_unsaved_changes": getattr(self.options, "warn_unsaved_changes", True),
         }
         template_name = self._get_template_name("create")
         return HtmxTemplateResponse(self.templates).render(

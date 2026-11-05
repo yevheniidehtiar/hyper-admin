@@ -185,6 +185,21 @@ pages show in a "Pinned" group at the top of the sidebar, are stored per user in
 `HyperAdminSettings.nav_pins_max` pages (20 by default). Pins of a page the user may no
 longer view stay stored but are hidden. Without auth there are no pins.
 
+### Keyboard shortcuts and unsaved changes
+
+On macOS, Cmd replaces Ctrl.
+
+| Keys | Where | What it does |
+|---|---|---|
+| Ctrl+K | everywhere | Open the command palette |
+| `/` | lists | Focus the search box |
+| Ctrl+S | forms | Save the form (or the open "+" popup form) |
+
+- Create and edit forms keep Save in view at the bottom of the screen while you scroll.
+- When a form has unsaved changes, leaving the page asks first. Saving does not ask, and
+  deleting the record from its edit page asks only in the delete dialog. Turn the prompt off
+  for a model with `AdminOptions(warn_unsaved_changes=False)`.
+
 ### Override templates
 
 Provide custom template directories searched before the built-in ones:

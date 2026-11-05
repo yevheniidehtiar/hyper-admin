@@ -6,15 +6,20 @@
             <h1 class="ha-page-title">{%- block form_title -%}{%- endblock -%}</h1>
             {%- block form_header_actions -%}{%- endblock -%}
         </div>
-        <form id="{{- model_name|lower -}}-form" data-testid="model-form" enctype="multipart/form-data" {%- block form_attributes -%}{%- endblock -%}>
+        {#- data-ha-guard (the leave prompt) turns on static/js/form_guard.js's
+            unsaved-changes guard; AdminOptions(warn_unsaved_changes=False) leaves it off. -#}
+        <form id="{{- model_name|lower -}}-form" data-testid="model-form" enctype="multipart/form-data"
+              {%- if warn_unsaved_changes|default(true) %} data-ha-guard="{{ _('You have unsaved changes. Leave this page?') }}"{% endif %} {%- block form_attributes -%}{%- endblock -%}>
             <div id="{{- model_name|lower -}}-form-body" class="ha-card">
                 {%- block form_body -%}{%- endblock -%}
             </div>
-            <div class="ha-form-actions">
+            <div class="ha-form-actions ha-form-actions--sticky" data-testid="form-actions">
                 {%- block form_actions -%}
                 <button type="submit" class="ha-btn ha-btn-primary">{{ _("Save") }}</button>
                 {%- endblock -%}
             </div>
         </form>
     </div>
+    {#- Unsaved-changes guard and Cmd/Ctrl+S (st-v059-kbd-01); after shortcuts.js. #}
+    <script src="{{ url_for('static', path='/js/form_guard.js') }}" defer></script>
 {%- endblock -%}

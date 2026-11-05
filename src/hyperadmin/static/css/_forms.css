@@ -710,3 +710,17 @@ input[type="file"].ha-input {
 .ha-confirm-delete .ha-dialog__title {
   overflow-wrap: anywhere;
 }
+
+/* Sticky save bar (st-v059-kbd-01): the form actions float at the bottom of the
+   viewport while a long form scrolls, clear of the iOS home indicator, and
+   settle under the form at its end. */
+.ha-form-actions.ha-form-actions--sticky {
+  position: sticky;
+  inset-block-end: calc(var(--ha-space-3) + env(safe-area-inset-bottom, 0px));
+  z-index: var(--ha-z-sticky);
+  padding: var(--ha-space-3) var(--ha-space-4);
+  background-color: var(--ha-surface-raised);
+  border: var(--ha-border-width) solid var(--ha-color-border-light);
+  border-radius: var(--ha-radius-lg);
+  box-shadow: var(--ha-shadow-md);
+}
