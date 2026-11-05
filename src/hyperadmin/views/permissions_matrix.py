@@ -144,6 +144,7 @@ class PermissionMatrixPage:
             icon="shield-check",
             permission=self.codename,
             section="Access",
+            order=3,
         )
         admin.plugins.add_permission(self, self.codename, "Can change group permissions")
 

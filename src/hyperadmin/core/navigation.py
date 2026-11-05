@@ -31,6 +31,9 @@ FALLBACK_ICON = "layout-grid"
 #: Group of plugin entries that declare no ``section``.
 PLUGINS_GROUP: Label = gettext_lazy("Plugins")
 
+#: Group of the built-in User, Group and Permission models and the permission matrix.
+ACCESS_GROUP: Label = gettext_lazy("Access")
+
 
 @dataclass(frozen=True)
 class NavGroup:
