@@ -125,7 +125,9 @@ def render(base: str, out: Path) -> None:
         _shoot(page, out, "command-palette")
         page.keyboard.press("Escape")
 
-        # Keyboard: row focus with j, then the ? overlay.
+        # Keyboard: row focus with j, then the ? overlay. Start from no hover and no focus.
+        page.mouse.move(0, DESKTOP["height"] - 1)
+        page.evaluate("document.activeElement && document.activeElement.blur()")
         page.keyboard.press("j")
         page.keyboard.press("j")
         _shoot(page, out, "keyboard-row-focus")
