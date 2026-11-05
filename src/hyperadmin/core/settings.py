@@ -1,7 +1,7 @@
 """Centralised configuration for HyperAdmin via pydantic-settings BaseSettings."""
 
 from functools import lru_cache
-from typing import Literal
+from typing import Any, Literal
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError, available_timezones
 
 from pydantic import AliasChoices, Field, SecretStr, field_validator, model_validator
@@ -114,6 +114,18 @@ class HyperAdminSettings(BaseSettings):
 
     # ── Database ─────────────────────────────────────────────────────────────
     database_url: str = _DEFAULT_DATABASE_URL
+    #: Connection pool of the engine HyperAdmin builds from ``database_url`` (no
+    #: ``engine=`` passed); a host engine keeps its own pool. ``None`` keeps
+    #: SQLAlchemy's default. The ``pool_*`` sizes are ignored for in-memory SQLite.
+    database_pool_size: int | None = Field(default=None, ge=1)
+    #: Connections opened above ``database_pool_size`` under load; ``-1`` is unlimited.
+    database_max_overflow: int | None = Field(default=None, ge=-1)
+    #: Seconds a request waits for a free connection before it fails.
+    database_pool_timeout: float | None = Field(default=None, gt=0)
+    #: Seconds after which a connection is replaced; ``-1`` never replaces it.
+    database_pool_recycle: int | None = Field(default=None, ge=-1)
+    #: Test each connection before use, so ones the server dropped are replaced.
+    database_pool_pre_ping: bool = False
 
     # ── Runtime behaviour ─────────────────────────────────────────────────────
     debug: bool = False
@@ -259,6 +271,20 @@ class HyperAdminSettings(BaseSettings):
     locale_response_header: bool = True
 
     # ── Derived helpers ───────────────────────────────────────────────────────
+    @property
+    def database_engine_kwargs(self) -> dict[str, Any]:
+        """Return the ``create_async_engine`` pool arguments set by ``database_pool_*``."""
+        kwargs: dict[str, Any] = {
+            "pool_size": self.database_pool_size,
+            "max_overflow": self.database_max_overflow,
+            "pool_timeout": self.database_pool_timeout,
+            "pool_recycle": self.database_pool_recycle,
+        }
+        kwargs = {key: value for key, value in kwargs.items() if value is not None}
+        if self.database_pool_pre_ping:
+            kwargs["pool_pre_ping"] = True
+        return kwargs
+
     @property
     def is_default_secret_key(self) -> bool:
         """Return ``True`` when ``secret_key`` has not been changed from the default."""

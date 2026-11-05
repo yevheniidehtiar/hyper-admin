@@ -10,6 +10,12 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
 ## [Unreleased]
 
 ### Added
+- **Connection pool settings** (#231, #232). `database_pool_size`, `database_max_overflow`,
+  `database_pool_timeout`, `database_pool_recycle` and `database_pool_pre_ping` on
+  `HyperAdminSettings` (`HYPERADMIN_DATABASE_POOL_SIZE` and so on) tune the engine
+  HyperAdmin builds from `database_url`. Unset, SQLAlchemy's defaults apply as before.
+  `hyperadmin.db.build_engine(url, engine_kwargs)` forwards the same arguments for an
+  engine you pass yourself and drops pool sizing for in-memory SQLite.
 - **Sidebar groups and icons, data layer** (v0.5.9, st-v059-nav-01). `NavGroup` and
   `Admin(nav_groups=[...])`, plus `nav_group`, `nav_order` and a documented `icon` on
   `ModelAdmin`. The new `nav_tree` template global groups models (falling back to

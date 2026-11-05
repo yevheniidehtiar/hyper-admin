@@ -133,6 +133,38 @@ What we learned sizing it:
 - **SQLite is for one worker and light writes.** Under concurrent writes it raises
   `database is locked`; use PostgreSQL for anything multi-user.
 
+### Connection pool
+
+Under load, requests queue for a database connection once the pool is used up. SQLAlchemy's
+default pool holds 5 connections plus 10 overflow, and a request waits 30 seconds for one
+before it fails. When HyperAdmin builds the engine from `database_url` (no `engine=`
+passed), set the pool through settings or environment variables:
+
+| Setting | Environment variable | SQLAlchemy argument |
+|---|---|---|
+| `database_pool_size` | `HYPERADMIN_DATABASE_POOL_SIZE` | `pool_size` |
+| `database_max_overflow` | `HYPERADMIN_DATABASE_MAX_OVERFLOW` | `max_overflow` |
+| `database_pool_timeout` | `HYPERADMIN_DATABASE_POOL_TIMEOUT` | `pool_timeout` |
+| `database_pool_recycle` | `HYPERADMIN_DATABASE_POOL_RECYCLE` | `pool_recycle` |
+| `database_pool_pre_ping` | `HYPERADMIN_DATABASE_POOL_PRE_PING` | `pool_pre_ping` |
+
+When you pass your own engine, build it with the same arguments. `build_engine` drops the
+pool sizing for an in-memory SQLite URL, so one configuration works in tests too:
+
+```python
+from hyperadmin.db import build_engine
+
+engine = build_engine(
+    DATABASE_URL,
+    {"pool_size": 20, "max_overflow": 40, "pool_timeout": 30, "pool_pre_ping": True},
+)
+admin = Admin(app, engine=engine)
+```
+
+These values are a starting point for PostgreSQL, not a measured optimum. Each worker
+process has its own pool, so keep `workers * (pool_size + max_overflow)` below the server's
+`max_connections`.
+
 ### Load testing your own deployment
 
 HyperAdmin ships a Locust suite and a synthetic data generator for measuring a real
