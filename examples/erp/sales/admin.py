@@ -18,6 +18,9 @@ SAMPLE_PDF = Path(__file__).resolve().parents[3] / "tests" / "_fixtures" / "samp
 
 class InvoiceAdmin(ModelAdmin):
     adapter_class = SQLModelAdapter
+    nav_group = "Sales"
+    nav_order = 0
+    icon = "receipt"
     list_display: ClassVar[list[str]] = [
         "number",
         "customer",
@@ -54,6 +57,9 @@ class InvoiceAdmin(ModelAdmin):
 
 class InvoiceItemAdmin(ModelAdmin):
     adapter_class = SQLModelAdapter
+    nav_group = "Sales"
+    nav_order = 1
+    icon = "file-text"
     list_display: ClassVar[list[str]] = [
         "invoice",
         "description",
@@ -65,6 +71,9 @@ class InvoiceItemAdmin(ModelAdmin):
 
 class TaxRateAdmin(ModelAdmin):
     adapter_class = SQLModelAdapter
+    nav_group = "Sales"
+    nav_order = 2
+    icon = "tag"
     list_display: ClassVar[list[str]] = ["id", "name", "rate"]
     search_fields: ClassVar[list[str]] = ["name"]
 

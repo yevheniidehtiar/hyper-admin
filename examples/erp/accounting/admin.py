@@ -11,6 +11,9 @@ from hyperadmin.core.registry import site
 
 class AccountAdmin(ModelAdmin):
     adapter_class = SQLModelAdapter
+    nav_group = "Accounting"
+    nav_order = 0
+    icon = "wallet"
     list_display: ClassVar[list[str]] = ["code", "name", "account_type"]
     list_filter: ClassVar[list[str]] = ["account_type"]
     search_fields: ClassVar[list[str]] = ["code", "name"]
@@ -18,6 +21,9 @@ class AccountAdmin(ModelAdmin):
 
 class JournalEntryAdmin(ModelAdmin):
     adapter_class = SQLModelAdapter
+    nav_group = "Accounting"
+    nav_order = 1
+    icon = "history"
     list_display: ClassVar[list[str]] = ["id", "date_posted", "description"]
     # Ledger rows are written as a side effect of invoices and bills: keep them out of
     # realtime notifications so only the business documents notify subscribers.
@@ -26,6 +32,9 @@ class JournalEntryAdmin(ModelAdmin):
 
 class JournalLineAdmin(ModelAdmin):
     adapter_class = SQLModelAdapter
+    nav_group = "Accounting"
+    nav_order = 2
+    icon = "columns-3"
     list_display: ClassVar[list[str]] = ["entry", "account", "debit", "credit"]
     options: ClassVar[AdminOptions] = AdminOptions(realtime_notifications=False)
 

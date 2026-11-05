@@ -13,9 +13,8 @@ from hyperadmin.views.urls import admin_url_for
 if TYPE_CHECKING:
     from hyperadmin import Admin
 
-#: Included into the admin sub-application (``admin.asgi_app``) in ``main.py``, so
-#: the report is served at ``/admin/reports/profit-loss`` behind the admin's own
-#: login, locale and session middleware.
+#: Mounted by ``ErpPagesPlugin`` (``plugin.py``) under ``/erp``, so the report is
+#: served at ``/admin/erp/profit-loss`` behind the admin's own login, CSRF and locale.
 router = APIRouter()
 
 
@@ -82,7 +81,7 @@ async def _get_pl_data(year: int) -> dict[str, Any]:
     }
 
 
-@router.get("/reports/profit-loss", response_class=HTMLResponse)
+@router.get("/profit-loss", response_class=HTMLResponse)
 async def profit_loss_report(
     request: Request,
     year: int | None = None,

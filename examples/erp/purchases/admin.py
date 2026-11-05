@@ -10,6 +10,9 @@ from hyperadmin.core.registry import site
 
 class BillAdmin(ModelAdmin):
     adapter_class = SQLModelAdapter
+    nav_group = "Purchases"
+    nav_order = 0
+    icon = "credit-card"
     list_display: ClassVar[list[str]] = [
         "reference",
         "supplier",
@@ -24,6 +27,9 @@ class BillAdmin(ModelAdmin):
 
 class BillItemAdmin(ModelAdmin):
     adapter_class = SQLModelAdapter
+    nav_group = "Purchases"
+    nav_order = 1
+    icon = "package"
     list_display: ClassVar[list[str]] = [
         "bill",
         "description",

@@ -6,9 +6,9 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 
 from examples.erp.db import engine
-from examples.erp.reports.views import router as reports_router
+from examples.erp.reports.plugin import ErpPagesPlugin
 from examples.erp.showcase.models import showcase_storage
-from hyperadmin import Admin
+from hyperadmin import Admin, NavGroup
 from hyperadmin.auth.permissions import ModelPermissionChecker, PermissionSyncService
 from hyperadmin.auth.session import SessionAuthBackend
 from hyperadmin.core.settings import HyperAdminSettings
@@ -110,7 +110,22 @@ admin = Admin(
     permission_registry=permission_registry,
     storage=showcase_storage,
     realtime=_realtime_settings(),
+    # Sidebar groups: their order, icon and initial state. Models join a group with
+    # ``nav_group`` on their admin class; plugin pages join the group named by their
+    # section. Groups not declared here still appear, after these.
+    nav_groups=[
+        NavGroup("Sales", icon="shopping-cart", order=0),
+        NavGroup("Purchases", icon="truck", order=1),
+        NavGroup("Accounting", icon="wallet", order=2),
+        NavGroup("Contacts", icon="users", order=3),
+        NavGroup("Reports", icon="bar-chart-3", order=4),
+        NavGroup("Field showcase", icon="sparkles", order=5, collapsed=True),
+        NavGroup("Tasks", icon="list-checks", order=6, collapsed=True),
+        NavGroup("Access", icon="shield-check", order=7, collapsed=True),
+    ],
 )
+# The P&L report: a page mounted inside the admin and linked from the "Reports" group.
+admin.plugins.register(ErpPagesPlugin(), admin=admin)
 
 # Credentials prefilled on the login page (examples/erp/templates/login.html).
 admin.templates.env.globals["login_hint"] = ("demo", "demo") if DEMO_MODE else ("admin", "admin")
@@ -124,17 +139,6 @@ if DEMO_MODE:
 app.state.admin = admin
 
 admin.mount(path="/admin")
-
-# Custom reports router: included into the admin sub-app so it runs behind the
-# admin login and is served at /admin/reports/profit-loss.
-assert admin.asgi_app is not None
-admin.asgi_app.include_router(reports_router)
-
-# Optional: Add custom report to the navigation menu
-assert "nav_items" in admin.templates.env.globals, "Call admin.mount() before adding nav items"
-admin.templates.env.globals["nav_items"].append(
-    {"name": "Profit & Loss Report", "url": "/reports/profit-loss"}
-)
 
 
 @app.get("/")

@@ -31,17 +31,17 @@ def test_profit_loss_report_loads(page: Page, erp_base_url: str) -> None:
     _erp_login(page, erp_base_url)
 
     # When navigating to the P&L report
-    page.goto(erp_base_url + "/admin/reports/profit-loss")
+    page.goto(erp_base_url + "/admin/erp/profit-loss")
 
     # Then the report page loads (no redirect to login)
-    expect(page).to_have_url(erp_base_url + "/admin/reports/profit-loss")
+    expect(page).to_have_url(erp_base_url + "/admin/erp/profit-loss")
     expect(page.get_by_role("heading", name="Annual Profit / Loss Report")).to_be_visible()
 
 
 def test_profit_loss_summary_elements_visible(page: Page, erp_base_url: str) -> None:
     """Summary totals section renders with non-empty values for seeded data."""
     _erp_login(page, erp_base_url)
-    page.goto(erp_base_url + "/admin/reports/profit-loss")
+    page.goto(erp_base_url + "/admin/erp/profit-loss")
 
     total_revenue = page.get_by_test_id("total-revenue")
     total_expenses = page.get_by_test_id("total-expenses")
@@ -60,7 +60,7 @@ def test_profit_loss_summary_elements_visible(page: Page, erp_base_url: str) -> 
 def test_profit_loss_year_navigation(page: Page, erp_base_url: str) -> None:
     """Year navigation links are present and functional."""
     _erp_login(page, erp_base_url)
-    page.goto(erp_base_url + "/admin/reports/profit-loss")
+    page.goto(erp_base_url + "/admin/erp/profit-loss")
 
     prev_link = page.get_by_role("link", name="Previous year")
     next_link = page.get_by_role("link", name="Next year")
@@ -76,7 +76,7 @@ def test_profit_loss_pl_table_renders(
 ) -> None:
     """Line-by-line breakdown table is present on the report page."""
     _erp_login(page, erp_base_url)
-    page.goto(erp_base_url + "/admin/reports/profit-loss")
+    page.goto(erp_base_url + "/admin/erp/profit-loss")
 
     pl_table = page.get_by_test_id("pl-table")
     expect(pl_table).to_be_visible()
