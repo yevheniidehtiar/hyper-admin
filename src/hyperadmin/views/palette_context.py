@@ -1,8 +1,8 @@
 """Per-request data for the command palette (``docs/specs/navigation-and-list-ux.md``).
 
-``ha_nav_palette(pins=None)`` is the palette's data island: the ``nav_tree``
-filtered by ``request.state.user_permissions`` (``None`` or unset means
-unrestricted), the visible pins and the current page to record as a recent
+``ha_nav_palette(pins=None)`` is the palette's data island: the sidebar's
+permission-filtered tree (``views.navigation.request_nav_tree``, so links hosts
+appended to ``nav_items`` are included), the visible pins and the current page to record as a recent
 visit. It is ``None`` on pages without a signed-in user (login, MFA
 challenge), so no navigation data leaks there. ``components/command_palette.html``
 passes the pins from the sidebar's ``nav_pinned_items()`` global when that
@@ -15,30 +15,18 @@ from typing import TYPE_CHECKING, Any
 
 from jinja2 import pass_context
 
-from hyperadmin.core.palette import (
-    model_singular_label,
-    palette_data,
-    palette_item_for_path,
-    palette_tree,
-)
+from hyperadmin.core.navigation import active_nav_item
+from hyperadmin.core.palette import model_singular_label, palette_create_actions, palette_data
 from hyperadmin.core.registry import site
+from hyperadmin.views.navigation import request_nav_tree
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable
+    from collections.abc import Iterable
 
     from jinja2 import Environment
     from jinja2.runtime import Context
-    from starlette.requests import Request
 
     from hyperadmin.core.navigation import NavGroupNode
-
-
-def _has_perm(request: Request) -> Callable[[str], bool]:
-    """``has_perm(codename)`` for the request's user, from ``request.state.user_permissions``."""
-    permissions = getattr(request.state, "user_permissions", None)
-    if permissions is None:
-        return lambda _codename: True
-    return permissions.__contains__
 
 
 def _singular_labels() -> dict[str, Any]:
@@ -61,7 +49,10 @@ def ha_nav_palette(ctx: Context, pins: Iterable[Any] | None = None) -> dict[str,
         return None
     if ctx.get("auth_enabled") and getattr(request.state, "user", None) is None:
         return None
-    tree = palette_tree(ctx.get("nav_tree") or (), _has_perm(request))
+    # The sidebar's tree: permission-filtered, with links hosts appended to nav_items.
+    tree = palette_create_actions(
+        request_nav_tree(request, ctx), getattr(request.state, "user_permissions", None)
+    )
     prefix = ctx.get("admin_prefix") or ""
     path = request.url.path
     relative = path.removeprefix(prefix)
@@ -78,7 +69,7 @@ def _recent_entry(
     Detail and edit pages pass ``item_name``; a list page is the nav item's own
     url. Other pages (dashboard, create forms, errors) record nothing.
     """
-    item = palette_item_for_path(tree, relative)
+    item = active_nav_item(tree, relative)
     if item is None:
         return None
     entry = {"url": path, "icon": item.icon}

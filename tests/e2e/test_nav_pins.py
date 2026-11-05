@@ -121,6 +121,26 @@ def test_pins_are_per_user(page: Page, browser: Browser, nav_base_url: str) -> N
         context.close()
 
 
+def test_a_pinned_page_is_listed_under_pinned_in_the_palette(page: Page, nav_base_url: str) -> None:
+    """
+    Scenario: a pinned page is listed under Pinned in the palette
+      Given carol pinned Orders (and Invoices, which she may no longer view)
+      When  carol opens the palette with an empty query
+      Then  the Pinned section lists Orders and not Invoices
+    """
+    # Given carol pinned Orders (and Invoices, which she may no longer view)
+    _login(page, nav_base_url, "carol")
+
+    # When carol opens the palette with an empty query
+    page.keyboard.press("ControlOrMeta+k")
+    expect(page.get_by_test_id("command-palette")).to_be_visible()
+
+    # Then the Pinned section lists Orders and not Invoices
+    pinned = page.get_by_role("group", name="Pinned")
+    expect(pinned.get_by_test_id("palette-result")).to_have_count(1)
+    expect(pinned.get_by_test_id("palette-result").filter(has_text="Orders")).to_be_visible()
+
+
 def test_a_pin_the_user_can_no_longer_view_is_hidden(page: Page, nav_base_url: str) -> None:
     """
     Scenario: a pin the user can no longer view is hidden
