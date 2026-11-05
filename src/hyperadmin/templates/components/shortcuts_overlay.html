@@ -1,0 +1,45 @@
+{#- Keyboard shortcuts overlay (st-v059-kbd-02, docs/specs/navigation-and-list-ux.md).
+
+    A native <dialog>, included once by _base.html. static/js/shortcuts.js opens
+    it on "?" (single key) or Cmd/Ctrl+/ (always on), fills the list from
+    haShortcuts.list() grouped by scope, and wires the switch to
+    haShortcuts.setEnabled() (WCAG 2.1.4: single-key shortcuts can be turned off;
+    stored in localStorage "ha-shortcuts"). Esc, the backdrop and Close close it
+    and return focus to where it was.
+
+    data-labels translates the scope names and the English descriptions scripts
+    register; a description without an entry shows as registered.
+-#}
+{%- from "components/_icons.html" import icon -%}
+{%- set _labels = {
+    "global": _("General"),
+    "list": _("List"),
+    "form": _("Form"),
+    "Show keyboard shortcuts": _("Show keyboard shortcuts"),
+    "Search": _("Search"),
+    "Focus search": _("Focus search"),
+    "Next row": _("Next row"),
+    "Previous row": _("Previous row"),
+    "Select row": _("Select row"),
+    "Create new": _("Create new"),
+    "Save": _("Save"),
+    "or": _("or"),
+} -%}
+<dialog id="ha-shortcuts" class="ha-dialog ha-shortcuts" data-testid="shortcuts-overlay"
+        aria-labelledby="ha-shortcuts-title" data-labels='{{ _labels|tojson }}'>
+    <div class="ha-dialog__head">
+        <div>
+            <h2 class="ha-dialog__title" id="ha-shortcuts-title">{{ _("Keyboard shortcuts") }}</h2>
+        </div>
+        <form method="dialog">
+            <button class="ha-btn ha-btn--icon ha-btn--ghost ha-dialog__close" aria-label="{{ _('Close') }}">{{ icon('x') }}</button>
+        </form>
+    </div>
+    <div class="ha-shortcuts__list" data-ha-shortcuts-list></div>
+    <div class="ha-dialog__foot">
+        <label class="ha-switch">
+            <input type="checkbox" role="switch" checked data-testid="shortcuts-toggle">
+            {{ _("Single-key shortcuts") }}
+        </label>
+    </div>
+</dialog>
