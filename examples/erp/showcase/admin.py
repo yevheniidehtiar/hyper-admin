@@ -28,6 +28,9 @@ from hyperadmin.core.registry import site
 
 class ShowcaseCategoryAdmin(ModelAdmin):
     adapter_class = SQLModelAdapter
+    nav_group = "Field showcase"
+    nav_order = 1
+    icon = "folder"
     verbose_name_plural = "Showcase Categories"
     options: ClassVar[AdminOptions] = AdminOptions(
         list_display=["id", "name"],
@@ -37,6 +40,9 @@ class ShowcaseCategoryAdmin(ModelAdmin):
 
 class ShowcaseSubcategoryAdmin(ModelAdmin):
     adapter_class = SQLModelAdapter
+    nav_group = "Field showcase"
+    nav_order = 2
+    icon = "layers"
     verbose_name_plural = "Showcase Subcategories"
     options: ClassVar[AdminOptions] = AdminOptions(
         list_display=["id", "name", "category"],
@@ -60,6 +66,9 @@ class FieldShowcaseAdmin(ModelAdmin):
     """
 
     adapter_class = SQLModelAdapter
+    nav_group = "Field showcase"
+    nav_order = 0
+    icon = "sparkles"
     verbose_name = "Field Showcase Item"
     verbose_name_plural = "Field Showcase Items"
     options: ClassVar[AdminOptions] = AdminOptions(

@@ -10,6 +10,9 @@ from hyperadmin.core.registry import site
 
 class ContactAdmin(ModelAdmin):
     adapter_class = SQLModelAdapter
+    nav_group = "Contacts"
+    nav_order = 0
+    icon = "users"
     list_display: ClassVar[list[str]] = ["id", "name", "email", "contact_type"]
     list_filter: ClassVar[list[str]] = ["contact_type"]
     search_fields: ClassVar[list[str]] = ["name", "email", "phone"]
@@ -17,6 +20,9 @@ class ContactAdmin(ModelAdmin):
 
 class AddressAdmin(ModelAdmin):
     adapter_class = SQLModelAdapter
+    nav_group = "Contacts"
+    nav_order = 1
+    icon = "map-pin"
     list_display: ClassVar[list[str]] = ["id", "street", "city", "country", "contact"]
     search_fields: ClassVar[list[str]] = ["street", "city", "country"]
 
