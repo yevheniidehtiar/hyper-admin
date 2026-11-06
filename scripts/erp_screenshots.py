@@ -18,15 +18,18 @@ import subprocess
 import sys
 import time
 import urllib.request
-from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from playwright.sync_api import Browser, Page, expect, sync_playwright
+from playwright.sync_api import Browser, Page, ViewportSize, expect, sync_playwright
+
+if TYPE_CHECKING:
+    from collections.abc import Iterator
 
 ROOT = Path(__file__).resolve().parents[1]
-DESKTOP = {"width": 1440, "height": 900}
-PHONE = {"width": 390, "height": 844}
+DESKTOP: ViewportSize = {"width": 1440, "height": 900}
+PHONE: ViewportSize = {"width": 390, "height": 844}
 
 
 def _free_port() -> int:
@@ -87,7 +90,7 @@ def _new_page(browser: Browser, base: str, *, dark: bool = False, phone: bool = 
 def _shoot(page: Page, out: Path, name: str) -> None:
     page.wait_for_timeout(150)  # let focus rings and tooltips settle
     page.screenshot(path=out / f"{name}.png")
-    print("saved", name)
+    sys.stdout.write(f"saved {name}\n")
 
 
 def render(base: str, out: Path) -> None:
