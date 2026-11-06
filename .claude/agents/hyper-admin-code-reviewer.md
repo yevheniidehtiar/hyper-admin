@@ -44,8 +44,11 @@ Enforce the accessibility-first locator priority strictly:
 
 **Fail any test that uses `page.locator('.ha-*')` or positional DOM selectors.**
 
-Verify `data-testid` values match the documented naming table:
-- `sidebar`, `list-table`, `list-row`, `row-view-link`, `row-edit-link`, `row-delete-btn`
+Verify `data-testid` values match the documented naming table (CLAUDE.md is the source of truth):
+- `sidebar`, `nav-{key}`, `nav-group-{slug}`, `sidebar-rail-toggle`, `nav-pinned`, `nav-pin-{key}`
+- `list-table`, `list-row`, `row-link`, `row-delete-btn`, `dialog-confirm-delete`
+- `detail-edit-link`, `detail-delete-btn`, `form-view-link`, `form-delete-btn`, `form-actions`
+- `command-palette`, `palette-input`, `palette-result`, `palette-trigger`, `shortcuts-overlay`, `shortcuts-toggle`
 - `search-input`, `pagination-info`, `pagination-prev`, `pagination-next`, `pagination-page`
 - `sort-{field_name}`, `create-link`, `model-form`, `{field_name}-errors`, `detail-fields`
 - New elements: follow `<view>-<element>` pattern.
