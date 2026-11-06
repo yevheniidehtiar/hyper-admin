@@ -1,7 +1,8 @@
-"""Host integration: an optional in-process pgtask worker bound to the admin lifespan.
+"""Host integration: an in-process pgtask worker and transactional enqueue from a session.
 
-The worker itself is built by the pgtask adapter (``backends/pgtask.py``, the only module that
-imports pgtask); this module only resolves the settings and drives ``run()`` / ``shutdown()``.
+pgtask itself is only touched by the pgtask adapter (``backends/pgtask.py``, the only module that
+imports pgtask); this module resolves settings, drives the worker's ``run()`` / ``shutdown()`` and
+finds the psycopg connection behind a SQLAlchemy session.
 """
 
 from __future__ import annotations
@@ -17,6 +18,8 @@ from hyperadmin_tasks.selection import PGTASK_MODULE
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator, Iterable
+
+    from sqlalchemy.ext.asyncio import AsyncSession
 
     from hyperadmin_tasks.settings import TasksSettings
 
@@ -71,14 +74,39 @@ def build_worker(settings: TasksSettings, registries: Iterable[Any] | None) -> W
             "(worker role) or HYPERADMIN_TASKS_DSN"
         )
     found = resolve_registries(settings, registries)
+    worker: Worker = getattr(_pgtask_adapter("the in-process worker"), WORKER_FACTORY)(
+        dsn, found, settings
+    )
+    return worker
+
+
+async def enqueue_in_session(session: AsyncSession, request: Any) -> str:
+    """Enqueue a pgtask ``EnqueueRequest`` in ``session``'s current transaction.
+
+    The task is written on the session's own connection, so it commits or rolls back together
+    with the business rows (no outbox). Returns the task id. The session's engine must use the
+    psycopg driver (``postgresql+psycopg://``); anything else raises ``TasksBackendError``.
+    """
+    connection = await session.connection()
+    dialect = connection.dialect
+    if dialect.driver != "psycopg":
+        raise TasksBackendError(
+            "enqueue_in_session() needs the psycopg driver (postgresql+psycopg://); "
+            f"the session uses {dialect.name}+{dialect.driver}"
+        )
+    raw = await connection.get_raw_connection()
+    adapter = _pgtask_adapter("enqueue_in_session()")
+    task_id: str = await adapter.enqueue_on(raw.driver_connection, request)
+    return task_id
+
+
+def _pgtask_adapter(feature: str) -> Any:
     try:
-        module = import_module(PGTASK_MODULE)
+        return import_module(PGTASK_MODULE)
     except ImportError as exc:
         raise TasksBackendError(
-            f"the in-process worker needs pgtask; install hyperadmin-tasks[pgtask] ({exc})"
+            f"{feature} needs pgtask; install hyperadmin-tasks[pgtask] ({exc})"
         ) from exc
-    worker: Worker = getattr(module, WORKER_FACTORY)(dsn, found, settings)
-    return worker
 
 
 @asynccontextmanager

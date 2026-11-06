@@ -58,3 +58,26 @@ async def main() -> None:
 
 asyncio.run(main())
 ```
+
+## Enqueueing in your own transaction
+
+`enqueue_in_session()` writes the task on the SQLAlchemy session's own connection, so it commits
+or rolls back together with your rows. You don't need an outbox table.
+
+```python
+from pgtask import EnqueueRequest
+
+from hyperadmin_tasks import enqueue_in_session
+
+
+async def place_order(session, order):
+    session.add(order)
+    await session.flush()
+    await enqueue_in_session(
+        session, EnqueueRequest("app.send_invoice", {"order_id": order.id}, queue_name="default")
+    )
+    await session.commit()  # the order and the task land together, or neither does
+```
+
+The engine must use the psycopg driver (`postgresql+psycopg://`), and the session's role needs
+the pgtask producer grants. Any other driver, asyncpg included, raises `TasksBackendError`.

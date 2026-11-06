@@ -303,12 +303,7 @@ def create_worker(dsn: str, registries: Sequence[Any], settings: TasksSettings) 
     Raises ``TasksBackendError`` when pgtask is not installed, for anything that is not a
     ``TaskRegistry`` and for two registries on the same queue.
     """
-    try:
-        pgtask: Any = import_module("pgtask")  # the [pgtask] extra; reads need only psycopg
-    except ImportError as exc:
-        raise TasksBackendError(
-            f"the in-process worker needs pgtask; install hyperadmin-tasks[pgtask] ({exc})"
-        ) from exc
+    pgtask = _import_pgtask("the in-process worker")
     for registry in registries:
         if not isinstance(registry, pgtask.TaskRegistry):
             raise TasksBackendError(f"{registry!r} is not a pgtask TaskRegistry")
@@ -321,3 +316,23 @@ def create_worker(dsn: str, registries: Sequence[Any], settings: TasksSettings) 
         )
     except ValueError as exc:
         raise TasksBackendError(f"cannot build the pgtask worker: {exc}") from exc
+
+
+async def enqueue_on(connection: Any, request: Any) -> str:
+    """Enqueue ``request`` (a pgtask ``EnqueueRequest``) on an open psycopg ``connection``.
+
+    The task row is written in the connection's current transaction, so it commits or rolls back
+    with it. Returns the task id (the existing one when an idempotency key matched).
+    """
+    pgtask = _import_pgtask("enqueue_in_session()")
+    task_id, _created = await pgtask.Client.enqueue_on(connection, request)
+    return str(task_id)
+
+
+def _import_pgtask(feature: str) -> Any:
+    try:
+        return import_module("pgtask")  # the [pgtask] extra; reads need only psycopg
+    except ImportError as exc:
+        raise TasksBackendError(
+            f"{feature} needs pgtask; install hyperadmin-tasks[pgtask] ({exc})"
+        ) from exc
