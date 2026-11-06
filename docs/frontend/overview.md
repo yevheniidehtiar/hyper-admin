@@ -235,8 +235,10 @@ Dark values are defined once as `--_dark-*` private tokens, then mapped to seman
 | `ha-table-row` | `<tr>` | Row with hover highlight |
 | `ha-table-cell` | `<td>` | Cell padding |
 | `ha-table-sort-link` | `<a>` | Sort toggle link in header |
-| `ha-action-link` | `<a>` | Inline action links (View, Edit) |
-| `ha-action-delete` | `<button>` | Inline delete button |
+| `ha-table-row--link` | `<tr>` | Row whose title cell links to the record (the whole row is clickable) |
+| `ha-row-link` | `<a>` | Title-cell link, stretched over the row; opens edit or detail by permission |
+| `ha-btn--danger-icon` | `<button>` | Red icon-only delete button; opens the shared confirm dialog |
+| `ha-action-link`, `ha-action-delete` | `<a>`, `<button>` | Former per-row View/Edit links and Delete button; the built-in templates no longer use them, the CSS stays for host overrides |
 
 #### Feedback
 
