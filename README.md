@@ -109,6 +109,11 @@ Tables with composite primary keys register list-only, by design.
 search over 100,000 rows takes 172 ms, and detail pages take about 9 ms. Registering 57 models
 takes 0.8 s.
 
+**Under load** (ERP example, PostgreSQL 16, 100,000 rows, one 9-CPU box for app and database,
+9 uvicorn workers, Locust with 90% reads and 10% writes): 400 concurrent users get about
+**300 requests per second at a median of 21 ms and a p95 of 170 ms, with no errors**. That is
+the box's ceiling: at 800 users throughput stays near 300 req/s and requests queue instead.
+
 Supported stacks, the full results, the timings and known limitations are on
 **[Compatibility & Performance](https://yevheniidehtiar.github.io/hyper-admin/compatibility/)**.
 
