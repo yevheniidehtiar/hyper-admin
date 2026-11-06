@@ -2,7 +2,7 @@
 type: story
 id: st-v059-list-02
 title: "feat(templates): clickable list rows and Edit/Delete on detail and edit pages"
-status: backlog
+status: done
 priority: high
 assignee: null
 labels:
@@ -15,7 +15,7 @@ estimate: null
 epic_ref:
   id: ep-v059-list-01
 created_at: 2026-11-01T00:00:00Z
-updated_at: 2026-11-01T00:00:00Z
+updated_at: 2026-11-06T00:00:00Z
 ---
 
 ## Summary

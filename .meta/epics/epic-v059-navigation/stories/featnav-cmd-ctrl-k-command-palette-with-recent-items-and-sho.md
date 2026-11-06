@@ -2,7 +2,7 @@
 type: story
 id: st-v059-nav-04
 title: "feat(nav): Cmd/Ctrl+K command palette with recent items and shortcut registry"
-status: backlog
+status: done
 priority: high
 assignee: null
 labels:
@@ -15,7 +15,7 @@ estimate: null
 epic_ref:
   id: ep-v059-nav-01
 created_at: 2026-11-01T00:00:00Z
-updated_at: 2026-11-01T00:00:00Z
+updated_at: 2026-11-06T00:00:00Z
 ---
 
 ## Summary

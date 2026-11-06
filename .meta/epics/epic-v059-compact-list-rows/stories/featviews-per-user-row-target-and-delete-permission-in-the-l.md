@@ -2,7 +2,7 @@
 type: story
 id: st-v059-list-01
 title: "feat(views): per-user row target and delete permission in the list context"
-status: backlog
+status: done
 priority: high
 assignee: null
 labels:
@@ -14,7 +14,7 @@ estimate: null
 epic_ref:
   id: ep-v059-list-01
 created_at: 2026-11-01T00:00:00Z
-updated_at: 2026-11-01T00:00:00Z
+updated_at: 2026-11-06T00:00:00Z
 ---
 
 ## Summary
