@@ -125,6 +125,9 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
   the dialog and shows the error toast.
 
 ### Fixed
+- Inline formsets label the model in words and in the request locale: "Add invoice item"
+  and a default title of "Invoice items", instead of "Add InvoiceItem" and "InvoiceItems";
+  the "Actions" column header is translated too.
 - SQLAlchemy 2.0 declarative models now get an adapter (#715).
 - Joined-eager collection loads are de-duplicated (#718).
 - Deferred columns are left out of generated schemas and inferred list and search fields (#719).

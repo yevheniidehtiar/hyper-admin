@@ -48,7 +48,18 @@ class TestInlineModelSpec:
         assert spec.fields == []
         assert spec.max_num == 0
         assert spec.extra == 1
-        assert spec.title == "ChildModels"
+        assert spec.title == "Child models"
+
+    def test_verbose_name_is_readable(self) -> None:
+        """
+        Scenario: an inline without a title gets readable labels
+          Given InlineModelSpec(model=ChildModel) with no title
+          When  its labels are read
+          Then  the verbose name is "Child model" and the title "Child models"
+        """
+        spec = InlineModelSpec(model=ChildModel, fk_field="parent_id")
+        assert spec.verbose_name == "Child model"
+        assert spec.title == "Child models"
 
     def test_custom_title(self) -> None:
         spec = InlineModelSpec(model=ChildModel, fk_field="parent_id", title="Children")
@@ -403,3 +414,36 @@ class TestInlineFormsetOptionalFields:
         assert "product" in fields
         assert "price" in fields
         assert "notes" in fields
+
+
+def test_inline_formset_labels_use_the_readable_model_name() -> None:
+    """
+    Scenario: the inline Add button names the model in words
+      Given an inline of InvoiceLine with no title
+      When  components/inline_formset.html renders
+      Then  the heading is "Invoice lines" and the button says "Add invoice line"
+      And   the actions header goes through gettext
+    """
+    from pathlib import Path
+
+    from jinja2 import Environment, FileSystemLoader, select_autoescape
+    from sqlmodel import Field, SQLModel
+
+    from hyperadmin.views.forms import InlineFormset
+
+    class InvoiceLine(SQLModel):
+        id: int | None = Field(default=None, primary_key=True)
+        invoice_id: int
+
+    templates_dir = Path(__file__).resolve().parents[2] / "src" / "hyperadmin" / "templates"
+    env = Environment(
+        loader=FileSystemLoader(str(templates_dir)), autoescape=select_autoescape(["html"])
+    )
+    env.globals["_"] = lambda s, **kw: ("«" + s + "»") % kw if kw else "«" + s + "»"
+    formset = InlineFormset(spec=InlineModelSpec(model=InvoiceLine, fk_field="invoice_id"))
+
+    html = env.get_template("components/inline_formset.html").render(inline=formset)
+
+    assert "Invoice lines</h3>" in html
+    assert "«Add invoice line»" in html
+    assert "«Actions»" in html
