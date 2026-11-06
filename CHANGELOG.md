@@ -48,6 +48,12 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
 - **Compatibility & Performance docs page** (`docs/compatibility.md`): supported stacks,
   results of running HyperAdmin unmodified on Polar, Langflow, Mealie and Open WebUI
   (epic #701), timings on 237,757 rows, and known limitations.
+- **Load-test matrix** (`scripts/loadtest_matrix.sh`): runs the ERP Locust suite across
+  database, app CPUs, users and realtime backend, stops a row once the app log shows overload,
+  and writes a summary table. Results (about 300 req/s at a median of 21 ms for 400 users on 9
+  CPUs) are in the README and on the Compatibility & Performance page. The ERP example reads
+  `DB_POOL_SIZE` / `DB_MAX_OVERFLOW` / `DB_POOL_TIMEOUT`, and `LOADTEST_LOGIN_SESSIONS` shares
+  logins between Locust users.
 - **Live CRUD notifications through an adapter proxy and shared pub/sub** (#311).
 - **Presence**: `PresenceBackend` with in-memory and Redis implementations, WebSocket
   heartbeat and the "someone else is editing" banner (#323–#328).

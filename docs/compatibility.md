@@ -103,7 +103,35 @@ What the numbers show:
 - **Startup is cheap.** Registering 57 models and building their routes took 0.8 s.
 
 These are SQLite figures, so treat them as a floor for query cost, not a forecast for
-production. PostgreSQL, concurrent users and page sizes above 10 were not covered by this run.
+production. The next section covers PostgreSQL under concurrent users.
+
+### Under load
+
+The ERP example on PostgreSQL 16 with 100,000 seeded rows. App and database share one Docker
+VM with 9 CPUs (PostgreSQL capped at 2); the app runs 9 uvicorn workers with a pool of 10 + 10
+connections each and `--limit-concurrency 100`. Locust runs outside the VM: 90% of users browse
+(list, search, sort, detail, foreign-key choices) and 10% create, update and delete contacts,
+each waiting 0.5–3 s between requests. Numbers exclude the ramp-up.
+
+| Users | Successful req/s | Median | p95 | p99 | Errors |
+|---:|---:|---:|---:|---:|---:|
+| 400 | 296 | 21 ms | 170 ms | 620 ms | 0% |
+| 800 | 270 | 1.2 s | 4.0 s | 6.4 s | 0.03% |
+
+At 400 users every page has a median of 9–35 ms and a p95 under 300 ms; writes are the
+slowest. At 800 users both the app (about 7.4 CPUs) and PostgreSQL (at its 2-CPU cap) are
+saturated, so throughput stays near 300 req/s and requests wait instead. Size for about
+**30 req/s per CPU** of app plus database at this page mix.
+
+What we learned sizing it:
+
+- **Size the pool per worker.** Each uvicorn worker has its own pool. SQLAlchemy's default
+  (5 + 10, 30 s timeout) times out with 500s once a worker falls behind; workers x (pool +
+  overflow) must stay under PostgreSQL's `max_connections`.
+- **Turn excess load away early.** `uvicorn --limit-concurrency` answers 503 straight away
+  when a worker is full, instead of queueing requests until the pool times out.
+- **SQLite is for one worker and light writes.** Under concurrent writes it raises
+  `database is locked`; use PostgreSQL for anything multi-user.
 
 ### Load testing your own deployment
 
@@ -118,8 +146,24 @@ docker compose -f docker-compose.loadtest.yml up --build
 
 `hyperadmin seed` bulk-inserts Faker data, including foreign keys with a realistic skew, and
 can resume an interrupted run. The Locust users cover the read pages (list, search, detail) and
-create and update writes, and log in once per user. `examples/erp/loadtest/baselines.py`
+create and update writes, and log in once per user; `LOADTEST_LOGIN_SESSIONS=N` caps that at
+`N` logins per Locust process, shared by the rest, so password hashing does not swamp a large
+run. `examples/erp/loadtest/baselines.py`
 records a baseline and compares later runs against it.
+
+To compare setups, `scripts/loadtest_matrix.sh` runs the same test across database, app CPUs,
+users and realtime backend, and writes a summary table to `reports/loadtest-matrix/`:
+
+```bash
+./scripts/loadtest_matrix.sh                      # the whole matrix
+./scripts/loadtest_matrix.sh pg-4cpu-400u         # chosen rows only
+SEED_ROWS=0 ./scripts/loadtest_matrix.sh          # reuse the data already seeded
+```
+
+It gives the app a hard CPU limit with one worker per CPU and stops a row early once the app
+log shows overload (`Exceeded concurrency limit`, `QueuePool limit`, `database is locked`, a
+traceback), skipping heavier rows for that setup. Run it on an otherwise idle machine: Locust
+runs on the host, and other work there starves it and skews the numbers.
 
 ## Known limitations
 
