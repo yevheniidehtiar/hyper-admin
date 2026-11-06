@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-05-03 15:06+0200\n"
+"POT-Creation-Date: 2026-11-06 19:09+0100\n"
 "PO-Revision-Date: 2026-05-05 12:00+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: tr\n"
@@ -18,260 +18,1984 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
+#: src/hyperadmin/auth/views.py:91
+#, fuzzy
+msgid "Could not send verification code. Please try again."
+msgstr "Doğrulama kodu gönderilemedi. Lütfen tekrar deneyin."
 
-#: src/hyperadmin/templates/_messages.html:3
+#: src/hyperadmin/auth/views.py:248 src/hyperadmin/auth/views.py:256
+#, fuzzy
+msgid "Code expired, please request a new one."
+msgstr "Kodun süresi doldu, lütfen yeni bir kod isteyin."
+
+#: src/hyperadmin/auth/views.py:271 src/hyperadmin/auth/views.py:471
+#: src/hyperadmin/auth/views.py:539
+#, fuzzy
+msgid "Invalid code."
+msgstr "Geçersiz kod."
+
+#: src/hyperadmin/auth/views.py:304 src/hyperadmin/auth/views.py:443
+#: src/hyperadmin/auth/views.py:518
+#, fuzzy
+msgid "Too many attempts, try again later."
+msgstr "Çok fazla deneme yapıldı, daha sonra tekrar deneyin."
+
+#: src/hyperadmin/auth/views.py:311
+#, fuzzy
+msgid "A new code has been sent to your email."
+msgstr "E-posta adresinize yeni bir kod gönderildi."
+
+#: src/hyperadmin/auth/views.py:455
+#, fuzzy
+msgid "No active MFA enable flow. Please try again."
+msgstr "Etkin bir MFA etkinleştirme işlemi yok. Lütfen tekrar deneyin."
+
+#: src/hyperadmin/auth/views.py:483
+#, fuzzy
+msgid "Two-factor authentication enabled."
+msgstr "İki faktörlü kimlik doğrulama etkinleştirildi."
+
+#: src/hyperadmin/auth/views.py:528
+#, fuzzy
+msgid "No active MFA disable flow. Please try again."
+msgstr "Etkin bir MFA devre dışı bırakma işlemi yok. Lütfen tekrar deneyin."
+
+#: src/hyperadmin/auth/views.py:549
+#, fuzzy
+msgid "Two-factor authentication disabled."
+msgstr "İki faktörlü kimlik doğrulama devre dışı bırakıldı."
+
+#: src/hyperadmin/core/navigation.py:32
+#, fuzzy
+msgid "Plugins"
+msgstr "Eklentiler"
+
+#: src/hyperadmin/core/navigation.py:35
+#, fuzzy
+msgid "Access"
+msgstr "Erişim"
+
+#: src/hyperadmin/core/palette.py:87
+#, fuzzy, python-format
+msgid "New %(name)s"
+msgstr "Yeni %(name)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:44
+#, fuzzy
+msgid "Field required"
+msgstr "Zorunlu alan"
+
+#: src/hyperadmin/i18n/validation_messages.py:45
+#, fuzzy
+msgid "Input should be a valid string"
+msgstr "Girdi geçerli bir metin olmalıdır"
+
+#: src/hyperadmin/i18n/validation_messages.py:46
+#, fuzzy, python-format
+msgid "String should match pattern '%(pattern)s'"
+msgstr "Metin '%(pattern)s' kalıbıyla eşleşmelidir"
+
+#: src/hyperadmin/i18n/validation_messages.py:47
+#, fuzzy, python-format
+msgid "Input should be greater than %(gt)s"
+msgstr "Girdi %(gt)s değerinden büyük olmalıdır"
+
+#: src/hyperadmin/i18n/validation_messages.py:48
+#, fuzzy, python-format
+msgid "Input should be greater than or equal to %(ge)s"
+msgstr "Girdi %(ge)s değerinden büyük veya ona eşit olmalıdır"
+
+#: src/hyperadmin/i18n/validation_messages.py:49
+#, fuzzy, python-format
+msgid "Input should be less than %(lt)s"
+msgstr "Girdi %(lt)s değerinden küçük olmalıdır"
+
+#: src/hyperadmin/i18n/validation_messages.py:50
+#, fuzzy, python-format
+msgid "Input should be less than or equal to %(le)s"
+msgstr "Girdi %(le)s değerinden küçük veya ona eşit olmalıdır"
+
+#: src/hyperadmin/i18n/validation_messages.py:51
+#, fuzzy, python-format
+msgid "Input should be a multiple of %(multiple_of)s"
+msgstr "Girdi %(multiple_of)s değerinin katı olmalıdır"
+
+#: src/hyperadmin/i18n/validation_messages.py:52
+#, fuzzy
+msgid "Input should be a valid integer"
+msgstr "Girdi geçerli bir tam sayı olmalıdır"
+
+#: src/hyperadmin/i18n/validation_messages.py:54
+#, fuzzy
+msgid "Input should be a valid integer, unable to parse string as an integer"
+msgstr "Girdi geçerli bir tam sayı olmalıdır; metin tam sayı olarak çözümlenemedi"
+
+#: src/hyperadmin/i18n/validation_messages.py:57
+#, fuzzy
+msgid "Input should be a valid integer, got a number with a fractional part"
+msgstr "Girdi geçerli bir tam sayı olmalıdır; ondalık kısmı olan bir sayı alındı"
+
+#: src/hyperadmin/i18n/validation_messages.py:59
+#, fuzzy
+msgid "Input should be a valid number"
+msgstr "Girdi geçerli bir sayı olmalıdır"
+
+#: src/hyperadmin/i18n/validation_messages.py:61
+#, fuzzy
+msgid "Input should be a valid number, unable to parse string as a number"
+msgstr "Girdi geçerli bir sayı olmalıdır; metin sayı olarak çözümlenemedi"
+
+#: src/hyperadmin/i18n/validation_messages.py:63
+#, fuzzy
+msgid "Input should be a valid boolean"
+msgstr "Girdi geçerli bir mantıksal değer olmalıdır"
+
+#: src/hyperadmin/i18n/validation_messages.py:64
+#, fuzzy
+msgid "Input should be a valid boolean, unable to interpret input"
+msgstr "Girdi geçerli bir mantıksal değer olmalıdır; girdi yorumlanamadı"
+
+#: src/hyperadmin/i18n/validation_messages.py:65
+#, fuzzy
+msgid "Input should be a valid decimal"
+msgstr "Girdi geçerli bir ondalık sayı olmalıdır"
+
+#: src/hyperadmin/i18n/validation_messages.py:67
+#, fuzzy, python-format
+msgid "Input should be a valid date in the format YYYY-MM-DD, %(error)s"
+msgstr "Girdi YYYY-AA-GG biçiminde geçerli bir tarih olmalıdır, %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:70
+#, fuzzy, python-format
+msgid "Input should be a valid date or datetime, %(error)s"
+msgstr "Girdi geçerli bir tarih veya tarih-saat olmalıdır, %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:72
+#, fuzzy, python-format
+msgid "Input should be a valid datetime, %(error)s"
+msgstr "Girdi geçerli bir tarih-saat olmalıdır, %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:74
+#, fuzzy, python-format
+msgid "Input should be a valid datetime or date, %(error)s"
+msgstr "Girdi geçerli bir tarih-saat veya tarih olmalıdır, %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:76
+#, fuzzy, python-format
+msgid "Input should be in a valid time format, %(error)s"
+msgstr "Girdi geçerli bir saat biçiminde olmalıdır, %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:77
+#, fuzzy, python-format
+msgid "Input should be a valid UUID, %(error)s"
+msgstr "Girdi geçerli bir UUID olmalıdır, %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:78
+#: src/hyperadmin/i18n/validation_messages.py:79
+#, fuzzy, python-format
+msgid "Input should be %(expected)s"
+msgstr "Girdi %(expected)s olmalıdır"
+
+#: src/hyperadmin/i18n/validation_messages.py:80
+#, fuzzy, python-format
+msgid "Input should be a valid URL, %(error)s"
+msgstr "Girdi geçerli bir URL olmalıdır, %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:81
+#, fuzzy, python-format
+msgid "Invalid JSON: %(error)s"
+msgstr "Geçersiz JSON: %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:82
+#, fuzzy, python-format
+msgid "Value error, %(error)s"
+msgstr "Değer hatası, %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:83
+#, fuzzy, python-format
+msgid "Assertion failed, %(error)s"
+msgstr "Doğrulama başarısız, %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:89
+#, fuzzy, python-format
+msgid "String should have at least %(min_length)s character"
+msgid_plural "String should have at least %(min_length)s characters"
+msgstr[0] "Metin en az %(min_length)s karakter olmalıdır"
+msgstr[1] "Metin en az %(min_length)s karakter olmalıdır"
+
+#: src/hyperadmin/i18n/validation_messages.py:96
+#, fuzzy, python-format
+msgid "String should have at most %(max_length)s character"
+msgid_plural "String should have at most %(max_length)s characters"
+msgstr[0] "Metin en fazla %(max_length)s karakter olmalıdır"
+msgstr[1] "Metin en fazla %(max_length)s karakter olmalıdır"
+
+#: src/hyperadmin/i18n/validation_messages.py:103
+#, fuzzy, python-format
+msgid ""
+"%(field_type)s should have at least %(min_length)s item after validation,"
+" not %(actual_length)s"
+msgid_plural ""
+"%(field_type)s should have at least %(min_length)s items after "
+"validation, not %(actual_length)s"
+msgstr[0] ""
+"%(field_type)s doğrulamadan sonra en az %(min_length)s öğe içermelidir, "
+"%(actual_length)s değil"
+msgstr[1] ""
+"%(field_type)s doğrulamadan sonra en az %(min_length)s öğe içermelidir, "
+"%(actual_length)s değil"
+
+#: src/hyperadmin/i18n/validation_messages.py:110
+#, fuzzy, python-format
+msgid ""
+"%(field_type)s should have at most %(max_length)s item after validation, "
+"not %(actual_length)s"
+msgid_plural ""
+"%(field_type)s should have at most %(max_length)s items after validation,"
+" not %(actual_length)s"
+msgstr[0] ""
+"%(field_type)s doğrulamadan sonra en fazla %(max_length)s öğe "
+"içermelidir, %(actual_length)s değil"
+msgstr[1] ""
+"%(field_type)s doğrulamadan sonra en fazla %(max_length)s öğe "
+"içermelidir, %(actual_length)s değil"
+
+#: src/hyperadmin/i18n/validation_messages.py:119
+#, fuzzy, python-format
+msgid ""
+"%(field_type)s should have at most %(max_length)s item after validation, "
+"not more"
+msgid_plural ""
+"%(field_type)s should have at most %(max_length)s items after validation,"
+" not more"
+msgstr[0] ""
+"%(field_type)s doğrulamadan sonra en fazla %(max_length)s öğe "
+"içermelidir, daha fazla değil"
+msgstr[1] ""
+"%(field_type)s doğrulamadan sonra en fazla %(max_length)s öğe "
+"içermelidir, daha fazla değil"
+
+#: src/hyperadmin/i18n/validation_messages.py:125
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:16
+#: src/hyperadmin/templates/list_layout.html:8
+#, fuzzy
+msgid "List"
+msgstr "Liste"
+
+#: src/hyperadmin/i18n/validation_messages.py:126
+#, fuzzy
+msgid "Tuple"
+msgstr "Demet"
+
+#: src/hyperadmin/i18n/validation_messages.py:127
+#, fuzzy
+msgid "Set"
+msgstr "Küme"
+
+#: src/hyperadmin/i18n/validation_messages.py:128
+#, fuzzy
+msgid "Frozenset"
+msgstr "Değişmez küme"
+
+#: src/hyperadmin/i18n/validation_messages.py:129
+#, fuzzy
+msgid "Dictionary"
+msgstr "Sözlük"
+
+#: src/hyperadmin/i18n/validation_messages.py:136
+#, fuzzy
+msgid "input is too short"
+msgstr "girdi çok kısa"
+
+#: src/hyperadmin/i18n/validation_messages.py:137
+#, fuzzy
+msgid "unexpected extra characters at the end of the input"
+msgstr "girdinin sonunda beklenmeyen fazladan karakterler"
+
+#: src/hyperadmin/i18n/validation_messages.py:138
+#, fuzzy
+msgid "invalid datetime separator, expected `T`, `t`, `_` or space"
+msgstr "geçersiz tarih-saat ayırıcısı, `T`, `t`, `_` veya boşluk bekleniyordu"
+
+#: src/hyperadmin/i18n/validation_messages.py:139
+#, fuzzy
+msgid "invalid date separator, expected `-`"
+msgstr "geçersiz tarih ayırıcısı, `-` bekleniyordu"
+
+#: src/hyperadmin/i18n/validation_messages.py:140
+#, fuzzy
+msgid "invalid time separator, expected `:`"
+msgstr "geçersiz saat ayırıcısı, `:` bekleniyordu"
+
+#: src/hyperadmin/i18n/validation_messages.py:141
+#, fuzzy
+msgid "invalid character in year"
+msgstr "yılda geçersiz karakter"
+
+#: src/hyperadmin/i18n/validation_messages.py:142
+#, fuzzy
+msgid "invalid character in month"
+msgstr "ayda geçersiz karakter"
+
+#: src/hyperadmin/i18n/validation_messages.py:143
+#, fuzzy
+msgid "invalid character in day"
+msgstr "günde geçersiz karakter"
+
+#: src/hyperadmin/i18n/validation_messages.py:144
+#, fuzzy
+msgid "invalid character in hour"
+msgstr "saatte geçersiz karakter"
+
+#: src/hyperadmin/i18n/validation_messages.py:145
+#, fuzzy
+msgid "invalid character in minute"
+msgstr "dakikada geçersiz karakter"
+
+#: src/hyperadmin/i18n/validation_messages.py:146
+#, fuzzy
+msgid "invalid character in second"
+msgstr "saniyede geçersiz karakter"
+
+#: src/hyperadmin/i18n/validation_messages.py:147
+#, fuzzy
+msgid "month value is outside expected range of 1-12"
+msgstr "ay değeri beklenen 1-12 aralığının dışında"
+
+#: src/hyperadmin/i18n/validation_messages.py:148
+#, fuzzy
+msgid "day value is outside expected range"
+msgstr "gün değeri beklenen aralığın dışında"
+
+#: src/hyperadmin/i18n/validation_messages.py:149
+#, fuzzy
+msgid "hour value is outside expected range of 0-23"
+msgstr "saat değeri beklenen 0-23 aralığının dışında"
+
+#: src/hyperadmin/i18n/validation_messages.py:150
+#, fuzzy
+msgid "minute value is outside expected range of 0-59"
+msgstr "dakika değeri beklenen 0-59 aralığının dışında"
+
+#: src/hyperadmin/i18n/validation_messages.py:151
+#, fuzzy
+msgid "second value is outside expected range of 0-59"
+msgstr "saniye değeri beklenen 0-59 aralığının dışında"
+
+#: src/hyperadmin/i18n/validation_messages.py:152
+#, fuzzy
+msgid "relative URL without a base"
+msgstr "tabanı olmayan göreli URL"
+
+#: src/hyperadmin/i18n/validation_messages.py:153
+#, fuzzy
+msgid "empty host"
+msgstr "boş ana makine"
+
+#: src/hyperadmin/i18n/validation_messages.py:154
+#, fuzzy
+msgid "invalid port number"
+msgstr "geçersiz bağlantı noktası numarası"
+
+#: src/hyperadmin/i18n/validation_messages.py:155
+#, fuzzy
+msgid "invalid domain character"
+msgstr "geçersiz alan adı karakteri"
+
+#: src/hyperadmin/i18n/validation_messages.py:156
+#, fuzzy
+msgid "invalid international domain name"
+msgstr "geçersiz uluslararası alan adı"
+
+#: src/hyperadmin/i18n/validation_messages.py:157
+#, fuzzy
+msgid "invalid IPv4 address"
+msgstr "geçersiz IPv4 adresi"
+
+#: src/hyperadmin/i18n/validation_messages.py:158
+#, fuzzy
+msgid "invalid IPv6 address"
+msgstr "geçersiz IPv6 adresi"
+
+#: src/hyperadmin/i18n/validation_messages.py:162
+#, fuzzy, python-format
+msgid "%(choices)s or %(last)s"
+msgstr "%(choices)s veya %(last)s"
+
+#: src/hyperadmin/templates/_messages.html:6
 #, fuzzy
 msgid "Success!"
 msgstr "Başarılı!"
 
-#: src/hyperadmin/templates/_messages.html:4
+#: src/hyperadmin/templates/_messages.html:7
 #, fuzzy
 msgid "Your action was successful."
 msgstr "İşleminiz başarılı oldu."
 
-#: src/hyperadmin/templates/_messages.html:5
-#: src/hyperadmin/templates/_messages.html:6
+#: src/hyperadmin/templates/_messages.html:9
+#: src/hyperadmin/templates/components/csrf_reload_banner.html:18
+#: src/hyperadmin/templates/components/error_toast.html:17
+#: src/hyperadmin/templates/components/popover.html:36
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:35
+#: src/hyperadmin/templates/components/toast.html:26
+#: src/hyperadmin/templates/permissions/_banner.html:16
+#: src/hyperadmin/templates/widgets/popup_form.html:33
 #, fuzzy
 msgid "Close"
 msgstr "Kapat"
 
-#: src/hyperadmin/templates/_navbar.html:1
+#: src/hyperadmin/templates/_navbar.html:2
 #, fuzzy
 msgid "Main navigation"
 msgstr "Ana gezinti"
 
-#: src/hyperadmin/templates/_navbar.html:8
+#: src/hyperadmin/templates/_navbar.html:9
 #, fuzzy
 msgid "Toggle navigation menu"
 msgstr "Gezinti menüsünü aç/kapat"
 
-#: src/hyperadmin/templates/_navbar.html:18
+#: src/hyperadmin/templates/_navbar.html:27
+#, fuzzy
+msgid "Search…"
+msgstr "Ara…"
+
+#: src/hyperadmin/templates/_navbar.html:36
+#, fuzzy
+msgid "Real-time connection status"
+msgstr "Gerçek zamanlı bağlantı durumu"
+
+#: src/hyperadmin/templates/_navbar.html:41
 #, fuzzy
 msgid "Language"
 msgstr "Dil"
 
-#: src/hyperadmin/templates/_navbar.html:22
+#: src/hyperadmin/templates/_navbar.html:46
 #, fuzzy
 msgid "Select language"
 msgstr "Dil seçin"
 
-#: src/hyperadmin/templates/_navbar.html:34
+#: src/hyperadmin/templates/_navbar.html:58
 #, fuzzy
 msgid "Toggle dark mode"
 msgstr "Karanlık modu aç/kapat"
 
-#: src/hyperadmin/templates/_navbar.html:56
+#: src/hyperadmin/templates/_navbar.html:78
 #, fuzzy
 msgid "Logout"
 msgstr "Çıkış yap"
 
-#: src/hyperadmin/templates/_navbar.html:64
+#: src/hyperadmin/templates/_navbar.html:84
 #, fuzzy
 msgid "Admin"
 msgstr "Yönetim"
 
-#: src/hyperadmin/templates/_navbar.html:70
+#: src/hyperadmin/templates/_navbar.html:88
 #, fuzzy
 msgid "Profile"
 msgstr "Profil"
 
-#: src/hyperadmin/templates/_navbar.html:71
+#: src/hyperadmin/templates/_navbar.html:89
 #, fuzzy
 msgid "Settings"
 msgstr "Ayarlar"
 
-#: src/hyperadmin/templates/_sidebar.html:5
+#: src/hyperadmin/templates/_sidebar.html:18
 #, fuzzy
 msgid "Model navigation"
 msgstr "Model gezintisi"
 
-#: src/hyperadmin/templates/_sidebar.html:12
+#: src/hyperadmin/templates/_sidebar.html:25
 #, fuzzy
 msgid "Menu"
 msgstr "Menü"
 
-#: src/hyperadmin/templates/_sidebar.html:16
+#: src/hyperadmin/templates/_sidebar.html:29
 #, fuzzy
 msgid "Close navigation menu"
 msgstr "Gezinti menüsünü kapat"
 
-#: src/hyperadmin/templates/_sidebar.html:23
+#: src/hyperadmin/templates/_sidebar.html:39
+#: src/hyperadmin/templates/_sidebar.html:40
+#, fuzzy
+msgid "Collapse sidebar"
+msgstr "Kenar çubuğunu daralt"
+
+#: src/hyperadmin/templates/_sidebar.html:45
 #, fuzzy
 msgid "Sidebar"
 msgstr "Kenar çubuğu"
 
-#: src/hyperadmin/templates/create.html:4
-#, python-format, fuzzy
-msgid "Create %(model_name)s"
-msgstr "%(model_name)s oluştur"
-
+#: src/hyperadmin/templates/base.html:12
 #: src/hyperadmin/templates/create.html:36
 #, fuzzy
 msgid "Create"
 msgstr "Oluştur"
 
+#: src/hyperadmin/templates/bulk_form.html:9
+#: src/hyperadmin/templates/bulk_result.html:11
+#, fuzzy
+msgid "Breadcrumb"
+msgstr "Sayfa yolu"
+
+#: src/hyperadmin/templates/create.html:4
+#, fuzzy, python-format
+msgid "Create %(model_name)s"
+msgstr "%(model_name)s oluştur"
+
+#: src/hyperadmin/templates/components/bulk_form.html:74
+#: src/hyperadmin/templates/components/bulk_form.html:76
+#: src/hyperadmin/templates/components/confirm_delete_dialog.html:23
+#: src/hyperadmin/templates/components/saved_views.html:24
+#: src/hyperadmin/templates/components/saved_views.html:49
 #: src/hyperadmin/templates/create.html:39
-#: src/hyperadmin/templates/update.html:39
+#: src/hyperadmin/templates/update.html:53
+#: src/hyperadmin/templates/widgets/popup_form.html:59
 #, fuzzy
 msgid "Cancel"
 msgstr "İptal"
 
-#: src/hyperadmin/templates/detail.html:30
-#, python-format, fuzzy
+#: src/hyperadmin/templates/detail.html:15
+#, fuzzy
+msgid "Edit"
+msgstr "Düzenle"
+
+#: src/hyperadmin/templates/components/confirm_delete_dialog.html:24
+#: src/hyperadmin/templates/components/table_body.html:57
+#: src/hyperadmin/templates/detail.html:22
+#: src/hyperadmin/templates/permissions/_macros.html:20
+#: src/hyperadmin/templates/update.html:59
+#, fuzzy
+msgid "Delete"
+msgstr "Sil"
+
+#: src/hyperadmin/templates/detail.html:113
+#, fuzzy, python-format
 msgid "Run action '%(label)s'?"
 msgstr "'%(label)s' eylemi çalıştırılsın mı?"
 
-#: src/hyperadmin/templates/detail.html:36
+#: src/hyperadmin/templates/detail.html:119
 #, fuzzy
 msgid "Back to list"
 msgstr "Listeye dön"
 
+#: src/hyperadmin/templates/error.html:5
+#, fuzzy
+msgid "You don't have access to this page"
+msgstr "Bu sayfaya erişiminiz yok"
+
+#: src/hyperadmin/templates/error.html:6 src/hyperadmin/views/nav_pins.py:95
+#: src/hyperadmin/views/nav_pins.py:130 src/hyperadmin/views/nav_pins.py:141
+#, fuzzy
+msgid "Page not found"
+msgstr "Sayfa bulunamadı"
+
+#: src/hyperadmin/templates/error.html:7
+#, fuzzy
+msgid "This action can't be completed"
+msgstr "Bu işlem tamamlanamıyor"
+
+#: src/hyperadmin/templates/error.html:10
+#: src/hyperadmin/templates/error.html:15
+#: src/hyperadmin/templates/error.html:16
+#, fuzzy
+msgid "Error"
+msgstr "Hata"
+
+#: src/hyperadmin/templates/error.html:18
+#, fuzzy
+msgid ""
+"Your account doesn't have permission for this. Ask an administrator if "
+"you need it."
+msgstr "Hesabınızın bunun için izni yok. Gerekiyorsa bir yöneticiden isteyin."
+
+#: src/hyperadmin/templates/error.html:22
+#, fuzzy
+msgid "Back to dashboard"
+msgstr "Panoya dön"
+
 #: src/hyperadmin/templates/form_layout.html:12
+#: src/hyperadmin/templates/widgets/popup_form.html:23
+#, fuzzy
+msgid "You have unsaved changes. Leave this page?"
+msgstr "Kaydedilmemiş değişiklikleriniz var. Bu sayfadan ayrılınsın mı?"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:25
+#: src/hyperadmin/templates/form_layout.html:18
 #, fuzzy
 msgid "Save"
 msgstr "Kaydet"
 
-#: src/hyperadmin/templates/list_layout.html:3
-#, python-format, fuzzy
+#: src/hyperadmin/templates/list_layout.html:4
+#, fuzzy, python-format
 msgid "%(model_name)s List | HyperAdmin"
 msgstr "%(model_name)s listesi | HyperAdmin"
 
-#: src/hyperadmin/templates/list_layout.html:7
-#, fuzzy
-msgid "List"
-msgstr "Liste"
-
-#: src/hyperadmin/templates/list_layout.html:11
-#, python-format, fuzzy
+#: src/hyperadmin/templates/list_layout.html:12
+#, fuzzy, python-format
 msgid "Create New %(model_name)s"
 msgstr "Yeni %(model_name)s oluştur"
+
+#: src/hyperadmin/templates/components/filter_bar.html:10
+#: src/hyperadmin/templates/components/filter_sidebar.html:13
+#: src/hyperadmin/templates/list_layout.html:28
+#, fuzzy
+msgid "Filters"
+msgstr "Filtreler"
+
+#: src/hyperadmin/templates/list_layout.html:31
+#, fuzzy
+msgid "Applied filters"
+msgstr "Uygulanan filtreler"
+
+#: src/hyperadmin/templates/list_layout.html:33
+#, fuzzy, python-format
+msgid "Remove filter %(label)s"
+msgstr "%(label)s filtresini kaldır"
 
 #: src/hyperadmin/templates/login.html:3
 #, fuzzy
 msgid "Login"
 msgstr "Giriş"
 
-#: src/hyperadmin/templates/login.html:13
+#: src/hyperadmin/templates/login.html:14
 #, fuzzy
 msgid "Sign in to your account"
 msgstr "Hesabınıza giriş yapın"
 
-#: src/hyperadmin/templates/login.html:23
+#: src/hyperadmin/templates/login.html:28
 #, fuzzy
 msgid "Username"
 msgstr "Kullanıcı adı"
 
-#: src/hyperadmin/templates/login.html:35
+#: src/hyperadmin/templates/login.html:40
 #, fuzzy
 msgid "Password"
 msgstr "Parola"
 
-#: src/hyperadmin/templates/login.html:46
+#: src/hyperadmin/templates/login.html:51
 #, fuzzy
 msgid "Sign in"
 msgstr "Giriş yap"
 
-#: src/hyperadmin/templates/update.html:4
-#, python-format, fuzzy
+#: src/hyperadmin/templates/update.html:5
+#, fuzzy, python-format
 msgid "Update %(item_name)s"
 msgstr "%(item_name)s güncelle"
 
-#: src/hyperadmin/templates/update.html:36
-#, fuzzy
-msgid "Update"
-msgstr "Güncelle"
-
-#: src/hyperadmin/templates/components/filter_bar.html:11
-#, fuzzy
-msgid "Filters"
-msgstr "Filtreler"
-
-#: src/hyperadmin/templates/components/filter_bar.html:27
-#, fuzzy
-msgid "Any"
-msgstr "Tümü"
-
-#: src/hyperadmin/templates/components/filter_bar.html:43
-#, fuzzy
-msgid "Clear all filters"
-msgstr "Tüm filtreleri temizle"
-
-#: src/hyperadmin/templates/components/inline_row.html:31
-#: src/hyperadmin/templates/components/table.html:8
-#: src/hyperadmin/templates/components/table.html:18
-#, fuzzy
-msgid "Actions"
-msgstr "Eylemler"
-
-#: src/hyperadmin/templates/components/inline_row.html:36
-#, fuzzy
-msgid "Remove"
-msgstr "Kaldır"
-
-#: src/hyperadmin/templates/components/pagination.html:1
-#, fuzzy
-msgid "Pagination"
-msgstr "Sayfalama"
-
-#: src/hyperadmin/templates/components/pagination.html:4
-#, python-format, fuzzy
-msgid "Showing %(start)s to %(end)s of %(total)s results"
-msgstr "%(total)s sonuç içinden %(start)s - %(end)s arası gösteriliyor"
-
-#: src/hyperadmin/templates/components/pagination.html:17
-#, fuzzy
-msgid "Previous"
-msgstr "Önceki"
-
-#: src/hyperadmin/templates/components/pagination.html:22
-#, python-format, fuzzy
-msgid "Page %(page)s of %(total_pages)s"
-msgstr "Sayfa %(page)s / %(total_pages)s"
-
-#: src/hyperadmin/templates/components/pagination.html:32
-#, fuzzy
-msgid "Next"
-msgstr "Sonraki"
-
-#: src/hyperadmin/templates/components/search_input.html:5
-#, fuzzy
-msgid "Search..."
-msgstr "Ara..."
-
-#: src/hyperadmin/templates/components/search_input.html:8
-#, fuzzy
-msgid "Search"
-msgstr "Ara"
-
-#: src/hyperadmin/templates/components/search_input.html:14
-#, fuzzy
-msgid "Searching..."
-msgstr "Aranıyor..."
-
-#: src/hyperadmin/templates/components/table.html:2
-#, python-format, fuzzy
-msgid "%(model_name)s list"
-msgstr "%(model_name)s listesi"
-
-#: src/hyperadmin/templates/components/table.html:20
+#: src/hyperadmin/templates/permissions/_macros.html:20
+#: src/hyperadmin/templates/update.html:14
 #, fuzzy
 msgid "View"
 msgstr "Görüntüle"
 
-#: src/hyperadmin/templates/components/table.html:23
+#: src/hyperadmin/templates/update.html:50
 #, fuzzy
-msgid "Edit"
-msgstr "Düzenle"
+msgid "Update"
+msgstr "Güncelle"
 
-#: src/hyperadmin/templates/components/table.html:27
+#: src/hyperadmin/templates/auth/mfa_challenge.html:3
 #, fuzzy
-msgid "Are you sure you want to delete this item?"
-msgstr "Bu öğeyi silmek istediğinizden emin misiniz?"
+msgid "MFA Challenge"
+msgstr "MFA doğrulaması"
 
-#: src/hyperadmin/templates/components/table.html:32
+#: src/hyperadmin/templates/auth/mfa_challenge.html:12
 #, fuzzy
-msgid "Delete"
-msgstr "Sil"
+msgid "Two-factor verification"
+msgstr "İki adımlı doğrulama"
+
+#: src/hyperadmin/templates/auth/mfa_challenge.html:14
+#, fuzzy
+msgid "Enter the 6-digit code we sent to your email."
+msgstr "E-posta adresinize gönderdiğimiz 6 haneli kodu girin."
+
+#: src/hyperadmin/templates/auth/mfa_challenge.html:36
+#: src/hyperadmin/templates/auth/mfa_settings.html:53
+#, fuzzy
+msgid "Verification code"
+msgstr "Doğrulama kodu"
+
+#: src/hyperadmin/templates/auth/mfa_challenge.html:54
+#, fuzzy
+msgid "Verify"
+msgstr "Doğrula"
+
+#: src/hyperadmin/templates/auth/mfa_challenge.html:60
+#, fuzzy
+msgid "Your code has expired."
+msgstr "Kodunuzun süresi doldu."
+
+#: src/hyperadmin/templates/auth/mfa_challenge.html:70
+#, fuzzy
+msgid "Resend code"
+msgstr "Kodu yeniden gönder"
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:3
+#: src/hyperadmin/templates/auth/mfa_settings.html:9
+#, fuzzy
+msgid "Two-factor authentication"
+msgstr "İki faktörlü kimlik doğrulama"
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:13
+#, fuzzy
+msgid "Status:"
+msgstr "Durum:"
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:16
+#, fuzzy
+msgid "Enabled"
+msgstr "Etkin"
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:20
+#, fuzzy
+msgid "Disabled"
+msgstr "Devre dışı"
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:49
+#, fuzzy
+msgid "Enter the 6-digit code we sent to your email to confirm."
+msgstr "Onaylamak için e-posta adresinize gönderdiğimiz 6 haneli kodu girin."
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:73
+#, fuzzy
+msgid "Confirm and enable"
+msgstr "Onayla ve etkinleştir"
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:75
+#, fuzzy
+msgid "Confirm and disable"
+msgstr "Onayla ve devre dışı bırak"
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:90
+#, fuzzy
+msgid "Disable two-factor authentication"
+msgstr "İki faktörlü kimlik doğrulamayı devre dışı bırak"
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:104
+#, fuzzy
+msgid "Enable two-factor authentication"
+msgstr "İki faktörlü kimlik doğrulamayı etkinleştir"
+
+#: src/hyperadmin/templates/components/_nav.html:33
+#, fuzzy, python-format
+msgid "Unpin %(label)s"
+msgstr "%(label)s sabitlemesini kaldır"
+
+#: src/hyperadmin/templates/components/_nav.html:33
+#, fuzzy, python-format
+msgid "Pin %(label)s"
+msgstr "%(label)s sabitle"
+
+#: src/hyperadmin/templates/components/banner.html:48
+#, fuzzy
+msgid "Dismiss"
+msgstr "Kapat"
+
+#: src/hyperadmin/templates/components/banner.html:57
+#, fuzzy
+msgid "Notices"
+msgstr "Bildirimler"
+
+#: src/hyperadmin/templates/components/banner.html:72
+#, fuzzy, python-format
+msgid "+%(count)s more notice"
+msgid_plural "+%(count)s more notices"
+msgstr[0] "+%(count)s bildirim daha"
+msgstr[1] "+%(count)s bildirim daha"
+
+#: src/hyperadmin/templates/components/bulk_form.html:21
+#, fuzzy, python-format
+msgid "%(label)s 1 row"
+msgstr "%(label)s: 1 satır"
+
+#: src/hyperadmin/templates/components/bulk_form.html:23
+#, fuzzy, python-format
+msgid "%(label)s %(count)s rows"
+msgstr "%(label)s: %(count)s satır"
+
+#: src/hyperadmin/templates/components/bulk_form.html:35
+#, fuzzy
+msgid "1 field needs fixing."
+msgstr "1 alanın düzeltilmesi gerekiyor."
+
+#: src/hyperadmin/templates/components/bulk_form.html:35
+#, fuzzy, python-format
+msgid "%(count)s fields need fixing."
+msgstr "%(count)s alanın düzeltilmesi gerekiyor."
+
+#: src/hyperadmin/templates/components/bulk_form.html:37
+#, fuzzy, python-format
+msgid "Your %(count)s selected rows are kept."
+msgstr "Seçili %(count)s satırınız korunur."
+
+#: src/hyperadmin/templates/components/bulk_form.html:42
+#, fuzzy, python-format
+msgid "This runs on the %(count)s selected rows."
+msgstr "Bu işlem seçili %(count)s satırda çalışır."
+
+#: src/hyperadmin/templates/components/bulk_form.html:45
+#, fuzzy
+msgid "Selected rows"
+msgstr "Seçili satırlar"
+
+#: src/hyperadmin/templates/components/bulk_form.html:56
+#, fuzzy
+msgid "optional"
+msgstr "isteğe bağlı"
+
+#: src/hyperadmin/templates/components/bulk_result.html:23
+#, fuzzy
+msgid "Done"
+msgstr "Tamamlandı"
+
+#: src/hyperadmin/templates/components/bulk_result.html:23
+#, fuzzy
+msgid "Failed"
+msgstr "Başarısız"
+
+#: src/hyperadmin/templates/components/bulk_result.html:23
+#, fuzzy
+msgid "Forbidden"
+msgstr "Yasak"
+
+#: src/hyperadmin/templates/components/bulk_result.html:25
+#, fuzzy
+msgid "Row not found. It may have been deleted after you selected it."
+msgstr "Satır bulunamadı. Siz seçtikten sonra silinmiş olabilir."
+
+#: src/hyperadmin/templates/components/bulk_result.html:26
+#, fuzzy
+msgid ""
+"The row could not be loaded because of a database error. Check the server"
+" logs, then retry."
+msgstr ""
+"Satır bir veritabanı hatası nedeniyle yüklenemedi. Sunucu günlüklerini "
+"kontrol edip tekrar deneyin."
+
+#: src/hyperadmin/templates/components/bulk_result.html:27
+#, fuzzy
+msgid "The action failed on this row. Check the server logs, then retry."
+msgstr ""
+"İşlem bu satırda başarısız oldu. Sunucu günlüklerini kontrol edip tekrar "
+"deneyin."
+
+#: src/hyperadmin/templates/components/bulk_result.html:31
+#, fuzzy, python-format
+msgid "%(failed)s failed and %(forbidden)s not allowed."
+msgstr "%(failed)s başarısız, %(forbidden)s izin verilmedi."
+
+#: src/hyperadmin/templates/components/bulk_result.html:33
+#, fuzzy, python-format
+msgid "%(failed)s failed."
+msgstr "%(failed)s başarısız."
+
+#: src/hyperadmin/templates/components/bulk_result.html:35
+#, fuzzy, python-format
+msgid "%(forbidden)s not allowed."
+msgstr "%(forbidden)s izin verilmedi."
+
+#: src/hyperadmin/templates/components/bulk_result.html:40
+#: src/hyperadmin/templates/components/bulk_result.html:95
+#, fuzzy
+msgid "Row"
+msgstr "Satır"
+
+#: src/hyperadmin/templates/components/bulk_result.html:45
+#: src/hyperadmin/templates/components/bulk_result.html:96
+#, fuzzy
+msgid "Result"
+msgstr "Sonuç"
+
+#: src/hyperadmin/templates/components/bulk_result.html:49
+#: src/hyperadmin/templates/components/bulk_result.html:97
+#, fuzzy
+msgid "What happened"
+msgstr "Ne oldu"
+
+#: src/hyperadmin/templates/components/bulk_result.html:51
+#, fuzzy
+msgid "no detail"
+msgstr "ayrıntı yok"
+
+#: src/hyperadmin/templates/components/bulk_result.html:66
+#, fuzzy
+msgid "No rows were selected."
+msgstr "Hiç satır seçilmedi."
+
+#: src/hyperadmin/templates/components/bulk_result.html:68
+#, fuzzy, python-format
+msgid "All %(count)s rows done."
+msgstr "%(count)s satırın tamamı tamamlandı."
+
+#: src/hyperadmin/templates/components/bulk_result.html:70
+#, fuzzy, python-format
+msgid "%(done)s of %(count)s rows done."
+msgstr "%(count)s satırdan %(done)s tanesi tamamlandı."
+
+#: src/hyperadmin/templates/components/bulk_result.html:72
+#, fuzzy
+msgid "No rows done."
+msgstr "Hiçbir satır tamamlanmadı."
+
+#: src/hyperadmin/templates/components/bulk_result.html:76
+#, fuzzy
+msgid "Totals"
+msgstr "Toplamlar"
+
+#: src/hyperadmin/templates/components/bulk_result.html:83
+#, fuzzy, python-format
+msgid "%(done)s done, %(failed)s failed, %(forbidden)s forbidden"
+msgstr "%(done)s tamamlandı, %(failed)s başarısız, %(forbidden)s yasak"
+
+#: src/hyperadmin/templates/components/bulk_result.html:92
+#, fuzzy
+msgid "Results per row"
+msgstr "Satır bazında sonuçlar"
+
+#: src/hyperadmin/templates/components/bulk_result.html:107
+#, fuzzy, python-format
+msgid "Show the %(count)s done rows"
+msgstr "Tamamlanan %(count)s satırı göster"
+
+#: src/hyperadmin/templates/components/bulk_result.html:108
+#, fuzzy
+msgid "Done rows"
+msgstr "Tamamlanan satırlar"
+
+#: src/hyperadmin/templates/components/bulk_result.html:125
+#, fuzzy, python-format
+msgid "Retry failures (%(count)s)"
+msgstr "Başarısızları yeniden dene (%(count)s)"
+
+#: src/hyperadmin/templates/components/bulk_result.html:130
+#, fuzzy, python-format
+msgid "Back to %(model_name)s"
+msgstr "%(model_name)s listesine dön"
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:22
+#, fuzzy
+msgid "Bulk actions"
+msgstr "Toplu işlemler"
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:28
+#, fuzzy
+msgid "Choose an action, then press Run."
+msgstr "Bir işlem seçin, ardından Çalıştır'a basın."
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:29
+#, fuzzy
+msgid "Select at least one row, then press Run."
+msgstr "En az bir satır seçin, ardından Çalıştır'a basın."
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:36
+#, fuzzy
+msgid "selected"
+msgstr "seçili"
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:37
+#: src/hyperadmin/templates/components/bulk_toolbar.html:38
+#, fuzzy
+msgid "Select rows, then choose an action"
+msgstr "Satırları seçin, ardından bir işlem seçin"
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:40
+#, fuzzy
+msgid "Action for selected rows"
+msgstr "Seçili satırlar için işlem"
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:44
+#, fuzzy
+msgid "Choose an action…"
+msgstr "Bir işlem seçin…"
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:51
+#, fuzzy
+msgid "Run"
+msgstr "Çalıştır"
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:54
+#, fuzzy
+msgid "Clear selection"
+msgstr "Seçimi temizle"
+
+#: src/hyperadmin/templates/components/command_palette.html:15
+#: src/hyperadmin/templates/components/nav_pinned.html:10
+#, fuzzy
+msgid "Pinned"
+msgstr "Sabitlenenler"
+
+#: src/hyperadmin/templates/components/command_palette.html:16
+#, fuzzy
+msgid "Recent"
+msgstr "Son kullanılanlar"
+
+#: src/hyperadmin/templates/components/command_palette.html:17
+#, fuzzy
+msgid "Models"
+msgstr "Modeller"
+
+#: src/hyperadmin/templates/components/command_palette.html:18
+#, fuzzy
+msgid "Pages"
+msgstr "Sayfalar"
+
+#: src/hyperadmin/templates/components/command_palette.html:19
+#: src/hyperadmin/templates/widgets/autocomplete.html:32
+#, fuzzy, python-format
+msgid "%(count)s results"
+msgstr "%(count)s sonuç"
+
+#: src/hyperadmin/templates/components/command_palette.html:20
+#: src/hyperadmin/templates/components/command_palette.html:37
+#: src/hyperadmin/templates/widgets/autocomplete.html:31
+#, fuzzy
+msgid "No results"
+msgstr "Sonuç yok"
+
+#: src/hyperadmin/templates/components/command_palette.html:24
+#: src/hyperadmin/templates/components/search_input.html:11
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:19
+#, fuzzy
+msgid "Search"
+msgstr "Ara"
+
+#: src/hyperadmin/templates/components/command_palette.html:30
+#, fuzzy
+msgid "Search models and pages"
+msgstr "Model ve sayfalarda ara"
+
+#: src/hyperadmin/templates/components/command_palette.html:31
+#, fuzzy
+msgid "Search models and pages…"
+msgstr "Model ve sayfalarda ara…"
+
+#: src/hyperadmin/templates/components/command_palette.html:36
+#, fuzzy
+msgid "Results"
+msgstr "Sonuçlar"
+
+#: src/hyperadmin/templates/components/command_palette.html:40
+#, fuzzy
+msgid "move"
+msgstr "gezin"
+
+#: src/hyperadmin/templates/components/command_palette.html:41
+#, fuzzy
+msgid "open"
+msgstr "aç"
+
+#: src/hyperadmin/templates/components/command_palette.html:42
+#, fuzzy
+msgid "new"
+msgstr "yeni"
+
+#: src/hyperadmin/templates/components/confirm_delete_dialog.html:14
+#, fuzzy, python-format
+msgid "Delete %(name)s?"
+msgstr "%(name)s silinsin mi?"
+
+#: src/hyperadmin/templates/components/confirm_delete_dialog.html:18
+#, fuzzy
+msgid "Delete this record?"
+msgstr "Bu kayıt silinsin mi?"
+
+#: src/hyperadmin/templates/components/confirm_delete_dialog.html:19
+#, fuzzy
+msgid "This cannot be undone."
+msgstr "Bu işlem geri alınamaz."
+
+#: src/hyperadmin/templates/components/csrf_reload_banner.html:12
+#, fuzzy
+msgid "This page's security token is out of date"
+msgstr "Bu sayfanın güvenlik belirtecinin süresi doldu"
+
+#: src/hyperadmin/templates/components/csrf_reload_banner.html:13
+#, fuzzy
+msgid "Reload the page, then try again."
+msgstr "Sayfayı yeniden yükleyin, ardından tekrar deneyin."
+
+#: src/hyperadmin/templates/components/csrf_reload_banner.html:15
+#, fuzzy
+msgid "Reload page"
+msgstr "Sayfayı yeniden yükle"
+
+#: src/hyperadmin/templates/components/error_toast.html:8
+#, fuzzy
+msgid "Permission denied"
+msgstr "İzin reddedildi"
+
+#: src/hyperadmin/templates/components/error_toast.html:9
+#, fuzzy
+msgid "Not found"
+msgstr "Bulunamadı"
+
+#: src/hyperadmin/templates/components/error_toast.html:10
+#, fuzzy
+msgid "Action refused"
+msgstr "İşlem reddedildi"
+
+#: src/hyperadmin/templates/components/error_toast.html:13
+#, fuzzy
+msgid "Your account doesn't have permission for this."
+msgstr "Hesabınızın bunun için izni yok."
+
+#: src/hyperadmin/templates/components/filter_bar.html:28
+#: src/hyperadmin/templates/components/filters/boolean.html:6
+#: src/hyperadmin/templates/components/filters/select.html:6
+#, fuzzy
+msgid "Any"
+msgstr "Tümü"
+
+#: src/hyperadmin/templates/components/filter_bar.html:44
+#, fuzzy
+msgid "Clear all filters"
+msgstr "Tüm filtreleri temizle"
+
+#: src/hyperadmin/templates/components/filter_sidebar.html:14
+#, fuzzy
+msgid "Reset"
+msgstr "Sıfırla"
+
+#: src/hyperadmin/templates/components/filter_sidebar.html:21
+#, fuzzy
+msgid "Clear all"
+msgstr "Tümünü temizle"
+
+#: src/hyperadmin/templates/components/filter_sidebar.html:22
+#, fuzzy
+msgid "Apply filters"
+msgstr "Filtreleri uygula"
+
+#: src/hyperadmin/templates/components/inline_row.html:32
+#: src/hyperadmin/templates/components/table.html:28
+#: src/hyperadmin/templates/components/table_body.html:54
+#, fuzzy
+msgid "Actions"
+msgstr "Eylemler"
+
+#: src/hyperadmin/templates/components/inline_row.html:45
+#: src/hyperadmin/templates/widgets/image_input.html:104
+#, fuzzy
+msgid "Remove"
+msgstr "Kaldır"
+
+#: src/hyperadmin/templates/components/list_error.html:5
+#, fuzzy
+msgid "The list could not be loaded because of a database error."
+msgstr "Liste bir veritabanı hatası nedeniyle yüklenemedi."
+
+#: src/hyperadmin/templates/components/list_error.html:7
+#, fuzzy, python-format
+msgid ""
+"The table for this model does not exist yet: run your migrations or "
+"%(cmd)s."
+msgstr ""
+"Bu modelin tablosu henüz yok: geçişlerinizi veya %(cmd)s komutunu "
+"çalıştırın."
+
+#: src/hyperadmin/templates/components/list_error.html:9
+#, fuzzy
+msgid "Check the server logs for details."
+msgstr "Ayrıntılar için sunucu günlüklerine bakın."
+
+#: src/hyperadmin/templates/components/pagination.html:2
+#, fuzzy
+msgid "Pagination"
+msgstr "Sayfalama"
+
+#: src/hyperadmin/templates/components/pagination.html:5
+#, fuzzy, python-format
+msgid "Showing %(start)s to %(end)s of %(total)s results"
+msgstr "%(total)s sonuç içinden %(start)s - %(end)s arası gösteriliyor"
+
+#: src/hyperadmin/templates/components/pagination.html:18
+#, fuzzy
+msgid "Previous"
+msgstr "Önceki"
+
+#: src/hyperadmin/templates/components/pagination.html:23
+#, fuzzy, python-format
+msgid "Page %(page)s of %(total_pages)s"
+msgstr "Sayfa %(page)s / %(total_pages)s"
+
+#: src/hyperadmin/templates/components/pagination.html:33
+#, fuzzy
+msgid "Next"
+msgstr "Sonraki"
+
+#: src/hyperadmin/templates/components/panel_document.html:12
+#, fuzzy
+msgid "Open in new tab"
+msgstr "Yeni sekmede aç"
+
+#: src/hyperadmin/templates/components/panel_document.html:12
+#, fuzzy
+msgid "(opens a new tab)"
+msgstr "(yeni sekmede açılır)"
+
+#: src/hyperadmin/templates/components/panel_document.html:15
+#, fuzzy
+msgid "Download"
+msgstr "İndir"
+
+#: src/hyperadmin/templates/components/panel_document.html:18
+#, fuzzy, python-format
+msgid "%(name)s, preview"
+msgstr "%(name)s, önizleme"
+
+#: src/hyperadmin/templates/components/panel_states.html:17
+#, fuzzy, python-format
+msgid "Loading %(label)s"
+msgstr "%(label)s yükleniyor"
+
+#: src/hyperadmin/templates/components/panel_states.html:18
+#, fuzzy, python-format
+msgid "Open %(label)s"
+msgstr "%(label)s aç"
+
+#: src/hyperadmin/templates/components/panel_states.html:25
+#, fuzzy, python-format
+msgid "%(label)s didn't load."
+msgstr "%(label)s yüklenemedi."
+
+#: src/hyperadmin/templates/components/panel_states.html:26
+#, fuzzy
+msgid "The server took too long to answer. The other tabs still work."
+msgstr "Sunucu yanıt vermekte çok gecikti. Diğer sekmeler çalışmaya devam ediyor."
+
+#: src/hyperadmin/templates/components/panel_states.html:27
+#: src/hyperadmin/templates/permissions/matrix.html:394
+#: src/hyperadmin/templates/widgets/image_input.html:99
+#, fuzzy
+msgid "Retry"
+msgstr "Tekrar dene"
+
+#: src/hyperadmin/templates/components/panel_states.html:32
+#, fuzzy
+msgid "You don't have access to this panel."
+msgstr "Bu panele erişiminiz yok."
+
+#: src/hyperadmin/templates/components/panel_states.html:33
+#, fuzzy, python-format
+msgid "Ask an administrator for the \"%(permission)s\" permission."
+msgstr "Bir yöneticiden \"%(permission)s\" iznini isteyin."
+
+#: src/hyperadmin/templates/components/panel_tab_strip.html:14
+#, fuzzy, python-format
+msgid "%(name)s sections"
+msgstr "%(name)s bölümleri"
+
+#: src/hyperadmin/templates/components/panel_tab_strip.html:21
+#, fuzzy
+msgid "Details"
+msgstr "Ayrıntılar"
+
+#: src/hyperadmin/templates/components/presence_banner.html:20
+#, fuzzy, python-brace-format
+msgid "{names} is also viewing this record."
+msgstr "{names} da bu kaydı görüntülüyor."
+
+#: src/hyperadmin/templates/components/presence_banner.html:21
+#, fuzzy, python-brace-format
+msgid "{names} are also viewing this record."
+msgstr "{names} da bu kaydı görüntülüyor."
+
+#: src/hyperadmin/templates/components/presence_banner.html:22
+#, fuzzy, python-brace-format
+msgid "{names} is also editing this record."
+msgstr "{names} da bu kaydı düzenliyor."
+
+#: src/hyperadmin/templates/components/presence_banner.html:23
+#, fuzzy, python-brace-format
+msgid "{names} are also editing this record."
+msgstr "{names} da bu kaydı düzenliyor."
+
+#: src/hyperadmin/templates/components/presence_banner.html:24
+#, fuzzy, python-brace-format
+msgid "+{count} more"
+msgstr "+{count} kişi daha"
+
+#: src/hyperadmin/templates/components/saved_views.html:9
+#, fuzzy
+msgid "My views"
+msgstr "Görünümlerim"
+
+#: src/hyperadmin/templates/components/saved_views.html:13
+#: src/hyperadmin/templates/components/saved_views.html:25
+#, fuzzy
+msgid "Save view"
+msgstr "Görünümü kaydet"
+
+#: src/hyperadmin/templates/components/saved_views.html:20
+#, fuzzy
+msgid "Name"
+msgstr "Ad"
+
+#: src/hyperadmin/templates/components/saved_views.html:34
+#, fuzzy
+msgid "(active)"
+msgstr "(etkin)"
+
+#: src/hyperadmin/templates/components/saved_views.html:37
+#, fuzzy, python-format
+msgid "Actions for view %(name)s"
+msgstr "%(name)s görünümü için işlemler"
+
+#: src/hyperadmin/templates/components/saved_views.html:41
+#, fuzzy
+msgid "Delete…"
+msgstr "Sil…"
+
+#: src/hyperadmin/templates/components/saved_views.html:46
+#, fuzzy, python-format
+msgid "Delete the view “%(name)s”?"
+msgstr "“%(name)s” görünümü silinsin mi?"
+
+#: src/hyperadmin/templates/components/saved_views.html:47
+#, fuzzy
+msgid "Only the saved filters go. No rows change."
+msgstr "Yalnızca kayıtlı filtreler silinir. Hiçbir satır değişmez."
+
+#: src/hyperadmin/templates/components/saved_views.html:51
+#, fuzzy
+msgid "Delete view"
+msgstr "Görünümü sil"
+
+#: src/hyperadmin/templates/components/saved_views.html:58
+#, fuzzy
+msgid "Save the filters you use often. They show up here, only for you."
+msgstr "Sık kullandığınız filtreleri kaydedin. Burada yalnızca size görünürler."
+
+#: src/hyperadmin/templates/components/search_input.html:8
+#, fuzzy
+msgid "Search..."
+msgstr "Ara..."
+
+#: src/hyperadmin/templates/components/search_input.html:18
+#, fuzzy
+msgid "Searching..."
+msgstr "Aranıyor..."
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:15
+#, fuzzy
+msgid "General"
+msgstr "Genel"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:17
+#, fuzzy
+msgid "Form"
+msgstr "Form"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:18
+#, fuzzy
+msgid "Show keyboard shortcuts"
+msgstr "Klavye kısayollarını göster"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:20
+#, fuzzy
+msgid "Focus search"
+msgstr "Aramaya git"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:21
+#, fuzzy
+msgid "Next row"
+msgstr "Sonraki satır"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:22
+#, fuzzy
+msgid "Previous row"
+msgstr "Önceki satır"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:23
+#, fuzzy
+msgid "Select row"
+msgstr "Satırı seç"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:24
+#, fuzzy
+msgid "Create new"
+msgstr "Yeni oluştur"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:26
+#, fuzzy
+msgid "or"
+msgstr "veya"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:32
+#, fuzzy
+msgid "Keyboard shortcuts"
+msgstr "Klavye kısayolları"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:42
+#, fuzzy
+msgid "Single-key shortcuts"
+msgstr "Tek tuşlu kısayollar"
+
+#: src/hyperadmin/templates/components/table.html:11
+#, fuzzy, python-format
+msgid "%(model_name)s list"
+msgstr "%(model_name)s listesi"
+
+#: src/hyperadmin/templates/components/table.html:18
+#, fuzzy
+msgid "Select all rows on this page"
+msgstr "Bu sayfadaki tüm satırları seç"
+
+#: src/hyperadmin/templates/components/table_body.html:23
+#, fuzzy
+msgid "Select"
+msgstr "Seç"
+
+#: src/hyperadmin/templates/components/table_body.html:27
+#, fuzzy, python-format
+msgid "Select %(pk)s"
+msgstr "%(pk)s seç"
+
+#: src/hyperadmin/templates/components/table_body.html:59
+#, fuzzy, python-format
+msgid "Delete %(name)s"
+msgstr "%(name)s sil"
+
+#: src/hyperadmin/templates/components/table_body.html:68
+#, fuzzy, python-format
+msgid "Open %(name)s"
+msgstr "%(name)s aç"
+
+#: src/hyperadmin/templates/components/toast.html:19
+#, fuzzy, python-brace-format
+msgid "{actor} changed {count} {model}"
+msgid_plural "{actor} changed {count} {model}"
+msgstr[0] "{actor}, {count} {model} değiştirdi"
+msgstr[1] "{actor}, {count} {model} değiştirdi"
+
+#: src/hyperadmin/templates/components/toast.html:20
+#, fuzzy, python-brace-format
+msgid "{count} person"
+msgid_plural "{count} people"
+msgstr[0] "{count} kişi"
+msgstr[1] "{count} kişi"
+
+#: src/hyperadmin/templates/components/toast.html:30
+#, fuzzy, python-brace-format
+msgid "{actor} created {model} #{pk}"
+msgstr "{actor}, {model} #{pk} oluşturdu"
+
+#: src/hyperadmin/templates/components/toast.html:31
+#, fuzzy, python-brace-format
+msgid "{actor} deleted {model} #{pk}"
+msgstr "{actor}, {model} #{pk} sildi"
+
+#: src/hyperadmin/templates/components/toast.html:32
+#, fuzzy
+msgid "Someone"
+msgstr "Birisi"
+
+#: src/hyperadmin/templates/components/toast.html:33
+#, fuzzy
+msgid "List changed: refresh"
+msgstr "Liste değişti: yenile"
+
+#: src/hyperadmin/templates/components/filters/boolean.html:7
+#, fuzzy
+msgid "Yes"
+msgstr "Evet"
+
+#: src/hyperadmin/templates/components/filters/boolean.html:8
+#, fuzzy
+msgid "No"
+msgstr "Hayır"
+
+#: src/hyperadmin/templates/components/filters/current_period.html:6
+#, fuzzy, python-format
+msgid "Showing %(period)s by default."
+msgstr "Varsayılan olarak %(period)s gösteriliyor."
+
+#: src/hyperadmin/templates/components/filters/current_period.html:6
+#, fuzzy
+msgid "Show all dates"
+msgstr "Tüm tarihleri göster"
+
+#: src/hyperadmin/templates/components/filters/date_range.html:5
+#: src/hyperadmin/templates/components/filters/multi_choice.html:4
+#: src/hyperadmin/templates/components/filters/multi_relation.html:5
+#: src/hyperadmin/templates/components/filters/select.html:4
+#, fuzzy
+msgid "Clear"
+msgstr "Temizle"
+
+#: src/hyperadmin/templates/components/filters/date_range.html:7
+#, fuzzy
+msgid "quick ranges"
+msgstr "hızlı aralıklar"
+
+#: src/hyperadmin/templates/components/filters/date_range.html:15
+#, fuzzy
+msgid "From"
+msgstr "Başlangıç"
+
+#: src/hyperadmin/templates/components/filters/date_range.html:19
+#, fuzzy
+msgid "To"
+msgstr "Bitiş"
+
+#: src/hyperadmin/templates/components/filters/is_owner.html:3
+#, fuzzy
+msgid "Owner"
+msgstr "Sahip"
+
+#: src/hyperadmin/templates/components/filters/multi_relation.html:5
+#, fuzzy, python-format
+msgid "%(num)d selected"
+msgid_plural "%(num)d selected"
+msgstr[0] "%(num)d seçili"
+msgstr[1] "%(num)d seçili"
+
+#: src/hyperadmin/templates/components/filters/multi_relation.html:9
+#: src/hyperadmin/templates/widgets/autocomplete.html:24
+#, fuzzy, python-format
+msgid "Search %(label)s"
+msgstr "%(label)s içinde ara"
+
+#: src/hyperadmin/templates/components/filters/multi_relation.html:18
+#, fuzzy, python-format
+msgid "Show %(num)d more"
+msgid_plural "Show %(num)d more"
+msgstr[0] "%(num)d tane daha göster"
+msgstr[1] "%(num)d tane daha göster"
+
+#: src/hyperadmin/templates/permissions/_banner.html:13
+#, fuzzy
+msgid "Permissions saved"
+msgstr "İzinler kaydedildi"
+
+#: src/hyperadmin/templates/permissions/_banner.html:14
+#, fuzzy
+msgid "change"
+msgstr "değişiklik"
+
+#: src/hyperadmin/templates/permissions/_banner.html:14
+#, fuzzy
+msgid "changes"
+msgstr "değişiklik"
+
+#: src/hyperadmin/templates/permissions/_banner.html:22
+#, fuzzy
+msgid "Permissions changed elsewhere."
+msgstr "İzinler başka bir yerde değiştirildi."
+
+#: src/hyperadmin/templates/permissions/_banner.html:23
+#, fuzzy
+msgid ""
+"Reload to see the latest. Nothing was saved; your changes are still on "
+"the page."
+msgstr ""
+"En son hâli görmek için yeniden yükleyin. Hiçbir şey kaydedilmedi; "
+"değişiklikleriniz hâlâ sayfada."
+
+#: src/hyperadmin/templates/permissions/_banner.html:27
+#, fuzzy
+msgid "Reload"
+msgstr "Yeniden yükle"
+
+#: src/hyperadmin/templates/permissions/_banner.html:35
+#, fuzzy
+msgid "change wasn’t saved."
+msgstr "değişiklik kaydedilmedi."
+
+#: src/hyperadmin/templates/permissions/_banner.html:35
+#, fuzzy
+msgid "changes weren’t saved."
+msgstr "değişiklik kaydedilmedi."
+
+#: src/hyperadmin/templates/permissions/_banner.html:36
+#, fuzzy
+msgid "You can only grant permissions you have yourself:"
+msgstr "Yalnızca kendinizde olan izinleri verebilirsiniz:"
+
+#: src/hyperadmin/templates/permissions/_banner.html:42
+#, fuzzy
+msgid ""
+"Nothing was saved. Untick them, or ask for those permissions, then save "
+"again."
+msgstr ""
+"Hiçbir şey kaydedilmedi. İşaretlerini kaldırın ya da bu izinleri isteyin,"
+" sonra yeniden kaydedin."
+
+#: src/hyperadmin/templates/permissions/_banner.html:51
+#, fuzzy
+msgid "Save failed"
+msgstr "Kaydetme başarısız"
+
+#: src/hyperadmin/templates/permissions/_banner.html:52
+#, fuzzy
+msgid "Nothing was saved; try again."
+msgstr "Hiçbir şey kaydedilmedi; tekrar deneyin."
+
+#: src/hyperadmin/templates/permissions/_group_gone.html:7
+#, fuzzy
+msgid "This group no longer exists"
+msgstr "Bu grup artık yok"
+
+#: src/hyperadmin/templates/permissions/_group_gone.html:8
+#, fuzzy
+msgid "Someone deleted it while you were editing. Nothing was saved."
+msgstr "Siz düzenlerken biri onu sildi. Hiçbir şey kaydedilmedi."
+
+#: src/hyperadmin/templates/permissions/_group_gone.html:10
+#, fuzzy
+msgid "Choose another group"
+msgstr "Başka bir grup seçin"
+
+#: src/hyperadmin/templates/permissions/_macros.html:20
+#: src/hyperadmin/templates/permissions/matrix.html:346
+#: src/hyperadmin/templates/permissions/object_popover.html:61
+#, fuzzy
+msgid "Add"
+msgstr "Ekle"
+
+#: src/hyperadmin/templates/permissions/_macros.html:20
+#, fuzzy
+msgid "Change"
+msgstr "Değiştir"
+
+#: src/hyperadmin/templates/permissions/matrix.html:11
+#: src/hyperadmin/templates/permissions/matrix.html:228
+#, fuzzy
+msgid "Permission matrix"
+msgstr "İzin matrisi"
+
+#: src/hyperadmin/templates/permissions/matrix.html:222
+#, fuzzy
+msgid "unsaved change"
+msgstr "kaydedilmemiş değişiklik"
+
+#: src/hyperadmin/templates/permissions/matrix.html:222
+#: src/hyperadmin/templates/permissions/matrix.html:368
+#, fuzzy
+msgid "unsaved changes"
+msgstr "kaydedilmemiş değişiklik"
+
+#: src/hyperadmin/templates/permissions/matrix.html:223
+#: src/hyperadmin/templates/permissions/matrix.html:342
+#, fuzzy
+msgid "rule"
+msgstr "kural"
+
+#: src/hyperadmin/templates/permissions/matrix.html:223
+#: src/hyperadmin/templates/permissions/matrix.html:342
+#, fuzzy
+msgid "rules"
+msgstr "kural"
+
+#: src/hyperadmin/templates/permissions/matrix.html:224
+#: src/hyperadmin/templates/permissions/matrix.html:343
+#, fuzzy
+msgid "for"
+msgstr "için"
+
+#: src/hyperadmin/templates/permissions/matrix.html:225
+#: src/hyperadmin/templates/permissions/matrix.html:244
+#, fuzzy, python-format
+msgid "Changes apply to everyone in %(group)s."
+msgstr "Değişiklikler %(group)s grubundaki herkese uygulanır."
+
+#: src/hyperadmin/templates/permissions/matrix.html:226
+#, fuzzy
+msgid "You have unsaved changes. Switch group and lose them?"
+msgstr ""
+"Kaydedilmemiş değişiklikleriniz var. Grup değiştirilip bunlar kaybedilsin"
+" mi?"
+
+#: src/hyperadmin/templates/permissions/matrix.html:234
+#, fuzzy
+msgid "Group"
+msgstr "Grup"
+
+#: src/hyperadmin/templates/permissions/matrix.html:247
+#, fuzzy
+msgid "Show group"
+msgstr "Grubu göster"
+
+#: src/hyperadmin/templates/permissions/matrix.html:262
+#, fuzzy
+msgid "No groups yet"
+msgstr "Henüz grup yok"
+
+#: src/hyperadmin/templates/permissions/matrix.html:263
+#, fuzzy
+msgid "Create a group first; its permissions show up here."
+msgstr "Önce bir grup oluşturun; izinleri burada görünür."
+
+#: src/hyperadmin/templates/permissions/matrix.html:270
+#, fuzzy
+msgid "No registered models"
+msgstr "Kayıtlı model yok"
+
+#: src/hyperadmin/templates/permissions/matrix.html:271
+#, fuzzy
+msgid "Register a ModelAdmin and its permissions show up here."
+msgstr "Bir ModelAdmin kaydedin; izinleri burada görünür."
+
+#: src/hyperadmin/templates/permissions/matrix.html:279
+#, fuzzy, python-format
+msgid "Permissions of the group %(group)s"
+msgstr "%(group)s grubunun izinleri"
+
+#: src/hyperadmin/templates/permissions/matrix.html:282
+#, fuzzy
+msgid "Model"
+msgstr "Model"
+
+#: src/hyperadmin/templates/permissions/matrix.html:288
+#, fuzzy, python-format
+msgid "%(group)s can %(action)s every model"
+msgstr "%(group)s her modeli %(action)s yetkisine sahip"
+
+#: src/hyperadmin/templates/permissions/matrix.html:295
+#: src/hyperadmin/templates/permissions/matrix.html:379
+#: src/hyperadmin/templates/permissions/matrix.html:390
+#: src/hyperadmin/templates/permissions/object_popover.html:14
+#: src/hyperadmin/templates/permissions/object_popover.html:21
+#, fuzzy
+msgid "Object rules"
+msgstr "Nesne kuralları"
+
+#: src/hyperadmin/templates/permissions/matrix.html:316
+#, fuzzy, python-format
+msgid "%(group)s can %(action)s %(model)s"
+msgstr "%(group)s, %(model)s için %(action)s yetkisine sahip"
+
+#: src/hyperadmin/templates/permissions/matrix.html:317
+#, fuzzy
+msgid "unsaved"
+msgstr "kaydedilmedi"
+
+#: src/hyperadmin/templates/permissions/matrix.html:323
+#, fuzzy
+msgid "Not saved: you don’t have this permission yourself"
+msgstr "Kaydedilmedi: bu izin sizde yok"
+
+#: src/hyperadmin/templates/permissions/matrix.html:327
+#, fuzzy, python-format
+msgid "%(action)s does not apply to %(model)s"
+msgstr "%(action)s, %(model)s için geçerli değil"
+
+#: src/hyperadmin/templates/permissions/matrix.html:347
+#, fuzzy
+msgid "object rule for"
+msgstr "şunun için nesne kuralı:"
+
+#: src/hyperadmin/templates/permissions/matrix.html:360
+#, fuzzy, python-format
+msgid "Permissions of %(group)s"
+msgstr "%(group)s izinleri"
+
+#: src/hyperadmin/templates/permissions/matrix.html:365
+#, fuzzy
+msgid "Unsaved changes"
+msgstr "Kaydedilmemiş değişiklikler"
+
+#: src/hyperadmin/templates/permissions/matrix.html:370
+#, fuzzy
+msgid "Discard"
+msgstr "Vazgeç"
+
+#: src/hyperadmin/templates/permissions/matrix.html:371
+#, fuzzy
+msgid "Save changes"
+msgstr "Değişiklikleri kaydet"
+
+#: src/hyperadmin/templates/permissions/matrix.html:384
+#, fuzzy
+msgid "Loading object rules"
+msgstr "Nesne kuralları yükleniyor"
+
+#: src/hyperadmin/templates/permissions/matrix.html:393
+#, fuzzy
+msgid "Couldn’t load the rules."
+msgstr "Kurallar yüklenemedi."
+
+#: src/hyperadmin/templates/permissions/object_popover.html:16
+#, fuzzy
+msgid "Close object rules"
+msgstr "Nesne kurallarını kapat"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:35
+#, fuzzy, python-format
+msgid "Remove rule for %(record)s"
+msgstr "%(record)s için kuralı kaldır"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:41
+#, fuzzy
+msgid "No object rules. Group permissions apply."
+msgstr "Nesne kuralı yok. Grup izinleri geçerli."
+
+#: src/hyperadmin/templates/permissions/object_popover.html:45
+#, fuzzy
+msgid "Add object rule"
+msgstr "Nesne kuralı ekle"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:49
+#, fuzzy
+msgid "Record"
+msgstr "Kayıt"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:54
+#, fuzzy
+msgid "Action"
+msgstr "İşlem"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:67
+#: src/hyperadmin/templates/permissions/object_popover.html:69
+#, fuzzy
+msgid "Rule for"
+msgstr "Kural:"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:67
+#, fuzzy
+msgid "added."
+msgstr "eklendi."
+
+#: src/hyperadmin/templates/permissions/object_popover.html:69
+#, fuzzy
+msgid "removed."
+msgstr "kaldırıldı."
+
+#: src/hyperadmin/templates/permissions/object_popover.html:76
+#, fuzzy
+msgid "Undo"
+msgstr "Geri al"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:80
+#, fuzzy
+msgid "You can only grant permissions you have yourself."
+msgstr "Yalnızca kendinizde olan izinleri verebilirsiniz."
+
+#: src/hyperadmin/templates/permissions/object_popover.html:82
+#, fuzzy
+msgid "No change."
+msgstr "Değişiklik yok."
+
+#: src/hyperadmin/templates/permissions/object_popover.html:88
+#, fuzzy
+msgid "Saved as you go. Group permissions still apply."
+msgstr "Anında kaydedilir. Grup izinleri geçerliliğini korur."
+
+#: src/hyperadmin/templates/permissions/object_popover.html:92
+#, fuzzy
+msgid "Add rule"
+msgstr "Kural ekle"
+
+#: src/hyperadmin/templates/widgets/autocomplete.html:21
+#, fuzzy, python-format
+msgid "Choose a %(parent)s first"
+msgstr "Önce %(parent)s seçin"
+
+#: src/hyperadmin/templates/widgets/autocomplete.html:30
+#, fuzzy
+msgid "Searching"
+msgstr "Aranıyor"
+
+#: src/hyperadmin/templates/widgets/autocomplete.html:60
+#, fuzzy, python-format
+msgid "Clear %(label)s"
+msgstr "%(label)s temizle"
+
+#: src/hyperadmin/templates/widgets/autocomplete.html:83
+#, fuzzy, python-format
+msgid "Add %(label)s"
+msgstr "%(label)s ekle"
+
+#: src/hyperadmin/templates/widgets/autocomplete.html:94
+#: src/hyperadmin/templates/widgets/autocomplete.html:97
+#, fuzzy, python-format
+msgid "Pick the %(parent)s above to list its %(label)s options."
+msgstr "%(label)s seçeneklerini listelemek için yukarıdan %(parent)s seçin."
+
+#: src/hyperadmin/templates/widgets/autocomplete.html:95
+#, fuzzy, python-format
+msgid "Cleared because the %(parent)s changed."
+msgstr "%(parent)s değiştiği için temizlendi."
+
+#: src/hyperadmin/templates/widgets/autocomplete.html:96
+#, fuzzy, python-format
+msgid "%(label)s cleared because the %(parent)s changed"
+msgstr "%(parent)s değiştiği için %(label)s temizlendi"
+
+#: src/hyperadmin/templates/widgets/datetime_input.html:16
+#, fuzzy, python-format
+msgid "Time zone: %(tz)s"
+msgstr "Saat dilimi: %(tz)s"
+
+#: src/hyperadmin/templates/widgets/image_input.html:19
+#, fuzzy
+msgid "Only one file allowed"
+msgstr "Yalnızca bir dosyaya izin verilir"
+
+#: src/hyperadmin/templates/widgets/image_input.html:21
+#, fuzzy
+msgid "File type not allowed"
+msgstr "Dosya türüne izin verilmiyor"
+
+#: src/hyperadmin/templates/widgets/image_input.html:74
+#: src/hyperadmin/templates/widgets/image_input.html:85
+#, fuzzy
+msgid "Release to upload"
+msgstr "Yüklemek için bırakın"
+
+#: src/hyperadmin/templates/widgets/image_input.html:74
+#, fuzzy
+msgid "Drop image here or click to select"
+msgstr "Görseli buraya bırakın veya seçmek için tıklayın"
+
+#: src/hyperadmin/templates/widgets/image_input.html:92
+#, fuzzy
+msgid "Uploading"
+msgstr "Yükleniyor"
+
+#: src/hyperadmin/templates/widgets/image_input.html:98
+#, fuzzy
+msgid "Upload failed — check your connection"
+msgstr "Yükleme başarısız — bağlantınızı kontrol edin"
+
+#: src/hyperadmin/templates/widgets/image_input.html:103
+#, fuzzy
+msgid "Selected image preview"
+msgstr "Seçili görselin önizlemesi"
+
+#: src/hyperadmin/templates/widgets/popup_form.html:29
+#, fuzzy, python-format
+msgid "Add %(model)s"
+msgstr "%(model)s ekle"
+
+#: src/hyperadmin/templates/widgets/popup_form.html:30
+#, fuzzy, python-format
+msgid "Saving selects it in the %(field)s field."
+msgstr "Kaydettiğinizde %(field)s alanında seçilir."
+
+#: src/hyperadmin/templates/widgets/popup_form.html:61
+#, fuzzy
+msgid "Save and select"
+msgstr "Kaydet ve seç"
+
+#: src/hyperadmin/views/forms.py:52
+#, fuzzy
+msgid "Invalid primary key."
+msgstr "Geçersiz birincil anahtar."
+
+#: src/hyperadmin/views/forms.py:55
+#, fuzzy
+msgid "Enter a valid date/time"
+msgstr "Geçerli bir tarih ve saat girin"
+
+#: src/hyperadmin/views/nav_pins.py:110
+#, fuzzy
+msgid "Pins need a signed-in user"
+msgstr "Sayfa sabitlemek için oturum açmanız gerekir"
+
+#: src/hyperadmin/views/nav_pins.py:126
+#, fuzzy, python-format
+msgid "You can pin up to %(count)s pages"
+msgstr "En fazla %(count)s sayfa sabitleyebilirsiniz"
 
 #: src/hyperadmin/views/static.py:12
 #, fuzzy
@@ -287,3 +2011,7 @@ msgstr "Öğe başarıyla oluşturuldu"
 #, fuzzy
 msgid "Item updated successfully"
 msgstr "Öğe başarıyla güncellendi"
+
+#~ msgid "Are you sure you want to delete this item?"
+#~ msgstr "Bu öğeyi silmek istediğinizden emin misiniz?"
+

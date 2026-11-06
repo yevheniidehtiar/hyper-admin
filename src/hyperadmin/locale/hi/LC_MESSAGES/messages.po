@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-05-03 15:06+0200\n"
+"POT-Creation-Date: 2026-11-06 19:09+0100\n"
 "PO-Revision-Date: 2026-05-05 12:00+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: hi\n"
@@ -18,260 +18,1984 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
+#: src/hyperadmin/auth/views.py:91
+#, fuzzy
+msgid "Could not send verification code. Please try again."
+msgstr "सत्यापन कोड नहीं भेजा जा सका। कृपया फिर से कोशिश करें।"
 
-#: src/hyperadmin/templates/_messages.html:3
+#: src/hyperadmin/auth/views.py:248 src/hyperadmin/auth/views.py:256
+#, fuzzy
+msgid "Code expired, please request a new one."
+msgstr "कोड की समय-सीमा समाप्त हो गई है, कृपया नया कोड माँगें।"
+
+#: src/hyperadmin/auth/views.py:271 src/hyperadmin/auth/views.py:471
+#: src/hyperadmin/auth/views.py:539
+#, fuzzy
+msgid "Invalid code."
+msgstr "अमान्य कोड।"
+
+#: src/hyperadmin/auth/views.py:304 src/hyperadmin/auth/views.py:443
+#: src/hyperadmin/auth/views.py:518
+#, fuzzy
+msgid "Too many attempts, try again later."
+msgstr "बहुत अधिक प्रयास हो गए, बाद में फिर से कोशिश करें।"
+
+#: src/hyperadmin/auth/views.py:311
+#, fuzzy
+msgid "A new code has been sent to your email."
+msgstr "आपके ईमेल पर नया कोड भेज दिया गया है।"
+
+#: src/hyperadmin/auth/views.py:455
+#, fuzzy
+msgid "No active MFA enable flow. Please try again."
+msgstr "MFA चालू करने की कोई सक्रिय प्रक्रिया नहीं है। कृपया फिर से कोशिश करें।"
+
+#: src/hyperadmin/auth/views.py:483
+#, fuzzy
+msgid "Two-factor authentication enabled."
+msgstr "दो-चरणीय प्रमाणीकरण चालू किया गया।"
+
+#: src/hyperadmin/auth/views.py:528
+#, fuzzy
+msgid "No active MFA disable flow. Please try again."
+msgstr "MFA बंद करने की कोई सक्रिय प्रक्रिया नहीं है। कृपया फिर से कोशिश करें।"
+
+#: src/hyperadmin/auth/views.py:549
+#, fuzzy
+msgid "Two-factor authentication disabled."
+msgstr "दो-चरणीय प्रमाणीकरण बंद किया गया।"
+
+#: src/hyperadmin/core/navigation.py:32
+#, fuzzy
+msgid "Plugins"
+msgstr "प्लगइन"
+
+#: src/hyperadmin/core/navigation.py:35
+#, fuzzy
+msgid "Access"
+msgstr "पहुँच"
+
+#: src/hyperadmin/core/palette.py:87
+#, fuzzy, python-format
+msgid "New %(name)s"
+msgstr "नया %(name)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:44
+#, fuzzy
+msgid "Field required"
+msgstr "यह फ़ील्ड आवश्यक है"
+
+#: src/hyperadmin/i18n/validation_messages.py:45
+#, fuzzy
+msgid "Input should be a valid string"
+msgstr "इनपुट एक मान्य स्ट्रिंग होना चाहिए"
+
+#: src/hyperadmin/i18n/validation_messages.py:46
+#, fuzzy, python-format
+msgid "String should match pattern '%(pattern)s'"
+msgstr "स्ट्रिंग को पैटर्न '%(pattern)s' से मेल खाना चाहिए"
+
+#: src/hyperadmin/i18n/validation_messages.py:47
+#, fuzzy, python-format
+msgid "Input should be greater than %(gt)s"
+msgstr "इनपुट %(gt)s से बड़ा होना चाहिए"
+
+#: src/hyperadmin/i18n/validation_messages.py:48
+#, fuzzy, python-format
+msgid "Input should be greater than or equal to %(ge)s"
+msgstr "इनपुट %(ge)s से बड़ा या उसके बराबर होना चाहिए"
+
+#: src/hyperadmin/i18n/validation_messages.py:49
+#, fuzzy, python-format
+msgid "Input should be less than %(lt)s"
+msgstr "इनपुट %(lt)s से छोटा होना चाहिए"
+
+#: src/hyperadmin/i18n/validation_messages.py:50
+#, fuzzy, python-format
+msgid "Input should be less than or equal to %(le)s"
+msgstr "इनपुट %(le)s से छोटा या उसके बराबर होना चाहिए"
+
+#: src/hyperadmin/i18n/validation_messages.py:51
+#, fuzzy, python-format
+msgid "Input should be a multiple of %(multiple_of)s"
+msgstr "इनपुट %(multiple_of)s का गुणज होना चाहिए"
+
+#: src/hyperadmin/i18n/validation_messages.py:52
+#, fuzzy
+msgid "Input should be a valid integer"
+msgstr "इनपुट एक मान्य पूर्णांक होना चाहिए"
+
+#: src/hyperadmin/i18n/validation_messages.py:54
+#, fuzzy
+msgid "Input should be a valid integer, unable to parse string as an integer"
+msgstr ""
+"इनपुट एक मान्य पूर्णांक होना चाहिए, स्ट्रिंग को पूर्णांक के रूप में नहीं "
+"पढ़ा जा सका"
+
+#: src/hyperadmin/i18n/validation_messages.py:57
+#, fuzzy
+msgid "Input should be a valid integer, got a number with a fractional part"
+msgstr "इनपुट एक मान्य पूर्णांक होना चाहिए, दशमलव भाग वाली संख्या मिली"
+
+#: src/hyperadmin/i18n/validation_messages.py:59
+#, fuzzy
+msgid "Input should be a valid number"
+msgstr "इनपुट एक मान्य संख्या होना चाहिए"
+
+#: src/hyperadmin/i18n/validation_messages.py:61
+#, fuzzy
+msgid "Input should be a valid number, unable to parse string as a number"
+msgstr ""
+"इनपुट एक मान्य संख्या होना चाहिए, स्ट्रिंग को संख्या के रूप में नहीं पढ़ा"
+" जा सका"
+
+#: src/hyperadmin/i18n/validation_messages.py:63
+#, fuzzy
+msgid "Input should be a valid boolean"
+msgstr "इनपुट एक मान्य बूलियन होना चाहिए"
+
+#: src/hyperadmin/i18n/validation_messages.py:64
+#, fuzzy
+msgid "Input should be a valid boolean, unable to interpret input"
+msgstr "इनपुट एक मान्य बूलियन होना चाहिए, इनपुट को समझा नहीं जा सका"
+
+#: src/hyperadmin/i18n/validation_messages.py:65
+#, fuzzy
+msgid "Input should be a valid decimal"
+msgstr "इनपुट एक मान्य दशमलव होना चाहिए"
+
+#: src/hyperadmin/i18n/validation_messages.py:67
+#, fuzzy, python-format
+msgid "Input should be a valid date in the format YYYY-MM-DD, %(error)s"
+msgstr "इनपुट YYYY-MM-DD प्रारूप में मान्य तारीख होना चाहिए, %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:70
+#, fuzzy, python-format
+msgid "Input should be a valid date or datetime, %(error)s"
+msgstr "इनपुट मान्य तारीख या तारीख-समय होना चाहिए, %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:72
+#, fuzzy, python-format
+msgid "Input should be a valid datetime, %(error)s"
+msgstr "इनपुट मान्य तारीख-समय होना चाहिए, %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:74
+#, fuzzy, python-format
+msgid "Input should be a valid datetime or date, %(error)s"
+msgstr "इनपुट मान्य तारीख-समय या तारीख होना चाहिए, %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:76
+#, fuzzy, python-format
+msgid "Input should be in a valid time format, %(error)s"
+msgstr "इनपुट मान्य समय प्रारूप में होना चाहिए, %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:77
+#, fuzzy, python-format
+msgid "Input should be a valid UUID, %(error)s"
+msgstr "इनपुट मान्य UUID होना चाहिए, %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:78
+#: src/hyperadmin/i18n/validation_messages.py:79
+#, fuzzy, python-format
+msgid "Input should be %(expected)s"
+msgstr "इनपुट %(expected)s होना चाहिए"
+
+#: src/hyperadmin/i18n/validation_messages.py:80
+#, fuzzy, python-format
+msgid "Input should be a valid URL, %(error)s"
+msgstr "इनपुट मान्य URL होना चाहिए, %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:81
+#, fuzzy, python-format
+msgid "Invalid JSON: %(error)s"
+msgstr "अमान्य JSON: %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:82
+#, fuzzy, python-format
+msgid "Value error, %(error)s"
+msgstr "मान त्रुटि, %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:83
+#, fuzzy, python-format
+msgid "Assertion failed, %(error)s"
+msgstr "जाँच विफल, %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:89
+#, fuzzy, python-format
+msgid "String should have at least %(min_length)s character"
+msgid_plural "String should have at least %(min_length)s characters"
+msgstr[0] "स्ट्रिंग में कम से कम %(min_length)s वर्ण होना चाहिए"
+msgstr[1] "स्ट्रिंग में कम से कम %(min_length)s वर्ण होने चाहिए"
+
+#: src/hyperadmin/i18n/validation_messages.py:96
+#, fuzzy, python-format
+msgid "String should have at most %(max_length)s character"
+msgid_plural "String should have at most %(max_length)s characters"
+msgstr[0] "स्ट्रिंग में अधिकतम %(max_length)s वर्ण होना चाहिए"
+msgstr[1] "स्ट्रिंग में अधिकतम %(max_length)s वर्ण होने चाहिए"
+
+#: src/hyperadmin/i18n/validation_messages.py:103
+#, fuzzy, python-format
+msgid ""
+"%(field_type)s should have at least %(min_length)s item after validation,"
+" not %(actual_length)s"
+msgid_plural ""
+"%(field_type)s should have at least %(min_length)s items after "
+"validation, not %(actual_length)s"
+msgstr[0] ""
+"सत्यापन के बाद %(field_type)s में कम से कम %(min_length)s आइटम होना "
+"चाहिए, %(actual_length)s नहीं"
+msgstr[1] ""
+"सत्यापन के बाद %(field_type)s में कम से कम %(min_length)s आइटम होने "
+"चाहिए, %(actual_length)s नहीं"
+
+#: src/hyperadmin/i18n/validation_messages.py:110
+#, fuzzy, python-format
+msgid ""
+"%(field_type)s should have at most %(max_length)s item after validation, "
+"not %(actual_length)s"
+msgid_plural ""
+"%(field_type)s should have at most %(max_length)s items after validation,"
+" not %(actual_length)s"
+msgstr[0] ""
+"सत्यापन के बाद %(field_type)s में अधिकतम %(max_length)s आइटम होना चाहिए, "
+"%(actual_length)s नहीं"
+msgstr[1] ""
+"सत्यापन के बाद %(field_type)s में अधिकतम %(max_length)s आइटम होने चाहिए, "
+"%(actual_length)s नहीं"
+
+#: src/hyperadmin/i18n/validation_messages.py:119
+#, fuzzy, python-format
+msgid ""
+"%(field_type)s should have at most %(max_length)s item after validation, "
+"not more"
+msgid_plural ""
+"%(field_type)s should have at most %(max_length)s items after validation,"
+" not more"
+msgstr[0] ""
+"सत्यापन के बाद %(field_type)s में अधिकतम %(max_length)s आइटम होना चाहिए, "
+"इससे अधिक नहीं"
+msgstr[1] ""
+"सत्यापन के बाद %(field_type)s में अधिकतम %(max_length)s आइटम होने चाहिए, "
+"इससे अधिक नहीं"
+
+#: src/hyperadmin/i18n/validation_messages.py:125
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:16
+#: src/hyperadmin/templates/list_layout.html:8
+#, fuzzy
+msgid "List"
+msgstr "सूची"
+
+#: src/hyperadmin/i18n/validation_messages.py:126
+#, fuzzy
+msgid "Tuple"
+msgstr "ट्यूपल"
+
+#: src/hyperadmin/i18n/validation_messages.py:127
+#, fuzzy
+msgid "Set"
+msgstr "सेट"
+
+#: src/hyperadmin/i18n/validation_messages.py:128
+#, fuzzy
+msgid "Frozenset"
+msgstr "अपरिवर्तनीय सेट"
+
+#: src/hyperadmin/i18n/validation_messages.py:129
+#, fuzzy
+msgid "Dictionary"
+msgstr "डिक्शनरी"
+
+#: src/hyperadmin/i18n/validation_messages.py:136
+#, fuzzy
+msgid "input is too short"
+msgstr "इनपुट बहुत छोटा है"
+
+#: src/hyperadmin/i18n/validation_messages.py:137
+#, fuzzy
+msgid "unexpected extra characters at the end of the input"
+msgstr "इनपुट के अंत में अनपेक्षित अतिरिक्त वर्ण"
+
+#: src/hyperadmin/i18n/validation_messages.py:138
+#, fuzzy
+msgid "invalid datetime separator, expected `T`, `t`, `_` or space"
+msgstr "तारीख-समय विभाजक अमान्य है, `T`, `t`, `_` या स्पेस अपेक्षित है"
+
+#: src/hyperadmin/i18n/validation_messages.py:139
+#, fuzzy
+msgid "invalid date separator, expected `-`"
+msgstr "तारीख विभाजक अमान्य है, `-` अपेक्षित है"
+
+#: src/hyperadmin/i18n/validation_messages.py:140
+#, fuzzy
+msgid "invalid time separator, expected `:`"
+msgstr "समय विभाजक अमान्य है, `:` अपेक्षित है"
+
+#: src/hyperadmin/i18n/validation_messages.py:141
+#, fuzzy
+msgid "invalid character in year"
+msgstr "वर्ष में अमान्य वर्ण"
+
+#: src/hyperadmin/i18n/validation_messages.py:142
+#, fuzzy
+msgid "invalid character in month"
+msgstr "महीने में अमान्य वर्ण"
+
+#: src/hyperadmin/i18n/validation_messages.py:143
+#, fuzzy
+msgid "invalid character in day"
+msgstr "दिन में अमान्य वर्ण"
+
+#: src/hyperadmin/i18n/validation_messages.py:144
+#, fuzzy
+msgid "invalid character in hour"
+msgstr "घंटे में अमान्य वर्ण"
+
+#: src/hyperadmin/i18n/validation_messages.py:145
+#, fuzzy
+msgid "invalid character in minute"
+msgstr "मिनट में अमान्य वर्ण"
+
+#: src/hyperadmin/i18n/validation_messages.py:146
+#, fuzzy
+msgid "invalid character in second"
+msgstr "सेकंड में अमान्य वर्ण"
+
+#: src/hyperadmin/i18n/validation_messages.py:147
+#, fuzzy
+msgid "month value is outside expected range of 1-12"
+msgstr "महीने का मान 1-12 की अपेक्षित सीमा से बाहर है"
+
+#: src/hyperadmin/i18n/validation_messages.py:148
+#, fuzzy
+msgid "day value is outside expected range"
+msgstr "दिन का मान अपेक्षित सीमा से बाहर है"
+
+#: src/hyperadmin/i18n/validation_messages.py:149
+#, fuzzy
+msgid "hour value is outside expected range of 0-23"
+msgstr "घंटे का मान 0-23 की अपेक्षित सीमा से बाहर है"
+
+#: src/hyperadmin/i18n/validation_messages.py:150
+#, fuzzy
+msgid "minute value is outside expected range of 0-59"
+msgstr "मिनट का मान 0-59 की अपेक्षित सीमा से बाहर है"
+
+#: src/hyperadmin/i18n/validation_messages.py:151
+#, fuzzy
+msgid "second value is outside expected range of 0-59"
+msgstr "सेकंड का मान 0-59 की अपेक्षित सीमा से बाहर है"
+
+#: src/hyperadmin/i18n/validation_messages.py:152
+#, fuzzy
+msgid "relative URL without a base"
+msgstr "बेस के बिना सापेक्ष URL"
+
+#: src/hyperadmin/i18n/validation_messages.py:153
+#, fuzzy
+msgid "empty host"
+msgstr "होस्ट खाली है"
+
+#: src/hyperadmin/i18n/validation_messages.py:154
+#, fuzzy
+msgid "invalid port number"
+msgstr "अमान्य पोर्ट संख्या"
+
+#: src/hyperadmin/i18n/validation_messages.py:155
+#, fuzzy
+msgid "invalid domain character"
+msgstr "डोमेन में अमान्य वर्ण"
+
+#: src/hyperadmin/i18n/validation_messages.py:156
+#, fuzzy
+msgid "invalid international domain name"
+msgstr "अमान्य अंतरराष्ट्रीय डोमेन नाम"
+
+#: src/hyperadmin/i18n/validation_messages.py:157
+#, fuzzy
+msgid "invalid IPv4 address"
+msgstr "अमान्य IPv4 पता"
+
+#: src/hyperadmin/i18n/validation_messages.py:158
+#, fuzzy
+msgid "invalid IPv6 address"
+msgstr "अमान्य IPv6 पता"
+
+#: src/hyperadmin/i18n/validation_messages.py:162
+#, fuzzy, python-format
+msgid "%(choices)s or %(last)s"
+msgstr "%(choices)s या %(last)s"
+
+#: src/hyperadmin/templates/_messages.html:6
 #, fuzzy
 msgid "Success!"
 msgstr "सफलता!"
 
-#: src/hyperadmin/templates/_messages.html:4
+#: src/hyperadmin/templates/_messages.html:7
 #, fuzzy
 msgid "Your action was successful."
 msgstr "आपकी कार्रवाई सफल रही।"
 
-#: src/hyperadmin/templates/_messages.html:5
-#: src/hyperadmin/templates/_messages.html:6
+#: src/hyperadmin/templates/_messages.html:9
+#: src/hyperadmin/templates/components/csrf_reload_banner.html:18
+#: src/hyperadmin/templates/components/error_toast.html:17
+#: src/hyperadmin/templates/components/popover.html:36
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:35
+#: src/hyperadmin/templates/components/toast.html:26
+#: src/hyperadmin/templates/permissions/_banner.html:16
+#: src/hyperadmin/templates/widgets/popup_form.html:33
 #, fuzzy
 msgid "Close"
 msgstr "बंद करें"
 
-#: src/hyperadmin/templates/_navbar.html:1
+#: src/hyperadmin/templates/_navbar.html:2
 #, fuzzy
 msgid "Main navigation"
 msgstr "मुख्य नेविगेशन"
 
-#: src/hyperadmin/templates/_navbar.html:8
+#: src/hyperadmin/templates/_navbar.html:9
 #, fuzzy
 msgid "Toggle navigation menu"
 msgstr "नेविगेशन मेनू टॉगल करें"
 
-#: src/hyperadmin/templates/_navbar.html:18
+#: src/hyperadmin/templates/_navbar.html:27
+#, fuzzy
+msgid "Search…"
+msgstr "खोजें…"
+
+#: src/hyperadmin/templates/_navbar.html:36
+#, fuzzy
+msgid "Real-time connection status"
+msgstr "रीयल-टाइम कनेक्शन की स्थिति"
+
+#: src/hyperadmin/templates/_navbar.html:41
 #, fuzzy
 msgid "Language"
 msgstr "भाषा"
 
-#: src/hyperadmin/templates/_navbar.html:22
+#: src/hyperadmin/templates/_navbar.html:46
 #, fuzzy
 msgid "Select language"
 msgstr "भाषा चुनें"
 
-#: src/hyperadmin/templates/_navbar.html:34
+#: src/hyperadmin/templates/_navbar.html:58
 #, fuzzy
 msgid "Toggle dark mode"
 msgstr "डार्क मोड टॉगल करें"
 
-#: src/hyperadmin/templates/_navbar.html:56
+#: src/hyperadmin/templates/_navbar.html:78
 #, fuzzy
 msgid "Logout"
 msgstr "लॉग आउट"
 
-#: src/hyperadmin/templates/_navbar.html:64
+#: src/hyperadmin/templates/_navbar.html:84
 #, fuzzy
 msgid "Admin"
 msgstr "व्यवस्थापन"
 
-#: src/hyperadmin/templates/_navbar.html:70
+#: src/hyperadmin/templates/_navbar.html:88
 #, fuzzy
 msgid "Profile"
 msgstr "प्रोफ़ाइल"
 
-#: src/hyperadmin/templates/_navbar.html:71
+#: src/hyperadmin/templates/_navbar.html:89
 #, fuzzy
 msgid "Settings"
 msgstr "सेटिंग्स"
 
-#: src/hyperadmin/templates/_sidebar.html:5
+#: src/hyperadmin/templates/_sidebar.html:18
 #, fuzzy
 msgid "Model navigation"
 msgstr "मॉडल नेविगेशन"
 
-#: src/hyperadmin/templates/_sidebar.html:12
+#: src/hyperadmin/templates/_sidebar.html:25
 #, fuzzy
 msgid "Menu"
 msgstr "मेनू"
 
-#: src/hyperadmin/templates/_sidebar.html:16
+#: src/hyperadmin/templates/_sidebar.html:29
 #, fuzzy
 msgid "Close navigation menu"
 msgstr "नेविगेशन मेनू बंद करें"
 
-#: src/hyperadmin/templates/_sidebar.html:23
+#: src/hyperadmin/templates/_sidebar.html:39
+#: src/hyperadmin/templates/_sidebar.html:40
+#, fuzzy
+msgid "Collapse sidebar"
+msgstr "साइडबार छोटा करें"
+
+#: src/hyperadmin/templates/_sidebar.html:45
 #, fuzzy
 msgid "Sidebar"
 msgstr "साइडबार"
 
-#: src/hyperadmin/templates/create.html:4
-#, python-format, fuzzy
-msgid "Create %(model_name)s"
-msgstr "%(model_name)s बनाएँ"
-
+#: src/hyperadmin/templates/base.html:12
 #: src/hyperadmin/templates/create.html:36
 #, fuzzy
 msgid "Create"
 msgstr "बनाएँ"
 
+#: src/hyperadmin/templates/bulk_form.html:9
+#: src/hyperadmin/templates/bulk_result.html:11
+#, fuzzy
+msgid "Breadcrumb"
+msgstr "ब्रेडक्रंब"
+
+#: src/hyperadmin/templates/create.html:4
+#, fuzzy, python-format
+msgid "Create %(model_name)s"
+msgstr "%(model_name)s बनाएँ"
+
+#: src/hyperadmin/templates/components/bulk_form.html:74
+#: src/hyperadmin/templates/components/bulk_form.html:76
+#: src/hyperadmin/templates/components/confirm_delete_dialog.html:23
+#: src/hyperadmin/templates/components/saved_views.html:24
+#: src/hyperadmin/templates/components/saved_views.html:49
 #: src/hyperadmin/templates/create.html:39
-#: src/hyperadmin/templates/update.html:39
+#: src/hyperadmin/templates/update.html:53
+#: src/hyperadmin/templates/widgets/popup_form.html:59
 #, fuzzy
 msgid "Cancel"
 msgstr "रद्द करें"
 
-#: src/hyperadmin/templates/detail.html:30
-#, python-format, fuzzy
+#: src/hyperadmin/templates/detail.html:15
+#, fuzzy
+msgid "Edit"
+msgstr "संपादित करें"
+
+#: src/hyperadmin/templates/components/confirm_delete_dialog.html:24
+#: src/hyperadmin/templates/components/table_body.html:57
+#: src/hyperadmin/templates/detail.html:22
+#: src/hyperadmin/templates/permissions/_macros.html:20
+#: src/hyperadmin/templates/update.html:59
+#, fuzzy
+msgid "Delete"
+msgstr "हटाएँ"
+
+#: src/hyperadmin/templates/detail.html:113
+#, fuzzy, python-format
 msgid "Run action '%(label)s'?"
 msgstr "क्या '%(label)s' क्रिया चलाएँ?"
 
-#: src/hyperadmin/templates/detail.html:36
+#: src/hyperadmin/templates/detail.html:119
 #, fuzzy
 msgid "Back to list"
 msgstr "सूची पर वापस जाएँ"
 
+#: src/hyperadmin/templates/error.html:5
+#, fuzzy
+msgid "You don't have access to this page"
+msgstr "आपके पास इस पृष्ठ की पहुँच नहीं है"
+
+#: src/hyperadmin/templates/error.html:6 src/hyperadmin/views/nav_pins.py:95
+#: src/hyperadmin/views/nav_pins.py:130 src/hyperadmin/views/nav_pins.py:141
+#, fuzzy
+msgid "Page not found"
+msgstr "पृष्ठ नहीं मिला"
+
+#: src/hyperadmin/templates/error.html:7
+#, fuzzy
+msgid "This action can't be completed"
+msgstr "यह कार्रवाई पूरी नहीं की जा सकती"
+
+#: src/hyperadmin/templates/error.html:10
+#: src/hyperadmin/templates/error.html:15
+#: src/hyperadmin/templates/error.html:16
+#, fuzzy
+msgid "Error"
+msgstr "त्रुटि"
+
+#: src/hyperadmin/templates/error.html:18
+#, fuzzy
+msgid ""
+"Your account doesn't have permission for this. Ask an administrator if "
+"you need it."
+msgstr "आपके खाते को इसकी अनुमति नहीं है। ज़रूरत हो तो किसी व्यवस्थापक से माँगें।"
+
+#: src/hyperadmin/templates/error.html:22
+#, fuzzy
+msgid "Back to dashboard"
+msgstr "डैशबोर्ड पर वापस जाएँ"
+
 #: src/hyperadmin/templates/form_layout.html:12
+#: src/hyperadmin/templates/widgets/popup_form.html:23
+#, fuzzy
+msgid "You have unsaved changes. Leave this page?"
+msgstr "आपके कुछ बदलाव सहेजे नहीं गए हैं। क्या यह पृष्ठ छोड़ना है?"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:25
+#: src/hyperadmin/templates/form_layout.html:18
 #, fuzzy
 msgid "Save"
 msgstr "सहेजें"
 
-#: src/hyperadmin/templates/list_layout.html:3
-#, python-format, fuzzy
+#: src/hyperadmin/templates/list_layout.html:4
+#, fuzzy, python-format
 msgid "%(model_name)s List | HyperAdmin"
 msgstr "%(model_name)s सूची | HyperAdmin"
 
-#: src/hyperadmin/templates/list_layout.html:7
-#, fuzzy
-msgid "List"
-msgstr "सूची"
-
-#: src/hyperadmin/templates/list_layout.html:11
-#, python-format, fuzzy
+#: src/hyperadmin/templates/list_layout.html:12
+#, fuzzy, python-format
 msgid "Create New %(model_name)s"
 msgstr "नया %(model_name)s बनाएँ"
+
+#: src/hyperadmin/templates/components/filter_bar.html:10
+#: src/hyperadmin/templates/components/filter_sidebar.html:13
+#: src/hyperadmin/templates/list_layout.html:28
+#, fuzzy
+msgid "Filters"
+msgstr "फ़िल्टर"
+
+#: src/hyperadmin/templates/list_layout.html:31
+#, fuzzy
+msgid "Applied filters"
+msgstr "लागू फ़िल्टर"
+
+#: src/hyperadmin/templates/list_layout.html:33
+#, fuzzy, python-format
+msgid "Remove filter %(label)s"
+msgstr "फ़िल्टर %(label)s हटाएँ"
 
 #: src/hyperadmin/templates/login.html:3
 #, fuzzy
 msgid "Login"
 msgstr "लॉगिन"
 
-#: src/hyperadmin/templates/login.html:13
+#: src/hyperadmin/templates/login.html:14
 #, fuzzy
 msgid "Sign in to your account"
 msgstr "अपने खाते में साइन इन करें"
 
-#: src/hyperadmin/templates/login.html:23
+#: src/hyperadmin/templates/login.html:28
 #, fuzzy
 msgid "Username"
 msgstr "उपयोगकर्ता नाम"
 
-#: src/hyperadmin/templates/login.html:35
+#: src/hyperadmin/templates/login.html:40
 #, fuzzy
 msgid "Password"
 msgstr "पासवर्ड"
 
-#: src/hyperadmin/templates/login.html:46
+#: src/hyperadmin/templates/login.html:51
 #, fuzzy
 msgid "Sign in"
 msgstr "साइन इन"
 
-#: src/hyperadmin/templates/update.html:4
-#, python-format, fuzzy
+#: src/hyperadmin/templates/update.html:5
+#, fuzzy, python-format
 msgid "Update %(item_name)s"
 msgstr "%(item_name)s अपडेट करें"
 
-#: src/hyperadmin/templates/update.html:36
-#, fuzzy
-msgid "Update"
-msgstr "अपडेट"
-
-#: src/hyperadmin/templates/components/filter_bar.html:11
-#, fuzzy
-msgid "Filters"
-msgstr "फ़िल्टर"
-
-#: src/hyperadmin/templates/components/filter_bar.html:27
-#, fuzzy
-msgid "Any"
-msgstr "कोई भी"
-
-#: src/hyperadmin/templates/components/filter_bar.html:43
-#, fuzzy
-msgid "Clear all filters"
-msgstr "सभी फ़िल्टर साफ़ करें"
-
-#: src/hyperadmin/templates/components/inline_row.html:31
-#: src/hyperadmin/templates/components/table.html:8
-#: src/hyperadmin/templates/components/table.html:18
-#, fuzzy
-msgid "Actions"
-msgstr "क्रियाएँ"
-
-#: src/hyperadmin/templates/components/inline_row.html:36
-#, fuzzy
-msgid "Remove"
-msgstr "हटाएँ"
-
-#: src/hyperadmin/templates/components/pagination.html:1
-#, fuzzy
-msgid "Pagination"
-msgstr "पृष्ठ संख्या"
-
-#: src/hyperadmin/templates/components/pagination.html:4
-#, python-format, fuzzy
-msgid "Showing %(start)s to %(end)s of %(total)s results"
-msgstr "%(total)s परिणामों में से %(start)s से %(end)s दिखाए जा रहे हैं"
-
-#: src/hyperadmin/templates/components/pagination.html:17
-#, fuzzy
-msgid "Previous"
-msgstr "पिछला"
-
-#: src/hyperadmin/templates/components/pagination.html:22
-#, python-format, fuzzy
-msgid "Page %(page)s of %(total_pages)s"
-msgstr "%(total_pages)s में से पृष्ठ %(page)s"
-
-#: src/hyperadmin/templates/components/pagination.html:32
-#, fuzzy
-msgid "Next"
-msgstr "अगला"
-
-#: src/hyperadmin/templates/components/search_input.html:5
-#, fuzzy
-msgid "Search..."
-msgstr "खोजें..."
-
-#: src/hyperadmin/templates/components/search_input.html:8
-#, fuzzy
-msgid "Search"
-msgstr "खोजें"
-
-#: src/hyperadmin/templates/components/search_input.html:14
-#, fuzzy
-msgid "Searching..."
-msgstr "खोज रहा है..."
-
-#: src/hyperadmin/templates/components/table.html:2
-#, python-format, fuzzy
-msgid "%(model_name)s list"
-msgstr "%(model_name)s सूची"
-
-#: src/hyperadmin/templates/components/table.html:20
+#: src/hyperadmin/templates/permissions/_macros.html:20
+#: src/hyperadmin/templates/update.html:14
 #, fuzzy
 msgid "View"
 msgstr "देखें"
 
-#: src/hyperadmin/templates/components/table.html:23
+#: src/hyperadmin/templates/update.html:50
 #, fuzzy
-msgid "Edit"
-msgstr "संपादित करें"
+msgid "Update"
+msgstr "अपडेट"
 
-#: src/hyperadmin/templates/components/table.html:27
+#: src/hyperadmin/templates/auth/mfa_challenge.html:3
 #, fuzzy
-msgid "Are you sure you want to delete this item?"
-msgstr "क्या आप वाकई इस आइटम को हटाना चाहते हैं?"
+msgid "MFA Challenge"
+msgstr "MFA सत्यापन"
 
-#: src/hyperadmin/templates/components/table.html:32
+#: src/hyperadmin/templates/auth/mfa_challenge.html:12
 #, fuzzy
-msgid "Delete"
+msgid "Two-factor verification"
+msgstr "दो-चरणीय सत्यापन"
+
+#: src/hyperadmin/templates/auth/mfa_challenge.html:14
+#, fuzzy
+msgid "Enter the 6-digit code we sent to your email."
+msgstr "हमने आपके ईमेल पर जो 6 अंकों का कोड भेजा है, उसे दर्ज करें।"
+
+#: src/hyperadmin/templates/auth/mfa_challenge.html:36
+#: src/hyperadmin/templates/auth/mfa_settings.html:53
+#, fuzzy
+msgid "Verification code"
+msgstr "सत्यापन कोड"
+
+#: src/hyperadmin/templates/auth/mfa_challenge.html:54
+#, fuzzy
+msgid "Verify"
+msgstr "सत्यापित करें"
+
+#: src/hyperadmin/templates/auth/mfa_challenge.html:60
+#, fuzzy
+msgid "Your code has expired."
+msgstr "आपके कोड की समय-सीमा समाप्त हो गई है।"
+
+#: src/hyperadmin/templates/auth/mfa_challenge.html:70
+#, fuzzy
+msgid "Resend code"
+msgstr "कोड फिर से भेजें"
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:3
+#: src/hyperadmin/templates/auth/mfa_settings.html:9
+#, fuzzy
+msgid "Two-factor authentication"
+msgstr "दो-चरणीय प्रमाणीकरण"
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:13
+#, fuzzy
+msgid "Status:"
+msgstr "स्थिति:"
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:16
+#, fuzzy
+msgid "Enabled"
+msgstr "चालू"
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:20
+#, fuzzy
+msgid "Disabled"
+msgstr "बंद"
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:49
+#, fuzzy
+msgid "Enter the 6-digit code we sent to your email to confirm."
+msgstr "पुष्टि के लिए हमने आपके ईमेल पर जो 6 अंकों का कोड भेजा है, उसे दर्ज करें।"
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:73
+#, fuzzy
+msgid "Confirm and enable"
+msgstr "पुष्टि करें और चालू करें"
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:75
+#, fuzzy
+msgid "Confirm and disable"
+msgstr "पुष्टि करें और बंद करें"
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:90
+#, fuzzy
+msgid "Disable two-factor authentication"
+msgstr "दो-चरणीय प्रमाणीकरण बंद करें"
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:104
+#, fuzzy
+msgid "Enable two-factor authentication"
+msgstr "दो-चरणीय प्रमाणीकरण चालू करें"
+
+#: src/hyperadmin/templates/components/_nav.html:33
+#, fuzzy, python-format
+msgid "Unpin %(label)s"
+msgstr "%(label)s को अनपिन करें"
+
+#: src/hyperadmin/templates/components/_nav.html:33
+#, fuzzy, python-format
+msgid "Pin %(label)s"
+msgstr "%(label)s को पिन करें"
+
+#: src/hyperadmin/templates/components/banner.html:48
+#, fuzzy
+msgid "Dismiss"
+msgstr "खारिज करें"
+
+#: src/hyperadmin/templates/components/banner.html:57
+#, fuzzy
+msgid "Notices"
+msgstr "सूचनाएँ"
+
+#: src/hyperadmin/templates/components/banner.html:72
+#, fuzzy, python-format
+msgid "+%(count)s more notice"
+msgid_plural "+%(count)s more notices"
+msgstr[0] "+%(count)s और सूचना"
+msgstr[1] "+%(count)s और सूचनाएँ"
+
+#: src/hyperadmin/templates/components/bulk_form.html:21
+#, fuzzy, python-format
+msgid "%(label)s 1 row"
+msgstr "%(label)s 1 पंक्ति"
+
+#: src/hyperadmin/templates/components/bulk_form.html:23
+#, fuzzy, python-format
+msgid "%(label)s %(count)s rows"
+msgstr "%(label)s %(count)s पंक्तियाँ"
+
+#: src/hyperadmin/templates/components/bulk_form.html:35
+#, fuzzy
+msgid "1 field needs fixing."
+msgstr "1 फ़ील्ड को ठीक करना है।"
+
+#: src/hyperadmin/templates/components/bulk_form.html:35
+#, fuzzy, python-format
+msgid "%(count)s fields need fixing."
+msgstr "%(count)s फ़ील्ड को ठीक करना है।"
+
+#: src/hyperadmin/templates/components/bulk_form.html:37
+#, fuzzy, python-format
+msgid "Your %(count)s selected rows are kept."
+msgstr "आपकी चुनी हुई %(count)s पंक्तियाँ बनी रहेंगी।"
+
+#: src/hyperadmin/templates/components/bulk_form.html:42
+#, fuzzy, python-format
+msgid "This runs on the %(count)s selected rows."
+msgstr "यह चुनी हुई %(count)s पंक्तियों पर चलेगा।"
+
+#: src/hyperadmin/templates/components/bulk_form.html:45
+#, fuzzy
+msgid "Selected rows"
+msgstr "चुनी हुई पंक्तियाँ"
+
+#: src/hyperadmin/templates/components/bulk_form.html:56
+#, fuzzy
+msgid "optional"
+msgstr "वैकल्पिक"
+
+#: src/hyperadmin/templates/components/bulk_result.html:23
+#, fuzzy
+msgid "Done"
+msgstr "पूर्ण"
+
+#: src/hyperadmin/templates/components/bulk_result.html:23
+#, fuzzy
+msgid "Failed"
+msgstr "विफल"
+
+#: src/hyperadmin/templates/components/bulk_result.html:23
+#, fuzzy
+msgid "Forbidden"
+msgstr "वर्जित"
+
+#: src/hyperadmin/templates/components/bulk_result.html:25
+#, fuzzy
+msgid "Row not found. It may have been deleted after you selected it."
+msgstr "पंक्ति नहीं मिली। हो सकता है कि आपके चुनने के बाद इसे हटा दिया गया हो।"
+
+#: src/hyperadmin/templates/components/bulk_result.html:26
+#, fuzzy
+msgid ""
+"The row could not be loaded because of a database error. Check the server"
+" logs, then retry."
+msgstr ""
+"डेटाबेस त्रुटि के कारण पंक्ति लोड नहीं हो सकी। सर्वर लॉग देखें, फिर "
+"दोबारा कोशिश करें।"
+
+#: src/hyperadmin/templates/components/bulk_result.html:27
+#, fuzzy
+msgid "The action failed on this row. Check the server logs, then retry."
+msgstr "इस पंक्ति पर कार्रवाई विफल रही। सर्वर लॉग देखें, फिर दोबारा कोशिश करें।"
+
+#: src/hyperadmin/templates/components/bulk_result.html:31
+#, fuzzy, python-format
+msgid "%(failed)s failed and %(forbidden)s not allowed."
+msgstr "%(failed)s विफल और %(forbidden)s की अनुमति नहीं।"
+
+#: src/hyperadmin/templates/components/bulk_result.html:33
+#, fuzzy, python-format
+msgid "%(failed)s failed."
+msgstr "%(failed)s विफल।"
+
+#: src/hyperadmin/templates/components/bulk_result.html:35
+#, fuzzy, python-format
+msgid "%(forbidden)s not allowed."
+msgstr "%(forbidden)s की अनुमति नहीं।"
+
+#: src/hyperadmin/templates/components/bulk_result.html:40
+#: src/hyperadmin/templates/components/bulk_result.html:95
+#, fuzzy
+msgid "Row"
+msgstr "पंक्ति"
+
+#: src/hyperadmin/templates/components/bulk_result.html:45
+#: src/hyperadmin/templates/components/bulk_result.html:96
+#, fuzzy
+msgid "Result"
+msgstr "परिणाम"
+
+#: src/hyperadmin/templates/components/bulk_result.html:49
+#: src/hyperadmin/templates/components/bulk_result.html:97
+#, fuzzy
+msgid "What happened"
+msgstr "क्या हुआ"
+
+#: src/hyperadmin/templates/components/bulk_result.html:51
+#, fuzzy
+msgid "no detail"
+msgstr "कोई विवरण नहीं"
+
+#: src/hyperadmin/templates/components/bulk_result.html:66
+#, fuzzy
+msgid "No rows were selected."
+msgstr "कोई पंक्ति नहीं चुनी गई।"
+
+#: src/hyperadmin/templates/components/bulk_result.html:68
+#, fuzzy, python-format
+msgid "All %(count)s rows done."
+msgstr "सभी %(count)s पंक्तियाँ पूर्ण।"
+
+#: src/hyperadmin/templates/components/bulk_result.html:70
+#, fuzzy, python-format
+msgid "%(done)s of %(count)s rows done."
+msgstr "%(count)s में से %(done)s पंक्तियाँ पूर्ण।"
+
+#: src/hyperadmin/templates/components/bulk_result.html:72
+#, fuzzy
+msgid "No rows done."
+msgstr "कोई पंक्ति पूर्ण नहीं हुई।"
+
+#: src/hyperadmin/templates/components/bulk_result.html:76
+#, fuzzy
+msgid "Totals"
+msgstr "कुल"
+
+#: src/hyperadmin/templates/components/bulk_result.html:83
+#, fuzzy, python-format
+msgid "%(done)s done, %(failed)s failed, %(forbidden)s forbidden"
+msgstr "%(done)s पूर्ण, %(failed)s विफल, %(forbidden)s वर्जित"
+
+#: src/hyperadmin/templates/components/bulk_result.html:92
+#, fuzzy
+msgid "Results per row"
+msgstr "प्रति पंक्ति परिणाम"
+
+#: src/hyperadmin/templates/components/bulk_result.html:107
+#, fuzzy, python-format
+msgid "Show the %(count)s done rows"
+msgstr "%(count)s पूर्ण पंक्तियाँ दिखाएँ"
+
+#: src/hyperadmin/templates/components/bulk_result.html:108
+#, fuzzy
+msgid "Done rows"
+msgstr "पूर्ण पंक्तियाँ"
+
+#: src/hyperadmin/templates/components/bulk_result.html:125
+#, fuzzy, python-format
+msgid "Retry failures (%(count)s)"
+msgstr "विफल को फिर से चलाएँ (%(count)s)"
+
+#: src/hyperadmin/templates/components/bulk_result.html:130
+#, fuzzy, python-format
+msgid "Back to %(model_name)s"
+msgstr "%(model_name)s पर वापस जाएँ"
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:22
+#, fuzzy
+msgid "Bulk actions"
+msgstr "सामूहिक कार्रवाइयाँ"
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:28
+#, fuzzy
+msgid "Choose an action, then press Run."
+msgstr "एक कार्रवाई चुनें, फिर चलाएँ दबाएँ।"
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:29
+#, fuzzy
+msgid "Select at least one row, then press Run."
+msgstr "कम से कम एक पंक्ति चुनें, फिर चलाएँ दबाएँ।"
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:36
+#, fuzzy
+msgid "selected"
+msgstr "चुने गए"
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:37
+#: src/hyperadmin/templates/components/bulk_toolbar.html:38
+#, fuzzy
+msgid "Select rows, then choose an action"
+msgstr "पंक्तियाँ चुनें, फिर एक कार्रवाई चुनें"
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:40
+#, fuzzy
+msgid "Action for selected rows"
+msgstr "चुनी हुई पंक्तियों के लिए कार्रवाई"
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:44
+#, fuzzy
+msgid "Choose an action…"
+msgstr "कार्रवाई चुनें…"
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:51
+#, fuzzy
+msgid "Run"
+msgstr "चलाएँ"
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:54
+#, fuzzy
+msgid "Clear selection"
+msgstr "चयन हटाएँ"
+
+#: src/hyperadmin/templates/components/command_palette.html:15
+#: src/hyperadmin/templates/components/nav_pinned.html:10
+#, fuzzy
+msgid "Pinned"
+msgstr "पिन किए गए"
+
+#: src/hyperadmin/templates/components/command_palette.html:16
+#, fuzzy
+msgid "Recent"
+msgstr "हाल के"
+
+#: src/hyperadmin/templates/components/command_palette.html:17
+#, fuzzy
+msgid "Models"
+msgstr "मॉडल"
+
+#: src/hyperadmin/templates/components/command_palette.html:18
+#, fuzzy
+msgid "Pages"
+msgstr "पृष्ठ"
+
+#: src/hyperadmin/templates/components/command_palette.html:19
+#: src/hyperadmin/templates/widgets/autocomplete.html:32
+#, fuzzy, python-format
+msgid "%(count)s results"
+msgstr "%(count)s परिणाम"
+
+#: src/hyperadmin/templates/components/command_palette.html:20
+#: src/hyperadmin/templates/components/command_palette.html:37
+#: src/hyperadmin/templates/widgets/autocomplete.html:31
+#, fuzzy
+msgid "No results"
+msgstr "कोई परिणाम नहीं"
+
+#: src/hyperadmin/templates/components/command_palette.html:24
+#: src/hyperadmin/templates/components/search_input.html:11
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:19
+#, fuzzy
+msgid "Search"
+msgstr "खोजें"
+
+#: src/hyperadmin/templates/components/command_palette.html:30
+#, fuzzy
+msgid "Search models and pages"
+msgstr "मॉडल और पृष्ठ खोजें"
+
+#: src/hyperadmin/templates/components/command_palette.html:31
+#, fuzzy
+msgid "Search models and pages…"
+msgstr "मॉडल और पृष्ठ खोजें…"
+
+#: src/hyperadmin/templates/components/command_palette.html:36
+#, fuzzy
+msgid "Results"
+msgstr "परिणाम"
+
+#: src/hyperadmin/templates/components/command_palette.html:40
+#, fuzzy
+msgid "move"
+msgstr "चलें"
+
+#: src/hyperadmin/templates/components/command_palette.html:41
+#, fuzzy
+msgid "open"
+msgstr "खोलें"
+
+#: src/hyperadmin/templates/components/command_palette.html:42
+#, fuzzy
+msgid "new"
+msgstr "नया"
+
+#: src/hyperadmin/templates/components/confirm_delete_dialog.html:14
+#, fuzzy, python-format
+msgid "Delete %(name)s?"
+msgstr "%(name)s हटाएँ?"
+
+#: src/hyperadmin/templates/components/confirm_delete_dialog.html:18
+#, fuzzy
+msgid "Delete this record?"
+msgstr "यह रिकॉर्ड हटाएँ?"
+
+#: src/hyperadmin/templates/components/confirm_delete_dialog.html:19
+#, fuzzy
+msgid "This cannot be undone."
+msgstr "इसे पूर्ववत नहीं किया जा सकता।"
+
+#: src/hyperadmin/templates/components/csrf_reload_banner.html:12
+#, fuzzy
+msgid "This page's security token is out of date"
+msgstr "इस पृष्ठ का सुरक्षा टोकन पुराना हो गया है"
+
+#: src/hyperadmin/templates/components/csrf_reload_banner.html:13
+#, fuzzy
+msgid "Reload the page, then try again."
+msgstr "पृष्ठ फिर से लोड करें, फिर दोबारा कोशिश करें।"
+
+#: src/hyperadmin/templates/components/csrf_reload_banner.html:15
+#, fuzzy
+msgid "Reload page"
+msgstr "पृष्ठ फिर से लोड करें"
+
+#: src/hyperadmin/templates/components/error_toast.html:8
+#, fuzzy
+msgid "Permission denied"
+msgstr "अनुमति नहीं है"
+
+#: src/hyperadmin/templates/components/error_toast.html:9
+#, fuzzy
+msgid "Not found"
+msgstr "नहीं मिला"
+
+#: src/hyperadmin/templates/components/error_toast.html:10
+#, fuzzy
+msgid "Action refused"
+msgstr "कार्रवाई अस्वीकृत"
+
+#: src/hyperadmin/templates/components/error_toast.html:13
+#, fuzzy
+msgid "Your account doesn't have permission for this."
+msgstr "आपके खाते को इसकी अनुमति नहीं है।"
+
+#: src/hyperadmin/templates/components/filter_bar.html:28
+#: src/hyperadmin/templates/components/filters/boolean.html:6
+#: src/hyperadmin/templates/components/filters/select.html:6
+#, fuzzy
+msgid "Any"
+msgstr "कोई भी"
+
+#: src/hyperadmin/templates/components/filter_bar.html:44
+#, fuzzy
+msgid "Clear all filters"
+msgstr "सभी फ़िल्टर साफ़ करें"
+
+#: src/hyperadmin/templates/components/filter_sidebar.html:14
+#, fuzzy
+msgid "Reset"
+msgstr "रीसेट करें"
+
+#: src/hyperadmin/templates/components/filter_sidebar.html:21
+#, fuzzy
+msgid "Clear all"
+msgstr "सभी साफ़ करें"
+
+#: src/hyperadmin/templates/components/filter_sidebar.html:22
+#, fuzzy
+msgid "Apply filters"
+msgstr "फ़िल्टर लागू करें"
+
+#: src/hyperadmin/templates/components/inline_row.html:32
+#: src/hyperadmin/templates/components/table.html:28
+#: src/hyperadmin/templates/components/table_body.html:54
+#, fuzzy
+msgid "Actions"
+msgstr "क्रियाएँ"
+
+#: src/hyperadmin/templates/components/inline_row.html:45
+#: src/hyperadmin/templates/widgets/image_input.html:104
+#, fuzzy
+msgid "Remove"
 msgstr "हटाएँ"
+
+#: src/hyperadmin/templates/components/list_error.html:5
+#, fuzzy
+msgid "The list could not be loaded because of a database error."
+msgstr "डेटाबेस त्रुटि के कारण सूची लोड नहीं हो सकी।"
+
+#: src/hyperadmin/templates/components/list_error.html:7
+#, fuzzy, python-format
+msgid ""
+"The table for this model does not exist yet: run your migrations or "
+"%(cmd)s."
+msgstr "इस मॉडल की तालिका अभी मौजूद नहीं है: अपने माइग्रेशन या %(cmd)s चलाएँ।"
+
+#: src/hyperadmin/templates/components/list_error.html:9
+#, fuzzy
+msgid "Check the server logs for details."
+msgstr "विवरण के लिए सर्वर लॉग देखें।"
+
+#: src/hyperadmin/templates/components/pagination.html:2
+#, fuzzy
+msgid "Pagination"
+msgstr "पृष्ठ संख्या"
+
+#: src/hyperadmin/templates/components/pagination.html:5
+#, fuzzy, python-format
+msgid "Showing %(start)s to %(end)s of %(total)s results"
+msgstr "%(total)s परिणामों में से %(start)s से %(end)s दिखाए जा रहे हैं"
+
+#: src/hyperadmin/templates/components/pagination.html:18
+#, fuzzy
+msgid "Previous"
+msgstr "पिछला"
+
+#: src/hyperadmin/templates/components/pagination.html:23
+#, fuzzy, python-format
+msgid "Page %(page)s of %(total_pages)s"
+msgstr "%(total_pages)s में से पृष्ठ %(page)s"
+
+#: src/hyperadmin/templates/components/pagination.html:33
+#, fuzzy
+msgid "Next"
+msgstr "अगला"
+
+#: src/hyperadmin/templates/components/panel_document.html:12
+#, fuzzy
+msgid "Open in new tab"
+msgstr "नए टैब में खोलें"
+
+#: src/hyperadmin/templates/components/panel_document.html:12
+#, fuzzy
+msgid "(opens a new tab)"
+msgstr "(नए टैब में खुलता है)"
+
+#: src/hyperadmin/templates/components/panel_document.html:15
+#, fuzzy
+msgid "Download"
+msgstr "डाउनलोड करें"
+
+#: src/hyperadmin/templates/components/panel_document.html:18
+#, fuzzy, python-format
+msgid "%(name)s, preview"
+msgstr "%(name)s, पूर्वावलोकन"
+
+#: src/hyperadmin/templates/components/panel_states.html:17
+#, fuzzy, python-format
+msgid "Loading %(label)s"
+msgstr "%(label)s लोड हो रहा है"
+
+#: src/hyperadmin/templates/components/panel_states.html:18
+#, fuzzy, python-format
+msgid "Open %(label)s"
+msgstr "%(label)s खोलें"
+
+#: src/hyperadmin/templates/components/panel_states.html:25
+#, fuzzy, python-format
+msgid "%(label)s didn't load."
+msgstr "%(label)s लोड नहीं हुआ।"
+
+#: src/hyperadmin/templates/components/panel_states.html:26
+#, fuzzy
+msgid "The server took too long to answer. The other tabs still work."
+msgstr "सर्वर ने जवाब देने में बहुत समय लिया। बाकी टैब अब भी काम कर रहे हैं।"
+
+#: src/hyperadmin/templates/components/panel_states.html:27
+#: src/hyperadmin/templates/permissions/matrix.html:394
+#: src/hyperadmin/templates/widgets/image_input.html:99
+#, fuzzy
+msgid "Retry"
+msgstr "फिर से कोशिश करें"
+
+#: src/hyperadmin/templates/components/panel_states.html:32
+#, fuzzy
+msgid "You don't have access to this panel."
+msgstr "आपके पास इस पैनल की पहुँच नहीं है।"
+
+#: src/hyperadmin/templates/components/panel_states.html:33
+#, fuzzy, python-format
+msgid "Ask an administrator for the \"%(permission)s\" permission."
+msgstr "किसी व्यवस्थापक से \"%(permission)s\" अनुमति माँगें।"
+
+#: src/hyperadmin/templates/components/panel_tab_strip.html:14
+#, fuzzy, python-format
+msgid "%(name)s sections"
+msgstr "%(name)s के अनुभाग"
+
+#: src/hyperadmin/templates/components/panel_tab_strip.html:21
+#, fuzzy
+msgid "Details"
+msgstr "विवरण"
+
+#: src/hyperadmin/templates/components/presence_banner.html:20
+#, fuzzy, python-brace-format
+msgid "{names} is also viewing this record."
+msgstr "{names} भी यह रिकॉर्ड देख रहे हैं।"
+
+#: src/hyperadmin/templates/components/presence_banner.html:21
+#, fuzzy, python-brace-format
+msgid "{names} are also viewing this record."
+msgstr "{names} भी यह रिकॉर्ड देख रहे हैं।"
+
+#: src/hyperadmin/templates/components/presence_banner.html:22
+#, fuzzy, python-brace-format
+msgid "{names} is also editing this record."
+msgstr "{names} भी यह रिकॉर्ड संपादित कर रहे हैं।"
+
+#: src/hyperadmin/templates/components/presence_banner.html:23
+#, fuzzy, python-brace-format
+msgid "{names} are also editing this record."
+msgstr "{names} भी यह रिकॉर्ड संपादित कर रहे हैं।"
+
+#: src/hyperadmin/templates/components/presence_banner.html:24
+#, fuzzy, python-brace-format
+msgid "+{count} more"
+msgstr "+{count} और"
+
+#: src/hyperadmin/templates/components/saved_views.html:9
+#, fuzzy
+msgid "My views"
+msgstr "मेरे व्यू"
+
+#: src/hyperadmin/templates/components/saved_views.html:13
+#: src/hyperadmin/templates/components/saved_views.html:25
+#, fuzzy
+msgid "Save view"
+msgstr "व्यू सहेजें"
+
+#: src/hyperadmin/templates/components/saved_views.html:20
+#, fuzzy
+msgid "Name"
+msgstr "नाम"
+
+#: src/hyperadmin/templates/components/saved_views.html:34
+#, fuzzy
+msgid "(active)"
+msgstr "(सक्रिय)"
+
+#: src/hyperadmin/templates/components/saved_views.html:37
+#, fuzzy, python-format
+msgid "Actions for view %(name)s"
+msgstr "व्यू %(name)s के लिए कार्रवाइयाँ"
+
+#: src/hyperadmin/templates/components/saved_views.html:41
+#, fuzzy
+msgid "Delete…"
+msgstr "हटाएँ…"
+
+#: src/hyperadmin/templates/components/saved_views.html:46
+#, fuzzy, python-format
+msgid "Delete the view “%(name)s”?"
+msgstr "व्यू “%(name)s” हटाएँ?"
+
+#: src/hyperadmin/templates/components/saved_views.html:47
+#, fuzzy
+msgid "Only the saved filters go. No rows change."
+msgstr "केवल सहेजे गए फ़िल्टर हटेंगे। कोई पंक्ति नहीं बदलेगी।"
+
+#: src/hyperadmin/templates/components/saved_views.html:51
+#, fuzzy
+msgid "Delete view"
+msgstr "व्यू हटाएँ"
+
+#: src/hyperadmin/templates/components/saved_views.html:58
+#, fuzzy
+msgid "Save the filters you use often. They show up here, only for you."
+msgstr ""
+"जिन फ़िल्टर का आप अक्सर उपयोग करते हैं, उन्हें सहेजें। वे यहाँ केवल आपके "
+"लिए दिखेंगे।"
+
+#: src/hyperadmin/templates/components/search_input.html:8
+#, fuzzy
+msgid "Search..."
+msgstr "खोजें..."
+
+#: src/hyperadmin/templates/components/search_input.html:18
+#, fuzzy
+msgid "Searching..."
+msgstr "खोज रहा है..."
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:15
+#, fuzzy
+msgid "General"
+msgstr "सामान्य"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:17
+#, fuzzy
+msgid "Form"
+msgstr "फ़ॉर्म"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:18
+#, fuzzy
+msgid "Show keyboard shortcuts"
+msgstr "कीबोर्ड शॉर्टकट दिखाएँ"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:20
+#, fuzzy
+msgid "Focus search"
+msgstr "खोज पर जाएँ"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:21
+#, fuzzy
+msgid "Next row"
+msgstr "अगली पंक्ति"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:22
+#, fuzzy
+msgid "Previous row"
+msgstr "पिछली पंक्ति"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:23
+#, fuzzy
+msgid "Select row"
+msgstr "पंक्ति चुनें"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:24
+#, fuzzy
+msgid "Create new"
+msgstr "नया बनाएँ"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:26
+#, fuzzy
+msgid "or"
+msgstr "या"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:32
+#, fuzzy
+msgid "Keyboard shortcuts"
+msgstr "कीबोर्ड शॉर्टकट"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:42
+#, fuzzy
+msgid "Single-key shortcuts"
+msgstr "एक-कुंजी शॉर्टकट"
+
+#: src/hyperadmin/templates/components/table.html:11
+#, fuzzy, python-format
+msgid "%(model_name)s list"
+msgstr "%(model_name)s सूची"
+
+#: src/hyperadmin/templates/components/table.html:18
+#, fuzzy
+msgid "Select all rows on this page"
+msgstr "इस पृष्ठ की सभी पंक्तियाँ चुनें"
+
+#: src/hyperadmin/templates/components/table_body.html:23
+#, fuzzy
+msgid "Select"
+msgstr "चुनें"
+
+#: src/hyperadmin/templates/components/table_body.html:27
+#, fuzzy, python-format
+msgid "Select %(pk)s"
+msgstr "%(pk)s चुनें"
+
+#: src/hyperadmin/templates/components/table_body.html:59
+#, fuzzy, python-format
+msgid "Delete %(name)s"
+msgstr "%(name)s हटाएँ"
+
+#: src/hyperadmin/templates/components/table_body.html:68
+#, fuzzy, python-format
+msgid "Open %(name)s"
+msgstr "%(name)s खोलें"
+
+#: src/hyperadmin/templates/components/toast.html:19
+#, fuzzy, python-brace-format
+msgid "{actor} changed {count} {model}"
+msgid_plural "{actor} changed {count} {model}"
+msgstr[0] "{actor} ने {count} {model} बदले"
+msgstr[1] "{actor} ने {count} {model} बदले"
+
+#: src/hyperadmin/templates/components/toast.html:20
+#, fuzzy, python-brace-format
+msgid "{count} person"
+msgid_plural "{count} people"
+msgstr[0] "{count} व्यक्ति"
+msgstr[1] "{count} लोग"
+
+#: src/hyperadmin/templates/components/toast.html:30
+#, fuzzy, python-brace-format
+msgid "{actor} created {model} #{pk}"
+msgstr "{actor} ने {model} #{pk} बनाया"
+
+#: src/hyperadmin/templates/components/toast.html:31
+#, fuzzy, python-brace-format
+msgid "{actor} deleted {model} #{pk}"
+msgstr "{actor} ने {model} #{pk} हटाया"
+
+#: src/hyperadmin/templates/components/toast.html:32
+#, fuzzy
+msgid "Someone"
+msgstr "कोई"
+
+#: src/hyperadmin/templates/components/toast.html:33
+#, fuzzy
+msgid "List changed: refresh"
+msgstr "सूची बदल गई: रीफ़्रेश करें"
+
+#: src/hyperadmin/templates/components/filters/boolean.html:7
+#, fuzzy
+msgid "Yes"
+msgstr "हाँ"
+
+#: src/hyperadmin/templates/components/filters/boolean.html:8
+#, fuzzy
+msgid "No"
+msgstr "नहीं"
+
+#: src/hyperadmin/templates/components/filters/current_period.html:6
+#, fuzzy, python-format
+msgid "Showing %(period)s by default."
+msgstr "डिफ़ॉल्ट रूप से %(period)s दिखाया जा रहा है।"
+
+#: src/hyperadmin/templates/components/filters/current_period.html:6
+#, fuzzy
+msgid "Show all dates"
+msgstr "सभी तारीखें दिखाएँ"
+
+#: src/hyperadmin/templates/components/filters/date_range.html:5
+#: src/hyperadmin/templates/components/filters/multi_choice.html:4
+#: src/hyperadmin/templates/components/filters/multi_relation.html:5
+#: src/hyperadmin/templates/components/filters/select.html:4
+#, fuzzy
+msgid "Clear"
+msgstr "साफ़ करें"
+
+#: src/hyperadmin/templates/components/filters/date_range.html:7
+#, fuzzy
+msgid "quick ranges"
+msgstr "त्वरित अवधियाँ"
+
+#: src/hyperadmin/templates/components/filters/date_range.html:15
+#, fuzzy
+msgid "From"
+msgstr "से"
+
+#: src/hyperadmin/templates/components/filters/date_range.html:19
+#, fuzzy
+msgid "To"
+msgstr "तक"
+
+#: src/hyperadmin/templates/components/filters/is_owner.html:3
+#, fuzzy
+msgid "Owner"
+msgstr "स्वामी"
+
+#: src/hyperadmin/templates/components/filters/multi_relation.html:5
+#, fuzzy, python-format
+msgid "%(num)d selected"
+msgid_plural "%(num)d selected"
+msgstr[0] "%(num)d चुना गया"
+msgstr[1] "%(num)d चुने गए"
+
+#: src/hyperadmin/templates/components/filters/multi_relation.html:9
+#: src/hyperadmin/templates/widgets/autocomplete.html:24
+#, fuzzy, python-format
+msgid "Search %(label)s"
+msgstr "%(label)s खोजें"
+
+#: src/hyperadmin/templates/components/filters/multi_relation.html:18
+#, fuzzy, python-format
+msgid "Show %(num)d more"
+msgid_plural "Show %(num)d more"
+msgstr[0] "%(num)d और दिखाएँ"
+msgstr[1] "%(num)d और दिखाएँ"
+
+#: src/hyperadmin/templates/permissions/_banner.html:13
+#, fuzzy
+msgid "Permissions saved"
+msgstr "अनुमतियाँ सहेजी गईं"
+
+#: src/hyperadmin/templates/permissions/_banner.html:14
+#, fuzzy
+msgid "change"
+msgstr "बदलाव"
+
+#: src/hyperadmin/templates/permissions/_banner.html:14
+#, fuzzy
+msgid "changes"
+msgstr "बदलाव"
+
+#: src/hyperadmin/templates/permissions/_banner.html:22
+#, fuzzy
+msgid "Permissions changed elsewhere."
+msgstr "अनुमतियाँ कहीं और बदली गईं।"
+
+#: src/hyperadmin/templates/permissions/_banner.html:23
+#, fuzzy
+msgid ""
+"Reload to see the latest. Nothing was saved; your changes are still on "
+"the page."
+msgstr ""
+"नवीनतम देखने के लिए फिर से लोड करें। कुछ भी सहेजा नहीं गया; आपके बदलाव अब"
+" भी पृष्ठ पर हैं।"
+
+#: src/hyperadmin/templates/permissions/_banner.html:27
+#, fuzzy
+msgid "Reload"
+msgstr "फिर से लोड करें"
+
+#: src/hyperadmin/templates/permissions/_banner.html:35
+#, fuzzy
+msgid "change wasn’t saved."
+msgstr "बदलाव सहेजा नहीं गया।"
+
+#: src/hyperadmin/templates/permissions/_banner.html:35
+#, fuzzy
+msgid "changes weren’t saved."
+msgstr "बदलाव सहेजे नहीं गए।"
+
+#: src/hyperadmin/templates/permissions/_banner.html:36
+#, fuzzy
+msgid "You can only grant permissions you have yourself:"
+msgstr "आप केवल वही अनुमतियाँ दे सकते हैं जो आपके पास स्वयं हैं:"
+
+#: src/hyperadmin/templates/permissions/_banner.html:42
+#, fuzzy
+msgid ""
+"Nothing was saved. Untick them, or ask for those permissions, then save "
+"again."
+msgstr ""
+"कुछ भी सहेजा नहीं गया। उन्हें अनचेक करें या वे अनुमतियाँ माँगें, फिर "
+"दोबारा सहेजें।"
+
+#: src/hyperadmin/templates/permissions/_banner.html:51
+#, fuzzy
+msgid "Save failed"
+msgstr "सहेजना विफल रहा"
+
+#: src/hyperadmin/templates/permissions/_banner.html:52
+#, fuzzy
+msgid "Nothing was saved; try again."
+msgstr "कुछ भी सहेजा नहीं गया; फिर से कोशिश करें।"
+
+#: src/hyperadmin/templates/permissions/_group_gone.html:7
+#, fuzzy
+msgid "This group no longer exists"
+msgstr "यह समूह अब मौजूद नहीं है"
+
+#: src/hyperadmin/templates/permissions/_group_gone.html:8
+#, fuzzy
+msgid "Someone deleted it while you were editing. Nothing was saved."
+msgstr "आपके संपादन के दौरान किसी ने इसे हटा दिया। कुछ भी सहेजा नहीं गया।"
+
+#: src/hyperadmin/templates/permissions/_group_gone.html:10
+#, fuzzy
+msgid "Choose another group"
+msgstr "दूसरा समूह चुनें"
+
+#: src/hyperadmin/templates/permissions/_macros.html:20
+#: src/hyperadmin/templates/permissions/matrix.html:346
+#: src/hyperadmin/templates/permissions/object_popover.html:61
+#, fuzzy
+msgid "Add"
+msgstr "जोड़ें"
+
+#: src/hyperadmin/templates/permissions/_macros.html:20
+#, fuzzy
+msgid "Change"
+msgstr "बदलें"
+
+#: src/hyperadmin/templates/permissions/matrix.html:11
+#: src/hyperadmin/templates/permissions/matrix.html:228
+#, fuzzy
+msgid "Permission matrix"
+msgstr "अनुमति मैट्रिक्स"
+
+#: src/hyperadmin/templates/permissions/matrix.html:222
+#, fuzzy
+msgid "unsaved change"
+msgstr "बिना सहेजा बदलाव"
+
+#: src/hyperadmin/templates/permissions/matrix.html:222
+#: src/hyperadmin/templates/permissions/matrix.html:368
+#, fuzzy
+msgid "unsaved changes"
+msgstr "बिना सहेजे बदलाव"
+
+#: src/hyperadmin/templates/permissions/matrix.html:223
+#: src/hyperadmin/templates/permissions/matrix.html:342
+#, fuzzy
+msgid "rule"
+msgstr "नियम"
+
+#: src/hyperadmin/templates/permissions/matrix.html:223
+#: src/hyperadmin/templates/permissions/matrix.html:342
+#, fuzzy
+msgid "rules"
+msgstr "नियम"
+
+#: src/hyperadmin/templates/permissions/matrix.html:224
+#: src/hyperadmin/templates/permissions/matrix.html:343
+#, fuzzy
+msgid "for"
+msgstr "के लिए"
+
+#: src/hyperadmin/templates/permissions/matrix.html:225
+#: src/hyperadmin/templates/permissions/matrix.html:244
+#, fuzzy, python-format
+msgid "Changes apply to everyone in %(group)s."
+msgstr "बदलाव %(group)s के सभी सदस्यों पर लागू होते हैं।"
+
+#: src/hyperadmin/templates/permissions/matrix.html:226
+#, fuzzy
+msgid "You have unsaved changes. Switch group and lose them?"
+msgstr "आपके कुछ बदलाव सहेजे नहीं गए हैं। समूह बदलकर उन्हें खोना है?"
+
+#: src/hyperadmin/templates/permissions/matrix.html:234
+#, fuzzy
+msgid "Group"
+msgstr "समूह"
+
+#: src/hyperadmin/templates/permissions/matrix.html:247
+#, fuzzy
+msgid "Show group"
+msgstr "समूह दिखाएँ"
+
+#: src/hyperadmin/templates/permissions/matrix.html:262
+#, fuzzy
+msgid "No groups yet"
+msgstr "अभी कोई समूह नहीं"
+
+#: src/hyperadmin/templates/permissions/matrix.html:263
+#, fuzzy
+msgid "Create a group first; its permissions show up here."
+msgstr "पहले एक समूह बनाएँ; उसकी अनुमतियाँ यहाँ दिखेंगी।"
+
+#: src/hyperadmin/templates/permissions/matrix.html:270
+#, fuzzy
+msgid "No registered models"
+msgstr "कोई पंजीकृत मॉडल नहीं"
+
+#: src/hyperadmin/templates/permissions/matrix.html:271
+#, fuzzy
+msgid "Register a ModelAdmin and its permissions show up here."
+msgstr "एक ModelAdmin पंजीकृत करें और उसकी अनुमतियाँ यहाँ दिखेंगी।"
+
+#: src/hyperadmin/templates/permissions/matrix.html:279
+#, fuzzy, python-format
+msgid "Permissions of the group %(group)s"
+msgstr "समूह %(group)s की अनुमतियाँ"
+
+#: src/hyperadmin/templates/permissions/matrix.html:282
+#, fuzzy
+msgid "Model"
+msgstr "मॉडल"
+
+#: src/hyperadmin/templates/permissions/matrix.html:288
+#, fuzzy, python-format
+msgid "%(group)s can %(action)s every model"
+msgstr "%(group)s हर मॉडल पर %(action)s कर सकता है"
+
+#: src/hyperadmin/templates/permissions/matrix.html:295
+#: src/hyperadmin/templates/permissions/matrix.html:379
+#: src/hyperadmin/templates/permissions/matrix.html:390
+#: src/hyperadmin/templates/permissions/object_popover.html:14
+#: src/hyperadmin/templates/permissions/object_popover.html:21
+#, fuzzy
+msgid "Object rules"
+msgstr "ऑब्जेक्ट नियम"
+
+#: src/hyperadmin/templates/permissions/matrix.html:316
+#, fuzzy, python-format
+msgid "%(group)s can %(action)s %(model)s"
+msgstr "%(group)s %(model)s पर %(action)s कर सकता है"
+
+#: src/hyperadmin/templates/permissions/matrix.html:317
+#, fuzzy
+msgid "unsaved"
+msgstr "सहेजा नहीं गया"
+
+#: src/hyperadmin/templates/permissions/matrix.html:323
+#, fuzzy
+msgid "Not saved: you don’t have this permission yourself"
+msgstr "सहेजा नहीं गया: यह अनुमति आपके पास स्वयं नहीं है"
+
+#: src/hyperadmin/templates/permissions/matrix.html:327
+#, fuzzy, python-format
+msgid "%(action)s does not apply to %(model)s"
+msgstr "%(action)s %(model)s पर लागू नहीं होता"
+
+#: src/hyperadmin/templates/permissions/matrix.html:347
+#, fuzzy
+msgid "object rule for"
+msgstr "ऑब्जेक्ट नियम, इसके लिए:"
+
+#: src/hyperadmin/templates/permissions/matrix.html:360
+#, fuzzy, python-format
+msgid "Permissions of %(group)s"
+msgstr "%(group)s की अनुमतियाँ"
+
+#: src/hyperadmin/templates/permissions/matrix.html:365
+#, fuzzy
+msgid "Unsaved changes"
+msgstr "बिना सहेजे बदलाव"
+
+#: src/hyperadmin/templates/permissions/matrix.html:370
+#, fuzzy
+msgid "Discard"
+msgstr "छोड़ें"
+
+#: src/hyperadmin/templates/permissions/matrix.html:371
+#, fuzzy
+msgid "Save changes"
+msgstr "बदलाव सहेजें"
+
+#: src/hyperadmin/templates/permissions/matrix.html:384
+#, fuzzy
+msgid "Loading object rules"
+msgstr "ऑब्जेक्ट नियम लोड हो रहे हैं"
+
+#: src/hyperadmin/templates/permissions/matrix.html:393
+#, fuzzy
+msgid "Couldn’t load the rules."
+msgstr "नियम लोड नहीं हो सके।"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:16
+#, fuzzy
+msgid "Close object rules"
+msgstr "ऑब्जेक्ट नियम बंद करें"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:35
+#, fuzzy, python-format
+msgid "Remove rule for %(record)s"
+msgstr "%(record)s का नियम हटाएँ"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:41
+#, fuzzy
+msgid "No object rules. Group permissions apply."
+msgstr "कोई ऑब्जेक्ट नियम नहीं। समूह की अनुमतियाँ लागू होती हैं।"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:45
+#, fuzzy
+msgid "Add object rule"
+msgstr "ऑब्जेक्ट नियम जोड़ें"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:49
+#, fuzzy
+msgid "Record"
+msgstr "रिकॉर्ड"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:54
+#, fuzzy
+msgid "Action"
+msgstr "कार्रवाई"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:67
+#: src/hyperadmin/templates/permissions/object_popover.html:69
+#, fuzzy
+msgid "Rule for"
+msgstr "नियम:"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:67
+#, fuzzy
+msgid "added."
+msgstr "जोड़ा गया।"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:69
+#, fuzzy
+msgid "removed."
+msgstr "हटाया गया।"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:76
+#, fuzzy
+msgid "Undo"
+msgstr "पूर्ववत करें"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:80
+#, fuzzy
+msgid "You can only grant permissions you have yourself."
+msgstr "आप केवल वही अनुमतियाँ दे सकते हैं जो आपके पास स्वयं हैं।"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:82
+#, fuzzy
+msgid "No change."
+msgstr "कोई बदलाव नहीं।"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:88
+#, fuzzy
+msgid "Saved as you go. Group permissions still apply."
+msgstr "बदलाव तुरंत सहेजे जाते हैं। समूह की अनुमतियाँ अब भी लागू हैं।"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:92
+#, fuzzy
+msgid "Add rule"
+msgstr "नियम जोड़ें"
+
+#: src/hyperadmin/templates/widgets/autocomplete.html:21
+#, fuzzy, python-format
+msgid "Choose a %(parent)s first"
+msgstr "पहले %(parent)s चुनें"
+
+#: src/hyperadmin/templates/widgets/autocomplete.html:30
+#, fuzzy
+msgid "Searching"
+msgstr "खोज जारी है"
+
+#: src/hyperadmin/templates/widgets/autocomplete.html:60
+#, fuzzy, python-format
+msgid "Clear %(label)s"
+msgstr "%(label)s साफ़ करें"
+
+#: src/hyperadmin/templates/widgets/autocomplete.html:83
+#, fuzzy, python-format
+msgid "Add %(label)s"
+msgstr "%(label)s जोड़ें"
+
+#: src/hyperadmin/templates/widgets/autocomplete.html:94
+#: src/hyperadmin/templates/widgets/autocomplete.html:97
+#, fuzzy, python-format
+msgid "Pick the %(parent)s above to list its %(label)s options."
+msgstr "%(label)s के विकल्प देखने के लिए ऊपर %(parent)s चुनें।"
+
+#: src/hyperadmin/templates/widgets/autocomplete.html:95
+#, fuzzy, python-format
+msgid "Cleared because the %(parent)s changed."
+msgstr "%(parent)s बदलने के कारण साफ़ किया गया।"
+
+#: src/hyperadmin/templates/widgets/autocomplete.html:96
+#, fuzzy, python-format
+msgid "%(label)s cleared because the %(parent)s changed"
+msgstr "%(parent)s बदलने के कारण %(label)s साफ़ किया गया"
+
+#: src/hyperadmin/templates/widgets/datetime_input.html:16
+#, fuzzy, python-format
+msgid "Time zone: %(tz)s"
+msgstr "समय क्षेत्र: %(tz)s"
+
+#: src/hyperadmin/templates/widgets/image_input.html:19
+#, fuzzy
+msgid "Only one file allowed"
+msgstr "केवल एक फ़ाइल की अनुमति है"
+
+#: src/hyperadmin/templates/widgets/image_input.html:21
+#, fuzzy
+msgid "File type not allowed"
+msgstr "फ़ाइल प्रकार की अनुमति नहीं है"
+
+#: src/hyperadmin/templates/widgets/image_input.html:74
+#: src/hyperadmin/templates/widgets/image_input.html:85
+#, fuzzy
+msgid "Release to upload"
+msgstr "अपलोड करने के लिए छोड़ें"
+
+#: src/hyperadmin/templates/widgets/image_input.html:74
+#, fuzzy
+msgid "Drop image here or click to select"
+msgstr "छवि यहाँ छोड़ें या चुनने के लिए क्लिक करें"
+
+#: src/hyperadmin/templates/widgets/image_input.html:92
+#, fuzzy
+msgid "Uploading"
+msgstr "अपलोड हो रहा है"
+
+#: src/hyperadmin/templates/widgets/image_input.html:98
+#, fuzzy
+msgid "Upload failed — check your connection"
+msgstr "अपलोड विफल — अपना कनेक्शन जाँचें"
+
+#: src/hyperadmin/templates/widgets/image_input.html:103
+#, fuzzy
+msgid "Selected image preview"
+msgstr "चुनी गई छवि का पूर्वावलोकन"
+
+#: src/hyperadmin/templates/widgets/popup_form.html:29
+#, fuzzy, python-format
+msgid "Add %(model)s"
+msgstr "%(model)s जोड़ें"
+
+#: src/hyperadmin/templates/widgets/popup_form.html:30
+#, fuzzy, python-format
+msgid "Saving selects it in the %(field)s field."
+msgstr "सहेजने पर यह %(field)s फ़ील्ड में चुना जाएगा।"
+
+#: src/hyperadmin/templates/widgets/popup_form.html:61
+#, fuzzy
+msgid "Save and select"
+msgstr "सहेजें और चुनें"
+
+#: src/hyperadmin/views/forms.py:52
+#, fuzzy
+msgid "Invalid primary key."
+msgstr "अमान्य प्राथमिक कुंजी।"
+
+#: src/hyperadmin/views/forms.py:55
+#, fuzzy
+msgid "Enter a valid date/time"
+msgstr "मान्य तारीख और समय दर्ज करें"
+
+#: src/hyperadmin/views/nav_pins.py:110
+#, fuzzy
+msgid "Pins need a signed-in user"
+msgstr "पृष्ठ पिन करने के लिए साइन इन होना ज़रूरी है"
+
+#: src/hyperadmin/views/nav_pins.py:126
+#, fuzzy, python-format
+msgid "You can pin up to %(count)s pages"
+msgstr "आप अधिकतम %(count)s पृष्ठ पिन कर सकते हैं"
 
 #: src/hyperadmin/views/static.py:12
 #, fuzzy
@@ -287,3 +2011,7 @@ msgstr "आइटम सफलतापूर्वक बनाया गया
 #, fuzzy
 msgid "Item updated successfully"
 msgstr "आइटम सफलतापूर्वक अपडेट किया गया"
+
+#~ msgid "Are you sure you want to delete this item?"
+#~ msgstr "क्या आप वाकई इस आइटम को हटाना चाहते हैं?"
+

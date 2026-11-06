@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-05-03 15:06+0200\n"
+"POT-Creation-Date: 2026-11-06 19:09+0100\n"
 "PO-Revision-Date: 2026-05-05 12:00+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: th\n"
@@ -18,260 +18,1966 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
+#: src/hyperadmin/auth/views.py:91
+#, fuzzy
+msgid "Could not send verification code. Please try again."
+msgstr "ส่งรหัสยืนยันไม่ได้ โปรดลองอีกครั้ง"
 
-#: src/hyperadmin/templates/_messages.html:3
+#: src/hyperadmin/auth/views.py:248 src/hyperadmin/auth/views.py:256
+#, fuzzy
+msgid "Code expired, please request a new one."
+msgstr "รหัสหมดอายุแล้ว โปรดขอรหัสใหม่"
+
+#: src/hyperadmin/auth/views.py:271 src/hyperadmin/auth/views.py:471
+#: src/hyperadmin/auth/views.py:539
+#, fuzzy
+msgid "Invalid code."
+msgstr "รหัสไม่ถูกต้อง"
+
+#: src/hyperadmin/auth/views.py:304 src/hyperadmin/auth/views.py:443
+#: src/hyperadmin/auth/views.py:518
+#, fuzzy
+msgid "Too many attempts, try again later."
+msgstr "ลองหลายครั้งเกินไป โปรดลองใหม่ภายหลัง"
+
+#: src/hyperadmin/auth/views.py:311
+#, fuzzy
+msgid "A new code has been sent to your email."
+msgstr "ส่งรหัสใหม่ไปยังอีเมลของคุณแล้ว"
+
+#: src/hyperadmin/auth/views.py:455
+#, fuzzy
+msgid "No active MFA enable flow. Please try again."
+msgstr "ไม่มีขั้นตอนการเปิดใช้ MFA ที่กำลังดำเนินอยู่ โปรดลองอีกครั้ง"
+
+#: src/hyperadmin/auth/views.py:483
+#, fuzzy
+msgid "Two-factor authentication enabled."
+msgstr "เปิดใช้การยืนยันตัวตนแบบสองปัจจัยแล้ว"
+
+#: src/hyperadmin/auth/views.py:528
+#, fuzzy
+msgid "No active MFA disable flow. Please try again."
+msgstr "ไม่มีขั้นตอนการปิดใช้ MFA ที่กำลังดำเนินอยู่ โปรดลองอีกครั้ง"
+
+#: src/hyperadmin/auth/views.py:549
+#, fuzzy
+msgid "Two-factor authentication disabled."
+msgstr "ปิดใช้การยืนยันตัวตนแบบสองปัจจัยแล้ว"
+
+#: src/hyperadmin/core/navigation.py:32
+#, fuzzy
+msgid "Plugins"
+msgstr "ปลั๊กอิน"
+
+#: src/hyperadmin/core/navigation.py:35
+#, fuzzy
+msgid "Access"
+msgstr "การเข้าถึง"
+
+#: src/hyperadmin/core/palette.py:87
+#, fuzzy, python-format
+msgid "New %(name)s"
+msgstr "%(name)s ใหม่"
+
+#: src/hyperadmin/i18n/validation_messages.py:44
+#, fuzzy
+msgid "Field required"
+msgstr "ต้องกรอกช่องนี้"
+
+#: src/hyperadmin/i18n/validation_messages.py:45
+#, fuzzy
+msgid "Input should be a valid string"
+msgstr "ค่าที่ป้อนต้องเป็นสตริงที่ถูกต้อง"
+
+#: src/hyperadmin/i18n/validation_messages.py:46
+#, fuzzy, python-format
+msgid "String should match pattern '%(pattern)s'"
+msgstr "สตริงต้องตรงกับรูปแบบ '%(pattern)s'"
+
+#: src/hyperadmin/i18n/validation_messages.py:47
+#, fuzzy, python-format
+msgid "Input should be greater than %(gt)s"
+msgstr "ค่าที่ป้อนต้องมากกว่า %(gt)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:48
+#, fuzzy, python-format
+msgid "Input should be greater than or equal to %(ge)s"
+msgstr "ค่าที่ป้อนต้องมากกว่าหรือเท่ากับ %(ge)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:49
+#, fuzzy, python-format
+msgid "Input should be less than %(lt)s"
+msgstr "ค่าที่ป้อนต้องน้อยกว่า %(lt)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:50
+#, fuzzy, python-format
+msgid "Input should be less than or equal to %(le)s"
+msgstr "ค่าที่ป้อนต้องน้อยกว่าหรือเท่ากับ %(le)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:51
+#, fuzzy, python-format
+msgid "Input should be a multiple of %(multiple_of)s"
+msgstr "ค่าที่ป้อนต้องเป็นผลคูณของ %(multiple_of)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:52
+#, fuzzy
+msgid "Input should be a valid integer"
+msgstr "ค่าที่ป้อนต้องเป็นจำนวนเต็มที่ถูกต้อง"
+
+#: src/hyperadmin/i18n/validation_messages.py:54
+#, fuzzy
+msgid "Input should be a valid integer, unable to parse string as an integer"
+msgstr "ค่าที่ป้อนต้องเป็นจำนวนเต็มที่ถูกต้อง ไม่สามารถแปลงสตริงเป็นจำนวนเต็มได้"
+
+#: src/hyperadmin/i18n/validation_messages.py:57
+#, fuzzy
+msgid "Input should be a valid integer, got a number with a fractional part"
+msgstr "ค่าที่ป้อนต้องเป็นจำนวนเต็มที่ถูกต้อง แต่ได้รับตัวเลขที่มีทศนิยม"
+
+#: src/hyperadmin/i18n/validation_messages.py:59
+#, fuzzy
+msgid "Input should be a valid number"
+msgstr "ค่าที่ป้อนต้องเป็นตัวเลขที่ถูกต้อง"
+
+#: src/hyperadmin/i18n/validation_messages.py:61
+#, fuzzy
+msgid "Input should be a valid number, unable to parse string as a number"
+msgstr "ค่าที่ป้อนต้องเป็นตัวเลขที่ถูกต้อง ไม่สามารถแปลงสตริงเป็นตัวเลขได้"
+
+#: src/hyperadmin/i18n/validation_messages.py:63
+#, fuzzy
+msgid "Input should be a valid boolean"
+msgstr "ค่าที่ป้อนต้องเป็นค่าบูลีนที่ถูกต้อง"
+
+#: src/hyperadmin/i18n/validation_messages.py:64
+#, fuzzy
+msgid "Input should be a valid boolean, unable to interpret input"
+msgstr "ค่าที่ป้อนต้องเป็นค่าบูลีนที่ถูกต้อง ไม่สามารถตีความค่าที่ป้อนได้"
+
+#: src/hyperadmin/i18n/validation_messages.py:65
+#, fuzzy
+msgid "Input should be a valid decimal"
+msgstr "ค่าที่ป้อนต้องเป็นทศนิยมที่ถูกต้อง"
+
+#: src/hyperadmin/i18n/validation_messages.py:67
+#, fuzzy, python-format
+msgid "Input should be a valid date in the format YYYY-MM-DD, %(error)s"
+msgstr "ค่าที่ป้อนต้องเป็นวันที่ที่ถูกต้องในรูปแบบ YYYY-MM-DD, %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:70
+#, fuzzy, python-format
+msgid "Input should be a valid date or datetime, %(error)s"
+msgstr "ค่าที่ป้อนต้องเป็นวันที่หรือวันที่และเวลาที่ถูกต้อง, %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:72
+#, fuzzy, python-format
+msgid "Input should be a valid datetime, %(error)s"
+msgstr "ค่าที่ป้อนต้องเป็นวันที่และเวลาที่ถูกต้อง, %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:74
+#, fuzzy, python-format
+msgid "Input should be a valid datetime or date, %(error)s"
+msgstr "ค่าที่ป้อนต้องเป็นวันที่และเวลาหรือวันที่ที่ถูกต้อง, %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:76
+#, fuzzy, python-format
+msgid "Input should be in a valid time format, %(error)s"
+msgstr "ค่าที่ป้อนต้องอยู่ในรูปแบบเวลาที่ถูกต้อง, %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:77
+#, fuzzy, python-format
+msgid "Input should be a valid UUID, %(error)s"
+msgstr "ค่าที่ป้อนต้องเป็น UUID ที่ถูกต้อง, %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:78
+#: src/hyperadmin/i18n/validation_messages.py:79
+#, fuzzy, python-format
+msgid "Input should be %(expected)s"
+msgstr "ค่าที่ป้อนต้องเป็น %(expected)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:80
+#, fuzzy, python-format
+msgid "Input should be a valid URL, %(error)s"
+msgstr "ค่าที่ป้อนต้องเป็น URL ที่ถูกต้อง, %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:81
+#, fuzzy, python-format
+msgid "Invalid JSON: %(error)s"
+msgstr "JSON ไม่ถูกต้อง: %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:82
+#, fuzzy, python-format
+msgid "Value error, %(error)s"
+msgstr "ค่าผิดพลาด, %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:83
+#, fuzzy, python-format
+msgid "Assertion failed, %(error)s"
+msgstr "การตรวจสอบล้มเหลว, %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:89
+#, fuzzy, python-format
+msgid "String should have at least %(min_length)s character"
+msgid_plural "String should have at least %(min_length)s characters"
+msgstr[0] "สตริงต้องมีอย่างน้อย %(min_length)s อักขระ"
+
+#: src/hyperadmin/i18n/validation_messages.py:96
+#, fuzzy, python-format
+msgid "String should have at most %(max_length)s character"
+msgid_plural "String should have at most %(max_length)s characters"
+msgstr[0] "สตริงต้องมีไม่เกิน %(max_length)s อักขระ"
+
+#: src/hyperadmin/i18n/validation_messages.py:103
+#, fuzzy, python-format
+msgid ""
+"%(field_type)s should have at least %(min_length)s item after validation,"
+" not %(actual_length)s"
+msgid_plural ""
+"%(field_type)s should have at least %(min_length)s items after "
+"validation, not %(actual_length)s"
+msgstr[0] ""
+"%(field_type)s ต้องมีอย่างน้อย %(min_length)s รายการหลังการตรวจสอบ ไม่ใช่"
+" %(actual_length)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:110
+#, fuzzy, python-format
+msgid ""
+"%(field_type)s should have at most %(max_length)s item after validation, "
+"not %(actual_length)s"
+msgid_plural ""
+"%(field_type)s should have at most %(max_length)s items after validation,"
+" not %(actual_length)s"
+msgstr[0] ""
+"%(field_type)s ต้องมีไม่เกิน %(max_length)s รายการหลังการตรวจสอบ ไม่ใช่ "
+"%(actual_length)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:119
+#, fuzzy, python-format
+msgid ""
+"%(field_type)s should have at most %(max_length)s item after validation, "
+"not more"
+msgid_plural ""
+"%(field_type)s should have at most %(max_length)s items after validation,"
+" not more"
+msgstr[0] ""
+"%(field_type)s ต้องมีไม่เกิน %(max_length)s รายการหลังการตรวจสอบ "
+"ห้ามเกินกว่านี้"
+
+#: src/hyperadmin/i18n/validation_messages.py:125
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:16
+#: src/hyperadmin/templates/list_layout.html:8
+#, fuzzy
+msgid "List"
+msgstr "รายการ"
+
+#: src/hyperadmin/i18n/validation_messages.py:126
+#, fuzzy
+msgid "Tuple"
+msgstr "ทูเพิล"
+
+#: src/hyperadmin/i18n/validation_messages.py:127
+#, fuzzy
+msgid "Set"
+msgstr "เซต"
+
+#: src/hyperadmin/i18n/validation_messages.py:128
+#, fuzzy
+msgid "Frozenset"
+msgstr "เซตที่แก้ไขไม่ได้"
+
+#: src/hyperadmin/i18n/validation_messages.py:129
+#, fuzzy
+msgid "Dictionary"
+msgstr "ดิกชันนารี"
+
+#: src/hyperadmin/i18n/validation_messages.py:136
+#, fuzzy
+msgid "input is too short"
+msgstr "ค่าที่ป้อนสั้นเกินไป"
+
+#: src/hyperadmin/i18n/validation_messages.py:137
+#, fuzzy
+msgid "unexpected extra characters at the end of the input"
+msgstr "มีอักขระเกินที่ไม่คาดคิดที่ท้ายค่าที่ป้อน"
+
+#: src/hyperadmin/i18n/validation_messages.py:138
+#, fuzzy
+msgid "invalid datetime separator, expected `T`, `t`, `_` or space"
+msgstr "ตัวคั่นวันที่และเวลาไม่ถูกต้อง ต้องเป็น `T`, `t`, `_` หรือช่องว่าง"
+
+#: src/hyperadmin/i18n/validation_messages.py:139
+#, fuzzy
+msgid "invalid date separator, expected `-`"
+msgstr "ตัวคั่นวันที่ไม่ถูกต้อง ต้องเป็น `-`"
+
+#: src/hyperadmin/i18n/validation_messages.py:140
+#, fuzzy
+msgid "invalid time separator, expected `:`"
+msgstr "ตัวคั่นเวลาไม่ถูกต้อง ต้องเป็น `:`"
+
+#: src/hyperadmin/i18n/validation_messages.py:141
+#, fuzzy
+msgid "invalid character in year"
+msgstr "มีอักขระไม่ถูกต้องในปี"
+
+#: src/hyperadmin/i18n/validation_messages.py:142
+#, fuzzy
+msgid "invalid character in month"
+msgstr "มีอักขระไม่ถูกต้องในเดือน"
+
+#: src/hyperadmin/i18n/validation_messages.py:143
+#, fuzzy
+msgid "invalid character in day"
+msgstr "มีอักขระไม่ถูกต้องในวัน"
+
+#: src/hyperadmin/i18n/validation_messages.py:144
+#, fuzzy
+msgid "invalid character in hour"
+msgstr "มีอักขระไม่ถูกต้องในชั่วโมง"
+
+#: src/hyperadmin/i18n/validation_messages.py:145
+#, fuzzy
+msgid "invalid character in minute"
+msgstr "มีอักขระไม่ถูกต้องในนาที"
+
+#: src/hyperadmin/i18n/validation_messages.py:146
+#, fuzzy
+msgid "invalid character in second"
+msgstr "มีอักขระไม่ถูกต้องในวินาที"
+
+#: src/hyperadmin/i18n/validation_messages.py:147
+#, fuzzy
+msgid "month value is outside expected range of 1-12"
+msgstr "ค่าเดือนอยู่นอกช่วง 1-12"
+
+#: src/hyperadmin/i18n/validation_messages.py:148
+#, fuzzy
+msgid "day value is outside expected range"
+msgstr "ค่าวันอยู่นอกช่วงที่กำหนด"
+
+#: src/hyperadmin/i18n/validation_messages.py:149
+#, fuzzy
+msgid "hour value is outside expected range of 0-23"
+msgstr "ค่าชั่วโมงอยู่นอกช่วง 0-23"
+
+#: src/hyperadmin/i18n/validation_messages.py:150
+#, fuzzy
+msgid "minute value is outside expected range of 0-59"
+msgstr "ค่านาทีอยู่นอกช่วง 0-59"
+
+#: src/hyperadmin/i18n/validation_messages.py:151
+#, fuzzy
+msgid "second value is outside expected range of 0-59"
+msgstr "ค่าวินาทีอยู่นอกช่วง 0-59"
+
+#: src/hyperadmin/i18n/validation_messages.py:152
+#, fuzzy
+msgid "relative URL without a base"
+msgstr "URL แบบสัมพัทธ์ที่ไม่มี URL ฐาน"
+
+#: src/hyperadmin/i18n/validation_messages.py:153
+#, fuzzy
+msgid "empty host"
+msgstr "โฮสต์ว่างเปล่า"
+
+#: src/hyperadmin/i18n/validation_messages.py:154
+#, fuzzy
+msgid "invalid port number"
+msgstr "หมายเลขพอร์ตไม่ถูกต้อง"
+
+#: src/hyperadmin/i18n/validation_messages.py:155
+#, fuzzy
+msgid "invalid domain character"
+msgstr "อักขระในโดเมนไม่ถูกต้อง"
+
+#: src/hyperadmin/i18n/validation_messages.py:156
+#, fuzzy
+msgid "invalid international domain name"
+msgstr "ชื่อโดเมนสากลไม่ถูกต้อง"
+
+#: src/hyperadmin/i18n/validation_messages.py:157
+#, fuzzy
+msgid "invalid IPv4 address"
+msgstr "ที่อยู่ IPv4 ไม่ถูกต้อง"
+
+#: src/hyperadmin/i18n/validation_messages.py:158
+#, fuzzy
+msgid "invalid IPv6 address"
+msgstr "ที่อยู่ IPv6 ไม่ถูกต้อง"
+
+#: src/hyperadmin/i18n/validation_messages.py:162
+#, fuzzy, python-format
+msgid "%(choices)s or %(last)s"
+msgstr "%(choices)s หรือ %(last)s"
+
+#: src/hyperadmin/templates/_messages.html:6
 #, fuzzy
 msgid "Success!"
 msgstr "สำเร็จ!"
 
-#: src/hyperadmin/templates/_messages.html:4
+#: src/hyperadmin/templates/_messages.html:7
 #, fuzzy
 msgid "Your action was successful."
 msgstr "การดำเนินการของคุณสำเร็จแล้ว"
 
-#: src/hyperadmin/templates/_messages.html:5
-#: src/hyperadmin/templates/_messages.html:6
+#: src/hyperadmin/templates/_messages.html:9
+#: src/hyperadmin/templates/components/csrf_reload_banner.html:18
+#: src/hyperadmin/templates/components/error_toast.html:17
+#: src/hyperadmin/templates/components/popover.html:36
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:35
+#: src/hyperadmin/templates/components/toast.html:26
+#: src/hyperadmin/templates/permissions/_banner.html:16
+#: src/hyperadmin/templates/widgets/popup_form.html:33
 #, fuzzy
 msgid "Close"
 msgstr "ปิด"
 
-#: src/hyperadmin/templates/_navbar.html:1
+#: src/hyperadmin/templates/_navbar.html:2
 #, fuzzy
 msgid "Main navigation"
 msgstr "การนำทางหลัก"
 
-#: src/hyperadmin/templates/_navbar.html:8
+#: src/hyperadmin/templates/_navbar.html:9
 #, fuzzy
 msgid "Toggle navigation menu"
 msgstr "สลับเมนูนำทาง"
 
-#: src/hyperadmin/templates/_navbar.html:18
+#: src/hyperadmin/templates/_navbar.html:27
+#, fuzzy
+msgid "Search…"
+msgstr "ค้นหา…"
+
+#: src/hyperadmin/templates/_navbar.html:36
+#, fuzzy
+msgid "Real-time connection status"
+msgstr "สถานะการเชื่อมต่อแบบเรียลไทม์"
+
+#: src/hyperadmin/templates/_navbar.html:41
 #, fuzzy
 msgid "Language"
 msgstr "ภาษา"
 
-#: src/hyperadmin/templates/_navbar.html:22
+#: src/hyperadmin/templates/_navbar.html:46
 #, fuzzy
 msgid "Select language"
 msgstr "เลือกภาษา"
 
-#: src/hyperadmin/templates/_navbar.html:34
+#: src/hyperadmin/templates/_navbar.html:58
 #, fuzzy
 msgid "Toggle dark mode"
 msgstr "สลับโหมดมืด"
 
-#: src/hyperadmin/templates/_navbar.html:56
+#: src/hyperadmin/templates/_navbar.html:78
 #, fuzzy
 msgid "Logout"
 msgstr "ออกจากระบบ"
 
-#: src/hyperadmin/templates/_navbar.html:64
+#: src/hyperadmin/templates/_navbar.html:84
 #, fuzzy
 msgid "Admin"
 msgstr "ผู้ดูแล"
 
-#: src/hyperadmin/templates/_navbar.html:70
+#: src/hyperadmin/templates/_navbar.html:88
 #, fuzzy
 msgid "Profile"
 msgstr "โปรไฟล์"
 
-#: src/hyperadmin/templates/_navbar.html:71
+#: src/hyperadmin/templates/_navbar.html:89
 #, fuzzy
 msgid "Settings"
 msgstr "ตั้งค่า"
 
-#: src/hyperadmin/templates/_sidebar.html:5
+#: src/hyperadmin/templates/_sidebar.html:18
 #, fuzzy
 msgid "Model navigation"
 msgstr "การนำทางโมเดล"
 
-#: src/hyperadmin/templates/_sidebar.html:12
+#: src/hyperadmin/templates/_sidebar.html:25
 #, fuzzy
 msgid "Menu"
 msgstr "เมนู"
 
-#: src/hyperadmin/templates/_sidebar.html:16
+#: src/hyperadmin/templates/_sidebar.html:29
 #, fuzzy
 msgid "Close navigation menu"
 msgstr "ปิดเมนูนำทาง"
 
-#: src/hyperadmin/templates/_sidebar.html:23
+#: src/hyperadmin/templates/_sidebar.html:39
+#: src/hyperadmin/templates/_sidebar.html:40
+#, fuzzy
+msgid "Collapse sidebar"
+msgstr "ยุบแถบด้านข้าง"
+
+#: src/hyperadmin/templates/_sidebar.html:45
 #, fuzzy
 msgid "Sidebar"
 msgstr "แถบข้าง"
 
-#: src/hyperadmin/templates/create.html:4
-#, python-format, fuzzy
-msgid "Create %(model_name)s"
-msgstr "สร้าง %(model_name)s"
-
+#: src/hyperadmin/templates/base.html:12
 #: src/hyperadmin/templates/create.html:36
 #, fuzzy
 msgid "Create"
 msgstr "สร้าง"
 
+#: src/hyperadmin/templates/bulk_form.html:9
+#: src/hyperadmin/templates/bulk_result.html:11
+#, fuzzy
+msgid "Breadcrumb"
+msgstr "เส้นทางนำทาง"
+
+#: src/hyperadmin/templates/create.html:4
+#, fuzzy, python-format
+msgid "Create %(model_name)s"
+msgstr "สร้าง %(model_name)s"
+
+#: src/hyperadmin/templates/components/bulk_form.html:74
+#: src/hyperadmin/templates/components/bulk_form.html:76
+#: src/hyperadmin/templates/components/confirm_delete_dialog.html:23
+#: src/hyperadmin/templates/components/saved_views.html:24
+#: src/hyperadmin/templates/components/saved_views.html:49
 #: src/hyperadmin/templates/create.html:39
-#: src/hyperadmin/templates/update.html:39
+#: src/hyperadmin/templates/update.html:53
+#: src/hyperadmin/templates/widgets/popup_form.html:59
 #, fuzzy
 msgid "Cancel"
 msgstr "ยกเลิก"
 
-#: src/hyperadmin/templates/detail.html:30
-#, python-format, fuzzy
+#: src/hyperadmin/templates/detail.html:15
+#, fuzzy
+msgid "Edit"
+msgstr "แก้ไข"
+
+#: src/hyperadmin/templates/components/confirm_delete_dialog.html:24
+#: src/hyperadmin/templates/components/table_body.html:57
+#: src/hyperadmin/templates/detail.html:22
+#: src/hyperadmin/templates/permissions/_macros.html:20
+#: src/hyperadmin/templates/update.html:59
+#, fuzzy
+msgid "Delete"
+msgstr "ลบ"
+
+#: src/hyperadmin/templates/detail.html:113
+#, fuzzy, python-format
 msgid "Run action '%(label)s'?"
 msgstr "เรียกใช้การกระทำ '%(label)s' หรือไม่?"
 
-#: src/hyperadmin/templates/detail.html:36
+#: src/hyperadmin/templates/detail.html:119
 #, fuzzy
 msgid "Back to list"
 msgstr "กลับไปยังรายการ"
 
+#: src/hyperadmin/templates/error.html:5
+#, fuzzy
+msgid "You don't have access to this page"
+msgstr "คุณไม่มีสิทธิ์เข้าถึงหน้านี้"
+
+#: src/hyperadmin/templates/error.html:6 src/hyperadmin/views/nav_pins.py:95
+#: src/hyperadmin/views/nav_pins.py:130 src/hyperadmin/views/nav_pins.py:141
+#, fuzzy
+msgid "Page not found"
+msgstr "ไม่พบหน้า"
+
+#: src/hyperadmin/templates/error.html:7
+#, fuzzy
+msgid "This action can't be completed"
+msgstr "ไม่สามารถดำเนินการนี้ได้"
+
+#: src/hyperadmin/templates/error.html:10
+#: src/hyperadmin/templates/error.html:15
+#: src/hyperadmin/templates/error.html:16
+#, fuzzy
+msgid "Error"
+msgstr "ข้อผิดพลาด"
+
+#: src/hyperadmin/templates/error.html:18
+#, fuzzy
+msgid ""
+"Your account doesn't have permission for this. Ask an administrator if "
+"you need it."
+msgstr "บัญชีของคุณไม่มีสิทธิ์ทำสิ่งนี้ หากจำเป็น โปรดขอสิทธิ์จากผู้ดูแลระบบ"
+
+#: src/hyperadmin/templates/error.html:22
+#, fuzzy
+msgid "Back to dashboard"
+msgstr "กลับไปที่แดชบอร์ด"
+
 #: src/hyperadmin/templates/form_layout.html:12
+#: src/hyperadmin/templates/widgets/popup_form.html:23
+#, fuzzy
+msgid "You have unsaved changes. Leave this page?"
+msgstr "คุณมีการเปลี่ยนแปลงที่ยังไม่ได้บันทึก ต้องการออกจากหน้านี้หรือไม่"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:25
+#: src/hyperadmin/templates/form_layout.html:18
 #, fuzzy
 msgid "Save"
 msgstr "บันทึก"
 
-#: src/hyperadmin/templates/list_layout.html:3
-#, python-format, fuzzy
+#: src/hyperadmin/templates/list_layout.html:4
+#, fuzzy, python-format
 msgid "%(model_name)s List | HyperAdmin"
 msgstr "รายการ %(model_name)s | HyperAdmin"
 
-#: src/hyperadmin/templates/list_layout.html:7
-#, fuzzy
-msgid "List"
-msgstr "รายการ"
-
-#: src/hyperadmin/templates/list_layout.html:11
-#, python-format, fuzzy
+#: src/hyperadmin/templates/list_layout.html:12
+#, fuzzy, python-format
 msgid "Create New %(model_name)s"
 msgstr "สร้าง %(model_name)s ใหม่"
+
+#: src/hyperadmin/templates/components/filter_bar.html:10
+#: src/hyperadmin/templates/components/filter_sidebar.html:13
+#: src/hyperadmin/templates/list_layout.html:28
+#, fuzzy
+msgid "Filters"
+msgstr "ตัวกรอง"
+
+#: src/hyperadmin/templates/list_layout.html:31
+#, fuzzy
+msgid "Applied filters"
+msgstr "ตัวกรองที่ใช้"
+
+#: src/hyperadmin/templates/list_layout.html:33
+#, fuzzy, python-format
+msgid "Remove filter %(label)s"
+msgstr "นำตัวกรอง %(label)s ออก"
 
 #: src/hyperadmin/templates/login.html:3
 #, fuzzy
 msgid "Login"
 msgstr "เข้าสู่ระบบ"
 
-#: src/hyperadmin/templates/login.html:13
+#: src/hyperadmin/templates/login.html:14
 #, fuzzy
 msgid "Sign in to your account"
 msgstr "เข้าสู่ระบบบัญชีของคุณ"
 
-#: src/hyperadmin/templates/login.html:23
+#: src/hyperadmin/templates/login.html:28
 #, fuzzy
 msgid "Username"
 msgstr "ชื่อผู้ใช้"
 
-#: src/hyperadmin/templates/login.html:35
+#: src/hyperadmin/templates/login.html:40
 #, fuzzy
 msgid "Password"
 msgstr "รหัสผ่าน"
 
-#: src/hyperadmin/templates/login.html:46
+#: src/hyperadmin/templates/login.html:51
 #, fuzzy
 msgid "Sign in"
 msgstr "เข้าสู่ระบบ"
 
-#: src/hyperadmin/templates/update.html:4
-#, python-format, fuzzy
+#: src/hyperadmin/templates/update.html:5
+#, fuzzy, python-format
 msgid "Update %(item_name)s"
 msgstr "อัปเดต %(item_name)s"
 
-#: src/hyperadmin/templates/update.html:36
-#, fuzzy
-msgid "Update"
-msgstr "อัปเดต"
-
-#: src/hyperadmin/templates/components/filter_bar.html:11
-#, fuzzy
-msgid "Filters"
-msgstr "ตัวกรอง"
-
-#: src/hyperadmin/templates/components/filter_bar.html:27
-#, fuzzy
-msgid "Any"
-msgstr "ใดก็ได้"
-
-#: src/hyperadmin/templates/components/filter_bar.html:43
-#, fuzzy
-msgid "Clear all filters"
-msgstr "ล้างตัวกรองทั้งหมด"
-
-#: src/hyperadmin/templates/components/inline_row.html:31
-#: src/hyperadmin/templates/components/table.html:8
-#: src/hyperadmin/templates/components/table.html:18
-#, fuzzy
-msgid "Actions"
-msgstr "การกระทำ"
-
-#: src/hyperadmin/templates/components/inline_row.html:36
-#, fuzzy
-msgid "Remove"
-msgstr "ลบ"
-
-#: src/hyperadmin/templates/components/pagination.html:1
-#, fuzzy
-msgid "Pagination"
-msgstr "การแบ่งหน้า"
-
-#: src/hyperadmin/templates/components/pagination.html:4
-#, python-format, fuzzy
-msgid "Showing %(start)s to %(end)s of %(total)s results"
-msgstr "กำลังแสดง %(start)s ถึง %(end)s จากทั้งหมด %(total)s รายการ"
-
-#: src/hyperadmin/templates/components/pagination.html:17
-#, fuzzy
-msgid "Previous"
-msgstr "ก่อนหน้า"
-
-#: src/hyperadmin/templates/components/pagination.html:22
-#, python-format, fuzzy
-msgid "Page %(page)s of %(total_pages)s"
-msgstr "หน้า %(page)s จาก %(total_pages)s"
-
-#: src/hyperadmin/templates/components/pagination.html:32
-#, fuzzy
-msgid "Next"
-msgstr "ถัดไป"
-
-#: src/hyperadmin/templates/components/search_input.html:5
-#, fuzzy
-msgid "Search..."
-msgstr "ค้นหา..."
-
-#: src/hyperadmin/templates/components/search_input.html:8
-#, fuzzy
-msgid "Search"
-msgstr "ค้นหา"
-
-#: src/hyperadmin/templates/components/search_input.html:14
-#, fuzzy
-msgid "Searching..."
-msgstr "กำลังค้นหา..."
-
-#: src/hyperadmin/templates/components/table.html:2
-#, python-format, fuzzy
-msgid "%(model_name)s list"
-msgstr "รายการ %(model_name)s"
-
-#: src/hyperadmin/templates/components/table.html:20
+#: src/hyperadmin/templates/permissions/_macros.html:20
+#: src/hyperadmin/templates/update.html:14
 #, fuzzy
 msgid "View"
 msgstr "ดู"
 
-#: src/hyperadmin/templates/components/table.html:23
+#: src/hyperadmin/templates/update.html:50
 #, fuzzy
-msgid "Edit"
-msgstr "แก้ไข"
+msgid "Update"
+msgstr "อัปเดต"
 
-#: src/hyperadmin/templates/components/table.html:27
+#: src/hyperadmin/templates/auth/mfa_challenge.html:3
 #, fuzzy
-msgid "Are you sure you want to delete this item?"
-msgstr "คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?"
+msgid "MFA Challenge"
+msgstr "การยืนยัน MFA"
 
-#: src/hyperadmin/templates/components/table.html:32
+#: src/hyperadmin/templates/auth/mfa_challenge.html:12
 #, fuzzy
-msgid "Delete"
+msgid "Two-factor verification"
+msgstr "การยืนยันสองขั้นตอน"
+
+#: src/hyperadmin/templates/auth/mfa_challenge.html:14
+#, fuzzy
+msgid "Enter the 6-digit code we sent to your email."
+msgstr "ป้อนรหัส 6 หลักที่เราส่งไปยังอีเมลของคุณ"
+
+#: src/hyperadmin/templates/auth/mfa_challenge.html:36
+#: src/hyperadmin/templates/auth/mfa_settings.html:53
+#, fuzzy
+msgid "Verification code"
+msgstr "รหัสยืนยัน"
+
+#: src/hyperadmin/templates/auth/mfa_challenge.html:54
+#, fuzzy
+msgid "Verify"
+msgstr "ยืนยัน"
+
+#: src/hyperadmin/templates/auth/mfa_challenge.html:60
+#, fuzzy
+msgid "Your code has expired."
+msgstr "รหัสของคุณหมดอายุแล้ว"
+
+#: src/hyperadmin/templates/auth/mfa_challenge.html:70
+#, fuzzy
+msgid "Resend code"
+msgstr "ส่งรหัสอีกครั้ง"
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:3
+#: src/hyperadmin/templates/auth/mfa_settings.html:9
+#, fuzzy
+msgid "Two-factor authentication"
+msgstr "การยืนยันตัวตนแบบสองปัจจัย"
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:13
+#, fuzzy
+msgid "Status:"
+msgstr "สถานะ:"
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:16
+#, fuzzy
+msgid "Enabled"
+msgstr "เปิดใช้งาน"
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:20
+#, fuzzy
+msgid "Disabled"
+msgstr "ปิดใช้งาน"
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:49
+#, fuzzy
+msgid "Enter the 6-digit code we sent to your email to confirm."
+msgstr "ป้อนรหัส 6 หลักที่เราส่งไปยังอีเมลของคุณเพื่อยืนยัน"
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:73
+#, fuzzy
+msgid "Confirm and enable"
+msgstr "ยืนยันและเปิดใช้งาน"
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:75
+#, fuzzy
+msgid "Confirm and disable"
+msgstr "ยืนยันและปิดใช้งาน"
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:90
+#, fuzzy
+msgid "Disable two-factor authentication"
+msgstr "ปิดใช้การยืนยันตัวตนแบบสองปัจจัย"
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:104
+#, fuzzy
+msgid "Enable two-factor authentication"
+msgstr "เปิดใช้การยืนยันตัวตนแบบสองปัจจัย"
+
+#: src/hyperadmin/templates/components/_nav.html:33
+#, fuzzy, python-format
+msgid "Unpin %(label)s"
+msgstr "เลิกปักหมุด %(label)s"
+
+#: src/hyperadmin/templates/components/_nav.html:33
+#, fuzzy, python-format
+msgid "Pin %(label)s"
+msgstr "ปักหมุด %(label)s"
+
+#: src/hyperadmin/templates/components/banner.html:48
+#, fuzzy
+msgid "Dismiss"
+msgstr "ปิด"
+
+#: src/hyperadmin/templates/components/banner.html:57
+#, fuzzy
+msgid "Notices"
+msgstr "ประกาศ"
+
+#: src/hyperadmin/templates/components/banner.html:72
+#, fuzzy, python-format
+msgid "+%(count)s more notice"
+msgid_plural "+%(count)s more notices"
+msgstr[0] "+ประกาศอีก %(count)s รายการ"
+
+#: src/hyperadmin/templates/components/bulk_form.html:21
+#, fuzzy, python-format
+msgid "%(label)s 1 row"
+msgstr "%(label)s 1 แถว"
+
+#: src/hyperadmin/templates/components/bulk_form.html:23
+#, fuzzy, python-format
+msgid "%(label)s %(count)s rows"
+msgstr "%(label)s %(count)s แถว"
+
+#: src/hyperadmin/templates/components/bulk_form.html:35
+#, fuzzy
+msgid "1 field needs fixing."
+msgstr "ต้องแก้ไข 1 ช่อง"
+
+#: src/hyperadmin/templates/components/bulk_form.html:35
+#, fuzzy, python-format
+msgid "%(count)s fields need fixing."
+msgstr "ต้องแก้ไข %(count)s ช่อง"
+
+#: src/hyperadmin/templates/components/bulk_form.html:37
+#, fuzzy, python-format
+msgid "Your %(count)s selected rows are kept."
+msgstr "ระบบยังคงเก็บ %(count)s แถวที่คุณเลือกไว้"
+
+#: src/hyperadmin/templates/components/bulk_form.html:42
+#, fuzzy, python-format
+msgid "This runs on the %(count)s selected rows."
+msgstr "การดำเนินการนี้จะทำกับ %(count)s แถวที่เลือก"
+
+#: src/hyperadmin/templates/components/bulk_form.html:45
+#, fuzzy
+msgid "Selected rows"
+msgstr "แถวที่เลือก"
+
+#: src/hyperadmin/templates/components/bulk_form.html:56
+#, fuzzy
+msgid "optional"
+msgstr "ไม่บังคับ"
+
+#: src/hyperadmin/templates/components/bulk_result.html:23
+#, fuzzy
+msgid "Done"
+msgstr "เสร็จแล้ว"
+
+#: src/hyperadmin/templates/components/bulk_result.html:23
+#, fuzzy
+msgid "Failed"
+msgstr "ล้มเหลว"
+
+#: src/hyperadmin/templates/components/bulk_result.html:23
+#, fuzzy
+msgid "Forbidden"
+msgstr "ไม่อนุญาต"
+
+#: src/hyperadmin/templates/components/bulk_result.html:25
+#, fuzzy
+msgid "Row not found. It may have been deleted after you selected it."
+msgstr "ไม่พบแถว อาจถูกลบหลังจากที่คุณเลือก"
+
+#: src/hyperadmin/templates/components/bulk_result.html:26
+#, fuzzy
+msgid ""
+"The row could not be loaded because of a database error. Check the server"
+" logs, then retry."
+msgstr ""
+"โหลดแถวไม่ได้เนื่องจากข้อผิดพลาดของฐานข้อมูล "
+"ตรวจสอบบันทึกของเซิร์ฟเวอร์แล้วลองอีกครั้ง"
+
+#: src/hyperadmin/templates/components/bulk_result.html:27
+#, fuzzy
+msgid "The action failed on this row. Check the server logs, then retry."
+msgstr "การดำเนินการล้มเหลวในแถวนี้ ตรวจสอบบันทึกของเซิร์ฟเวอร์แล้วลองอีกครั้ง"
+
+#: src/hyperadmin/templates/components/bulk_result.html:31
+#, fuzzy, python-format
+msgid "%(failed)s failed and %(forbidden)s not allowed."
+msgstr "ล้มเหลว %(failed)s และไม่อนุญาต %(forbidden)s"
+
+#: src/hyperadmin/templates/components/bulk_result.html:33
+#, fuzzy, python-format
+msgid "%(failed)s failed."
+msgstr "ล้มเหลว %(failed)s"
+
+#: src/hyperadmin/templates/components/bulk_result.html:35
+#, fuzzy, python-format
+msgid "%(forbidden)s not allowed."
+msgstr "ไม่อนุญาต %(forbidden)s"
+
+#: src/hyperadmin/templates/components/bulk_result.html:40
+#: src/hyperadmin/templates/components/bulk_result.html:95
+#, fuzzy
+msgid "Row"
+msgstr "แถว"
+
+#: src/hyperadmin/templates/components/bulk_result.html:45
+#: src/hyperadmin/templates/components/bulk_result.html:96
+#, fuzzy
+msgid "Result"
+msgstr "ผลลัพธ์"
+
+#: src/hyperadmin/templates/components/bulk_result.html:49
+#: src/hyperadmin/templates/components/bulk_result.html:97
+#, fuzzy
+msgid "What happened"
+msgstr "สิ่งที่เกิดขึ้น"
+
+#: src/hyperadmin/templates/components/bulk_result.html:51
+#, fuzzy
+msgid "no detail"
+msgstr "ไม่มีรายละเอียด"
+
+#: src/hyperadmin/templates/components/bulk_result.html:66
+#, fuzzy
+msgid "No rows were selected."
+msgstr "ไม่ได้เลือกแถวใด"
+
+#: src/hyperadmin/templates/components/bulk_result.html:68
+#, fuzzy, python-format
+msgid "All %(count)s rows done."
+msgstr "ทั้ง %(count)s แถวเสร็จแล้ว"
+
+#: src/hyperadmin/templates/components/bulk_result.html:70
+#, fuzzy, python-format
+msgid "%(done)s of %(count)s rows done."
+msgstr "เสร็จแล้ว %(done)s จาก %(count)s แถว"
+
+#: src/hyperadmin/templates/components/bulk_result.html:72
+#, fuzzy
+msgid "No rows done."
+msgstr "ยังไม่มีแถวที่เสร็จ"
+
+#: src/hyperadmin/templates/components/bulk_result.html:76
+#, fuzzy
+msgid "Totals"
+msgstr "ยอดรวม"
+
+#: src/hyperadmin/templates/components/bulk_result.html:83
+#, fuzzy, python-format
+msgid "%(done)s done, %(failed)s failed, %(forbidden)s forbidden"
+msgstr "เสร็จ %(done)s, ล้มเหลว %(failed)s, ไม่อนุญาต %(forbidden)s"
+
+#: src/hyperadmin/templates/components/bulk_result.html:92
+#, fuzzy
+msgid "Results per row"
+msgstr "ผลลัพธ์แยกตามแถว"
+
+#: src/hyperadmin/templates/components/bulk_result.html:107
+#, fuzzy, python-format
+msgid "Show the %(count)s done rows"
+msgstr "แสดง %(count)s แถวที่เสร็จแล้ว"
+
+#: src/hyperadmin/templates/components/bulk_result.html:108
+#, fuzzy
+msgid "Done rows"
+msgstr "แถวที่เสร็จแล้ว"
+
+#: src/hyperadmin/templates/components/bulk_result.html:125
+#, fuzzy, python-format
+msgid "Retry failures (%(count)s)"
+msgstr "ลองรายการที่ล้มเหลวอีกครั้ง (%(count)s)"
+
+#: src/hyperadmin/templates/components/bulk_result.html:130
+#, fuzzy, python-format
+msgid "Back to %(model_name)s"
+msgstr "กลับไปที่ %(model_name)s"
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:22
+#, fuzzy
+msgid "Bulk actions"
+msgstr "การดำเนินการแบบกลุ่ม"
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:28
+#, fuzzy
+msgid "Choose an action, then press Run."
+msgstr "เลือกการดำเนินการ แล้วกด เรียกใช้"
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:29
+#, fuzzy
+msgid "Select at least one row, then press Run."
+msgstr "เลือกอย่างน้อยหนึ่งแถว แล้วกด เรียกใช้"
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:36
+#, fuzzy
+msgid "selected"
+msgstr "ที่เลือก"
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:37
+#: src/hyperadmin/templates/components/bulk_toolbar.html:38
+#, fuzzy
+msgid "Select rows, then choose an action"
+msgstr "เลือกแถว แล้วเลือกการดำเนินการ"
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:40
+#, fuzzy
+msgid "Action for selected rows"
+msgstr "การดำเนินการสำหรับแถวที่เลือก"
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:44
+#, fuzzy
+msgid "Choose an action…"
+msgstr "เลือกการดำเนินการ…"
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:51
+#, fuzzy
+msgid "Run"
+msgstr "เรียกใช้"
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:54
+#, fuzzy
+msgid "Clear selection"
+msgstr "ล้างการเลือก"
+
+#: src/hyperadmin/templates/components/command_palette.html:15
+#: src/hyperadmin/templates/components/nav_pinned.html:10
+#, fuzzy
+msgid "Pinned"
+msgstr "ปักหมุดไว้"
+
+#: src/hyperadmin/templates/components/command_palette.html:16
+#, fuzzy
+msgid "Recent"
+msgstr "ล่าสุด"
+
+#: src/hyperadmin/templates/components/command_palette.html:17
+#, fuzzy
+msgid "Models"
+msgstr "โมเดล"
+
+#: src/hyperadmin/templates/components/command_palette.html:18
+#, fuzzy
+msgid "Pages"
+msgstr "หน้า"
+
+#: src/hyperadmin/templates/components/command_palette.html:19
+#: src/hyperadmin/templates/widgets/autocomplete.html:32
+#, fuzzy, python-format
+msgid "%(count)s results"
+msgstr "%(count)s ผลลัพธ์"
+
+#: src/hyperadmin/templates/components/command_palette.html:20
+#: src/hyperadmin/templates/components/command_palette.html:37
+#: src/hyperadmin/templates/widgets/autocomplete.html:31
+#, fuzzy
+msgid "No results"
+msgstr "ไม่มีผลลัพธ์"
+
+#: src/hyperadmin/templates/components/command_palette.html:24
+#: src/hyperadmin/templates/components/search_input.html:11
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:19
+#, fuzzy
+msgid "Search"
+msgstr "ค้นหา"
+
+#: src/hyperadmin/templates/components/command_palette.html:30
+#, fuzzy
+msgid "Search models and pages"
+msgstr "ค้นหาโมเดลและหน้า"
+
+#: src/hyperadmin/templates/components/command_palette.html:31
+#, fuzzy
+msgid "Search models and pages…"
+msgstr "ค้นหาโมเดลและหน้า…"
+
+#: src/hyperadmin/templates/components/command_palette.html:36
+#, fuzzy
+msgid "Results"
+msgstr "ผลลัพธ์"
+
+#: src/hyperadmin/templates/components/command_palette.html:40
+#, fuzzy
+msgid "move"
+msgstr "เลื่อน"
+
+#: src/hyperadmin/templates/components/command_palette.html:41
+#, fuzzy
+msgid "open"
+msgstr "เปิด"
+
+#: src/hyperadmin/templates/components/command_palette.html:42
+#, fuzzy
+msgid "new"
+msgstr "ใหม่"
+
+#: src/hyperadmin/templates/components/confirm_delete_dialog.html:14
+#, fuzzy, python-format
+msgid "Delete %(name)s?"
+msgstr "ลบ %(name)s หรือไม่"
+
+#: src/hyperadmin/templates/components/confirm_delete_dialog.html:18
+#, fuzzy
+msgid "Delete this record?"
+msgstr "ลบระเบียนนี้หรือไม่"
+
+#: src/hyperadmin/templates/components/confirm_delete_dialog.html:19
+#, fuzzy
+msgid "This cannot be undone."
+msgstr "การดำเนินการนี้ไม่สามารถย้อนกลับได้"
+
+#: src/hyperadmin/templates/components/csrf_reload_banner.html:12
+#, fuzzy
+msgid "This page's security token is out of date"
+msgstr "โทเค็นความปลอดภัยของหน้านี้หมดอายุแล้ว"
+
+#: src/hyperadmin/templates/components/csrf_reload_banner.html:13
+#, fuzzy
+msgid "Reload the page, then try again."
+msgstr "โหลดหน้าใหม่ แล้วลองอีกครั้ง"
+
+#: src/hyperadmin/templates/components/csrf_reload_banner.html:15
+#, fuzzy
+msgid "Reload page"
+msgstr "โหลดหน้าใหม่"
+
+#: src/hyperadmin/templates/components/error_toast.html:8
+#, fuzzy
+msgid "Permission denied"
+msgstr "ไม่ได้รับอนุญาต"
+
+#: src/hyperadmin/templates/components/error_toast.html:9
+#, fuzzy
+msgid "Not found"
+msgstr "ไม่พบ"
+
+#: src/hyperadmin/templates/components/error_toast.html:10
+#, fuzzy
+msgid "Action refused"
+msgstr "การดำเนินการถูกปฏิเสธ"
+
+#: src/hyperadmin/templates/components/error_toast.html:13
+#, fuzzy
+msgid "Your account doesn't have permission for this."
+msgstr "บัญชีของคุณไม่มีสิทธิ์ทำสิ่งนี้"
+
+#: src/hyperadmin/templates/components/filter_bar.html:28
+#: src/hyperadmin/templates/components/filters/boolean.html:6
+#: src/hyperadmin/templates/components/filters/select.html:6
+#, fuzzy
+msgid "Any"
+msgstr "ใดก็ได้"
+
+#: src/hyperadmin/templates/components/filter_bar.html:44
+#, fuzzy
+msgid "Clear all filters"
+msgstr "ล้างตัวกรองทั้งหมด"
+
+#: src/hyperadmin/templates/components/filter_sidebar.html:14
+#, fuzzy
+msgid "Reset"
+msgstr "รีเซ็ต"
+
+#: src/hyperadmin/templates/components/filter_sidebar.html:21
+#, fuzzy
+msgid "Clear all"
+msgstr "ล้างทั้งหมด"
+
+#: src/hyperadmin/templates/components/filter_sidebar.html:22
+#, fuzzy
+msgid "Apply filters"
+msgstr "ใช้ตัวกรอง"
+
+#: src/hyperadmin/templates/components/inline_row.html:32
+#: src/hyperadmin/templates/components/table.html:28
+#: src/hyperadmin/templates/components/table_body.html:54
+#, fuzzy
+msgid "Actions"
+msgstr "การกระทำ"
+
+#: src/hyperadmin/templates/components/inline_row.html:45
+#: src/hyperadmin/templates/widgets/image_input.html:104
+#, fuzzy
+msgid "Remove"
 msgstr "ลบ"
+
+#: src/hyperadmin/templates/components/list_error.html:5
+#, fuzzy
+msgid "The list could not be loaded because of a database error."
+msgstr "โหลดรายการไม่ได้เนื่องจากข้อผิดพลาดของฐานข้อมูล"
+
+#: src/hyperadmin/templates/components/list_error.html:7
+#, fuzzy, python-format
+msgid ""
+"The table for this model does not exist yet: run your migrations or "
+"%(cmd)s."
+msgstr ""
+"ยังไม่มีตารางสำหรับโมเดลนี้: เรียกใช้การย้ายข้อมูล (migration) หรือ "
+"%(cmd)s"
+
+#: src/hyperadmin/templates/components/list_error.html:9
+#, fuzzy
+msgid "Check the server logs for details."
+msgstr "ดูรายละเอียดในบันทึกของเซิร์ฟเวอร์"
+
+#: src/hyperadmin/templates/components/pagination.html:2
+#, fuzzy
+msgid "Pagination"
+msgstr "การแบ่งหน้า"
+
+#: src/hyperadmin/templates/components/pagination.html:5
+#, fuzzy, python-format
+msgid "Showing %(start)s to %(end)s of %(total)s results"
+msgstr "กำลังแสดง %(start)s ถึง %(end)s จากทั้งหมด %(total)s รายการ"
+
+#: src/hyperadmin/templates/components/pagination.html:18
+#, fuzzy
+msgid "Previous"
+msgstr "ก่อนหน้า"
+
+#: src/hyperadmin/templates/components/pagination.html:23
+#, fuzzy, python-format
+msgid "Page %(page)s of %(total_pages)s"
+msgstr "หน้า %(page)s จาก %(total_pages)s"
+
+#: src/hyperadmin/templates/components/pagination.html:33
+#, fuzzy
+msgid "Next"
+msgstr "ถัดไป"
+
+#: src/hyperadmin/templates/components/panel_document.html:12
+#, fuzzy
+msgid "Open in new tab"
+msgstr "เปิดในแท็บใหม่"
+
+#: src/hyperadmin/templates/components/panel_document.html:12
+#, fuzzy
+msgid "(opens a new tab)"
+msgstr "(เปิดในแท็บใหม่)"
+
+#: src/hyperadmin/templates/components/panel_document.html:15
+#, fuzzy
+msgid "Download"
+msgstr "ดาวน์โหลด"
+
+#: src/hyperadmin/templates/components/panel_document.html:18
+#, fuzzy, python-format
+msgid "%(name)s, preview"
+msgstr "%(name)s, ตัวอย่าง"
+
+#: src/hyperadmin/templates/components/panel_states.html:17
+#, fuzzy, python-format
+msgid "Loading %(label)s"
+msgstr "กำลังโหลด %(label)s"
+
+#: src/hyperadmin/templates/components/panel_states.html:18
+#, fuzzy, python-format
+msgid "Open %(label)s"
+msgstr "เปิด %(label)s"
+
+#: src/hyperadmin/templates/components/panel_states.html:25
+#, fuzzy, python-format
+msgid "%(label)s didn't load."
+msgstr "โหลด %(label)s ไม่ได้"
+
+#: src/hyperadmin/templates/components/panel_states.html:26
+#, fuzzy
+msgid "The server took too long to answer. The other tabs still work."
+msgstr "เซิร์ฟเวอร์ใช้เวลาตอบนานเกินไป แท็บอื่นยังใช้งานได้ตามปกติ"
+
+#: src/hyperadmin/templates/components/panel_states.html:27
+#: src/hyperadmin/templates/permissions/matrix.html:394
+#: src/hyperadmin/templates/widgets/image_input.html:99
+#, fuzzy
+msgid "Retry"
+msgstr "ลองอีกครั้ง"
+
+#: src/hyperadmin/templates/components/panel_states.html:32
+#, fuzzy
+msgid "You don't have access to this panel."
+msgstr "คุณไม่มีสิทธิ์เข้าถึงแผงนี้"
+
+#: src/hyperadmin/templates/components/panel_states.html:33
+#, fuzzy, python-format
+msgid "Ask an administrator for the \"%(permission)s\" permission."
+msgstr "ขอสิทธิ์ \"%(permission)s\" จากผู้ดูแลระบบ"
+
+#: src/hyperadmin/templates/components/panel_tab_strip.html:14
+#, fuzzy, python-format
+msgid "%(name)s sections"
+msgstr "ส่วนของ %(name)s"
+
+#: src/hyperadmin/templates/components/panel_tab_strip.html:21
+#, fuzzy
+msgid "Details"
+msgstr "รายละเอียด"
+
+#: src/hyperadmin/templates/components/presence_banner.html:20
+#, fuzzy, python-brace-format
+msgid "{names} is also viewing this record."
+msgstr "{names} กำลังดูระเบียนนี้อยู่ด้วย"
+
+#: src/hyperadmin/templates/components/presence_banner.html:21
+#, fuzzy, python-brace-format
+msgid "{names} are also viewing this record."
+msgstr "{names} กำลังดูระเบียนนี้อยู่ด้วย"
+
+#: src/hyperadmin/templates/components/presence_banner.html:22
+#, fuzzy, python-brace-format
+msgid "{names} is also editing this record."
+msgstr "{names} กำลังแก้ไขระเบียนนี้อยู่ด้วย"
+
+#: src/hyperadmin/templates/components/presence_banner.html:23
+#, fuzzy, python-brace-format
+msgid "{names} are also editing this record."
+msgstr "{names} กำลังแก้ไขระเบียนนี้อยู่ด้วย"
+
+#: src/hyperadmin/templates/components/presence_banner.html:24
+#, fuzzy, python-brace-format
+msgid "+{count} more"
+msgstr "+อีก {count} คน"
+
+#: src/hyperadmin/templates/components/saved_views.html:9
+#, fuzzy
+msgid "My views"
+msgstr "มุมมองของฉัน"
+
+#: src/hyperadmin/templates/components/saved_views.html:13
+#: src/hyperadmin/templates/components/saved_views.html:25
+#, fuzzy
+msgid "Save view"
+msgstr "บันทึกมุมมอง"
+
+#: src/hyperadmin/templates/components/saved_views.html:20
+#, fuzzy
+msgid "Name"
+msgstr "ชื่อ"
+
+#: src/hyperadmin/templates/components/saved_views.html:34
+#, fuzzy
+msgid "(active)"
+msgstr "(ใช้งานอยู่)"
+
+#: src/hyperadmin/templates/components/saved_views.html:37
+#, fuzzy, python-format
+msgid "Actions for view %(name)s"
+msgstr "การดำเนินการสำหรับมุมมอง %(name)s"
+
+#: src/hyperadmin/templates/components/saved_views.html:41
+#, fuzzy
+msgid "Delete…"
+msgstr "ลบ…"
+
+#: src/hyperadmin/templates/components/saved_views.html:46
+#, fuzzy, python-format
+msgid "Delete the view “%(name)s”?"
+msgstr "ลบมุมมอง “%(name)s” หรือไม่"
+
+#: src/hyperadmin/templates/components/saved_views.html:47
+#, fuzzy
+msgid "Only the saved filters go. No rows change."
+msgstr "จะลบเฉพาะตัวกรองที่บันทึกไว้ ไม่มีแถวใดเปลี่ยนแปลง"
+
+#: src/hyperadmin/templates/components/saved_views.html:51
+#, fuzzy
+msgid "Delete view"
+msgstr "ลบมุมมอง"
+
+#: src/hyperadmin/templates/components/saved_views.html:58
+#, fuzzy
+msgid "Save the filters you use often. They show up here, only for you."
+msgstr "บันทึกตัวกรองที่คุณใช้บ่อย ตัวกรองจะแสดงที่นี่สำหรับคุณเท่านั้น"
+
+#: src/hyperadmin/templates/components/search_input.html:8
+#, fuzzy
+msgid "Search..."
+msgstr "ค้นหา..."
+
+#: src/hyperadmin/templates/components/search_input.html:18
+#, fuzzy
+msgid "Searching..."
+msgstr "กำลังค้นหา..."
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:15
+#, fuzzy
+msgid "General"
+msgstr "ทั่วไป"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:17
+#, fuzzy
+msgid "Form"
+msgstr "ฟอร์ม"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:18
+#, fuzzy
+msgid "Show keyboard shortcuts"
+msgstr "แสดงแป้นพิมพ์ลัด"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:20
+#, fuzzy
+msgid "Focus search"
+msgstr "ไปที่ช่องค้นหา"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:21
+#, fuzzy
+msgid "Next row"
+msgstr "แถวถัดไป"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:22
+#, fuzzy
+msgid "Previous row"
+msgstr "แถวก่อนหน้า"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:23
+#, fuzzy
+msgid "Select row"
+msgstr "เลือกแถว"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:24
+#, fuzzy
+msgid "Create new"
+msgstr "สร้างใหม่"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:26
+#, fuzzy
+msgid "or"
+msgstr "หรือ"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:32
+#, fuzzy
+msgid "Keyboard shortcuts"
+msgstr "แป้นพิมพ์ลัด"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:42
+#, fuzzy
+msgid "Single-key shortcuts"
+msgstr "แป้นลัดแบบปุ่มเดียว"
+
+#: src/hyperadmin/templates/components/table.html:11
+#, fuzzy, python-format
+msgid "%(model_name)s list"
+msgstr "รายการ %(model_name)s"
+
+#: src/hyperadmin/templates/components/table.html:18
+#, fuzzy
+msgid "Select all rows on this page"
+msgstr "เลือกทุกแถวในหน้านี้"
+
+#: src/hyperadmin/templates/components/table_body.html:23
+#, fuzzy
+msgid "Select"
+msgstr "เลือก"
+
+#: src/hyperadmin/templates/components/table_body.html:27
+#, fuzzy, python-format
+msgid "Select %(pk)s"
+msgstr "เลือก %(pk)s"
+
+#: src/hyperadmin/templates/components/table_body.html:59
+#, fuzzy, python-format
+msgid "Delete %(name)s"
+msgstr "ลบ %(name)s"
+
+#: src/hyperadmin/templates/components/table_body.html:68
+#, fuzzy, python-format
+msgid "Open %(name)s"
+msgstr "เปิด %(name)s"
+
+#: src/hyperadmin/templates/components/toast.html:19
+#, fuzzy, python-brace-format
+msgid "{actor} changed {count} {model}"
+msgid_plural "{actor} changed {count} {model}"
+msgstr[0] "{actor} เปลี่ยน {model} {count} รายการ"
+
+#: src/hyperadmin/templates/components/toast.html:20
+#, fuzzy, python-brace-format
+msgid "{count} person"
+msgid_plural "{count} people"
+msgstr[0] "{count} คน"
+
+#: src/hyperadmin/templates/components/toast.html:30
+#, fuzzy, python-brace-format
+msgid "{actor} created {model} #{pk}"
+msgstr "{actor} สร้าง {model} #{pk}"
+
+#: src/hyperadmin/templates/components/toast.html:31
+#, fuzzy, python-brace-format
+msgid "{actor} deleted {model} #{pk}"
+msgstr "{actor} ลบ {model} #{pk}"
+
+#: src/hyperadmin/templates/components/toast.html:32
+#, fuzzy
+msgid "Someone"
+msgstr "มีผู้ใช้"
+
+#: src/hyperadmin/templates/components/toast.html:33
+#, fuzzy
+msgid "List changed: refresh"
+msgstr "รายการมีการเปลี่ยนแปลง: รีเฟรช"
+
+#: src/hyperadmin/templates/components/filters/boolean.html:7
+#, fuzzy
+msgid "Yes"
+msgstr "ใช่"
+
+#: src/hyperadmin/templates/components/filters/boolean.html:8
+#, fuzzy
+msgid "No"
+msgstr "ไม่"
+
+#: src/hyperadmin/templates/components/filters/current_period.html:6
+#, fuzzy, python-format
+msgid "Showing %(period)s by default."
+msgstr "แสดง %(period)s เป็นค่าเริ่มต้น"
+
+#: src/hyperadmin/templates/components/filters/current_period.html:6
+#, fuzzy
+msgid "Show all dates"
+msgstr "แสดงทุกวันที่"
+
+#: src/hyperadmin/templates/components/filters/date_range.html:5
+#: src/hyperadmin/templates/components/filters/multi_choice.html:4
+#: src/hyperadmin/templates/components/filters/multi_relation.html:5
+#: src/hyperadmin/templates/components/filters/select.html:4
+#, fuzzy
+msgid "Clear"
+msgstr "ล้าง"
+
+#: src/hyperadmin/templates/components/filters/date_range.html:7
+#, fuzzy
+msgid "quick ranges"
+msgstr "ช่วงด่วน"
+
+#: src/hyperadmin/templates/components/filters/date_range.html:15
+#, fuzzy
+msgid "From"
+msgstr "ตั้งแต่"
+
+#: src/hyperadmin/templates/components/filters/date_range.html:19
+#, fuzzy
+msgid "To"
+msgstr "ถึง"
+
+#: src/hyperadmin/templates/components/filters/is_owner.html:3
+#, fuzzy
+msgid "Owner"
+msgstr "เจ้าของ"
+
+#: src/hyperadmin/templates/components/filters/multi_relation.html:5
+#, fuzzy, python-format
+msgid "%(num)d selected"
+msgid_plural "%(num)d selected"
+msgstr[0] "เลือก %(num)d รายการ"
+
+#: src/hyperadmin/templates/components/filters/multi_relation.html:9
+#: src/hyperadmin/templates/widgets/autocomplete.html:24
+#, fuzzy, python-format
+msgid "Search %(label)s"
+msgstr "ค้นหา %(label)s"
+
+#: src/hyperadmin/templates/components/filters/multi_relation.html:18
+#, fuzzy, python-format
+msgid "Show %(num)d more"
+msgid_plural "Show %(num)d more"
+msgstr[0] "แสดงเพิ่มอีก %(num)d รายการ"
+
+#: src/hyperadmin/templates/permissions/_banner.html:13
+#, fuzzy
+msgid "Permissions saved"
+msgstr "บันทึกสิทธิ์แล้ว"
+
+#: src/hyperadmin/templates/permissions/_banner.html:14
+#, fuzzy
+msgid "change"
+msgstr "การเปลี่ยนแปลง"
+
+#: src/hyperadmin/templates/permissions/_banner.html:14
+#, fuzzy
+msgid "changes"
+msgstr "การเปลี่ยนแปลง"
+
+#: src/hyperadmin/templates/permissions/_banner.html:22
+#, fuzzy
+msgid "Permissions changed elsewhere."
+msgstr "สิทธิ์ถูกเปลี่ยนจากที่อื่น"
+
+#: src/hyperadmin/templates/permissions/_banner.html:23
+#, fuzzy
+msgid ""
+"Reload to see the latest. Nothing was saved; your changes are still on "
+"the page."
+msgstr ""
+"โหลดใหม่เพื่อดูข้อมูลล่าสุด ยังไม่มีการบันทึกใด ๆ "
+"การเปลี่ยนแปลงของคุณยังอยู่บนหน้า"
+
+#: src/hyperadmin/templates/permissions/_banner.html:27
+#, fuzzy
+msgid "Reload"
+msgstr "โหลดใหม่"
+
+#: src/hyperadmin/templates/permissions/_banner.html:35
+#, fuzzy
+msgid "change wasn’t saved."
+msgstr "การเปลี่ยนแปลงไม่ได้รับการบันทึก"
+
+#: src/hyperadmin/templates/permissions/_banner.html:35
+#, fuzzy
+msgid "changes weren’t saved."
+msgstr "การเปลี่ยนแปลงไม่ได้รับการบันทึก"
+
+#: src/hyperadmin/templates/permissions/_banner.html:36
+#, fuzzy
+msgid "You can only grant permissions you have yourself:"
+msgstr "คุณให้ได้เฉพาะสิทธิ์ที่คุณมีอยู่เอง:"
+
+#: src/hyperadmin/templates/permissions/_banner.html:42
+#, fuzzy
+msgid ""
+"Nothing was saved. Untick them, or ask for those permissions, then save "
+"again."
+msgstr ""
+"ยังไม่มีการบันทึกใด ๆ ยกเลิกการเลือก หรือขอสิทธิ์เหล่านั้น "
+"แล้วบันทึกอีกครั้ง"
+
+#: src/hyperadmin/templates/permissions/_banner.html:51
+#, fuzzy
+msgid "Save failed"
+msgstr "บันทึกไม่สำเร็จ"
+
+#: src/hyperadmin/templates/permissions/_banner.html:52
+#, fuzzy
+msgid "Nothing was saved; try again."
+msgstr "ยังไม่มีการบันทึกใด ๆ โปรดลองอีกครั้ง"
+
+#: src/hyperadmin/templates/permissions/_group_gone.html:7
+#, fuzzy
+msgid "This group no longer exists"
+msgstr "กลุ่มนี้ไม่มีอยู่แล้ว"
+
+#: src/hyperadmin/templates/permissions/_group_gone.html:8
+#, fuzzy
+msgid "Someone deleted it while you were editing. Nothing was saved."
+msgstr "มีผู้ลบกลุ่มนี้ขณะที่คุณกำลังแก้ไข ยังไม่มีการบันทึกใด ๆ"
+
+#: src/hyperadmin/templates/permissions/_group_gone.html:10
+#, fuzzy
+msgid "Choose another group"
+msgstr "เลือกกลุ่มอื่น"
+
+#: src/hyperadmin/templates/permissions/_macros.html:20
+#: src/hyperadmin/templates/permissions/matrix.html:346
+#: src/hyperadmin/templates/permissions/object_popover.html:61
+#, fuzzy
+msgid "Add"
+msgstr "เพิ่ม"
+
+#: src/hyperadmin/templates/permissions/_macros.html:20
+#, fuzzy
+msgid "Change"
+msgstr "เปลี่ยน"
+
+#: src/hyperadmin/templates/permissions/matrix.html:11
+#: src/hyperadmin/templates/permissions/matrix.html:228
+#, fuzzy
+msgid "Permission matrix"
+msgstr "ตารางสิทธิ์"
+
+#: src/hyperadmin/templates/permissions/matrix.html:222
+#, fuzzy
+msgid "unsaved change"
+msgstr "การเปลี่ยนแปลงที่ยังไม่บันทึก"
+
+#: src/hyperadmin/templates/permissions/matrix.html:222
+#: src/hyperadmin/templates/permissions/matrix.html:368
+#, fuzzy
+msgid "unsaved changes"
+msgstr "การเปลี่ยนแปลงที่ยังไม่บันทึก"
+
+#: src/hyperadmin/templates/permissions/matrix.html:223
+#: src/hyperadmin/templates/permissions/matrix.html:342
+#, fuzzy
+msgid "rule"
+msgstr "กฎ"
+
+#: src/hyperadmin/templates/permissions/matrix.html:223
+#: src/hyperadmin/templates/permissions/matrix.html:342
+#, fuzzy
+msgid "rules"
+msgstr "กฎ"
+
+#: src/hyperadmin/templates/permissions/matrix.html:224
+#: src/hyperadmin/templates/permissions/matrix.html:343
+#, fuzzy
+msgid "for"
+msgstr "สำหรับ"
+
+#: src/hyperadmin/templates/permissions/matrix.html:225
+#: src/hyperadmin/templates/permissions/matrix.html:244
+#, fuzzy, python-format
+msgid "Changes apply to everyone in %(group)s."
+msgstr "การเปลี่ยนแปลงมีผลกับทุกคนใน %(group)s"
+
+#: src/hyperadmin/templates/permissions/matrix.html:226
+#, fuzzy
+msgid "You have unsaved changes. Switch group and lose them?"
+msgstr ""
+"คุณมีการเปลี่ยนแปลงที่ยังไม่ได้บันทึก "
+"ต้องการเปลี่ยนกลุ่มและทิ้งการเปลี่ยนแปลงหรือไม่"
+
+#: src/hyperadmin/templates/permissions/matrix.html:234
+#, fuzzy
+msgid "Group"
+msgstr "กลุ่ม"
+
+#: src/hyperadmin/templates/permissions/matrix.html:247
+#, fuzzy
+msgid "Show group"
+msgstr "แสดงกลุ่ม"
+
+#: src/hyperadmin/templates/permissions/matrix.html:262
+#, fuzzy
+msgid "No groups yet"
+msgstr "ยังไม่มีกลุ่ม"
+
+#: src/hyperadmin/templates/permissions/matrix.html:263
+#, fuzzy
+msgid "Create a group first; its permissions show up here."
+msgstr "สร้างกลุ่มก่อน แล้วสิทธิ์ของกลุ่มจะแสดงที่นี่"
+
+#: src/hyperadmin/templates/permissions/matrix.html:270
+#, fuzzy
+msgid "No registered models"
+msgstr "ไม่มีโมเดลที่ลงทะเบียน"
+
+#: src/hyperadmin/templates/permissions/matrix.html:271
+#, fuzzy
+msgid "Register a ModelAdmin and its permissions show up here."
+msgstr "ลงทะเบียน ModelAdmin แล้วสิทธิ์ของโมเดลจะแสดงที่นี่"
+
+#: src/hyperadmin/templates/permissions/matrix.html:279
+#, fuzzy, python-format
+msgid "Permissions of the group %(group)s"
+msgstr "สิทธิ์ของกลุ่ม %(group)s"
+
+#: src/hyperadmin/templates/permissions/matrix.html:282
+#, fuzzy
+msgid "Model"
+msgstr "โมเดล"
+
+#: src/hyperadmin/templates/permissions/matrix.html:288
+#, fuzzy, python-format
+msgid "%(group)s can %(action)s every model"
+msgstr "%(group)s สามารถ%(action)sทุกโมเดล"
+
+#: src/hyperadmin/templates/permissions/matrix.html:295
+#: src/hyperadmin/templates/permissions/matrix.html:379
+#: src/hyperadmin/templates/permissions/matrix.html:390
+#: src/hyperadmin/templates/permissions/object_popover.html:14
+#: src/hyperadmin/templates/permissions/object_popover.html:21
+#, fuzzy
+msgid "Object rules"
+msgstr "กฎระดับออบเจ็กต์"
+
+#: src/hyperadmin/templates/permissions/matrix.html:316
+#, fuzzy, python-format
+msgid "%(group)s can %(action)s %(model)s"
+msgstr "%(group)s สามารถ%(action)s %(model)s"
+
+#: src/hyperadmin/templates/permissions/matrix.html:317
+#, fuzzy
+msgid "unsaved"
+msgstr "ยังไม่บันทึก"
+
+#: src/hyperadmin/templates/permissions/matrix.html:323
+#, fuzzy
+msgid "Not saved: you don’t have this permission yourself"
+msgstr "ไม่ได้บันทึก: คุณเองไม่มีสิทธิ์นี้"
+
+#: src/hyperadmin/templates/permissions/matrix.html:327
+#, fuzzy, python-format
+msgid "%(action)s does not apply to %(model)s"
+msgstr "%(action)s ใช้กับ %(model)s ไม่ได้"
+
+#: src/hyperadmin/templates/permissions/matrix.html:347
+#, fuzzy
+msgid "object rule for"
+msgstr "กฎระดับออบเจ็กต์สำหรับ"
+
+#: src/hyperadmin/templates/permissions/matrix.html:360
+#, fuzzy, python-format
+msgid "Permissions of %(group)s"
+msgstr "สิทธิ์ของ %(group)s"
+
+#: src/hyperadmin/templates/permissions/matrix.html:365
+#, fuzzy
+msgid "Unsaved changes"
+msgstr "การเปลี่ยนแปลงที่ยังไม่บันทึก"
+
+#: src/hyperadmin/templates/permissions/matrix.html:370
+#, fuzzy
+msgid "Discard"
+msgstr "ทิ้ง"
+
+#: src/hyperadmin/templates/permissions/matrix.html:371
+#, fuzzy
+msgid "Save changes"
+msgstr "บันทึกการเปลี่ยนแปลง"
+
+#: src/hyperadmin/templates/permissions/matrix.html:384
+#, fuzzy
+msgid "Loading object rules"
+msgstr "กำลังโหลดกฎระดับออบเจ็กต์"
+
+#: src/hyperadmin/templates/permissions/matrix.html:393
+#, fuzzy
+msgid "Couldn’t load the rules."
+msgstr "โหลดกฎไม่ได้"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:16
+#, fuzzy
+msgid "Close object rules"
+msgstr "ปิดกฎระดับออบเจ็กต์"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:35
+#, fuzzy, python-format
+msgid "Remove rule for %(record)s"
+msgstr "นำกฎของ %(record)s ออก"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:41
+#, fuzzy
+msgid "No object rules. Group permissions apply."
+msgstr "ไม่มีกฎระดับออบเจ็กต์ ใช้สิทธิ์ของกลุ่ม"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:45
+#, fuzzy
+msgid "Add object rule"
+msgstr "เพิ่มกฎระดับออบเจ็กต์"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:49
+#, fuzzy
+msgid "Record"
+msgstr "ระเบียน"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:54
+#, fuzzy
+msgid "Action"
+msgstr "การดำเนินการ"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:67
+#: src/hyperadmin/templates/permissions/object_popover.html:69
+#, fuzzy
+msgid "Rule for"
+msgstr "กฎสำหรับ"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:67
+#, fuzzy
+msgid "added."
+msgstr "เพิ่มแล้ว"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:69
+#, fuzzy
+msgid "removed."
+msgstr "นำออกแล้ว"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:76
+#, fuzzy
+msgid "Undo"
+msgstr "เลิกทำ"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:80
+#, fuzzy
+msgid "You can only grant permissions you have yourself."
+msgstr "คุณให้ได้เฉพาะสิทธิ์ที่คุณมีอยู่เอง"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:82
+#, fuzzy
+msgid "No change."
+msgstr "ไม่มีการเปลี่ยนแปลง"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:88
+#, fuzzy
+msgid "Saved as you go. Group permissions still apply."
+msgstr "บันทึกทันทีที่เปลี่ยน สิทธิ์ของกลุ่มยังคงมีผล"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:92
+#, fuzzy
+msgid "Add rule"
+msgstr "เพิ่มกฎ"
+
+#: src/hyperadmin/templates/widgets/autocomplete.html:21
+#, fuzzy, python-format
+msgid "Choose a %(parent)s first"
+msgstr "เลือก %(parent)s ก่อน"
+
+#: src/hyperadmin/templates/widgets/autocomplete.html:30
+#, fuzzy
+msgid "Searching"
+msgstr "กำลังค้นหา"
+
+#: src/hyperadmin/templates/widgets/autocomplete.html:60
+#, fuzzy, python-format
+msgid "Clear %(label)s"
+msgstr "ล้าง %(label)s"
+
+#: src/hyperadmin/templates/widgets/autocomplete.html:83
+#, fuzzy, python-format
+msgid "Add %(label)s"
+msgstr "เพิ่ม %(label)s"
+
+#: src/hyperadmin/templates/widgets/autocomplete.html:94
+#: src/hyperadmin/templates/widgets/autocomplete.html:97
+#, fuzzy, python-format
+msgid "Pick the %(parent)s above to list its %(label)s options."
+msgstr "เลือก %(parent)s ด้านบนเพื่อแสดงตัวเลือก %(label)s"
+
+#: src/hyperadmin/templates/widgets/autocomplete.html:95
+#, fuzzy, python-format
+msgid "Cleared because the %(parent)s changed."
+msgstr "ล้างแล้วเนื่องจาก %(parent)s เปลี่ยน"
+
+#: src/hyperadmin/templates/widgets/autocomplete.html:96
+#, fuzzy, python-format
+msgid "%(label)s cleared because the %(parent)s changed"
+msgstr "ล้าง %(label)s แล้วเนื่องจาก %(parent)s เปลี่ยน"
+
+#: src/hyperadmin/templates/widgets/datetime_input.html:16
+#, fuzzy, python-format
+msgid "Time zone: %(tz)s"
+msgstr "เขตเวลา: %(tz)s"
+
+#: src/hyperadmin/templates/widgets/image_input.html:19
+#, fuzzy
+msgid "Only one file allowed"
+msgstr "อนุญาตเพียงไฟล์เดียว"
+
+#: src/hyperadmin/templates/widgets/image_input.html:21
+#, fuzzy
+msgid "File type not allowed"
+msgstr "ไม่อนุญาตประเภทไฟล์นี้"
+
+#: src/hyperadmin/templates/widgets/image_input.html:74
+#: src/hyperadmin/templates/widgets/image_input.html:85
+#, fuzzy
+msgid "Release to upload"
+msgstr "ปล่อยเพื่ออัปโหลด"
+
+#: src/hyperadmin/templates/widgets/image_input.html:74
+#, fuzzy
+msgid "Drop image here or click to select"
+msgstr "วางรูปภาพที่นี่หรือคลิกเพื่อเลือก"
+
+#: src/hyperadmin/templates/widgets/image_input.html:92
+#, fuzzy
+msgid "Uploading"
+msgstr "กำลังอัปโหลด"
+
+#: src/hyperadmin/templates/widgets/image_input.html:98
+#, fuzzy
+msgid "Upload failed — check your connection"
+msgstr "อัปโหลดไม่สำเร็จ — ตรวจสอบการเชื่อมต่อ"
+
+#: src/hyperadmin/templates/widgets/image_input.html:103
+#, fuzzy
+msgid "Selected image preview"
+msgstr "ตัวอย่างรูปภาพที่เลือก"
+
+#: src/hyperadmin/templates/widgets/popup_form.html:29
+#, fuzzy, python-format
+msgid "Add %(model)s"
+msgstr "เพิ่ม %(model)s"
+
+#: src/hyperadmin/templates/widgets/popup_form.html:30
+#, fuzzy, python-format
+msgid "Saving selects it in the %(field)s field."
+msgstr "เมื่อบันทึก ระบบจะเลือกรายการนี้ในช่อง %(field)s"
+
+#: src/hyperadmin/templates/widgets/popup_form.html:61
+#, fuzzy
+msgid "Save and select"
+msgstr "บันทึกและเลือก"
+
+#: src/hyperadmin/views/forms.py:52
+#, fuzzy
+msgid "Invalid primary key."
+msgstr "คีย์หลักไม่ถูกต้อง"
+
+#: src/hyperadmin/views/forms.py:55
+#, fuzzy
+msgid "Enter a valid date/time"
+msgstr "ป้อนวันที่และเวลาที่ถูกต้อง"
+
+#: src/hyperadmin/views/nav_pins.py:110
+#, fuzzy
+msgid "Pins need a signed-in user"
+msgstr "ต้องเข้าสู่ระบบจึงจะปักหมุดหน้าได้"
+
+#: src/hyperadmin/views/nav_pins.py:126
+#, fuzzy, python-format
+msgid "You can pin up to %(count)s pages"
+msgstr "ปักหมุดได้สูงสุด %(count)s หน้า"
 
 #: src/hyperadmin/views/static.py:12
 #, fuzzy
@@ -287,3 +1993,7 @@ msgstr "สร้างรายการสำเร็จ"
 #, fuzzy
 msgid "Item updated successfully"
 msgstr "อัปเดตรายการสำเร็จ"
+
+#~ msgid "Are you sure you want to delete this item?"
+#~ msgstr "คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?"
+
