@@ -2,7 +2,7 @@
 type: epic
 id: ep-v059-list-01
 title: "epic(templates): compact list rows with click-to-open and icon delete"
-status: backlog
+status: done
 priority: high
 owner: null
 labels:
@@ -14,7 +14,7 @@ labels:
 milestone_ref:
   id: v059-nav-01
 created_at: 2026-11-01T00:00:00Z
-updated_at: 2026-11-01T00:00:00Z
+updated_at: 2026-11-06T00:00:00Z
 ---
 
 ## Overview

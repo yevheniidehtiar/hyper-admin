@@ -2,7 +2,7 @@
 type: epic
 id: ep-v059-kbd-01
 title: "epic(templates): form safety and keyboard navigation"
-status: backlog
+status: done
 priority: medium
 owner: null
 labels:
@@ -13,7 +13,7 @@ labels:
 milestone_ref:
   id: v059-nav-01
 created_at: 2026-11-01T00:00:00Z
-updated_at: 2026-11-01T00:00:00Z
+updated_at: 2026-11-06T00:00:00Z
 ---
 
 ## Overview

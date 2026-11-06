@@ -2,7 +2,7 @@
 type: story
 id: st-v059-kbd-02
 title: "feat(templates): list keyboard navigation and shortcuts overlay"
-status: backlog
+status: done
 priority: medium
 assignee: null
 labels:
@@ -15,7 +15,7 @@ estimate: null
 epic_ref:
   id: ep-v059-kbd-01
 created_at: 2026-11-01T00:00:00Z
-updated_at: 2026-11-01T00:00:00Z
+updated_at: 2026-11-06T00:00:00Z
 ---
 
 ## Summary
