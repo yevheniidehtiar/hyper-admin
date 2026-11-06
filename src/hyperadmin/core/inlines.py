@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any
 
+from hyperadmin.core.display import humanize_class_name, pluralize
 from hyperadmin.core.schema import schema_for
 
 
@@ -37,10 +38,14 @@ class InlineModelSpec:
 
     def __post_init__(self) -> None:
         if not self.title:
-            name = getattr(self.model, "__name__", str(self.model))
-            self.title = name + "s"
+            self.title = pluralize(self.verbose_name)
         if not self.relationship_name:
             self.relationship_name = getattr(self.model, "__name__", str(self.model)).lower()
+
+    @property
+    def verbose_name(self) -> str:
+        """Readable singular name of the inline model (``InvoiceItem`` -> ``"Invoice item"``)."""
+        return humanize_class_name(getattr(self.model, "__name__", str(self.model)))
 
     @property
     def model_name(self) -> str:

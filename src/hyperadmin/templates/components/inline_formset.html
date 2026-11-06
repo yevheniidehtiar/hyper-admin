@@ -12,7 +12,7 @@
                 {%- for label in inline.field_labels -%}
                 <th>{{ label }}</th>
                 {%- endfor -%}
-                <th class="ha-inline-actions-col">Actions</th>
+                <th class="ha-inline-actions-col">{{ _("Actions") }}</th>
             </tr>
         </thead>
         <tbody id="inline-{{ inline.prefix }}-body" data-testid="inline-{{ inline.prefix }}-body">
@@ -28,7 +28,7 @@
             hx-get="{{ inline.add_row_url }}?index={{ inline.rows|length }}"
             hx-target="#inline-{{ inline.prefix }}-body"
             hx-swap="beforeend">
-        {{ icon('plus', 'ha-icon-sm') }}Add {{ inline.spec.model.__name__ }}
+        {{ icon('plus', 'ha-icon-sm') }}{{ _('Add %(model)s', model=inline.spec.verbose_name|lower) }}
     </button>
     {%- endif -%}
 </div>
