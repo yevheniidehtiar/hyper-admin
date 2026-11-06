@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-05-03 15:06+0200\n"
+"POT-Creation-Date: 2026-11-06 19:09+0100\n"
 "PO-Revision-Date: 2026-05-05 12:00+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: it\n"
@@ -18,260 +18,1998 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
+#: src/hyperadmin/auth/views.py:91
+#, fuzzy
+msgid "Could not send verification code. Please try again."
+msgstr "Impossibile inviare il codice di verifica. Riprova."
 
-#: src/hyperadmin/templates/_messages.html:3
+#: src/hyperadmin/auth/views.py:248 src/hyperadmin/auth/views.py:256
+#, fuzzy
+msgid "Code expired, please request a new one."
+msgstr "Codice scaduto, richiedine uno nuovo."
+
+#: src/hyperadmin/auth/views.py:271 src/hyperadmin/auth/views.py:471
+#: src/hyperadmin/auth/views.py:539
+#, fuzzy
+msgid "Invalid code."
+msgstr "Codice non valido."
+
+#: src/hyperadmin/auth/views.py:304 src/hyperadmin/auth/views.py:443
+#: src/hyperadmin/auth/views.py:518
+#, fuzzy
+msgid "Too many attempts, try again later."
+msgstr "Troppi tentativi, riprova più tardi."
+
+#: src/hyperadmin/auth/views.py:311
+#, fuzzy
+msgid "A new code has been sent to your email."
+msgstr "Un nuovo codice è stato inviato alla tua email."
+
+#: src/hyperadmin/auth/views.py:455
+#, fuzzy
+msgid "No active MFA enable flow. Please try again."
+msgstr "Nessuna procedura di attivazione MFA in corso. Riprova."
+
+#: src/hyperadmin/auth/views.py:483
+#, fuzzy
+msgid "Two-factor authentication enabled."
+msgstr "Autenticazione a due fattori attivata."
+
+#: src/hyperadmin/auth/views.py:528
+#, fuzzy
+msgid "No active MFA disable flow. Please try again."
+msgstr "Nessuna procedura di disattivazione MFA in corso. Riprova."
+
+#: src/hyperadmin/auth/views.py:549
+#, fuzzy
+msgid "Two-factor authentication disabled."
+msgstr "Autenticazione a due fattori disattivata."
+
+#: src/hyperadmin/core/navigation.py:32
+#, fuzzy
+msgid "Plugins"
+msgstr "Plugin"
+
+#: src/hyperadmin/core/navigation.py:35
+#, fuzzy
+msgid "Access"
+msgstr "Accesso"
+
+#: src/hyperadmin/core/palette.py:87
+#, fuzzy, python-format
+msgid "New %(name)s"
+msgstr "Nuovo: %(name)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:44
+#, fuzzy
+msgid "Field required"
+msgstr "Campo obbligatorio"
+
+#: src/hyperadmin/i18n/validation_messages.py:45
+#, fuzzy
+msgid "Input should be a valid string"
+msgstr "Il valore deve essere una stringa valida"
+
+#: src/hyperadmin/i18n/validation_messages.py:46
+#, fuzzy, python-format
+msgid "String should match pattern '%(pattern)s'"
+msgstr "La stringa deve corrispondere al modello '%(pattern)s'"
+
+#: src/hyperadmin/i18n/validation_messages.py:47
+#, fuzzy, python-format
+msgid "Input should be greater than %(gt)s"
+msgstr "Il valore deve essere maggiore di %(gt)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:48
+#, fuzzy, python-format
+msgid "Input should be greater than or equal to %(ge)s"
+msgstr "Il valore deve essere maggiore o uguale a %(ge)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:49
+#, fuzzy, python-format
+msgid "Input should be less than %(lt)s"
+msgstr "Il valore deve essere minore di %(lt)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:50
+#, fuzzy, python-format
+msgid "Input should be less than or equal to %(le)s"
+msgstr "Il valore deve essere minore o uguale a %(le)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:51
+#, fuzzy, python-format
+msgid "Input should be a multiple of %(multiple_of)s"
+msgstr "Il valore deve essere un multiplo di %(multiple_of)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:52
+#, fuzzy
+msgid "Input should be a valid integer"
+msgstr "Il valore deve essere un numero intero valido"
+
+#: src/hyperadmin/i18n/validation_messages.py:54
+#, fuzzy
+msgid "Input should be a valid integer, unable to parse string as an integer"
+msgstr ""
+"Il valore deve essere un numero intero valido; impossibile interpretare "
+"la stringa come intero"
+
+#: src/hyperadmin/i18n/validation_messages.py:57
+#, fuzzy
+msgid "Input should be a valid integer, got a number with a fractional part"
+msgstr ""
+"Il valore deve essere un numero intero valido; ricevuto un numero con "
+"parte decimale"
+
+#: src/hyperadmin/i18n/validation_messages.py:59
+#, fuzzy
+msgid "Input should be a valid number"
+msgstr "Il valore deve essere un numero valido"
+
+#: src/hyperadmin/i18n/validation_messages.py:61
+#, fuzzy
+msgid "Input should be a valid number, unable to parse string as a number"
+msgstr ""
+"Il valore deve essere un numero valido; impossibile interpretare la "
+"stringa come numero"
+
+#: src/hyperadmin/i18n/validation_messages.py:63
+#, fuzzy
+msgid "Input should be a valid boolean"
+msgstr "Il valore deve essere un booleano valido"
+
+#: src/hyperadmin/i18n/validation_messages.py:64
+#, fuzzy
+msgid "Input should be a valid boolean, unable to interpret input"
+msgstr ""
+"Il valore deve essere un booleano valido; impossibile interpretare il "
+"valore"
+
+#: src/hyperadmin/i18n/validation_messages.py:65
+#, fuzzy
+msgid "Input should be a valid decimal"
+msgstr "Il valore deve essere un decimale valido"
+
+#: src/hyperadmin/i18n/validation_messages.py:67
+#, fuzzy, python-format
+msgid "Input should be a valid date in the format YYYY-MM-DD, %(error)s"
+msgstr "Il valore deve essere una data valida nel formato AAAA-MM-GG, %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:70
+#, fuzzy, python-format
+msgid "Input should be a valid date or datetime, %(error)s"
+msgstr "Il valore deve essere una data o data e ora valida, %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:72
+#, fuzzy, python-format
+msgid "Input should be a valid datetime, %(error)s"
+msgstr "Il valore deve essere una data e ora valida, %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:74
+#, fuzzy, python-format
+msgid "Input should be a valid datetime or date, %(error)s"
+msgstr "Il valore deve essere una data e ora o una data valida, %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:76
+#, fuzzy, python-format
+msgid "Input should be in a valid time format, %(error)s"
+msgstr "Il valore deve essere un orario in formato valido, %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:77
+#, fuzzy, python-format
+msgid "Input should be a valid UUID, %(error)s"
+msgstr "Il valore deve essere un UUID valido, %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:78
+#: src/hyperadmin/i18n/validation_messages.py:79
+#, fuzzy, python-format
+msgid "Input should be %(expected)s"
+msgstr "Il valore deve essere %(expected)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:80
+#, fuzzy, python-format
+msgid "Input should be a valid URL, %(error)s"
+msgstr "Il valore deve essere un URL valido, %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:81
+#, fuzzy, python-format
+msgid "Invalid JSON: %(error)s"
+msgstr "JSON non valido: %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:82
+#, fuzzy, python-format
+msgid "Value error, %(error)s"
+msgstr "Errore di valore, %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:83
+#, fuzzy, python-format
+msgid "Assertion failed, %(error)s"
+msgstr "Verifica non riuscita, %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:89
+#, fuzzy, python-format
+msgid "String should have at least %(min_length)s character"
+msgid_plural "String should have at least %(min_length)s characters"
+msgstr[0] "La stringa deve contenere almeno %(min_length)s carattere"
+msgstr[1] "La stringa deve contenere almeno %(min_length)s caratteri"
+
+#: src/hyperadmin/i18n/validation_messages.py:96
+#, fuzzy, python-format
+msgid "String should have at most %(max_length)s character"
+msgid_plural "String should have at most %(max_length)s characters"
+msgstr[0] "La stringa deve contenere al massimo %(max_length)s carattere"
+msgstr[1] "La stringa deve contenere al massimo %(max_length)s caratteri"
+
+#: src/hyperadmin/i18n/validation_messages.py:103
+#, fuzzy, python-format
+msgid ""
+"%(field_type)s should have at least %(min_length)s item after validation,"
+" not %(actual_length)s"
+msgid_plural ""
+"%(field_type)s should have at least %(min_length)s items after "
+"validation, not %(actual_length)s"
+msgstr[0] ""
+"%(field_type)s deve contenere almeno %(min_length)s elemento dopo la "
+"convalida, non %(actual_length)s"
+msgstr[1] ""
+"%(field_type)s deve contenere almeno %(min_length)s elementi dopo la "
+"convalida, non %(actual_length)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:110
+#, fuzzy, python-format
+msgid ""
+"%(field_type)s should have at most %(max_length)s item after validation, "
+"not %(actual_length)s"
+msgid_plural ""
+"%(field_type)s should have at most %(max_length)s items after validation,"
+" not %(actual_length)s"
+msgstr[0] ""
+"%(field_type)s deve contenere al massimo %(max_length)s elemento dopo la "
+"convalida, non %(actual_length)s"
+msgstr[1] ""
+"%(field_type)s deve contenere al massimo %(max_length)s elementi dopo la "
+"convalida, non %(actual_length)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:119
+#, fuzzy, python-format
+msgid ""
+"%(field_type)s should have at most %(max_length)s item after validation, "
+"not more"
+msgid_plural ""
+"%(field_type)s should have at most %(max_length)s items after validation,"
+" not more"
+msgstr[0] ""
+"%(field_type)s deve contenere al massimo %(max_length)s elemento dopo la "
+"convalida, non di più"
+msgstr[1] ""
+"%(field_type)s deve contenere al massimo %(max_length)s elementi dopo la "
+"convalida, non di più"
+
+#: src/hyperadmin/i18n/validation_messages.py:125
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:16
+#: src/hyperadmin/templates/list_layout.html:8
+#, fuzzy
+msgid "List"
+msgstr "Elenco"
+
+#: src/hyperadmin/i18n/validation_messages.py:126
+#, fuzzy
+msgid "Tuple"
+msgstr "Tupla"
+
+#: src/hyperadmin/i18n/validation_messages.py:127
+#, fuzzy
+msgid "Set"
+msgstr "Insieme"
+
+#: src/hyperadmin/i18n/validation_messages.py:128
+#, fuzzy
+msgid "Frozenset"
+msgstr "Insieme immutabile"
+
+#: src/hyperadmin/i18n/validation_messages.py:129
+#, fuzzy
+msgid "Dictionary"
+msgstr "Dizionario"
+
+#: src/hyperadmin/i18n/validation_messages.py:136
+#, fuzzy
+msgid "input is too short"
+msgstr "il valore è troppo corto"
+
+#: src/hyperadmin/i18n/validation_messages.py:137
+#, fuzzy
+msgid "unexpected extra characters at the end of the input"
+msgstr "caratteri aggiuntivi inattesi alla fine del valore"
+
+#: src/hyperadmin/i18n/validation_messages.py:138
+#, fuzzy
+msgid "invalid datetime separator, expected `T`, `t`, `_` or space"
+msgstr "separatore data-ora non valido, previsto `T`, `t`, `_` o spazio"
+
+#: src/hyperadmin/i18n/validation_messages.py:139
+#, fuzzy
+msgid "invalid date separator, expected `-`"
+msgstr "separatore della data non valido, previsto `-`"
+
+#: src/hyperadmin/i18n/validation_messages.py:140
+#, fuzzy
+msgid "invalid time separator, expected `:`"
+msgstr "separatore dell’ora non valido, previsto `:`"
+
+#: src/hyperadmin/i18n/validation_messages.py:141
+#, fuzzy
+msgid "invalid character in year"
+msgstr "carattere non valido nell’anno"
+
+#: src/hyperadmin/i18n/validation_messages.py:142
+#, fuzzy
+msgid "invalid character in month"
+msgstr "carattere non valido nel mese"
+
+#: src/hyperadmin/i18n/validation_messages.py:143
+#, fuzzy
+msgid "invalid character in day"
+msgstr "carattere non valido nel giorno"
+
+#: src/hyperadmin/i18n/validation_messages.py:144
+#, fuzzy
+msgid "invalid character in hour"
+msgstr "carattere non valido nell’ora"
+
+#: src/hyperadmin/i18n/validation_messages.py:145
+#, fuzzy
+msgid "invalid character in minute"
+msgstr "carattere non valido nei minuti"
+
+#: src/hyperadmin/i18n/validation_messages.py:146
+#, fuzzy
+msgid "invalid character in second"
+msgstr "carattere non valido nei secondi"
+
+#: src/hyperadmin/i18n/validation_messages.py:147
+#, fuzzy
+msgid "month value is outside expected range of 1-12"
+msgstr "il mese è fuori dall’intervallo previsto 1-12"
+
+#: src/hyperadmin/i18n/validation_messages.py:148
+#, fuzzy
+msgid "day value is outside expected range"
+msgstr "il giorno è fuori dall’intervallo previsto"
+
+#: src/hyperadmin/i18n/validation_messages.py:149
+#, fuzzy
+msgid "hour value is outside expected range of 0-23"
+msgstr "l’ora è fuori dall’intervallo previsto 0-23"
+
+#: src/hyperadmin/i18n/validation_messages.py:150
+#, fuzzy
+msgid "minute value is outside expected range of 0-59"
+msgstr "i minuti sono fuori dall’intervallo previsto 0-59"
+
+#: src/hyperadmin/i18n/validation_messages.py:151
+#, fuzzy
+msgid "second value is outside expected range of 0-59"
+msgstr "i secondi sono fuori dall’intervallo previsto 0-59"
+
+#: src/hyperadmin/i18n/validation_messages.py:152
+#, fuzzy
+msgid "relative URL without a base"
+msgstr "URL relativo senza base"
+
+#: src/hyperadmin/i18n/validation_messages.py:153
+#, fuzzy
+msgid "empty host"
+msgstr "host vuoto"
+
+#: src/hyperadmin/i18n/validation_messages.py:154
+#, fuzzy
+msgid "invalid port number"
+msgstr "numero di porta non valido"
+
+#: src/hyperadmin/i18n/validation_messages.py:155
+#, fuzzy
+msgid "invalid domain character"
+msgstr "carattere di dominio non valido"
+
+#: src/hyperadmin/i18n/validation_messages.py:156
+#, fuzzy
+msgid "invalid international domain name"
+msgstr "nome di dominio internazionale non valido"
+
+#: src/hyperadmin/i18n/validation_messages.py:157
+#, fuzzy
+msgid "invalid IPv4 address"
+msgstr "indirizzo IPv4 non valido"
+
+#: src/hyperadmin/i18n/validation_messages.py:158
+#, fuzzy
+msgid "invalid IPv6 address"
+msgstr "indirizzo IPv6 non valido"
+
+#: src/hyperadmin/i18n/validation_messages.py:162
+#, fuzzy, python-format
+msgid "%(choices)s or %(last)s"
+msgstr "%(choices)s o %(last)s"
+
+#: src/hyperadmin/templates/_messages.html:6
 #, fuzzy
 msgid "Success!"
 msgstr "Successo!"
 
-#: src/hyperadmin/templates/_messages.html:4
+#: src/hyperadmin/templates/_messages.html:7
 #, fuzzy
 msgid "Your action was successful."
 msgstr "La tua azione è andata a buon fine."
 
-#: src/hyperadmin/templates/_messages.html:5
-#: src/hyperadmin/templates/_messages.html:6
+#: src/hyperadmin/templates/_messages.html:9
+#: src/hyperadmin/templates/components/csrf_reload_banner.html:18
+#: src/hyperadmin/templates/components/error_toast.html:17
+#: src/hyperadmin/templates/components/popover.html:36
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:35
+#: src/hyperadmin/templates/components/toast.html:26
+#: src/hyperadmin/templates/permissions/_banner.html:16
+#: src/hyperadmin/templates/widgets/popup_form.html:33
 #, fuzzy
 msgid "Close"
 msgstr "Chiudi"
 
-#: src/hyperadmin/templates/_navbar.html:1
+#: src/hyperadmin/templates/_navbar.html:2
 #, fuzzy
 msgid "Main navigation"
 msgstr "Navigazione principale"
 
-#: src/hyperadmin/templates/_navbar.html:8
+#: src/hyperadmin/templates/_navbar.html:9
 #, fuzzy
 msgid "Toggle navigation menu"
 msgstr "Attiva/disattiva il menu di navigazione"
 
-#: src/hyperadmin/templates/_navbar.html:18
+#: src/hyperadmin/templates/_navbar.html:27
+#, fuzzy
+msgid "Search…"
+msgstr "Cerca…"
+
+#: src/hyperadmin/templates/_navbar.html:36
+#, fuzzy
+msgid "Real-time connection status"
+msgstr "Stato della connessione in tempo reale"
+
+#: src/hyperadmin/templates/_navbar.html:41
 #, fuzzy
 msgid "Language"
 msgstr "Lingua"
 
-#: src/hyperadmin/templates/_navbar.html:22
+#: src/hyperadmin/templates/_navbar.html:46
 #, fuzzy
 msgid "Select language"
 msgstr "Seleziona la lingua"
 
-#: src/hyperadmin/templates/_navbar.html:34
+#: src/hyperadmin/templates/_navbar.html:58
 #, fuzzy
 msgid "Toggle dark mode"
 msgstr "Attiva/disattiva la modalità scura"
 
-#: src/hyperadmin/templates/_navbar.html:56
+#: src/hyperadmin/templates/_navbar.html:78
 #, fuzzy
 msgid "Logout"
 msgstr "Esci"
 
-#: src/hyperadmin/templates/_navbar.html:64
+#: src/hyperadmin/templates/_navbar.html:84
 #, fuzzy
 msgid "Admin"
 msgstr "Amministrazione"
 
-#: src/hyperadmin/templates/_navbar.html:70
+#: src/hyperadmin/templates/_navbar.html:88
 #, fuzzy
 msgid "Profile"
 msgstr "Profilo"
 
-#: src/hyperadmin/templates/_navbar.html:71
+#: src/hyperadmin/templates/_navbar.html:89
 #, fuzzy
 msgid "Settings"
 msgstr "Impostazioni"
 
-#: src/hyperadmin/templates/_sidebar.html:5
+#: src/hyperadmin/templates/_sidebar.html:18
 #, fuzzy
 msgid "Model navigation"
 msgstr "Navigazione dei modelli"
 
-#: src/hyperadmin/templates/_sidebar.html:12
+#: src/hyperadmin/templates/_sidebar.html:25
 #, fuzzy
 msgid "Menu"
 msgstr "Menu"
 
-#: src/hyperadmin/templates/_sidebar.html:16
+#: src/hyperadmin/templates/_sidebar.html:29
 #, fuzzy
 msgid "Close navigation menu"
 msgstr "Chiudi il menu di navigazione"
 
-#: src/hyperadmin/templates/_sidebar.html:23
+#: src/hyperadmin/templates/_sidebar.html:39
+#: src/hyperadmin/templates/_sidebar.html:40
+#, fuzzy
+msgid "Collapse sidebar"
+msgstr "Comprimi la barra laterale"
+
+#: src/hyperadmin/templates/_sidebar.html:45
 #, fuzzy
 msgid "Sidebar"
 msgstr "Barra laterale"
 
-#: src/hyperadmin/templates/create.html:4
-#, python-format, fuzzy
-msgid "Create %(model_name)s"
-msgstr "Crea %(model_name)s"
-
+#: src/hyperadmin/templates/base.html:12
 #: src/hyperadmin/templates/create.html:36
 #, fuzzy
 msgid "Create"
 msgstr "Crea"
 
+#: src/hyperadmin/templates/bulk_form.html:9
+#: src/hyperadmin/templates/bulk_result.html:11
+#, fuzzy
+msgid "Breadcrumb"
+msgstr "Percorso di navigazione"
+
+#: src/hyperadmin/templates/create.html:4
+#, fuzzy, python-format
+msgid "Create %(model_name)s"
+msgstr "Crea %(model_name)s"
+
+#: src/hyperadmin/templates/components/bulk_form.html:74
+#: src/hyperadmin/templates/components/bulk_form.html:76
+#: src/hyperadmin/templates/components/confirm_delete_dialog.html:23
+#: src/hyperadmin/templates/components/saved_views.html:24
+#: src/hyperadmin/templates/components/saved_views.html:49
 #: src/hyperadmin/templates/create.html:39
-#: src/hyperadmin/templates/update.html:39
+#: src/hyperadmin/templates/update.html:53
+#: src/hyperadmin/templates/widgets/popup_form.html:59
 #, fuzzy
 msgid "Cancel"
 msgstr "Annulla"
 
-#: src/hyperadmin/templates/detail.html:30
-#, python-format, fuzzy
+#: src/hyperadmin/templates/detail.html:15
+#, fuzzy
+msgid "Edit"
+msgstr "Modifica"
+
+#: src/hyperadmin/templates/components/confirm_delete_dialog.html:24
+#: src/hyperadmin/templates/components/table_body.html:57
+#: src/hyperadmin/templates/detail.html:22
+#: src/hyperadmin/templates/permissions/_macros.html:20
+#: src/hyperadmin/templates/update.html:59
+#, fuzzy
+msgid "Delete"
+msgstr "Elimina"
+
+#: src/hyperadmin/templates/detail.html:113
+#, fuzzy, python-format
 msgid "Run action '%(label)s'?"
 msgstr "Eseguire l'azione \"%(label)s\"?"
 
-#: src/hyperadmin/templates/detail.html:36
+#: src/hyperadmin/templates/detail.html:119
 #, fuzzy
 msgid "Back to list"
 msgstr "Torna all'elenco"
 
+#: src/hyperadmin/templates/error.html:5
+#, fuzzy
+msgid "You don't have access to this page"
+msgstr "Non hai accesso a questa pagina"
+
+#: src/hyperadmin/templates/error.html:6 src/hyperadmin/views/nav_pins.py:95
+#: src/hyperadmin/views/nav_pins.py:130 src/hyperadmin/views/nav_pins.py:141
+#, fuzzy
+msgid "Page not found"
+msgstr "Pagina non trovata"
+
+#: src/hyperadmin/templates/error.html:7
+#, fuzzy
+msgid "This action can't be completed"
+msgstr "Impossibile completare questa azione"
+
+#: src/hyperadmin/templates/error.html:10
+#: src/hyperadmin/templates/error.html:15
+#: src/hyperadmin/templates/error.html:16
+#, fuzzy
+msgid "Error"
+msgstr "Errore"
+
+#: src/hyperadmin/templates/error.html:18
+#, fuzzy
+msgid ""
+"Your account doesn't have permission for this. Ask an administrator if "
+"you need it."
+msgstr ""
+"Il tuo account non ha l’autorizzazione per farlo. Chiedila a un "
+"amministratore se ti serve."
+
+#: src/hyperadmin/templates/error.html:22
+#, fuzzy
+msgid "Back to dashboard"
+msgstr "Torna alla dashboard"
+
 #: src/hyperadmin/templates/form_layout.html:12
+#: src/hyperadmin/templates/widgets/popup_form.html:23
+#, fuzzy
+msgid "You have unsaved changes. Leave this page?"
+msgstr "Ci sono modifiche non salvate. Uscire da questa pagina?"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:25
+#: src/hyperadmin/templates/form_layout.html:18
 #, fuzzy
 msgid "Save"
 msgstr "Salva"
 
-#: src/hyperadmin/templates/list_layout.html:3
-#, python-format, fuzzy
+#: src/hyperadmin/templates/list_layout.html:4
+#, fuzzy, python-format
 msgid "%(model_name)s List | HyperAdmin"
 msgstr "Elenco %(model_name)s | HyperAdmin"
 
-#: src/hyperadmin/templates/list_layout.html:7
-#, fuzzy
-msgid "List"
-msgstr "Elenco"
-
-#: src/hyperadmin/templates/list_layout.html:11
-#, python-format, fuzzy
+#: src/hyperadmin/templates/list_layout.html:12
+#, fuzzy, python-format
 msgid "Create New %(model_name)s"
 msgstr "Crea nuovo %(model_name)s"
+
+#: src/hyperadmin/templates/components/filter_bar.html:10
+#: src/hyperadmin/templates/components/filter_sidebar.html:13
+#: src/hyperadmin/templates/list_layout.html:28
+#, fuzzy
+msgid "Filters"
+msgstr "Filtri"
+
+#: src/hyperadmin/templates/list_layout.html:31
+#, fuzzy
+msgid "Applied filters"
+msgstr "Filtri applicati"
+
+#: src/hyperadmin/templates/list_layout.html:33
+#, fuzzy, python-format
+msgid "Remove filter %(label)s"
+msgstr "Rimuovi il filtro %(label)s"
 
 #: src/hyperadmin/templates/login.html:3
 #, fuzzy
 msgid "Login"
 msgstr "Accedi"
 
-#: src/hyperadmin/templates/login.html:13
+#: src/hyperadmin/templates/login.html:14
 #, fuzzy
 msgid "Sign in to your account"
 msgstr "Accedi al tuo account"
 
-#: src/hyperadmin/templates/login.html:23
+#: src/hyperadmin/templates/login.html:28
 #, fuzzy
 msgid "Username"
 msgstr "Nome utente"
 
-#: src/hyperadmin/templates/login.html:35
+#: src/hyperadmin/templates/login.html:40
 #, fuzzy
 msgid "Password"
 msgstr "Password"
 
-#: src/hyperadmin/templates/login.html:46
+#: src/hyperadmin/templates/login.html:51
 #, fuzzy
 msgid "Sign in"
 msgstr "Accedi"
 
-#: src/hyperadmin/templates/update.html:4
-#, python-format, fuzzy
+#: src/hyperadmin/templates/update.html:5
+#, fuzzy, python-format
 msgid "Update %(item_name)s"
 msgstr "Aggiorna %(item_name)s"
 
-#: src/hyperadmin/templates/update.html:36
-#, fuzzy
-msgid "Update"
-msgstr "Aggiorna"
-
-#: src/hyperadmin/templates/components/filter_bar.html:11
-#, fuzzy
-msgid "Filters"
-msgstr "Filtri"
-
-#: src/hyperadmin/templates/components/filter_bar.html:27
-#, fuzzy
-msgid "Any"
-msgstr "Tutti"
-
-#: src/hyperadmin/templates/components/filter_bar.html:43
-#, fuzzy
-msgid "Clear all filters"
-msgstr "Cancella tutti i filtri"
-
-#: src/hyperadmin/templates/components/inline_row.html:31
-#: src/hyperadmin/templates/components/table.html:8
-#: src/hyperadmin/templates/components/table.html:18
-#, fuzzy
-msgid "Actions"
-msgstr "Azioni"
-
-#: src/hyperadmin/templates/components/inline_row.html:36
-#, fuzzy
-msgid "Remove"
-msgstr "Rimuovi"
-
-#: src/hyperadmin/templates/components/pagination.html:1
-#, fuzzy
-msgid "Pagination"
-msgstr "Paginazione"
-
-#: src/hyperadmin/templates/components/pagination.html:4
-#, python-format, fuzzy
-msgid "Showing %(start)s to %(end)s of %(total)s results"
-msgstr "Visualizzazione da %(start)s a %(end)s di %(total)s risultati"
-
-#: src/hyperadmin/templates/components/pagination.html:17
-#, fuzzy
-msgid "Previous"
-msgstr "Precedente"
-
-#: src/hyperadmin/templates/components/pagination.html:22
-#, python-format, fuzzy
-msgid "Page %(page)s of %(total_pages)s"
-msgstr "Pagina %(page)s di %(total_pages)s"
-
-#: src/hyperadmin/templates/components/pagination.html:32
-#, fuzzy
-msgid "Next"
-msgstr "Successivo"
-
-#: src/hyperadmin/templates/components/search_input.html:5
-#, fuzzy
-msgid "Search..."
-msgstr "Cerca..."
-
-#: src/hyperadmin/templates/components/search_input.html:8
-#, fuzzy
-msgid "Search"
-msgstr "Cerca"
-
-#: src/hyperadmin/templates/components/search_input.html:14
-#, fuzzy
-msgid "Searching..."
-msgstr "Ricerca in corso..."
-
-#: src/hyperadmin/templates/components/table.html:2
-#, python-format, fuzzy
-msgid "%(model_name)s list"
-msgstr "Elenco %(model_name)s"
-
-#: src/hyperadmin/templates/components/table.html:20
+#: src/hyperadmin/templates/permissions/_macros.html:20
+#: src/hyperadmin/templates/update.html:14
 #, fuzzy
 msgid "View"
 msgstr "Visualizza"
 
-#: src/hyperadmin/templates/components/table.html:23
+#: src/hyperadmin/templates/update.html:50
 #, fuzzy
-msgid "Edit"
+msgid "Update"
+msgstr "Aggiorna"
+
+#: src/hyperadmin/templates/auth/mfa_challenge.html:3
+#, fuzzy
+msgid "MFA Challenge"
+msgstr "Verifica MFA"
+
+#: src/hyperadmin/templates/auth/mfa_challenge.html:12
+#, fuzzy
+msgid "Two-factor verification"
+msgstr "Verifica in due passaggi"
+
+#: src/hyperadmin/templates/auth/mfa_challenge.html:14
+#, fuzzy
+msgid "Enter the 6-digit code we sent to your email."
+msgstr "Inserisci il codice a 6 cifre che abbiamo inviato alla tua email."
+
+#: src/hyperadmin/templates/auth/mfa_challenge.html:36
+#: src/hyperadmin/templates/auth/mfa_settings.html:53
+#, fuzzy
+msgid "Verification code"
+msgstr "Codice di verifica"
+
+#: src/hyperadmin/templates/auth/mfa_challenge.html:54
+#, fuzzy
+msgid "Verify"
+msgstr "Verifica"
+
+#: src/hyperadmin/templates/auth/mfa_challenge.html:60
+#, fuzzy
+msgid "Your code has expired."
+msgstr "Il codice è scaduto."
+
+#: src/hyperadmin/templates/auth/mfa_challenge.html:70
+#, fuzzy
+msgid "Resend code"
+msgstr "Invia di nuovo il codice"
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:3
+#: src/hyperadmin/templates/auth/mfa_settings.html:9
+#, fuzzy
+msgid "Two-factor authentication"
+msgstr "Autenticazione a due fattori"
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:13
+#, fuzzy
+msgid "Status:"
+msgstr "Stato:"
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:16
+#, fuzzy
+msgid "Enabled"
+msgstr "Attivata"
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:20
+#, fuzzy
+msgid "Disabled"
+msgstr "Disattivata"
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:49
+#, fuzzy
+msgid "Enter the 6-digit code we sent to your email to confirm."
+msgstr ""
+"Inserisci il codice a 6 cifre che abbiamo inviato alla tua email per "
+"confermare."
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:73
+#, fuzzy
+msgid "Confirm and enable"
+msgstr "Conferma e attiva"
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:75
+#, fuzzy
+msgid "Confirm and disable"
+msgstr "Conferma e disattiva"
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:90
+#, fuzzy
+msgid "Disable two-factor authentication"
+msgstr "Disattiva l’autenticazione a due fattori"
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:104
+#, fuzzy
+msgid "Enable two-factor authentication"
+msgstr "Attiva l’autenticazione a due fattori"
+
+#: src/hyperadmin/templates/components/_nav.html:33
+#, fuzzy, python-format
+msgid "Unpin %(label)s"
+msgstr "Rimuovi %(label)s dai fissati"
+
+#: src/hyperadmin/templates/components/_nav.html:33
+#, fuzzy, python-format
+msgid "Pin %(label)s"
+msgstr "Fissa %(label)s"
+
+#: src/hyperadmin/templates/components/banner.html:48
+#, fuzzy
+msgid "Dismiss"
+msgstr "Ignora"
+
+#: src/hyperadmin/templates/components/banner.html:57
+#, fuzzy
+msgid "Notices"
+msgstr "Avvisi"
+
+#: src/hyperadmin/templates/components/banner.html:72
+#, fuzzy, python-format
+msgid "+%(count)s more notice"
+msgid_plural "+%(count)s more notices"
+msgstr[0] "+%(count)s altro avviso"
+msgstr[1] "+%(count)s altri avvisi"
+
+#: src/hyperadmin/templates/components/bulk_form.html:21
+#, fuzzy, python-format
+msgid "%(label)s 1 row"
+msgstr "%(label)s: 1 riga"
+
+#: src/hyperadmin/templates/components/bulk_form.html:23
+#, fuzzy, python-format
+msgid "%(label)s %(count)s rows"
+msgstr "%(label)s: %(count)s righe"
+
+#: src/hyperadmin/templates/components/bulk_form.html:35
+#, fuzzy
+msgid "1 field needs fixing."
+msgstr "1 campo da correggere."
+
+#: src/hyperadmin/templates/components/bulk_form.html:35
+#, fuzzy, python-format
+msgid "%(count)s fields need fixing."
+msgstr "%(count)s campi da correggere."
+
+#: src/hyperadmin/templates/components/bulk_form.html:37
+#, fuzzy, python-format
+msgid "Your %(count)s selected rows are kept."
+msgstr "Le %(count)s righe selezionate vengono mantenute."
+
+#: src/hyperadmin/templates/components/bulk_form.html:42
+#, fuzzy, python-format
+msgid "This runs on the %(count)s selected rows."
+msgstr "Viene eseguita sulle %(count)s righe selezionate."
+
+#: src/hyperadmin/templates/components/bulk_form.html:45
+#, fuzzy
+msgid "Selected rows"
+msgstr "Righe selezionate"
+
+#: src/hyperadmin/templates/components/bulk_form.html:56
+#, fuzzy
+msgid "optional"
+msgstr "facoltativo"
+
+#: src/hyperadmin/templates/components/bulk_result.html:23
+#, fuzzy
+msgid "Done"
+msgstr "Completata"
+
+#: src/hyperadmin/templates/components/bulk_result.html:23
+#, fuzzy
+msgid "Failed"
+msgstr "Non riuscita"
+
+#: src/hyperadmin/templates/components/bulk_result.html:23
+#, fuzzy
+msgid "Forbidden"
+msgstr "Non consentita"
+
+#: src/hyperadmin/templates/components/bulk_result.html:25
+#, fuzzy
+msgid "Row not found. It may have been deleted after you selected it."
+msgstr "Riga non trovata. Potrebbe essere stata eliminata dopo la selezione."
+
+#: src/hyperadmin/templates/components/bulk_result.html:26
+#, fuzzy
+msgid ""
+"The row could not be loaded because of a database error. Check the server"
+" logs, then retry."
+msgstr ""
+"Impossibile caricare la riga a causa di un errore del database. Controlla"
+" i log del server, poi riprova."
+
+#: src/hyperadmin/templates/components/bulk_result.html:27
+#, fuzzy
+msgid "The action failed on this row. Check the server logs, then retry."
+msgstr ""
+"L’azione non è riuscita su questa riga. Controlla i log del server, poi "
+"riprova."
+
+#: src/hyperadmin/templates/components/bulk_result.html:31
+#, fuzzy, python-format
+msgid "%(failed)s failed and %(forbidden)s not allowed."
+msgstr "%(failed)s non riuscite e %(forbidden)s non consentite."
+
+#: src/hyperadmin/templates/components/bulk_result.html:33
+#, fuzzy, python-format
+msgid "%(failed)s failed."
+msgstr "%(failed)s non riuscite."
+
+#: src/hyperadmin/templates/components/bulk_result.html:35
+#, fuzzy, python-format
+msgid "%(forbidden)s not allowed."
+msgstr "%(forbidden)s non consentite."
+
+#: src/hyperadmin/templates/components/bulk_result.html:40
+#: src/hyperadmin/templates/components/bulk_result.html:95
+#, fuzzy
+msgid "Row"
+msgstr "Riga"
+
+#: src/hyperadmin/templates/components/bulk_result.html:45
+#: src/hyperadmin/templates/components/bulk_result.html:96
+#, fuzzy
+msgid "Result"
+msgstr "Risultato"
+
+#: src/hyperadmin/templates/components/bulk_result.html:49
+#: src/hyperadmin/templates/components/bulk_result.html:97
+#, fuzzy
+msgid "What happened"
+msgstr "Cosa è successo"
+
+#: src/hyperadmin/templates/components/bulk_result.html:51
+#, fuzzy
+msgid "no detail"
+msgstr "nessun dettaglio"
+
+#: src/hyperadmin/templates/components/bulk_result.html:66
+#, fuzzy
+msgid "No rows were selected."
+msgstr "Nessuna riga selezionata."
+
+#: src/hyperadmin/templates/components/bulk_result.html:68
+#, fuzzy, python-format
+msgid "All %(count)s rows done."
+msgstr "Tutte le %(count)s righe completate."
+
+#: src/hyperadmin/templates/components/bulk_result.html:70
+#, fuzzy, python-format
+msgid "%(done)s of %(count)s rows done."
+msgstr "%(done)s di %(count)s righe completate."
+
+#: src/hyperadmin/templates/components/bulk_result.html:72
+#, fuzzy
+msgid "No rows done."
+msgstr "Nessuna riga completata."
+
+#: src/hyperadmin/templates/components/bulk_result.html:76
+#, fuzzy
+msgid "Totals"
+msgstr "Totali"
+
+#: src/hyperadmin/templates/components/bulk_result.html:83
+#, fuzzy, python-format
+msgid "%(done)s done, %(failed)s failed, %(forbidden)s forbidden"
+msgstr "%(done)s completate, %(failed)s non riuscite, %(forbidden)s non consentite"
+
+#: src/hyperadmin/templates/components/bulk_result.html:92
+#, fuzzy
+msgid "Results per row"
+msgstr "Risultati per riga"
+
+#: src/hyperadmin/templates/components/bulk_result.html:107
+#, fuzzy, python-format
+msgid "Show the %(count)s done rows"
+msgstr "Mostra le %(count)s righe completate"
+
+#: src/hyperadmin/templates/components/bulk_result.html:108
+#, fuzzy
+msgid "Done rows"
+msgstr "Righe completate"
+
+#: src/hyperadmin/templates/components/bulk_result.html:125
+#, fuzzy, python-format
+msgid "Retry failures (%(count)s)"
+msgstr "Riprova quelle non riuscite (%(count)s)"
+
+#: src/hyperadmin/templates/components/bulk_result.html:130
+#, fuzzy, python-format
+msgid "Back to %(model_name)s"
+msgstr "Torna a %(model_name)s"
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:22
+#, fuzzy
+msgid "Bulk actions"
+msgstr "Azioni di gruppo"
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:28
+#, fuzzy
+msgid "Choose an action, then press Run."
+msgstr "Scegli un’azione, poi premi Esegui."
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:29
+#, fuzzy
+msgid "Select at least one row, then press Run."
+msgstr "Seleziona almeno una riga, poi premi Esegui."
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:36
+#, fuzzy
+msgid "selected"
+msgstr "selezionati"
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:37
+#: src/hyperadmin/templates/components/bulk_toolbar.html:38
+#, fuzzy
+msgid "Select rows, then choose an action"
+msgstr "Seleziona le righe, poi scegli un’azione"
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:40
+#, fuzzy
+msgid "Action for selected rows"
+msgstr "Azione per le righe selezionate"
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:44
+#, fuzzy
+msgid "Choose an action…"
+msgstr "Scegli un’azione…"
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:51
+#, fuzzy
+msgid "Run"
+msgstr "Esegui"
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:54
+#, fuzzy
+msgid "Clear selection"
+msgstr "Annulla selezione"
+
+#: src/hyperadmin/templates/components/command_palette.html:15
+#: src/hyperadmin/templates/components/nav_pinned.html:10
+#, fuzzy
+msgid "Pinned"
+msgstr "Fissati"
+
+#: src/hyperadmin/templates/components/command_palette.html:16
+#, fuzzy
+msgid "Recent"
+msgstr "Recenti"
+
+#: src/hyperadmin/templates/components/command_palette.html:17
+#, fuzzy
+msgid "Models"
+msgstr "Modelli"
+
+#: src/hyperadmin/templates/components/command_palette.html:18
+#, fuzzy
+msgid "Pages"
+msgstr "Pagine"
+
+#: src/hyperadmin/templates/components/command_palette.html:19
+#: src/hyperadmin/templates/widgets/autocomplete.html:32
+#, fuzzy, python-format
+msgid "%(count)s results"
+msgstr "%(count)s risultati"
+
+#: src/hyperadmin/templates/components/command_palette.html:20
+#: src/hyperadmin/templates/components/command_palette.html:37
+#: src/hyperadmin/templates/widgets/autocomplete.html:31
+#, fuzzy
+msgid "No results"
+msgstr "Nessun risultato"
+
+#: src/hyperadmin/templates/components/command_palette.html:24
+#: src/hyperadmin/templates/components/search_input.html:11
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:19
+#, fuzzy
+msgid "Search"
+msgstr "Cerca"
+
+#: src/hyperadmin/templates/components/command_palette.html:30
+#, fuzzy
+msgid "Search models and pages"
+msgstr "Cerca modelli e pagine"
+
+#: src/hyperadmin/templates/components/command_palette.html:31
+#, fuzzy
+msgid "Search models and pages…"
+msgstr "Cerca modelli e pagine…"
+
+#: src/hyperadmin/templates/components/command_palette.html:36
+#, fuzzy
+msgid "Results"
+msgstr "Risultati"
+
+#: src/hyperadmin/templates/components/command_palette.html:40
+#, fuzzy
+msgid "move"
+msgstr "sposta"
+
+#: src/hyperadmin/templates/components/command_palette.html:41
+#, fuzzy
+msgid "open"
+msgstr "apri"
+
+#: src/hyperadmin/templates/components/command_palette.html:42
+#, fuzzy
+msgid "new"
+msgstr "nuovo"
+
+#: src/hyperadmin/templates/components/confirm_delete_dialog.html:14
+#, fuzzy, python-format
+msgid "Delete %(name)s?"
+msgstr "Eliminare %(name)s?"
+
+#: src/hyperadmin/templates/components/confirm_delete_dialog.html:18
+#, fuzzy
+msgid "Delete this record?"
+msgstr "Eliminare questo record?"
+
+#: src/hyperadmin/templates/components/confirm_delete_dialog.html:19
+#, fuzzy
+msgid "This cannot be undone."
+msgstr "L’operazione non può essere annullata."
+
+#: src/hyperadmin/templates/components/csrf_reload_banner.html:12
+#, fuzzy
+msgid "This page's security token is out of date"
+msgstr "Il token di sicurezza di questa pagina è scaduto"
+
+#: src/hyperadmin/templates/components/csrf_reload_banner.html:13
+#, fuzzy
+msgid "Reload the page, then try again."
+msgstr "Ricarica la pagina, poi riprova."
+
+#: src/hyperadmin/templates/components/csrf_reload_banner.html:15
+#, fuzzy
+msgid "Reload page"
+msgstr "Ricarica la pagina"
+
+#: src/hyperadmin/templates/components/error_toast.html:8
+#, fuzzy
+msgid "Permission denied"
+msgstr "Autorizzazione negata"
+
+#: src/hyperadmin/templates/components/error_toast.html:9
+#, fuzzy
+msgid "Not found"
+msgstr "Non trovato"
+
+#: src/hyperadmin/templates/components/error_toast.html:10
+#, fuzzy
+msgid "Action refused"
+msgstr "Azione rifiutata"
+
+#: src/hyperadmin/templates/components/error_toast.html:13
+#, fuzzy
+msgid "Your account doesn't have permission for this."
+msgstr "Il tuo account non ha l’autorizzazione per farlo."
+
+#: src/hyperadmin/templates/components/filter_bar.html:28
+#: src/hyperadmin/templates/components/filters/boolean.html:6
+#: src/hyperadmin/templates/components/filters/select.html:6
+#, fuzzy
+msgid "Any"
+msgstr "Tutti"
+
+#: src/hyperadmin/templates/components/filter_bar.html:44
+#, fuzzy
+msgid "Clear all filters"
+msgstr "Cancella tutti i filtri"
+
+#: src/hyperadmin/templates/components/filter_sidebar.html:14
+#, fuzzy
+msgid "Reset"
+msgstr "Reimposta"
+
+#: src/hyperadmin/templates/components/filter_sidebar.html:21
+#, fuzzy
+msgid "Clear all"
+msgstr "Cancella tutto"
+
+#: src/hyperadmin/templates/components/filter_sidebar.html:22
+#, fuzzy
+msgid "Apply filters"
+msgstr "Applica filtri"
+
+#: src/hyperadmin/templates/components/inline_row.html:32
+#: src/hyperadmin/templates/components/table.html:28
+#: src/hyperadmin/templates/components/table_body.html:54
+#, fuzzy
+msgid "Actions"
+msgstr "Azioni"
+
+#: src/hyperadmin/templates/components/inline_row.html:45
+#: src/hyperadmin/templates/widgets/image_input.html:104
+#, fuzzy
+msgid "Remove"
+msgstr "Rimuovi"
+
+#: src/hyperadmin/templates/components/list_error.html:5
+#, fuzzy
+msgid "The list could not be loaded because of a database error."
+msgstr "Impossibile caricare l’elenco a causa di un errore del database."
+
+#: src/hyperadmin/templates/components/list_error.html:7
+#, fuzzy, python-format
+msgid ""
+"The table for this model does not exist yet: run your migrations or "
+"%(cmd)s."
+msgstr ""
+"La tabella di questo modello non esiste ancora: esegui le migrazioni o "
+"%(cmd)s."
+
+#: src/hyperadmin/templates/components/list_error.html:9
+#, fuzzy
+msgid "Check the server logs for details."
+msgstr "Controlla i log del server per i dettagli."
+
+#: src/hyperadmin/templates/components/pagination.html:2
+#, fuzzy
+msgid "Pagination"
+msgstr "Paginazione"
+
+#: src/hyperadmin/templates/components/pagination.html:5
+#, fuzzy, python-format
+msgid "Showing %(start)s to %(end)s of %(total)s results"
+msgstr "Visualizzazione da %(start)s a %(end)s di %(total)s risultati"
+
+#: src/hyperadmin/templates/components/pagination.html:18
+#, fuzzy
+msgid "Previous"
+msgstr "Precedente"
+
+#: src/hyperadmin/templates/components/pagination.html:23
+#, fuzzy, python-format
+msgid "Page %(page)s of %(total_pages)s"
+msgstr "Pagina %(page)s di %(total_pages)s"
+
+#: src/hyperadmin/templates/components/pagination.html:33
+#, fuzzy
+msgid "Next"
+msgstr "Successivo"
+
+#: src/hyperadmin/templates/components/panel_document.html:12
+#, fuzzy
+msgid "Open in new tab"
+msgstr "Apri in una nuova scheda"
+
+#: src/hyperadmin/templates/components/panel_document.html:12
+#, fuzzy
+msgid "(opens a new tab)"
+msgstr "(si apre in una nuova scheda)"
+
+#: src/hyperadmin/templates/components/panel_document.html:15
+#, fuzzy
+msgid "Download"
+msgstr "Scarica"
+
+#: src/hyperadmin/templates/components/panel_document.html:18
+#, fuzzy, python-format
+msgid "%(name)s, preview"
+msgstr "%(name)s, anteprima"
+
+#: src/hyperadmin/templates/components/panel_states.html:17
+#, fuzzy, python-format
+msgid "Loading %(label)s"
+msgstr "Caricamento di %(label)s"
+
+#: src/hyperadmin/templates/components/panel_states.html:18
+#, fuzzy, python-format
+msgid "Open %(label)s"
+msgstr "Apri %(label)s"
+
+#: src/hyperadmin/templates/components/panel_states.html:25
+#, fuzzy, python-format
+msgid "%(label)s didn't load."
+msgstr "Impossibile caricare %(label)s."
+
+#: src/hyperadmin/templates/components/panel_states.html:26
+#, fuzzy
+msgid "The server took too long to answer. The other tabs still work."
+msgstr ""
+"Il server ha impiegato troppo tempo a rispondere. Le altre schede "
+"funzionano ancora."
+
+#: src/hyperadmin/templates/components/panel_states.html:27
+#: src/hyperadmin/templates/permissions/matrix.html:394
+#: src/hyperadmin/templates/widgets/image_input.html:99
+#, fuzzy
+msgid "Retry"
+msgstr "Riprova"
+
+#: src/hyperadmin/templates/components/panel_states.html:32
+#, fuzzy
+msgid "You don't have access to this panel."
+msgstr "Non hai accesso a questo pannello."
+
+#: src/hyperadmin/templates/components/panel_states.html:33
+#, fuzzy, python-format
+msgid "Ask an administrator for the \"%(permission)s\" permission."
+msgstr "Chiedi a un amministratore l’autorizzazione «%(permission)s»."
+
+#: src/hyperadmin/templates/components/panel_tab_strip.html:14
+#, fuzzy, python-format
+msgid "%(name)s sections"
+msgstr "Sezioni di %(name)s"
+
+#: src/hyperadmin/templates/components/panel_tab_strip.html:21
+#, fuzzy
+msgid "Details"
+msgstr "Dettagli"
+
+#: src/hyperadmin/templates/components/presence_banner.html:20
+#, fuzzy, python-brace-format
+msgid "{names} is also viewing this record."
+msgstr "Anche {names} sta visualizzando questo record."
+
+#: src/hyperadmin/templates/components/presence_banner.html:21
+#, fuzzy, python-brace-format
+msgid "{names} are also viewing this record."
+msgstr "Anche {names} stanno visualizzando questo record."
+
+#: src/hyperadmin/templates/components/presence_banner.html:22
+#, fuzzy, python-brace-format
+msgid "{names} is also editing this record."
+msgstr "Anche {names} sta modificando questo record."
+
+#: src/hyperadmin/templates/components/presence_banner.html:23
+#, fuzzy, python-brace-format
+msgid "{names} are also editing this record."
+msgstr "Anche {names} stanno modificando questo record."
+
+#: src/hyperadmin/templates/components/presence_banner.html:24
+#, fuzzy, python-brace-format
+msgid "+{count} more"
+msgstr "+{count} altri"
+
+#: src/hyperadmin/templates/components/saved_views.html:9
+#, fuzzy
+msgid "My views"
+msgstr "Le mie viste"
+
+#: src/hyperadmin/templates/components/saved_views.html:13
+#: src/hyperadmin/templates/components/saved_views.html:25
+#, fuzzy
+msgid "Save view"
+msgstr "Salva vista"
+
+#: src/hyperadmin/templates/components/saved_views.html:20
+#, fuzzy
+msgid "Name"
+msgstr "Nome"
+
+#: src/hyperadmin/templates/components/saved_views.html:34
+#, fuzzy
+msgid "(active)"
+msgstr "(attiva)"
+
+#: src/hyperadmin/templates/components/saved_views.html:37
+#, fuzzy, python-format
+msgid "Actions for view %(name)s"
+msgstr "Azioni per la vista %(name)s"
+
+#: src/hyperadmin/templates/components/saved_views.html:41
+#, fuzzy
+msgid "Delete…"
+msgstr "Elimina…"
+
+#: src/hyperadmin/templates/components/saved_views.html:46
+#, fuzzy, python-format
+msgid "Delete the view “%(name)s”?"
+msgstr "Eliminare la vista «%(name)s»?"
+
+#: src/hyperadmin/templates/components/saved_views.html:47
+#, fuzzy
+msgid "Only the saved filters go. No rows change."
+msgstr "Vengono rimossi solo i filtri salvati. Nessuna riga viene modificata."
+
+#: src/hyperadmin/templates/components/saved_views.html:51
+#, fuzzy
+msgid "Delete view"
+msgstr "Elimina vista"
+
+#: src/hyperadmin/templates/components/saved_views.html:58
+#, fuzzy
+msgid "Save the filters you use often. They show up here, only for you."
+msgstr "Salva i filtri che usi spesso. Compaiono qui, solo per te."
+
+#: src/hyperadmin/templates/components/search_input.html:8
+#, fuzzy
+msgid "Search..."
+msgstr "Cerca..."
+
+#: src/hyperadmin/templates/components/search_input.html:18
+#, fuzzy
+msgid "Searching..."
+msgstr "Ricerca in corso..."
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:15
+#, fuzzy
+msgid "General"
+msgstr "Generale"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:17
+#, fuzzy
+msgid "Form"
+msgstr "Modulo"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:18
+#, fuzzy
+msgid "Show keyboard shortcuts"
+msgstr "Mostra le scorciatoie da tastiera"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:20
+#, fuzzy
+msgid "Focus search"
+msgstr "Vai alla ricerca"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:21
+#, fuzzy
+msgid "Next row"
+msgstr "Riga successiva"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:22
+#, fuzzy
+msgid "Previous row"
+msgstr "Riga precedente"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:23
+#, fuzzy
+msgid "Select row"
+msgstr "Seleziona riga"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:24
+#, fuzzy
+msgid "Create new"
+msgstr "Crea nuovo"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:26
+#, fuzzy
+msgid "or"
+msgstr "o"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:32
+#, fuzzy
+msgid "Keyboard shortcuts"
+msgstr "Scorciatoie da tastiera"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:42
+#, fuzzy
+msgid "Single-key shortcuts"
+msgstr "Scorciatoie a tasto singolo"
+
+#: src/hyperadmin/templates/components/table.html:11
+#, fuzzy, python-format
+msgid "%(model_name)s list"
+msgstr "Elenco %(model_name)s"
+
+#: src/hyperadmin/templates/components/table.html:18
+#, fuzzy
+msgid "Select all rows on this page"
+msgstr "Seleziona tutte le righe di questa pagina"
+
+#: src/hyperadmin/templates/components/table_body.html:23
+#, fuzzy
+msgid "Select"
+msgstr "Seleziona"
+
+#: src/hyperadmin/templates/components/table_body.html:27
+#, fuzzy, python-format
+msgid "Select %(pk)s"
+msgstr "Seleziona %(pk)s"
+
+#: src/hyperadmin/templates/components/table_body.html:59
+#, fuzzy, python-format
+msgid "Delete %(name)s"
+msgstr "Elimina %(name)s"
+
+#: src/hyperadmin/templates/components/table_body.html:68
+#, fuzzy, python-format
+msgid "Open %(name)s"
+msgstr "Apri %(name)s"
+
+#: src/hyperadmin/templates/components/toast.html:19
+#, fuzzy, python-brace-format
+msgid "{actor} changed {count} {model}"
+msgid_plural "{actor} changed {count} {model}"
+msgstr[0] "{actor} ha modificato {count} {model}"
+msgstr[1] "{actor} ha modificato {count} {model}"
+
+#: src/hyperadmin/templates/components/toast.html:20
+#, fuzzy, python-brace-format
+msgid "{count} person"
+msgid_plural "{count} people"
+msgstr[0] "{count} persona"
+msgstr[1] "{count} persone"
+
+#: src/hyperadmin/templates/components/toast.html:30
+#, fuzzy, python-brace-format
+msgid "{actor} created {model} #{pk}"
+msgstr "{actor} ha creato {model} #{pk}"
+
+#: src/hyperadmin/templates/components/toast.html:31
+#, fuzzy, python-brace-format
+msgid "{actor} deleted {model} #{pk}"
+msgstr "{actor} ha eliminato {model} #{pk}"
+
+#: src/hyperadmin/templates/components/toast.html:32
+#, fuzzy
+msgid "Someone"
+msgstr "Qualcuno"
+
+#: src/hyperadmin/templates/components/toast.html:33
+#, fuzzy
+msgid "List changed: refresh"
+msgstr "Elenco modificato: aggiorna"
+
+#: src/hyperadmin/templates/components/filters/boolean.html:7
+#, fuzzy
+msgid "Yes"
+msgstr "Sì"
+
+#: src/hyperadmin/templates/components/filters/boolean.html:8
+#, fuzzy
+msgid "No"
+msgstr "No"
+
+#: src/hyperadmin/templates/components/filters/current_period.html:6
+#, fuzzy, python-format
+msgid "Showing %(period)s by default."
+msgstr "Per impostazione predefinita viene mostrato %(period)s."
+
+#: src/hyperadmin/templates/components/filters/current_period.html:6
+#, fuzzy
+msgid "Show all dates"
+msgstr "Mostra tutte le date"
+
+#: src/hyperadmin/templates/components/filters/date_range.html:5
+#: src/hyperadmin/templates/components/filters/multi_choice.html:4
+#: src/hyperadmin/templates/components/filters/multi_relation.html:5
+#: src/hyperadmin/templates/components/filters/select.html:4
+#, fuzzy
+msgid "Clear"
+msgstr "Cancella"
+
+#: src/hyperadmin/templates/components/filters/date_range.html:7
+#, fuzzy
+msgid "quick ranges"
+msgstr "intervalli rapidi"
+
+#: src/hyperadmin/templates/components/filters/date_range.html:15
+#, fuzzy
+msgid "From"
+msgstr "Da"
+
+#: src/hyperadmin/templates/components/filters/date_range.html:19
+#, fuzzy
+msgid "To"
+msgstr "A"
+
+#: src/hyperadmin/templates/components/filters/is_owner.html:3
+#, fuzzy
+msgid "Owner"
+msgstr "Proprietario"
+
+#: src/hyperadmin/templates/components/filters/multi_relation.html:5
+#, fuzzy, python-format
+msgid "%(num)d selected"
+msgid_plural "%(num)d selected"
+msgstr[0] "%(num)d selezionato"
+msgstr[1] "%(num)d selezionati"
+
+#: src/hyperadmin/templates/components/filters/multi_relation.html:9
+#: src/hyperadmin/templates/widgets/autocomplete.html:24
+#, fuzzy, python-format
+msgid "Search %(label)s"
+msgstr "Cerca %(label)s"
+
+#: src/hyperadmin/templates/components/filters/multi_relation.html:18
+#, fuzzy, python-format
+msgid "Show %(num)d more"
+msgid_plural "Show %(num)d more"
+msgstr[0] "Mostra altri %(num)d"
+msgstr[1] "Mostra altri %(num)d"
+
+#: src/hyperadmin/templates/permissions/_banner.html:13
+#, fuzzy
+msgid "Permissions saved"
+msgstr "Autorizzazioni salvate"
+
+#: src/hyperadmin/templates/permissions/_banner.html:14
+#, fuzzy
+msgid "change"
+msgstr "modifica"
+
+#: src/hyperadmin/templates/permissions/_banner.html:14
+#, fuzzy
+msgid "changes"
+msgstr "modifiche"
+
+#: src/hyperadmin/templates/permissions/_banner.html:22
+#, fuzzy
+msgid "Permissions changed elsewhere."
+msgstr "Le autorizzazioni sono state modificate altrove."
+
+#: src/hyperadmin/templates/permissions/_banner.html:23
+#, fuzzy
+msgid ""
+"Reload to see the latest. Nothing was saved; your changes are still on "
+"the page."
+msgstr ""
+"Ricarica per vedere la versione più recente. Non è stato salvato nulla; "
+"le tue modifiche sono ancora nella pagina."
+
+#: src/hyperadmin/templates/permissions/_banner.html:27
+#, fuzzy
+msgid "Reload"
+msgstr "Ricarica"
+
+#: src/hyperadmin/templates/permissions/_banner.html:35
+#, fuzzy
+msgid "change wasn’t saved."
+msgstr "modifica non è stata salvata."
+
+#: src/hyperadmin/templates/permissions/_banner.html:35
+#, fuzzy
+msgid "changes weren’t saved."
+msgstr "modifiche non sono state salvate."
+
+#: src/hyperadmin/templates/permissions/_banner.html:36
+#, fuzzy
+msgid "You can only grant permissions you have yourself:"
+msgstr "Puoi concedere solo le autorizzazioni che possiedi:"
+
+#: src/hyperadmin/templates/permissions/_banner.html:42
+#, fuzzy
+msgid ""
+"Nothing was saved. Untick them, or ask for those permissions, then save "
+"again."
+msgstr ""
+"Non è stato salvato nulla. Deselezionale o richiedi quelle "
+"autorizzazioni, poi salva di nuovo."
+
+#: src/hyperadmin/templates/permissions/_banner.html:51
+#, fuzzy
+msgid "Save failed"
+msgstr "Salvataggio non riuscito"
+
+#: src/hyperadmin/templates/permissions/_banner.html:52
+#, fuzzy
+msgid "Nothing was saved; try again."
+msgstr "Non è stato salvato nulla; riprova."
+
+#: src/hyperadmin/templates/permissions/_group_gone.html:7
+#, fuzzy
+msgid "This group no longer exists"
+msgstr "Questo gruppo non esiste più"
+
+#: src/hyperadmin/templates/permissions/_group_gone.html:8
+#, fuzzy
+msgid "Someone deleted it while you were editing. Nothing was saved."
+msgstr ""
+"Qualcuno lo ha eliminato mentre lo stavi modificando. Non è stato salvato"
+" nulla."
+
+#: src/hyperadmin/templates/permissions/_group_gone.html:10
+#, fuzzy
+msgid "Choose another group"
+msgstr "Scegli un altro gruppo"
+
+#: src/hyperadmin/templates/permissions/_macros.html:20
+#: src/hyperadmin/templates/permissions/matrix.html:346
+#: src/hyperadmin/templates/permissions/object_popover.html:61
+#, fuzzy
+msgid "Add"
+msgstr "Aggiungi"
+
+#: src/hyperadmin/templates/permissions/_macros.html:20
+#, fuzzy
+msgid "Change"
 msgstr "Modifica"
 
-#: src/hyperadmin/templates/components/table.html:27
+#: src/hyperadmin/templates/permissions/matrix.html:11
+#: src/hyperadmin/templates/permissions/matrix.html:228
 #, fuzzy
-msgid "Are you sure you want to delete this item?"
-msgstr "Sei sicuro di voler eliminare questo elemento?"
+msgid "Permission matrix"
+msgstr "Matrice delle autorizzazioni"
 
-#: src/hyperadmin/templates/components/table.html:32
+#: src/hyperadmin/templates/permissions/matrix.html:222
 #, fuzzy
-msgid "Delete"
-msgstr "Elimina"
+msgid "unsaved change"
+msgstr "modifica non salvata"
+
+#: src/hyperadmin/templates/permissions/matrix.html:222
+#: src/hyperadmin/templates/permissions/matrix.html:368
+#, fuzzy
+msgid "unsaved changes"
+msgstr "modifiche non salvate"
+
+#: src/hyperadmin/templates/permissions/matrix.html:223
+#: src/hyperadmin/templates/permissions/matrix.html:342
+#, fuzzy
+msgid "rule"
+msgstr "regola"
+
+#: src/hyperadmin/templates/permissions/matrix.html:223
+#: src/hyperadmin/templates/permissions/matrix.html:342
+#, fuzzy
+msgid "rules"
+msgstr "regole"
+
+#: src/hyperadmin/templates/permissions/matrix.html:224
+#: src/hyperadmin/templates/permissions/matrix.html:343
+#, fuzzy
+msgid "for"
+msgstr "per"
+
+#: src/hyperadmin/templates/permissions/matrix.html:225
+#: src/hyperadmin/templates/permissions/matrix.html:244
+#, fuzzy, python-format
+msgid "Changes apply to everyone in %(group)s."
+msgstr "Le modifiche valgono per tutti i membri di %(group)s."
+
+#: src/hyperadmin/templates/permissions/matrix.html:226
+#, fuzzy
+msgid "You have unsaved changes. Switch group and lose them?"
+msgstr "Ci sono modifiche non salvate. Cambiare gruppo e perderle?"
+
+#: src/hyperadmin/templates/permissions/matrix.html:234
+#, fuzzy
+msgid "Group"
+msgstr "Gruppo"
+
+#: src/hyperadmin/templates/permissions/matrix.html:247
+#, fuzzy
+msgid "Show group"
+msgstr "Mostra gruppo"
+
+#: src/hyperadmin/templates/permissions/matrix.html:262
+#, fuzzy
+msgid "No groups yet"
+msgstr "Ancora nessun gruppo"
+
+#: src/hyperadmin/templates/permissions/matrix.html:263
+#, fuzzy
+msgid "Create a group first; its permissions show up here."
+msgstr "Crea prima un gruppo; le sue autorizzazioni compariranno qui."
+
+#: src/hyperadmin/templates/permissions/matrix.html:270
+#, fuzzy
+msgid "No registered models"
+msgstr "Nessun modello registrato"
+
+#: src/hyperadmin/templates/permissions/matrix.html:271
+#, fuzzy
+msgid "Register a ModelAdmin and its permissions show up here."
+msgstr "Registra un ModelAdmin e le sue autorizzazioni compariranno qui."
+
+#: src/hyperadmin/templates/permissions/matrix.html:279
+#, fuzzy, python-format
+msgid "Permissions of the group %(group)s"
+msgstr "Autorizzazioni del gruppo %(group)s"
+
+#: src/hyperadmin/templates/permissions/matrix.html:282
+#, fuzzy
+msgid "Model"
+msgstr "Modello"
+
+#: src/hyperadmin/templates/permissions/matrix.html:288
+#, fuzzy, python-format
+msgid "%(group)s can %(action)s every model"
+msgstr "%(group)s può %(action)s ogni modello"
+
+#: src/hyperadmin/templates/permissions/matrix.html:295
+#: src/hyperadmin/templates/permissions/matrix.html:379
+#: src/hyperadmin/templates/permissions/matrix.html:390
+#: src/hyperadmin/templates/permissions/object_popover.html:14
+#: src/hyperadmin/templates/permissions/object_popover.html:21
+#, fuzzy
+msgid "Object rules"
+msgstr "Regole per oggetto"
+
+#: src/hyperadmin/templates/permissions/matrix.html:316
+#, fuzzy, python-format
+msgid "%(group)s can %(action)s %(model)s"
+msgstr "%(group)s può %(action)s %(model)s"
+
+#: src/hyperadmin/templates/permissions/matrix.html:317
+#, fuzzy
+msgid "unsaved"
+msgstr "non salvata"
+
+#: src/hyperadmin/templates/permissions/matrix.html:323
+#, fuzzy
+msgid "Not saved: you don’t have this permission yourself"
+msgstr "Non salvato: non hai questa autorizzazione"
+
+#: src/hyperadmin/templates/permissions/matrix.html:327
+#, fuzzy, python-format
+msgid "%(action)s does not apply to %(model)s"
+msgstr "%(action)s non si applica a %(model)s"
+
+#: src/hyperadmin/templates/permissions/matrix.html:347
+#, fuzzy
+msgid "object rule for"
+msgstr "regola per oggetto per"
+
+#: src/hyperadmin/templates/permissions/matrix.html:360
+#, fuzzy, python-format
+msgid "Permissions of %(group)s"
+msgstr "Autorizzazioni di %(group)s"
+
+#: src/hyperadmin/templates/permissions/matrix.html:365
+#, fuzzy
+msgid "Unsaved changes"
+msgstr "Modifiche non salvate"
+
+#: src/hyperadmin/templates/permissions/matrix.html:370
+#, fuzzy
+msgid "Discard"
+msgstr "Scarta"
+
+#: src/hyperadmin/templates/permissions/matrix.html:371
+#, fuzzy
+msgid "Save changes"
+msgstr "Salva le modifiche"
+
+#: src/hyperadmin/templates/permissions/matrix.html:384
+#, fuzzy
+msgid "Loading object rules"
+msgstr "Caricamento delle regole per oggetto"
+
+#: src/hyperadmin/templates/permissions/matrix.html:393
+#, fuzzy
+msgid "Couldn’t load the rules."
+msgstr "Impossibile caricare le regole."
+
+#: src/hyperadmin/templates/permissions/object_popover.html:16
+#, fuzzy
+msgid "Close object rules"
+msgstr "Chiudi le regole per oggetto"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:35
+#, fuzzy, python-format
+msgid "Remove rule for %(record)s"
+msgstr "Rimuovi la regola per %(record)s"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:41
+#, fuzzy
+msgid "No object rules. Group permissions apply."
+msgstr "Nessuna regola per oggetto. Valgono le autorizzazioni del gruppo."
+
+#: src/hyperadmin/templates/permissions/object_popover.html:45
+#, fuzzy
+msgid "Add object rule"
+msgstr "Aggiungi regola per oggetto"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:49
+#, fuzzy
+msgid "Record"
+msgstr "Record"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:54
+#, fuzzy
+msgid "Action"
+msgstr "Azione"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:67
+#: src/hyperadmin/templates/permissions/object_popover.html:69
+#, fuzzy
+msgid "Rule for"
+msgstr "Regola per"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:67
+#, fuzzy
+msgid "added."
+msgstr "aggiunta."
+
+#: src/hyperadmin/templates/permissions/object_popover.html:69
+#, fuzzy
+msgid "removed."
+msgstr "rimossa."
+
+#: src/hyperadmin/templates/permissions/object_popover.html:76
+#, fuzzy
+msgid "Undo"
+msgstr "Annulla"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:80
+#, fuzzy
+msgid "You can only grant permissions you have yourself."
+msgstr "Puoi concedere solo le autorizzazioni che possiedi."
+
+#: src/hyperadmin/templates/permissions/object_popover.html:82
+#, fuzzy
+msgid "No change."
+msgstr "Nessuna modifica."
+
+#: src/hyperadmin/templates/permissions/object_popover.html:88
+#, fuzzy
+msgid "Saved as you go. Group permissions still apply."
+msgstr "Salvataggio immediato. Le autorizzazioni del gruppo continuano a valere."
+
+#: src/hyperadmin/templates/permissions/object_popover.html:92
+#, fuzzy
+msgid "Add rule"
+msgstr "Aggiungi regola"
+
+#: src/hyperadmin/templates/widgets/autocomplete.html:21
+#, fuzzy, python-format
+msgid "Choose a %(parent)s first"
+msgstr "Scegli prima %(parent)s"
+
+#: src/hyperadmin/templates/widgets/autocomplete.html:30
+#, fuzzy
+msgid "Searching"
+msgstr "Ricerca in corso"
+
+#: src/hyperadmin/templates/widgets/autocomplete.html:60
+#, fuzzy, python-format
+msgid "Clear %(label)s"
+msgstr "Cancella %(label)s"
+
+#: src/hyperadmin/templates/widgets/autocomplete.html:83
+#, fuzzy, python-format
+msgid "Add %(label)s"
+msgstr "Aggiungi %(label)s"
+
+#: src/hyperadmin/templates/widgets/autocomplete.html:94
+#: src/hyperadmin/templates/widgets/autocomplete.html:97
+#, fuzzy, python-format
+msgid "Pick the %(parent)s above to list its %(label)s options."
+msgstr "Scegli %(parent)s qui sopra per vedere le opzioni di %(label)s."
+
+#: src/hyperadmin/templates/widgets/autocomplete.html:95
+#, fuzzy, python-format
+msgid "Cleared because the %(parent)s changed."
+msgstr "Cancellato perché %(parent)s è cambiato."
+
+#: src/hyperadmin/templates/widgets/autocomplete.html:96
+#, fuzzy, python-format
+msgid "%(label)s cleared because the %(parent)s changed"
+msgstr "%(label)s cancellato perché %(parent)s è cambiato"
+
+#: src/hyperadmin/templates/widgets/datetime_input.html:16
+#, fuzzy, python-format
+msgid "Time zone: %(tz)s"
+msgstr "Fuso orario: %(tz)s"
+
+#: src/hyperadmin/templates/widgets/image_input.html:19
+#, fuzzy
+msgid "Only one file allowed"
+msgstr "È consentito un solo file"
+
+#: src/hyperadmin/templates/widgets/image_input.html:21
+#, fuzzy
+msgid "File type not allowed"
+msgstr "Tipo di file non consentito"
+
+#: src/hyperadmin/templates/widgets/image_input.html:74
+#: src/hyperadmin/templates/widgets/image_input.html:85
+#, fuzzy
+msgid "Release to upload"
+msgstr "Rilascia per caricare"
+
+#: src/hyperadmin/templates/widgets/image_input.html:74
+#, fuzzy
+msgid "Drop image here or click to select"
+msgstr "Trascina qui un’immagine o fai clic per selezionarla"
+
+#: src/hyperadmin/templates/widgets/image_input.html:92
+#, fuzzy
+msgid "Uploading"
+msgstr "Caricamento"
+
+#: src/hyperadmin/templates/widgets/image_input.html:98
+#, fuzzy
+msgid "Upload failed — check your connection"
+msgstr "Caricamento non riuscito: controlla la connessione"
+
+#: src/hyperadmin/templates/widgets/image_input.html:103
+#, fuzzy
+msgid "Selected image preview"
+msgstr "Anteprima dell’immagine selezionata"
+
+#: src/hyperadmin/templates/widgets/popup_form.html:29
+#, fuzzy, python-format
+msgid "Add %(model)s"
+msgstr "Aggiungi %(model)s"
+
+#: src/hyperadmin/templates/widgets/popup_form.html:30
+#, fuzzy, python-format
+msgid "Saving selects it in the %(field)s field."
+msgstr "Salvando, verrà selezionato nel campo %(field)s."
+
+#: src/hyperadmin/templates/widgets/popup_form.html:61
+#, fuzzy
+msgid "Save and select"
+msgstr "Salva e seleziona"
+
+#: src/hyperadmin/views/forms.py:52
+#, fuzzy
+msgid "Invalid primary key."
+msgstr "Chiave primaria non valida."
+
+#: src/hyperadmin/views/forms.py:55
+#, fuzzy
+msgid "Enter a valid date/time"
+msgstr "Inserisci una data e ora valida"
+
+#: src/hyperadmin/views/nav_pins.py:110
+#, fuzzy
+msgid "Pins need a signed-in user"
+msgstr "Per fissare le pagine devi aver effettuato l’accesso"
+
+#: src/hyperadmin/views/nav_pins.py:126
+#, fuzzy, python-format
+msgid "You can pin up to %(count)s pages"
+msgstr "Puoi fissare fino a %(count)s pagine"
 
 #: src/hyperadmin/views/static.py:12
 #, fuzzy
@@ -287,3 +2025,7 @@ msgstr "Elemento creato con successo"
 #, fuzzy
 msgid "Item updated successfully"
 msgstr "Elemento aggiornato con successo"
+
+#~ msgid "Are you sure you want to delete this item?"
+#~ msgstr "Sei sicuro di voler eliminare questo elemento?"
+

@@ -7,271 +7,2046 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-05-03 15:06+0200\n"
+"POT-Creation-Date: 2026-11-06 19:09+0100\n"
 "PO-Revision-Date: 2026-05-05 12:00+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ar\n"
 "Language-Team: ar <LL@li.org>\n"
-"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
+"Plural-Forms: nplurals=6; plural=(n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : "
+"n%100>=3 && n%100<=10 ? 3 : n%100>=11 ? 4 : 5);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
+#: src/hyperadmin/auth/views.py:91
+#, fuzzy
+msgid "Could not send verification code. Please try again."
+msgstr "تعذّر إرسال رمز التحقق. يُرجى المحاولة مرة أخرى."
 
-#: src/hyperadmin/templates/_messages.html:3
+#: src/hyperadmin/auth/views.py:248 src/hyperadmin/auth/views.py:256
+#, fuzzy
+msgid "Code expired, please request a new one."
+msgstr "انتهت صلاحية الرمز، يُرجى طلب رمز جديد."
+
+#: src/hyperadmin/auth/views.py:271 src/hyperadmin/auth/views.py:471
+#: src/hyperadmin/auth/views.py:539
+#, fuzzy
+msgid "Invalid code."
+msgstr "رمز غير صالح."
+
+#: src/hyperadmin/auth/views.py:304 src/hyperadmin/auth/views.py:443
+#: src/hyperadmin/auth/views.py:518
+#, fuzzy
+msgid "Too many attempts, try again later."
+msgstr "محاولات كثيرة جدًا، حاول مرة أخرى لاحقًا."
+
+#: src/hyperadmin/auth/views.py:311
+#, fuzzy
+msgid "A new code has been sent to your email."
+msgstr "تم إرسال رمز جديد إلى بريدك الإلكتروني."
+
+#: src/hyperadmin/auth/views.py:455
+#, fuzzy
+msgid "No active MFA enable flow. Please try again."
+msgstr ""
+"لا توجد عملية نشطة لتفعيل المصادقة متعددة العوامل. يُرجى المحاولة مرة "
+"أخرى."
+
+#: src/hyperadmin/auth/views.py:483
+#, fuzzy
+msgid "Two-factor authentication enabled."
+msgstr "تم تفعيل المصادقة الثنائية."
+
+#: src/hyperadmin/auth/views.py:528
+#, fuzzy
+msgid "No active MFA disable flow. Please try again."
+msgstr ""
+"لا توجد عملية نشطة لتعطيل المصادقة متعددة العوامل. يُرجى المحاولة مرة "
+"أخرى."
+
+#: src/hyperadmin/auth/views.py:549
+#, fuzzy
+msgid "Two-factor authentication disabled."
+msgstr "تم تعطيل المصادقة الثنائية."
+
+#: src/hyperadmin/core/navigation.py:32
+#, fuzzy
+msgid "Plugins"
+msgstr "الإضافات"
+
+#: src/hyperadmin/core/navigation.py:35
+#, fuzzy
+msgid "Access"
+msgstr "الوصول"
+
+#: src/hyperadmin/core/palette.py:87
+#, fuzzy, python-format
+msgid "New %(name)s"
+msgstr "%(name)s جديد"
+
+#: src/hyperadmin/i18n/validation_messages.py:44
+#, fuzzy
+msgid "Field required"
+msgstr "حقل مطلوب"
+
+#: src/hyperadmin/i18n/validation_messages.py:45
+#, fuzzy
+msgid "Input should be a valid string"
+msgstr "يجب أن تكون القيمة سلسلة نصية صالحة"
+
+#: src/hyperadmin/i18n/validation_messages.py:46
+#, fuzzy, python-format
+msgid "String should match pattern '%(pattern)s'"
+msgstr "يجب أن تطابق السلسلة النمط '%(pattern)s'"
+
+#: src/hyperadmin/i18n/validation_messages.py:47
+#, fuzzy, python-format
+msgid "Input should be greater than %(gt)s"
+msgstr "يجب أن تكون القيمة أكبر من %(gt)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:48
+#, fuzzy, python-format
+msgid "Input should be greater than or equal to %(ge)s"
+msgstr "يجب أن تكون القيمة أكبر من %(ge)s أو تساويها"
+
+#: src/hyperadmin/i18n/validation_messages.py:49
+#, fuzzy, python-format
+msgid "Input should be less than %(lt)s"
+msgstr "يجب أن تكون القيمة أصغر من %(lt)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:50
+#, fuzzy, python-format
+msgid "Input should be less than or equal to %(le)s"
+msgstr "يجب أن تكون القيمة أصغر من %(le)s أو تساويها"
+
+#: src/hyperadmin/i18n/validation_messages.py:51
+#, fuzzy, python-format
+msgid "Input should be a multiple of %(multiple_of)s"
+msgstr "يجب أن تكون القيمة من مضاعفات %(multiple_of)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:52
+#, fuzzy
+msgid "Input should be a valid integer"
+msgstr "يجب أن تكون القيمة عددًا صحيحًا صالحًا"
+
+#: src/hyperadmin/i18n/validation_messages.py:54
+#, fuzzy
+msgid "Input should be a valid integer, unable to parse string as an integer"
+msgstr "يجب أن تكون القيمة عددًا صحيحًا صالحًا، تعذّر تحليل السلسلة كعدد صحيح"
+
+#: src/hyperadmin/i18n/validation_messages.py:57
+#, fuzzy
+msgid "Input should be a valid integer, got a number with a fractional part"
+msgstr "يجب أن تكون القيمة عددًا صحيحًا صالحًا، تم استلام عدد يحتوي على كسر"
+
+#: src/hyperadmin/i18n/validation_messages.py:59
+#, fuzzy
+msgid "Input should be a valid number"
+msgstr "يجب أن تكون القيمة رقمًا صالحًا"
+
+#: src/hyperadmin/i18n/validation_messages.py:61
+#, fuzzy
+msgid "Input should be a valid number, unable to parse string as a number"
+msgstr "يجب أن تكون القيمة رقمًا صالحًا، تعذّر تحليل السلسلة كرقم"
+
+#: src/hyperadmin/i18n/validation_messages.py:63
+#, fuzzy
+msgid "Input should be a valid boolean"
+msgstr "يجب أن تكون القيمة قيمة منطقية صالحة"
+
+#: src/hyperadmin/i18n/validation_messages.py:64
+#, fuzzy
+msgid "Input should be a valid boolean, unable to interpret input"
+msgstr "يجب أن تكون القيمة قيمة منطقية صالحة، تعذّر تفسير الإدخال"
+
+#: src/hyperadmin/i18n/validation_messages.py:65
+#, fuzzy
+msgid "Input should be a valid decimal"
+msgstr "يجب أن تكون القيمة رقمًا عشريًا صالحًا"
+
+#: src/hyperadmin/i18n/validation_messages.py:67
+#, fuzzy, python-format
+msgid "Input should be a valid date in the format YYYY-MM-DD, %(error)s"
+msgstr "يجب أن تكون القيمة تاريخًا صالحًا بالتنسيق YYYY-MM-DD، %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:70
+#, fuzzy, python-format
+msgid "Input should be a valid date or datetime, %(error)s"
+msgstr "يجب أن تكون القيمة تاريخًا أو تاريخًا ووقتًا صالحًا، %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:72
+#, fuzzy, python-format
+msgid "Input should be a valid datetime, %(error)s"
+msgstr "يجب أن تكون القيمة تاريخًا ووقتًا صالحًا، %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:74
+#, fuzzy, python-format
+msgid "Input should be a valid datetime or date, %(error)s"
+msgstr "يجب أن تكون القيمة تاريخًا ووقتًا أو تاريخًا صالحًا، %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:76
+#, fuzzy, python-format
+msgid "Input should be in a valid time format, %(error)s"
+msgstr "يجب أن تكون القيمة بتنسيق وقت صالح، %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:77
+#, fuzzy, python-format
+msgid "Input should be a valid UUID, %(error)s"
+msgstr "يجب أن تكون القيمة UUID صالحًا، %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:78
+#: src/hyperadmin/i18n/validation_messages.py:79
+#, fuzzy, python-format
+msgid "Input should be %(expected)s"
+msgstr "يجب أن تكون القيمة %(expected)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:80
+#, fuzzy, python-format
+msgid "Input should be a valid URL, %(error)s"
+msgstr "يجب أن تكون القيمة عنوان URL صالحًا، %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:81
+#, fuzzy, python-format
+msgid "Invalid JSON: %(error)s"
+msgstr "JSON غير صالح: %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:82
+#, fuzzy, python-format
+msgid "Value error, %(error)s"
+msgstr "خطأ في القيمة، %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:83
+#, fuzzy, python-format
+msgid "Assertion failed, %(error)s"
+msgstr "فشل التحقق، %(error)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:89
+#, fuzzy, python-format
+msgid "String should have at least %(min_length)s character"
+msgid_plural "String should have at least %(min_length)s characters"
+msgstr[0] "يجب ألا تقل السلسلة عن %(min_length)s حرف"
+msgstr[1] "يجب ألا تقل السلسلة عن حرف واحد (%(min_length)s)"
+msgstr[2] "يجب ألا تقل السلسلة عن حرفين (%(min_length)s)"
+msgstr[3] "يجب ألا تقل السلسلة عن %(min_length)s أحرف"
+msgstr[4] "يجب ألا تقل السلسلة عن %(min_length)s حرفًا"
+msgstr[5] "يجب ألا تقل السلسلة عن %(min_length)s حرف"
+
+#: src/hyperadmin/i18n/validation_messages.py:96
+#, fuzzy, python-format
+msgid "String should have at most %(max_length)s character"
+msgid_plural "String should have at most %(max_length)s characters"
+msgstr[0] "يجب ألا تزيد السلسلة على %(max_length)s حرف"
+msgstr[1] "يجب ألا تزيد السلسلة على حرف واحد (%(max_length)s)"
+msgstr[2] "يجب ألا تزيد السلسلة على حرفين (%(max_length)s)"
+msgstr[3] "يجب ألا تزيد السلسلة على %(max_length)s أحرف"
+msgstr[4] "يجب ألا تزيد السلسلة على %(max_length)s حرفًا"
+msgstr[5] "يجب ألا تزيد السلسلة على %(max_length)s حرف"
+
+#: src/hyperadmin/i18n/validation_messages.py:103
+#, fuzzy, python-format
+msgid ""
+"%(field_type)s should have at least %(min_length)s item after validation,"
+" not %(actual_length)s"
+msgid_plural ""
+"%(field_type)s should have at least %(min_length)s items after "
+"validation, not %(actual_length)s"
+msgstr[0] ""
+"يجب أن يحتوي %(field_type)s بعد التحقق على %(min_length)s عنصر على الأقل،"
+" وليس %(actual_length)s"
+msgstr[1] ""
+"يجب أن يحتوي %(field_type)s بعد التحقق على عنصر واحد (%(min_length)s) على"
+" الأقل، وليس %(actual_length)s"
+msgstr[2] ""
+"يجب أن يحتوي %(field_type)s بعد التحقق على عنصرين (%(min_length)s) على "
+"الأقل، وليس %(actual_length)s"
+msgstr[3] ""
+"يجب أن يحتوي %(field_type)s بعد التحقق على %(min_length)s عناصر على "
+"الأقل، وليس %(actual_length)s"
+msgstr[4] ""
+"يجب أن يحتوي %(field_type)s بعد التحقق على %(min_length)s عنصرًا على "
+"الأقل، وليس %(actual_length)s"
+msgstr[5] ""
+"يجب أن يحتوي %(field_type)s بعد التحقق على %(min_length)s عنصر على الأقل،"
+" وليس %(actual_length)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:110
+#, fuzzy, python-format
+msgid ""
+"%(field_type)s should have at most %(max_length)s item after validation, "
+"not %(actual_length)s"
+msgid_plural ""
+"%(field_type)s should have at most %(max_length)s items after validation,"
+" not %(actual_length)s"
+msgstr[0] ""
+"يجب ألا يحتوي %(field_type)s بعد التحقق على أكثر من %(max_length)s عنصر، "
+"وليس %(actual_length)s"
+msgstr[1] ""
+"يجب ألا يحتوي %(field_type)s بعد التحقق على أكثر من عنصر واحد "
+"(%(max_length)s)، وليس %(actual_length)s"
+msgstr[2] ""
+"يجب ألا يحتوي %(field_type)s بعد التحقق على أكثر من عنصرين "
+"(%(max_length)s)، وليس %(actual_length)s"
+msgstr[3] ""
+"يجب ألا يحتوي %(field_type)s بعد التحقق على أكثر من %(max_length)s عناصر،"
+" وليس %(actual_length)s"
+msgstr[4] ""
+"يجب ألا يحتوي %(field_type)s بعد التحقق على أكثر من %(max_length)s "
+"عنصرًا، وليس %(actual_length)s"
+msgstr[5] ""
+"يجب ألا يحتوي %(field_type)s بعد التحقق على أكثر من %(max_length)s عنصر، "
+"وليس %(actual_length)s"
+
+#: src/hyperadmin/i18n/validation_messages.py:119
+#, fuzzy, python-format
+msgid ""
+"%(field_type)s should have at most %(max_length)s item after validation, "
+"not more"
+msgid_plural ""
+"%(field_type)s should have at most %(max_length)s items after validation,"
+" not more"
+msgstr[0] "يجب ألا يحتوي %(field_type)s بعد التحقق على أكثر من %(max_length)s عنصر"
+msgstr[1] ""
+"يجب ألا يحتوي %(field_type)s بعد التحقق على أكثر من عنصر واحد "
+"(%(max_length)s)"
+msgstr[2] ""
+"يجب ألا يحتوي %(field_type)s بعد التحقق على أكثر من عنصرين "
+"(%(max_length)s)"
+msgstr[3] "يجب ألا يحتوي %(field_type)s بعد التحقق على أكثر من %(max_length)s عناصر"
+msgstr[4] "يجب ألا يحتوي %(field_type)s بعد التحقق على أكثر من %(max_length)s عنصرًا"
+msgstr[5] "يجب ألا يحتوي %(field_type)s بعد التحقق على أكثر من %(max_length)s عنصر"
+
+#: src/hyperadmin/i18n/validation_messages.py:125
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:16
+#: src/hyperadmin/templates/list_layout.html:8
+#, fuzzy
+msgid "List"
+msgstr "القائمة"
+
+#: src/hyperadmin/i18n/validation_messages.py:126
+#, fuzzy
+msgid "Tuple"
+msgstr "صف مرتب (Tuple)"
+
+#: src/hyperadmin/i18n/validation_messages.py:127
+#, fuzzy
+msgid "Set"
+msgstr "مجموعة"
+
+#: src/hyperadmin/i18n/validation_messages.py:128
+#, fuzzy
+msgid "Frozenset"
+msgstr "مجموعة ثابتة"
+
+#: src/hyperadmin/i18n/validation_messages.py:129
+#, fuzzy
+msgid "Dictionary"
+msgstr "قاموس"
+
+#: src/hyperadmin/i18n/validation_messages.py:136
+#, fuzzy
+msgid "input is too short"
+msgstr "الإدخال قصير جدًا"
+
+#: src/hyperadmin/i18n/validation_messages.py:137
+#, fuzzy
+msgid "unexpected extra characters at the end of the input"
+msgstr "أحرف إضافية غير متوقعة في نهاية الإدخال"
+
+#: src/hyperadmin/i18n/validation_messages.py:138
+#, fuzzy
+msgid "invalid datetime separator, expected `T`, `t`, `_` or space"
+msgstr "فاصل التاريخ والوقت غير صالح، المتوقع `T` أو `t` أو `_` أو مسافة"
+
+#: src/hyperadmin/i18n/validation_messages.py:139
+#, fuzzy
+msgid "invalid date separator, expected `-`"
+msgstr "فاصل التاريخ غير صالح، المتوقع `-`"
+
+#: src/hyperadmin/i18n/validation_messages.py:140
+#, fuzzy
+msgid "invalid time separator, expected `:`"
+msgstr "فاصل الوقت غير صالح، المتوقع `:`"
+
+#: src/hyperadmin/i18n/validation_messages.py:141
+#, fuzzy
+msgid "invalid character in year"
+msgstr "حرف غير صالح في السنة"
+
+#: src/hyperadmin/i18n/validation_messages.py:142
+#, fuzzy
+msgid "invalid character in month"
+msgstr "حرف غير صالح في الشهر"
+
+#: src/hyperadmin/i18n/validation_messages.py:143
+#, fuzzy
+msgid "invalid character in day"
+msgstr "حرف غير صالح في اليوم"
+
+#: src/hyperadmin/i18n/validation_messages.py:144
+#, fuzzy
+msgid "invalid character in hour"
+msgstr "حرف غير صالح في الساعة"
+
+#: src/hyperadmin/i18n/validation_messages.py:145
+#, fuzzy
+msgid "invalid character in minute"
+msgstr "حرف غير صالح في الدقيقة"
+
+#: src/hyperadmin/i18n/validation_messages.py:146
+#, fuzzy
+msgid "invalid character in second"
+msgstr "حرف غير صالح في الثانية"
+
+#: src/hyperadmin/i18n/validation_messages.py:147
+#, fuzzy
+msgid "month value is outside expected range of 1-12"
+msgstr "قيمة الشهر خارج النطاق المتوقع 1-12"
+
+#: src/hyperadmin/i18n/validation_messages.py:148
+#, fuzzy
+msgid "day value is outside expected range"
+msgstr "قيمة اليوم خارج النطاق المتوقع"
+
+#: src/hyperadmin/i18n/validation_messages.py:149
+#, fuzzy
+msgid "hour value is outside expected range of 0-23"
+msgstr "قيمة الساعة خارج النطاق المتوقع 0-23"
+
+#: src/hyperadmin/i18n/validation_messages.py:150
+#, fuzzy
+msgid "minute value is outside expected range of 0-59"
+msgstr "قيمة الدقيقة خارج النطاق المتوقع 0-59"
+
+#: src/hyperadmin/i18n/validation_messages.py:151
+#, fuzzy
+msgid "second value is outside expected range of 0-59"
+msgstr "قيمة الثانية خارج النطاق المتوقع 0-59"
+
+#: src/hyperadmin/i18n/validation_messages.py:152
+#, fuzzy
+msgid "relative URL without a base"
+msgstr "عنوان URL نسبي بدون عنوان أساسي"
+
+#: src/hyperadmin/i18n/validation_messages.py:153
+#, fuzzy
+msgid "empty host"
+msgstr "المضيف فارغ"
+
+#: src/hyperadmin/i18n/validation_messages.py:154
+#, fuzzy
+msgid "invalid port number"
+msgstr "رقم منفذ غير صالح"
+
+#: src/hyperadmin/i18n/validation_messages.py:155
+#, fuzzy
+msgid "invalid domain character"
+msgstr "حرف غير صالح في النطاق"
+
+#: src/hyperadmin/i18n/validation_messages.py:156
+#, fuzzy
+msgid "invalid international domain name"
+msgstr "اسم نطاق دولي غير صالح"
+
+#: src/hyperadmin/i18n/validation_messages.py:157
+#, fuzzy
+msgid "invalid IPv4 address"
+msgstr "عنوان IPv4 غير صالح"
+
+#: src/hyperadmin/i18n/validation_messages.py:158
+#, fuzzy
+msgid "invalid IPv6 address"
+msgstr "عنوان IPv6 غير صالح"
+
+#: src/hyperadmin/i18n/validation_messages.py:162
+#, fuzzy, python-format
+msgid "%(choices)s or %(last)s"
+msgstr "%(choices)s أو %(last)s"
+
+#: src/hyperadmin/templates/_messages.html:6
 #, fuzzy
 msgid "Success!"
 msgstr "نجاح!"
 
-#: src/hyperadmin/templates/_messages.html:4
+#: src/hyperadmin/templates/_messages.html:7
 #, fuzzy
 msgid "Your action was successful."
 msgstr "تم تنفيذ إجراءك بنجاح."
 
-#: src/hyperadmin/templates/_messages.html:5
-#: src/hyperadmin/templates/_messages.html:6
+#: src/hyperadmin/templates/_messages.html:9
+#: src/hyperadmin/templates/components/csrf_reload_banner.html:18
+#: src/hyperadmin/templates/components/error_toast.html:17
+#: src/hyperadmin/templates/components/popover.html:36
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:35
+#: src/hyperadmin/templates/components/toast.html:26
+#: src/hyperadmin/templates/permissions/_banner.html:16
+#: src/hyperadmin/templates/widgets/popup_form.html:33
 #, fuzzy
 msgid "Close"
 msgstr "إغلاق"
 
-#: src/hyperadmin/templates/_navbar.html:1
+#: src/hyperadmin/templates/_navbar.html:2
 #, fuzzy
 msgid "Main navigation"
 msgstr "التنقل الرئيسي"
 
-#: src/hyperadmin/templates/_navbar.html:8
+#: src/hyperadmin/templates/_navbar.html:9
 #, fuzzy
 msgid "Toggle navigation menu"
 msgstr "تبديل قائمة التنقل"
 
-#: src/hyperadmin/templates/_navbar.html:18
+#: src/hyperadmin/templates/_navbar.html:27
+#, fuzzy
+msgid "Search…"
+msgstr "بحث…"
+
+#: src/hyperadmin/templates/_navbar.html:36
+#, fuzzy
+msgid "Real-time connection status"
+msgstr "حالة الاتصال الفوري"
+
+#: src/hyperadmin/templates/_navbar.html:41
 #, fuzzy
 msgid "Language"
 msgstr "اللغة"
 
-#: src/hyperadmin/templates/_navbar.html:22
+#: src/hyperadmin/templates/_navbar.html:46
 #, fuzzy
 msgid "Select language"
 msgstr "اختر اللغة"
 
-#: src/hyperadmin/templates/_navbar.html:34
+#: src/hyperadmin/templates/_navbar.html:58
 #, fuzzy
 msgid "Toggle dark mode"
 msgstr "تبديل الوضع الداكن"
 
-#: src/hyperadmin/templates/_navbar.html:56
+#: src/hyperadmin/templates/_navbar.html:78
 #, fuzzy
 msgid "Logout"
 msgstr "تسجيل الخروج"
 
-#: src/hyperadmin/templates/_navbar.html:64
+#: src/hyperadmin/templates/_navbar.html:84
 #, fuzzy
 msgid "Admin"
 msgstr "الإدارة"
 
-#: src/hyperadmin/templates/_navbar.html:70
+#: src/hyperadmin/templates/_navbar.html:88
 #, fuzzy
 msgid "Profile"
 msgstr "الملف الشخصي"
 
-#: src/hyperadmin/templates/_navbar.html:71
+#: src/hyperadmin/templates/_navbar.html:89
 #, fuzzy
 msgid "Settings"
 msgstr "الإعدادات"
 
-#: src/hyperadmin/templates/_sidebar.html:5
+#: src/hyperadmin/templates/_sidebar.html:18
 #, fuzzy
 msgid "Model navigation"
 msgstr "تنقل النماذج"
 
-#: src/hyperadmin/templates/_sidebar.html:12
+#: src/hyperadmin/templates/_sidebar.html:25
 #, fuzzy
 msgid "Menu"
 msgstr "القائمة"
 
-#: src/hyperadmin/templates/_sidebar.html:16
+#: src/hyperadmin/templates/_sidebar.html:29
 #, fuzzy
 msgid "Close navigation menu"
 msgstr "إغلاق قائمة التنقل"
 
-#: src/hyperadmin/templates/_sidebar.html:23
+#: src/hyperadmin/templates/_sidebar.html:39
+#: src/hyperadmin/templates/_sidebar.html:40
+#, fuzzy
+msgid "Collapse sidebar"
+msgstr "طيّ الشريط الجانبي"
+
+#: src/hyperadmin/templates/_sidebar.html:45
 #, fuzzy
 msgid "Sidebar"
 msgstr "الشريط الجانبي"
 
-#: src/hyperadmin/templates/create.html:4
-#, python-format, fuzzy
-msgid "Create %(model_name)s"
-msgstr "إنشاء %(model_name)s"
-
+#: src/hyperadmin/templates/base.html:12
 #: src/hyperadmin/templates/create.html:36
 #, fuzzy
 msgid "Create"
 msgstr "إنشاء"
 
+#: src/hyperadmin/templates/bulk_form.html:9
+#: src/hyperadmin/templates/bulk_result.html:11
+#, fuzzy
+msgid "Breadcrumb"
+msgstr "مسار التنقل"
+
+#: src/hyperadmin/templates/create.html:4
+#, fuzzy, python-format
+msgid "Create %(model_name)s"
+msgstr "إنشاء %(model_name)s"
+
+#: src/hyperadmin/templates/components/bulk_form.html:74
+#: src/hyperadmin/templates/components/bulk_form.html:76
+#: src/hyperadmin/templates/components/confirm_delete_dialog.html:23
+#: src/hyperadmin/templates/components/saved_views.html:24
+#: src/hyperadmin/templates/components/saved_views.html:49
 #: src/hyperadmin/templates/create.html:39
-#: src/hyperadmin/templates/update.html:39
+#: src/hyperadmin/templates/update.html:53
+#: src/hyperadmin/templates/widgets/popup_form.html:59
 #, fuzzy
 msgid "Cancel"
 msgstr "إلغاء"
 
-#: src/hyperadmin/templates/detail.html:30
-#, python-format, fuzzy
+#: src/hyperadmin/templates/detail.html:15
+#, fuzzy
+msgid "Edit"
+msgstr "تعديل"
+
+#: src/hyperadmin/templates/components/confirm_delete_dialog.html:24
+#: src/hyperadmin/templates/components/table_body.html:57
+#: src/hyperadmin/templates/detail.html:22
+#: src/hyperadmin/templates/permissions/_macros.html:20
+#: src/hyperadmin/templates/update.html:59
+#, fuzzy
+msgid "Delete"
+msgstr "حذف"
+
+#: src/hyperadmin/templates/detail.html:113
+#, fuzzy, python-format
 msgid "Run action '%(label)s'?"
 msgstr "تنفيذ الإجراء '%(label)s'؟"
 
-#: src/hyperadmin/templates/detail.html:36
+#: src/hyperadmin/templates/detail.html:119
 #, fuzzy
 msgid "Back to list"
 msgstr "العودة إلى القائمة"
 
+#: src/hyperadmin/templates/error.html:5
+#, fuzzy
+msgid "You don't have access to this page"
+msgstr "ليس لديك صلاحية الوصول إلى هذه الصفحة"
+
+#: src/hyperadmin/templates/error.html:6 src/hyperadmin/views/nav_pins.py:95
+#: src/hyperadmin/views/nav_pins.py:130 src/hyperadmin/views/nav_pins.py:141
+#, fuzzy
+msgid "Page not found"
+msgstr "الصفحة غير موجودة"
+
+#: src/hyperadmin/templates/error.html:7
+#, fuzzy
+msgid "This action can't be completed"
+msgstr "لا يمكن إكمال هذا الإجراء"
+
+#: src/hyperadmin/templates/error.html:10
+#: src/hyperadmin/templates/error.html:15
+#: src/hyperadmin/templates/error.html:16
+#, fuzzy
+msgid "Error"
+msgstr "خطأ"
+
+#: src/hyperadmin/templates/error.html:18
+#, fuzzy
+msgid ""
+"Your account doesn't have permission for this. Ask an administrator if "
+"you need it."
+msgstr "لا يملك حسابك إذنًا لهذا. اطلبه من مسؤول إذا كنت بحاجة إليه."
+
+#: src/hyperadmin/templates/error.html:22
+#, fuzzy
+msgid "Back to dashboard"
+msgstr "العودة إلى لوحة التحكم"
+
 #: src/hyperadmin/templates/form_layout.html:12
+#: src/hyperadmin/templates/widgets/popup_form.html:23
+#, fuzzy
+msgid "You have unsaved changes. Leave this page?"
+msgstr "لديك تغييرات غير محفوظة. هل تريد مغادرة هذه الصفحة؟"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:25
+#: src/hyperadmin/templates/form_layout.html:18
 #, fuzzy
 msgid "Save"
 msgstr "حفظ"
 
-#: src/hyperadmin/templates/list_layout.html:3
-#, python-format, fuzzy
+#: src/hyperadmin/templates/list_layout.html:4
+#, fuzzy, python-format
 msgid "%(model_name)s List | HyperAdmin"
 msgstr "قائمة %(model_name)s | HyperAdmin"
 
-#: src/hyperadmin/templates/list_layout.html:7
-#, fuzzy
-msgid "List"
-msgstr "القائمة"
-
-#: src/hyperadmin/templates/list_layout.html:11
-#, python-format, fuzzy
+#: src/hyperadmin/templates/list_layout.html:12
+#, fuzzy, python-format
 msgid "Create New %(model_name)s"
 msgstr "إنشاء %(model_name)s جديد"
+
+#: src/hyperadmin/templates/components/filter_bar.html:10
+#: src/hyperadmin/templates/components/filter_sidebar.html:13
+#: src/hyperadmin/templates/list_layout.html:28
+#, fuzzy
+msgid "Filters"
+msgstr "الفلاتر"
+
+#: src/hyperadmin/templates/list_layout.html:31
+#, fuzzy
+msgid "Applied filters"
+msgstr "الفلاتر المطبقة"
+
+#: src/hyperadmin/templates/list_layout.html:33
+#, fuzzy, python-format
+msgid "Remove filter %(label)s"
+msgstr "إزالة الفلتر %(label)s"
 
 #: src/hyperadmin/templates/login.html:3
 #, fuzzy
 msgid "Login"
 msgstr "تسجيل الدخول"
 
-#: src/hyperadmin/templates/login.html:13
+#: src/hyperadmin/templates/login.html:14
 #, fuzzy
 msgid "Sign in to your account"
 msgstr "تسجيل الدخول إلى حسابك"
 
-#: src/hyperadmin/templates/login.html:23
+#: src/hyperadmin/templates/login.html:28
 #, fuzzy
 msgid "Username"
 msgstr "اسم المستخدم"
 
-#: src/hyperadmin/templates/login.html:35
+#: src/hyperadmin/templates/login.html:40
 #, fuzzy
 msgid "Password"
 msgstr "كلمة المرور"
 
-#: src/hyperadmin/templates/login.html:46
+#: src/hyperadmin/templates/login.html:51
 #, fuzzy
 msgid "Sign in"
 msgstr "تسجيل الدخول"
 
-#: src/hyperadmin/templates/update.html:4
-#, python-format, fuzzy
+#: src/hyperadmin/templates/update.html:5
+#, fuzzy, python-format
 msgid "Update %(item_name)s"
 msgstr "تحديث %(item_name)s"
 
-#: src/hyperadmin/templates/update.html:36
-#, fuzzy
-msgid "Update"
-msgstr "تحديث"
-
-#: src/hyperadmin/templates/components/filter_bar.html:11
-#, fuzzy
-msgid "Filters"
-msgstr "الفلاتر"
-
-#: src/hyperadmin/templates/components/filter_bar.html:27
-#, fuzzy
-msgid "Any"
-msgstr "أي"
-
-#: src/hyperadmin/templates/components/filter_bar.html:43
-#, fuzzy
-msgid "Clear all filters"
-msgstr "مسح كل الفلاتر"
-
-#: src/hyperadmin/templates/components/inline_row.html:31
-#: src/hyperadmin/templates/components/table.html:8
-#: src/hyperadmin/templates/components/table.html:18
-#, fuzzy
-msgid "Actions"
-msgstr "الإجراءات"
-
-#: src/hyperadmin/templates/components/inline_row.html:36
-#, fuzzy
-msgid "Remove"
-msgstr "إزالة"
-
-#: src/hyperadmin/templates/components/pagination.html:1
-#, fuzzy
-msgid "Pagination"
-msgstr "ترقيم الصفحات"
-
-#: src/hyperadmin/templates/components/pagination.html:4
-#, python-format, fuzzy
-msgid "Showing %(start)s to %(end)s of %(total)s results"
-msgstr "عرض %(start)s إلى %(end)s من أصل %(total)s نتيجة"
-
-#: src/hyperadmin/templates/components/pagination.html:17
-#, fuzzy
-msgid "Previous"
-msgstr "السابق"
-
-#: src/hyperadmin/templates/components/pagination.html:22
-#, python-format, fuzzy
-msgid "Page %(page)s of %(total_pages)s"
-msgstr "الصفحة %(page)s من %(total_pages)s"
-
-#: src/hyperadmin/templates/components/pagination.html:32
-#, fuzzy
-msgid "Next"
-msgstr "التالي"
-
-#: src/hyperadmin/templates/components/search_input.html:5
-#, fuzzy
-msgid "Search..."
-msgstr "بحث..."
-
-#: src/hyperadmin/templates/components/search_input.html:8
-#, fuzzy
-msgid "Search"
-msgstr "بحث"
-
-#: src/hyperadmin/templates/components/search_input.html:14
-#, fuzzy
-msgid "Searching..."
-msgstr "جارٍ البحث..."
-
-#: src/hyperadmin/templates/components/table.html:2
-#, python-format, fuzzy
-msgid "%(model_name)s list"
-msgstr "قائمة %(model_name)s"
-
-#: src/hyperadmin/templates/components/table.html:20
+#: src/hyperadmin/templates/permissions/_macros.html:20
+#: src/hyperadmin/templates/update.html:14
 #, fuzzy
 msgid "View"
 msgstr "عرض"
 
-#: src/hyperadmin/templates/components/table.html:23
+#: src/hyperadmin/templates/update.html:50
 #, fuzzy
-msgid "Edit"
-msgstr "تعديل"
+msgid "Update"
+msgstr "تحديث"
 
-#: src/hyperadmin/templates/components/table.html:27
+#: src/hyperadmin/templates/auth/mfa_challenge.html:3
 #, fuzzy
-msgid "Are you sure you want to delete this item?"
-msgstr "هل أنت متأكد من حذف هذا العنصر؟"
+msgid "MFA Challenge"
+msgstr "تحقق المصادقة متعددة العوامل"
 
-#: src/hyperadmin/templates/components/table.html:32
+#: src/hyperadmin/templates/auth/mfa_challenge.html:12
 #, fuzzy
-msgid "Delete"
-msgstr "حذف"
+msgid "Two-factor verification"
+msgstr "التحقق بخطوتين"
+
+#: src/hyperadmin/templates/auth/mfa_challenge.html:14
+#, fuzzy
+msgid "Enter the 6-digit code we sent to your email."
+msgstr "أدخل الرمز المكون من 6 أرقام الذي أرسلناه إلى بريدك الإلكتروني."
+
+#: src/hyperadmin/templates/auth/mfa_challenge.html:36
+#: src/hyperadmin/templates/auth/mfa_settings.html:53
+#, fuzzy
+msgid "Verification code"
+msgstr "رمز التحقق"
+
+#: src/hyperadmin/templates/auth/mfa_challenge.html:54
+#, fuzzy
+msgid "Verify"
+msgstr "تحقق"
+
+#: src/hyperadmin/templates/auth/mfa_challenge.html:60
+#, fuzzy
+msgid "Your code has expired."
+msgstr "انتهت صلاحية الرمز."
+
+#: src/hyperadmin/templates/auth/mfa_challenge.html:70
+#, fuzzy
+msgid "Resend code"
+msgstr "إعادة إرسال الرمز"
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:3
+#: src/hyperadmin/templates/auth/mfa_settings.html:9
+#, fuzzy
+msgid "Two-factor authentication"
+msgstr "المصادقة الثنائية"
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:13
+#, fuzzy
+msgid "Status:"
+msgstr "الحالة:"
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:16
+#, fuzzy
+msgid "Enabled"
+msgstr "مفعّلة"
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:20
+#, fuzzy
+msgid "Disabled"
+msgstr "معطّلة"
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:49
+#, fuzzy
+msgid "Enter the 6-digit code we sent to your email to confirm."
+msgstr "أدخل الرمز المكون من 6 أرقام الذي أرسلناه إلى بريدك الإلكتروني للتأكيد."
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:73
+#, fuzzy
+msgid "Confirm and enable"
+msgstr "تأكيد وتفعيل"
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:75
+#, fuzzy
+msgid "Confirm and disable"
+msgstr "تأكيد وتعطيل"
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:90
+#, fuzzy
+msgid "Disable two-factor authentication"
+msgstr "تعطيل المصادقة الثنائية"
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:104
+#, fuzzy
+msgid "Enable two-factor authentication"
+msgstr "تفعيل المصادقة الثنائية"
+
+#: src/hyperadmin/templates/components/_nav.html:33
+#, fuzzy, python-format
+msgid "Unpin %(label)s"
+msgstr "إلغاء تثبيت %(label)s"
+
+#: src/hyperadmin/templates/components/_nav.html:33
+#, fuzzy, python-format
+msgid "Pin %(label)s"
+msgstr "تثبيت %(label)s"
+
+#: src/hyperadmin/templates/components/banner.html:48
+#, fuzzy
+msgid "Dismiss"
+msgstr "تجاهل"
+
+#: src/hyperadmin/templates/components/banner.html:57
+#, fuzzy
+msgid "Notices"
+msgstr "إشعارات"
+
+#: src/hyperadmin/templates/components/banner.html:72
+#, fuzzy, python-format
+msgid "+%(count)s more notice"
+msgid_plural "+%(count)s more notices"
+msgstr[0] "+%(count)s إشعار آخر"
+msgstr[1] "+%(count)s إشعار آخر"
+msgstr[2] "+%(count)s إشعاران آخران"
+msgstr[3] "+%(count)s إشعارات أخرى"
+msgstr[4] "+%(count)s إشعارًا آخر"
+msgstr[5] "+%(count)s إشعار آخر"
+
+#: src/hyperadmin/templates/components/bulk_form.html:21
+#, fuzzy, python-format
+msgid "%(label)s 1 row"
+msgstr "%(label)s صف واحد"
+
+#: src/hyperadmin/templates/components/bulk_form.html:23
+#, fuzzy, python-format
+msgid "%(label)s %(count)s rows"
+msgstr "%(label)s %(count)s صفوف"
+
+#: src/hyperadmin/templates/components/bulk_form.html:35
+#, fuzzy
+msgid "1 field needs fixing."
+msgstr "يلزم تصحيح حقل واحد."
+
+#: src/hyperadmin/templates/components/bulk_form.html:35
+#, fuzzy, python-format
+msgid "%(count)s fields need fixing."
+msgstr "يلزم تصحيح %(count)s من الحقول."
+
+#: src/hyperadmin/templates/components/bulk_form.html:37
+#, fuzzy, python-format
+msgid "Your %(count)s selected rows are kept."
+msgstr "يتم الاحتفاظ بالصفوف المحددة (%(count)s)."
+
+#: src/hyperadmin/templates/components/bulk_form.html:42
+#, fuzzy, python-format
+msgid "This runs on the %(count)s selected rows."
+msgstr "يُنفَّذ على الصفوف المحددة (%(count)s)."
+
+#: src/hyperadmin/templates/components/bulk_form.html:45
+#, fuzzy
+msgid "Selected rows"
+msgstr "الصفوف المحددة"
+
+#: src/hyperadmin/templates/components/bulk_form.html:56
+#, fuzzy
+msgid "optional"
+msgstr "اختياري"
+
+#: src/hyperadmin/templates/components/bulk_result.html:23
+#, fuzzy
+msgid "Done"
+msgstr "تم"
+
+#: src/hyperadmin/templates/components/bulk_result.html:23
+#, fuzzy
+msgid "Failed"
+msgstr "فشل"
+
+#: src/hyperadmin/templates/components/bulk_result.html:23
+#, fuzzy
+msgid "Forbidden"
+msgstr "ممنوع"
+
+#: src/hyperadmin/templates/components/bulk_result.html:25
+#, fuzzy
+msgid "Row not found. It may have been deleted after you selected it."
+msgstr "الصف غير موجود. ربما حُذف بعد أن حددته."
+
+#: src/hyperadmin/templates/components/bulk_result.html:26
+#, fuzzy
+msgid ""
+"The row could not be loaded because of a database error. Check the server"
+" logs, then retry."
+msgstr ""
+"تعذّر تحميل الصف بسبب خطأ في قاعدة البيانات. راجع سجلات الخادم، ثم أعد "
+"المحاولة."
+
+#: src/hyperadmin/templates/components/bulk_result.html:27
+#, fuzzy
+msgid "The action failed on this row. Check the server logs, then retry."
+msgstr "فشل الإجراء في هذا الصف. راجع سجلات الخادم، ثم أعد المحاولة."
+
+#: src/hyperadmin/templates/components/bulk_result.html:31
+#, fuzzy, python-format
+msgid "%(failed)s failed and %(forbidden)s not allowed."
+msgstr "فشل %(failed)s وغير مسموح %(forbidden)s."
+
+#: src/hyperadmin/templates/components/bulk_result.html:33
+#, fuzzy, python-format
+msgid "%(failed)s failed."
+msgstr "فشل %(failed)s."
+
+#: src/hyperadmin/templates/components/bulk_result.html:35
+#, fuzzy, python-format
+msgid "%(forbidden)s not allowed."
+msgstr "غير مسموح %(forbidden)s."
+
+#: src/hyperadmin/templates/components/bulk_result.html:40
+#: src/hyperadmin/templates/components/bulk_result.html:95
+#, fuzzy
+msgid "Row"
+msgstr "الصف"
+
+#: src/hyperadmin/templates/components/bulk_result.html:45
+#: src/hyperadmin/templates/components/bulk_result.html:96
+#, fuzzy
+msgid "Result"
+msgstr "النتيجة"
+
+#: src/hyperadmin/templates/components/bulk_result.html:49
+#: src/hyperadmin/templates/components/bulk_result.html:97
+#, fuzzy
+msgid "What happened"
+msgstr "ما حدث"
+
+#: src/hyperadmin/templates/components/bulk_result.html:51
+#, fuzzy
+msgid "no detail"
+msgstr "لا توجد تفاصيل"
+
+#: src/hyperadmin/templates/components/bulk_result.html:66
+#, fuzzy
+msgid "No rows were selected."
+msgstr "لم يتم تحديد أي صفوف."
+
+#: src/hyperadmin/templates/components/bulk_result.html:68
+#, fuzzy, python-format
+msgid "All %(count)s rows done."
+msgstr "اكتملت جميع الصفوف (%(count)s)."
+
+#: src/hyperadmin/templates/components/bulk_result.html:70
+#, fuzzy, python-format
+msgid "%(done)s of %(count)s rows done."
+msgstr "اكتمل %(done)s من %(count)s صفوف."
+
+#: src/hyperadmin/templates/components/bulk_result.html:72
+#, fuzzy
+msgid "No rows done."
+msgstr "لم يكتمل أي صف."
+
+#: src/hyperadmin/templates/components/bulk_result.html:76
+#, fuzzy
+msgid "Totals"
+msgstr "الإجماليات"
+
+#: src/hyperadmin/templates/components/bulk_result.html:83
+#, fuzzy, python-format
+msgid "%(done)s done, %(failed)s failed, %(forbidden)s forbidden"
+msgstr "مكتمل %(done)s، فاشل %(failed)s، ممنوع %(forbidden)s"
+
+#: src/hyperadmin/templates/components/bulk_result.html:92
+#, fuzzy
+msgid "Results per row"
+msgstr "النتائج لكل صف"
+
+#: src/hyperadmin/templates/components/bulk_result.html:107
+#, fuzzy, python-format
+msgid "Show the %(count)s done rows"
+msgstr "عرض الصفوف المكتملة (%(count)s)"
+
+#: src/hyperadmin/templates/components/bulk_result.html:108
+#, fuzzy
+msgid "Done rows"
+msgstr "الصفوف المكتملة"
+
+#: src/hyperadmin/templates/components/bulk_result.html:125
+#, fuzzy, python-format
+msgid "Retry failures (%(count)s)"
+msgstr "إعادة محاولة الفاشلة (%(count)s)"
+
+#: src/hyperadmin/templates/components/bulk_result.html:130
+#, fuzzy, python-format
+msgid "Back to %(model_name)s"
+msgstr "العودة إلى %(model_name)s"
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:22
+#, fuzzy
+msgid "Bulk actions"
+msgstr "إجراءات جماعية"
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:28
+#, fuzzy
+msgid "Choose an action, then press Run."
+msgstr "اختر إجراءً، ثم اضغط تشغيل."
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:29
+#, fuzzy
+msgid "Select at least one row, then press Run."
+msgstr "حدد صفًا واحدًا على الأقل، ثم اضغط تشغيل."
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:36
+#, fuzzy
+msgid "selected"
+msgstr "محدد"
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:37
+#: src/hyperadmin/templates/components/bulk_toolbar.html:38
+#, fuzzy
+msgid "Select rows, then choose an action"
+msgstr "حدد صفوفًا، ثم اختر إجراءً"
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:40
+#, fuzzy
+msgid "Action for selected rows"
+msgstr "إجراء للصفوف المحددة"
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:44
+#, fuzzy
+msgid "Choose an action…"
+msgstr "اختر إجراءً…"
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:51
+#, fuzzy
+msgid "Run"
+msgstr "تشغيل"
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:54
+#, fuzzy
+msgid "Clear selection"
+msgstr "مسح التحديد"
+
+#: src/hyperadmin/templates/components/command_palette.html:15
+#: src/hyperadmin/templates/components/nav_pinned.html:10
+#, fuzzy
+msgid "Pinned"
+msgstr "المثبتة"
+
+#: src/hyperadmin/templates/components/command_palette.html:16
+#, fuzzy
+msgid "Recent"
+msgstr "الأخيرة"
+
+#: src/hyperadmin/templates/components/command_palette.html:17
+#, fuzzy
+msgid "Models"
+msgstr "النماذج"
+
+#: src/hyperadmin/templates/components/command_palette.html:18
+#, fuzzy
+msgid "Pages"
+msgstr "الصفحات"
+
+#: src/hyperadmin/templates/components/command_palette.html:19
+#: src/hyperadmin/templates/widgets/autocomplete.html:32
+#, fuzzy, python-format
+msgid "%(count)s results"
+msgstr "%(count)s نتيجة"
+
+#: src/hyperadmin/templates/components/command_palette.html:20
+#: src/hyperadmin/templates/components/command_palette.html:37
+#: src/hyperadmin/templates/widgets/autocomplete.html:31
+#, fuzzy
+msgid "No results"
+msgstr "لا توجد نتائج"
+
+#: src/hyperadmin/templates/components/command_palette.html:24
+#: src/hyperadmin/templates/components/search_input.html:11
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:19
+#, fuzzy
+msgid "Search"
+msgstr "بحث"
+
+#: src/hyperadmin/templates/components/command_palette.html:30
+#, fuzzy
+msgid "Search models and pages"
+msgstr "البحث في النماذج والصفحات"
+
+#: src/hyperadmin/templates/components/command_palette.html:31
+#, fuzzy
+msgid "Search models and pages…"
+msgstr "البحث في النماذج والصفحات…"
+
+#: src/hyperadmin/templates/components/command_palette.html:36
+#, fuzzy
+msgid "Results"
+msgstr "النتائج"
+
+#: src/hyperadmin/templates/components/command_palette.html:40
+#, fuzzy
+msgid "move"
+msgstr "تنقّل"
+
+#: src/hyperadmin/templates/components/command_palette.html:41
+#, fuzzy
+msgid "open"
+msgstr "فتح"
+
+#: src/hyperadmin/templates/components/command_palette.html:42
+#, fuzzy
+msgid "new"
+msgstr "جديد"
+
+#: src/hyperadmin/templates/components/confirm_delete_dialog.html:14
+#, fuzzy, python-format
+msgid "Delete %(name)s?"
+msgstr "حذف %(name)s؟"
+
+#: src/hyperadmin/templates/components/confirm_delete_dialog.html:18
+#, fuzzy
+msgid "Delete this record?"
+msgstr "حذف هذا السجل؟"
+
+#: src/hyperadmin/templates/components/confirm_delete_dialog.html:19
+#, fuzzy
+msgid "This cannot be undone."
+msgstr "لا يمكن التراجع عن هذا الإجراء."
+
+#: src/hyperadmin/templates/components/csrf_reload_banner.html:12
+#, fuzzy
+msgid "This page's security token is out of date"
+msgstr "رمز الأمان لهذه الصفحة قديم"
+
+#: src/hyperadmin/templates/components/csrf_reload_banner.html:13
+#, fuzzy
+msgid "Reload the page, then try again."
+msgstr "أعد تحميل الصفحة، ثم حاول مرة أخرى."
+
+#: src/hyperadmin/templates/components/csrf_reload_banner.html:15
+#, fuzzy
+msgid "Reload page"
+msgstr "إعادة تحميل الصفحة"
+
+#: src/hyperadmin/templates/components/error_toast.html:8
+#, fuzzy
+msgid "Permission denied"
+msgstr "تم رفض الإذن"
+
+#: src/hyperadmin/templates/components/error_toast.html:9
+#, fuzzy
+msgid "Not found"
+msgstr "غير موجود"
+
+#: src/hyperadmin/templates/components/error_toast.html:10
+#, fuzzy
+msgid "Action refused"
+msgstr "تم رفض الإجراء"
+
+#: src/hyperadmin/templates/components/error_toast.html:13
+#, fuzzy
+msgid "Your account doesn't have permission for this."
+msgstr "لا يملك حسابك إذنًا لهذا."
+
+#: src/hyperadmin/templates/components/filter_bar.html:28
+#: src/hyperadmin/templates/components/filters/boolean.html:6
+#: src/hyperadmin/templates/components/filters/select.html:6
+#, fuzzy
+msgid "Any"
+msgstr "أي"
+
+#: src/hyperadmin/templates/components/filter_bar.html:44
+#, fuzzy
+msgid "Clear all filters"
+msgstr "مسح كل الفلاتر"
+
+#: src/hyperadmin/templates/components/filter_sidebar.html:14
+#, fuzzy
+msgid "Reset"
+msgstr "إعادة تعيين"
+
+#: src/hyperadmin/templates/components/filter_sidebar.html:21
+#, fuzzy
+msgid "Clear all"
+msgstr "مسح الكل"
+
+#: src/hyperadmin/templates/components/filter_sidebar.html:22
+#, fuzzy
+msgid "Apply filters"
+msgstr "تطبيق الفلاتر"
+
+#: src/hyperadmin/templates/components/inline_row.html:32
+#: src/hyperadmin/templates/components/table.html:28
+#: src/hyperadmin/templates/components/table_body.html:54
+#, fuzzy
+msgid "Actions"
+msgstr "الإجراءات"
+
+#: src/hyperadmin/templates/components/inline_row.html:45
+#: src/hyperadmin/templates/widgets/image_input.html:104
+#, fuzzy
+msgid "Remove"
+msgstr "إزالة"
+
+#: src/hyperadmin/templates/components/list_error.html:5
+#, fuzzy
+msgid "The list could not be loaded because of a database error."
+msgstr "تعذّر تحميل القائمة بسبب خطأ في قاعدة البيانات."
+
+#: src/hyperadmin/templates/components/list_error.html:7
+#, fuzzy, python-format
+msgid ""
+"The table for this model does not exist yet: run your migrations or "
+"%(cmd)s."
+msgstr "جدول هذا النموذج غير موجود بعد: شغّل عمليات الترحيل أو %(cmd)s."
+
+#: src/hyperadmin/templates/components/list_error.html:9
+#, fuzzy
+msgid "Check the server logs for details."
+msgstr "راجع سجلات الخادم للاطلاع على التفاصيل."
+
+#: src/hyperadmin/templates/components/pagination.html:2
+#, fuzzy
+msgid "Pagination"
+msgstr "ترقيم الصفحات"
+
+#: src/hyperadmin/templates/components/pagination.html:5
+#, fuzzy, python-format
+msgid "Showing %(start)s to %(end)s of %(total)s results"
+msgstr "عرض %(start)s إلى %(end)s من أصل %(total)s نتيجة"
+
+#: src/hyperadmin/templates/components/pagination.html:18
+#, fuzzy
+msgid "Previous"
+msgstr "السابق"
+
+#: src/hyperadmin/templates/components/pagination.html:23
+#, fuzzy, python-format
+msgid "Page %(page)s of %(total_pages)s"
+msgstr "الصفحة %(page)s من %(total_pages)s"
+
+#: src/hyperadmin/templates/components/pagination.html:33
+#, fuzzy
+msgid "Next"
+msgstr "التالي"
+
+#: src/hyperadmin/templates/components/panel_document.html:12
+#, fuzzy
+msgid "Open in new tab"
+msgstr "فتح في علامة تبويب جديدة"
+
+#: src/hyperadmin/templates/components/panel_document.html:12
+#, fuzzy
+msgid "(opens a new tab)"
+msgstr "(يُفتح في علامة تبويب جديدة)"
+
+#: src/hyperadmin/templates/components/panel_document.html:15
+#, fuzzy
+msgid "Download"
+msgstr "تنزيل"
+
+#: src/hyperadmin/templates/components/panel_document.html:18
+#, fuzzy, python-format
+msgid "%(name)s, preview"
+msgstr "%(name)s، معاينة"
+
+#: src/hyperadmin/templates/components/panel_states.html:17
+#, fuzzy, python-format
+msgid "Loading %(label)s"
+msgstr "جارٍ تحميل %(label)s"
+
+#: src/hyperadmin/templates/components/panel_states.html:18
+#, fuzzy, python-format
+msgid "Open %(label)s"
+msgstr "فتح %(label)s"
+
+#: src/hyperadmin/templates/components/panel_states.html:25
+#, fuzzy, python-format
+msgid "%(label)s didn't load."
+msgstr "تعذّر تحميل %(label)s."
+
+#: src/hyperadmin/templates/components/panel_states.html:26
+#, fuzzy
+msgid "The server took too long to answer. The other tabs still work."
+msgstr "استغرق الخادم وقتًا طويلًا للرد. لا تزال علامات التبويب الأخرى تعمل."
+
+#: src/hyperadmin/templates/components/panel_states.html:27
+#: src/hyperadmin/templates/permissions/matrix.html:394
+#: src/hyperadmin/templates/widgets/image_input.html:99
+#, fuzzy
+msgid "Retry"
+msgstr "إعادة المحاولة"
+
+#: src/hyperadmin/templates/components/panel_states.html:32
+#, fuzzy
+msgid "You don't have access to this panel."
+msgstr "ليس لديك صلاحية الوصول إلى هذه اللوحة."
+
+#: src/hyperadmin/templates/components/panel_states.html:33
+#, fuzzy, python-format
+msgid "Ask an administrator for the \"%(permission)s\" permission."
+msgstr "اطلب من مسؤول إذن \"%(permission)s\"."
+
+#: src/hyperadmin/templates/components/panel_tab_strip.html:14
+#, fuzzy, python-format
+msgid "%(name)s sections"
+msgstr "أقسام %(name)s"
+
+#: src/hyperadmin/templates/components/panel_tab_strip.html:21
+#, fuzzy
+msgid "Details"
+msgstr "التفاصيل"
+
+#: src/hyperadmin/templates/components/presence_banner.html:20
+#, fuzzy, python-brace-format
+msgid "{names} is also viewing this record."
+msgstr "{names} يشاهد هذا السجل أيضًا."
+
+#: src/hyperadmin/templates/components/presence_banner.html:21
+#, fuzzy, python-brace-format
+msgid "{names} are also viewing this record."
+msgstr "{names} يشاهدون هذا السجل أيضًا."
+
+#: src/hyperadmin/templates/components/presence_banner.html:22
+#, fuzzy, python-brace-format
+msgid "{names} is also editing this record."
+msgstr "{names} يحرر هذا السجل أيضًا."
+
+#: src/hyperadmin/templates/components/presence_banner.html:23
+#, fuzzy, python-brace-format
+msgid "{names} are also editing this record."
+msgstr "{names} يحررون هذا السجل أيضًا."
+
+#: src/hyperadmin/templates/components/presence_banner.html:24
+#, fuzzy, python-brace-format
+msgid "+{count} more"
+msgstr "+{count} آخرون"
+
+#: src/hyperadmin/templates/components/saved_views.html:9
+#, fuzzy
+msgid "My views"
+msgstr "طرق العرض الخاصة بي"
+
+#: src/hyperadmin/templates/components/saved_views.html:13
+#: src/hyperadmin/templates/components/saved_views.html:25
+#, fuzzy
+msgid "Save view"
+msgstr "حفظ العرض"
+
+#: src/hyperadmin/templates/components/saved_views.html:20
+#, fuzzy
+msgid "Name"
+msgstr "الاسم"
+
+#: src/hyperadmin/templates/components/saved_views.html:34
+#, fuzzy
+msgid "(active)"
+msgstr "(نشط)"
+
+#: src/hyperadmin/templates/components/saved_views.html:37
+#, fuzzy, python-format
+msgid "Actions for view %(name)s"
+msgstr "إجراءات العرض %(name)s"
+
+#: src/hyperadmin/templates/components/saved_views.html:41
+#, fuzzy
+msgid "Delete…"
+msgstr "حذف…"
+
+#: src/hyperadmin/templates/components/saved_views.html:46
+#, fuzzy, python-format
+msgid "Delete the view “%(name)s”?"
+msgstr "حذف العرض “%(name)s”؟"
+
+#: src/hyperadmin/templates/components/saved_views.html:47
+#, fuzzy
+msgid "Only the saved filters go. No rows change."
+msgstr "تُحذف الفلاتر المحفوظة فقط. لا تتغير أي صفوف."
+
+#: src/hyperadmin/templates/components/saved_views.html:51
+#, fuzzy
+msgid "Delete view"
+msgstr "حذف العرض"
+
+#: src/hyperadmin/templates/components/saved_views.html:58
+#, fuzzy
+msgid "Save the filters you use often. They show up here, only for you."
+msgstr "احفظ الفلاتر التي تستخدمها كثيرًا. تظهر هنا لك وحدك."
+
+#: src/hyperadmin/templates/components/search_input.html:8
+#, fuzzy
+msgid "Search..."
+msgstr "بحث..."
+
+#: src/hyperadmin/templates/components/search_input.html:18
+#, fuzzy
+msgid "Searching..."
+msgstr "جارٍ البحث..."
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:15
+#, fuzzy
+msgid "General"
+msgstr "عام"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:17
+#, fuzzy
+msgid "Form"
+msgstr "النموذج"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:18
+#, fuzzy
+msgid "Show keyboard shortcuts"
+msgstr "عرض اختصارات لوحة المفاتيح"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:20
+#, fuzzy
+msgid "Focus search"
+msgstr "الانتقال إلى البحث"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:21
+#, fuzzy
+msgid "Next row"
+msgstr "الصف التالي"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:22
+#, fuzzy
+msgid "Previous row"
+msgstr "الصف السابق"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:23
+#, fuzzy
+msgid "Select row"
+msgstr "تحديد الصف"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:24
+#, fuzzy
+msgid "Create new"
+msgstr "إنشاء جديد"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:26
+#, fuzzy
+msgid "or"
+msgstr "أو"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:32
+#, fuzzy
+msgid "Keyboard shortcuts"
+msgstr "اختصارات لوحة المفاتيح"
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:42
+#, fuzzy
+msgid "Single-key shortcuts"
+msgstr "اختصارات بمفتاح واحد"
+
+#: src/hyperadmin/templates/components/table.html:11
+#, fuzzy, python-format
+msgid "%(model_name)s list"
+msgstr "قائمة %(model_name)s"
+
+#: src/hyperadmin/templates/components/table.html:18
+#, fuzzy
+msgid "Select all rows on this page"
+msgstr "تحديد كل الصفوف في هذه الصفحة"
+
+#: src/hyperadmin/templates/components/table_body.html:23
+#, fuzzy
+msgid "Select"
+msgstr "تحديد"
+
+#: src/hyperadmin/templates/components/table_body.html:27
+#, fuzzy, python-format
+msgid "Select %(pk)s"
+msgstr "تحديد %(pk)s"
+
+#: src/hyperadmin/templates/components/table_body.html:59
+#, fuzzy, python-format
+msgid "Delete %(name)s"
+msgstr "حذف %(name)s"
+
+#: src/hyperadmin/templates/components/table_body.html:68
+#, fuzzy, python-format
+msgid "Open %(name)s"
+msgstr "فتح %(name)s"
+
+#: src/hyperadmin/templates/components/toast.html:19
+#, fuzzy, python-brace-format
+msgid "{actor} changed {count} {model}"
+msgid_plural "{actor} changed {count} {model}"
+msgstr[0] "غيّر {actor} {count} {model}"
+msgstr[1] "غيّر {actor} {count} {model}"
+msgstr[2] "غيّر {actor} {count} {model}"
+msgstr[3] "غيّر {actor} {count} {model}"
+msgstr[4] "غيّر {actor} {count} {model}"
+msgstr[5] "غيّر {actor} {count} {model}"
+
+#: src/hyperadmin/templates/components/toast.html:20
+#, fuzzy, python-brace-format
+msgid "{count} person"
+msgid_plural "{count} people"
+msgstr[0] "{count} شخص"
+msgstr[1] "{count} شخص"
+msgstr[2] "{count} شخصان"
+msgstr[3] "{count} أشخاص"
+msgstr[4] "{count} شخصًا"
+msgstr[5] "{count} شخص"
+
+#: src/hyperadmin/templates/components/toast.html:30
+#, fuzzy, python-brace-format
+msgid "{actor} created {model} #{pk}"
+msgstr "أنشأ {actor} {model} #{pk}"
+
+#: src/hyperadmin/templates/components/toast.html:31
+#, fuzzy, python-brace-format
+msgid "{actor} deleted {model} #{pk}"
+msgstr "حذف {actor} {model} #{pk}"
+
+#: src/hyperadmin/templates/components/toast.html:32
+#, fuzzy
+msgid "Someone"
+msgstr "شخص ما"
+
+#: src/hyperadmin/templates/components/toast.html:33
+#, fuzzy
+msgid "List changed: refresh"
+msgstr "تغيّرت القائمة: تحديث"
+
+#: src/hyperadmin/templates/components/filters/boolean.html:7
+#, fuzzy
+msgid "Yes"
+msgstr "نعم"
+
+#: src/hyperadmin/templates/components/filters/boolean.html:8
+#, fuzzy
+msgid "No"
+msgstr "لا"
+
+#: src/hyperadmin/templates/components/filters/current_period.html:6
+#, fuzzy, python-format
+msgid "Showing %(period)s by default."
+msgstr "يُعرض %(period)s افتراضيًا."
+
+#: src/hyperadmin/templates/components/filters/current_period.html:6
+#, fuzzy
+msgid "Show all dates"
+msgstr "عرض كل التواريخ"
+
+#: src/hyperadmin/templates/components/filters/date_range.html:5
+#: src/hyperadmin/templates/components/filters/multi_choice.html:4
+#: src/hyperadmin/templates/components/filters/multi_relation.html:5
+#: src/hyperadmin/templates/components/filters/select.html:4
+#, fuzzy
+msgid "Clear"
+msgstr "مسح"
+
+#: src/hyperadmin/templates/components/filters/date_range.html:7
+#, fuzzy
+msgid "quick ranges"
+msgstr "نطاقات سريعة"
+
+#: src/hyperadmin/templates/components/filters/date_range.html:15
+#, fuzzy
+msgid "From"
+msgstr "من"
+
+#: src/hyperadmin/templates/components/filters/date_range.html:19
+#, fuzzy
+msgid "To"
+msgstr "إلى"
+
+#: src/hyperadmin/templates/components/filters/is_owner.html:3
+#, fuzzy
+msgid "Owner"
+msgstr "المالك"
+
+#: src/hyperadmin/templates/components/filters/multi_relation.html:5
+#, fuzzy, python-format
+msgid "%(num)d selected"
+msgid_plural "%(num)d selected"
+msgstr[0] "تم تحديد %(num)d"
+msgstr[1] "تم تحديد %(num)d"
+msgstr[2] "تم تحديد %(num)d"
+msgstr[3] "تم تحديد %(num)d"
+msgstr[4] "تم تحديد %(num)d"
+msgstr[5] "تم تحديد %(num)d"
+
+#: src/hyperadmin/templates/components/filters/multi_relation.html:9
+#: src/hyperadmin/templates/widgets/autocomplete.html:24
+#, fuzzy, python-format
+msgid "Search %(label)s"
+msgstr "البحث في %(label)s"
+
+#: src/hyperadmin/templates/components/filters/multi_relation.html:18
+#, fuzzy, python-format
+msgid "Show %(num)d more"
+msgid_plural "Show %(num)d more"
+msgstr[0] "عرض %(num)d أخرى"
+msgstr[1] "عرض %(num)d أخرى"
+msgstr[2] "عرض %(num)d أخرى"
+msgstr[3] "عرض %(num)d أخرى"
+msgstr[4] "عرض %(num)d أخرى"
+msgstr[5] "عرض %(num)d أخرى"
+
+#: src/hyperadmin/templates/permissions/_banner.html:13
+#, fuzzy
+msgid "Permissions saved"
+msgstr "تم حفظ الأذونات"
+
+#: src/hyperadmin/templates/permissions/_banner.html:14
+#, fuzzy
+msgid "change"
+msgstr "تغيير"
+
+#: src/hyperadmin/templates/permissions/_banner.html:14
+#, fuzzy
+msgid "changes"
+msgstr "تغييرات"
+
+#: src/hyperadmin/templates/permissions/_banner.html:22
+#, fuzzy
+msgid "Permissions changed elsewhere."
+msgstr "تم تغيير الأذونات من مكان آخر."
+
+#: src/hyperadmin/templates/permissions/_banner.html:23
+#, fuzzy
+msgid ""
+"Reload to see the latest. Nothing was saved; your changes are still on "
+"the page."
+msgstr "أعد التحميل لرؤية أحدث نسخة. لم يُحفظ شيء؛ لا تزال تغييراتك على الصفحة."
+
+#: src/hyperadmin/templates/permissions/_banner.html:27
+#, fuzzy
+msgid "Reload"
+msgstr "إعادة التحميل"
+
+#: src/hyperadmin/templates/permissions/_banner.html:35
+#, fuzzy
+msgid "change wasn’t saved."
+msgstr "تغيير لم يُحفظ."
+
+#: src/hyperadmin/templates/permissions/_banner.html:35
+#, fuzzy
+msgid "changes weren’t saved."
+msgstr "تغييرات لم تُحفظ."
+
+#: src/hyperadmin/templates/permissions/_banner.html:36
+#, fuzzy
+msgid "You can only grant permissions you have yourself:"
+msgstr "يمكنك منح الأذونات التي تملكها أنت فقط:"
+
+#: src/hyperadmin/templates/permissions/_banner.html:42
+#, fuzzy
+msgid ""
+"Nothing was saved. Untick them, or ask for those permissions, then save "
+"again."
+msgstr "لم يُحفظ شيء. ألغِ تحديدها أو اطلب تلك الأذونات، ثم احفظ مرة أخرى."
+
+#: src/hyperadmin/templates/permissions/_banner.html:51
+#, fuzzy
+msgid "Save failed"
+msgstr "فشل الحفظ"
+
+#: src/hyperadmin/templates/permissions/_banner.html:52
+#, fuzzy
+msgid "Nothing was saved; try again."
+msgstr "لم يُحفظ شيء؛ حاول مرة أخرى."
+
+#: src/hyperadmin/templates/permissions/_group_gone.html:7
+#, fuzzy
+msgid "This group no longer exists"
+msgstr "هذه المجموعة لم تعد موجودة"
+
+#: src/hyperadmin/templates/permissions/_group_gone.html:8
+#, fuzzy
+msgid "Someone deleted it while you were editing. Nothing was saved."
+msgstr "حذفها شخص ما أثناء تحريرك لها. لم يُحفظ شيء."
+
+#: src/hyperadmin/templates/permissions/_group_gone.html:10
+#, fuzzy
+msgid "Choose another group"
+msgstr "اختر مجموعة أخرى"
+
+#: src/hyperadmin/templates/permissions/_macros.html:20
+#: src/hyperadmin/templates/permissions/matrix.html:346
+#: src/hyperadmin/templates/permissions/object_popover.html:61
+#, fuzzy
+msgid "Add"
+msgstr "إضافة"
+
+#: src/hyperadmin/templates/permissions/_macros.html:20
+#, fuzzy
+msgid "Change"
+msgstr "تغيير"
+
+#: src/hyperadmin/templates/permissions/matrix.html:11
+#: src/hyperadmin/templates/permissions/matrix.html:228
+#, fuzzy
+msgid "Permission matrix"
+msgstr "مصفوفة الأذونات"
+
+#: src/hyperadmin/templates/permissions/matrix.html:222
+#, fuzzy
+msgid "unsaved change"
+msgstr "تغيير غير محفوظ"
+
+#: src/hyperadmin/templates/permissions/matrix.html:222
+#: src/hyperadmin/templates/permissions/matrix.html:368
+#, fuzzy
+msgid "unsaved changes"
+msgstr "تغييرات غير محفوظة"
+
+#: src/hyperadmin/templates/permissions/matrix.html:223
+#: src/hyperadmin/templates/permissions/matrix.html:342
+#, fuzzy
+msgid "rule"
+msgstr "قاعدة"
+
+#: src/hyperadmin/templates/permissions/matrix.html:223
+#: src/hyperadmin/templates/permissions/matrix.html:342
+#, fuzzy
+msgid "rules"
+msgstr "قواعد"
+
+#: src/hyperadmin/templates/permissions/matrix.html:224
+#: src/hyperadmin/templates/permissions/matrix.html:343
+#, fuzzy
+msgid "for"
+msgstr "لـ"
+
+#: src/hyperadmin/templates/permissions/matrix.html:225
+#: src/hyperadmin/templates/permissions/matrix.html:244
+#, fuzzy, python-format
+msgid "Changes apply to everyone in %(group)s."
+msgstr "تنطبق التغييرات على كل أعضاء %(group)s."
+
+#: src/hyperadmin/templates/permissions/matrix.html:226
+#, fuzzy
+msgid "You have unsaved changes. Switch group and lose them?"
+msgstr "لديك تغييرات غير محفوظة. هل تريد تبديل المجموعة وفقدانها؟"
+
+#: src/hyperadmin/templates/permissions/matrix.html:234
+#, fuzzy
+msgid "Group"
+msgstr "المجموعة"
+
+#: src/hyperadmin/templates/permissions/matrix.html:247
+#, fuzzy
+msgid "Show group"
+msgstr "عرض المجموعة"
+
+#: src/hyperadmin/templates/permissions/matrix.html:262
+#, fuzzy
+msgid "No groups yet"
+msgstr "لا توجد مجموعات بعد"
+
+#: src/hyperadmin/templates/permissions/matrix.html:263
+#, fuzzy
+msgid "Create a group first; its permissions show up here."
+msgstr "أنشئ مجموعة أولًا؛ ستظهر أذوناتها هنا."
+
+#: src/hyperadmin/templates/permissions/matrix.html:270
+#, fuzzy
+msgid "No registered models"
+msgstr "لا توجد نماذج مسجلة"
+
+#: src/hyperadmin/templates/permissions/matrix.html:271
+#, fuzzy
+msgid "Register a ModelAdmin and its permissions show up here."
+msgstr "سجّل ModelAdmin وستظهر أذوناته هنا."
+
+#: src/hyperadmin/templates/permissions/matrix.html:279
+#, fuzzy, python-format
+msgid "Permissions of the group %(group)s"
+msgstr "أذونات المجموعة %(group)s"
+
+#: src/hyperadmin/templates/permissions/matrix.html:282
+#, fuzzy
+msgid "Model"
+msgstr "النموذج"
+
+#: src/hyperadmin/templates/permissions/matrix.html:288
+#, fuzzy, python-format
+msgid "%(group)s can %(action)s every model"
+msgstr "يمكن لـ %(group)s %(action)s كل النماذج"
+
+#: src/hyperadmin/templates/permissions/matrix.html:295
+#: src/hyperadmin/templates/permissions/matrix.html:379
+#: src/hyperadmin/templates/permissions/matrix.html:390
+#: src/hyperadmin/templates/permissions/object_popover.html:14
+#: src/hyperadmin/templates/permissions/object_popover.html:21
+#, fuzzy
+msgid "Object rules"
+msgstr "قواعد الكائنات"
+
+#: src/hyperadmin/templates/permissions/matrix.html:316
+#, fuzzy, python-format
+msgid "%(group)s can %(action)s %(model)s"
+msgstr "يمكن لـ %(group)s %(action)s %(model)s"
+
+#: src/hyperadmin/templates/permissions/matrix.html:317
+#, fuzzy
+msgid "unsaved"
+msgstr "غير محفوظ"
+
+#: src/hyperadmin/templates/permissions/matrix.html:323
+#, fuzzy
+msgid "Not saved: you don’t have this permission yourself"
+msgstr "لم يُحفظ: لا تملك هذا الإذن بنفسك"
+
+#: src/hyperadmin/templates/permissions/matrix.html:327
+#, fuzzy, python-format
+msgid "%(action)s does not apply to %(model)s"
+msgstr "لا ينطبق %(action)s على %(model)s"
+
+#: src/hyperadmin/templates/permissions/matrix.html:347
+#, fuzzy
+msgid "object rule for"
+msgstr "قاعدة كائن لـ"
+
+#: src/hyperadmin/templates/permissions/matrix.html:360
+#, fuzzy, python-format
+msgid "Permissions of %(group)s"
+msgstr "أذونات %(group)s"
+
+#: src/hyperadmin/templates/permissions/matrix.html:365
+#, fuzzy
+msgid "Unsaved changes"
+msgstr "تغييرات غير محفوظة"
+
+#: src/hyperadmin/templates/permissions/matrix.html:370
+#, fuzzy
+msgid "Discard"
+msgstr "تجاهل"
+
+#: src/hyperadmin/templates/permissions/matrix.html:371
+#, fuzzy
+msgid "Save changes"
+msgstr "حفظ التغييرات"
+
+#: src/hyperadmin/templates/permissions/matrix.html:384
+#, fuzzy
+msgid "Loading object rules"
+msgstr "جارٍ تحميل قواعد الكائنات"
+
+#: src/hyperadmin/templates/permissions/matrix.html:393
+#, fuzzy
+msgid "Couldn’t load the rules."
+msgstr "تعذّر تحميل القواعد."
+
+#: src/hyperadmin/templates/permissions/object_popover.html:16
+#, fuzzy
+msgid "Close object rules"
+msgstr "إغلاق قواعد الكائنات"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:35
+#, fuzzy, python-format
+msgid "Remove rule for %(record)s"
+msgstr "إزالة قاعدة %(record)s"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:41
+#, fuzzy
+msgid "No object rules. Group permissions apply."
+msgstr "لا توجد قواعد كائنات. تنطبق أذونات المجموعة."
+
+#: src/hyperadmin/templates/permissions/object_popover.html:45
+#, fuzzy
+msgid "Add object rule"
+msgstr "إضافة قاعدة كائن"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:49
+#, fuzzy
+msgid "Record"
+msgstr "السجل"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:54
+#, fuzzy
+msgid "Action"
+msgstr "الإجراء"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:67
+#: src/hyperadmin/templates/permissions/object_popover.html:69
+#, fuzzy
+msgid "Rule for"
+msgstr "القاعدة لـ"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:67
+#, fuzzy
+msgid "added."
+msgstr "أُضيفت."
+
+#: src/hyperadmin/templates/permissions/object_popover.html:69
+#, fuzzy
+msgid "removed."
+msgstr "أُزيلت."
+
+#: src/hyperadmin/templates/permissions/object_popover.html:76
+#, fuzzy
+msgid "Undo"
+msgstr "تراجع"
+
+#: src/hyperadmin/templates/permissions/object_popover.html:80
+#, fuzzy
+msgid "You can only grant permissions you have yourself."
+msgstr "يمكنك منح الأذونات التي تملكها أنت فقط."
+
+#: src/hyperadmin/templates/permissions/object_popover.html:82
+#, fuzzy
+msgid "No change."
+msgstr "لا يوجد تغيير."
+
+#: src/hyperadmin/templates/permissions/object_popover.html:88
+#, fuzzy
+msgid "Saved as you go. Group permissions still apply."
+msgstr "يُحفظ فورًا. لا تزال أذونات المجموعة سارية."
+
+#: src/hyperadmin/templates/permissions/object_popover.html:92
+#, fuzzy
+msgid "Add rule"
+msgstr "إضافة قاعدة"
+
+#: src/hyperadmin/templates/widgets/autocomplete.html:21
+#, fuzzy, python-format
+msgid "Choose a %(parent)s first"
+msgstr "اختر %(parent)s أولًا"
+
+#: src/hyperadmin/templates/widgets/autocomplete.html:30
+#, fuzzy
+msgid "Searching"
+msgstr "جارٍ البحث"
+
+#: src/hyperadmin/templates/widgets/autocomplete.html:60
+#, fuzzy, python-format
+msgid "Clear %(label)s"
+msgstr "مسح %(label)s"
+
+#: src/hyperadmin/templates/widgets/autocomplete.html:83
+#, fuzzy, python-format
+msgid "Add %(label)s"
+msgstr "إضافة %(label)s"
+
+#: src/hyperadmin/templates/widgets/autocomplete.html:94
+#: src/hyperadmin/templates/widgets/autocomplete.html:97
+#, fuzzy, python-format
+msgid "Pick the %(parent)s above to list its %(label)s options."
+msgstr "اختر %(parent)s أعلاه لعرض خيارات %(label)s."
+
+#: src/hyperadmin/templates/widgets/autocomplete.html:95
+#, fuzzy, python-format
+msgid "Cleared because the %(parent)s changed."
+msgstr "تم المسح لأن %(parent)s تغيّر."
+
+#: src/hyperadmin/templates/widgets/autocomplete.html:96
+#, fuzzy, python-format
+msgid "%(label)s cleared because the %(parent)s changed"
+msgstr "تم مسح %(label)s لأن %(parent)s تغيّر"
+
+#: src/hyperadmin/templates/widgets/datetime_input.html:16
+#, fuzzy, python-format
+msgid "Time zone: %(tz)s"
+msgstr "المنطقة الزمنية: %(tz)s"
+
+#: src/hyperadmin/templates/widgets/image_input.html:19
+#, fuzzy
+msgid "Only one file allowed"
+msgstr "يُسمح بملف واحد فقط"
+
+#: src/hyperadmin/templates/widgets/image_input.html:21
+#, fuzzy
+msgid "File type not allowed"
+msgstr "نوع الملف غير مسموح به"
+
+#: src/hyperadmin/templates/widgets/image_input.html:74
+#: src/hyperadmin/templates/widgets/image_input.html:85
+#, fuzzy
+msgid "Release to upload"
+msgstr "أفلت للرفع"
+
+#: src/hyperadmin/templates/widgets/image_input.html:74
+#, fuzzy
+msgid "Drop image here or click to select"
+msgstr "أفلت صورة هنا أو انقر للاختيار"
+
+#: src/hyperadmin/templates/widgets/image_input.html:92
+#, fuzzy
+msgid "Uploading"
+msgstr "جارٍ الرفع"
+
+#: src/hyperadmin/templates/widgets/image_input.html:98
+#, fuzzy
+msgid "Upload failed — check your connection"
+msgstr "فشل الرفع — تحقق من اتصالك"
+
+#: src/hyperadmin/templates/widgets/image_input.html:103
+#, fuzzy
+msgid "Selected image preview"
+msgstr "معاينة الصورة المحددة"
+
+#: src/hyperadmin/templates/widgets/popup_form.html:29
+#, fuzzy, python-format
+msgid "Add %(model)s"
+msgstr "إضافة %(model)s"
+
+#: src/hyperadmin/templates/widgets/popup_form.html:30
+#, fuzzy, python-format
+msgid "Saving selects it in the %(field)s field."
+msgstr "عند الحفظ سيتم تحديده في الحقل %(field)s."
+
+#: src/hyperadmin/templates/widgets/popup_form.html:61
+#, fuzzy
+msgid "Save and select"
+msgstr "حفظ وتحديد"
+
+#: src/hyperadmin/views/forms.py:52
+#, fuzzy
+msgid "Invalid primary key."
+msgstr "مفتاح أساسي غير صالح."
+
+#: src/hyperadmin/views/forms.py:55
+#, fuzzy
+msgid "Enter a valid date/time"
+msgstr "أدخل تاريخًا ووقتًا صالحين"
+
+#: src/hyperadmin/views/nav_pins.py:110
+#, fuzzy
+msgid "Pins need a signed-in user"
+msgstr "يجب تسجيل الدخول لتثبيت الصفحات"
+
+#: src/hyperadmin/views/nav_pins.py:126
+#, fuzzy, python-format
+msgid "You can pin up to %(count)s pages"
+msgstr "يمكنك تثبيت ما يصل إلى %(count)s صفحات"
 
 #: src/hyperadmin/views/static.py:12
 #, fuzzy
@@ -287,3 +2062,7 @@ msgstr "تم إنشاء العنصر بنجاح"
 #, fuzzy
 msgid "Item updated successfully"
 msgstr "تم تحديث العنصر بنجاح"
+
+#~ msgid "Are you sure you want to delete this item?"
+#~ msgstr "هل أنت متأكد من حذف هذا العنصر؟"
+

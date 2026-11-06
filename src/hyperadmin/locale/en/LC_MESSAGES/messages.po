@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-05-03 15:06+0200\n"
+"POT-Creation-Date: 2026-11-06 19:09+0100\n"
 "PO-Revision-Date: 2026-05-03 15:07+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: en\n"
@@ -18,69 +18,441 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.18.0\n"
 
-#: src/hyperadmin/templates/_messages.html:3
+#: src/hyperadmin/auth/views.py:91
+msgid "Could not send verification code. Please try again."
+msgstr ""
+
+#: src/hyperadmin/auth/views.py:248 src/hyperadmin/auth/views.py:256
+msgid "Code expired, please request a new one."
+msgstr ""
+
+#: src/hyperadmin/auth/views.py:271 src/hyperadmin/auth/views.py:471
+#: src/hyperadmin/auth/views.py:539
+msgid "Invalid code."
+msgstr ""
+
+#: src/hyperadmin/auth/views.py:304 src/hyperadmin/auth/views.py:443
+#: src/hyperadmin/auth/views.py:518
+msgid "Too many attempts, try again later."
+msgstr ""
+
+#: src/hyperadmin/auth/views.py:311
+msgid "A new code has been sent to your email."
+msgstr ""
+
+#: src/hyperadmin/auth/views.py:455
+msgid "No active MFA enable flow. Please try again."
+msgstr ""
+
+#: src/hyperadmin/auth/views.py:483
+msgid "Two-factor authentication enabled."
+msgstr ""
+
+#: src/hyperadmin/auth/views.py:528
+msgid "No active MFA disable flow. Please try again."
+msgstr ""
+
+#: src/hyperadmin/auth/views.py:549
+msgid "Two-factor authentication disabled."
+msgstr ""
+
+#: src/hyperadmin/core/navigation.py:32
+msgid "Plugins"
+msgstr ""
+
+#: src/hyperadmin/core/navigation.py:35
+msgid "Access"
+msgstr ""
+
+#: src/hyperadmin/core/palette.py:87
+#, python-format
+msgid "New %(name)s"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:44
+msgid "Field required"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:45
+msgid "Input should be a valid string"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:46
+#, python-format
+msgid "String should match pattern '%(pattern)s'"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:47
+#, python-format
+msgid "Input should be greater than %(gt)s"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:48
+#, python-format
+msgid "Input should be greater than or equal to %(ge)s"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:49
+#, python-format
+msgid "Input should be less than %(lt)s"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:50
+#, python-format
+msgid "Input should be less than or equal to %(le)s"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:51
+#, python-format
+msgid "Input should be a multiple of %(multiple_of)s"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:52
+msgid "Input should be a valid integer"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:54
+msgid "Input should be a valid integer, unable to parse string as an integer"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:57
+msgid "Input should be a valid integer, got a number with a fractional part"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:59
+msgid "Input should be a valid number"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:61
+msgid "Input should be a valid number, unable to parse string as a number"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:63
+msgid "Input should be a valid boolean"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:64
+msgid "Input should be a valid boolean, unable to interpret input"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:65
+msgid "Input should be a valid decimal"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:67
+#, python-format
+msgid "Input should be a valid date in the format YYYY-MM-DD, %(error)s"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:70
+#, python-format
+msgid "Input should be a valid date or datetime, %(error)s"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:72
+#, python-format
+msgid "Input should be a valid datetime, %(error)s"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:74
+#, python-format
+msgid "Input should be a valid datetime or date, %(error)s"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:76
+#, python-format
+msgid "Input should be in a valid time format, %(error)s"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:77
+#, python-format
+msgid "Input should be a valid UUID, %(error)s"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:78
+#: src/hyperadmin/i18n/validation_messages.py:79
+#, python-format
+msgid "Input should be %(expected)s"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:80
+#, python-format
+msgid "Input should be a valid URL, %(error)s"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:81
+#, python-format
+msgid "Invalid JSON: %(error)s"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:82
+#, python-format
+msgid "Value error, %(error)s"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:83
+#, python-format
+msgid "Assertion failed, %(error)s"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:89
+#, python-format
+msgid "String should have at least %(min_length)s character"
+msgid_plural "String should have at least %(min_length)s characters"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/hyperadmin/i18n/validation_messages.py:96
+#, python-format
+msgid "String should have at most %(max_length)s character"
+msgid_plural "String should have at most %(max_length)s characters"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/hyperadmin/i18n/validation_messages.py:103
+#, python-format
+msgid ""
+"%(field_type)s should have at least %(min_length)s item after validation,"
+" not %(actual_length)s"
+msgid_plural ""
+"%(field_type)s should have at least %(min_length)s items after "
+"validation, not %(actual_length)s"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/hyperadmin/i18n/validation_messages.py:110
+#, python-format
+msgid ""
+"%(field_type)s should have at most %(max_length)s item after validation, "
+"not %(actual_length)s"
+msgid_plural ""
+"%(field_type)s should have at most %(max_length)s items after validation,"
+" not %(actual_length)s"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/hyperadmin/i18n/validation_messages.py:119
+#, python-format
+msgid ""
+"%(field_type)s should have at most %(max_length)s item after validation, "
+"not more"
+msgid_plural ""
+"%(field_type)s should have at most %(max_length)s items after validation,"
+" not more"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/hyperadmin/i18n/validation_messages.py:125
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:16
+#: src/hyperadmin/templates/list_layout.html:8
+msgid "List"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:126
+msgid "Tuple"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:127
+msgid "Set"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:128
+msgid "Frozenset"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:129
+msgid "Dictionary"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:136
+msgid "input is too short"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:137
+msgid "unexpected extra characters at the end of the input"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:138
+msgid "invalid datetime separator, expected `T`, `t`, `_` or space"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:139
+msgid "invalid date separator, expected `-`"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:140
+msgid "invalid time separator, expected `:`"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:141
+msgid "invalid character in year"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:142
+msgid "invalid character in month"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:143
+msgid "invalid character in day"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:144
+msgid "invalid character in hour"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:145
+msgid "invalid character in minute"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:146
+msgid "invalid character in second"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:147
+msgid "month value is outside expected range of 1-12"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:148
+msgid "day value is outside expected range"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:149
+msgid "hour value is outside expected range of 0-23"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:150
+msgid "minute value is outside expected range of 0-59"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:151
+msgid "second value is outside expected range of 0-59"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:152
+msgid "relative URL without a base"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:153
+msgid "empty host"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:154
+msgid "invalid port number"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:155
+msgid "invalid domain character"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:156
+msgid "invalid international domain name"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:157
+msgid "invalid IPv4 address"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:158
+msgid "invalid IPv6 address"
+msgstr ""
+
+#: src/hyperadmin/i18n/validation_messages.py:162
+#, python-format
+msgid "%(choices)s or %(last)s"
+msgstr ""
+
+#: src/hyperadmin/templates/_messages.html:6
 msgid "Success!"
 msgstr ""
 
-#: src/hyperadmin/templates/_messages.html:4
+#: src/hyperadmin/templates/_messages.html:7
 msgid "Your action was successful."
 msgstr ""
 
-#: src/hyperadmin/templates/_messages.html:5
-#: src/hyperadmin/templates/_messages.html:6
+#: src/hyperadmin/templates/_messages.html:9
+#: src/hyperadmin/templates/components/csrf_reload_banner.html:18
+#: src/hyperadmin/templates/components/error_toast.html:17
+#: src/hyperadmin/templates/components/popover.html:36
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:35
+#: src/hyperadmin/templates/components/toast.html:26
+#: src/hyperadmin/templates/permissions/_banner.html:16
+#: src/hyperadmin/templates/widgets/popup_form.html:33
 msgid "Close"
 msgstr ""
 
-#: src/hyperadmin/templates/_navbar.html:1
+#: src/hyperadmin/templates/_navbar.html:2
 msgid "Main navigation"
 msgstr ""
 
-#: src/hyperadmin/templates/_navbar.html:8
+#: src/hyperadmin/templates/_navbar.html:9
 msgid "Toggle navigation menu"
 msgstr ""
 
-#: src/hyperadmin/templates/_navbar.html:18
+#: src/hyperadmin/templates/_navbar.html:27
+msgid "Search…"
+msgstr ""
+
+#: src/hyperadmin/templates/_navbar.html:36
+msgid "Real-time connection status"
+msgstr ""
+
+#: src/hyperadmin/templates/_navbar.html:41
 msgid "Language"
 msgstr ""
 
-#: src/hyperadmin/templates/_navbar.html:22
+#: src/hyperadmin/templates/_navbar.html:46
 msgid "Select language"
 msgstr ""
 
-#: src/hyperadmin/templates/_navbar.html:34
+#: src/hyperadmin/templates/_navbar.html:58
 msgid "Toggle dark mode"
 msgstr ""
 
-#: src/hyperadmin/templates/_navbar.html:56
+#: src/hyperadmin/templates/_navbar.html:78
 msgid "Logout"
 msgstr ""
 
-#: src/hyperadmin/templates/_navbar.html:64
+#: src/hyperadmin/templates/_navbar.html:84
 msgid "Admin"
 msgstr ""
 
-#: src/hyperadmin/templates/_navbar.html:70
+#: src/hyperadmin/templates/_navbar.html:88
 msgid "Profile"
 msgstr ""
 
-#: src/hyperadmin/templates/_navbar.html:71
+#: src/hyperadmin/templates/_navbar.html:89
 msgid "Settings"
 msgstr ""
 
-#: src/hyperadmin/templates/_sidebar.html:5
+#: src/hyperadmin/templates/_sidebar.html:18
 msgid "Model navigation"
 msgstr ""
 
-#: src/hyperadmin/templates/_sidebar.html:12
+#: src/hyperadmin/templates/_sidebar.html:25
 msgid "Menu"
 msgstr ""
 
-#: src/hyperadmin/templates/_sidebar.html:16
+#: src/hyperadmin/templates/_sidebar.html:29
 msgid "Close navigation menu"
 msgstr ""
 
-#: src/hyperadmin/templates/_sidebar.html:23
+#: src/hyperadmin/templates/_sidebar.html:39
+#: src/hyperadmin/templates/_sidebar.html:40
+msgid "Collapse sidebar"
+msgstr ""
+
+#: src/hyperadmin/templates/_sidebar.html:45
 msgid "Sidebar"
+msgstr ""
+
+#: src/hyperadmin/templates/base.html:12
+#: src/hyperadmin/templates/create.html:36
+msgid "Create"
+msgstr ""
+
+#: src/hyperadmin/templates/bulk_form.html:9
+#: src/hyperadmin/templates/bulk_result.html:11
+msgid "Breadcrumb"
 msgstr ""
 
 #: src/hyperadmin/templates/create.html:4
@@ -88,146 +460,1243 @@ msgstr ""
 msgid "Create %(model_name)s"
 msgstr ""
 
-#: src/hyperadmin/templates/create.html:36
-msgid "Create"
-msgstr ""
-
+#: src/hyperadmin/templates/components/bulk_form.html:74
+#: src/hyperadmin/templates/components/bulk_form.html:76
+#: src/hyperadmin/templates/components/confirm_delete_dialog.html:23
+#: src/hyperadmin/templates/components/saved_views.html:24
+#: src/hyperadmin/templates/components/saved_views.html:49
 #: src/hyperadmin/templates/create.html:39
-#: src/hyperadmin/templates/update.html:39
+#: src/hyperadmin/templates/update.html:53
+#: src/hyperadmin/templates/widgets/popup_form.html:59
 msgid "Cancel"
 msgstr ""
 
-#: src/hyperadmin/templates/detail.html:30
+#: src/hyperadmin/templates/detail.html:15
+msgid "Edit"
+msgstr ""
+
+#: src/hyperadmin/templates/components/confirm_delete_dialog.html:24
+#: src/hyperadmin/templates/components/table_body.html:57
+#: src/hyperadmin/templates/detail.html:22
+#: src/hyperadmin/templates/permissions/_macros.html:20
+#: src/hyperadmin/templates/update.html:59
+msgid "Delete"
+msgstr ""
+
+#: src/hyperadmin/templates/detail.html:113
 #, python-format
 msgid "Run action '%(label)s'?"
 msgstr ""
 
-#: src/hyperadmin/templates/detail.html:36
+#: src/hyperadmin/templates/detail.html:119
 msgid "Back to list"
 msgstr ""
 
+#: src/hyperadmin/templates/error.html:5
+msgid "You don't have access to this page"
+msgstr ""
+
+#: src/hyperadmin/templates/error.html:6 src/hyperadmin/views/nav_pins.py:95
+#: src/hyperadmin/views/nav_pins.py:130 src/hyperadmin/views/nav_pins.py:141
+msgid "Page not found"
+msgstr ""
+
+#: src/hyperadmin/templates/error.html:7
+msgid "This action can't be completed"
+msgstr ""
+
+#: src/hyperadmin/templates/error.html:10
+#: src/hyperadmin/templates/error.html:15
+#: src/hyperadmin/templates/error.html:16
+msgid "Error"
+msgstr ""
+
+#: src/hyperadmin/templates/error.html:18
+msgid ""
+"Your account doesn't have permission for this. Ask an administrator if "
+"you need it."
+msgstr ""
+
+#: src/hyperadmin/templates/error.html:22
+msgid "Back to dashboard"
+msgstr ""
+
 #: src/hyperadmin/templates/form_layout.html:12
+#: src/hyperadmin/templates/widgets/popup_form.html:23
+msgid "You have unsaved changes. Leave this page?"
+msgstr ""
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:25
+#: src/hyperadmin/templates/form_layout.html:18
 msgid "Save"
 msgstr ""
 
-#: src/hyperadmin/templates/list_layout.html:3
+#: src/hyperadmin/templates/list_layout.html:4
 #, python-format
 msgid "%(model_name)s List | HyperAdmin"
 msgstr ""
 
-#: src/hyperadmin/templates/list_layout.html:7
-msgid "List"
-msgstr ""
-
-#: src/hyperadmin/templates/list_layout.html:11
+#: src/hyperadmin/templates/list_layout.html:12
 #, python-format
 msgid "Create New %(model_name)s"
+msgstr ""
+
+#: src/hyperadmin/templates/components/filter_bar.html:10
+#: src/hyperadmin/templates/components/filter_sidebar.html:13
+#: src/hyperadmin/templates/list_layout.html:28
+msgid "Filters"
+msgstr ""
+
+#: src/hyperadmin/templates/list_layout.html:31
+msgid "Applied filters"
+msgstr ""
+
+#: src/hyperadmin/templates/list_layout.html:33
+#, python-format
+msgid "Remove filter %(label)s"
 msgstr ""
 
 #: src/hyperadmin/templates/login.html:3
 msgid "Login"
 msgstr ""
 
-#: src/hyperadmin/templates/login.html:13
+#: src/hyperadmin/templates/login.html:14
 msgid "Sign in to your account"
 msgstr ""
 
-#: src/hyperadmin/templates/login.html:23
+#: src/hyperadmin/templates/login.html:28
 msgid "Username"
 msgstr ""
 
-#: src/hyperadmin/templates/login.html:35
+#: src/hyperadmin/templates/login.html:40
 msgid "Password"
 msgstr ""
 
-#: src/hyperadmin/templates/login.html:46
+#: src/hyperadmin/templates/login.html:51
 msgid "Sign in"
 msgstr ""
 
-#: src/hyperadmin/templates/update.html:4
+#: src/hyperadmin/templates/update.html:5
 #, python-format
 msgid "Update %(item_name)s"
 msgstr ""
 
-#: src/hyperadmin/templates/update.html:36
+#: src/hyperadmin/templates/permissions/_macros.html:20
+#: src/hyperadmin/templates/update.html:14
+msgid "View"
+msgstr ""
+
+#: src/hyperadmin/templates/update.html:50
 msgid "Update"
 msgstr ""
 
-#: src/hyperadmin/templates/components/filter_bar.html:11
-msgid "Filters"
+#: src/hyperadmin/templates/auth/mfa_challenge.html:3
+msgid "MFA Challenge"
 msgstr ""
 
-#: src/hyperadmin/templates/components/filter_bar.html:27
+#: src/hyperadmin/templates/auth/mfa_challenge.html:12
+msgid "Two-factor verification"
+msgstr ""
+
+#: src/hyperadmin/templates/auth/mfa_challenge.html:14
+msgid "Enter the 6-digit code we sent to your email."
+msgstr ""
+
+#: src/hyperadmin/templates/auth/mfa_challenge.html:36
+#: src/hyperadmin/templates/auth/mfa_settings.html:53
+msgid "Verification code"
+msgstr ""
+
+#: src/hyperadmin/templates/auth/mfa_challenge.html:54
+msgid "Verify"
+msgstr ""
+
+#: src/hyperadmin/templates/auth/mfa_challenge.html:60
+msgid "Your code has expired."
+msgstr ""
+
+#: src/hyperadmin/templates/auth/mfa_challenge.html:70
+msgid "Resend code"
+msgstr ""
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:3
+#: src/hyperadmin/templates/auth/mfa_settings.html:9
+msgid "Two-factor authentication"
+msgstr ""
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:13
+msgid "Status:"
+msgstr ""
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:16
+msgid "Enabled"
+msgstr ""
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:20
+msgid "Disabled"
+msgstr ""
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:49
+msgid "Enter the 6-digit code we sent to your email to confirm."
+msgstr ""
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:73
+msgid "Confirm and enable"
+msgstr ""
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:75
+msgid "Confirm and disable"
+msgstr ""
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:90
+msgid "Disable two-factor authentication"
+msgstr ""
+
+#: src/hyperadmin/templates/auth/mfa_settings.html:104
+msgid "Enable two-factor authentication"
+msgstr ""
+
+#: src/hyperadmin/templates/components/_nav.html:33
+#, python-format
+msgid "Unpin %(label)s"
+msgstr ""
+
+#: src/hyperadmin/templates/components/_nav.html:33
+#, python-format
+msgid "Pin %(label)s"
+msgstr ""
+
+#: src/hyperadmin/templates/components/banner.html:48
+msgid "Dismiss"
+msgstr ""
+
+#: src/hyperadmin/templates/components/banner.html:57
+msgid "Notices"
+msgstr ""
+
+#: src/hyperadmin/templates/components/banner.html:72
+#, python-format
+msgid "+%(count)s more notice"
+msgid_plural "+%(count)s more notices"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/hyperadmin/templates/components/bulk_form.html:21
+#, python-format
+msgid "%(label)s 1 row"
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_form.html:23
+#, python-format
+msgid "%(label)s %(count)s rows"
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_form.html:35
+msgid "1 field needs fixing."
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_form.html:35
+#, python-format
+msgid "%(count)s fields need fixing."
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_form.html:37
+#, python-format
+msgid "Your %(count)s selected rows are kept."
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_form.html:42
+#, python-format
+msgid "This runs on the %(count)s selected rows."
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_form.html:45
+msgid "Selected rows"
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_form.html:56
+msgid "optional"
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_result.html:23
+msgid "Done"
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_result.html:23
+msgid "Failed"
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_result.html:23
+msgid "Forbidden"
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_result.html:25
+msgid "Row not found. It may have been deleted after you selected it."
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_result.html:26
+msgid ""
+"The row could not be loaded because of a database error. Check the server"
+" logs, then retry."
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_result.html:27
+msgid "The action failed on this row. Check the server logs, then retry."
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_result.html:31
+#, python-format
+msgid "%(failed)s failed and %(forbidden)s not allowed."
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_result.html:33
+#, python-format
+msgid "%(failed)s failed."
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_result.html:35
+#, python-format
+msgid "%(forbidden)s not allowed."
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_result.html:40
+#: src/hyperadmin/templates/components/bulk_result.html:95
+msgid "Row"
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_result.html:45
+#: src/hyperadmin/templates/components/bulk_result.html:96
+msgid "Result"
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_result.html:49
+#: src/hyperadmin/templates/components/bulk_result.html:97
+msgid "What happened"
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_result.html:51
+msgid "no detail"
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_result.html:66
+msgid "No rows were selected."
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_result.html:68
+#, python-format
+msgid "All %(count)s rows done."
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_result.html:70
+#, python-format
+msgid "%(done)s of %(count)s rows done."
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_result.html:72
+msgid "No rows done."
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_result.html:76
+msgid "Totals"
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_result.html:83
+#, python-format
+msgid "%(done)s done, %(failed)s failed, %(forbidden)s forbidden"
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_result.html:92
+msgid "Results per row"
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_result.html:107
+#, python-format
+msgid "Show the %(count)s done rows"
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_result.html:108
+msgid "Done rows"
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_result.html:125
+#, python-format
+msgid "Retry failures (%(count)s)"
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_result.html:130
+#, python-format
+msgid "Back to %(model_name)s"
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:22
+msgid "Bulk actions"
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:28
+msgid "Choose an action, then press Run."
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:29
+msgid "Select at least one row, then press Run."
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:36
+msgid "selected"
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:37
+#: src/hyperadmin/templates/components/bulk_toolbar.html:38
+msgid "Select rows, then choose an action"
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:40
+msgid "Action for selected rows"
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:44
+msgid "Choose an action…"
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:51
+msgid "Run"
+msgstr ""
+
+#: src/hyperadmin/templates/components/bulk_toolbar.html:54
+msgid "Clear selection"
+msgstr ""
+
+#: src/hyperadmin/templates/components/command_palette.html:15
+#: src/hyperadmin/templates/components/nav_pinned.html:10
+msgid "Pinned"
+msgstr ""
+
+#: src/hyperadmin/templates/components/command_palette.html:16
+msgid "Recent"
+msgstr ""
+
+#: src/hyperadmin/templates/components/command_palette.html:17
+msgid "Models"
+msgstr ""
+
+#: src/hyperadmin/templates/components/command_palette.html:18
+msgid "Pages"
+msgstr ""
+
+#: src/hyperadmin/templates/components/command_palette.html:19
+#: src/hyperadmin/templates/widgets/autocomplete.html:32
+#, python-format
+msgid "%(count)s results"
+msgstr ""
+
+#: src/hyperadmin/templates/components/command_palette.html:20
+#: src/hyperadmin/templates/components/command_palette.html:37
+#: src/hyperadmin/templates/widgets/autocomplete.html:31
+msgid "No results"
+msgstr ""
+
+#: src/hyperadmin/templates/components/command_palette.html:24
+#: src/hyperadmin/templates/components/search_input.html:11
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:19
+msgid "Search"
+msgstr ""
+
+#: src/hyperadmin/templates/components/command_palette.html:30
+msgid "Search models and pages"
+msgstr ""
+
+#: src/hyperadmin/templates/components/command_palette.html:31
+msgid "Search models and pages…"
+msgstr ""
+
+#: src/hyperadmin/templates/components/command_palette.html:36
+msgid "Results"
+msgstr ""
+
+#: src/hyperadmin/templates/components/command_palette.html:40
+msgid "move"
+msgstr ""
+
+#: src/hyperadmin/templates/components/command_palette.html:41
+msgid "open"
+msgstr ""
+
+#: src/hyperadmin/templates/components/command_palette.html:42
+msgid "new"
+msgstr ""
+
+#: src/hyperadmin/templates/components/confirm_delete_dialog.html:14
+#, python-format
+msgid "Delete %(name)s?"
+msgstr ""
+
+#: src/hyperadmin/templates/components/confirm_delete_dialog.html:18
+msgid "Delete this record?"
+msgstr ""
+
+#: src/hyperadmin/templates/components/confirm_delete_dialog.html:19
+msgid "This cannot be undone."
+msgstr ""
+
+#: src/hyperadmin/templates/components/csrf_reload_banner.html:12
+msgid "This page's security token is out of date"
+msgstr ""
+
+#: src/hyperadmin/templates/components/csrf_reload_banner.html:13
+msgid "Reload the page, then try again."
+msgstr ""
+
+#: src/hyperadmin/templates/components/csrf_reload_banner.html:15
+msgid "Reload page"
+msgstr ""
+
+#: src/hyperadmin/templates/components/error_toast.html:8
+msgid "Permission denied"
+msgstr ""
+
+#: src/hyperadmin/templates/components/error_toast.html:9
+msgid "Not found"
+msgstr ""
+
+#: src/hyperadmin/templates/components/error_toast.html:10
+msgid "Action refused"
+msgstr ""
+
+#: src/hyperadmin/templates/components/error_toast.html:13
+msgid "Your account doesn't have permission for this."
+msgstr ""
+
+#: src/hyperadmin/templates/components/filter_bar.html:28
+#: src/hyperadmin/templates/components/filters/boolean.html:6
+#: src/hyperadmin/templates/components/filters/select.html:6
 msgid "Any"
 msgstr ""
 
-#: src/hyperadmin/templates/components/filter_bar.html:43
+#: src/hyperadmin/templates/components/filter_bar.html:44
 msgid "Clear all filters"
 msgstr ""
 
-#: src/hyperadmin/templates/components/inline_row.html:31
-#: src/hyperadmin/templates/components/table.html:8
-#: src/hyperadmin/templates/components/table.html:18
+#: src/hyperadmin/templates/components/filter_sidebar.html:14
+msgid "Reset"
+msgstr ""
+
+#: src/hyperadmin/templates/components/filter_sidebar.html:21
+msgid "Clear all"
+msgstr ""
+
+#: src/hyperadmin/templates/components/filter_sidebar.html:22
+msgid "Apply filters"
+msgstr ""
+
+#: src/hyperadmin/templates/components/inline_row.html:32
+#: src/hyperadmin/templates/components/table.html:28
+#: src/hyperadmin/templates/components/table_body.html:54
 msgid "Actions"
 msgstr ""
 
-#: src/hyperadmin/templates/components/inline_row.html:36
+#: src/hyperadmin/templates/components/inline_row.html:45
+#: src/hyperadmin/templates/widgets/image_input.html:104
 msgid "Remove"
 msgstr ""
 
-#: src/hyperadmin/templates/components/pagination.html:1
+#: src/hyperadmin/templates/components/list_error.html:5
+msgid "The list could not be loaded because of a database error."
+msgstr ""
+
+#: src/hyperadmin/templates/components/list_error.html:7
+#, python-format
+msgid ""
+"The table for this model does not exist yet: run your migrations or "
+"%(cmd)s."
+msgstr ""
+
+#: src/hyperadmin/templates/components/list_error.html:9
+msgid "Check the server logs for details."
+msgstr ""
+
+#: src/hyperadmin/templates/components/pagination.html:2
 msgid "Pagination"
 msgstr ""
 
-#: src/hyperadmin/templates/components/pagination.html:4
+#: src/hyperadmin/templates/components/pagination.html:5
 #, python-format
 msgid "Showing %(start)s to %(end)s of %(total)s results"
 msgstr ""
 
-#: src/hyperadmin/templates/components/pagination.html:17
+#: src/hyperadmin/templates/components/pagination.html:18
 msgid "Previous"
 msgstr ""
 
-#: src/hyperadmin/templates/components/pagination.html:22
+#: src/hyperadmin/templates/components/pagination.html:23
 #, python-format
 msgid "Page %(page)s of %(total_pages)s"
 msgstr ""
 
-#: src/hyperadmin/templates/components/pagination.html:32
+#: src/hyperadmin/templates/components/pagination.html:33
 msgid "Next"
 msgstr ""
 
-#: src/hyperadmin/templates/components/search_input.html:5
-msgid "Search..."
+#: src/hyperadmin/templates/components/panel_document.html:12
+msgid "Open in new tab"
+msgstr ""
+
+#: src/hyperadmin/templates/components/panel_document.html:12
+msgid "(opens a new tab)"
+msgstr ""
+
+#: src/hyperadmin/templates/components/panel_document.html:15
+msgid "Download"
+msgstr ""
+
+#: src/hyperadmin/templates/components/panel_document.html:18
+#, python-format
+msgid "%(name)s, preview"
+msgstr ""
+
+#: src/hyperadmin/templates/components/panel_states.html:17
+#, python-format
+msgid "Loading %(label)s"
+msgstr ""
+
+#: src/hyperadmin/templates/components/panel_states.html:18
+#, python-format
+msgid "Open %(label)s"
+msgstr ""
+
+#: src/hyperadmin/templates/components/panel_states.html:25
+#, python-format
+msgid "%(label)s didn't load."
+msgstr ""
+
+#: src/hyperadmin/templates/components/panel_states.html:26
+msgid "The server took too long to answer. The other tabs still work."
+msgstr ""
+
+#: src/hyperadmin/templates/components/panel_states.html:27
+#: src/hyperadmin/templates/permissions/matrix.html:394
+#: src/hyperadmin/templates/widgets/image_input.html:99
+msgid "Retry"
+msgstr ""
+
+#: src/hyperadmin/templates/components/panel_states.html:32
+msgid "You don't have access to this panel."
+msgstr ""
+
+#: src/hyperadmin/templates/components/panel_states.html:33
+#, python-format
+msgid "Ask an administrator for the \"%(permission)s\" permission."
+msgstr ""
+
+#: src/hyperadmin/templates/components/panel_tab_strip.html:14
+#, python-format
+msgid "%(name)s sections"
+msgstr ""
+
+#: src/hyperadmin/templates/components/panel_tab_strip.html:21
+msgid "Details"
+msgstr ""
+
+#: src/hyperadmin/templates/components/presence_banner.html:20
+#, python-brace-format
+msgid "{names} is also viewing this record."
+msgstr ""
+
+#: src/hyperadmin/templates/components/presence_banner.html:21
+#, python-brace-format
+msgid "{names} are also viewing this record."
+msgstr ""
+
+#: src/hyperadmin/templates/components/presence_banner.html:22
+#, python-brace-format
+msgid "{names} is also editing this record."
+msgstr ""
+
+#: src/hyperadmin/templates/components/presence_banner.html:23
+#, python-brace-format
+msgid "{names} are also editing this record."
+msgstr ""
+
+#: src/hyperadmin/templates/components/presence_banner.html:24
+#, python-brace-format
+msgid "+{count} more"
+msgstr ""
+
+#: src/hyperadmin/templates/components/saved_views.html:9
+msgid "My views"
+msgstr ""
+
+#: src/hyperadmin/templates/components/saved_views.html:13
+#: src/hyperadmin/templates/components/saved_views.html:25
+msgid "Save view"
+msgstr ""
+
+#: src/hyperadmin/templates/components/saved_views.html:20
+msgid "Name"
+msgstr ""
+
+#: src/hyperadmin/templates/components/saved_views.html:34
+msgid "(active)"
+msgstr ""
+
+#: src/hyperadmin/templates/components/saved_views.html:37
+#, python-format
+msgid "Actions for view %(name)s"
+msgstr ""
+
+#: src/hyperadmin/templates/components/saved_views.html:41
+msgid "Delete…"
+msgstr ""
+
+#: src/hyperadmin/templates/components/saved_views.html:46
+#, python-format
+msgid "Delete the view “%(name)s”?"
+msgstr ""
+
+#: src/hyperadmin/templates/components/saved_views.html:47
+msgid "Only the saved filters go. No rows change."
+msgstr ""
+
+#: src/hyperadmin/templates/components/saved_views.html:51
+msgid "Delete view"
+msgstr ""
+
+#: src/hyperadmin/templates/components/saved_views.html:58
+msgid "Save the filters you use often. They show up here, only for you."
 msgstr ""
 
 #: src/hyperadmin/templates/components/search_input.html:8
-msgid "Search"
+msgid "Search..."
 msgstr ""
 
-#: src/hyperadmin/templates/components/search_input.html:14
+#: src/hyperadmin/templates/components/search_input.html:18
 msgid "Searching..."
 msgstr ""
 
-#: src/hyperadmin/templates/components/table.html:2
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:15
+msgid "General"
+msgstr ""
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:17
+msgid "Form"
+msgstr ""
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:18
+msgid "Show keyboard shortcuts"
+msgstr ""
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:20
+msgid "Focus search"
+msgstr ""
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:21
+msgid "Next row"
+msgstr ""
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:22
+msgid "Previous row"
+msgstr ""
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:23
+msgid "Select row"
+msgstr ""
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:24
+msgid "Create new"
+msgstr ""
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:26
+msgid "or"
+msgstr ""
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:32
+msgid "Keyboard shortcuts"
+msgstr ""
+
+#: src/hyperadmin/templates/components/shortcuts_overlay.html:42
+msgid "Single-key shortcuts"
+msgstr ""
+
+#: src/hyperadmin/templates/components/table.html:11
 #, python-format
 msgid "%(model_name)s list"
 msgstr ""
 
-#: src/hyperadmin/templates/components/table.html:20
-msgid "View"
+#: src/hyperadmin/templates/components/table.html:18
+msgid "Select all rows on this page"
 msgstr ""
 
-#: src/hyperadmin/templates/components/table.html:23
-msgid "Edit"
+#: src/hyperadmin/templates/components/table_body.html:23
+msgid "Select"
 msgstr ""
 
-#: src/hyperadmin/templates/components/table.html:27
-msgid "Are you sure you want to delete this item?"
+#: src/hyperadmin/templates/components/table_body.html:27
+#, python-format
+msgid "Select %(pk)s"
 msgstr ""
 
-#: src/hyperadmin/templates/components/table.html:32
-msgid "Delete"
+#: src/hyperadmin/templates/components/table_body.html:59
+#, python-format
+msgid "Delete %(name)s"
+msgstr ""
+
+#: src/hyperadmin/templates/components/table_body.html:68
+#, python-format
+msgid "Open %(name)s"
+msgstr ""
+
+#: src/hyperadmin/templates/components/toast.html:19
+#, python-brace-format
+msgid "{actor} changed {count} {model}"
+msgid_plural "{actor} changed {count} {model}"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/hyperadmin/templates/components/toast.html:20
+#, python-brace-format
+msgid "{count} person"
+msgid_plural "{count} people"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/hyperadmin/templates/components/toast.html:30
+#, python-brace-format
+msgid "{actor} created {model} #{pk}"
+msgstr ""
+
+#: src/hyperadmin/templates/components/toast.html:31
+#, python-brace-format
+msgid "{actor} deleted {model} #{pk}"
+msgstr ""
+
+#: src/hyperadmin/templates/components/toast.html:32
+msgid "Someone"
+msgstr ""
+
+#: src/hyperadmin/templates/components/toast.html:33
+msgid "List changed: refresh"
+msgstr ""
+
+#: src/hyperadmin/templates/components/filters/boolean.html:7
+msgid "Yes"
+msgstr ""
+
+#: src/hyperadmin/templates/components/filters/boolean.html:8
+msgid "No"
+msgstr ""
+
+#: src/hyperadmin/templates/components/filters/current_period.html:6
+#, python-format
+msgid "Showing %(period)s by default."
+msgstr ""
+
+#: src/hyperadmin/templates/components/filters/current_period.html:6
+msgid "Show all dates"
+msgstr ""
+
+#: src/hyperadmin/templates/components/filters/date_range.html:5
+#: src/hyperadmin/templates/components/filters/multi_choice.html:4
+#: src/hyperadmin/templates/components/filters/multi_relation.html:5
+#: src/hyperadmin/templates/components/filters/select.html:4
+msgid "Clear"
+msgstr ""
+
+#: src/hyperadmin/templates/components/filters/date_range.html:7
+msgid "quick ranges"
+msgstr ""
+
+#: src/hyperadmin/templates/components/filters/date_range.html:15
+msgid "From"
+msgstr ""
+
+#: src/hyperadmin/templates/components/filters/date_range.html:19
+msgid "To"
+msgstr ""
+
+#: src/hyperadmin/templates/components/filters/is_owner.html:3
+msgid "Owner"
+msgstr ""
+
+#: src/hyperadmin/templates/components/filters/multi_relation.html:5
+#, python-format
+msgid "%(num)d selected"
+msgid_plural "%(num)d selected"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/hyperadmin/templates/components/filters/multi_relation.html:9
+#: src/hyperadmin/templates/widgets/autocomplete.html:24
+#, python-format
+msgid "Search %(label)s"
+msgstr ""
+
+#: src/hyperadmin/templates/components/filters/multi_relation.html:18
+#, python-format
+msgid "Show %(num)d more"
+msgid_plural "Show %(num)d more"
+msgstr[0] ""
+msgstr[1] ""
+
+#: src/hyperadmin/templates/permissions/_banner.html:13
+msgid "Permissions saved"
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/_banner.html:14
+msgid "change"
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/_banner.html:14
+msgid "changes"
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/_banner.html:22
+msgid "Permissions changed elsewhere."
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/_banner.html:23
+msgid ""
+"Reload to see the latest. Nothing was saved; your changes are still on "
+"the page."
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/_banner.html:27
+msgid "Reload"
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/_banner.html:35
+msgid "change wasn’t saved."
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/_banner.html:35
+msgid "changes weren’t saved."
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/_banner.html:36
+msgid "You can only grant permissions you have yourself:"
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/_banner.html:42
+msgid ""
+"Nothing was saved. Untick them, or ask for those permissions, then save "
+"again."
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/_banner.html:51
+msgid "Save failed"
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/_banner.html:52
+msgid "Nothing was saved; try again."
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/_group_gone.html:7
+msgid "This group no longer exists"
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/_group_gone.html:8
+msgid "Someone deleted it while you were editing. Nothing was saved."
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/_group_gone.html:10
+msgid "Choose another group"
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/_macros.html:20
+#: src/hyperadmin/templates/permissions/matrix.html:346
+#: src/hyperadmin/templates/permissions/object_popover.html:61
+msgid "Add"
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/_macros.html:20
+msgid "Change"
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/matrix.html:11
+#: src/hyperadmin/templates/permissions/matrix.html:228
+msgid "Permission matrix"
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/matrix.html:222
+msgid "unsaved change"
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/matrix.html:222
+#: src/hyperadmin/templates/permissions/matrix.html:368
+msgid "unsaved changes"
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/matrix.html:223
+#: src/hyperadmin/templates/permissions/matrix.html:342
+msgid "rule"
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/matrix.html:223
+#: src/hyperadmin/templates/permissions/matrix.html:342
+msgid "rules"
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/matrix.html:224
+#: src/hyperadmin/templates/permissions/matrix.html:343
+msgid "for"
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/matrix.html:225
+#: src/hyperadmin/templates/permissions/matrix.html:244
+#, python-format
+msgid "Changes apply to everyone in %(group)s."
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/matrix.html:226
+msgid "You have unsaved changes. Switch group and lose them?"
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/matrix.html:234
+msgid "Group"
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/matrix.html:247
+msgid "Show group"
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/matrix.html:262
+msgid "No groups yet"
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/matrix.html:263
+msgid "Create a group first; its permissions show up here."
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/matrix.html:270
+msgid "No registered models"
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/matrix.html:271
+msgid "Register a ModelAdmin and its permissions show up here."
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/matrix.html:279
+#, python-format
+msgid "Permissions of the group %(group)s"
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/matrix.html:282
+msgid "Model"
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/matrix.html:288
+#, python-format
+msgid "%(group)s can %(action)s every model"
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/matrix.html:295
+#: src/hyperadmin/templates/permissions/matrix.html:379
+#: src/hyperadmin/templates/permissions/matrix.html:390
+#: src/hyperadmin/templates/permissions/object_popover.html:14
+#: src/hyperadmin/templates/permissions/object_popover.html:21
+msgid "Object rules"
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/matrix.html:316
+#, python-format
+msgid "%(group)s can %(action)s %(model)s"
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/matrix.html:317
+msgid "unsaved"
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/matrix.html:323
+msgid "Not saved: you don’t have this permission yourself"
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/matrix.html:327
+#, python-format
+msgid "%(action)s does not apply to %(model)s"
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/matrix.html:347
+msgid "object rule for"
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/matrix.html:360
+#, python-format
+msgid "Permissions of %(group)s"
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/matrix.html:365
+msgid "Unsaved changes"
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/matrix.html:370
+msgid "Discard"
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/matrix.html:371
+msgid "Save changes"
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/matrix.html:384
+msgid "Loading object rules"
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/matrix.html:393
+msgid "Couldn’t load the rules."
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/object_popover.html:16
+msgid "Close object rules"
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/object_popover.html:35
+#, python-format
+msgid "Remove rule for %(record)s"
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/object_popover.html:41
+msgid "No object rules. Group permissions apply."
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/object_popover.html:45
+msgid "Add object rule"
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/object_popover.html:49
+msgid "Record"
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/object_popover.html:54
+msgid "Action"
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/object_popover.html:67
+#: src/hyperadmin/templates/permissions/object_popover.html:69
+msgid "Rule for"
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/object_popover.html:67
+msgid "added."
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/object_popover.html:69
+msgid "removed."
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/object_popover.html:76
+msgid "Undo"
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/object_popover.html:80
+msgid "You can only grant permissions you have yourself."
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/object_popover.html:82
+msgid "No change."
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/object_popover.html:88
+msgid "Saved as you go. Group permissions still apply."
+msgstr ""
+
+#: src/hyperadmin/templates/permissions/object_popover.html:92
+msgid "Add rule"
+msgstr ""
+
+#: src/hyperadmin/templates/widgets/autocomplete.html:21
+#, python-format
+msgid "Choose a %(parent)s first"
+msgstr ""
+
+#: src/hyperadmin/templates/widgets/autocomplete.html:30
+msgid "Searching"
+msgstr ""
+
+#: src/hyperadmin/templates/widgets/autocomplete.html:60
+#, python-format
+msgid "Clear %(label)s"
+msgstr ""
+
+#: src/hyperadmin/templates/widgets/autocomplete.html:83
+#, python-format
+msgid "Add %(label)s"
+msgstr ""
+
+#: src/hyperadmin/templates/widgets/autocomplete.html:94
+#: src/hyperadmin/templates/widgets/autocomplete.html:97
+#, python-format
+msgid "Pick the %(parent)s above to list its %(label)s options."
+msgstr ""
+
+#: src/hyperadmin/templates/widgets/autocomplete.html:95
+#, python-format
+msgid "Cleared because the %(parent)s changed."
+msgstr ""
+
+#: src/hyperadmin/templates/widgets/autocomplete.html:96
+#, python-format
+msgid "%(label)s cleared because the %(parent)s changed"
+msgstr ""
+
+#: src/hyperadmin/templates/widgets/datetime_input.html:16
+#, python-format
+msgid "Time zone: %(tz)s"
+msgstr ""
+
+#: src/hyperadmin/templates/widgets/image_input.html:19
+msgid "Only one file allowed"
+msgstr ""
+
+#: src/hyperadmin/templates/widgets/image_input.html:21
+msgid "File type not allowed"
+msgstr ""
+
+#: src/hyperadmin/templates/widgets/image_input.html:74
+#: src/hyperadmin/templates/widgets/image_input.html:85
+msgid "Release to upload"
+msgstr ""
+
+#: src/hyperadmin/templates/widgets/image_input.html:74
+msgid "Drop image here or click to select"
+msgstr ""
+
+#: src/hyperadmin/templates/widgets/image_input.html:92
+msgid "Uploading"
+msgstr ""
+
+#: src/hyperadmin/templates/widgets/image_input.html:98
+msgid "Upload failed — check your connection"
+msgstr ""
+
+#: src/hyperadmin/templates/widgets/image_input.html:103
+msgid "Selected image preview"
+msgstr ""
+
+#: src/hyperadmin/templates/widgets/popup_form.html:29
+#, python-format
+msgid "Add %(model)s"
+msgstr ""
+
+#: src/hyperadmin/templates/widgets/popup_form.html:30
+#, python-format
+msgid "Saving selects it in the %(field)s field."
+msgstr ""
+
+#: src/hyperadmin/templates/widgets/popup_form.html:61
+msgid "Save and select"
+msgstr ""
+
+#: src/hyperadmin/views/forms.py:52
+msgid "Invalid primary key."
+msgstr ""
+
+#: src/hyperadmin/views/forms.py:55
+msgid "Enter a valid date/time"
+msgstr ""
+
+#: src/hyperadmin/views/nav_pins.py:110
+msgid "Pins need a signed-in user"
+msgstr ""
+
+#: src/hyperadmin/views/nav_pins.py:126
+#, python-format
+msgid "You can pin up to %(count)s pages"
 msgstr ""
 
 #: src/hyperadmin/views/static.py:12
@@ -241,4 +1710,7 @@ msgstr ""
 #: src/hyperadmin/views/static.py:14
 msgid "Item updated successfully"
 msgstr ""
+
+#~ msgid "Are you sure you want to delete this item?"
+#~ msgstr ""
 

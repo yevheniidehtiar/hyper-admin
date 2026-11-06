@@ -123,6 +123,12 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
   suites that accept a native `page.on("dialog")` prompt should click the dialog's Delete
   button instead. A refused delete (409 when other rows still reference the record) closes
   the dialog and shows the error toast.
+- **Locale catalogs refreshed** (v0.5.9). All 20 catalogs now list every UI string, including
+  the v0.5.9 sidebar, palette, list, delete dialog, unsaved-changes and shortcut strings, and
+  the strings added since v0.5.2. `uk` translations are compiled; the other 18 locales get
+  machine drafts marked `#, fuzzy`, so they keep rendering English until a native speaker
+  reviews them (`docs/specs/i18n-top-20-locales.md`). `poe i18n:extract` now also extracts
+  `gettext_lazy` strings, which picks up the "Plugins" and "Access" sidebar groups.
 
 ### Fixed
 - SQLAlchemy 2.0 declarative models now get an adapter (#715).
