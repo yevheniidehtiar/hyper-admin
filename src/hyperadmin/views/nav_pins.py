@@ -107,7 +107,7 @@ class NavPins:
     def _user(request: Request) -> Any:
         user_key = getattr(request.state, "user_key", None)
         if user_key is None:
-            raise HTTPException(status_code=403, detail="Pins need a signed-in user")
+            raise HTTPException(status_code=403, detail=gettext("Pins need a signed-in user"))
         return user_key
 
     async def pin(self, request: Request, target: Annotated[str, Form()] = "") -> Response:
