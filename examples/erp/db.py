@@ -22,4 +22,20 @@ DB_URL = _resolve_database_url()
 # check_same_thread is a SQLite-only connect arg; passing it to asyncpg would error.
 _connect_args = {"check_same_thread": False} if DB_URL.startswith("sqlite") else {}
 
-engine = create_async_engine(DB_URL, connect_args=_connect_args)
+
+def _pool_options() -> dict[str, int]:
+    """Connection-pool sizing from ``DB_POOL_SIZE`` / ``DB_MAX_OVERFLOW`` / ``DB_POOL_TIMEOUT``.
+
+    The pool is per process, so a deployment with N uvicorn workers can open up to
+    N x (pool size + overflow) connections; keep that below PostgreSQL's ``max_connections``.
+    Unset variables keep SQLAlchemy's defaults (5 + 10 overflow, 30 s timeout).
+    """
+    names = {
+        "pool_size": "DB_POOL_SIZE",
+        "max_overflow": "DB_MAX_OVERFLOW",
+        "pool_timeout": "DB_POOL_TIMEOUT",
+    }
+    return {opt: int(os.environ[env]) for opt, env in names.items() if os.environ.get(env)}
+
+
+engine = create_async_engine(DB_URL, connect_args=_connect_args, **_pool_options())

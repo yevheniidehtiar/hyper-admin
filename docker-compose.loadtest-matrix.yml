@@ -1,0 +1,68 @@
+# Load-test matrix stack, driven by scripts/loadtest_matrix.sh (not meant to be run by hand).
+#
+# The app container gets a hard CPU limit (APP_CPUS) and one uvicorn worker per CPU
+# (APP_WORKERS), so each matrix row measures what that many cores can serve. PostgreSQL and
+# Redis get fixed limits of their own, and Locust runs on the host, outside these limits.
+name: hyperadmin-loadtest-matrix
+
+services:
+  postgres:
+    image: postgres:16
+    cpus: 2
+    environment:
+      POSTGRES_USER: hyperadmin
+      POSTGRES_PASSWORD: hyperadmin
+      POSTGRES_DB: erp
+    command:
+      - postgres
+      - -c
+      - shared_buffers=256MB
+      - -c
+      - work_mem=16MB
+      - -c
+      - max_connections=300
+      - -c
+      - effective_cache_size=1GB
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hyperadmin -d erp"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  redis:
+    image: redis:7
+    cpus: 0.5
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  app:
+    build:
+      context: .
+      dockerfile: examples/erp/Dockerfile
+    cpus: ${APP_CPUS:-1}
+    environment:
+      HYPERADMIN_SECRET_KEY: loadtest-secret-key
+      DEMO_REALTIME: ${DEMO_REALTIME:-0}
+      # Passed through only when set: an empty REDIS_URL would select the Redis backend.
+      DATABASE_URL:
+      REDIS_URL:
+      DB_POOL_SIZE:
+      DB_MAX_OVERFLOW:
+      DB_POOL_TIMEOUT:
+    command:
+      - sh
+      - -c
+      - exec uv run --no-sync uvicorn examples.erp.main:app --host 0.0.0.0 --port 8000 --workers ${APP_WORKERS:-1} --limit-concurrency ${LIMIT_CONCURRENCY:-1000} --no-access-log
+    volumes:
+      - sqlitedata:/data
+    ports:
+      - "8000:8000"
+
+volumes:
+  pgdata:
+  sqlitedata:
