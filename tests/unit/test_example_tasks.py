@@ -16,7 +16,9 @@ import pytest
 
 from hyperadmin.core.registry import site
 
-pytest.importorskip("pgtask")
+# ``pgtask.client``, not ``pgtask``: without the extra, the plugin's ``tests/pgtask/`` directory can
+# resolve as a ``pgtask`` namespace package once it is on sys.path.
+pytest.importorskip("pgtask.client")
 
 pytestmark = pytest.mark.anyio
 
