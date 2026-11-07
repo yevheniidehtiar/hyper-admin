@@ -187,6 +187,7 @@ E2E tests use Playwright's accessibility-first locators. Query priority (highest
 | Form (create/update) | `model-form` |
 | Sticky form actions bar (create/update) | `form-actions` |
 | Field error list | `{field_name}-errors` |
+| Form error summary (lists invalid fields) | `error-summary` |
 | Detail fields container | `detail-fields` |
 | Request-failure alert (5xx / network error on an HTMX request) | `request-error-toast` |
 | Status pill in a list row | `row-status` |

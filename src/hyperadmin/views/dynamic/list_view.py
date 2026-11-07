@@ -440,6 +440,7 @@ class ListViewMixin(SavedViewsMixin):
             "request": request,
             "pk_attr": self.pk.attr,
             "model_name": self.model.__name__,
+            **self._verbose_labels(),
             "fields": self.column_list,
             "field_labels": self.field_labels,
             "items": rows,

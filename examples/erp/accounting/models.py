@@ -36,6 +36,9 @@ class JournalEntry(SQLModel, table=True):
         sa_relationship_kwargs={"lazy": "selectin", "cascade": "all, delete-orphan"},
     )
 
+    def __str__(self) -> str:
+        return f"{self.date_posted:%Y-%m-%d} - {self.description}"
+
 
 class JournalLine(SQLModel, table=True):
     __tablename__ = "erp_journal_lines"  # type: ignore
@@ -59,3 +62,6 @@ class JournalLine(SQLModel, table=True):
     def credit_amount(self) -> float | str:
         """The credit, or an empty cell when this line is on the debit side."""
         return self.credit or ""
+
+    def __str__(self) -> str:
+        return f"Line {self.id}: debit {self.debit:g}, credit {self.credit:g}"

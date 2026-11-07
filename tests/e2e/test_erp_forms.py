@@ -72,3 +72,27 @@ def test_empty_invoice_create_shows_friendly_errors_and_a_focused_summary(
     # And following a summary link moves focus to the field
     summary.get_by_role("link", name="Date issued: Enter a date").click()
     expect(page.get_by_label("Date issued")).to_be_focused()
+
+
+def test_titles_use_the_plural_verbose_name(page: Page, erp_base_url: str) -> None:
+    # Given the JournalLine admin
+    _erp_login(page, erp_base_url)
+
+    # When the list page renders
+    page.goto(erp_base_url + "/admin/journalline")
+
+    # Then the title reads "Journal lines" and the button "Create journal line"
+    expect(page.get_by_role("heading", name="Journal lines", exact=True)).to_be_visible()
+    expect(page.get_by_test_id("create-link")).to_have_text("Create journal line")
+
+
+def test_fk_labels_have_no_id_suffix(page: Page, erp_base_url: str) -> None:
+    # Given the invoice create form
+    _erp_login(page, erp_base_url)
+
+    # When it renders
+    page.goto(erp_base_url + "/admin/invoice/create")
+
+    # Then the customer field is labelled "Customer", not "Customer id"
+    expect(page.get_by_text("Customer id")).to_have_count(0)
+    expect(page.get_by_label("Customer", exact=False).first).to_be_visible()

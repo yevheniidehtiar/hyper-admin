@@ -1,7 +1,7 @@
 {%- extends "form_layout.html" -%}
 
 {%- block form_title -%}
-    {% trans model_name=model_name %}Create {{ model_name }}{% endtrans %}
+    {% trans name=verbose_name_lower|default(model_name) %}Create {{ name }}{% endtrans %}
 {%- endblock -%}
 
 {%- block form_attributes -%}

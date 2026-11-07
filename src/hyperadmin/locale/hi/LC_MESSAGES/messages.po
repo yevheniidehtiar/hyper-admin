@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-07 09:09+0100\n"
+"POT-Creation-Date: 2026-11-07 09:12+0100\n"
 "PO-Revision-Date: 2026-05-05 12:00+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: hi\n"
@@ -281,7 +281,6 @@ msgstr[1] ""
 
 #: src/hyperadmin/i18n/validation_messages.py:125
 #: src/hyperadmin/templates/components/shortcuts_overlay.html:16
-#: src/hyperadmin/templates/list_layout.html:8
 #, fuzzy
 msgid "List"
 msgstr "सूची"
@@ -542,8 +541,9 @@ msgid "Breadcrumb"
 msgstr "ब्रेडक्रंब"
 
 #: src/hyperadmin/templates/create.html:4
+#: src/hyperadmin/templates/list_layout.html:12
 #, fuzzy, python-format
-msgid "Create %(model_name)s"
+msgid "Create %(name)s"
 msgstr "%(model_name)s बनाएँ"
 
 #: src/hyperadmin/templates/components/bulk_form.html:74
@@ -631,13 +631,8 @@ msgstr "सहेजें"
 
 #: src/hyperadmin/templates/list_layout.html:4
 #, fuzzy, python-format
-msgid "%(model_name)s List | HyperAdmin"
+msgid "%(plural)s | HyperAdmin"
 msgstr "%(model_name)s सूची | HyperAdmin"
-
-#: src/hyperadmin/templates/list_layout.html:12
-#, fuzzy, python-format
-msgid "Create New %(model_name)s"
-msgstr "नया %(model_name)s बनाएँ"
 
 #: src/hyperadmin/templates/components/filter_bar.html:10
 #: src/hyperadmin/templates/components/filter_sidebar.html:13
@@ -2068,4 +2063,7 @@ msgstr "आइटम सफलतापूर्वक अपडेट किय
 
 #~ msgid "Are you sure you want to delete this item?"
 #~ msgstr "क्या आप वाकई इस आइटम को हटाना चाहते हैं?"
+
+#~ msgid "Create New %(model_name)s"
+#~ msgstr "नया %(model_name)s बनाएँ"
 

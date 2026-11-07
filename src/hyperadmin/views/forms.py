@@ -466,7 +466,13 @@ class FormField:
     @property
     def label(self) -> str:
         t = getattr(self.model_field, "title", None)
-        return t or self.name.replace("_", " ").capitalize()
+        if t:
+            return t
+        name = self.name
+        # A foreign-key picker is labelled by what it points at, not by its column.
+        if isinstance(self.widget, RelationSelectWidget) and name.endswith("_id") and len(name) > 3:
+            name = name[: -len("_id")]
+        return name.replace("_", " ").capitalize()
 
     @property
     def required(self) -> bool:
