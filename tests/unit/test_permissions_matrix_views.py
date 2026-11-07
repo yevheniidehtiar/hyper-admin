@@ -327,6 +327,60 @@ async def test_grid_without_groups_shows_an_empty_state(engine):
     assert "No groups yet" in response.text
 
 
+async def test_empty_state_offers_to_create_a_group(engine):
+    """
+    Scenario: empty state has a next step
+      Given no groups exist
+      When  a superuser opens the matrix
+      Then  the matrix shows a "Create group" button and no Group select
+    """
+    await PermissionSyncService(engine=engine).sync_permissions(REGISTERED)
+    await _user(engine, "super", superuser=True)
+    _admin, app = _build(engine)
+    async with _client(app, "super") as client:
+        response = await client.get(MATRIX, headers=HTML)
+
+    assert 'data-testid="pmatrix-create-group"' in response.text
+    assert "/admin/group/create" in response.text
+    assert 'data-testid="pmatrix-group-select"' not in response.text
+
+
+async def test_empty_state_hides_create_group_without_the_add_permission(engine):
+    """
+    Scenario: create group button respects the add-group permission
+      Given no groups exist
+      When  a user who holds the matrix permission but not add_group opens the matrix
+      Then  the empty state shows no "Create group" button
+    """
+    sync = PermissionSyncService(engine=engine)
+    await sync.sync_permissions(REGISTERED)
+    await sync.sync_codenames([(MATRIX_CODENAME, "Can change group permissions", None)])
+    editor = await _user(engine, "editor")
+    await _grant_user(engine, editor, MATRIX_CODENAME)
+    _admin, app = _build(engine)
+    async with _client(app, "editor") as client:
+        response = await client.get(MATRIX, headers=HTML)
+
+    assert 'data-testid="pmatrix-empty"' in response.text
+    assert 'data-testid="pmatrix-create-group"' not in response.text
+
+
+async def test_empty_state_hides_create_group_when_the_group_admin_is_absent(engine):
+    """
+    Scenario: no group admin, no button
+      Given no groups exist and the Group model is not registered with the admin
+      When  a superuser opens the matrix
+      Then  the empty state shows no "Create group" button
+    """
+    await PermissionSyncService(engine=engine).sync_permissions(REGISTERED)
+    await _user(engine, "super", superuser=True)
+    _admin, app = _build(engine, register_auth_models=False)
+    async with _client(app, "super") as client:
+        response = await client.get(MATRIX, headers=HTML)
+
+    assert 'data-testid="pmatrix-empty"' in response.text
+
+
 async def test_empty_admin_registry_renders_the_no_models_notice(engine):
     """
     Scenario: empty admin registry

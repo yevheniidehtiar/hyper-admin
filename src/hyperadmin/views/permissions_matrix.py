@@ -32,6 +32,7 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse, Response
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 from sqlmodel import select
+from starlette.routing import NoMatchFound
 
 from hyperadmin.auth.models import Group
 from hyperadmin.core.adapters import open_session
@@ -48,6 +49,7 @@ from hyperadmin.permissions import (
     write_audit,
 )
 from hyperadmin.views.htmx import HtmxTemplateResponse
+from hyperadmin.views.urls import admin_url_for
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -252,7 +254,20 @@ class PermissionMatrixPage:
             status_code=status_code,
         )
 
-    async def _grid_context(self, group_id: int | None) -> dict[str, Any]:
+    async def _create_group_url(self, request: Request) -> str | None:
+        """The Group create form URL, when it exists and the user may add groups."""
+        user = getattr(request.state, "user", None)
+        checker = self.admin.permission_checker
+        if checker is not None and (
+            user is None or not await checker.has_permission(user, "add_group")
+        ):
+            return None
+        try:
+            return str(admin_url_for(request, "group-create-form"))
+        except NoMatchFound:
+            return None
+
+    async def _grid_context(self, request: Request, group_id: int | None) -> dict[str, Any]:
         groups = await self._groups()
         selected = group_id if group_id is not None else (groups[0]["id"] if groups else None)
         context: dict[str, Any] = {
@@ -261,8 +276,10 @@ class PermissionMatrixPage:
             "grid": None,
             "rule_counts": {},
             "group_gone": False,
+            "create_group_url": None,
         }
         if selected is None:
+            context["create_group_url"] = await self._create_group_url(request)
             return context
         try:
             context["grid"] = await self.matrix.load_grid(selected)
@@ -274,7 +291,7 @@ class PermissionMatrixPage:
     async def grid_view(self, request: Request, group_id: int | None) -> Response:
         """The grid page; an HTMX request (group switch) gets the ``grid`` block only."""
         await self._require_access(request)
-        context = await self._grid_context(group_id)
+        context = await self._grid_context(request, group_id)
         context["outcome"] = None
         status = 404 if context["group_gone"] else 200
         return self._render(
@@ -304,7 +321,7 @@ class PermissionMatrixPage:
             return self._render(
                 request, "permissions/_banner.html", context, status_code=status_code
             )
-        context.update(await self._grid_context(group_id))
+        context.update(await self._grid_context(request, group_id))
         return self._render(request, "permissions/matrix.html", context, status_code=status_code)
 
     # -- save -----------------------------------------------------------------------
