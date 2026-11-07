@@ -107,9 +107,34 @@ lists the pages and records you opened recently, and offers "New …" for models
 ![Command palette searching for "acco"](../assets/screenshots/command-palette.png)
 
 The palette searches in the browser, over a list of the pages the user may open that is embedded in
-every page, so typing sends no requests. Recent visits are kept in the browser's localStorage
+every page, so typing sends no requests unless a model opts in to record search (below). Recent visits are kept in the browser's localStorage
 (`ha-recent`, the last 8). A custom page can record itself as a recent visit with
 `<body data-ha-recent='{"label": "Q3 forecast", "url": "/admin/erp/forecast", "kind": "page"}'>`.
+
+### Finding records
+
+A model can let the palette find its records too. It is off by default, so the palette never queries a
+table you did not opt in:
+
+```python
+from hyperadmin.core.model import ModelAdmin
+from hyperadmin.core.options import AdminOptions
+
+
+class OrderAdmin(ModelAdmin):
+    options = AdminOptions(palette_search=True, search_fields=["number", "customer_name"])
+```
+
+Typing "1042" now lists order "ORD-1042" under **Records**, after the matching models and pages.
+<kbd>Enter</kbd> opens its edit page, or its detail page for users who may only view orders.
+
+![Command palette finding order ORD-1042 under Records](../assets/screenshots/command-palette-records.png)
+
+- The palette asks the server 250 ms after you stop typing, and only for 2 characters or more.
+- It uses the list search: the model's `search_fields` and its `get_queryset()`, so users only find
+  records they could find on the list page. Users without `view_<model>` get nothing, and the table
+  is not queried for them.
+- At most 5 records per model and 6 models per search. A model without search fields is skipped.
 
 ## Lists and deleting
 

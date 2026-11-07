@@ -1057,6 +1057,21 @@ msgstr "Cari model dan halaman"
 msgid "Search models and pages…"
 msgstr "Cari model dan halaman…"
 
+#: src/hyperadmin/templates/components/command_palette.html:19
+#, fuzzy
+msgid "Records"
+msgstr "Rekaman"
+
+#: src/hyperadmin/templates/components/command_palette.html:31
+#, fuzzy
+msgid "Search models, pages and records"
+msgstr "Cari model, halaman, dan rekaman"
+
+#: src/hyperadmin/templates/components/command_palette.html:32
+#, fuzzy
+msgid "Search models, pages and records…"
+msgstr "Cari model, halaman, dan rekaman…"
+
 #: src/hyperadmin/templates/components/command_palette.html:36
 #, fuzzy
 msgid "Results"

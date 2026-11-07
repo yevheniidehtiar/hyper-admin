@@ -7,7 +7,7 @@
 | Issue | — (stories in `.meta/epics/epic-v059-*`) |
 | Milestone | v0.5.9 — Navigation & List UX |
 | Created | 2026-11-01 |
-| Last updated | 2026-11-07 |
+| Last updated | 2026-11-07 (record search addendum) |
 
 ---
 
@@ -39,7 +39,7 @@ None of it is implemented yet. This SDD turns those specs into an implementable 
 - G1. Models can be grouped by domain, ordered, and given an icon from one documented place. Plugin sections take part in the same grouping.
 - G2. The sidebar renders the AppShell grouped layout. Groups collapse, the sidebar collapses to an icon rail, and both states persist without a flash on load.
 - G3. Each user can pin models and plugin pages. Pins are stored server-side, follow the user across devices, and show as a "Pinned" group at the top.
-- G4. Cmd/Ctrl+K opens a palette that finds models, groups and plugin pages by name and lists recently visited pages and records. It never queries model tables.
+- G4. Cmd/Ctrl+K opens a palette that finds models, groups and plugin pages by name and lists recently visited pages and records. It never queries model tables, except for models that opt in to record search (addendum below).
 - G5. List rows have no View or Edit buttons. The record's title cell is a real link and the whole row is clickable: edit for users who may change the record, detail for read-only users.
 - G6. Delete is a red icon button that opens one shared confirm dialog, on the list, detail and edit pages.
 - G7. Forms warn before unsaved changes are lost, keep Save in view, and save on Cmd/Ctrl+S.
@@ -47,7 +47,7 @@ None of it is implemented yet. This SDD turns those specs into an implementable 
 
 ## Non-Goals
 
-- Palette search over **records** in model tables. This is a follow-up story (`st-v059-nav-05`): a per-model opt-in, a capped endpoint and permission filtering.
+- Palette search over **records** in model tables was a follow-up story (`st-v059-nav-05`). It is now specified in [Addendum: record search](#addendum-record-search-st-v059-nav-05).
 - Record history and audit timeline. This is a separate epic (`epic-record-history`) that needs its own SDD.
 - Breadcrumbs and sidebar count badges. Both are specified in AppShell but are not part of this milestone.
 - Column show/hide, a density toggle, and remembering list state when you come back from a record.
@@ -405,6 +405,7 @@ haShortcuts.register({ keys: "j", description, handler, scope: "list", single: t
 | ModelView / ModelAdmin class | `nav_group`, `nav_order`, `icon` (documented) | see Data Model | nav-01 |
 | `HyperAdminSettings` | `nav_pins_max` (`HYPERADMIN_NAV_PINS_MAX`) | `int = 20`, `ge=1` | nav-03 |
 | `AdminOptions` | `warn_unsaved_changes` | `bool = True` | kbd-01 |
+| `AdminOptions` | `palette_search` | `bool = False` | nav-05 |
 
 `nav_groups` goes on the constructor, not on `HyperAdminSettings`: the settings class is for scalar env-driven values ("All scalar configuration lives here"), and a list of objects does not belong in env vars. `disabled_plugins` is the precedent.
 
@@ -417,6 +418,72 @@ These are added to the CLAUDE.md reference table by the story that introduces th
 - `shortcuts-overlay`, `shortcuts-toggle`
 
 `row-view-link` and `row-edit-link` are removed.
+
+## Addendum: record search (st-v059-nav-05)
+
+Added 2026-11-07. The owner chose to review this addendum together with its implementation, in one PR.
+
+### Scenarios
+
+```
+Scenario: records of opted-in models appear in the palette
+  Given OrderAdmin(palette_search=True) and order "ORD-1042"
+  When  the user types "1042" in the palette
+  Then  "ORD-1042" is listed under Records, as an Orders record
+
+Scenario: models without opt-in are never queried
+  Given InvoiceAdmin without palette_search, and invoice "INV-1042"
+  When  the user types "1042" in the palette
+  Then  no query runs against the invoice table and "INV-1042" is not listed
+```
+
+### Opt-in
+
+`AdminOptions.palette_search: bool = False`. Off by default, so the palette never queries a table the host
+did not opt in. A model is searchable only when all of these hold:
+- `palette_search=True` and `can_list`;
+- it has search fields (`search_fields`, or the inferred defaults). With `search_fields=[]` it is skipped;
+- a found record has a page to open: edit when `can_edit` and the user holds `change_<model>`, else detail
+  when `can_detail`, else the model is skipped (composite keys are always skipped, since they have neither).
+
+### Endpoint
+
+`GET {prefix}/nav/search?q=<text>` (route name `admin-palette-search`, `views/palette_search.py`).
+- Registered only when at least one model opts in, on the dashboard router, so it matches before any
+  `/{model}/{item_id}` route.
+- `q` is trimmed. Under 2 characters, it returns no groups and touches no table. Over 100 characters
+  (`MAX_QUERY_LENGTH`), it is a 422.
+- It asks the opted-in models in registry order and stops after **6** models were queried
+  (`MODELS_PER_REQUEST`). A skipped model (no permission, no search fields, no page) does not count.
+- Each model returns at most **5** records (`RESULTS_PER_MODEL`), in the list's default sort.
+- Response: `{"groups": [{"key": "order", "label": "Orders", "items": [{"label": "ORD-1042", "url": "/admin/order/1042/edit"}]}]}`.
+  Models without a match are left out. `Cache-Control: no-store`.
+- A database error on one model is logged and gives that model no records; the response is still 200.
+
+### Permission filtering
+
+- Per model, the view's `palette_records()` runs under `_request_scoped`, so `ModelAdmin.get_queryset(request)`
+  scopes the query exactly as on the list page.
+- It checks `view_<model>` before any query. A user without it gets nothing, and the table is not queried.
+- The palette page only learns the endpoint when it may use it: the island's `search_url` is set only
+  when the user's permission-filtered nav tree contains an opted-in model.
+- The client renders a group only when its `key` is a model in the user's island, and only same-origin urls.
+- Object-level permissions stay with the page the record opens, as for list rows.
+
+### Client
+
+- `palette.js` sends the trimmed query 250 ms after the last keystroke (debounce), only when `search_url`
+  is set and the query has 2+ characters. Each keystroke aborts the pending request (`AbortController`).
+- Results arrive after the instant model and page matches and are appended as a "Records" section. Each
+  record shows the model's plural label and icon. Enter opens the active record; there is no "New" action.
+- A late response for an older query is dropped. A failed request shows nothing extra.
+- The input placeholder becomes "Search models, pages and records…" when `search_url` is set.
+
+### Cost
+
+One `list()` call per queried model and request: the page query plus the count query the adapter already
+runs (the count cache does not help, since each query differs). With the debounce, 2-character minimum and
+the 6 × 5 caps, a burst of typing costs at most one request.
 
 ## Edge Cases & Error Handling
 
@@ -485,3 +552,6 @@ These are added to the CLAUDE.md reference table by the story that introduces th
 | `mod+/` always opens the shortcuts overlay (#991) | With single keys off, `?` no longer works, so a way back is needed (WCAG 2.1.4) | Only `?` |
 | Deleting from a dirty edit page asks once, in the delete dialog (#991) | Two stacked prompts for one action | Leave prompt, then delete dialog |
 | New strings ship as fuzzy machine drafts except `uk` (#998) | The i18n spec keeps machine drafts out of compiled catalogs until a native speaker reviews them | Activating all 20 locales at once |
+| Record search is per-model opt-in (`palette_search=False` by default) (nav-05) | No table is queried unless the host asks; search fields and permissions differ per model | Searching every model with search fields |
+| One `/nav/search` endpoint for all models, capped at 6 models × 5 records (nav-05) | One request per pause in typing; the server enforces the caps | One request per model from the browser |
+| Results appended after the instant matches, debounced 250 ms (nav-05) | Model and page navigation stays instant; records add to it | Waiting for the server before showing anything |

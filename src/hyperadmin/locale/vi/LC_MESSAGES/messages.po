@@ -1053,6 +1053,21 @@ msgstr "Tìm mô hình và trang"
 msgid "Search models and pages…"
 msgstr "Tìm mô hình và trang…"
 
+#: src/hyperadmin/templates/components/command_palette.html:19
+#, fuzzy
+msgid "Records"
+msgstr "Bản ghi"
+
+#: src/hyperadmin/templates/components/command_palette.html:31
+#, fuzzy
+msgid "Search models, pages and records"
+msgstr "Tìm mô hình, trang và bản ghi"
+
+#: src/hyperadmin/templates/components/command_palette.html:32
+#, fuzzy
+msgid "Search models, pages and records…"
+msgstr "Tìm mô hình, trang và bản ghi…"
+
 #: src/hyperadmin/templates/components/command_palette.html:36
 #, fuzzy
 msgid "Results"

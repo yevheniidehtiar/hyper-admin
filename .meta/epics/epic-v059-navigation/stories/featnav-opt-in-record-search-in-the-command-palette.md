@@ -20,15 +20,18 @@ updated_at: 2026-11-01T00:00:00Z
 
 ## Summary
 
-Follow-up (not specced in detail). Let models opt in with `palette_search=True` so the palette also finds records via their `search_fields`, through one capped endpoint that filters by `view_<model>` and the queryset/object scoping. Needs an SDD addendum first.
+Let models opt in with `palette_search=True` so the palette also finds records via their `search_fields`, through one capped endpoint that filters by `view_<model>` and the queryset/object scoping. Specified in the SDD addendum, which the owner reviews together with the code (2026-11-07).
 
-**Spec:** [`docs/specs/navigation-and-list-ux.md`](../../../../docs/specs/navigation-and-list-ux.md)
+**Spec:** [`docs/specs/navigation-and-list-ux.md`](../../../../docs/specs/navigation-and-list-ux.md) — section: Addendum: record search
 
 ## Files to Change
 
-- `src/hyperadmin/views/` (new endpoint)
-- `static/js/palette.js`
-- `core/options.py`
+- `src/hyperadmin/views/palette_search.py` (new endpoint)
+- `src/hyperadmin/views/dynamic/palette_search.py` (new, per-model search)
+- `src/hyperadmin/views/dynamic/core.py`, `src/hyperadmin/routing.py`
+- `src/hyperadmin/core/options.py`, `src/hyperadmin/core/palette.py`, `src/hyperadmin/views/palette_context.py`
+- `src/hyperadmin/static/js/palette.js`, `src/hyperadmin/templates/components/command_palette.html`
+- `src/hyperadmin/locale/*/LC_MESSAGES/messages.po`
 
 ## Scenarios
 
@@ -36,12 +39,12 @@ Follow-up (not specced in detail). Let models opt in with `palette_search=True` 
 Scenario: records of opted-in models appear in the palette
   Given OrderAdmin(palette_search=True) and order "ORD-1042"
   When  the user types "1042" in the palette
-  Then  "ORD-1042" is listed under Orders
+  Then  "ORD-1042" is listed under Records, as an Orders record
 
 Scenario: models without opt-in are never queried
-  Given CustomerAdmin without palette_search
-  When  the user types any query
-  Then  no query runs against the customer table
+  Given InvoiceAdmin without palette_search, and invoice "INV-1042"
+  When  the user types "1042" in the palette
+  Then  no query runs against the invoice table and "INV-1042" is not listed
 ```
 
 ## Acceptance Criteria

@@ -1063,6 +1063,21 @@ msgstr "Model ve sayfalarda ara"
 msgid "Search models and pages…"
 msgstr "Model ve sayfalarda ara…"
 
+#: src/hyperadmin/templates/components/command_palette.html:19
+#, fuzzy
+msgid "Records"
+msgstr "Kayıtlar"
+
+#: src/hyperadmin/templates/components/command_palette.html:31
+#, fuzzy
+msgid "Search models, pages and records"
+msgstr "Modelleri, sayfaları ve kayıtları ara"
+
+#: src/hyperadmin/templates/components/command_palette.html:32
+#, fuzzy
+msgid "Search models, pages and records…"
+msgstr "Modelleri, sayfaları ve kayıtları ara…"
+
 #: src/hyperadmin/templates/components/command_palette.html:36
 #, fuzzy
 msgid "Results"

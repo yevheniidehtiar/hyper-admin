@@ -2,9 +2,10 @@
 
 ``ha_nav_palette(pins=None)`` is the palette's data island: the sidebar's
 permission-filtered tree (``views.navigation.request_nav_tree``, so links hosts
-appended to ``nav_items`` are included), the visible pins and the current page to record as a recent
-visit. It is ``None`` on pages without a signed-in user (login, MFA
-challenge), so no navigation data leaks there. ``components/command_palette.html``
+appended to ``nav_items`` are included), the visible pins, the current page to
+record as a recent visit, and the record search url when a visible model opted
+in. It is ``None`` on pages without a signed-in user (login, MFA challenge), so
+no navigation data leaks there. ``components/command_palette.html``
 passes the pins from the sidebar's ``nav_pinned_items()`` global when that
 global exists.
 """
@@ -58,7 +59,10 @@ def ha_nav_palette(ctx: Context, pins: Iterable[Any] | None = None) -> dict[str,
     relative = path.removeprefix(prefix)
     keys = [getattr(pin, "key", pin) for pin in pins or ()]
     current = _recent_entry(ctx, tree, path, relative)
-    return palette_data(tree, prefix, keys, current, _singular_labels())
+    searchable = ctx.get("palette_search_models") or ()
+    visible = any(item.key in searchable for node in tree for item in node.items)
+    search_url = f"{prefix}/nav/search" if visible else None
+    return palette_data(tree, prefix, keys, current, _singular_labels(), search_url)
 
 
 def _recent_entry(

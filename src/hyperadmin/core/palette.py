@@ -56,6 +56,7 @@ def palette_data(
     pins: Sequence[str] = (),
     current: dict[str, str] | None = None,
     singular: Mapping[str, Any] | None = None,
+    search_url: str | None = None,
 ) -> dict[str, Any]:
     """The command palette's JSON data island for an already filtered ``tree``.
 
@@ -63,7 +64,8 @@ def palette_data(
     pinned item keys in pin order; keys not in ``tree`` are dropped, so a pin
     never names a hidden model. ``current`` is the page to record as a recent
     visit (or ``None``). ``singular`` maps model keys to the name used in the
-    "New …" action (the plural label otherwise).
+    "New …" action (the plural label otherwise). ``search_url`` is the record
+    search endpoint, or ``None`` when no visible model opted in (st-v059-nav-05).
     """
     visible = {item.key for node in tree for item in node.items}
     pins = [key for key in pins if key in visible]
@@ -89,4 +91,4 @@ def palette_data(
                 entry["pinned"] = True
             items.append(entry)
         groups.append({"label": group, "items": items})
-    return {"groups": groups, "pins": pins, "current": current}
+    return {"groups": groups, "pins": pins, "current": current, "search_url": search_url}

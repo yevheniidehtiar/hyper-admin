@@ -18,6 +18,11 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
   (no hover) they stay tappable on every row, dimmed until current, focused or pinned.
 
 ### Added
+- **Record search in the command palette** (st-v059-nav-05). `AdminOptions(palette_search=True)` lets
+  Cmd/Ctrl+K find a model's records through its `search_fields`, under a new "Records" section. One
+  endpoint, `GET {prefix}/nav/search`, checks `view_<model>`, applies `get_queryset()` and returns at
+  most 5 records per model and 6 models per search; the browser debounces typing by 250 ms. Off by
+  default, so no table is queried unless the host opts in.
 - **Table readability** (st-ux-erp-04, -13, -14, -08). List cells format decimals with thousands separators and right-align
   numeric columns (`ha_number`), enum columns can render as status pills (`__ha_tones__`, `ha_pill`), phone cards get a
   title/status/amount hierarchy, and tablet tables show scroll shadows.
