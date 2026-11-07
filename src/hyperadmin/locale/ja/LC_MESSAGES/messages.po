@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-06 19:09+0100\n"
+"POT-Creation-Date: 2026-11-07 09:12+0100\n"
 "PO-Revision-Date: 2026-05-05 12:00+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ja\n"
@@ -260,7 +260,6 @@ msgstr[0] "%(field_type)s は検証後に %(max_length)s 個以下の項目に�
 
 #: src/hyperadmin/i18n/validation_messages.py:125
 #: src/hyperadmin/templates/components/shortcuts_overlay.html:16
-#: src/hyperadmin/templates/list_layout.html:8
 #, fuzzy
 msgid "List"
 msgstr "一覧"
@@ -509,7 +508,7 @@ msgid "Sidebar"
 msgstr "サイドバー"
 
 #: src/hyperadmin/templates/base.html:12
-#: src/hyperadmin/templates/create.html:36
+#: src/hyperadmin/templates/create.html:37
 #, fuzzy
 msgid "Create"
 msgstr "作成"
@@ -521,8 +520,9 @@ msgid "Breadcrumb"
 msgstr "パンくずリスト"
 
 #: src/hyperadmin/templates/create.html:4
+#: src/hyperadmin/templates/list_layout.html:12
 #, fuzzy, python-format
-msgid "Create %(model_name)s"
+msgid "Create %(name)s"
 msgstr "%(model_name)s を作成"
 
 #: src/hyperadmin/templates/components/bulk_form.html:74
@@ -530,8 +530,8 @@ msgstr "%(model_name)s を作成"
 #: src/hyperadmin/templates/components/confirm_delete_dialog.html:23
 #: src/hyperadmin/templates/components/saved_views.html:24
 #: src/hyperadmin/templates/components/saved_views.html:49
-#: src/hyperadmin/templates/create.html:39
-#: src/hyperadmin/templates/update.html:53
+#: src/hyperadmin/templates/create.html:40
+#: src/hyperadmin/templates/update.html:54
 #: src/hyperadmin/templates/widgets/popup_form.html:59
 #, fuzzy
 msgid "Cancel"
@@ -546,7 +546,7 @@ msgstr "編集"
 #: src/hyperadmin/templates/components/table_body.html:57
 #: src/hyperadmin/templates/detail.html:22
 #: src/hyperadmin/templates/permissions/_macros.html:20
-#: src/hyperadmin/templates/update.html:59
+#: src/hyperadmin/templates/update.html:60
 #, fuzzy
 msgid "Delete"
 msgstr "削除"
@@ -610,13 +610,8 @@ msgstr "保存"
 
 #: src/hyperadmin/templates/list_layout.html:4
 #, fuzzy, python-format
-msgid "%(model_name)s List | HyperAdmin"
+msgid "%(plural)s | HyperAdmin"
 msgstr "%(model_name)s 一覧 | HyperAdmin"
-
-#: src/hyperadmin/templates/list_layout.html:12
-#, fuzzy, python-format
-msgid "Create New %(model_name)s"
-msgstr "新しい %(model_name)s を作成"
 
 #: src/hyperadmin/templates/components/filter_bar.html:10
 #: src/hyperadmin/templates/components/filter_sidebar.html:13
@@ -671,7 +666,7 @@ msgstr "%(item_name)s を更新"
 msgid "View"
 msgstr "表示"
 
-#: src/hyperadmin/templates/update.html:50
+#: src/hyperadmin/templates/update.html:51
 #, fuzzy
 msgid "Update"
 msgstr "更新"
@@ -1096,6 +1091,12 @@ msgstr "ページを再読み込みしてから、もう一度お試しくださ
 msgid "Reload page"
 msgstr "ページを再読み込み"
 
+#: src/hyperadmin/templates/components/error_summary.html:7
+#, python-format
+msgid "There is a problem with 1 field"
+msgid_plural "There are problems with %(count)s fields"
+msgstr[0] ""
+
 #: src/hyperadmin/templates/components/error_toast.html:8
 #, fuzzy
 msgid "Permission denied"
@@ -1143,12 +1144,19 @@ msgstr "すべてクリア"
 msgid "Apply filters"
 msgstr "フィルターを適用"
 
+#: src/hyperadmin/templates/components/inline_formset.html:15
 #: src/hyperadmin/templates/components/inline_row.html:32
 #: src/hyperadmin/templates/components/table.html:28
 #: src/hyperadmin/templates/components/table_body.html:54
 #, fuzzy
 msgid "Actions"
 msgstr "アクション"
+
+#: src/hyperadmin/templates/components/inline_formset.html:31
+#: src/hyperadmin/templates/widgets/popup_form.html:29
+#, fuzzy, python-format
+msgid "Add %(model)s"
+msgstr "%(model)s を追加"
 
 #: src/hyperadmin/templates/components/inline_row.html:45
 #: src/hyperadmin/templates/widgets/image_input.html:104
@@ -1928,11 +1936,6 @@ msgstr "アップロードに失敗しました。接続を確認してくださ
 msgid "Selected image preview"
 msgstr "選択した画像のプレビュー"
 
-#: src/hyperadmin/templates/widgets/popup_form.html:29
-#, fuzzy, python-format
-msgid "Add %(model)s"
-msgstr "%(model)s を追加"
-
 #: src/hyperadmin/templates/widgets/popup_form.html:30
 #, fuzzy, python-format
 msgid "Saving selects it in the %(field)s field."
@@ -1951,6 +1954,51 @@ msgstr "無効な主キーです。"
 #: src/hyperadmin/views/forms.py:55
 #, fuzzy
 msgid "Enter a valid date/time"
+msgstr "有効な日時を入力してください"
+
+#: src/hyperadmin/views/forms.py:60
+#, fuzzy
+msgid "This field is required"
+msgstr "必須項目です"
+
+#: src/hyperadmin/views/forms.py:61 src/hyperadmin/views/forms.py:62
+#: src/hyperadmin/views/forms.py:63
+msgid "Enter a whole number"
+msgstr ""
+
+#: src/hyperadmin/views/forms.py:64 src/hyperadmin/views/forms.py:65
+#: src/hyperadmin/views/forms.py:66
+msgid "Enter a number"
+msgstr ""
+
+#: src/hyperadmin/views/forms.py:67
+msgid "Choose yes or no"
+msgstr ""
+
+#: src/hyperadmin/views/forms.py:68 src/hyperadmin/views/forms.py:69
+#: src/hyperadmin/views/forms.py:70
+#, fuzzy
+msgid "Enter a valid date and time"
+msgstr "有効な日時を入力してください"
+
+#: src/hyperadmin/views/forms.py:71
+#, fuzzy
+msgid "Enter a valid identifier"
+msgstr "有効な日時を入力してください"
+
+#: src/hyperadmin/views/forms.py:72
+#, fuzzy
+msgid "Enter a valid URL"
+msgstr "有効な日時を入力してください"
+
+#: src/hyperadmin/views/forms.py:75
+#, fuzzy
+msgid "Enter a date"
+msgstr "有効な日時を入力してください"
+
+#: src/hyperadmin/views/forms.py:76
+#, fuzzy
+msgid "Enter a valid date"
 msgstr "有効な日時を入力してください"
 
 #: src/hyperadmin/views/nav_pins.py:110
@@ -1980,4 +2028,7 @@ msgstr "項目を更新しました"
 
 #~ msgid "Are you sure you want to delete this item?"
 #~ msgstr "この項目を削除してもよろしいですか？"
+
+#~ msgid "Create New %(model_name)s"
+#~ msgstr "新しい %(model_name)s を作成"
 

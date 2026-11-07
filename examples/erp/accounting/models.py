@@ -36,6 +36,9 @@ class JournalEntry(SQLModel, table=True):
         sa_relationship_kwargs={"lazy": "selectin", "cascade": "all, delete-orphan"},
     )
 
+    def __str__(self) -> str:
+        return f"{self.date_posted:%Y-%m-%d} - {self.description}"
+
 
 class JournalLine(SQLModel, table=True):
     __tablename__ = "erp_journal_lines"  # type: ignore
@@ -49,3 +52,6 @@ class JournalLine(SQLModel, table=True):
 
     entry: JournalEntry = Relationship(back_populates="lines")
     account: Account = Relationship(sa_relationship_kwargs={"lazy": "selectin"})
+
+    def __str__(self) -> str:
+        return f"Line {self.id}: debit {self.debit:g}, credit {self.credit:g}"

@@ -103,7 +103,7 @@ def test_create_view_validation_error(client: TestClient):
 
     # HTMX fragment should be returned with 422 and include error text
     assert response.status_code == 422
-    assert "Field required" in response.text
+    assert "This field is required" in response.text
 
     # Should not include the full page or form wrapper when returning fragment
     assert "<html" not in response.text.lower()

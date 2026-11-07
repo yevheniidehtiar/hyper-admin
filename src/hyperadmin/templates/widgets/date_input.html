@@ -1,0 +1,13 @@
+{%- from "components/_macros.html" import field_wrapper -%}
+{%- call field_wrapper(field) -%}
+    <input id="{{- field.name -}}" {# -#}
+           name="{{- field.name -}}" {# -#}
+           type="date"
+           value="{{- field.value or '' -}}"
+           class="ha-input"
+           aria-invalid="{{- 'true' if field.errors else 'false' -}}"
+            {%- if widget.htmx_attrs -%}
+                {%- for k, v in widget.htmx_attrs.items() -%} {{ k }}="{{ v }}"{%- endfor -%}
+            {%- endif -%}
+    />
+{%- endcall -%}

@@ -18,6 +18,11 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
   (no hover) they stay tappable on every row, dimmed until current, focused or pinned.
 
 ### Added
+- **Form UX fixes** (st-ux-erp-01, -06, -07, -11). Models with a relationship named
+  `items`, `keys` or `values` save again; `date` fields render a native date input;
+  validation errors use plain wording ("Enter a date") with an error summary that takes
+  focus and links to each field; list and create pages use verbose names ("Journal lines",
+  "Create journal line") and foreign-key labels drop `_id`.
 - **Connection pool settings** (#231, #232). `database_pool_size`, `database_max_overflow`,
   `database_pool_timeout`, `database_pool_recycle` and `database_pool_pre_ping` on
   `HyperAdminSettings` (`HYPERADMIN_DATABASE_POOL_SIZE` and so on) tune the engine

@@ -8,7 +8,7 @@
 {%- block content -%}
     <nav class="ha-crumbs" aria-label="{{ _('Breadcrumb') }}" data-testid="bulk-breadcrumb">
         <ol>
-            <li><a href="{{ url_for(model_name|lower ~ '-list') }}">{{ model_name|capitalize }}</a>{{ icon('chevron-right', 'ha-icon--sm ha-icon--mirror') }}</li>
+            <li><a href="{{ url_for(model_name|lower ~ '-list') }}">{{ verbose_name_plural|default(model_name|capitalize) }}</a>{{ icon('chevron-right', 'ha-icon--sm ha-icon--mirror') }}</li>
             <li aria-current="page">{{ action.label }}</li>
         </ol>
     </nav>

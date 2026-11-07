@@ -141,6 +141,7 @@ class ActionViewMixin(DynamicModelViewBase):
             "action": action_def,
             "outcomes": outcomes,
             "model_name": self._model_name_lower,
+            **self._verbose_labels(),
             "bulk_endpoint_url": admin_url_for(
                 request, f"{self._model_name_lower}-bulk-action", action_name=action_def.name
             ),
@@ -181,6 +182,7 @@ class ActionViewMixin(DynamicModelViewBase):
             "ids": [self.pk.to_str(pk) for pk in ids],
             "fields": fields,
             "model_name": self._model_name_lower,
+            **self._verbose_labels(),
             "confirm_url": admin_url_for(
                 request,
                 f"{self._model_name_lower}-bulk-action-confirm",

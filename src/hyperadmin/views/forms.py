@@ -2,15 +2,16 @@ from __future__ import annotations
 
 import json
 import types
+import uuid
 from dataclasses import dataclass
 from dataclasses import field as dc_field
-from datetime import datetime, tzinfo
+from datetime import date, datetime, tzinfo
 from datetime import timezone as dt_timezone
 from enum import Enum
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, Union, get_args, get_origin
 
 from markupsafe import Markup
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, TypeAdapter, ValidationError
 from pydantic.fields import FieldInfo
 
 from hyperadmin.core.choices import ChoiceItem
@@ -54,6 +55,46 @@ _INVALID_PK_MESSAGE = gettext_lazy("Invalid primary key.")
 # Field error for a datetime input that is not a valid ISO-8601 date/time.
 _INVALID_DATETIME_MESSAGE = gettext_lazy("Enter a valid date/time")
 
+# Plain-language replacements for pydantic's wording on the errors users hit most.
+# Keyed by the pydantic error ``type``; anything else keeps ``translate_error_lazy``.
+_FRIENDLY_MESSAGES: dict[str, Any] = {
+    "missing": gettext_lazy("This field is required"),
+    "int_parsing": gettext_lazy("Enter a whole number"),
+    "int_type": gettext_lazy("Enter a whole number"),
+    "int_from_float": gettext_lazy("Enter a whole number"),
+    "float_parsing": gettext_lazy("Enter a number"),
+    "float_type": gettext_lazy("Enter a number"),
+    "decimal_parsing": gettext_lazy("Enter a number"),
+    "bool_parsing": gettext_lazy("Choose yes or no"),
+    "datetime_parsing": gettext_lazy("Enter a valid date and time"),
+    "datetime_from_date_parsing": gettext_lazy("Enter a valid date and time"),
+    "datetime_type": gettext_lazy("Enter a valid date and time"),
+    "uuid_parsing": gettext_lazy("Enter a valid identifier"),
+    "url_parsing": gettext_lazy("Enter a valid URL"),
+}
+_FRIENDLY_DATE_TYPES = frozenset({"date_parsing", "date_from_datetime_parsing", "date_type"})
+_ENTER_A_DATE = gettext_lazy("Enter a date")
+_ENTER_A_VALID_DATE = gettext_lazy("Enter a valid date")
+
+
+def friendly_error(error: Mapping[str, Any]) -> Any:
+    """Return a user-facing message for one pydantic error.
+
+    Common types (missing, number and date parsing) get plain wording; an empty
+    date or text input reads "Enter a date" / "This field is required". Other
+    types fall back to :func:`translate_error_lazy`.
+    """
+    err_type = error.get("type")
+    entered = error.get("input")
+    blank = isinstance(entered, str) and not entered.strip()
+    if err_type in _FRIENDLY_DATE_TYPES:
+        return _ENTER_A_DATE if blank else _ENTER_A_VALID_DATE
+    if err_type == "string_too_short" and blank:
+        return _FRIENDLY_MESSAGES["missing"]
+    if err_type in _FRIENDLY_MESSAGES:
+        return _FRIENDLY_MESSAGES[err_type]
+    return translate_error_lazy(error)
+
 
 def _unwrap_optional(annotation: Any) -> Any:
     """Return the first non-``None`` member of an optional union, else ``annotation``.
@@ -72,6 +113,42 @@ def _is_datetime_annotation(annotation: Any) -> bool:
     """Whether ``annotation`` is a datetime: ``datetime`` (or a subclass),
     ``AwareDatetime``, ``NaiveDatetime`` or ``Annotated[datetime, ...]``."""
     return annotation_datetime_kind(annotation) is not None
+
+
+class _FormData(dict):
+    """Submitted values handed to schema validation.
+
+    SQLModel table models read their relationships back with ``getattr(data, name)``;
+    on a plain dict a relationship named ``items``, ``keys`` or ``values`` resolves
+    to the dict method and is assigned to the relationship. Lookups of the model's
+    relationship names raise ``AttributeError`` here so SQLModel skips them.
+    """
+
+    def __init__(self, data: dict[str, Any], model: type) -> None:
+        super().__init__(data)
+        self._hidden = frozenset(getattr(model, "__sqlmodel_relationships__", ()))
+
+    def __getattribute__(self, name: str) -> Any:
+        if name in object.__getattribute__(self, "_hidden"):
+            raise AttributeError(name)
+        return super().__getattribute__(name)
+
+
+def _placeholder_key(annotation: Any) -> Any:
+    """A value ``annotation`` accepts, standing in for a parent key not yet assigned.
+
+    A new parent has no key while its inline rows are validated; the real key
+    replaces this one when the rows are saved. Returns ``None`` when no
+    candidate validates, which leaves the field to report its own error.
+    """
+    adapter = TypeAdapter(annotation)
+    for candidate in (0, uuid.UUID(int=0), ""):
+        try:
+            adapter.validate_python(candidate)
+        except ValidationError:
+            continue
+        return candidate
+    return None
 
 
 @dataclass(slots=True)
@@ -167,6 +244,15 @@ class DateTimeInput(HtmxWidget):
 
     def __init__(self):
         super().__init__(template_path="widgets/datetime_input.html")
+
+
+class DateInput(HtmxWidget):
+    """A native ``<input type="date">`` for ``date`` fields; submits ISO ``YYYY-MM-DD``."""
+
+    input_type: ClassVar[str] = "date"
+
+    def __init__(self):
+        super().__init__(template_path="widgets/date_input.html")
 
 
 class FileInputWidget(HtmxWidget):
@@ -398,7 +484,13 @@ class FormField:
     @property
     def label(self) -> str:
         t = getattr(self.model_field, "title", None)
-        return t or self.name.replace("_", " ").capitalize()
+        if t:
+            return t
+        name = self.name
+        # A foreign-key picker is labelled by what it points at, not by its column.
+        if isinstance(self.widget, RelationSelectWidget) and name.endswith("_id") and len(name) > 3:
+            name = name[: -len("_id")]
+        return name.replace("_", " ").capitalize()
 
     @property
     def required(self) -> bool:
@@ -571,6 +663,8 @@ class PydanticForm:
             return FloatInput()
         if _is_datetime_annotation(ann):
             return DateTimeInput()
+        if ann is date:
+            return DateInput()
         if isinstance(ann, type) and issubclass(ann, Enum):
             return SelectInput()
         return TextInput()
@@ -740,12 +834,12 @@ class PydanticForm:
         instance: BaseModel | None = None
         errs: dict[str, ErrorList] = {}
         try:
-            instance = schema_for(self.model).model_validate(cleaned_data)
+            instance = schema_for(self.model).model_validate(_FormData(cleaned_data, self.model))
         except ValidationError as e:
             for error in e.errors():
                 loc = error["loc"][0]
                 key = str(loc)
-                errs.setdefault(key, []).append(translate_error_lazy(error))
+                errs.setdefault(key, []).append(friendly_error(error))
         # A datetime the form could not parse replaces pydantic's message for it.
         errs.update(datetime_errors)
         self.errors = errs
@@ -972,6 +1066,10 @@ class InlineFormset:
             data = {k: v for k, v in row.items() if not k.startswith("_")}
             if parent_pk is not None:
                 data[self.spec.fk_field] = parent_pk
+            else:
+                fk_info = schema_for(self.spec.model).model_fields.get(self.spec.fk_field)
+                if fk_info is not None and fk_info.is_required():
+                    data.setdefault(self.spec.fk_field, _placeholder_key(fk_info.annotation))
 
             # Clean empty strings to None for optional fields
             model_fields = schema_for(self.spec.model).model_fields
@@ -981,7 +1079,9 @@ class InlineFormset:
                     data[field_name] = None
 
             try:
-                instance = schema_for(self.spec.model).model_validate(data)
+                instance = schema_for(self.spec.model).model_validate(
+                    _FormData(data, self.spec.model)
+                )
                 result = instance.model_dump()
                 if "_pk" in row:
                     result["_pk"] = row["_pk"]
@@ -990,7 +1090,7 @@ class InlineFormset:
                 row_errors: dict[str, ErrorList] = {}
                 for error in e.errors():
                     loc = str(error["loc"][0])
-                    row_errors.setdefault(loc, []).append(translate_error_lazy(error))
+                    row_errors.setdefault(loc, []).append(friendly_error(error))
                 errors[i] = row_errors
 
         self.errors = errors

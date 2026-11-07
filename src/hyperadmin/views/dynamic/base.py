@@ -22,6 +22,7 @@ from hyperadmin.core.adapters import (
 )
 from hyperadmin.core.choices import SelectFieldMeta
 from hyperadmin.core.discovery import build_filter_metadata
+from hyperadmin.core.display import humanize_class_name, pluralize
 from hyperadmin.core.fields import classify_field
 from hyperadmin.core.inlines import InlineModelSpec
 from hyperadmin.core.options import AdminOptions
@@ -101,6 +102,36 @@ class DynamicModelViewBase:
         )
         self.panels: list[PanelDef] = resolve_panels(panel_source, self.model)
         self._panel_map: dict[str, PanelDef] = {p.slug: p for p in self.panels}
+
+    def _verbose_labels(self) -> dict[str, str]:
+        """Template context with the model's readable names.
+
+        ``verbose_name`` / ``verbose_name_plural`` come from the ``ModelAdmin``; with no
+        ``verbose_name`` set, the CamelCase class name is split into words. The
+        ``_lower`` form keeps a leading acronym (``HTTP log``) and lowercases other
+        initials, for use inside a sentence ("Create journal line").
+        """
+        model = self.model
+        admin = self._admin_instance
+        singular = humanize_class_name(model.__name__)
+        plural = pluralize(singular)
+        declared_name = False
+        if admin is not None and hasattr(admin, "get_verbose_name"):
+            declared = str(admin.get_verbose_name(model))
+            if getattr(admin, "verbose_name", None) is not None:
+                singular = declared
+                declared_name = True
+            plural = str(admin.get_verbose_name_plural(model))
+        first = singular.split(" ", 1)[0]
+        # A declared name is used as given ("Acme invoice", German nouns); only a
+        # name derived from the class gets its initial lowercased.
+        keep_case = declared_name or (len(first) > 1 and first.isupper())
+        lower = singular if keep_case else singular[:1].lower() + singular[1:]
+        return {
+            "verbose_name": singular,
+            "verbose_name_lower": lower,
+            "verbose_name_plural": plural,
+        }
 
     async def _has_permission(self, request: Request, codename: str) -> bool:
         """Return whether the request's user holds ``codename`` (always true without auth)."""
