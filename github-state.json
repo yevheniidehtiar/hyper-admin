@@ -1,6 +1,6 @@
 {
   "repo": "yevheniidehtiar/hyper-admin",
-  "last_sync": "2026-11-07T07:49:27.959Z",
+  "last_sync": "2026-11-07T07:52:03.693Z",
   "entities": {
     "dqmi_70iAUbv": {
       "local_hash": "sha256:0c241e5668b04857314c6bf866015a7d5715e683844b27f32c24f0fe99ce1743",
@@ -3826,6 +3826,126 @@
       "local_hash": "sha256:166994a658b4b4871668180b1aa9455a5047357b58c28777770ffdbedc1f1941",
       "remote_hash": "sha256:166994a658b4b4871668180b1aa9455a5047357b58c28777770ffdbedc1f1941",
       "synced_at": "2026-11-07T07:49:27.948Z"
+    },
+    "ep-ux-erp-01": {
+      "github_issue_number": 1007,
+      "local_hash": "sha256:eab005deb7246892929f99c1a535c0500bef28eb362294499988dbd58973bb11",
+      "remote_hash": "sha256:eab005deb7246892929f99c1a535c0500bef28eb362294499988dbd58973bb11",
+      "synced_at": "2026-11-07T07:51:54.448Z"
+    },
+    "st-ux-erp-19": {
+      "github_issue_number": 1008,
+      "local_hash": "sha256:407e954380f47fc41142c4f92d9fb6a0efde5be769b2daaae4bcf6ca617e064e",
+      "remote_hash": "sha256:407e954380f47fc41142c4f92d9fb6a0efde5be769b2daaae4bcf6ca617e064e",
+      "synced_at": "2026-11-07T07:51:54.897Z"
+    },
+    "st-ux-erp-20": {
+      "github_issue_number": 1009,
+      "local_hash": "sha256:3571c71229aa30129bac9b2804e6e06645c54e27bf89d02b78bb2ccd95f89393",
+      "remote_hash": "sha256:3571c71229aa30129bac9b2804e6e06645c54e27bf89d02b78bb2ccd95f89393",
+      "synced_at": "2026-11-07T07:51:55.395Z"
+    },
+    "st-ux-erp-04": {
+      "github_issue_number": 1010,
+      "local_hash": "sha256:d2fd30e3547cc699b888b674366fda030ad75f44629315918519b0042c07754e",
+      "remote_hash": "sha256:d2fd30e3547cc699b888b674366fda030ad75f44629315918519b0042c07754e",
+      "synced_at": "2026-11-07T07:51:55.835Z"
+    },
+    "st-ux-erp-14": {
+      "github_issue_number": 1011,
+      "local_hash": "sha256:4c4ba0b09f47aae12085d97170b1043d2bac2820671febc4cd807cde3ce34a19",
+      "remote_hash": "sha256:4c4ba0b09f47aae12085d97170b1043d2bac2820671febc4cd807cde3ce34a19",
+      "synced_at": "2026-11-07T07:51:56.258Z"
+    },
+    "st-ux-erp-13": {
+      "github_issue_number": 1012,
+      "local_hash": "sha256:43504bbcccc77e995ca66385ac22e0864a087ece13335dec4c93d06ec60a805f",
+      "remote_hash": "sha256:43504bbcccc77e995ca66385ac22e0864a087ece13335dec4c93d06ec60a805f",
+      "synced_at": "2026-11-07T07:51:56.794Z"
+    },
+    "st-ux-erp-07": {
+      "github_issue_number": 1013,
+      "local_hash": "sha256:caceda027337c487c08789041992f837829d40d3eb59e88fdea6f5db021a1ad8",
+      "remote_hash": "sha256:caceda027337c487c08789041992f837829d40d3eb59e88fdea6f5db021a1ad8",
+      "synced_at": "2026-11-07T07:51:57.290Z"
+    },
+    "st-ux-erp-09": {
+      "github_issue_number": 1014,
+      "local_hash": "sha256:5e9f51f8cafecf91bcec0d8c0ba1480140acfd59853a0cc69f2a521611bc8360",
+      "remote_hash": "sha256:5e9f51f8cafecf91bcec0d8c0ba1480140acfd59853a0cc69f2a521611bc8360",
+      "synced_at": "2026-11-07T07:51:57.730Z"
+    },
+    "st-ux-erp-17": {
+      "github_issue_number": 1015,
+      "local_hash": "sha256:3bdd3e7f1123e58bd1f429c60fce0a218c7401b8737af65ffea183e872772f0b",
+      "remote_hash": "sha256:3bdd3e7f1123e58bd1f429c60fce0a218c7401b8737af65ffea183e872772f0b",
+      "synced_at": "2026-11-07T07:51:58.227Z"
+    },
+    "st-ux-erp-06": {
+      "github_issue_number": 1016,
+      "local_hash": "sha256:c279753ab04b8b986c380c0a3c688df5f5135cba7128f8625fcf29df81c739af",
+      "remote_hash": "sha256:c279753ab04b8b986c380c0a3c688df5f5135cba7128f8625fcf29df81c739af",
+      "synced_at": "2026-11-07T07:51:58.686Z"
+    },
+    "st-ux-erp-01": {
+      "github_issue_number": 1017,
+      "local_hash": "sha256:37adb5886777a4f553a595169a36ad1ebdb610191d78c9141a94722867200d84",
+      "remote_hash": "sha256:37adb5886777a4f553a595169a36ad1ebdb610191d78c9141a94722867200d84",
+      "synced_at": "2026-11-07T07:51:59.257Z"
+    },
+    "st-ux-erp-05": {
+      "github_issue_number": 1018,
+      "local_hash": "sha256:4f15b86d9a6ec1efa848c19e37424ffd7c1cfda49f731a3275f30f8e7ab6c2cb",
+      "remote_hash": "sha256:4f15b86d9a6ec1efa848c19e37424ffd7c1cfda49f731a3275f30f8e7ab6c2cb",
+      "synced_at": "2026-11-07T07:51:59.713Z"
+    },
+    "st-ux-erp-18": {
+      "github_issue_number": 1019,
+      "local_hash": "sha256:217083d45e105dd039bcbae0f788aee3d5ad1bfaf71ff2025beaddb5604105b3",
+      "remote_hash": "sha256:217083d45e105dd039bcbae0f788aee3d5ad1bfaf71ff2025beaddb5604105b3",
+      "synced_at": "2026-11-07T07:52:00.338Z"
+    },
+    "st-ux-erp-03": {
+      "github_issue_number": 1020,
+      "local_hash": "sha256:9727ce2abd3ce7c06e3eaeab02a14cf908eec8b743fcba822127cf5485d4de24",
+      "remote_hash": "sha256:9727ce2abd3ce7c06e3eaeab02a14cf908eec8b743fcba822127cf5485d4de24",
+      "synced_at": "2026-11-07T07:52:00.798Z"
+    },
+    "st-ux-erp-11": {
+      "github_issue_number": 1021,
+      "local_hash": "sha256:6b12f5d6126e9a5f9e19af5262c28b56037509606bf4d6ef30b7797ee7611ce8",
+      "remote_hash": "sha256:6b12f5d6126e9a5f9e19af5262c28b56037509606bf4d6ef30b7797ee7611ce8",
+      "synced_at": "2026-11-07T07:52:01.279Z"
+    },
+    "st-ux-erp-08": {
+      "github_issue_number": 1022,
+      "local_hash": "sha256:099da29473326c7c08aa02e3108c6da275b982e06051f01ad19a4343dd9eb055",
+      "remote_hash": "sha256:099da29473326c7c08aa02e3108c6da275b982e06051f01ad19a4343dd9eb055",
+      "synced_at": "2026-11-07T07:52:01.704Z"
+    },
+    "st-ux-erp-02": {
+      "github_issue_number": 1023,
+      "local_hash": "sha256:20f653a26be36c49fa220f9c5416c7f24d2531814dea1c1efa8b1526b5d17907",
+      "remote_hash": "sha256:20f653a26be36c49fa220f9c5416c7f24d2531814dea1c1efa8b1526b5d17907",
+      "synced_at": "2026-11-07T07:52:02.174Z"
+    },
+    "st-ux-erp-12": {
+      "github_issue_number": 1024,
+      "local_hash": "sha256:55f95b3e0ad07469b725888625a7728244ef2cd675b7fb65b621fa0bb70d553d",
+      "remote_hash": "sha256:55f95b3e0ad07469b725888625a7728244ef2cd675b7fb65b621fa0bb70d553d",
+      "synced_at": "2026-11-07T07:52:02.581Z"
+    },
+    "st-ux-erp-15": {
+      "github_issue_number": 1025,
+      "local_hash": "sha256:9598addb75eeb225ffe2e0e3ead50a1365eec7968224d00aecd31b247d97803a",
+      "remote_hash": "sha256:9598addb75eeb225ffe2e0e3ead50a1365eec7968224d00aecd31b247d97803a",
+      "synced_at": "2026-11-07T07:52:03.329Z"
+    },
+    "st-ux-erp-16": {
+      "github_issue_number": 1026,
+      "local_hash": "sha256:19571f67bfabf6814a595d8613bffb592da4e68cb058406747337a1d8c0f4943",
+      "remote_hash": "sha256:19571f67bfabf6814a595d8613bffb592da4e68cb058406747337a1d8c0f4943",
+      "synced_at": "2026-11-07T07:52:03.688Z"
     }
   }
 }
