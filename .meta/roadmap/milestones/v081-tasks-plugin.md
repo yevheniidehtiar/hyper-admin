@@ -3,13 +3,13 @@ type: milestone
 id: iOTodDwZehp2
 title: v0.8.1 — Tasks plugin (pgtask, experimental)
 target_date: 2026-11-13T00:00:00Z
-status: in_progress
+status: done
 github:
   milestone_id: 23
   repo: yevheniidehtiar/hyper-admin
   synced_at: 2026-11-01T00:00:00Z
 created_at: 2026-10-29T00:00:00Z
-updated_at: 2026-11-01T00:00:00Z
+updated_at: 2026-11-07T00:00:00Z
 ---
 
 First-party plugin **`hyperadmin-tasks`** (`plugins/hyperadmin-tasks/`): a Postgres-native

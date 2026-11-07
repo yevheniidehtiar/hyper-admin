@@ -2,7 +2,7 @@
 type: story
 id: QVP4dSaO_qEJ
 title: "feat(plugin-tasks): optional in-process pgtask Worker bound to the admin lifespan"
-status: backlog
+status: done
 priority: medium
 assignee: null
 labels:
@@ -19,7 +19,7 @@ github:
   repo: yevheniidehtiar/hyper-admin
   synced_at: 2026-11-01T00:00:00Z
 created_at: 2026-10-29T00:00:00Z
-updated_at: 2026-10-29T00:00:00Z
+updated_at: 2026-11-07T00:00:00Z
 ---
 
 ## Context
