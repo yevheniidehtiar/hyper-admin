@@ -877,6 +877,7 @@ class Admin:
             permission_checker=self.permission_checker,
             isolated=isolated,
             admin_path=admin_path,
+            user_cache_ttl=settings.user_cache_ttl,
         )
         target.add_middleware(
             AdminSessionMiddleware,

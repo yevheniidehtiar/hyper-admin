@@ -8,6 +8,7 @@ for any admin route other than the MFA endpoints themselves.
 
 from __future__ import annotations
 
+import time
 from typing import TYPE_CHECKING, Any
 
 # FastAPI itself imports ``get_route_path`` from here (see core/lifecycle.py).
@@ -17,6 +18,7 @@ from starlette.responses import RedirectResponse, Response
 
 from hyperadmin.auth.bridge import default_display_name
 from hyperadmin.auth.otp import PARTIAL_AUTH_SESSION_KEY
+from hyperadmin.auth.user_cache import CachedUser, UserCache
 
 if TYPE_CHECKING:
     from collections.abc import Callable
@@ -38,7 +40,7 @@ class AuthenticationMiddleware:
     # like EventSource cannot follow a redirect into a login form.
     API_PREFIXES = ("/realtime/",)
 
-    def __init__(
+    def __init__(  # noqa: PLR0913 - one keyword per option
         self,
         app: Any,
         auth_backend: Any,
@@ -47,6 +49,8 @@ class AuthenticationMiddleware:
         *,
         isolated: bool = False,
         admin_path: Callable[[Request], str] | None = None,
+        user_cache_ttl: int = 0,
+        clock: Callable[[], float] = time.monotonic,
     ) -> None:
         """Build the middleware.
 
@@ -65,6 +69,9 @@ class AuthenticationMiddleware:
                 passes one that honours the host's ``root_path`` in both modes;
                 without it, the sub-app ``root_path`` (isolated) or the static
                 ``admin_prefix`` (router mode) is used.
+            user_cache_ttl: Seconds to cache the user and permission set per session
+                user id in this worker; ``0`` (default) loads them on every request.
+            clock: Monotonic clock of the cache (injectable for tests).
         """
         self.app = app
         self.auth_backend = auth_backend
@@ -72,6 +79,7 @@ class AuthenticationMiddleware:
         self.permission_checker = permission_checker
         self.isolated = isolated
         self._admin_path_for = admin_path
+        self._user_cache = UserCache(user_cache_ttl, clock=clock) if user_cache_ttl > 0 else None
 
     def _relative_admin_path(self, request: Request) -> str | None:
         """Return the path below the admin prefix, or ``None`` for a host request.
@@ -137,7 +145,7 @@ class AuthenticationMiddleware:
         on_mfa_route = relative.startswith(self.MFA_PREFIX)
 
         # Check authentication
-        user = await self.auth_backend.get_current_user(request)
+        user, cached = await self._resolve_user(request)
         if user is None:
             # API endpoints reject with 401 — long-lived clients (EventSource,
             # XHR) can't follow a redirect into the login form.
@@ -163,8 +171,44 @@ class AuthenticationMiddleware:
         # so realtime and templates read one contract in both auth modes.
         request.state.user_key = user.id
         request.state.user_display = default_display_name(user)
-        request.state.user_permissions = await self._user_permissions(user)
+        request.state.user_permissions = await self._permissions_for(request, user, cached)
         return None
+
+    async def _resolve_user(self, request: Request) -> tuple[Any, CachedUser | None]:
+        """Return the current user and the cache entry it came from, if any."""
+        key = self._cache_key(request)
+        if key is not None and self._user_cache is not None:
+            cached = self._user_cache.get(key)
+            if cached is not None:
+                return cached.user, cached
+        user = await self.auth_backend.get_current_user(request)
+        if key is not None and getattr(user, "is_active", True) is False:
+            # Only reachable with the cache on: a deactivated user is locked out
+            # at the latest when its entry expires.
+            return None, None
+        return user, None
+
+    async def _permissions_for(
+        self, request: Request, user: Any, cached: CachedUser | None
+    ) -> frozenset[str] | None:
+        """Return the permission set, loading and caching it unless the entry was a hit."""
+        if cached is not None:
+            return cached.permissions
+        permissions = await self._user_permissions(user)
+        key = self._cache_key(request)
+        if key is not None and self._user_cache is not None:
+            self._user_cache.set(key, CachedUser(user, permissions))
+        return permissions
+
+    def _cache_key(self, request: Request) -> Any:
+        """Return the session user id to key the cache on, or ``None`` to bypass it."""
+        if self._user_cache is None:
+            return None
+        try:
+            user_id = request.session.get("user_id")
+        except (AssertionError, AttributeError):
+            return None
+        return user_id if isinstance(user_id, int) else None
 
     async def _user_permissions(self, user: Any) -> frozenset[str] | None:
         """Load the user's permission codenames once per request (the sidebar reads them).
