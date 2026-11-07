@@ -124,3 +124,27 @@ def test_fk_label_drops_the_id_suffix(client: TestClient) -> None:
 
     assert "Ledger id" not in html
     assert ">Ledger<" in html or "Ledger<span" in html
+
+
+def test_view_with_a_plain_admin_object_falls_back_to_the_class_name() -> None:
+    """
+    Scenario: an admin object without verbose-name hooks keeps the humanised class name
+      Given a dynamic view whose admin instance has no get_verbose_name (a ModelView)
+      When  the verbose labels are built
+      Then  the singular is the humanised class name and the plural is pluralised
+    """
+    from types import SimpleNamespace
+
+    from hyperadmin.views.dynamic.base import DynamicModelViewBase
+
+    # Given
+    view = DynamicModelViewBase.__new__(DynamicModelViewBase)
+    view.model = VtJournalLine
+    view._admin_instance = SimpleNamespace()
+
+    # When
+    labels = view._verbose_labels()
+
+    # Then
+    assert labels["verbose_name"] == "Vt journal line"
+    assert labels["verbose_name_plural"] == "Vt journal lines"
