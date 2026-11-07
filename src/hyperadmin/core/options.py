@@ -245,6 +245,16 @@ class AdminOptions(BaseModel):
         )
         ```
     """
+    enforce_occ: bool = False
+    """Reject edits that were made against an out-of-date copy of the row (default off).
+
+    With ``True`` the edit form carries the row's version and a save whose version no
+    longer matches is refused with HTTP 409 instead of silently overwriting the newer
+    change. The model needs a ``version: int`` column, a ``__version_field__`` class
+    attribute naming another column, or (with ``HYPERADMIN_CONCURRENCY_USE_UPDATED_AT``)
+    an ``updated_at`` column; otherwise startup fails with a
+    :class:`~hyperadmin.core.concurrency.ConcurrencyConfigurationError`.
+    """
     count_cache_ttl: int = Field(default=0, ge=0)
     """Seconds to cache this model's list total; ``0`` (default) always counts.
 

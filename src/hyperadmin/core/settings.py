@@ -261,6 +261,14 @@ class HyperAdminSettings(BaseSettings):
     #: Only used by models that set ``AdminOptions.count_cache_ttl``.
     count_cache_max_entries: int = Field(default=1024, ge=1)
 
+    # ── Concurrency (docs/specs/realtime-occ.md) ──────────────────────────────
+    #: Let ``updated_at`` act as the version field of models with no ``version`` column.
+    #: Approximate: writes within the column's timestamp resolution can go undetected.
+    concurrency_use_updated_at: bool = False
+    #: Render the HTML conflict dialog on a stale save; ``False`` answers API clients
+    #: with a JSON 409 body instead.
+    occ_render_dialog: bool = True
+
     # ── Navigation ────────────────────────────────────────────────────────────
     #: Most sidebar pages one user may pin (built-in or bridge auth only).
     nav_pins_max: int = Field(default=20, ge=1)

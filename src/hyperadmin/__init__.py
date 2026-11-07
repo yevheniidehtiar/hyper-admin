@@ -1,6 +1,7 @@
 from importlib.metadata import version as _distribution_version
 
 from hyperadmin.core.app import Admin
+from hyperadmin.core.concurrency import ConcurrencyConfigurationError, StaleRecordError
 from hyperadmin.core.navigation import NavGroup
 from hyperadmin.core.plugins import Plugin, PluginError, PluginRegistry
 from hyperadmin.core.settings import HyperAdminSettings
@@ -13,6 +14,7 @@ __version__: str = _distribution_version("hyper-admin")
 
 __all__ = [
     "Admin",
+    "ConcurrencyConfigurationError",
     "HyperAdminSettings",
     "NavGroup",
     "PDFStreamPanel",
@@ -20,6 +22,7 @@ __all__ = [
     "PluginError",
     "PluginRegistry",
     "RealtimeSettings",
+    "StaleRecordError",
     "__version__",
     "gettext_lazy",
     "pdf_stream_panel",
