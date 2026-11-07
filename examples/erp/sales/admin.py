@@ -39,7 +39,7 @@ class InvoiceAdmin(ModelAdmin):
                 model=InvoiceItem,
                 fk_field="invoice_id",
                 relationship_name="items",
-                extra=2,
+                extra=1,
                 title="Invoice items",
             ),
         ],

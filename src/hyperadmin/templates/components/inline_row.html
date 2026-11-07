@@ -39,7 +39,7 @@
         </ul>
         {%- endif -%}
         <button type="button"
-                class="ha-btn ha-btn-danger ha-btn-sm ha-inline-remove-btn"
+                class="ha-btn ha-btn-secondary ha-btn-sm ha-inline-remove-btn"
                 data-testid="inline-{{ inline.prefix }}-remove-{{ row.index }}"
                 onclick="this.closest('tr').querySelector('[name$=DELETE]').value='1'; this.closest('tr').classList.add('ha-inline-row-deleted'); this.closest('tr').style.display='none';">
             {{ _("Remove") }}
