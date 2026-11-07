@@ -159,6 +159,11 @@ class HyperAdminSettings(BaseSettings):
     #: Session lifetime in seconds (default: 14 days).
     session_max_age: int = Field(default=1_209_600, gt=0)
     session_same_site: SameSiteLiteral = "lax"
+    #: Seconds the authenticated user and its permission set are cached per worker,
+    #: keyed by session user id (``0`` = off: loaded on every request). Writes on the
+    #: same worker invalidate the entry; other workers may serve a stale user for up
+    #: to this many seconds.
+    user_cache_ttl: int = Field(default=0, ge=0)
 
     # ── Discovery ─────────────────────────────────────────────────────────────
     auto_discover: bool = False
