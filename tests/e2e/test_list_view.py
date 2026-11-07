@@ -8,7 +8,7 @@ from playwright.sync_api import Page, expect
 def test_admin_interface_loads(page: Page, demo_base_url: str) -> None:
     page.goto(demo_base_url + "/admin/user")
 
-    expect(page).to_have_title("User List | HyperAdmin")
+    expect(page).to_have_title("Users | HyperAdmin")
     expect(page.get_by_role("link", name="HyperAdmin")).to_be_visible()
     expect(page.get_by_test_id("sidebar").get_by_role("link", name="Users")).to_be_visible()
     expect(page.get_by_role("navigation", name="Main navigation")).to_be_visible()
@@ -54,7 +54,7 @@ def test_admin_interface_styling(page: Page, demo_base_url: str) -> None:
 def test_admin_interface_accessibility(page: Page, demo_base_url: str) -> None:
     page.goto(demo_base_url + "/admin/user")
 
-    expect(page).to_have_title("User List | HyperAdmin")
+    expect(page).to_have_title("Users | HyperAdmin")
     expect(page.get_by_role("navigation", name="Main navigation")).to_be_visible()
     expect(page.get_by_role("main")).to_be_attached()
     expect(page.get_by_role("complementary")).to_be_visible()

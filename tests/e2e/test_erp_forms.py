@@ -23,10 +23,27 @@ def erp_base_url(start_server: Callable[..., str]) -> str:
     return start_server("examples.erp.main", ready_path="/")
 
 
+def _create_invoice(page: Page, base_url: str, number: str) -> None:
+    """Fill and submit the invoice create form; leaves the browser on the new invoice."""
+    page.goto(base_url + "/admin/invoice/create")
+    page.get_by_label("Number").fill(number)
+    page.get_by_label("Date issued").fill("2026-01-05")
+    page.get_by_label("Date due").fill("2026-02-05")
+    page.get_by_test_id("autocomplete-select-customer_id").select_option(index=1)
+    page.get_by_label("Description").first.fill("Consulting")
+    page.get_by_label("Quantity").first.fill("2")
+    page.get_by_label("Unit price").first.fill("50")
+    with page.expect_response(lambda r: r.request.method == "POST") as saved:
+        page.get_by_role("button", name="Create", exact=True).click()
+    assert saved.value.status < 400
+    expect(page.get_by_test_id("detail-edit-link")).to_be_visible()
+
+
 def test_invoice_edit_saves(page: Page, erp_base_url: str) -> None:
-    # Given the ERP example and an existing invoice
+    # Given the ERP example and an invoice with its customer selected
     _erp_login(page, erp_base_url)
-    page.goto(erp_base_url + "/admin/invoice/3/edit")
+    _create_invoice(page, erp_base_url, "INV-TO-EDIT-1")
+    page.get_by_test_id("detail-edit-link").click()
 
     # When the user changes the number and clicks Update
     page.get_by_label("Number").fill("INV-EDITED-1")
@@ -34,9 +51,9 @@ def test_invoice_edit_saves(page: Page, erp_base_url: str) -> None:
         page.get_by_role("button", name="Update").click()
 
     # Then the response is not 5xx and the new number is shown after a reload
-    assert saved.value.status < 500
-    page.goto(erp_base_url + "/admin/invoice/3/edit")
-    expect(page.get_by_label("Number")).to_have_value("INV-EDITED-1")
+    assert saved.value.status < 400
+    page.goto(erp_base_url + "/admin/invoice?search=INV-EDITED-1")
+    expect(page.get_by_role("link", name="INV-EDITED-1").first).to_be_visible()
 
 
 def test_date_field_uses_the_native_date_picker(page: Page, erp_base_url: str) -> None:
