@@ -1,5 +1,6 @@
 """E2E tests for ERP form fixes (ep-ux-erp-01 forms lane)."""
 
+import re
 from collections.abc import Callable
 
 import pytest
@@ -52,6 +53,8 @@ def test_invoice_edit_saves(page: Page, erp_base_url: str) -> None:
 
     # Then the response is not 5xx and the new number is shown after a reload
     assert saved.value.status < 400
+    # The HX-Redirect to the list navigates after the response; a goto before it lands aborts.
+    page.wait_for_url(re.compile(r"/admin/invoice/?(\?.*)?$"))
     page.goto(erp_base_url + "/admin/invoice?search=INV-EDITED-1")
     expect(page.get_by_role("link", name="INV-EDITED-1").first).to_be_visible()
 
@@ -133,5 +136,7 @@ def test_invoice_create_saves_with_one_line_item(page: Page, erp_base_url: str) 
 
     # Then the invoice appears in the list
     assert saved.value.status < 400
+    # Wait for the HX-Redirect to the new invoice to land, so the goto does not abort it.
+    expect(page.get_by_test_id("detail-edit-link")).to_be_visible()
     page.goto(erp_base_url + "/admin/invoice?search=INV-NEW-1")
     expect(page.get_by_role("link", name="INV-NEW-1").first).to_be_visible()
