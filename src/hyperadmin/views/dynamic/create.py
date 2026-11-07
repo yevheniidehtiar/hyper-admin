@@ -75,6 +75,7 @@ class CreateViewMixin(RelationViewMixin, InlineViewMixin):
             "request": request,
             "pk_attr": self.pk.attr,
             "model_name": self.model.__name__,
+            **self._verbose_labels(),
             "form": form,
             "values": values or {},
             "errors": errors or {},
