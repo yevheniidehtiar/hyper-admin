@@ -37,3 +37,15 @@ def test_invoice_edit_saves(page: Page, erp_base_url: str) -> None:
     assert saved.value.status < 500
     page.goto(erp_base_url + "/admin/invoice/3/edit")
     expect(page.get_by_label("Number")).to_have_value("INV-EDITED-1")
+
+
+def test_date_field_uses_the_native_date_picker(page: Page, erp_base_url: str) -> None:
+    # Given the ERP invoice admin, whose invoices have date fields
+    _erp_login(page, erp_base_url)
+
+    # When the create form renders
+    page.goto(erp_base_url + "/admin/invoice/create")
+
+    # Then the date inputs have type=date
+    expect(page.get_by_label("Date issued")).to_have_attribute("type", "date")
+    expect(page.get_by_label("Date due")).to_have_attribute("type", "date")
