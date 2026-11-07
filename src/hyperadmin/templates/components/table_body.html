@@ -12,6 +12,7 @@
     delete; it opens the shared confirm dialog (components/confirm_delete_dialog.html). -#}
 {%- from "components/_icons.html" import icon -%}
 {%- from "components/tooltip.html" import tip -%}
+{%- from "components/pill.html" import pill -%}
 {%- import "components/_row_access.html" as rows with context -%}
 <tbody id="model-list-body" class="ha-table-body" data-testid="list-body">
     {%- for item in items -%}
@@ -33,7 +34,9 @@
             {%- if list_editable and field in list_editable and field != pk_attr|default('id') -%}
                 {%- include "components/inline_cell.html" -%}
             {%- else -%}
-                {%- set cell_value -%}{%- if item[field] is none -%}<span class="ha-text-muted">&mdash;</span>{%- elif item._thumbs is defined and field in item._thumbs -%}{%- set thumb_src = item._thumbs[field] -%}{%- set thumb_label = cell_label -%}{%- set thumb_size = 40 -%}{%- include "components/thumbnail.html" -%}{%- else -%}{{- item[field]|ha_display -}}{%- endif -%}{%- endset -%}
+                {%- set cell_pill = item[field]|ha_pill(item) -%}
+                {%- set cell_num = item[field] is ha_decimal -%}
+                {%- set cell_value -%}{%- if item[field] is none -%}<span class="ha-text-muted">&mdash;</span>{%- elif item._thumbs is defined and field in item._thumbs -%}{%- set thumb_src = item._thumbs[field] -%}{%- set thumb_label = cell_label -%}{%- set thumb_size = 40 -%}{%- include "components/thumbnail.html" -%}{%- elif cell_pill -%}{{- pill(cell_pill[0], cell_pill[1], testid='row-status') -}}{%- elif cell_num -%}{{- item[field]|ha_number(field_currency[field] if field_currency is defined and field in field_currency else none) -}}{%- else -%}{{- item[field]|ha_display -}}{%- endif -%}{%- endset -%}
                 {%- if field == rows.title_field -%}
                 <th class="ha-table-cell ha-table-title" scope="row" data-label="{{ cell_label }}">
                     {%- if row_url -%}
@@ -46,7 +49,7 @@
                     {%- endif -%}
                 </th>
                 {%- else -%}
-                <td class="ha-table-cell" data-label="{{ cell_label }}">{{- cell_value -}}</td>
+                <td class="ha-table-cell{{ ' ha-num' if cell_num }}{{ ' ha-cell-pill' if cell_pill }}" data-label="{{ cell_label }}">{{- cell_value -}}</td>
                 {%- endif -%}
             {%- endif -%}
         {%- endfor -%}

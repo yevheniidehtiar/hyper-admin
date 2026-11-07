@@ -188,6 +188,9 @@ E2E tests use Playwright's accessibility-first locators. Query priority (highest
 | Field error list | `{field_name}-errors` |
 | Detail fields container | `detail-fields` |
 | Request-failure alert (5xx / network error on an HTMX request) | `request-error-toast` |
+| Status pill in a list row | `row-status` |
+| ERP dashboard figures grid / its live region | `dashboard-figures` / `dashboard-figures-region` |
+| ERP dashboard figure tile | `figure-{name}` (e.g. `figure-overdue-invoices`) |
 
 When adding new interactive or assertable elements to templates, add a `data-testid` following the `<view>-<element>` naming pattern.
 
