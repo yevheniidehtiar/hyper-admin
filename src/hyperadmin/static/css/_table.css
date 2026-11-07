@@ -640,7 +640,7 @@
    at the end. Line 3: everything else, small and muted, label inline.
    -------------------------------------------------------------------------- */
 @media (max-width: 767px) {
-  .ha-table-row {
+  [data-testid="list-table"] .ha-table-row {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
@@ -649,22 +649,22 @@
   }
 
   /* Line breaks between the three lines. */
-  .ha-table-row::before,
-  .ha-table-row::after {
+  [data-testid="list-table"] .ha-table-row::before,
+  [data-testid="list-table"] .ha-table-row::after {
     content: "";
     flex: 0 0 100%;
     height: 0;
   }
 
-  .ha-table-row::before {
+  [data-testid="list-table"] .ha-table-row::before {
     order: 2;
   }
 
-  .ha-table-row::after {
+  [data-testid="list-table"] .ha-table-row::after {
     order: 4;
   }
 
-  .ha-table-row > .ha-table-cell {
+  [data-testid="list-table"] .ha-table-row > .ha-table-cell {
     order: 5;
     flex: 0 1 auto;
     width: auto;
@@ -678,7 +678,7 @@
     text-align: start;
   }
 
-  .ha-table-row > .ha-table-title {
+  [data-testid="list-table"] .ha-table-row > .ha-table-title {
     order: 1;
     max-width: 100%;
     font-size: var(--ha-font-size-sm);
@@ -686,17 +686,17 @@
     color: var(--ha-color-text-strong);
   }
 
-  .ha-table-row > .ha-col-check {
+  [data-testid="list-table"] .ha-table-row > .ha-col-check {
     order: 0;
   }
 
-  .ha-table-row > .ha-table-title::before,
-  .ha-table-row > .ha-cell-pill::before,
-  .ha-table-row > .ha-num::before {
+  [data-testid="list-table"] .ha-table-row > .ha-table-title::before,
+  [data-testid="list-table"] .ha-table-row > .ha-cell-pill::before,
+  [data-testid="list-table"] .ha-table-row > .ha-num::before {
     content: none;
   }
 
-  .ha-table-row > .ha-table-title + .ha-table-cell:not(.ha-cell-pill, .ha-num) {
+  [data-testid="list-table"] .ha-table-row > .ha-table-title + .ha-table-cell:not(.ha-cell-pill, .ha-num) {
     order: 1;
     flex: 1 1 0;
     min-width: 0;
@@ -707,44 +707,50 @@
     color: var(--ha-color-text);
   }
 
-  .ha-table-row > .ha-table-title + .ha-table-cell:not(.ha-cell-pill, .ha-num)::before {
+  [data-testid="list-table"] .ha-table-row > .ha-table-title + .ha-table-cell:not(.ha-cell-pill, .ha-num, :empty)::before {
     content: "\00b7";
     font-size: inherit;
     color: var(--ha-color-text-muted);
   }
 
-  .ha-table-row > .ha-cell-pill,
-  .ha-table-row > .ha-num,
-  .ha-table-row > .ha-col-end {
+  [data-testid="list-table"] .ha-table-row > .ha-cell-pill,
+  [data-testid="list-table"] .ha-table-row > .ha-num,
+  [data-testid="list-table"] .ha-table-row > .ha-col-end {
     order: 3;
     font-size: var(--ha-font-size-sm);
     color: var(--ha-color-text);
   }
 
-  .ha-table-row > .ha-num {
+  [data-testid="list-table"] .ha-table-row > .ha-num {
     margin-inline-start: auto;
     font-weight: var(--ha-font-semibold);
     color: var(--ha-color-text-strong);
   }
 
   /* The 44px delete target overlaps the card padding instead of adding a line. */
-  .ha-table-row > .ha-col-end {
+  [data-testid="list-table"] .ha-table-row > .ha-col-end {
     margin-inline-start: auto;
     margin-block: calc((44px - 28px) / -2);
     padding: 0;
   }
 
-  .ha-table-row > .ha-num ~ .ha-col-end {
+  [data-testid="list-table"] .ha-table-row > .ha-num ~ .ha-col-end {
     margin-inline-start: 0;
   }
 
   /* A table of label/value pairs (a report's totals): one row per pair. */
-  .ha-table--pairs .ha-table-row::before,
-  .ha-table--pairs .ha-table-row::after {
-    display: none;
+  .ha-table--pairs .ha-table-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--ha-space-3);
   }
 
-  .ha-table--pairs .ha-table-row > .ha-table-title {
-    flex: 1 1 auto;
+  .ha-table--pairs .ha-table-row > .ha-table-cell {
+    width: auto;
+  }
+
+  .ha-table--pairs .ha-table-row > .ha-table-cell::before {
+    content: none;
   }
 }

@@ -306,7 +306,7 @@ def test_non_htmx_request_renders_full_page_with_filter_groups() -> None:
     assert ctx["list_body_id"] == LIST_BODY_ID
     assert ctx["active_filters"] == {"status": "open"}
     assert (
-        "page=2&search=&sort_by=id&sort_direction=asc&filter_status=open&created_at__gte=2026-01-01"
+        "page=2&search=&sort_by=id&sort_direction=asc&filter_status=open&page_size=1&created_at__gte=2026-01-01"
         in resp.text
     )
 

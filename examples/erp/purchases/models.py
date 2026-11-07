@@ -1,17 +1,18 @@
 import enum
-from datetime import date
+from datetime import date, datetime, timezone
 from typing import Any
 
 from sqlmodel import Field, Relationship, SQLModel
 
 from examples.erp.contacts.models import Contact
+from hyperadmin import gettext_lazy as _
 
 
 def _to_pay_tone(row: Any) -> tuple[str, str] | str:
     """A bill still to pay past its due date reads "Overdue" (danger tone)."""
     due = row.get("date_due") if row is not None else None
-    if isinstance(due, date) and due < date.today():  # noqa: DTZ011
-        return ("Overdue", "danger")
+    if isinstance(due, date) and due < datetime.now(tz=timezone.utc).date():
+        return (_("Overdue"), "danger")
     return "warning"
 
 

@@ -1,0 +1,6 @@
+{#- OverdueFilter group: one switch, "Overdue only". -#}
+<fieldset class="ha-filtergroup" data-testid="filter-overdue-group">
+    <legend class="ha-sr-only">{{ _("Overdue") }}</legend>
+    <label class="ha-switch"><input type="checkbox" role="switch" name="overdue" value="1"{% if active %} checked{% endif %} data-testid="filter-overdue">{{ _(filter.title) }}</label>
+    <p class="ha-help">{{ _(filter.help_text) }}</p>
+</fieldset>

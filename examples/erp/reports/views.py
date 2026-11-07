@@ -1,6 +1,7 @@
 import datetime
 from typing import TYPE_CHECKING, Any
 
+from babel.dates import format_date
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -116,6 +117,11 @@ async def profit_loss_report(
     )
 
 
+def _locale(request: Request) -> str:
+    """The request locale code (``request.state.locale``), ``en`` when unset."""
+    return str(getattr(request.state, "locale", None) or "en")
+
+
 async def _count(session: AsyncSession, model: Any, *conditions: Any) -> int:
     """Number of ``model`` rows matching every condition."""
     stmt = select(func.count()).select_from(model)
@@ -124,7 +130,7 @@ async def _count(session: AsyncSession, model: Any, *conditions: Any) -> int:
     return int((await session.execute(stmt)).scalar_one())
 
 
-async def _get_dashboard_figures(today: datetime.date) -> dict[str, Any]:
+async def _get_dashboard_figures(today: datetime.date, request: Request) -> dict[str, Any]:
     """What needs attention today: open and overdue invoices, bills to pay, the month's result."""
     week_end = today + datetime.timedelta(days=7)
     month_start = today.replace(day=1)
@@ -142,11 +148,10 @@ async def _get_dashboard_figures(today: datetime.date) -> dict[str, Any]:
                 Invoice.date_due <= week_end,  # type: ignore[arg-type]  # date column proxy
             ),
             "bills_to_pay": await _count(session, Bill, to_pay),
-            "bills_overdue": await _count(session, Bill, to_pay, Bill.date_due < today),  # type: ignore[arg-type]  # date column proxy
         }
     month = await _get_pl_range(month_start, today)
     figures["month_result"] = month["net_profit"]
-    figures["month_label"] = today.strftime("%B %Y")
+    figures["month_label"] = format_date(today, "LLLL y", locale=_locale(request))
     figures["today"] = today
     figures["week_end"] = week_end
     figures["yesterday"] = today - datetime.timedelta(days=1)
@@ -161,5 +166,5 @@ async def dashboard_figures(request: Request) -> HTMLResponse:
     return admin.templates.TemplateResponse(
         request,
         "reports/dashboard_figures.html",
-        await _get_dashboard_figures(today),
+        await _get_dashboard_figures(today, request),
     )

@@ -9,6 +9,7 @@
 
     {# ── Figures: loaded after the page, so a slow ledger never blocks the home page ── #}
     <div class="ha-mb-4" hx-get="{{ admin_prefix }}/erp/dashboard-figures" hx-trigger="load" hx-swap="innerHTML"
+         hx-on::response-error="this.textContent = '{{ _("Figures could not be loaded. Reload the page to try again.") }}'"
          data-testid="dashboard-figures-region" aria-live="polite">
         <p class="ha-text-muted">{{ _('Loading figures…') }}</p>
     </div>

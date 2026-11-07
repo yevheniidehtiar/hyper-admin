@@ -142,6 +142,15 @@ def test_card_shows_the_key_facts_first(page: Page, erp_url: str) -> None:
         < 12
     )
 
+    # And the title is the number followed by the customer, and the dates are secondary
+    title = row.get_by_role("rowheader")
+    customer = row.get_by_role("cell").nth(0)
+    assert title.bounding_box()["y"] <= customer.bounding_box()["y"] + 4  # type: ignore[index]
+    expect(customer).not_to_be_empty()
+    date_colour = row.get_by_role("cell").nth(1).evaluate("el => getComputedStyle(el).color")
+    title_colour = title.evaluate("el => getComputedStyle(el).color")
+    assert date_colour != title_colour
+
     # And at least six cards are at least half visible on the first screen
     on_screen = 0
     for card in page.get_by_test_id("list-row").all():
@@ -166,11 +175,35 @@ def test_all_columns_are_reachable_on_a_tablet(page: Page, erp_url: str) -> None
     page.set_viewport_size({"width": 768, "height": 1024})
     _open(page, erp_url, "/admin/invoice")
 
-    # Then the table either fits, or its wrapper scrolls and paints a scroll shadow
+    # Then every column is reachable: it fits, or the wrapper scrolls to the last header
     wrapper = page.get_by_test_id("list-table").locator("xpath=..")
     scrolls = wrapper.evaluate("el => el.scrollWidth > el.clientWidth")
     shadow = wrapper.evaluate("el => getComputedStyle(el).backgroundImage")
-    assert not scrolls or "gradient" in shadow
+    assert "gradient" in shadow
+    last = page.get_by_role("columnheader", name="Total Amount")
+    if scrolls:
+        last.scroll_into_view_if_needed()
+    expect(last).to_be_in_viewport()
+    expect(page.get_by_role("columnheader", name="Status")).to_be_attached()
+
+
+def test_scroll_shadows_follow_dark_mode(page: Page, erp_url: str) -> None:
+    """
+    Scenario: scroll shadow covers match the table background in dark mode
+      Given a 768px viewport in dark mode and the invoice list
+      Then  the wrapper background colour is the surface the gradient covers use
+    """
+    # Given dark mode on a tablet
+    page.emulate_media(color_scheme="dark")
+    page.set_viewport_size({"width": 768, "height": 1024})
+    _open(page, erp_url, "/admin/invoice")
+
+    # Then the wrapper paints a gradient over its own (dark) background
+    wrapper = page.get_by_test_id("list-table").locator("xpath=..")
+    assert "gradient" in wrapper.evaluate("el => getComputedStyle(el).backgroundImage")
+    colour = wrapper.evaluate("el => getComputedStyle(el).backgroundColor")
+    channels = [int(c) for c in re.findall(r"\d+", colour)[:3]]
+    assert max(channels) < 128
 
 
 def test_consistent_naming(page: Page, erp_url: str) -> None:
@@ -217,12 +250,55 @@ def test_invoice_list_offers_customer_and_due_date_filters(page: Page, erp_url: 
     # Given the invoice list
     _open(page, erp_url, "/admin/invoice")
 
-    # Then the sidebar has the three filters
+    # Then the sidebar has the customer, due-date, status and overdue filters
     sidebar = page.get_by_test_id("filter-sidebar")
     expect(sidebar).to_be_visible()
     expect(sidebar.get_by_text("Customer", exact=True).first).to_be_visible()
     expect(sidebar.get_by_text("Due date", exact=True).first).to_be_visible()
     expect(sidebar.get_by_text("Status", exact=True).first).to_be_visible()
+    expect(sidebar.get_by_test_id("filter-overdue")).to_be_visible()
+
+
+def test_overdue_filter_lists_only_overdue_invoices(page: Page, erp_url: str) -> None:
+    """
+    Scenario: overdue filter lists only invoices that read Overdue
+      Given the invoice list
+      When  the clerk turns on "Overdue only"
+      Then  every row on the page shows the Overdue pill
+    """
+    # Given the invoice list
+    _open(page, erp_url, "/admin/invoice")
+
+    # When the clerk turns on Overdue only
+    page.get_by_test_id("filter-overdue").check()
+    page.get_by_test_id("filter-apply-btn").click()
+    expect(page).to_have_url(re.compile(r"overdue=1"))
+
+    # Then every row reads Overdue
+    rows = page.get_by_test_id("list-row")
+    expect(rows.first).to_be_visible()
+    for row in rows.all():
+        expect(row.get_by_test_id("row-status")).to_have_text("Overdue")
+
+
+def test_page_size_selector_changes_rows_per_page(page: Page, erp_url: str) -> None:
+    """
+    Scenario: clerk picks how many invoices to see per page
+      Given the invoice list with ten rows per page
+      When  the clerk chooses 25 rows per page
+      Then  the list shows 25 rows and the pager keeps that size on the next page
+    """
+    # Given the invoice list
+    _open(page, erp_url, "/admin/invoice")
+    expect(page.get_by_test_id("list-row")).to_have_count(10)
+
+    # When the clerk chooses 25 rows per page
+    page.get_by_test_id("page-size-25").click()
+
+    # Then 25 rows show and the next page keeps the size
+    expect(page.get_by_test_id("list-row")).to_have_count(25)
+    page.get_by_test_id("pagination-next").click()
+    expect(page.get_by_test_id("page-size-25")).to_have_attribute("aria-current", "true")
 
 
 def test_mark_paid_bulk_action_settles_invoices(page: Page, erp_url: str) -> None:
@@ -246,6 +322,28 @@ def test_mark_paid_bulk_action_settles_invoices(page: Page, erp_url: str) -> Non
     # Then one fewer invoice is Sent
     page.goto(erp_url + "/admin/invoice?filter_status=SENT")
     expect(page.get_by_test_id("pagination-info")).to_contain_text(f"of {before - 1} results")
+
+
+def test_mark_paid_refuses_a_cancelled_invoice(page: Page, erp_url: str) -> None:
+    """
+    Scenario: mark paid skips invoices that are not Sent
+      Given the Cancelled invoices
+      When  a clerk selects one and runs "Mark paid"
+      Then  the row fails and the invoice stays Cancelled
+    """
+    # Given the Cancelled invoices
+    _open(page, erp_url, "/admin/invoice?filter_status=CANCELLED")
+    before = page.get_by_test_id("pagination-info").inner_text()
+
+    # When a clerk selects the first row and runs Mark paid
+    page.get_by_test_id("bulk-checkbox").first.check()
+    page.get_by_label("Action for selected rows").select_option("mark_paid")
+    page.get_by_role("button", name="Run").click()
+    expect(page.get_by_test_id("bulk-result")).to_contain_text("Only Sent invoices")
+
+    # Then the Cancelled count is unchanged
+    page.goto(erp_url + "/admin/invoice?filter_status=CANCELLED")
+    expect(page.get_by_test_id("pagination-info")).to_have_text(before)
 
 
 def test_dashboard_answers_what_needs_attention(page: Page, erp_url: str) -> None:
