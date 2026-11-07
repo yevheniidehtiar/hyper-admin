@@ -1,6 +1,6 @@
 {%- extends "base.html" -%}
 
-{%- block title -%}{{ model_name }} Detail | HyperAdmin{%- endblock -%}
+{%- block title -%}{% trans name=verbose_name|default(model_name) %}{{ name }} Detail | HyperAdmin{% endtrans %}{%- endblock -%}
 
 {%- block content -%}
     <div class="ha-detail-container">

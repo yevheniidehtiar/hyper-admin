@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from datetime import date
+from types import SimpleNamespace
 
 import pytest
 from fastapi import FastAPI
@@ -128,3 +129,41 @@ def test_error_summary_is_absent_without_errors() -> None:
     html = admin.templates.get_template("components/error_summary.html").render(form=form)
 
     assert html.strip() == ""
+
+
+def test_error_summary_lists_inline_row_and_form_level_errors() -> None:
+    """
+    Scenario: inline row and non-field errors appear in the summary
+      Given a valid parent form, an inline row with a bad quantity, a row with only a key error
+        and an error keyed to no field
+      When  the summary renders
+      Then  it links to the invalid row input and the row, and lists the form-level message
+    """
+
+    admin = Admin(app=FastAPI(), settings=HyperAdminSettings(create_tables=False))
+    form = PydanticForm(_Invoice)
+    form.validate({"number": "A1", "date_issued": "2026-01-01", "quantity": "1", "price": "2"})
+    bad_field = SimpleNamespace(name="qty", label="Qty", errors=["Enter a whole number"])
+    good_field = SimpleNamespace(name="sku", label="Sku", errors=None)
+    rows = [
+        SimpleNamespace(index=0, has_errors=False, fields=[good_field], pk_errors=None),
+        SimpleNamespace(index=1, has_errors=True, fields=[good_field, bad_field], pk_errors=None),
+        SimpleNamespace(index=2, has_errors=True, fields=[good_field], pk_errors=["Bad key"]),
+        SimpleNamespace(index=3, has_errors=True, fields=[good_field], pk_errors=None),
+    ]
+    formset = SimpleNamespace(prefix="items", title="Items", rows=rows)
+
+    html = admin.templates.get_template("components/error_summary.html").render(
+        form=form,
+        inline_formsets=[formset],
+        errors={"number": ["ignored, a known field"], "__root__": ["Totals do not match"], "x": []},
+    )
+
+    assert 'href="#items-1-qty"' in html
+    assert "Items #2 - Qty: Enter a whole number" in html
+    assert 'href="#inline-items-row-2"' in html
+    assert "Items #3: Bad key" in html
+    assert 'href="#inline-items-row-3"' in html
+    assert "Totals do not match" in html
+    assert "ignored" not in html
+    assert "There are problems with 4 fields" in html
