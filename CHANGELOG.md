@@ -124,6 +124,11 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
   `sliders-horizontal`) available through `icon(name)`.
 
 ### Changed
+- **List cell display** (st-ux-erp-04, -13). Every `float`/`Decimal` list cell now shows locale grouping and at least two
+  decimals (`4.5` reads `4.50`, up to six places), and every `Enum` list cell renders as a status pill whose tone comes
+  from the enum's `__ha_tones__` or a built-in table keyed on the member name. Detail, edit and CSV export are unchanged.
+  The pager gained a rows-per-page selector (10, 25, 50, 100). A per-field currency code is not wired yet; `ha_number`
+  accepts one for a future option.
 - **Clickable list rows** (v0.5.9, st-v059-list-02). The View and Edit row buttons are gone:
   the title cell (the first column that is not inline-editable) is a `<th scope="row">` link
   that opens the edit page for users who may change the record and the detail page for

@@ -173,6 +173,7 @@ E2E tests use Playwright's accessibility-first locators. Query priority (highest
 | Pagination previous | `pagination-prev` |
 | Pagination next | `pagination-next` |
 | Pagination current page | `pagination-page` |
+| Rows-per-page group / option | `page-size` / `page-size-{n}` |
 | Sort link (per field) | `sort-{field_name}` |
 | Command palette `<dialog>` | `command-palette` |
 | Palette search input | `palette-input` |

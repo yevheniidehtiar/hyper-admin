@@ -76,3 +76,24 @@
     padding: 0 var(--ha-space-3);
   }
 }
+
+/* Page-size selector: a quiet row of links beside the page controls. */
+.ha-pagination-sizes {
+  display: flex;
+  align-items: center;
+  gap: var(--ha-space-1);
+  font-size: 0.8125rem;
+}
+
+.ha-pagination-sizes .ha-pagination-btn[aria-current="true"] {
+  background-color: var(--ha-surface-hover);
+  color: var(--ha-color-text-strong);
+  font-weight: var(--ha-font-semibold, 600);
+}
+
+@media (max-width: 767px) {
+  .ha-pagination-sizes {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}

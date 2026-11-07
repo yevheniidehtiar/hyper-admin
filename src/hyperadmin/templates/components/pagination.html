@@ -1,16 +1,28 @@
 {%- from "components/_icons.html" import icon -%}
 <nav aria-label="{{ _('Pagination') }}">
 <div class="ha-pagination">
-    <div class="ha-pagination-info" data-testid="pagination-info">
-        {% trans start=pagination.start_index, end=pagination.end_index, total=pagination.total_items %}Showing {{ start }} to {{ end }} of {{ total }} results{% endtrans %}
-    </div>
-    <div class="ha-pagination-controls">
         {%- set filter_params -%}
             {%- for key, value in active_filters.items() -%}&filter_{{ key }}={{ value }}{%- endfor -%}
         {%- endset -%}
+    <div class="ha-pagination-info" data-testid="pagination-info">
+        {% trans start=pagination.start_index, end=pagination.end_index, total=pagination.total_items %}Showing {{ start }} to {{ end }} of {{ total }} results{% endtrans %}
+    </div>
+    <div class="ha-pagination-sizes" role="group" aria-label="{{ _('Rows per page') }}" data-testid="page-size">
+        <span class="ha-text-muted">{{ _("Rows per page") }}</span>
+        {%- for size in (10, 25, 50, 100) %}
+        <a href="{{- url_for(model_name|lower ~ '-list') }}?page=1&search={{ search_query }}&sort_by={{ sort_by }}&sort_direction={{ sort_direction }}{{ filter_params }}&page_size={{ size }}{{ filter_query|default('')|safe -}}"
+           hx-get="{{- url_for(model_name|lower ~ '-list') }}?page=1&search={{ search_query }}&sort_by={{ sort_by }}&sort_direction={{ sort_direction }}{{ filter_params }}&page_size={{ size }}{{ filter_query|default('')|safe -}}"
+           hx-target="#model-list"
+           hx-swap="outerHTML"
+           class="ha-pagination-btn"
+           {%- if size == pagination.page_size %} aria-current="true"{% endif %}
+           data-testid="page-size-{{ size }}">{{ size }}</a>
+        {%- endfor %}
+    </div>
+    <div class="ha-pagination-controls">
         {%- if pagination.page > 1 -%}
-        <a href="{{- url_for(model_name|lower ~ '-list') }}?page={{ pagination.page - 1 }}&search={{ search_query }}&sort_by={{ sort_by }}&sort_direction={{ sort_direction }}{{ filter_params }}{{ filter_query|default('')|safe -}}"
-           hx-get="{{- url_for(model_name|lower ~ '-list') }}?page={{ pagination.page - 1 }}&search={{ search_query }}&sort_by={{ sort_by }}&sort_direction={{ sort_direction }}{{ filter_params }}{{ filter_query|default('')|safe -}}"
+        <a href="{{- url_for(model_name|lower ~ '-list') }}?page={{ pagination.page - 1 }}&search={{ search_query }}&sort_by={{ sort_by }}&sort_direction={{ sort_direction }}{{ filter_params }}&page_size={{ pagination.page_size }}{{ filter_query|default('')|safe -}}"
+           hx-get="{{- url_for(model_name|lower ~ '-list') }}?page={{ pagination.page - 1 }}&search={{ search_query }}&sort_by={{ sort_by }}&sort_direction={{ sort_direction }}{{ filter_params }}&page_size={{ pagination.page_size }}{{ filter_query|default('')|safe -}}"
            hx-target="#model-list"
            hx-swap="outerHTML"
            class="ha-pagination-btn"
@@ -24,8 +36,8 @@
         </div>
 
         {%- if pagination.page < pagination.total_pages -%}
-        <a href="{{- url_for(model_name|lower ~ '-list') }}?page={{ pagination.page + 1 }}&search={{ search_query }}&sort_by={{ sort_by }}&sort_direction={{ sort_direction }}{{ filter_params }}{{ filter_query|default('')|safe -}}"
-           hx-get="{{- url_for(model_name|lower ~ '-list') }}?page={{ pagination.page + 1 }}&search={{ search_query }}&sort_by={{ sort_by }}&sort_direction={{ sort_direction }}{{ filter_params }}{{ filter_query|default('')|safe -}}"
+        <a href="{{- url_for(model_name|lower ~ '-list') }}?page={{ pagination.page + 1 }}&search={{ search_query }}&sort_by={{ sort_by }}&sort_direction={{ sort_direction }}{{ filter_params }}&page_size={{ pagination.page_size }}{{ filter_query|default('')|safe -}}"
+           hx-get="{{- url_for(model_name|lower ~ '-list') }}?page={{ pagination.page + 1 }}&search={{ search_query }}&sort_by={{ sort_by }}&sort_direction={{ sort_direction }}{{ filter_params }}&page_size={{ pagination.page_size }}{{ filter_query|default('')|safe -}}"
            hx-target="#model-list"
            hx-swap="outerHTML"
            class="ha-pagination-btn"

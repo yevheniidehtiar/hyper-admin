@@ -3,6 +3,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, ClassVar
 
+from fastapi import HTTPException
+
+from examples.erp.filters import OverdueFilter
 from examples.erp.sales.models import Invoice, InvoiceItem, InvoiceStatus, TaxRate
 from hyperadmin.adapters.sqlmodel import SQLModelAdapter
 from hyperadmin.core.actions import action
@@ -40,6 +43,7 @@ class InvoiceAdmin(ModelAdmin):
         "status",
         MultiFKFilter(field="customer_id", label="Customer"),
         DateRangeFilter(field="date_due", label="Due date"),
+        OverdueFilter(field="date_due", open_status=InvoiceStatus.SENT),
     ]
     search_fields: ClassVar[list[str]] = ["number"]
     # Demonstrates AdminOptions.inlines: invoice items are edited directly on
@@ -67,7 +71,10 @@ class InvoiceAdmin(ModelAdmin):
 
     @action(label="Mark paid", bulk=True)
     async def mark_paid(self, request: Request, item_id: int, *, params: Any = None) -> None:  # noqa: ARG002
-        """Marks the selected invoices as paid."""
+        """Marks the selected Sent invoices as paid; other statuses are refused."""
+        invoice = await self.adapter.get(item_id)
+        if invoice is None or invoice.status != InvoiceStatus.SENT:
+            raise HTTPException(status_code=409, detail="Only Sent invoices can be marked paid")
         await self.adapter.update(item_id, {"status": InvoiceStatus.PAID})
 
 

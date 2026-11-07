@@ -2,6 +2,12 @@
 {%- import "components/_row_access.html" as rows with context -%}
 {%- set rt_labels = realtime_notification_models.get(model_name|lower) if realtime_notification_models is defined else none -%}
 {%- set rt_hook = rt_labels is not none -%}
+{%- set numeric_cols = namespace(names=[]) -%}
+{%- for field in fields -%}
+    {%- set seen = namespace(numeric=false) -%}
+    {%- for row in items -%}{%- if not seen.numeric and row[field] is ha_decimal -%}{%- set seen.numeric = true -%}{%- endif -%}{%- endfor -%}
+    {%- if seen.numeric -%}{%- set numeric_cols.names = numeric_cols.names + [field] -%}{%- endif -%}
+{%- endfor -%}
 <div id="model-list" class="ha-table-wrapper"
      {%- if rt_hook %} data-testid="realtime-hook" data-realtime-model="{{ model_name|lower }}" data-realtime-label="{{ rt_labels[0] }}" data-realtime-label-plural="{{ rt_labels[1] }}"{% endif %}>
     {%- include "components/list_error.html" -%}
@@ -22,9 +28,7 @@
                 </th>
                 {%- endif -%}
                 {%- for field in fields -%}
-                    {%- set ns = namespace(col_numeric=false) -%}
-                    {%- for row in items -%}{%- if not ns.col_numeric and row[field] is ha_decimal -%}{%- set ns.col_numeric = true -%}{%- endif -%}{%- endfor -%}
-                    {%- set col_numeric = ns.col_numeric -%}
+                    {%- set col_numeric = field in numeric_cols.names -%}
                     {%- include "components/sortable_header.html" -%}
                 {%- endfor -%}
                 {%- if rows.end_cell -%}
