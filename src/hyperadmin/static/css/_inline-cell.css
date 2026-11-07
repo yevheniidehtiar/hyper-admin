@@ -104,3 +104,17 @@
     flex-wrap: wrap;
   }
 }
+
+/* Optimistic concurrency (docs/specs/realtime-occ.md): an inline save refused as stale,
+   and the conflict dialog's changed rows. */
+.ha-cell-stale {
+  background-color: var(--ha-color-warning-light);
+}
+
+.ha-occ-conflict {
+  margin-block-end: var(--ha-space-4);
+}
+
+.ha-occ-differs {
+  background-color: var(--ha-color-warning-light);
+}

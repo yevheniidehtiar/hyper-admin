@@ -9,6 +9,8 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import Any
 
+from hyperadmin.core.schema import schema_for
+
 _VERSION_FIELD = "version"
 _UPDATED_AT_FIELD = "updated_at"
 _OVERRIDE_ATTR = "__version_field__"
@@ -49,7 +51,7 @@ class StaleRecordError(Exception):
 
 
 def _field_names(model: type) -> set[str]:
-    names: set[str] = set(getattr(model, "model_fields", {}))
+    names: set[str] = set(schema_for(model).model_fields)
     table = getattr(model, "__table__", None)
     if table is not None:
         names |= {column.key for column in table.columns}

@@ -9,6 +9,9 @@
           hx-post="{{- url_for(model_name|lower ~ '-inline-save', item_id=item_pk, field=field) -}}"
           hx-target="closest td"
           hx-swap="outerHTML">
+        {%- if version_token is defined and version_token is not none -%}
+        <input type="hidden" name="{{ version_param }}" value="{{ version_token }}">
+        {%- endif -%}
         <label for="inline-{{ field }}-{{ item_token }}" class="ha-visually-hidden">
             {{- form_field.label if form_field else field -}}
         </label>

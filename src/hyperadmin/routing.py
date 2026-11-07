@@ -129,6 +129,7 @@ def create_admin_router(  # noqa: PLR0912, PLR0913, PLR0915, PLR0917
     realtime_settings: "RealtimeSettings | None" = None,
     count_cache: CountCache | None = None,
     concurrency_use_updated_at: bool = False,
+    occ_render_dialog: bool = True,
 ) -> APIRouter:
     """Creates an APIRouter for a given model with the specified admin options."""
     router = APIRouter(route_class=route_class)
@@ -194,6 +195,7 @@ def create_admin_router(  # noqa: PLR0912, PLR0913, PLR0915, PLR0917
         storage=storage,
         admin_lookup=admin_lookup,
         debug=debug,
+        occ_render_dialog=occ_render_dialog,
     )
     model_name = model.__name__.lower()
 
@@ -474,6 +476,7 @@ class HyperAdminRouter:
         realtime_settings: "RealtimeSettings | None" = None,
         count_cache: CountCache | None = None,
         concurrency_use_updated_at: bool = False,
+        occ_render_dialog: bool = True,
     ):
         self.engine = engine
         self.debug = debug
@@ -487,6 +490,7 @@ class HyperAdminRouter:
         self.realtime_settings = realtime_settings
         self.count_cache: CountCache = count_cache or InMemoryTTLCache()
         self.concurrency_use_updated_at = concurrency_use_updated_at
+        self.occ_render_dialog = occ_render_dialog
         self.notification_models: set[str] = set()
         #: Registered models in registry order, for the sidebar nav tree.
         self.nav_sources: list[ModelNavSource] = []
@@ -574,6 +578,7 @@ class HyperAdminRouter:
                 realtime_settings=self.realtime_settings,
                 count_cache=self.count_cache,
                 concurrency_use_updated_at=self.concurrency_use_updated_at,
+                occ_render_dialog=self.occ_render_dialog,
             )
             self.routers.append(router)
             if (

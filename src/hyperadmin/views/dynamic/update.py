@@ -7,8 +7,10 @@ from fastapi import HTTPException, Request
 from sqlalchemy.exc import IntegrityError
 from starlette.responses import RedirectResponse, Response
 
+from hyperadmin.core.concurrency import StaleRecordError
 from hyperadmin.core.display import get_display_name
 from hyperadmin.core.schema import schema_for
+from hyperadmin.views.dynamic.concurrency import VERSION_PARAM
 from hyperadmin.views.dynamic.helpers import (
     _integrity_error_to_field_errors,
     _request_scoped,
@@ -55,8 +57,13 @@ class UpdateViewMixin(RelationViewMixin, InlineViewMixin):
         errors: dict | None = None,
         status_code: int = 200,
         inline_formsets: list[InlineFormset] | None = None,
+        version: str | None = None,
     ):
-        """Renders the update form, optionally pre-filled with submitted values and errors."""
+        """Renders the update form, optionally pre-filled with submitted values and errors.
+
+        ``version`` is the ``__version`` the user's form was loaded with: a validation
+        re-render keeps it, so a later conflict is still detected against that copy.
+        """
         pk = self._resolve_pk(item_id)
         await self._check_permission(request, "change")
         item = await self._get_or_404(pk)
@@ -120,6 +127,8 @@ class UpdateViewMixin(RelationViewMixin, InlineViewMixin):
             "values": values or initial_values,
             "errors": errors or {},
             "inline_formsets": inline_formsets or [],
+            "version_param": VERSION_PARAM,
+            "version_token": version or self._occ_token(item),
             "warn_unsaved_changes": getattr(self.options, "warn_unsaved_changes", True),
             # View / Delete live outside form_body, which is all HTMX re-renders.
             **({} if is_htmx else await self._record_actions(request)),
@@ -143,6 +152,7 @@ class UpdateViewMixin(RelationViewMixin, InlineViewMixin):
         existing = await self._get_or_404(pk)
         await self._check_object_permission(request, existing, "change")
         form_data = await request.form()
+        expected_version = self._expected_version(form_data)
 
         relation_widgets = await self._build_relation_widgets(
             request=request,
@@ -198,11 +208,17 @@ class UpdateViewMixin(RelationViewMixin, InlineViewMixin):
                 errors=legacy_errs,
                 status_code=422,
                 inline_formsets=inline_formsets,
+                version=expected_version,
             )
 
         if not instance:
             return await self.update_form_view(
-                request, item_id=pk, values=data, errors={}, status_code=422
+                request,
+                item_id=pk,
+                values=data,
+                errors={},
+                status_code=422,
+                version=expected_version,
             )
 
         # Ownership and inline-model permissions are checked before any write.
@@ -212,7 +228,12 @@ class UpdateViewMixin(RelationViewMixin, InlineViewMixin):
         hidden_refs = await self._hidden_reference_errors(instance.model_dump(exclude_none=True))
         if hidden_refs:
             return await self.update_form_view(
-                request, item_id=pk, values=data, errors=hidden_refs, status_code=422
+                request,
+                item_id=pk,
+                values=data,
+                errors=hidden_refs,
+                status_code=422,
+                version=expected_version,
             )
 
         # The pk is immutable: never write it, not even a default_factory value
@@ -225,12 +246,20 @@ class UpdateViewMixin(RelationViewMixin, InlineViewMixin):
             )
             update_data.pop(self.pk.attr, None)
             update_data.update(file_uploads)
-            await self.adapter.update(pk=pk, data=update_data)
+            await self.adapter.update(pk=pk, data=update_data, **self._occ_kwargs(expected_version))
+        except StaleRecordError as exc:
+            current = await self.adapter.get(pk=pk)
+            return self._conflict_response(request, exc, update_data, current, item_id=pk)
         except IntegrityError as exc:
             logger.exception("IntegrityError during update")
             field_errors = _integrity_error_to_field_errors(exc)
             return await self.update_form_view(
-                request, item_id=pk, values=data, errors=field_errors, status_code=422
+                request,
+                item_id=pk,
+                values=data,
+                errors=field_errors,
+                status_code=422,
+                version=expected_version,
             )
 
         # Save inline rows
