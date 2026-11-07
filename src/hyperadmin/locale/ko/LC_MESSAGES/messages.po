@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-06 19:09+0100\n"
+"POT-Creation-Date: 2026-11-07 09:09+0100\n"
 "PO-Revision-Date: 2026-05-05 12:00+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: ko\n"
@@ -509,7 +509,7 @@ msgid "Sidebar"
 msgstr "사이드바"
 
 #: src/hyperadmin/templates/base.html:12
-#: src/hyperadmin/templates/create.html:36
+#: src/hyperadmin/templates/create.html:37
 #, fuzzy
 msgid "Create"
 msgstr "만들기"
@@ -530,8 +530,8 @@ msgstr "%(model_name)s 만들기"
 #: src/hyperadmin/templates/components/confirm_delete_dialog.html:23
 #: src/hyperadmin/templates/components/saved_views.html:24
 #: src/hyperadmin/templates/components/saved_views.html:49
-#: src/hyperadmin/templates/create.html:39
-#: src/hyperadmin/templates/update.html:53
+#: src/hyperadmin/templates/create.html:40
+#: src/hyperadmin/templates/update.html:54
 #: src/hyperadmin/templates/widgets/popup_form.html:59
 #, fuzzy
 msgid "Cancel"
@@ -546,7 +546,7 @@ msgstr "편집"
 #: src/hyperadmin/templates/components/table_body.html:57
 #: src/hyperadmin/templates/detail.html:22
 #: src/hyperadmin/templates/permissions/_macros.html:20
-#: src/hyperadmin/templates/update.html:59
+#: src/hyperadmin/templates/update.html:60
 #, fuzzy
 msgid "Delete"
 msgstr "삭제"
@@ -671,7 +671,7 @@ msgstr "%(item_name)s 업데이트"
 msgid "View"
 msgstr "보기"
 
-#: src/hyperadmin/templates/update.html:50
+#: src/hyperadmin/templates/update.html:51
 #, fuzzy
 msgid "Update"
 msgstr "업데이트"
@@ -1096,6 +1096,12 @@ msgstr "페이지를 새로고침한 뒤 다시 시도하세요."
 msgid "Reload page"
 msgstr "페이지 새로고침"
 
+#: src/hyperadmin/templates/components/error_summary.html:7
+#, python-format
+msgid "There is a problem with 1 field"
+msgid_plural "There are problems with %(count)s fields"
+msgstr[0] ""
+
 #: src/hyperadmin/templates/components/error_toast.html:8
 #, fuzzy
 msgid "Permission denied"
@@ -1143,12 +1149,19 @@ msgstr "모두 지우기"
 msgid "Apply filters"
 msgstr "필터 적용"
 
+#: src/hyperadmin/templates/components/inline_formset.html:15
 #: src/hyperadmin/templates/components/inline_row.html:32
 #: src/hyperadmin/templates/components/table.html:28
 #: src/hyperadmin/templates/components/table_body.html:54
 #, fuzzy
 msgid "Actions"
 msgstr "작업"
+
+#: src/hyperadmin/templates/components/inline_formset.html:31
+#: src/hyperadmin/templates/widgets/popup_form.html:29
+#, fuzzy, python-format
+msgid "Add %(model)s"
+msgstr "%(model)s 추가"
 
 #: src/hyperadmin/templates/components/inline_row.html:45
 #: src/hyperadmin/templates/widgets/image_input.html:104
@@ -1928,11 +1941,6 @@ msgstr "업로드 실패 — 연결을 확인하세요"
 msgid "Selected image preview"
 msgstr "선택한 이미지 미리 보기"
 
-#: src/hyperadmin/templates/widgets/popup_form.html:29
-#, fuzzy, python-format
-msgid "Add %(model)s"
-msgstr "%(model)s 추가"
-
 #: src/hyperadmin/templates/widgets/popup_form.html:30
 #, fuzzy, python-format
 msgid "Saving selects it in the %(field)s field."
@@ -1951,6 +1959,51 @@ msgstr "잘못된 기본 키입니다."
 #: src/hyperadmin/views/forms.py:55
 #, fuzzy
 msgid "Enter a valid date/time"
+msgstr "올바른 날짜와 시간을 입력하세요"
+
+#: src/hyperadmin/views/forms.py:60
+#, fuzzy
+msgid "This field is required"
+msgstr "필수 항목입니다"
+
+#: src/hyperadmin/views/forms.py:61 src/hyperadmin/views/forms.py:62
+#: src/hyperadmin/views/forms.py:63
+msgid "Enter a whole number"
+msgstr ""
+
+#: src/hyperadmin/views/forms.py:64 src/hyperadmin/views/forms.py:65
+#: src/hyperadmin/views/forms.py:66
+msgid "Enter a number"
+msgstr ""
+
+#: src/hyperadmin/views/forms.py:67
+msgid "Choose yes or no"
+msgstr ""
+
+#: src/hyperadmin/views/forms.py:68 src/hyperadmin/views/forms.py:69
+#: src/hyperadmin/views/forms.py:70
+#, fuzzy
+msgid "Enter a valid date and time"
+msgstr "올바른 날짜와 시간을 입력하세요"
+
+#: src/hyperadmin/views/forms.py:71
+#, fuzzy
+msgid "Enter a valid identifier"
+msgstr "올바른 날짜와 시간을 입력하세요"
+
+#: src/hyperadmin/views/forms.py:72
+#, fuzzy
+msgid "Enter a valid URL"
+msgstr "올바른 날짜와 시간을 입력하세요"
+
+#: src/hyperadmin/views/forms.py:75
+#, fuzzy
+msgid "Enter a date"
+msgstr "올바른 날짜와 시간을 입력하세요"
+
+#: src/hyperadmin/views/forms.py:76
+#, fuzzy
+msgid "Enter a valid date"
 msgstr "올바른 날짜와 시간을 입력하세요"
 
 #: src/hyperadmin/views/nav_pins.py:110

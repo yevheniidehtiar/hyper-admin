@@ -54,6 +54,46 @@ _INVALID_PK_MESSAGE = gettext_lazy("Invalid primary key.")
 # Field error for a datetime input that is not a valid ISO-8601 date/time.
 _INVALID_DATETIME_MESSAGE = gettext_lazy("Enter a valid date/time")
 
+# Plain-language replacements for pydantic's wording on the errors users hit most.
+# Keyed by the pydantic error ``type``; anything else keeps ``translate_error_lazy``.
+_FRIENDLY_MESSAGES: dict[str, Any] = {
+    "missing": gettext_lazy("This field is required"),
+    "int_parsing": gettext_lazy("Enter a whole number"),
+    "int_type": gettext_lazy("Enter a whole number"),
+    "int_from_float": gettext_lazy("Enter a whole number"),
+    "float_parsing": gettext_lazy("Enter a number"),
+    "float_type": gettext_lazy("Enter a number"),
+    "decimal_parsing": gettext_lazy("Enter a number"),
+    "bool_parsing": gettext_lazy("Choose yes or no"),
+    "datetime_parsing": gettext_lazy("Enter a valid date and time"),
+    "datetime_from_date_parsing": gettext_lazy("Enter a valid date and time"),
+    "datetime_type": gettext_lazy("Enter a valid date and time"),
+    "uuid_parsing": gettext_lazy("Enter a valid identifier"),
+    "url_parsing": gettext_lazy("Enter a valid URL"),
+}
+_FRIENDLY_DATE_TYPES = frozenset({"date_parsing", "date_from_datetime_parsing", "date_type"})
+_ENTER_A_DATE = gettext_lazy("Enter a date")
+_ENTER_A_VALID_DATE = gettext_lazy("Enter a valid date")
+
+
+def friendly_error(error: Mapping[str, Any]) -> Any:
+    """Return a user-facing message for one pydantic error.
+
+    Common types (missing, number and date parsing) get plain wording; an empty
+    date or text input reads "Enter a date" / "This field is required". Other
+    types fall back to :func:`translate_error_lazy`.
+    """
+    err_type = error.get("type")
+    entered = error.get("input")
+    blank = isinstance(entered, str) and not entered.strip()
+    if err_type in _FRIENDLY_DATE_TYPES:
+        return _ENTER_A_DATE if blank else _ENTER_A_VALID_DATE
+    if err_type == "string_too_short" and blank:
+        return _FRIENDLY_MESSAGES["missing"]
+    if err_type in _FRIENDLY_MESSAGES:
+        return _FRIENDLY_MESSAGES[err_type]
+    return translate_error_lazy(error)
+
 
 def _unwrap_optional(annotation: Any) -> Any:
     """Return the first non-``None`` member of an optional union, else ``annotation``.
@@ -775,7 +815,7 @@ class PydanticForm:
             for error in e.errors():
                 loc = error["loc"][0]
                 key = str(loc)
-                errs.setdefault(key, []).append(translate_error_lazy(error))
+                errs.setdefault(key, []).append(friendly_error(error))
         # A datetime the form could not parse replaces pydantic's message for it.
         errs.update(datetime_errors)
         self.errors = errs
@@ -1022,7 +1062,7 @@ class InlineFormset:
                 row_errors: dict[str, ErrorList] = {}
                 for error in e.errors():
                     loc = str(error["loc"][0])
-                    row_errors.setdefault(loc, []).append(translate_error_lazy(error))
+                    row_errors.setdefault(loc, []).append(friendly_error(error))
                 errors[i] = row_errors
 
         self.errors = errors
