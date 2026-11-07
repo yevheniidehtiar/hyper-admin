@@ -1,0 +1,19 @@
+{#- Lists every invalid field with a link that moves focus to it (st-ux-erp-06).
+    Needs `form`; renders nothing when the form has no field errors. -#}
+{%- set invalid = form.fields|selectattr("errors")|list -%}
+{%- if invalid -%}
+<div class="ha-error-summary" role="alert" tabindex="-1" data-testid="error-summary">
+    <h2 class="ha-error-summary-title">
+        {%- trans count=invalid|length -%}
+        There is a problem with 1 field
+        {%- pluralize -%}
+        There are problems with {{ count }} fields
+        {%- endtrans -%}
+    </h2>
+    <ul>
+        {%- for f in invalid -%}
+        <li><a href="#{{- f.name -}}" data-ha-error-link>{{- f.label -}}: {{ f.errors|first }}</a></li>
+        {%- endfor -%}
+    </ul>
+</div>
+{%- endif -%}

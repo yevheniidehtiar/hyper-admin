@@ -25,6 +25,7 @@
 
 {%- block form_body -%}
     {%- include "components/presence_banner.html" -%}
+    {%- include "components/error_summary.html" -%}
     {%- if form.fieldset_groups|length > 1 or (form.fieldset_groups|length == 1 and form.fieldset_groups[0].name) -%}
         {%- for group in form.fieldset_groups -%}
             {%- include "components/fieldset.html" -%}
