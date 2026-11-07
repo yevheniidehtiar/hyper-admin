@@ -55,131 +55,126 @@ and stories live under `.meta/epics/`.
 
 - `ObjectPermissionChecker`, `get_queryset` row-level security, email-OTP MFA
 
+### v0.5.5 — Bulk Actions & Autocomplete
+
+- List-view checkbox column and action toolbar, bulk-action endpoint with a result for each row,
+  `@action` bulk / form parameters
+- Autocomplete widget with dependent filtering and create popup, `relation_filters` /
+  `relation_display`, inline-row error highlighting
+
+### v0.5.6 — Detail Panels & Filter Library
+
+- `@panel` tabbed detail panels with lazy loading and a streamed PDF panel
+- Six built-in filters, the filter sidebar and per-user saved views
+
+### v0.5.7 — Permissions Matrix
+
+- Model × action grid with conflict handling and an audit trail
+- `examples/full-demo/` and its qualification suite
+
+### v0.3.2 — Advanced File Uploads
+
+- S3-compatible storage, thumbnails, EXIF auto-rotation, drag-and-drop preview, upload progress and retry
+
+### v0.6.1 — Presence
+
+- In-memory and Redis presence backends, WebSocket heartbeat and the "someone else is editing" banner
+
+### v0.7.1 — Load Testing & Synthetic Data
+
+- Synthetic data generator (`hyperadmin seed`) and Locust suite with baselines and a CI smoke run
+
 ### Landed ahead of their milestones
 
 These features are merged on `develop`, but their milestones are still open: each one closes
 when its remaining stories, demo or real-app proof are done.
 
-- **Bring your own app (v0.5.8):** isolated sub-application mount; int, UUID and `str` primary
-  keys; `session_factory=`; `ExternalAuth`; CSRF; no DDL by default; a guide and the
+- **Bring your own app (v0.5.8, 43 of 46 stories):** isolated sub-application mount; int, UUID and
+  `str` primary keys; `session_factory=`; `ExternalAuth`; CSRF; no DDL by default; a guide and the
   `examples/byoa/` app. **Plain SQLAlchemy 2.0 / 2.1 models** work through a schema built from
-  the mapper (`schema_for`), with an `examples/sqlalchemy/` app.
+  the mapper (`schema_for`), with an `examples/sqlalchemy/` app
 - **Real-app proof (dogfood):** Polar, Langflow, Mealie and Open WebUI run unmodified and
   every model's pages render; see [Compatibility & Performance](compatibility.md)
-- **Navigation & list UX (v0.5.9):** sidebar grouped by domain (`NavGroup`, `nav_group`,
-  `nav_order`, icons), icon rail, per-user pinned pages, a <kbd>⌘K</kbd> command palette,
-  clickable list rows, a red delete icon with a shared confirmation dialog, keyboard shortcuts
-  with a `?` overlay, and an unsaved-changes warning with a sticky save bar; see
+- **Navigation & list UX (v0.5.9, 5 of 6 epic stories):** sidebar grouped by domain (`NavGroup`,
+  `nav_group`, `nav_order`, icons), icon rail, per-user pinned pages, a <kbd>⌘K</kbd> command
+  palette, clickable list rows, a red delete icon with a shared confirmation dialog, keyboard
+  shortcuts with a `?` overlay, and an unsaved-changes warning with a sticky save bar; see
   [Navigation, Lists & Keyboard](guides/navigation.md). Left: opt-in record search in the palette
-- **Bulk actions & autocomplete (v0.5.5):** list-view checkbox column and action toolbar,
-  bulk-action endpoint with a result for each row, `@action` bulk / form parameters, autocomplete
-  widget, create popup, `relation_filters` / `relation_display`, inline-row error highlighting
-- **Detail panels & filter library (v0.5.6):** `@panel` tabbed detail panels with lazy loading
-  and a streamed PDF panel; six built-in filters, the filter sidebar and per-user saved views
-- **Permissions matrix (v0.5.7):** model × action grid with conflict handling and an audit trail;
-  `examples/full-demo/` and its qualification suite
-- **Reporting & charts (v0.5.4):** the `hyperadmin-reports` plugin with aggregates, crosstab and
-  time bucketing, report pages, server-rendered SVG charts and CSV / XLSX export
-- **Advanced file uploads (v0.3.2):** S3-compatible storage, thumbnails, EXIF auto-rotation,
-  drag-and-drop preview, upload progress and retry
+- **Reporting & charts (v0.5.4, dashboard builder left):** the `hyperadmin-reports` plugin with
+  aggregates, crosstab and time bucketing, report pages, server-rendered SVG charts and
+  CSV / XLSX export
 - **Real-time (v0.6.0b):** `PubSubBackend` (in-memory and Redis), `RealtimeEvent`, CRUD events
-  emitted through an adapter proxy, SSE and WebSocket transport
-- **Presence (v0.6.1):** in-memory and Redis presence backends, WebSocket heartbeat and the
-  "someone else is editing" banner
-- **Plugins (v0.8.0):** plugin registry wired into `Admin` (pages, static files, templates,
-  navigation, permissions, hooks); `hyperadmin-tasks` plugin scaffold (v0.8.1)
-- **Load testing (v0.7.1):** synthetic data generator (`hyperadmin seed`) and Locust suite with
-  baselines and a CI smoke run
+  emitted through an adapter proxy, SSE and WebSocket transport. Left: toasts and live list
+  updates in the list templates, and the two-session E2E test
+- **Plugins (v0.8.0, v0.8.1):** plugin registry wired into `Admin` (pages, static files,
+  templates, navigation, permissions, hooks); `hyperadmin-tasks` with a `TaskBackend` port,
+  in-memory and experimental pgtask backends, and a monitoring UI (dashboard, tasks, workers,
+  schedules). Left: in-process worker, transactional enqueue, example app and docs
+- **ERP showcase UX:** number formatting, status pills with an overdue variant, phone card rows,
+  page-size selector, invoice and bill filters with bulk Mark paid, and an ERP dashboard in the
+  bookkeeping example
+- **Scale core (v0.7.0a, partly):** first adapter query performance work, such as loading the
+  current user without eager-loading groups and permissions
 - `JsonApiAdapter` / `ListEnvelope` protocol (JSON REST API)
 
 ---
 
 ## What's next, in order
 
-### 1. v0.5.8 — Bring Your Own App (dogfood-1) · *new, top priority*
+Percentages are stories done, from `./scripts/gitpm.sh status`.
 
-Make HyperAdmin a guest in someone else's app.
+### 1. Close the nearly done milestones
 
-- **Your keys** — primary-key-agnostic routes: UUID, string and int PKs end-to-end
-- **Your migrations** — no DDL against the host database unless explicitly requested
-- **Your models / engine** — plain SQLAlchemy 2.0 `DeclarativeBase` models; reuse the host `AsyncEngine` / sessionmaker
-- **Your auth** — bring-your-own-auth adapter mapping the host's user/session to admin permissions
-- A "10-minute" guide and an example app with Alembic, UUID keys and its own auth
-- **Dogfood-1:** the milestone closes only after the admin runs on a real existing app and blocking gaps are fixed. Status: runs on four open-source apps (see [Compatibility & Performance](compatibility.md)); open gaps are auto-discovery for plain SQLAlchemy models (#716) and hybrid / `column_property` columns (#731)
+- **v0.5.8 Bring Your Own App (93%)** — the milestone closes only after the admin runs on a real
+  existing app and the last blocking gaps are fixed
+- **v0.5.9 Navigation & List UX (91%)** — opt-in record search in the command palette
+- **v0.6.0b Real-Time (88%)** — live list updates and toasts over HTMX
+- **v0.8.1 Tasks plugin (81%, due 2026-11-13)** — app integration: in-process worker,
+  transactional enqueue, example app, docs
 
-### 2. v0.5.5 — Bulk Actions & Autocomplete (finish)
-
-- List-view checkbox column, action selector and run button
-- `AutocompleteWidget` template with dependent filtering and inline "+" create
-- Playwright suites for both
-
-### 3. v0.7.0a — Scale Core
+### 2. v0.7.0a — Scale Core (30%)
 
 - Configurable `selectinload` (no N+1 on list/detail)
 - Configurable `search_fields` in both adapters
 - COUNT caching with TTL
 - FK preload threshold and filter-metadata caching
 
-### 4. v0.6.0a — Optimistic Concurrency Control
+### 3. v0.6.0a — Optimistic Concurrency Control (0%)
 
 - Version column detection, `StaleRecordError`, hidden version field on update forms
 - Conflict dialog when two people edit the same record
 
-### 5. v0.5.2 — OAuth SSO
+### 4. v0.5.2 — OAuth SSO (11%)
 
 - OAuth2 / OIDC backend (Google, GitHub), provider configuration, token refresh
 - Login buttons; composes with bring-your-own auth
 
-### 6. v0.5.3 — Multi-Tenancy
+### 5. v0.5.3 — Multi-Tenancy (0%)
 
 - Tenant resolution middleware, `TenantAwareAdapter`, tenant options on `AdminOptions`
 
-### 7. v0.5.6 — Detail Panels & Filter Library
+### 6. v0.5.4 — Dashboard Builder (0 of 10 stories)
 
-- Tabbed detail panels with HTMX lazy-load and streaming (PDF) panels
-- Date-range, multi-FK, multi-choice, boolean and owner filters; URL-shareable state; saved views
+- `DashboardWidget` protocol and built-in widgets on top of `ReportView`, dashboard view and
+  template, drag-and-drop reordering
 
-### 8. v0.5.7 — Permissions Matrix
-
-- Model × action permission grid for groups/roles, object-permission column, audit logging
-- `examples/full-demo/` umbrella app and qualification suite
-
-### 9. v0.5.4 — Reporting & Charts
-
-- `ReportView` with aggregates, crosstab and time bucketing; CSV / XLSX export
-- SVG chart primitives and a Chart.js widget; dashboard widgets on top of `ReportView`
-
-### 10. v0.3.2 — Advanced File Uploads
-
-- S3-compatible backend configuration, Pillow thumbnails, EXIF auto-rotate
-- Drag-and-drop preview widget, upload progress bar, error recovery with retry
-
-### 11. v0.6.0b — Real-Time Pub/Sub & Live Notifications
-
-- `PubSubBackend` (InMemory + Redis), `RealtimeEvent` emission from adapters
-- Live list updates and toasts over HTMX
-
-### 12. v0.6.1 — Presence
-
-- Heartbeat-based presence (InMemory + Redis), "someone else is editing" banner
-
-### 13. v0.7.0b — Scale Advanced
+### 7. v0.7.0b — Scale Advanced (0%)
 
 - Keyset (cursor) pagination
 - Engine pool configuration and rate limiting
 - E2E scalability validation and configuration guide
-- Measured with **v0.7.1 — Load Testing & Synthetic Data** (Locust suite + seeder)
+- Measured with the v0.7.1 Locust suite and seeder
 
-### 14. JSON REST API
+### 8. JSON REST API (33%)
 
 - `JsonApiRouter` with CRUD endpoints per model, session / bearer auth, docs
 
-### 15. v0.8.0 — Plugins & AI
+### 9. v0.8.0 — Plugins & AI (38%)
 
-- Plugin registry with lifecycle hooks; `hyperadmin-logfire` as the first official plugin
+- Plugin registry lifecycle hooks (60%); `hyperadmin-logfire` as the first official plugin (9%)
 - AI-assisted features, more ORM adapters and custom pages afterwards
 
-### 16. v1.0 — Stable Release
+### 10. v1.0 — Stable Release
 
 - Public API audit and freeze, semver and deprecation policy
 - Migration guides from other Python admin frameworks
