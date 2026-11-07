@@ -3,11 +3,12 @@
 | Field | Value |
 |---|---|
 | Author | Claude Code |
-| Status | Draft |
+| Status | In Review |
 | Issue | #332 (epic), #314–#321 (stories) |
-| Milestone | v0.6.0 — Real-Time Layer (Track B, independent of WebSocket track) |
+| Milestone | v0.6.0a — Optimistic Concurrency Control (split out of v0.6.0 in the 2026-09-28 re-cut) |
+| PR | #1037 |
 | Created | 2026-05-10 |
-| Last updated | 2026-05-10 |
+| Last updated | 2026-11-07 |
 
 ---
 
@@ -26,8 +27,8 @@ What's missing today:
 4. **OCC for inline cell editing.** The new endpoint shipped in v0.5.0 has no version field.
 
 OCC is the smallest of the four v0.6.0 epics, has no dependency on WebSocket / PubSub
-infrastructure, and provides immediate value to inline editing. Shipping it first inside
-v0.6.0 lets the WebSocket track proceed in parallel with no merge contention.
+infrastructure, and provides immediate value to inline editing. Shipping it as its own milestone (v0.6.0a) lets the WebSocket track proceed in
+parallel with no merge contention.
 
 ## Goals
 
@@ -43,8 +44,9 @@ v0.6.0 lets the WebSocket track proceed in parallel with no merge contention.
   affordance instead of swapping the value.
 - **Opt-in per `ModelAdmin`.** `AdminOptions.enforce_occ: bool = False` (default off) so
   existing apps see no behaviour change; flip on once their models have a version column.
-- **Settings switch for `updated_at` fallback.** `concurrency_use_updated_at: bool = False`.
-  Documented as approximate (sub-millisecond races possible).
+- **Settings switch for `updated_at` fallback.** `concurrency_use_updated_at: bool = False`
+  (`HYPERADMIN_CONCURRENCY_USE_UPDATED_AT`). Documented as approximate (sub-millisecond races
+  possible).
 - **Friendly conflict resolution UI.** A diff dialog shows the user's submitted values vs.
   the current row, with "Override anyway" and "Discard my edits" actions.
 - **Backward compatible.** `enforce_occ=False` ⇒ identical to current behaviour.
@@ -154,6 +156,17 @@ Scenario: updated_at fallback rejects sub-millisecond stale writes
   When  POST /admin/order/42/edit submits __version with a different timestamp
   Then  the response is 409
 
+Scenario: validation error keeps the original version
+  Given alice loaded the edit form for order#42 (version=3)
+  When  she submits it with an invalid value while the row is still at version 3
+  Then  the form re-renders with status 422
+  And   the hidden __version is still 3
+
+Scenario: JSON 409 when dialog rendering is off
+  Given HYPERADMIN_OCC_RENDER_DIALOG = False
+  When  POST /admin/order/42/edit is submitted with a stale __version
+  Then  the response is 409 with {"error": "stale", "current_version": "3"}
+
 Scenario: prefetched form does not become stale until submit
   Given alice opens the edit form for order#42 (version=3)
   And   bob saves order#42 a moment later (now version=4)
@@ -183,8 +196,10 @@ Scenario: prefetched form does not become stale until submit
               │ called by                                   │
               ▼                                             │
      views/dynamic.py                                       │
-     ─ update_view raises 409 on StaleRecordError, renders  │
-       conflict_dialog.html                                  │
+     ─ views/dynamic/concurrency.py (ConcurrencyViewMixin)  │
+       reads __version, builds the 409 responses            │
+     ─ update_view returns conflict_dialog.html on          │
+       StaleRecordError                                     │
      ─ inline_save_view returns inline_cell_stale.html      │
               ▲                                             │
               │ render                                      │
@@ -193,16 +208,18 @@ Scenario: prefetched form does not become stale until submit
      ─ conflict_dialog.html         (new)                   │
      ─ inline_cell_stale.html        (new)                   │
      ─ form.html                     (mod) hidden __version │
-     ─ inline_cell.html              (mod) data-version attr│
+     ─ inline_editor.html            (mod) hidden __version │
 ```
 
 Module layout:
 
 ```
 src/hyperadmin/core/
-└── concurrency.py            (new) — version detection + StaleRecordError
+└── concurrency.py            (new) — version detection, StaleRecordError,
+                                      ConcurrencyConfigurationError, next_version
 
 src/hyperadmin/adapters/
+├── _occ.py                   (new) — claim_version(): shared compare-and-set
 ├── sqlmodel.py               (mod) — update(pk, data, expected_version)
 └── sqlalchemy.py             (mod) — same
 
@@ -211,23 +228,28 @@ src/hyperadmin/core/
 ├── options.py                (mod) — enforce_occ
 └── settings.py               (mod) — concurrency_use_updated_at
 
-src/hyperadmin/views/
-└── dynamic.py                (mod) — handle __version on update + inline_save
+src/hyperadmin/views/dynamic/
+├── concurrency.py            (new) — ConcurrencyViewMixin: __version + 409 responses
+├── update.py                 (mod) — expected_version, conflict dialog
+└── inline.py                 (mod) — expected_version, stale cell
 
 src/hyperadmin/templates/
-├── form.html                 (mod) — hidden __version
+├── update.html               (mod) — hidden __version, #ha-occ-conflict region
 └── components/
     ├── conflict_dialog.html  (new) — full-form conflict UI
-    ├── inline_cell.html      (mod) — data-version attr on cell
+    ├── inline_editor.html    (mod) — hidden __version
     └── inline_cell_stale.html (new) — stale indicator + refresh affordance
 
 tests/unit/test_concurrency.py
 tests/unit/test_occ_adapters.py
+tests/unit/test_occ_wiring.py
+tests/unit/test_occ_views.py
+tests/e2e/apps/occ_conflict.py
 tests/e2e/test_occ_conflict.py
 ```
 
 `core/concurrency.py` lives in `core/` (no ORM-specific dependencies) — it only knows
-about model field metadata and exception types.
+about model field metadata (read through `schema_for`) and exception types.
 
 ### Data Model Changes
 
@@ -244,77 +266,62 @@ Detection precedence (in `detect_version_field()`):
 1. If the model declares `__version_field__: ClassVar[str] = "..."`, use it.
 2. Else if a `version: int` field exists, use it.
 3. Else if `concurrency_use_updated_at` is `True` and `updated_at: datetime` exists, use it.
-4. Else if `enforce_occ=True`, raise `ConfigurationError` at `Admin.__init__`.
+4. Else if `enforce_occ=True`, raise `ConcurrencyConfigurationError` when the model's router
+   is built (app startup).
 5. Else, OCC is silently disabled for this model (legacy behaviour).
 
 ### API / Protocol Changes
 
-**`StaleRecordError`** in `src/hyperadmin/core/concurrency.py`:
+**`core/concurrency.py`**:
 
 ```python
 class StaleRecordError(Exception):
     def __init__(self, *, model: type, pk: Any, expected: Any, current: Any) -> None: ...
+    # also exposed as .expected_version / .current_version
+
+class ConcurrencyConfigurationError(ValueError): ...
+
+def detect_version_field(model, *, use_updated_at=False) -> str | None
+def resolve_version_field(model, *, enforce, use_updated_at=False) -> str | None
+def next_version(field, current) -> Any   # int + 1, or now(UTC) for timestamps
 ```
 
-**`BaseAdapter.update`** signature change:
+**`BaseAdapter`** gains a `version_field: str | None = None` attribute (set by the router from
+`AdminOptions.enforce_occ`) and a keyword-only argument on `update`:
 
 ```python
 async def update(
-    self,
-    pk: Any,
-    data: dict[str, Any],
-    *,
-    expected_version: Any | None = None,
+    self, pk: Any, data: dict[str, Any], *, expected_version: Any | None = None
 ) -> Any:
-    """Update a row.
-    If ``expected_version`` is provided, raise :class:`StaleRecordError` when the
-    current version differs.
-    """
+    """If ``expected_version`` is given and ``version_field`` is set, raise
+    :class:`StaleRecordError` when the stored version differs."""
 ```
 
-`expected_version=None` preserves today's behaviour for adapters that pre-date OCC.
+`expected_version=None` (or no `version_field`) preserves today's behaviour.
 
-**SQLModel adapter implementation** (illustrative):
+**SQLModel / SQLAlchemy adapters** share `adapters/_occ.claim_version()`. Inside the update's
+session it first runs `UPDATE … SET <version> = next WHERE pk = :pk AND <version> = :expected`
+(the expected value is coerced to the column type, so a form's `"3"` or an ISO-8601 timestamp
+works). Zero rows matched means `StaleRecordError` (or `None` if the row is gone). Only then are
+the remaining columns assigned through the ORM and committed in the same transaction, so two
+writers holding the same version cannot both succeed. A version value inside `data` is ignored:
+the adapter owns that column. `EventEmittingAdapter.update` forwards `expected_version` and emits
+nothing when the write is refused.
 
-```python
-async def update(self, pk, data, *, expected_version=None):
-    vf = self._version_field
-    async with self.session_factory() as session:
-        if expected_version is not None and vf is not None:
-            stmt = update(self.model).where(self.model.id == pk,
-                                            getattr(self.model, vf) == expected_version)
-            stmt = stmt.values(**data, **{vf: _bump(vf, expected_version)})
-            result = await session.execute(stmt)
-            if result.rowcount == 0:
-                current = await session.get(self.model, pk)
-                raise StaleRecordError(model=self.model, pk=pk,
-                                       expected=expected_version,
-                                       current=getattr(current, vf, None))
-            await session.commit()
-            # Re-fetch to return the canonical updated row
-            return await session.get(self.model, pk)
-        else:
-            return await super().update(pk, data)
-```
+**View layer** (`views/dynamic/concurrency.py`, `ConcurrencyViewMixin`):
 
-`_bump(vf, current)` increments integer versions and refreshes `updated_at` to
-`datetime.now(UTC)`.
-
-**View-layer changes** in `views/dynamic.py`:
-
-```python
-async def update_view(self, request, item_id):
-    form = await self._build_form(request, item_id)
-    expected_version = form.data.pop("__version", None)
-    try:
-        await self.adapter.update(item_id, form.data, expected_version=expected_version)
-    except StaleRecordError as exc:
-        current = await self.adapter.get(item_id)
-        return self._render_conflict_dialog(request, submitted=form.data, current=current)
-    return RedirectResponse(...)
-```
-
-A parallel branch in `inline_save_view` returns `inline_cell_stale.html`.
+- `update_view` reads `__version` from the form and calls
+  `adapter.update(pk, data, expected_version=…)`. The keyword is passed **only when OCC is on**, so
+  third-party adapters that pre-date OCC keep working; `getattr(adapter, "version_field", None)`
+  tolerates adapters that lack the attribute.
+- A stale save returns **409** with `conflict_dialog.html` and `HX-Retarget: #ha-occ-conflict`
+  (`HX-Reswap: innerHTML`); `_base.html`'s existing 409-with-`HX-Retarget` swap rule needs no change.
+  The dialog's "Override anyway" button re-sends the surrounding form with `hx-vals` carrying the
+  current version; "Discard my edits" is a link to the edit URL.
+- `update_form_view(version=…)` keeps the original `__version` on a 422 re-render.
+- `inline_save_view` returns **409** with `inline_cell_stale.html`, retargeted at the cell
+  (`HX-Retarget: #cell-<model>-<pk>-<field>`, `HX-Reswap: outerHTML`).
+- With `occ_render_dialog=False` both views answer `{"error": "stale", "current_version": …}`.
 
 **`AdminOptions`** addition:
 
@@ -322,11 +329,7 @@ A parallel branch in `inline_save_view` returns `inline_cell_stale.html`.
 enforce_occ: bool = False
 ```
 
-**Public exports** added to `hyperadmin.__init__`:
-
-```python
-from hyperadmin.core.concurrency import StaleRecordError
-```
+**Public exports** added to `hyperadmin.__init__`: `StaleRecordError`, `ConcurrencyConfigurationError`.
 
 ### Configuration Changes
 
@@ -334,6 +337,9 @@ from hyperadmin.core.concurrency import StaleRecordError
 |---|---|---|
 | `HYPERADMIN_CONCURRENCY_USE_UPDATED_AT` | `False` | Allow `updated_at` as a fallback version field |
 | `HYPERADMIN_OCC_RENDER_DIALOG` | `True` | If `False`, return raw 409 with JSON body (for API clients) |
+
+The version column is named by `__version_field__` on the model, else `version`, else
+`updated_at` (only with the first setting).
 
 Per-`ModelAdmin`:
 
@@ -346,7 +352,7 @@ class OrderAdmin(ModelAdmin):
 
 | Case | Handling |
 |---|---|
-| `enforce_occ=True` but no version field detectable | `ConfigurationError` at startup. Fail fast |
+| `enforce_occ=True` but no version field detectable | `ConcurrencyConfigurationError` at startup. Fail fast |
 | `enforce_occ=True` and the form posts no `__version` | 400 Bad Request — hostile / malformed client |
 | `enforce_occ=False` and `__version` is present | Ignored. Forward-compat, no error |
 | Multiple concurrent updates from the same user (two tabs) | Whichever submits second receives 409 |
@@ -355,10 +361,12 @@ class OrderAdmin(ModelAdmin):
 | `updated_at` with database-side `NOW()` triggers | Works — adapter re-fetches after update |
 | Custom version field name | Set `__version_field__: ClassVar[str] = "rev"` on the model |
 | Bulk delete includes a stale row | Bulk operations bypass OCC in MVP. Documented; revisit when bulk update lands |
-| Inline cell save with stale __version | 409 + `inline_cell_stale.html` (small "Refresh" indicator). Cell does not swap |
+| Inline cell save with stale __version | 409 + `inline_cell_stale.html` (small "Refresh" indicator). The cell shows the current value; the stored row is untouched |
+| Inline cell save with no `__version` | 400, same as the full form |
+| Version token source for inline edits | The hidden `__version` in the editor fragment, read when the editor opens (the editor re-fetches the row, so it matches the value shown). No `data-version` on the list cell |
 | Detail view (read-only) | OCC has no effect; reads are always best-effort |
 | File upload field with OCC | Works — the file write happens after the version compare passes |
-| Form re-render on validation error | `__version` re-emitted from the now-current value (refresh-aware) — actually no, we keep the original `__version` so the user can still resolve their conflict on resubmit. Documented |
+| Form re-render on validation error | The original `__version` is kept so the user can still resolve a conflict on resubmit. Documented |
 | Object-level permission denial after OCC pass | Permission check runs first (existing v0.5.1 path); OCC compare runs only if permission granted |
 | Tenant filter mismatch | The pre-update `adapter.get(pk)` already 404s for cross-tenant; OCC never executes |
 | API client wants a raw 409 | `HYPERADMIN_OCC_RENDER_DIALOG=False` returns `{"error": "stale", "current_version": ...}` |
@@ -368,14 +376,15 @@ class OrderAdmin(ModelAdmin):
 
 - **No breaking changes.** `enforce_occ=False` (default) preserves current behaviour.
 - **`BaseAdapter.update` signature** gains a keyword-only `expected_version=None`.
-  Third-party adapters that don't accept it: callers will pass it as a kwarg, raising
-  `TypeError`. Mitigated by adding the kwarg with default `None` to the protocol; runtime
-  callers only pass it when `enforce_occ=True`. Documented.
+  The views pass it only when `enforce_occ=True` and an adapter reports a version field, so
+  third-party adapters that don't accept it are unaffected unless the host opts into OCC.
+  Documented.
 - **DB migration owned by host app.** When opting into OCC, add `version: int default 1`
   to the relevant model. Documented in changelog.
-- **Public API.** `__init__.py` gains `StaleRecordError`. Nothing renamed.
-- **Inline cell editing.** The inline `__version` data attribute is additive on the cell
-  fragment; absent cells render as today.
+- **Public API.** `__init__.py` gains `StaleRecordError` and `ConcurrencyConfigurationError`.
+  Nothing renamed.
+- **Inline cell editing.** The hidden `__version` input is additive on the editor fragment;
+  models without OCC render exactly as before.
 
 ## Open Questions
 
@@ -409,4 +418,8 @@ class OrderAdmin(ModelAdmin):
 | Inline cell stale indicator (not full dialog) | A full-page dialog over a single-cell edit is jarring | Full dialog for inline too — UX whiplash |
 | Render mode toggle (HTML dialog vs JSON 409) | Same routes serve both UI and API clients | Two route prefixes — duplication |
 | OCC uses `expected_version` keyword-only | Future-proof against positional ambiguity | Positional — easier to misuse |
+| Pass `expected_version` only when OCC is on | Third-party adapters without the keyword keep working | Always pass `None` — `TypeError` for old adapters |
+| Row version bump runs first, in the update's transaction | The conditional `UPDATE` is the atomic gate; the ORM assignments then ride the same transaction | One big `UPDATE … SET …` — breaks for non-column keys such as relationships |
+| Inline token lives in the editor, not the list cell | Editor re-fetches the row, so token and shown value agree; avoids touching list templates | `data-version` on the cell — needs list-view context plumbing |
+| 409 delivered with `HX-Retarget` | Reuses the existing `_base.html` swap rule for refused requests; no change to the `_base.html` hotspot | New `htmx:beforeSwap` branch |
 | Track B independent of WebSocket track | OCC has zero infra dependency on PubSub; ship it first inside v0.6.0 | Bundle into a single epic — slows OCC delivery |
