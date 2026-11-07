@@ -1,7 +1,7 @@
 ---
 type: story
 id: st-perf-03
-title: "refactor(core): convert the four BaseHTTPMiddleware classes to plain ASGI"
+title: "refactor(core): convert the BaseHTTPMiddleware classes to plain ASGI"
 status: todo
 priority: high
 assignee: null
@@ -19,13 +19,13 @@ updated_at: 2026-11-07T00:00:00Z
 
 ## Summary
 
-`BaseHTTPMiddleware` adds per-request overhead on every layer. Convert, one commit each: `LocaleMiddleware`, `StartupGuardMiddleware`, `AuthenticationMiddleware`, the realtime one. Behaviour is unchanged; the existing suites are the spec.
+`BaseHTTPMiddleware` adds per-request overhead on every layer. Convert, one commit each: `LocaleMiddleware`, `AuthenticationMiddleware`. `StartupGuardMiddleware` was already plain ASGI (pinned by tests) and `realtime/` has no middleware class. Behaviour is unchanged; the existing suites are the spec.
 
 **Spec:** [`docs/specs/asgi-middleware.md`](../../../../docs/specs/asgi-middleware.md)
 
 ## Files to Change
 
-- **Modified:** `src/hyperadmin/i18n/middleware.py`, `src/hyperadmin/core/lifecycle.py`, `src/hyperadmin/auth/middleware.py`, `src/hyperadmin/realtime/ws.py`
+- **Modified:** `src/hyperadmin/i18n/middleware.py`, `src/hyperadmin/auth/middleware.py`
 - **New:** `tests/unit/test_asgi_middleware.py`
 
 ## Scenarios

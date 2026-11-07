@@ -1,15 +1,27 @@
 """Plain-ASGI contract tests for LocaleMiddleware and AuthenticationMiddleware.
 
+StartupGuardMiddleware was already plain ASGI; its tests pin that.
+
 Covers the scenarios of docs/specs/asgi-middleware.md (st-perf-03).
 """
 
 from __future__ import annotations
 
+from types import SimpleNamespace
 from typing import Any
 
+import anyio
 import pytest
+from starlette.applications import Starlette
+from starlette.requests import Request
+from starlette.responses import StreamingResponse
+from starlette.routing import Route
 
+from hyperadmin.auth.middleware import AuthenticationMiddleware
+from hyperadmin.auth.otp import PARTIAL_AUTH_SESSION_KEY
+from hyperadmin.core.lifecycle import StartupGuardMiddleware
 from hyperadmin.core.settings import HyperAdminSettings
+from hyperadmin.i18n.loader import get_current_translations
 from hyperadmin.i18n.middleware import LocaleMiddleware
 
 pytestmark = pytest.mark.anyio
@@ -122,10 +134,6 @@ async def test_startup_guard_non_http_scopes_pass_through_untouched(scope_type: 
       When  a websocket or lifespan scope arrives
       Then  each middleware forwards it to the inner app
     """
-    from types import SimpleNamespace
-
-    from hyperadmin.core.lifecycle import StartupGuardMiddleware
-
     inner = _Recorder()
     lifecycle: Any = SimpleNamespace(started=True)
     mw = StartupGuardMiddleware(inner, lifecycle=lifecycle, admin_prefix="/admin")
@@ -143,8 +151,6 @@ async def test_stack_does_not_buffer_a_streaming_response() -> None:
       When  the client reads the stream
       Then  the first chunk is sent before the app produces the second
     """
-    from hyperadmin.auth.middleware import AuthenticationMiddleware
-
     events: list[str] = []
 
     async def streaming_app(scope: Any, receive: Any, send: Any) -> None:
@@ -208,8 +214,6 @@ async def test_auth_non_http_scopes_pass_through_untouched(scope_type: str) -> N
       When  a websocket or lifespan scope arrives
       Then  each middleware forwards it to the inner app
     """
-    from hyperadmin.auth.middleware import AuthenticationMiddleware
-
     inner = _Recorder()
     mw = AuthenticationMiddleware(inner, _Backend())
     scope: dict[str, Any] = {"type": scope_type}
@@ -226,8 +230,6 @@ async def test_auth_anonymous_request_is_redirected_to_login() -> None:
       When  GET /admin/ without a session
       Then  the response is a 302 to /admin/login
     """
-    from hyperadmin.auth.middleware import AuthenticationMiddleware
-
     inner = _Recorder()
     mw = AuthenticationMiddleware(inner, _Backend())
 
@@ -245,8 +247,6 @@ async def test_auth_anonymous_realtime_request_gets_401() -> None:
       When  GET /admin/realtime/stream without a session
       Then  the response is a 401 and the inner app is not called
     """
-    from hyperadmin.auth.middleware import AuthenticationMiddleware
-
     inner = _Recorder()
     mw = AuthenticationMiddleware(inner, _Backend())
 
@@ -263,9 +263,6 @@ async def test_auth_partial_auth_session_is_redirected_to_mfa_challenge() -> Non
       When  GET /admin/ is requested
       Then  the response is a 302 to /admin/mfa/challenge
     """
-    from hyperadmin.auth.middleware import AuthenticationMiddleware
-    from hyperadmin.auth.otp import PARTIAL_AUTH_SESSION_KEY
-
     inner = _Recorder()
     mw = AuthenticationMiddleware(inner, _Backend())
     scope = _http_scope(path="/admin/")
@@ -283,8 +280,6 @@ async def test_auth_mfa_route_and_host_route_pass_through() -> None:
       When  it targets /admin/mfa/challenge, a static asset or a host route
       Then  the inner app handles it
     """
-    from hyperadmin.auth.middleware import AuthenticationMiddleware
-
     inner = _Recorder()
     mw = AuthenticationMiddleware(inner, _Backend())
 
@@ -302,8 +297,6 @@ async def test_auth_public_login_path_sets_anonymous_user_state() -> None:
       When  GET /admin/login
       Then  the inner app runs with scope state user = None
     """
-    from hyperadmin.auth.middleware import AuthenticationMiddleware
-
     inner = _Recorder()
     mw = AuthenticationMiddleware(inner, _Backend())
 
@@ -320,8 +313,6 @@ async def test_auth_authenticated_request_populates_scope_state() -> None:
       When  GET /admin/ is requested
       Then  scope["state"] carries user, user_key and user_permissions
     """
-    from hyperadmin.auth.middleware import AuthenticationMiddleware
-
     inner = _Recorder()
     mw = AuthenticationMiddleware(inner, _Backend(_User()))
 
@@ -339,7 +330,6 @@ async def test_auth_non_superuser_permissions_loaded_once() -> None:
       When  GET /admin/ is requested
       Then  scope state holds the frozenset of codenames
     """
-    from hyperadmin.auth.middleware import AuthenticationMiddleware
 
     class _Checker:
         async def get_user_permissions(self, user: Any) -> list[str]:
@@ -354,3 +344,131 @@ async def test_auth_non_superuser_permissions_loaded_once() -> None:
     _, scope = await _run_auth(mw, _http_scope(path="/admin/"))
 
     assert scope["state"]["user_permissions"] == frozenset({"a.view"})
+
+
+async def test_auth_backend_reading_the_body_raises_and_leaves_the_stream_alone() -> None:
+    """
+    Scenario: the auth gate never drains the request body
+      Given a backend whose get_current_user reads the body
+      When  GET /admin/ is requested
+      Then  the read raises instead of consuming the inner app's stream
+    """
+
+    class _BodyReader:
+        async def get_current_user(self, request: Any) -> Any:
+            return await request.body()
+
+    mw = AuthenticationMiddleware(_Recorder(), _BodyReader())
+
+    with pytest.raises(RuntimeError):
+        await _run_auth(mw, _http_scope(path="/admin/"))
+
+
+async def test_auth_state_is_visible_to_the_inner_app_request() -> None:
+    """
+    Scenario: the inner app reads auth state through Request(scope).state
+      Given a logged-in user
+      When  GET /admin/ reaches the inner app
+      Then  Request(scope).state.user is that user
+    """
+    seen: list[Any] = []
+
+    async def inner(scope: Any, receive: Any, send: Any) -> None:
+        seen.append(Request(scope).state.user)
+
+    user = _User()
+    await _run_auth(AuthenticationMiddleware(inner, _Backend(user)), _http_scope(path="/admin/"))
+
+    assert seen == [user]
+
+
+# ---------------------------------------------------------------------------
+# LocaleMiddleware edge cases and streaming
+# ---------------------------------------------------------------------------
+
+
+async def test_locale_adds_header_when_start_message_has_no_headers() -> None:
+    """
+    Scenario: a start message without headers still gets Content-Language
+      Given an inner app that sends http.response.start with no headers key
+      When  the request passes the locale middleware
+      Then  Content-Language is set and no KeyError is raised
+    """
+
+    async def bare(scope: Any, receive: Any, send: Any) -> None:
+        await send({"type": "http.response.start", "status": 204})
+        await send({"type": "http.response.body", "body": b""})
+
+    sent: list[dict[str, Any]] = []
+
+    async def send(message: dict[str, Any]) -> None:
+        sent.append(message)
+
+    await LocaleMiddleware(bare, HyperAdminSettings())(_http_scope(), _noop_receive, send)
+
+    assert (b"content-language", b"en") in sent[0]["headers"]
+
+
+async def test_locale_resets_translations_when_the_inner_app_raises() -> None:
+    """
+    Scenario: translations are reset when the inner app fails
+      Given an inner app that raises
+      When  the request passes the locale middleware
+      Then  the exception propagates and the translations contextvar is restored
+    """
+
+    async def boom(scope: Any, receive: Any, send: Any) -> None:
+        raise ValueError("boom")
+
+    before = get_current_translations()
+    mw = LocaleMiddleware(boom, HyperAdminSettings())
+
+    with pytest.raises(ValueError, match="boom"):
+        await mw(_http_scope([(b"cookie", b"hyperadmin_locale=es")]), _noop_receive, _discard)
+
+    assert get_current_translations() is before
+
+
+async def test_real_streaming_response_is_not_buffered_and_header_is_set_once() -> None:
+    """
+    Scenario: a real StreamingResponse flows through the stack unbuffered
+      Given a Starlette streaming route behind the locale and auth middleware
+      When  the client reads the stream
+      Then  Content-Language is on the start message only and chunks arrive as produced
+    """
+    gate = anyio.Event()
+
+    async def body() -> Any:
+        yield b"a"
+        await gate.wait()
+        yield b"b"
+
+    async def stream(request: Request) -> StreamingResponse:
+        return StreamingResponse(body())
+
+    app = Starlette(routes=[Route("/admin/stream", stream)])
+    stack = LocaleMiddleware(AuthenticationMiddleware(app, _Backend(_User())), HyperAdminSettings())
+    sent: list[dict[str, Any]] = []
+
+    async def send(message: dict[str, Any]) -> None:
+        sent.append(message)
+        if message["type"] == "http.response.body" and message["body"] == b"a":
+            # The second chunk has not been produced yet: nothing buffered it.
+            assert len(sent) == 2
+            gate.set()
+
+    async def idle_receive() -> dict[str, Any]:
+        # A real client sends nothing more until it disconnects; a receive that
+        # returns instantly would spin StreamingResponse's disconnect listener.
+        await anyio.sleep_forever()
+        raise AssertionError("unreachable")
+
+    scope = _http_scope(path="/admin/stream")
+    scope["app"] = app
+    await stack(scope, idle_receive, send)
+
+    starts = [m for m in sent if m["type"] == "http.response.start"]
+    assert len(starts) == 1
+    assert (b"content-language", b"en") in starts[0]["headers"]
+    chunks = [m["body"] for m in sent if m["type"] == "http.response.body"]
+    assert b"".join(chunks) == b"ab"

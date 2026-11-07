@@ -7,17 +7,17 @@
 | Issue | st-perf-03 |
 | Milestone | v0.7.0a (scale-core) |
 | Created | 2026-11-07 |
-| Last updated | 2026-11-07 |
+| Last updated | 2026-11-07 (scope narrowed to two classes) |
 
 ---
 
 ## Problem
 
-Four middleware classes subclass Starlette's `BaseHTTPMiddleware`: `LocaleMiddleware` (`i18n/middleware.py`), `StartupGuardMiddleware` (`core/lifecycle.py`), `AuthenticationMiddleware` (`auth/middleware.py`) and the realtime one (`realtime/ws.py`). Each wraps every request in an extra task and stream. On the ERP load test (400 users, 9 CPUs) the app is CPU-bound at about 300 req/s, so per-request overhead matters.
+Two middleware classes subclass Starlette's `BaseHTTPMiddleware`: `LocaleMiddleware` (`i18n/middleware.py`) and `AuthenticationMiddleware` (`auth/middleware.py`). `StartupGuardMiddleware` (`core/lifecycle.py`) is already plain ASGI and `realtime/` has no middleware class (`ws.py` only mentions `BaseHTTPMiddleware` in a docstring). Each converted class wraps every request in an extra task and stream. On the ERP load test (400 users, 9 CPUs) the app is CPU-bound at about 300 req/s, so per-request overhead matters.
 
 ## Goals
 
-- Convert the four classes to plain ASGI (`__init__(app, ...)`, `async __call__(scope, receive, send)`).
+- Convert the two remaining classes to plain ASGI (`__init__(app, ...)`, `async __call__(scope, receive, send)`).
 - No behaviour change and no public API change.
 
 ## Non-Goals
@@ -48,9 +48,9 @@ Scenario: a streaming response is not buffered
 
 ### Architecture
 
-Each class keeps its constructor arguments and its name, so `add_middleware` calls in `core/app.py` are unchanged. `__call__` handles `http` scopes and forwards `websocket` and `lifespan` untouched. A `Request(scope, receive)` is built where the old code used the request. Redirects and 401s are sent by calling the response object with `(scope, receive, send)`. State set on `request.state` goes to `scope["state"]`, which `Request.state` reads. The session comes from `scope["session"]`, set by `AdminSessionMiddleware` earlier in the stack.
+Each class keeps its constructor arguments and its name, so `add_middleware` calls in `core/app.py` are unchanged. `__call__` handles `http` scopes and forwards `websocket` and `lifespan` untouched. A `Request(scope)` is built where the old code used the request, with no `receive`: `AuthBackend.get_current_user` must not read the body, and a body read raises instead of draining the stream the inner app needs. `Content-Language` is added by wrapping `send`, creating the `headers` list when the start message omits it. Redirects and 401s are sent by calling the response object with `(scope, receive, send)`. State set on `request.state` goes to `scope["state"]`, which `Request.state` reads. The session comes from `scope["session"]`, set by `AdminSessionMiddleware` earlier in the stack.
 
-Conversion order, one commit each: locale, startup guard, authentication, realtime.
+Conversion order, one commit each: locale, authentication. A third commit pins `StartupGuardMiddleware` as plain ASGI.
 
 ### Data Model Changes
 
@@ -84,4 +84,6 @@ Backward compatible, no migration required. Hosts that import the middleware cla
 | Decision | Rationale | Alternatives considered |
 |---|---|---|
 | Plain ASGI, not a shared base class | Four small classes; a base class would be the only abstraction and hides the ASGI contract | A `PureASGIMiddleware` helper |
+| Convert two classes, not four | `StartupGuardMiddleware` was already plain ASGI and `realtime/` has no middleware; tests pin the guard so it stays so | Rewrite the guard anyway |
+| Auth `Request` gets no `receive` | Prevents a custom backend from draining the body the inner app reads; `BaseHTTPMiddleware` hid this by replaying a cached body | Buffer and replay the body |
 | Keep class names and constructors | Zero edits to the `core/app.py` hotspot | New names with aliases |
