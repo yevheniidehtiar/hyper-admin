@@ -79,7 +79,11 @@
   .ha-theme-toggle,
   .ha-navbar-user-btn,
   .ha-sidebar-toggle,
-  .ha-sidebar-close {
+  .ha-sidebar-close,
+  .ha-nav-group__toggle,
+  .ha-nav-pin,
+  .ha-sidebar-rail-toggle,
+  .ha-table-sort-link {
     min-height: 44px;
     min-width: 44px;
   }

@@ -12,7 +12,7 @@ must not appear here.
 
 from __future__ import annotations
 
-from playwright.sync_api import Page, expect
+from playwright.sync_api import Browser, Page, expect
 
 MOBILE = {"width": 375, "height": 667}
 TABLET = {"width": 768, "height": 1024}
@@ -422,3 +422,27 @@ def test_brand_is_not_truncated_to_one_letter(page: Page, demo_base_url: str) ->
     brand = page.get_by_test_id("navbar-brand")
     expect(brand).to_have_accessible_name("HyperAdmin")
     expect(brand.get_by_text("HyperAdmin")).to_be_hidden()
+
+
+def test_navigation_controls_are_touch_sized(browser: Browser, demo_base_url: str) -> None:
+    """
+    Scenario: navigation controls are touch-sized
+      Given a touch device (pointer: coarse)
+      Then  sidebar group toggles, pin buttons, the rail toggle and sort links are at least 44px tall
+    """
+    # Given a touch device
+    context = browser.new_context(
+        viewport={"width": 1024, "height": 768}, has_touch=True, is_mobile=True
+    )
+    page = context.new_page()
+    try:
+        page.goto(f"{demo_base_url}/admin/user")
+
+        # Then each control is at least 44px tall
+        height = "el => el.getBoundingClientRect().height"
+        group_toggle = page.get_by_test_id("sidebar").get_by_role("button", expanded=True).first
+        assert group_toggle.evaluate(height) >= 44
+        assert page.get_by_test_id("sidebar-rail-toggle").evaluate(height) >= 44
+        assert page.get_by_test_id("sort-id").evaluate(height) >= 44
+    finally:
+        context.close()
