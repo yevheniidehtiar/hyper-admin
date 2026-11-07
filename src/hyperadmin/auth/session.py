@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from sqlalchemy.orm import noload
 from sqlmodel import select
 
 from hyperadmin.auth.backend import verify_password
@@ -69,5 +70,12 @@ class SessionAuthBackend:
         if user_id is None:
             return None
         async with self._session() as session:
-            stmt = select(User).where(User.id == user_id)
+            # The per-request auth load needs only the user row. ``noload`` skips the
+            # model's ``lazy="selectin"`` group/permission queries (3 SELECTs -> 1);
+            # permissions are resolved by id in ``ModelPermissionChecker``.
+            stmt = (
+                select(User)
+                .where(User.id == user_id)
+                .options(noload(User.user_groups), noload(User.user_permissions))  # type: ignore[arg-type]
+            )
             return (await session.execute(stmt)).scalar_one_or_none()
