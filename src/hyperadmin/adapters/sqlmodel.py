@@ -9,6 +9,7 @@ from sqlmodel import SQLModel, select
 
 from hyperadmin.adapters._estimate import estimate_table_rows
 from hyperadmin.adapters._filter_clause import build_clauses
+from hyperadmin.adapters._occ import claim_version
 from hyperadmin.adapters._search import contains_clause, detect_search_columns
 from hyperadmin.adapters.introspection import coerce_column_value, introspect_primary_key
 from hyperadmin.adapters.introspection import datetime_kind as _introspect_datetime_kind
@@ -203,7 +204,9 @@ class SQLModelAdapter(BaseAdapter):
             await session.refresh(db_obj)
             return db_obj
 
-    async def update(self, pk: Any, data: dict[str, Any]) -> Any:
+    async def update(
+        self, pk: Any, data: dict[str, Any], *, expected_version: Any | None = None
+    ) -> Any:
         """
         Updates an existing object.
 
@@ -220,11 +223,24 @@ class SQLModelAdapter(BaseAdapter):
         Raises:
             InvalidPrimaryKey: If ``pk`` does not parse as this model's key type.
             NotImplementedError: For a composite primary key.
+            StaleRecordError: ``expected_version`` no longer matches the stored row.
         """
         parsed_pk = self.pk.parse(pk)
         data = {key: value for key, value in data.items() if key not in self.pk.attrs}
         async with self._session() as session:
-            db_obj = await session.get(self.model, parsed_pk)
+            if expected_version is not None and self.version_field:
+                # Raises StaleRecordError before any other column is written.
+                db_obj = await claim_version(
+                    session,
+                    self.model,
+                    self.pk.attr,
+                    parsed_pk,
+                    self.version_field,
+                    expected_version,
+                )
+                data = {k: v for k, v in data.items() if k != self.version_field}
+            else:
+                db_obj = await session.get(self.model, parsed_pk)
             if db_obj:
                 for key, value in data.items():
                     setattr(db_obj, key, value)

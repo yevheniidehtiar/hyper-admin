@@ -14,6 +14,7 @@ from starlette.convertors import CONVERTOR_TYPES, Convertor, register_url_conver
 
 from hyperadmin.core.actions import ActionDef, collect_actions
 from hyperadmin.core.cache import CountCache, InMemoryTTLCache
+from hyperadmin.core.concurrency import resolve_version_field
 from hyperadmin.core.display import get_field_label
 from hyperadmin.core.introspection import infer_list_display, infer_list_filter, infer_search_fields
 from hyperadmin.core.navigation import ModelNavSource, build_nav_tree, model_nav_label
@@ -127,6 +128,7 @@ def create_admin_router(  # noqa: PLR0912, PLR0913, PLR0915, PLR0917
     realtime_emitter: "RealtimeEmitter | None" = None,
     realtime_settings: "RealtimeSettings | None" = None,
     count_cache: CountCache | None = None,
+    concurrency_use_updated_at: bool = False,
 ) -> APIRouter:
     """Creates an APIRouter for a given model with the specified admin options."""
     router = APIRouter(route_class=route_class)
@@ -141,6 +143,9 @@ def create_admin_router(  # noqa: PLR0912, PLR0913, PLR0915, PLR0917
     adapter.count_cache = count_cache
     adapter.count_cache_ttl = options.count_cache_ttl
     adapter.filter_cache_ttl = options.filter_cache_ttl
+    adapter.version_field = resolve_version_field(
+        model, enforce=options.enforce_occ, use_updated_at=concurrency_use_updated_at
+    )
     if realtime_emitter is None:
         if options.realtime_notifications is True:
             logger.info(
@@ -468,6 +473,7 @@ class HyperAdminRouter:
         realtime_emitter: "RealtimeEmitter | None" = None,
         realtime_settings: "RealtimeSettings | None" = None,
         count_cache: CountCache | None = None,
+        concurrency_use_updated_at: bool = False,
     ):
         self.engine = engine
         self.debug = debug
@@ -480,6 +486,7 @@ class HyperAdminRouter:
         self.realtime_emitter = realtime_emitter
         self.realtime_settings = realtime_settings
         self.count_cache: CountCache = count_cache or InMemoryTTLCache()
+        self.concurrency_use_updated_at = concurrency_use_updated_at
         self.notification_models: set[str] = set()
         #: Registered models in registry order, for the sidebar nav tree.
         self.nav_sources: list[ModelNavSource] = []
@@ -566,6 +573,7 @@ class HyperAdminRouter:
                 realtime_emitter=self.realtime_emitter,
                 realtime_settings=self.realtime_settings,
                 count_cache=self.count_cache,
+                concurrency_use_updated_at=self.concurrency_use_updated_at,
             )
             self.routers.append(router)
             if (

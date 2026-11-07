@@ -120,8 +120,14 @@ class EventEmittingAdapter:
         self._emit(RealtimeAction.CREATED, instance, from_instance=True)
         return instance
 
-    async def update(self, pk: Any, data: dict[str, Any]) -> Any:
-        result = await object.__getattribute__(self, "_ha_inner").update(pk, data)
+    async def update(
+        self, pk: Any, data: dict[str, Any], *, expected_version: Any | None = None
+    ) -> Any:
+        inner = object.__getattribute__(self, "_ha_inner")
+        if expected_version is None:
+            result = await inner.update(pk, data)
+        else:
+            result = await inner.update(pk, data, expected_version=expected_version)
         self._emit(RealtimeAction.UPDATED, pk)
         return result
 

@@ -209,6 +209,10 @@ class BaseAdapter(ABC):
     #: How long the first rows of a related model are cached for this model's list filters.
     #: Set by the router from ``AdminOptions.filter_cache_ttl``; ``0`` disables caching.
     filter_cache_ttl: int = 0
+    #: Concurrency-token field (``version`` / ``updated_at``) when optimistic concurrency
+    #: control is enforced for this model. Set by the router from
+    #: ``AdminOptions.enforce_occ``; ``None`` (the default) keeps last-write-wins.
+    version_field: str | None = None
 
     def __init__(
         self, model: Any, engine: Any = None, *, session_factory: SessionFactory | None = None
@@ -491,16 +495,24 @@ class BaseAdapter(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    async def update(self, pk: Any, data: dict[str, Any]) -> Any:
+    async def update(
+        self, pk: Any, data: dict[str, Any], *, expected_version: Any | None = None
+    ) -> Any:
         """
         Updates an existing object.
 
         Args:
             pk: The primary key of the object to update.
             data: A dictionary of data to update the object with.
+            expected_version: The version the caller read. When given and
+                :attr:`version_field` is set, the write only succeeds if the row still
+                carries that version; the version is bumped atomically with the write.
 
         Returns:
             The updated object.
+
+        Raises:
+            StaleRecordError: ``expected_version`` no longer matches the stored row.
         """
         raise NotImplementedError
 
