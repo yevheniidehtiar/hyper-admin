@@ -4,7 +4,7 @@ import json
 import types
 from dataclasses import dataclass
 from dataclasses import field as dc_field
-from datetime import datetime, tzinfo
+from datetime import date, datetime, tzinfo
 from datetime import timezone as dt_timezone
 from enum import Enum
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, Union, get_args, get_origin
@@ -79,14 +79,18 @@ class _FormData(dict):
 
     SQLModel table models read their relationships back with ``getattr(data, name)``;
     on a plain dict a relationship named ``items``, ``keys`` or ``values`` resolves
-    to the dict method and is assigned to the relationship. Public attribute lookups
-    raise ``AttributeError`` here so SQLModel skips them.
+    to the dict method and is assigned to the relationship. Lookups of the model's
+    relationship names raise ``AttributeError`` here so SQLModel skips them.
     """
 
+    def __init__(self, data: dict[str, Any], model: type) -> None:
+        super().__init__(data)
+        self._hidden = frozenset(getattr(model, "__sqlmodel_relationships__", ()))
+
     def __getattribute__(self, name: str) -> Any:
-        if name.startswith("_"):
-            return super().__getattribute__(name)
-        raise AttributeError(name)
+        if name in object.__getattribute__(self, "_hidden"):
+            raise AttributeError(name)
+        return super().__getattribute__(name)
 
 
 @dataclass(slots=True)
@@ -182,6 +186,15 @@ class DateTimeInput(HtmxWidget):
 
     def __init__(self):
         super().__init__(template_path="widgets/datetime_input.html")
+
+
+class DateInput(HtmxWidget):
+    """A native ``<input type="date">`` for ``date`` fields; submits ISO ``YYYY-MM-DD``."""
+
+    input_type: ClassVar[str] = "date"
+
+    def __init__(self):
+        super().__init__(template_path="widgets/date_input.html")
 
 
 class FileInputWidget(HtmxWidget):
@@ -586,6 +599,8 @@ class PydanticForm:
             return FloatInput()
         if _is_datetime_annotation(ann):
             return DateTimeInput()
+        if ann is date:
+            return DateInput()
         if isinstance(ann, type) and issubclass(ann, Enum):
             return SelectInput()
         return TextInput()
@@ -755,7 +770,7 @@ class PydanticForm:
         instance: BaseModel | None = None
         errs: dict[str, ErrorList] = {}
         try:
-            instance = schema_for(self.model).model_validate(_FormData(cleaned_data))
+            instance = schema_for(self.model).model_validate(_FormData(cleaned_data, self.model))
         except ValidationError as e:
             for error in e.errors():
                 loc = error["loc"][0]
@@ -996,7 +1011,9 @@ class InlineFormset:
                     data[field_name] = None
 
             try:
-                instance = schema_for(self.spec.model).model_validate(_FormData(data))
+                instance = schema_for(self.spec.model).model_validate(
+                    _FormData(data, self.spec.model)
+                )
                 result = instance.model_dump()
                 if "_pk" in row:
                     result["_pk"] = row["_pk"]
