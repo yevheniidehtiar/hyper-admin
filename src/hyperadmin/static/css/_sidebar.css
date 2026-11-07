@@ -95,7 +95,8 @@
 
 /* ==========================================================================
    Pins: the Pinned group on top and a pin toggle at the end of each item,
-   shown on hover and focus (always on touch screens).
+   shown on hover and focus, and always on pinned items and the current page
+   (so touch screens can pin from the page they are on).
    ========================================================================== */
 
 .ha-nav-group--pinned {
@@ -139,7 +140,9 @@
 }
 
 .ha-nav-row:hover > .ha-nav-pin,
-.ha-nav-row:focus-within > .ha-nav-pin {
+.ha-nav-row:focus-within > .ha-nav-pin,
+.ha-nav-row:has(> [aria-current="page"]) > .ha-nav-pin,
+.ha-nav-pin[aria-pressed="true"] {
   opacity: 1;
 }
 
@@ -152,9 +155,22 @@
   color: var(--ha-color-primary-text);
 }
 
+/* No hover on touch: a hidden pin must not catch taps meant for the link. */
 @media (hover: none) {
   .ha-nav-pin {
-    opacity: 1;
+    pointer-events: none;
+  }
+
+  .ha-nav-row:focus-within > .ha-nav-pin,
+  .ha-nav-row:has(> [aria-current="page"]) > .ha-nav-pin,
+  .ha-nav-pin[aria-pressed="true"] {
+    pointer-events: auto;
+  }
+}
+
+@media (pointer: coarse) {
+  .ha-nav-row:has(.ha-nav-pin) > .ha-sidebar-link {
+    padding-inline-end: calc(var(--ha-space-3) + 44px);
   }
 }
 
