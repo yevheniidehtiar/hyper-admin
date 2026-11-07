@@ -384,3 +384,41 @@ def test_navbar_brand_visible_at_tablet_breakpoint(page: Page, demo_base_url: st
 
     # And the hamburger is hidden at >= 768px
     expect(page.get_by_test_id("sidebar-toggle")).to_be_hidden()
+
+
+def test_no_horizontal_scroll_on_a_small_phone(page: Page, demo_base_url: str) -> None:
+    """
+    Scenario: no horizontal scroll on a small phone
+      Given a 360x740 touch viewport
+      When  any admin page loads
+      Then  document scrollWidth equals the viewport width
+    """
+    # Given a 360x740 viewport
+    # When any admin page loads
+    _open_admin(page, demo_base_url, {"width": 360, "height": 740})
+
+    # Then the document is not wider than the viewport
+    widths = page.evaluate(
+        "() => [document.documentElement.scrollWidth, document.documentElement.clientWidth]"
+    )
+    assert widths[0] == widths[1], f"scrollWidth {widths[0]} != viewport {widths[1]}"
+
+    # And the theme toggle moved into the account menu
+    expect(page.get_by_test_id("theme-toggle")).to_be_hidden()
+    page.get_by_role("button", name="Admin").click()
+    expect(page.get_by_test_id("theme-toggle-menu")).to_be_visible()
+
+
+def test_brand_is_not_truncated_to_one_letter(page: Page, demo_base_url: str) -> None:
+    """
+    Scenario: brand is not truncated to one letter
+      Given a 393x852 viewport
+      Then  the navbar shows the logo only, with the site name as its accessible label
+    """
+    # Given a 393x852 viewport
+    _open_admin(page, demo_base_url, {"width": 393, "height": 852})
+
+    # Then the brand link is named after the site and shows no clipped text
+    brand = page.get_by_test_id("navbar-brand")
+    expect(brand).to_have_accessible_name("HyperAdmin")
+    expect(brand.get_by_text("HyperAdmin")).to_be_hidden()

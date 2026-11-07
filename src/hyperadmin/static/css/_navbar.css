@@ -152,6 +152,39 @@
   }
 }
 
+/* Below --ha-bp-sm (640px) the navbar keeps the burger, brand mark, search and
+   the account button; language and theme move into the account menu. The
+   brand shrinks to its mark (the link keeps the site name as aria-label). */
+.ha-dropdown-prefs {
+  display: none;
+}
+
+@media (max-width: 639px) {
+  .ha-navbar-actions > .ha-theme-toggle,
+  .ha-navbar-actions > .ha-locale-switcher {
+    display: none;
+  }
+
+  .ha-dropdown-prefs {
+    display: block;
+    padding-block-end: var(--ha-space-1);
+    margin-block-end: var(--ha-space-1);
+    border-block-end: var(--ha-border-width) solid var(--ha-color-border-light);
+  }
+
+  .ha-navbar-brand-text {
+    display: none;
+  }
+}
+
+.ha-dropdown-locale {
+  margin: 0;
+}
+
+.ha-dropdown-locale label {
+  flex: 1;
+}
+
 /* ==========================================================================
    Dropdown (menu surface)
    ========================================================================== */
