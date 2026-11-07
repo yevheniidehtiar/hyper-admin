@@ -24,6 +24,11 @@
 {%- endblock -%}
 
 {%- block form_body -%}
+    {#- Optimistic concurrency (enforce_occ): the version this copy of the row was loaded at. -#}
+    {%- if version_token is not none and version_token is defined -%}
+    <input type="hidden" name="{{ version_param }}" value="{{ version_token }}">
+    {%- endif -%}
+    <div id="ha-occ-conflict" aria-live="assertive"></div>
     {%- include "components/presence_banner.html" -%}
     {%- include "components/error_summary.html" -%}
     {%- if form.fieldset_groups|length > 1 or (form.fieldset_groups|length == 1 and form.fieldset_groups[0].name) -%}

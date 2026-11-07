@@ -10,12 +10,13 @@ from hyperadmin.core.adapters import (
     InlineRowNotOwnedError,
     scoped_queryset_filters,
 )
+from hyperadmin.core.concurrency import StaleRecordError
 from hyperadmin.core.primary_key import InvalidPrimaryKey
 from hyperadmin.core.schema import dump_instance, schema_for
 from hyperadmin.core.sensitive import (
     is_text_annotation,
 )
-from hyperadmin.views.dynamic.form_data import FormDataMixin
+from hyperadmin.views.dynamic.concurrency import VERSION_PARAM, ConcurrencyViewMixin
 from hyperadmin.views.dynamic.helpers import (
     _request_scoped,
 )
@@ -28,7 +29,7 @@ from hyperadmin.views.forms import (
 logger = logging.getLogger(__name__)
 
 
-class InlineViewMixin(FormDataMixin):
+class InlineViewMixin(ConcurrencyViewMixin):
     """Inline formsets and inline (in-list) editing."""
 
     async def _save_inline_rows(
@@ -236,6 +237,8 @@ class InlineViewMixin(FormDataMixin):
             "field": field,
             "form_field": form_field,
             "form": form,
+            "version_param": VERSION_PARAM,
+            "version_token": self._occ_token(item),
         }
         return self.templates.TemplateResponse(request, "components/inline_editor.html", context)
 
@@ -317,7 +320,12 @@ class InlineViewMixin(FormDataMixin):
         # Persist only the edited field — exclude_unset would also work, but
         # we know precisely what changed.
         new_value = getattr(instance, field)
-        await self.adapter.update(pk=pk, data={field: new_value})
+        expected = self._expected_version(form_data)
+        try:
+            await self.adapter.update(pk=pk, data={field: new_value}, **self._occ_kwargs(expected))
+        except StaleRecordError as exc:
+            current_row = await self.adapter.get(pk=pk)
+            return self._stale_cell_response(request, exc, current_row, field)
 
         # Re-fetch to get the canonical stored value (e.g. type coercion)
         refreshed = await self.adapter.get(pk=pk)

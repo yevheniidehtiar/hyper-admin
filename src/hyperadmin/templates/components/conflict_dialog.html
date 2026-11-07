@@ -1,0 +1,42 @@
+{#- Optimistic-concurrency conflict (docs/specs/realtime-occ.md). Swapped into
+    #ha-occ-conflict on the edit page after a 409. "Override anyway" re-sends the
+    surrounding form with the row's current version; "Discard my edits" reloads a
+    fresh edit form. -#}
+{%- from "components/_icons.html" import icon -%}
+<div class="ha-dialog ha-occ-conflict" role="alertdialog" aria-labelledby="ha-occ-title"
+     data-testid="conflict-dialog">
+    <div class="ha-dialog__head">
+        <span class="ha-dialog__glyph ha-dialog__glyph--danger" aria-hidden="true">{{ icon('triangle-alert') }}</span>
+        <div>
+            <h2 class="ha-dialog__title" id="ha-occ-title">{{ _("This record was changed by someone else") }}</h2>
+            <p class="ha-dialog__lede">{{ _("Your changes were not saved. Compare them with the current values, then choose which to keep.") }}</p>
+        </div>
+    </div>
+    <table class="ha-table" data-testid="conflict-diff">
+        <thead>
+            <tr>
+                <th scope="col">{{ _("Field") }}</th>
+                <th scope="col">{{ _("Your edit") }}</th>
+                <th scope="col">{{ _("Current value") }}</th>
+            </tr>
+        </thead>
+        <tbody>
+        {%- for row in rows -%}
+            <tr{% if row.differs %} class="ha-occ-differs"{% endif %} data-testid="conflict-row-{{ row.name }}">
+                <th scope="row">{{ row.label }}</th>
+                <td data-testid="conflict-mine-{{ row.name }}">{{ row.mine|ha_display }}</td>
+                <td data-testid="conflict-current-{{ row.name }}">{{ row.current|ha_display }}</td>
+            </tr>
+        {%- endfor -%}
+        </tbody>
+    </table>
+    <div class="ha-dialog__foot">
+        <a class="ha-btn ha-btn-secondary" href="{{ edit_url }}" data-testid="conflict-discard">{{ _("Discard my edits") }}</a>
+        <button type="button" class="ha-btn ha-btn--danger" data-testid="conflict-override"
+                hx-put="{{ update_url }}"
+                hx-include="closest form"
+                hx-vals='{"__version": "{{ current_version }}"}'
+                hx-target="#{{ model_name|lower }}-form-body"
+                hx-swap="innerHTML">{{ _("Override anyway") }}</button>
+    </div>
+</div>
