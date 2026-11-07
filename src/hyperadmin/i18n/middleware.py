@@ -18,7 +18,8 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 import babel
-from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.datastructures import MutableHeaders
+from starlette.requests import Request
 
 from hyperadmin.i18n.loader import (
     load_translations,
@@ -29,8 +30,7 @@ from hyperadmin.i18n.loader import (
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from starlette.requests import Request
-    from starlette.responses import Response
+    from starlette.types import Message, Receive, Scope, Send
 
     from hyperadmin.core.settings import HyperAdminSettings
 
@@ -114,8 +114,8 @@ def negotiate_locale(
     return default
 
 
-class LocaleMiddleware(BaseHTTPMiddleware):
-    """ASGI middleware that resolves the request locale and stores it on state.
+class LocaleMiddleware:
+    """Plain ASGI middleware that resolves the request locale and stores it on state.
 
     Args:
         app: The downstream ASGI app.
@@ -125,10 +125,14 @@ class LocaleMiddleware(BaseHTTPMiddleware):
     """
 
     def __init__(self, app: Any, settings: HyperAdminSettings) -> None:
-        super().__init__(app)
+        self.app = app
         self.settings = settings
 
-    async def dispatch(self, request: Request, call_next: Any) -> Response:
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+        request = Request(scope)
         locale = negotiate_locale(
             cookie_value=request.cookies.get(COOKIE_NAME),
             accept_language=request.headers.get("accept-language"),
@@ -139,10 +143,13 @@ class LocaleMiddleware(BaseHTTPMiddleware):
         request.state.locale = locale
         request.state.translations = translations
         token = set_current_translations(translations)
+
+        async def send_with_header(message: Message) -> None:
+            if message["type"] == "http.response.start" and self.settings.locale_response_header:
+                MutableHeaders(scope=message)["Content-Language"] = locale
+            await send(message)
+
         try:
-            response = await call_next(request)
+            await self.app(scope, receive, send_with_header)
         finally:
             reset_current_translations(token)
-        if self.settings.locale_response_header:
-            response.headers["Content-Language"] = locale
-        return response
