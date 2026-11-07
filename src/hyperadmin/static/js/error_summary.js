@@ -23,7 +23,12 @@
     field.focus();
     field.scrollIntoView({ block: 'center' });
   });
-  document.addEventListener('htmx:afterSettle', focusSummary);
+  // Only the form's own swap moves focus: a field's htmx validation, an
+  // autocomplete or an inline-row add settling must not pull focus away.
+  document.addEventListener('htmx:afterSettle', function (evt) {
+    var t = (evt.detail && evt.detail.target) || evt.target;
+    if (t && t.id && /-form-body$/.test(t.id)) { focusSummary(); }
+  });
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', focusSummary);
   } else {

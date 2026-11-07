@@ -51,6 +51,7 @@ class DetailViewMixin(FileViewMixin):
             "field_labels": self.field_labels,
             "actions": self.actions,
             "model_name_lower": self._model_name_lower,
+            **self._verbose_labels(),
             "file_fields": file_fields,
             "file_urls": file_urls,
             "thumb_urls": self._thumbnail_urls(request, item_id, item_data, "detail"),

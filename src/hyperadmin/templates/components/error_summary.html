@@ -1,18 +1,38 @@
 {#- Lists every invalid field with a link that moves focus to it (st-ux-erp-06).
-    Needs `form`; renders nothing when the form has no field errors. -#}
+    Needs `form`; inline formset rows with errors link to their first invalid
+    input, and errors keyed to no field (model validators) get a catch-all entry.
+    Renders nothing when the form has no errors. -#}
 {%- set invalid = form.fields|selectattr("errors")|list -%}
-{%- if invalid -%}
+{%- set ns = namespace(entries=[], known=[]) -%}
+{%- for f in form.fields -%}{%- set ns.known = ns.known + [f.name] -%}{%- endfor -%}
+{%- for f in invalid -%}
+{%- set ns.entries = ns.entries + [("#" ~ f.name, f.label ~ ": " ~ (f.errors|first))] -%}
+{%- endfor -%}
+{%- for formset in inline_formsets|default([]) -%}
+{%- for row in formset.rows if row.has_errors -%}
+{%- set bad = row.fields|selectattr("errors")|list -%}
+{%- if bad -%}
+{%- set ns.entries = ns.entries + [("#" ~ formset.prefix ~ "-" ~ row.index ~ "-" ~ bad[0].name, formset.title ~ " #" ~ (row.index + 1) ~ " - " ~ bad[0].label ~ ": " ~ (bad[0].errors|first))] -%}
+{%- else -%}
+{%- set ns.entries = ns.entries + [("#inline-" ~ formset.prefix ~ "-row-" ~ row.index, formset.title ~ " #" ~ (row.index + 1) ~ (": " ~ (row.pk_errors|first) if row.pk_errors else ""))] -%}
+{%- endif -%}
+{%- endfor -%}
+{%- endfor -%}
+{%- for key, msgs in (errors|default({})).items() if key not in ns.known and msgs -%}
+{%- set ns.entries = ns.entries + [(none, msgs if msgs is string else (msgs|first))] -%}
+{%- endfor -%}
+{%- if ns.entries -%}
 <div class="ha-error-summary" role="alert" tabindex="-1" data-testid="error-summary">
     <h2 class="ha-error-summary-title">
-        {%- trans count=invalid|length -%}
+        {%- trans count=ns.entries|length -%}
         There is a problem with 1 field
         {%- pluralize -%}
         There are problems with {{ count }} fields
         {%- endtrans -%}
     </h2>
     <ul>
-        {%- for f in invalid -%}
-        <li><a href="#{{- f.name -}}" data-ha-error-link>{{- f.label -}}: {{ f.errors|first }}</a></li>
+        {%- for href, text in ns.entries -%}
+        <li>{% if href %}<a href="{{ href }}" data-ha-error-link>{{ text }}</a>{% else %}{{ text }}{% endif %}</li>
         {%- endfor -%}
     </ul>
 </div>
