@@ -7,7 +7,7 @@
 | Issue | TBD |
 | Milestone | Pulled forward ahead of v0.8.0 — prerequisite for the `hyperadmin-reports` plugin |
 | Created | 2026-05-05 |
-| Last updated | 2026-10-18 |
+| Last updated | 2026-11-07 |
 
 ---
 
@@ -48,7 +48,8 @@ Other consumers, unchanged from revision 1:
 5. **Failure isolation** — a plugin that fails to import, validate settings, register or run a
    hook is logged at ERROR and skipped; the admin and the request keep working.
 6. **App-level lifecycle hooks** (phase 2, v0.8.0) — `on_model_register`, `on_before/after_create`,
-   `on_before/after_update`, `on_before/after_delete`, `on_before/after_adapter_call`. The
+   `on_before/after_update`, `on_before/after_delete`, `on_before/after_adapter_call`,
+   `on_validation_error`, `on_auth_event` (the last two added 2026-11-07 for logfire). The
    dispatcher ships in phase 1; firing them from core call sites ships with logfire.
 7. **CLI introspection** (later story) — `hyperadmin plugins list`.
 
@@ -69,7 +70,7 @@ Other consumers, unchanged from revision 1:
 | 1a — `plug-core` | `core/plugins.py`: `Plugin`, `PluginRegistry` (discovery, disable, isolation, ordering), seam *registration* API + data structures, `dispatch_hook`, typed settings. Unit tests only. | this SDD's first PR |
 | 1b — `plug-wire` (gated on v0.5.8 BYOA) | `Admin` calls discovery; mounts pages + static; adds template dirs to the Jinja env; renders nav entries in the sidebar; syncs plugin permissions; `admin.plugins`, `admin.dispatch_hook`; exports from `hyperadmin`. E2E with a fixture plugin. | follow-up PR |
 | 1c — `hyperadmin-reports` | First plugin, uses only phase-1 seams. | reports swarm items |
-| 2 — v0.8.0 | Fire lifecycle hooks from `SiteRegistry` / `DynamicModelView`; `_AdapterHookWrapper`; `hyperadmin-logfire`; `hyperadmin plugins list`. | v0.8.0 epics |
+| 2 — v0.8.0 | Fire lifecycle hooks from `SiteRegistry` / `DynamicModelView` / `auth/views.py`; `_AdapterHookWrapper`; `on_validation_error` and `on_auth_event`; `hyperadmin plugins list`. `hyperadmin-logfire` phase A ships before this on HTTP + SQL spans only (`docs/specs/plugin-logfire.md`). | v0.8.0 epics |
 
 ## BDD Scenarios
 
@@ -289,7 +290,9 @@ Signatures (documented contract; plugins type-hint explicitly; all keyword argum
 | `on_before_create` / `on_after_create` | `admin, model, data` / `admin, model, instance` | `DynamicModelView` create |
 | `on_before_update` / `on_after_update` | `admin, model, pk, data` / `admin, model, instance` | `DynamicModelView` update |
 | `on_before_delete` / `on_after_delete` | `admin, model, pk` | `DynamicModelView` delete |
-| `on_before_adapter_call` / `on_after_adapter_call` | `admin, model, op, kwargs` / `admin, model, op, result` | `_AdapterHookWrapper` |
+| `on_before_adapter_call` / `on_after_adapter_call` | `admin, model, op, kwargs` / `admin, model, op, result, error` | `_AdapterHookWrapper`; the after hook fires in `finally` (`result=None` and the exception on failure, then re-raised) |
+| `on_validation_error` | `admin, model, field_errors` (`dict[str, list[str]]` of field → pydantic error types; never input values) | `DynamicModelView` create / update when the form returns errors |
+| `on_auth_event` | `admin, event, user, username, request` (`event` ∈ `login_success`, `login_failure`, `logout`, `permission_denied`; `user` is `None` on `login_failure`; the password is never passed) | `auth/views.py` login / logout; the view permission check |
 
 `dispatch_hook(name, **kwargs)` rejects names outside this list (`ValueError` — a core typo,
 not a plugin failure), calls handlers in plugin order, and logs-and-continues on exceptions.
@@ -388,6 +391,8 @@ public API is removed.
 | Typed settings via optional `settings_model`, validated before `on_register` | Fail fast, typed access, `BaseSettings` gives env support for free | Untyped dict — errors surface late inside the plugin |
 | Entry-point name is identity; `plugin.name` must match | One name for URLs, static path, settings, disable list | Trust `plugin.name` — two names for one plugin |
 | Wrap adapters at `SiteRegistry.register()` boundary (phase 2) | Concrete adapters stay clean; one wrapper covers all adapters | Decorate `BaseAdapter` methods; mixin inheritance |
+| `on_after_adapter_call` takes `error` and fires in `finally` (2026-11-07) | A raising adapter must still close what `on_before` opened (logfire spans) | A separate `on_adapter_error` hook — a second name for the same moment |
+| Add `on_validation_error` and `on_auth_event` (2026-11-07) | Logfire needs form-failure and auth events without patching `PydanticForm` or sniffing redirects | Middleware listener — cannot tell login success from any other 302 |
 | Synchronous fan-out, exceptions caught per plugin | Plugins must not break core; no async leakage | Async fan-out; re-raise |
 | Entry-point group `hyperadmin.plugins` | Convention (pytest, Flask) | `hyperadmin.extensions` |
 | `Plugin` is a `Protocol`, not an ABC | No forced inheritance; `isinstance` works | ABC |
