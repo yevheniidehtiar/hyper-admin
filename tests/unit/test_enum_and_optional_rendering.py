@@ -74,7 +74,8 @@ def test_list_cells_show_enum_labels_and_a_dash_for_empty_values(client: TestCli
     body = client.get("/admin/enumpartner").text
 
     assert "PartnerKind." not in body
-    assert re.search(r'data-label="Kind">\s*Supplier\s*</td>', body)
+    # Enum cells render as a status pill; the label is the pill text.
+    assert re.search(r'data-label="Kind">\s*<span[^>]*>\s*Supplier\s*</span>\s*</td>', body)
     assert re.search(r'data-label="Email">\s*<span class="ha-text-muted">&mdash;</span>', body)
     assert ">None<" not in body
 
