@@ -221,3 +221,31 @@ def test_no_auth_means_no_pins(page: Page, demo_base_url: str) -> None:
     expect(page.get_by_test_id("nav-pinned")).to_have_count(0)
     response = page.request.post(f"{demo_base_url}/admin/nav/pins", form={"target": "user"})
     assert response.status == 404
+
+
+def test_pins_appear_on_demand(page: Page, nav_base_url: str) -> None:
+    """
+    Scenario: pins appear on demand
+      Given the sidebar
+      Then  a pin button is visible only on the hovered or focused item and on already-pinned items
+    """
+    # Given alice is signed in and has pinned Orders
+    _login(page, nav_base_url)
+    _pin_orders(page)
+    page.mouse.move(700, 600)
+
+    # Then a pin on an untouched, unpinned item is hidden
+    idle = page.get_by_test_id("nav-pin-invoice")
+    expect(idle).to_have_css("opacity", "0")
+
+    # And the pin on the already-pinned item stays visible
+    expect(page.get_by_test_id("nav-pin-order")).to_have_css("opacity", "1")
+
+    # And hovering an item reveals its pin
+    page.get_by_test_id("nav-invoice").hover()
+    expect(idle).to_have_css("opacity", "1")
+
+    # And keyboard focus reveals it too
+    page.mouse.move(700, 600)
+    page.get_by_test_id("nav-invoice").focus()
+    expect(idle).to_have_css("opacity", "1")
