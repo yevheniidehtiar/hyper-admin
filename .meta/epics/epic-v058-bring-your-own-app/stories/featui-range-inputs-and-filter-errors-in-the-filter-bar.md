@@ -2,7 +2,7 @@
 type: story
 id: st-v058-byoa-47
 title: "feat(ui): range inputs and filter errors in the filter bar"
-status: todo
+status: done
 priority: high
 assignee: null
 labels:
@@ -15,8 +15,15 @@ estimate: null
 epic_ref:
   id: ep-v058-byoa-01
 created_at: 2026-09-28T00:00:00Z
-updated_at: 2026-10-08T00:00:00Z
+updated_at: 2026-11-07T00:00:00Z
 ---
+
+## Superseded (2026-11-07)
+
+Closed by the owner as superseded. The v0.5.6 filter library ships `DateRangeFilter`
+(`hyperadmin.filters`), which gives a date field From/To inputs, presets and an inline error in the filter
+sidebar. The parts it does not cover (number ranges, and ranges for plain string `list_filter` entries) moved
+to `st-filters-number-range` (no milestone).
 
 ## Deferred (2026-10-08)
 

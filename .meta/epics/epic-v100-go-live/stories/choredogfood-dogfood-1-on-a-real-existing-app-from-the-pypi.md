@@ -14,10 +14,15 @@ labels:
   - dogfood
 estimate: null
 epic_ref:
-  id: ep-v058-byoa-01
+  id: ep-v100-golive-01
 created_at: 2026-09-28T00:00:00Z
-updated_at: 2026-09-28T00:00:00Z
+updated_at: 2026-11-07T00:00:00Z
 ---
+
+## Moved (2026-11-07)
+
+Moved from v0.5.8 to v1.0 by the owner: it needs the first PyPI alpha, and the release date is the owner's
+call. It runs with the go-live release.
 
 ## Summary
 
@@ -61,4 +66,4 @@ Scenario: gaps are filed
 
 ## Parent
 
-- Epic: `epic-v058-bring-your-own-app` (v0.5.8 — Bring Your Own App)
+- Epic: `epic-v100-go-live` (v1.0 — Stable Release)

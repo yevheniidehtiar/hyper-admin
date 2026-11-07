@@ -2,7 +2,7 @@
 type: epic
 id: ep-v058-byoa-01
 title: "epic(core): Bring Your Own App — mount into an existing FastAPI app without taking over"
-status: in_progress
+status: done
 priority: critical
 owner: null
 labels:
@@ -13,7 +13,7 @@ labels:
 milestone_ref:
   id: v058-byoa-01
 created_at: 2026-09-28T00:00:00Z
-updated_at: 2026-09-28T00:00:00Z
+updated_at: 2026-11-07T00:00:00Z
 ---
 
 ## Overview
@@ -85,12 +85,12 @@ without it taking over the app: your models, your UUID and string keys, your mig
 | st-v058-byoa-44 | [feat(views): typed, whitelisted filters in list_view](stories/featviews-typed-whitelisted-filters-in-list-view.md) | S | byoa-24, byoa-43 |
 | st-v058-byoa-45 | [feat(templates): pk-agnostic item links/testids and tz-aware datetime rendering](stories/feattemplates-pk-agnostic-item-links-testids-and-tz-aware-da.md) | M | byoa-32, byoa-33 |
 | st-v058-byoa-46 | [feat(ui): bridge-aware navbar and CSRF reload banner](stories/featui-csrf-token-injection-and-bridge-aware-navbar.md) | S | byoa-40 |
-| st-v058-byoa-47 † (deferred) | [feat(ui): range inputs and filter errors in the filter bar](stories/featui-range-inputs-and-filter-errors-in-the-filter-bar.md) | M | byoa-44 |
+| st-v058-byoa-47 † (superseded by `DateRangeFilter`; rest in `st-filters-number-range`) | [feat(ui): range inputs and filter errors in the filter bar](stories/featui-range-inputs-and-filter-errors-in-the-filter-bar.md) | M | byoa-44 |
 | st-v058-byoa-48 | [build(deps): lift the sqlmodel<0.0.45 cap and migrate examples and fixtures to utc_now](stories/builddeps-lift-the-sqlmodel-0-0-45-cap-and-migrate-examples.md) | S | byoa-16, byoa-32, byoa-45 |
 | st-v058-byoa-49 | [test(e2e): pk-type and timezone fixture app (UUID, natural str, int)](stories/teste2e-pk-type-and-timezone-fixture-app-uuid-natural-str-in.md) | M | byoa-30, byoa-45, byoa-48 |
 | st-v058-byoa-50 | [build(release): 0.5.0a1, pep440 commitizen, __version__ and fixed release/publish workflows](stories/buildrelease-0-5-0a1-pep440-commitizen-version-and-fixed-rel.md) | M | byoa-12, byoa-48 |
 | st-v058-byoa-51 | [docs(guides): existing-app guide, examples/byoa, CSRF upgrade note and multi-tenancy SDD amendment](stories/docsguides-existing-app-guide-examples-byoa-csrf-upgrade-not.md) | M | byoa-36, byoa-37, byoa-41, byoa-42, byoa-46, byoa-49 |
-| st-v058-byoa-52 | [chore(dogfood): dogfood-1 on a real existing app from the PyPI alpha; gap log](stories/choredogfood-dogfood-1-on-a-real-existing-app-from-the-pypi.md) | S | byoa-50, byoa-51, byoa-54 |
+| st-v058-byoa-52 (moved to v1.0, `epic-v100-go-live`) | [chore(dogfood): dogfood-1 on a real existing app from the PyPI alpha; gap log](../epic-v100-go-live/stories/choredogfood-dogfood-1-on-a-real-existing-app-from-the-pypi.md) | S | byoa-50, byoa-51, byoa-54 |
 | st-v058-byoa-53 | [fix(views): close query oracles — sensitive fields, sort_by whitelist, choices cascade whitelist](stories/fixviews-close-query-oracles-sensitive-fields-sort-and-choices.md) | M | — (security fix, not gated) |
 | st-v058-byoa-54 | [chore(dogfood): dogfood-0 from a repository install once the bridge and isolated mount land](stories/choredogfood-dogfood-0-from-a-repository-install.md) | S | byoa-35, byoa-41 |
 
@@ -111,7 +111,7 @@ delete the stub story files and keep this `epic.md`.
 - [ ] No handler bypasses model, object or queryset scoping; no query parameter is an oracle on sensitive fields
 - [ ] `hyper-admin==0.5.0a1` installs from PyPI and `from hyperadmin import Admin` works
 - [ ] The guide can be followed start to finish in 10 minutes or less on a clean checkout
-- [ ] The dogfood-1 gap log has been reviewed, and blocking gaps are fixed in this milestone
+- [x] The dogfood gap log has been reviewed, and blocking gaps are fixed in this milestone (dogfood-0 via #701; dogfood-1 moved to v1.0 on 2026-11-07)
 
 ## Parent
 

@@ -2,7 +2,7 @@
 type: story
 id: st-v058-byoa-54
 title: "chore(dogfood): dogfood-0 from a repository install once the bridge and isolated mount land"
-status: todo
+status: done
 priority: high
 assignee: null
 labels:
@@ -15,8 +15,15 @@ estimate: null
 epic_ref:
   id: ep-v058-byoa-01
 created_at: 2026-09-28T00:00:00Z
-updated_at: 2026-09-28T00:00:00Z
+updated_at: 2026-11-07T00:00:00Z
 ---
+
+## Resolution (2026-11-07)
+
+Done by the dogfood epic (#701). HyperAdmin was installed from `develop` and mounted, unmodified, on
+Polar, Langflow, Mealie and Open WebUI. Results, timings and known limits are in
+[`docs/compatibility.md`](../../../../docs/compatibility.md). The blocking gaps were filed and fixed as
+#715, #716, #718 and #719. Closed by the owner on 2026-11-07.
 
 ## Summary
 
@@ -38,9 +45,9 @@ Scenario: dogfood-0 gap log is filed
 
 ## Acceptance Criteria
 
-- [ ] Gap log recorded, with the elapsed time
-- [ ] Blocking gaps filed as stories and linked from the epic
-- [ ] No downstream project names are written into the repository
+- [x] Gap log recorded, with the elapsed time
+- [x] Blocking gaps filed as stories and linked from the epic
+- [x] No downstream project names are written into the repository
 
 ## Blocked by
 

@@ -2,9 +2,9 @@
 type: milestone
 id: v058-byoa-01
 title: "v0.5.8 — Bring Your Own App (dogfood-1)"
-status: in_progress
+status: done
 created_at: 2026-09-28T00:00:00Z
-updated_at: 2026-09-28T00:00:00Z
+updated_at: 2026-11-07T00:00:00Z
 ---
 
 **Roadmap position 1/16 (2026-09-28 re-cut).** NEW, top priority. Adoption is gated on one thing: can HyperAdmin be added to an *existing* FastAPI app in 10 minutes without taking it over?
