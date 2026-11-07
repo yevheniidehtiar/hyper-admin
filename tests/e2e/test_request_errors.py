@@ -82,3 +82,22 @@ def test_network_failure_on_save_is_visible(page: Page, base_url_: str) -> None:
     # Then an alert says the server could not be reached and the edits are kept
     expect(page.get_by_role("alert").filter(has_text="Could not reach the server")).to_be_visible()
     expect(field).to_have_value("Edited Corp")
+
+
+def test_failed_read_request_does_not_claim_a_save_failed(page: Page, base_url_: str) -> None:
+    """
+    Scenario: failed read request is not reported as a failed save
+      Given the server answers an HTMX GET with HTTP 500
+      When  the page issues that GET
+      Then  no "Not saved" alert is shown
+    """
+    # Given the server answers an HTMX GET with HTTP 500
+    _open_edit(page, base_url_)
+    page.route("**/admin/order/42/probe", lambda route: route.fulfill(status=500, body="boom"))
+
+    # When the page issues that GET
+    page.evaluate("htmx.ajax('GET', '/admin/order/42/probe', {target: 'body', swap: 'none'})")
+    page.wait_for_timeout(300)
+
+    # Then no "Not saved" alert is shown
+    expect(page.get_by_test_id("request-error-toast")).to_have_count(0)

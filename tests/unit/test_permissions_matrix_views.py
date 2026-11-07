@@ -379,6 +379,24 @@ async def test_empty_state_hides_create_group_when_the_group_admin_is_absent(eng
         response = await client.get(MATRIX, headers=HTML)
 
     assert 'data-testid="pmatrix-empty"' in response.text
+    assert 'data-testid="pmatrix-create-group"' not in response.text
+
+
+async def test_stale_group_id_with_no_groups_keeps_the_create_group_button(engine):
+    """
+    Scenario: stale group id with no groups
+      Given no groups exist
+      When  a superuser opens the matrix with a group_id that no longer exists
+      Then  the response is 404 and the empty state still offers "Create group"
+    """
+    await PermissionSyncService(engine=engine).sync_permissions(REGISTERED)
+    await _user(engine, "super", superuser=True)
+    _admin, app = _build(engine)
+    async with _client(app, "super") as client:
+        response = await client.get(MATRIX + "?group_id=99", headers=HTML)
+
+    assert response.status_code == 404
+    assert 'data-testid="pmatrix-create-group"' in response.text
 
 
 async def test_empty_admin_registry_renders_the_no_models_notice(engine):
