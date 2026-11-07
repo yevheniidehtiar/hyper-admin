@@ -3,15 +3,25 @@
 {%- block title -%}ERP Dashboard{%- endblock -%}
 
 {%- block content -%}
+    <div class="ha-page-header">
+        <h1 class="ha-page-title">{{ _('What needs attention') }}</h1>
+    </div>
+
+    {# ── Figures: loaded after the page, so a slow ledger never blocks the home page ── #}
+    <div class="ha-mb-4" hx-get="{{ admin_prefix }}/erp/dashboard-figures" hx-trigger="load" hx-swap="innerHTML"
+         data-testid="dashboard-figures-region" aria-live="polite">
+        <p class="ha-text-muted">{{ _('Loading figures…') }}</p>
+    </div>
+
     <div class="ha-card ha-mb-4">
         <div class="ha-card-header">
-            <h1 class="ha-card-title">Welcome to the ERP Administration</h1>
+            <h2 class="ha-card-title">Welcome to the ERP Administration</h2>
         </div>
         <div class="ha-card-body">
             <p class="ha-text-muted">You are logged into the Bookkeeping ERP system. Use the sidebar to manage your accounts or access custom reports below.</p>
             <div class="ha-mt-4">
                 <a href="{{ admin_prefix }}/erp/profit-loss" class="ha-btn ha-btn-primary">
-                    <i class="ha-icon-chart"></i> View Annual Profit & Loss
+                    <i class="ha-icon-chart"></i> View Profit & Loss
                 </a>
             </div>
         </div>
