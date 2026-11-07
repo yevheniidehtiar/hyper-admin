@@ -22,6 +22,9 @@
                 </th>
                 {%- endif -%}
                 {%- for field in fields -%}
+                    {%- set ns = namespace(col_numeric=false) -%}
+                    {%- for row in items -%}{%- if not ns.col_numeric and row[field] is ha_decimal -%}{%- set ns.col_numeric = true -%}{%- endif -%}{%- endfor -%}
+                    {%- set col_numeric = ns.col_numeric -%}
                     {%- include "components/sortable_header.html" -%}
                 {%- endfor -%}
                 {%- if rows.end_cell -%}

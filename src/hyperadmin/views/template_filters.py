@@ -24,11 +24,14 @@ import re
 from collections.abc import Mapping
 from datetime import datetime, tzinfo
 from datetime import timezone as dt_timezone
+from decimal import Decimal
 from enum import Enum
 from hashlib import blake2b
 from typing import TYPE_CHECKING, Any
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
+from babel import Locale, UnknownLocaleError
+from babel.numbers import format_currency, format_decimal
 from jinja2 import pass_context
 from markupsafe import Markup
 
@@ -173,6 +176,92 @@ def ha_display(ctx: Context, value: Any) -> Any:
     return value
 
 
+def is_ha_decimal(value: Any) -> bool:
+    """Jinja test ``ha_decimal``: True for a ``float`` or ``Decimal`` (never a ``bool``).
+
+    List tables use it to right-align a column and format it with :func:`ha_number`.
+    """
+    return isinstance(value, float | Decimal)
+
+
+_MAX_FRACTION_DIGITS = 6
+
+
+def _resolve_locale(ctx: Context) -> Locale:
+    """Return the request locale (``request.state.locale``), ``en`` when unknown."""
+    code = getattr(getattr(ctx.get("request"), "state", None), "locale", None) or "en"
+    try:
+        return Locale.parse(str(code), sep="_")
+    except (UnknownLocaleError, ValueError):
+        return Locale("en")
+
+
+@pass_context
+def ha_number(ctx: Context, value: Any, currency: str | None = None) -> Any:
+    """Format a ``float`` or ``Decimal`` with locale grouping and at least two decimals.
+
+    ``3013.3`` reads ``3,013.30`` in ``en`` and ``3.013,30`` in ``de``. A value
+    with more precision keeps it (up to six places). Pass an ISO 4217 ``currency``
+    code to format as money (``$3,013.30``). Anything that is not a float or
+    Decimal, and a non-finite number, passes through unchanged.
+    """
+    if not is_ha_decimal(value):
+        return value
+    # Round float noise (450842.68000000005) away before measuring the precision.
+    number = Decimal(str(round(value, _MAX_FRACTION_DIGITS) if isinstance(value, float) else value))
+    if not number.is_finite():
+        return value
+    locale = _resolve_locale(ctx)
+    places = min(max(2, -int(number.normalize().as_tuple().exponent)), _MAX_FRACTION_DIGITS)  # type: ignore[call-overload]  # exponent is an int once is_finite()
+    if currency:
+        return format_currency(number, currency, locale=locale)
+    return format_decimal(number, format="#,##0." + "0" * places, locale=locale)
+
+
+#: Pill tone by lower-cased enum member name, for enums that declare no ``__ha_tones__``.
+_DEFAULT_PILL_TONES: dict[str, str] = {
+    "paid": "success",
+    "active": "success",
+    "done": "success",
+    "complete": "success",
+    "completed": "success",
+    "approved": "success",
+    "sent": "info",
+    "open": "info",
+    "in_progress": "info",
+    "pending": "warning",
+    "on_hold": "warning",
+    "overdue": "danger",
+    "cancelled": "danger",
+    "canceled": "danger",
+    "failed": "danger",
+    "rejected": "danger",
+}
+
+
+def ha_pill(value: Any, row: Any = None) -> tuple[str, str] | None:
+    """Return ``(label, tone)`` for an enum member shown as a status pill, else ``None``.
+
+    The tone comes from the enum class's ``__ha_tones__`` mapping (member name to
+    a pill kind such as ``success``, ``warning``, ``danger``, ``info`` or ``""`` for
+    neutral), then from a built-in table keyed on the member name. A mapping value may
+    also be a callable taking the list ``row``; it returns a tone, or a
+    ``(label, tone)`` pair to replace the label as well (an invoice that is Sent
+    but past its due date reads "Overdue"). The label is always shown, so colour
+    is never the only signal.
+    """
+    if not isinstance(value, Enum):
+        return None
+    label = get_enum_label(value)
+    tones = getattr(type(value), "__ha_tones__", {})
+    tone: Any = tones.get(value.name, _DEFAULT_PILL_TONES.get(value.name.lower(), ""))
+    if callable(tone):
+        tone = tone(row)
+    if isinstance(tone, tuple):
+        return str(tone[0]), str(tone[1])
+    return label, str(tone)
+
+
 def register_template_filters(
     env: Environment,
     *,
@@ -194,4 +283,7 @@ def register_template_filters(
     env.filters["ha_dom_token"] = ha_dom_token
     env.filters["ha_datetime_input"] = ha_datetime_input
     env.filters["ha_display"] = ha_display
+    env.filters["ha_number"] = ha_number
+    env.filters["ha_pill"] = ha_pill
+    env.tests["ha_decimal"] = is_ha_decimal
     env.globals["ha_timezone_name"] = ha_timezone_name
