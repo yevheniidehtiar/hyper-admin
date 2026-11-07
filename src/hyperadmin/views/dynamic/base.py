@@ -115,7 +115,7 @@ class DynamicModelViewBase:
         admin = self._admin_instance
         singular = humanize_class_name(model.__name__)
         plural = pluralize(singular)
-        if admin is not None:
+        if admin is not None and hasattr(admin, "get_verbose_name"):
             declared = str(admin.get_verbose_name(model))
             if declared != model.__name__:
                 singular = declared
