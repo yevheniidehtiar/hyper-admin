@@ -47,6 +47,7 @@ services:
     cpus: ${APP_CPUS:-1}
     environment:
       HYPERADMIN_SECRET_KEY: loadtest-secret-key
+      HYPERADMIN_USER_CACHE_TTL: 5
       DEMO_REALTIME: ${DEMO_REALTIME:-0}
       # Passed through only when set: an empty REDIS_URL would select the Redis backend.
       DATABASE_URL:

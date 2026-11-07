@@ -403,6 +403,17 @@ The admin is mounted as a private sub-application:
   token. A custom template with a raw `<form method="post">` needs
   `{{ csrf_input() }}` inside the form; your own JavaScript can read the token
   from `<meta name="csrf-token">` and send it as `X-CSRF-Token`.
+- **User cache and staleness.** `HYPERADMIN_USER_CACHE_TTL` (seconds, default `0`
+  = off) keeps the signed-in user and its permission set in memory, per worker and
+  per session user id, so a request skips two database round trips. A write to a
+  user, group or permission on the same worker drops the affected entries at
+  commit. Other workers are not told: with N workers, one can keep serving the old
+  user or permission set for up to the TTL after you deactivate an account or
+  revoke a permission on another. A deactivated or deleted user is locked out at
+  the latest when its entry expires. Keep the TTL at a few seconds, or leave it
+  `0` when you need a revocation to take effect on every worker immediately.
+  Bulk `UPDATE` statements that bypass the ORM unit of work do not invalidate the
+  cache; they take effect after the TTL.
 
 ## 9. Testing your app
 
