@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Any
 
 # FastAPI itself imports ``get_route_path`` from here (see core/lifecycle.py).
 from starlette._utils import get_route_path
-from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoint
+from starlette.requests import Request
 from starlette.responses import RedirectResponse, Response
 
 from hyperadmin.auth.bridge import default_display_name
@@ -21,11 +21,11 @@ from hyperadmin.auth.otp import PARTIAL_AUTH_SESSION_KEY
 if TYPE_CHECKING:
     from collections.abc import Callable
 
-    from starlette.requests import Request
+    from starlette.types import Receive, Scope, Send
 
 
-class AuthenticationMiddleware(BaseHTTPMiddleware):
-    """Starlette middleware that enforces authentication on admin routes."""
+class AuthenticationMiddleware:
+    """Plain ASGI middleware that enforces authentication on admin routes."""
 
     # Paths that don't require authentication (relative to admin prefix)
     PUBLIC_SUFFIXES = ("/login", "/login/")
@@ -66,7 +66,7 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
                 without it, the sub-app ``root_path`` (isolated) or the static
                 ``admin_prefix`` (router mode) is used.
         """
-        super().__init__(app)
+        self.app = app
         self.auth_backend = auth_backend
         self.admin_prefix = admin_prefix.rstrip("/")
         self.permission_checker = permission_checker
@@ -95,22 +95,37 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
             return request.scope.get("root_path", "")
         return self.admin_prefix
 
-    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+        response = await self._authenticate(Request(scope, receive))
+        if response is not None:
+            await response(scope, receive, send)
+            return
+        await self.app(scope, receive, send)
+
+    async def _authenticate(self, request: Request) -> Response | None:
+        """Run the auth gate; return a short-circuit response, or ``None`` to pass through.
+
+        ``request.state`` writes land in ``scope["state"]``, which the inner app's
+        ``Request.state`` reads.
+        """
         # Only enforce auth on admin routes
         relative = self._relative_admin_path(request)
         if relative is None:
-            return await call_next(request)
+            return None
 
         # Allow public paths (login page, static assets)
         if any(
             relative == suffix or relative.startswith(suffix) for suffix in self.PUBLIC_SUFFIXES
         ):
             request.state.user = None
-            return await call_next(request)
+            return None
 
         # Allow static assets
         if relative.startswith("/static"):
-            return await call_next(request)
+            return None
 
         # MFA endpoints are reachable in BOTH partial-auth and full-auth states.
         # Partial-auth: the user is resolving the challenge.
@@ -130,7 +145,7 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
             # redirect to login as before. Either way, MFA routes themselves
             # remain reachable so the user has a way out.
             if on_mfa_route:
-                return await call_next(request)
+                return None
             if _has_partial_auth(request):
                 challenge_url = f"{self._admin_path(request)}/mfa/challenge"
                 return RedirectResponse(url=challenge_url, status_code=302)
@@ -146,7 +161,7 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
         request.state.user_key = user.id
         request.state.user_display = default_display_name(user)
         request.state.user_permissions = await self._user_permissions(user)
-        return await call_next(request)
+        return None
 
     async def _user_permissions(self, user: Any) -> frozenset[str] | None:
         """Load the user's permission codenames once per request (the sidebar reads them).
