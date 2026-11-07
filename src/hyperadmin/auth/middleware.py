@@ -97,9 +97,12 @@ class AuthenticationMiddleware:
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http":
+            # Websocket scopes skip the gate: realtime/ws.py authenticates itself.
             await self.app(scope, receive, send)
             return
-        response = await self._authenticate(Request(scope, receive))
+        # Built without ``receive``: ``get_current_user`` must not read the body, or the
+        # inner app would see a drained stream. A body read raises instead of consuming it.
+        response = await self._authenticate(Request(scope))
         if response is not None:
             await response(scope, receive, send)
             return

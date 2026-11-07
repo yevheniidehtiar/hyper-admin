@@ -130,6 +130,8 @@ class LocaleMiddleware:
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http":
+            # Websocket and lifespan scopes skip this on purpose: realtime/ws.py
+            # authenticates itself and must not depend on locale state.
             await self.app(scope, receive, send)
             return
         request = Request(scope)
@@ -146,6 +148,8 @@ class LocaleMiddleware:
 
         async def send_with_header(message: Message) -> None:
             if message["type"] == "http.response.start" and self.settings.locale_response_header:
+                # ASGI makes ``headers`` optional on the start message.
+                message.setdefault("headers", [])
                 MutableHeaders(scope=message)["Content-Language"] = locale
             await send(message)
 
