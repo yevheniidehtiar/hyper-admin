@@ -504,6 +504,66 @@ input[type="file"].ha-input {
 }
 
 /* ==========================================================================
+   Single-value combobox (st-ux-erp-12)
+   autocomplete.js adds .ha-autocomplete--combobox to a single-value widget:
+   the search input becomes the one visible control (ARIA combobox) and the
+   native <select> keeps carrying the value, visually hidden while closed and
+   shown as the listbox popup while .is-open. Without JS the select stays
+   visible beside the search input.
+   ========================================================================== */
+
+.ha-autocomplete--combobox {
+  position: relative;
+  row-gap: 0;
+}
+
+.ha-autocomplete--combobox > .ha-autocomplete__select {
+  position: absolute;
+  inline-size: 1px;
+  block-size: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ha-autocomplete--combobox.is-open > .ha-autocomplete__select {
+  inset-inline-start: 0;
+  inset-block-start: calc(var(--ha-ctl-h) + var(--ha-space-1));
+  inline-size: 100%;
+  block-size: auto;
+  max-block-size: 16rem;
+  overflow: auto;
+  clip-path: none;
+  opacity: 1;
+  pointer-events: auto;
+  z-index: var(--ha-z-popover);
+  padding: var(--ha-space-1);
+  background: var(--ha-surface-overlay);
+  border: var(--ha-border-width) solid var(--ha-color-border-light);
+  border-radius: var(--ha-radius-lg);
+  box-shadow: var(--ha-shadow-lg);
+}
+
+.ha-autocomplete--combobox > .ha-autocomplete__select option[value=""] {
+  display: none;
+}
+
+.ha-autocomplete--combobox > .ha-autocomplete__select option {
+  padding: var(--ha-space-2) var(--ha-space-3);
+  border-radius: var(--ha-radius-sm);
+}
+
+.ha-autocomplete--combobox > .ha-autocomplete__select option[data-ha-active],
+.ha-autocomplete--combobox > .ha-autocomplete__select option:hover {
+  background: var(--ha-surface-hover);
+}
+
+.ha-autocomplete--combobox > .ha-autocomplete__select option:checked {
+  font-weight: 600;
+}
+
+/* ==========================================================================
    Dialog (design system) — the popup create form opens in one. Width is
    set by its host (#ha-popup-root gives the popup form 640px).
    ========================================================================== */

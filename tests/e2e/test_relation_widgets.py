@@ -23,7 +23,7 @@ def test_city_create_form_preloaded_country_options_present(page: Page, demo_bas
     """In preload mode the country options are present in the HTML before any interaction."""
     page.goto(demo_base_url + "/admin/city/create")
 
-    country_select = page.get_by_role("combobox", name=re.compile(r"country", re.IGNORECASE))
+    country_select = page.get_by_test_id("autocomplete-select-country_id")
     expect(country_select).to_be_visible()
 
     # Options must be present without any JS interaction (preload baked in)
@@ -41,7 +41,7 @@ def test_city_create_form_submit_redirects_to_detail(page: Page, demo_base_url: 
 
     page.get_by_label("Name").fill("Bristol")
 
-    country_select = page.get_by_role("combobox", name=re.compile(r"country", re.IGNORECASE))
+    country_select = page.get_by_test_id("autocomplete-select-country_id")
     # Select United Kingdom
     country_select.select_option(label="United Kingdom")
 
@@ -60,7 +60,7 @@ def test_city_update_form_preselects_current_country(page: Page, demo_base_url: 
     expect(page).to_have_url(re.compile(r"/edit$"))
     expect(page.get_by_test_id("model-form")).to_be_visible()
 
-    country_select = page.get_by_role("combobox", name=re.compile(r"country", re.IGNORECASE))
+    country_select = page.get_by_test_id("autocomplete-select-country_id")
     # The currently selected option should be non-empty (UK for London)
     selected = country_select.evaluate("el => el.options[el.selectedIndex].text")
     assert selected != "---------"

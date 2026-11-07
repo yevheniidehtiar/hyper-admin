@@ -137,6 +137,12 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
   `gettext_lazy` strings, which picks up the "Plugins" and "Access" sidebar groups.
 
 ### Fixed
+- A foreign-key field keeps its stored value on the edit form even when the related row
+  falls outside the 50 preloaded options (st-ux-erp-02, #1023); before, the select showed
+  `---------` and saving failed with "Input should be a valid integer".
+- A single-value FK field is now one ARIA combobox instead of a search box plus a select
+  (st-ux-erp-12, #1024): the input shows the chosen label with the placeholder
+  "Choose a customer…" and lists the options in a popup, operable by keyboard.
 - Inline formsets label the model in words and in the request locale: "Add invoice item"
   and a default title of "Invoice items", instead of "Add InvoiceItem" and "InvoiceItems";
   the "Actions" column header is translated too.
