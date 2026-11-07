@@ -96,3 +96,25 @@ def test_fk_labels_have_no_id_suffix(page: Page, erp_base_url: str) -> None:
     # Then the customer field is labelled "Customer", not "Customer id"
     expect(page.get_by_text("Customer id")).to_have_count(0)
     expect(page.get_by_label("Customer", exact=False).first).to_be_visible()
+
+
+def test_invoice_create_saves_with_one_line_item(page: Page, erp_base_url: str) -> None:
+    # Given the create form filled with number, dates, customer and one item
+    _erp_login(page, erp_base_url)
+    page.goto(erp_base_url + "/admin/invoice/create")
+    page.get_by_label("Number").fill("INV-NEW-1")
+    page.get_by_label("Date issued").fill("2026-01-05")
+    page.get_by_label("Date due").fill("2026-02-05")
+    page.get_by_test_id("autocomplete-select-customer_id").select_option(index=1)
+    page.get_by_label("Description").first.fill("Consulting")
+    page.get_by_label("Quantity").first.fill("2")
+    page.get_by_label("Unit price").first.fill("50")
+
+    # When the user clicks Create
+    with page.expect_response(lambda r: r.request.method == "POST") as saved:
+        page.get_by_role("button", name="Create", exact=True).click()
+
+    # Then the invoice appears in the list
+    assert saved.value.status < 400
+    page.goto(erp_base_url + "/admin/invoice?search=INV-NEW-1")
+    expect(page.get_by_role("link", name="INV-NEW-1").first).to_be_visible()
