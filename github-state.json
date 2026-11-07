@@ -1,6 +1,6 @@
 {
   "repo": "yevheniidehtiar/hyper-admin",
-  "last_sync": "2026-11-07T07:52:03.693Z",
+  "last_sync": "2026-11-07T12:22:46.351Z",
   "entities": {
     "dqmi_70iAUbv": {
       "local_hash": "sha256:0c241e5668b04857314c6bf866015a7d5715e683844b27f32c24f0fe99ce1743",
@@ -3811,9 +3811,10 @@
     },
     "st-perf-01": {
       "github_issue_number": 1004,
-      "local_hash": "sha256:cc884fbdac35327520b5133f00dc4437a36a1fa11ebe031c978105f98d3d89f2",
-      "remote_hash": "sha256:cc884fbdac35327520b5133f00dc4437a36a1fa11ebe031c978105f98d3d89f2",
-      "synced_at": "2026-11-07T07:49:27.195Z"
+      "local_hash": "sha256:124fabb73172819442e79f8700ed3c7e0fd579fd6d71973d6d5bf1522387d482",
+      "remote_hash": "sha256:124fabb73172819442e79f8700ed3c7e0fd579fd6d71973d6d5bf1522387d482",
+      "synced_at": "2026-11-07T12:22:45.520Z",
+      "closed_on_remote": true
     },
     "st-perf-03": {
       "github_issue_number": 1005,
@@ -3823,9 +3824,10 @@
     },
     "st-perf-02": {
       "github_issue_number": 1006,
-      "local_hash": "sha256:166994a658b4b4871668180b1aa9455a5047357b58c28777770ffdbedc1f1941",
-      "remote_hash": "sha256:166994a658b4b4871668180b1aa9455a5047357b58c28777770ffdbedc1f1941",
-      "synced_at": "2026-11-07T07:49:27.948Z"
+      "local_hash": "sha256:9a8e710e2d18510cf8886241c99277e5edfd3bdc68ca48270ea2bcf1fbd6bc4c",
+      "remote_hash": "sha256:9a8e710e2d18510cf8886241c99277e5edfd3bdc68ca48270ea2bcf1fbd6bc4c",
+      "synced_at": "2026-11-07T12:22:46.336Z",
+      "closed_on_remote": true
     },
     "ep-ux-erp-01": {
       "github_issue_number": 1007,
