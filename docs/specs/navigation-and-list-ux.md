@@ -7,7 +7,7 @@
 | Issue | — (stories in `.meta/epics/epic-v059-*`) |
 | Milestone | v0.5.9 — Navigation & List UX |
 | Created | 2026-11-01 |
-| Last updated | 2026-11-03 |
+| Last updated | 2026-11-07 |
 
 ---
 
@@ -479,3 +479,9 @@ These are added to the CLAUDE.md reference table by the story that introduces th
 | Pin limit 20 by default, configurable as `HyperAdminSettings.nav_pins_max` | Owner decision (2026-11-01). A scalar, so it belongs in settings (env `HYPERADMIN_NAV_PINS_MAX`) | Hard-coded `MAX_PINS` constant |
 | No "Create …" in the palette's empty state | Owner decision (2026-11-01): not now | First option on list pages |
 | Shortcut registry with an off switch for single keys | WCAG 2.1.4; one place for the palette, forms and lists | Per-feature key handlers (current `_base.html` handler) |
+| Detail row target needs no `view_<model>` check (#981) | The list page already requires it | A second permission lookup per page |
+| Links appended to `nav_items` after `mount()` render in the unnamed top group (#987) | Hosts that added links that way keep them in the grouped sidebar | Dropping them, since `nav_tree` replaces `nav_items` for rendering |
+| Built-in User, Group and Permission join the "Access" group with icons (#992) | The nav-01 scenario puts Users next to the permission matrix; the unnamed top group was the wrong default | Leaving them ungrouped until the host registers its own admin classes |
+| `mod+/` always opens the shortcuts overlay (#991) | With single keys off, `?` no longer works, so a way back is needed (WCAG 2.1.4) | Only `?` |
+| Deleting from a dirty edit page asks once, in the delete dialog (#991) | Two stacked prompts for one action | Leave prompt, then delete dialog |
+| New strings ship as fuzzy machine drafts except `uk` (#998) | The i18n spec keeps machine drafts out of compiled catalogs until a native speaker reviews them | Activating all 20 locales at once |
