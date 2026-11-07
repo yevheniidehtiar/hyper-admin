@@ -162,8 +162,8 @@ class HyperAdminSettings(BaseSettings):
     #: Seconds the authenticated user and its permission set are cached per worker,
     #: keyed by session user id (``0`` = off: loaded on every request). Writes on the
     #: same worker invalidate the entry; other workers may serve a stale user for up
-    #: to this many seconds.
-    user_cache_ttl: int = Field(default=0, ge=0)
+    #: to this many seconds, so the value is capped at one minute.
+    user_cache_ttl: int = Field(default=0, ge=0, le=60)
 
     # ── Discovery ─────────────────────────────────────────────────────────────
     auto_discover: bool = False

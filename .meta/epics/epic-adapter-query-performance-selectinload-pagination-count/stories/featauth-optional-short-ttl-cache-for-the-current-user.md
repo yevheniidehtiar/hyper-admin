@@ -22,9 +22,9 @@ Add `user_cache_ttl` (seconds, default 0 = off). When set, `AuthenticationMiddle
 
 ## Files to Change
 
-- **Modified:** `src/hyperadmin/core/settings.py`, `src/hyperadmin/auth/middleware.py`, `src/hyperadmin/auth/permissions.py`
-- **Modified:** `docs/` security notes, `docker-compose.loadtest-matrix.yml` (enable at 5 s)
-- **New:** `tests/unit/test_user_cache.py`
+- **Modified:** `src/hyperadmin/core/settings.py`, `src/hyperadmin/core/app.py`, `src/hyperadmin/auth/middleware.py`
+- **Modified:** `docs/guides/existing-app.md`, `docs/api/application.md`, `docker-compose.loadtest-matrix.yml` (enable at 5 s)
+- **New:** `src/hyperadmin/auth/user_cache.py` (cache and write-path invalidation), `tests/unit/test_user_cache.py`
 
 ## Scenarios
 

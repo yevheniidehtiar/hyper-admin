@@ -8,6 +8,7 @@ for any admin route other than the MFA endpoints themselves.
 
 from __future__ import annotations
 
+import logging
 import time
 from typing import TYPE_CHECKING, Any
 
@@ -18,12 +19,29 @@ from starlette.responses import RedirectResponse, Response
 
 from hyperadmin.auth.bridge import default_display_name
 from hyperadmin.auth.otp import PARTIAL_AUTH_SESSION_KEY
-from hyperadmin.auth.user_cache import CachedUser, UserCache
+from hyperadmin.auth.user_cache import CachedUser, UserCache, clone_user
 
 if TYPE_CHECKING:
     from collections.abc import Callable
 
     from starlette.types import Receive, Scope, Send
+
+
+logger = logging.getLogger(__name__)
+
+
+def _cache_supported(auth_backend: Any, permission_checker: Any) -> bool:
+    """Return True when the user cache can be invalidated for these collaborators.
+
+    Invalidation watches the built-in auth tables only, so a custom backend or checker
+    (tenant roles, token versions, session revocation) would be served stale on every hit.
+    """
+    from hyperadmin.auth.permissions import ModelPermissionChecker  # noqa: PLC0415
+    from hyperadmin.auth.session import SessionAuthBackend  # noqa: PLC0415
+
+    return type(auth_backend) is SessionAuthBackend and (
+        permission_checker is None or type(permission_checker) is ModelPermissionChecker
+    )
 
 
 class AuthenticationMiddleware:
@@ -71,6 +89,9 @@ class AuthenticationMiddleware:
                 ``admin_prefix`` (router mode) is used.
             user_cache_ttl: Seconds to cache the user and permission set per session
                 user id in this worker; ``0`` (default) loads them on every request.
+                Honoured only with the built-in ``SessionAuthBackend`` and
+                ``ModelPermissionChecker`` (or no checker); otherwise it is ignored
+                with a warning, since only their tables invalidate the cache.
             clock: Monotonic clock of the cache (injectable for tests).
         """
         self.app = app
@@ -79,7 +100,15 @@ class AuthenticationMiddleware:
         self.permission_checker = permission_checker
         self.isolated = isolated
         self._admin_path_for = admin_path
-        self._user_cache = UserCache(user_cache_ttl, clock=clock) if user_cache_ttl > 0 else None
+        self._user_cache: UserCache | None = None
+        if user_cache_ttl > 0:
+            if _cache_supported(auth_backend, permission_checker):
+                self._user_cache = UserCache(user_cache_ttl, clock=clock)
+            else:
+                logger.warning(
+                    "user_cache_ttl is ignored: the user cache supports only the built-in "
+                    "SessionAuthBackend and ModelPermissionChecker."
+                )
 
     def _relative_admin_path(self, request: Request) -> str | None:
         """Return the path below the admin prefix, or ``None`` for a host request.
@@ -145,6 +174,7 @@ class AuthenticationMiddleware:
         on_mfa_route = relative.startswith(self.MFA_PREFIX)
 
         # Check authentication
+        generation = self._user_cache.generation if self._user_cache is not None else 0
         user, cached = await self._resolve_user(request)
         if user is None:
             # API endpoints reject with 401 — long-lived clients (EventSource,
@@ -171,33 +201,43 @@ class AuthenticationMiddleware:
         # so realtime and templates read one contract in both auth modes.
         request.state.user_key = user.id
         request.state.user_display = default_display_name(user)
-        request.state.user_permissions = await self._permissions_for(request, user, cached)
+        request.state.user_permissions = await self._permissions_for(
+            request, user, cached, generation
+        )
         return None
 
     async def _resolve_user(self, request: Request) -> tuple[Any, CachedUser | None]:
-        """Return the current user and the cache entry it came from, if any."""
+        """Return the current user and the cache entry it came from, if any.
+
+        A cache hit yields a private copy of the cached user, never the shared snapshot.
+        """
         key = self._cache_key(request)
         if key is not None and self._user_cache is not None:
             cached = self._user_cache.get(key)
             if cached is not None:
-                return cached.user, cached
+                return clone_user(cached.user), cached
         user = await self.auth_backend.get_current_user(request)
-        if key is not None and getattr(user, "is_active", True) is False:
-            # Only reachable with the cache on: a deactivated user is locked out
-            # at the latest when its entry expires.
+        if getattr(user, "is_active", True) is False:
+            # A deactivated user never gets in, with or without the cache.
             return None, None
         return user, None
 
     async def _permissions_for(
-        self, request: Request, user: Any, cached: CachedUser | None
+        self, request: Request, user: Any, cached: CachedUser | None, generation: int
     ) -> frozenset[str] | None:
-        """Return the permission set, loading and caching it unless the entry was a hit."""
+        """Return the permission set, loading and caching it unless the entry was a hit.
+
+        ``generation`` was read before the user was loaded; the cache drops the fill when a
+        write invalidated it in between.
+        """
         if cached is not None:
             return cached.permissions
         permissions = await self._user_permissions(user)
         key = self._cache_key(request)
         if key is not None and self._user_cache is not None:
-            self._user_cache.set(key, CachedUser(user, permissions))
+            snapshot = clone_user(user)
+            if snapshot is not None:
+                self._user_cache.set(key, CachedUser(snapshot, permissions), generation)
         return permissions
 
     def _cache_key(self, request: Request) -> Any:
