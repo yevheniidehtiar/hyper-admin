@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-06 19:09+0100\n"
+"POT-Creation-Date: 2026-11-07 09:09+0100\n"
 "PO-Revision-Date: 2026-05-05 12:00+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: hi\n"
@@ -530,7 +530,7 @@ msgid "Sidebar"
 msgstr "साइडबार"
 
 #: src/hyperadmin/templates/base.html:12
-#: src/hyperadmin/templates/create.html:36
+#: src/hyperadmin/templates/create.html:37
 #, fuzzy
 msgid "Create"
 msgstr "बनाएँ"
@@ -551,8 +551,8 @@ msgstr "%(model_name)s बनाएँ"
 #: src/hyperadmin/templates/components/confirm_delete_dialog.html:23
 #: src/hyperadmin/templates/components/saved_views.html:24
 #: src/hyperadmin/templates/components/saved_views.html:49
-#: src/hyperadmin/templates/create.html:39
-#: src/hyperadmin/templates/update.html:53
+#: src/hyperadmin/templates/create.html:40
+#: src/hyperadmin/templates/update.html:54
 #: src/hyperadmin/templates/widgets/popup_form.html:59
 #, fuzzy
 msgid "Cancel"
@@ -567,7 +567,7 @@ msgstr "संपादित करें"
 #: src/hyperadmin/templates/components/table_body.html:57
 #: src/hyperadmin/templates/detail.html:22
 #: src/hyperadmin/templates/permissions/_macros.html:20
-#: src/hyperadmin/templates/update.html:59
+#: src/hyperadmin/templates/update.html:60
 #, fuzzy
 msgid "Delete"
 msgstr "हटाएँ"
@@ -692,7 +692,7 @@ msgstr "%(item_name)s अपडेट करें"
 msgid "View"
 msgstr "देखें"
 
-#: src/hyperadmin/templates/update.html:50
+#: src/hyperadmin/templates/update.html:51
 #, fuzzy
 msgid "Update"
 msgstr "अपडेट"
@@ -1120,6 +1120,13 @@ msgstr "पृष्ठ फिर से लोड करें, फिर द�
 msgid "Reload page"
 msgstr "पृष्ठ फिर से लोड करें"
 
+#: src/hyperadmin/templates/components/error_summary.html:7
+#, python-format
+msgid "There is a problem with 1 field"
+msgid_plural "There are problems with %(count)s fields"
+msgstr[0] ""
+msgstr[1] ""
+
 #: src/hyperadmin/templates/components/error_toast.html:8
 #, fuzzy
 msgid "Permission denied"
@@ -1167,12 +1174,19 @@ msgstr "सभी साफ़ करें"
 msgid "Apply filters"
 msgstr "फ़िल्टर लागू करें"
 
+#: src/hyperadmin/templates/components/inline_formset.html:15
 #: src/hyperadmin/templates/components/inline_row.html:32
 #: src/hyperadmin/templates/components/table.html:28
 #: src/hyperadmin/templates/components/table_body.html:54
 #, fuzzy
 msgid "Actions"
 msgstr "क्रियाएँ"
+
+#: src/hyperadmin/templates/components/inline_formset.html:31
+#: src/hyperadmin/templates/widgets/popup_form.html:29
+#, fuzzy, python-format
+msgid "Add %(model)s"
+msgstr "%(model)s जोड़ें"
 
 #: src/hyperadmin/templates/components/inline_row.html:45
 #: src/hyperadmin/templates/widgets/image_input.html:104
@@ -1962,11 +1976,6 @@ msgstr "अपलोड विफल — अपना कनेक्शन ज�
 msgid "Selected image preview"
 msgstr "चुनी गई छवि का पूर्वावलोकन"
 
-#: src/hyperadmin/templates/widgets/popup_form.html:29
-#, fuzzy, python-format
-msgid "Add %(model)s"
-msgstr "%(model)s जोड़ें"
-
 #: src/hyperadmin/templates/widgets/popup_form.html:30
 #, fuzzy, python-format
 msgid "Saving selects it in the %(field)s field."
@@ -1985,6 +1994,51 @@ msgstr "अमान्य प्राथमिक कुंजी।"
 #: src/hyperadmin/views/forms.py:55
 #, fuzzy
 msgid "Enter a valid date/time"
+msgstr "मान्य तारीख और समय दर्ज करें"
+
+#: src/hyperadmin/views/forms.py:60
+#, fuzzy
+msgid "This field is required"
+msgstr "यह फ़ील्ड आवश्यक है"
+
+#: src/hyperadmin/views/forms.py:61 src/hyperadmin/views/forms.py:62
+#: src/hyperadmin/views/forms.py:63
+msgid "Enter a whole number"
+msgstr ""
+
+#: src/hyperadmin/views/forms.py:64 src/hyperadmin/views/forms.py:65
+#: src/hyperadmin/views/forms.py:66
+msgid "Enter a number"
+msgstr ""
+
+#: src/hyperadmin/views/forms.py:67
+msgid "Choose yes or no"
+msgstr ""
+
+#: src/hyperadmin/views/forms.py:68 src/hyperadmin/views/forms.py:69
+#: src/hyperadmin/views/forms.py:70
+#, fuzzy
+msgid "Enter a valid date and time"
+msgstr "मान्य तारीख और समय दर्ज करें"
+
+#: src/hyperadmin/views/forms.py:71
+#, fuzzy
+msgid "Enter a valid identifier"
+msgstr "मान्य तारीख और समय दर्ज करें"
+
+#: src/hyperadmin/views/forms.py:72
+#, fuzzy
+msgid "Enter a valid URL"
+msgstr "मान्य तारीख और समय दर्ज करें"
+
+#: src/hyperadmin/views/forms.py:75
+#, fuzzy
+msgid "Enter a date"
+msgstr "मान्य तारीख और समय दर्ज करें"
+
+#: src/hyperadmin/views/forms.py:76
+#, fuzzy
+msgid "Enter a valid date"
 msgstr "मान्य तारीख और समय दर्ज करें"
 
 #: src/hyperadmin/views/nav_pins.py:110

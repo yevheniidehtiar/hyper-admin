@@ -49,3 +49,26 @@ def test_date_field_uses_the_native_date_picker(page: Page, erp_base_url: str) -
     # Then the date inputs have type=date
     expect(page.get_by_label("Date issued")).to_have_attribute("type", "date")
     expect(page.get_by_label("Date due")).to_have_attribute("type", "date")
+
+
+def test_empty_invoice_create_shows_friendly_errors_and_a_focused_summary(
+    page: Page, erp_base_url: str
+) -> None:
+    # Given the invoice create form with Date issued empty
+    _erp_login(page, erp_base_url)
+    page.goto(erp_base_url + "/admin/invoice/create")
+
+    # When the user clicks Create
+    page.get_by_role("button", name="Create", exact=True).click()
+
+    # Then the field says "Enter a date"
+    expect(page.get_by_test_id("date_issued-errors")).to_contain_text("Enter a date")
+    # And an error summary at the top lists the invalid fields and has focus
+    summary = page.get_by_test_id("error-summary")
+    expect(summary).to_be_focused()
+    expect(summary.get_by_role("link", name="Date issued: Enter a date")).to_be_visible()
+    expect(summary).not_to_contain_text("Input should")
+
+    # And following a summary link moves focus to the field
+    summary.get_by_role("link", name="Date issued: Enter a date").click()
+    expect(page.get_by_label("Date issued")).to_be_focused()
