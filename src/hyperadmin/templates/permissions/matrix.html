@@ -230,6 +230,7 @@ function pmatrix() {
     <form method="get" action="{{ url_for('permissions-matrix') }}" class="ha-perm-head" id="pmatrix-group-form"
           hx-get="{{ url_for('permissions-matrix') }}" hx-trigger="change" hx-target="#pmatrix-grid"
           hx-swap="innerHTML" hx-push-url="true">
+        {%- if groups %}
         <div class="ha-field">
             <label for="pmatrix-group" class="ha-label">{{ _("Group") }}</label>
             <select id="pmatrix-group" name="group_id" class="ha-select" data-testid="pmatrix-group-select">
@@ -238,6 +239,7 @@ function pmatrix() {
                 {%- endfor %}
             </select>
         </div>
+        {%- endif %}
         {%- if grid %}
         <p class="ha-perm-head__note" data-testid="pmatrix-group-note">
             {{- icon('info', 'ha-icon--sm') -}}
@@ -261,6 +263,9 @@ function pmatrix() {
                 <span class="ha-empty-glyph">{{ icon('users') }}</span>
                 <h2 class="ha-h3">{{ _("No groups yet") }}</h2>
                 <p class="ha-empty-text">{{ _("Create a group first; its permissions show up here.") }}</p>
+                {%- if create_group_url %}
+                <a href="{{ create_group_url }}" class="ha-btn ha-btn-primary" data-testid="pmatrix-create-group">{{ _("Create group") }}</a>
+                {%- endif %}
             </div>
         </div>
     {%- elif not grid.rows %}
