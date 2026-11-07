@@ -240,12 +240,10 @@ class UpdateViewMixin(RelationViewMixin, InlineViewMixin):
         # (a fresh uuid4) that validation filled in. Auto-now fields are not
         # rendered; validation re-ran their default factory, so writing them
         # would overwrite the stored timestamp on every edit.
+        update_data = instance.model_dump(exclude_none=True, exclude=set(form.auto_now_field_names))
+        update_data.pop(self.pk.attr, None)
+        update_data.update(file_uploads)
         try:
-            update_data = instance.model_dump(
-                exclude_none=True, exclude=set(form.auto_now_field_names)
-            )
-            update_data.pop(self.pk.attr, None)
-            update_data.update(file_uploads)
             await self.adapter.update(pk=pk, data=update_data, **self._occ_kwargs(expected_version))
         except StaleRecordError as exc:
             current = await self.adapter.get(pk=pk)
