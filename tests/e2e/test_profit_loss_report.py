@@ -35,7 +35,7 @@ def test_profit_loss_report_loads(page: Page, erp_base_url: str) -> None:
 
     # Then the report page loads (no redirect to login)
     expect(page).to_have_url(erp_base_url + "/admin/erp/profit-loss")
-    expect(page.get_by_role("heading", name="Annual Profit / Loss Report")).to_be_visible()
+    expect(page.get_by_role("heading", name="Profit & Loss", level=1)).to_be_visible()
 
 
 def test_profit_loss_summary_elements_visible(page: Page, erp_base_url: str) -> None:
