@@ -319,7 +319,8 @@ def test_table_renders_as_stacked_cards_on_mobile(page: Page, demo_base_url: str
     first_row = page.get_by_test_id("list-row").first
     expect(first_row).to_be_visible()
     row_display = first_row.evaluate("el => window.getComputedStyle(el).display")
-    assert row_display == "block"
+    # (the card hierarchy lays the row out as a flex column; never a table-row)
+    assert row_display in {"block", "flex"}
 
 
 def test_table_renders_as_horizontal_table_on_desktop(page: Page, demo_base_url: str) -> None:
