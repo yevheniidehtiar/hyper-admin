@@ -227,3 +227,14 @@
   color: var(--ha-color-text-strong);
   background-color: var(--ha-surface-hover);
 }
+
+/* List-row delete icons are neutral at rest and turn danger on hover or keyboard focus
+   (st-ux-erp-15). The three-class selector beats the always-red rule in _forms.css. */
+.ha-btn.ha-btn--icon.ha-btn--danger-icon {
+  color: var(--ha-color-text-muted);
+}
+
+.ha-btn.ha-btn--icon.ha-btn--danger-icon:hover,
+.ha-btn.ha-btn--icon.ha-btn--danger-icon:focus-visible {
+  color: var(--ha-color-danger-text);
+}
