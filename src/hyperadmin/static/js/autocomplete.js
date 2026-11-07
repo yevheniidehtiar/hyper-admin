@@ -13,6 +13,10 @@
  *    in its help text and `role="status"`, and htmx fetches again;
  *  - the clear button (shown while the input has text) and the status
  *    announcements ("Searching", "3 results", "No results");
+ *  - on a single-value widget the search input becomes the one visible control,
+ *    an ARIA combobox: it shows the chosen label, the native select (still the
+ *    value carrier) turns into the listbox popup, ArrowUp/ArrowDown move the
+ *    active option (aria-activedescendant), Enter picks it, Escape closes;
  *  - the inline-create popup: the "+" button loads the popup into
  *    #ha-popup-root. A successful popup POST answers with an empty body and
  *    `HX-Trigger: {"hyperadminPopupCreated": {"target", "id", "label"}}`;
@@ -86,6 +90,7 @@
   function setWaiting(w, waiting) {
     if (!w.combobox) return;
     w.combobox.classList.toggle("is-waiting", waiting);
+    if (waiting && isCombo(w.widget)) closeList(w);
     if (w.input) w.input.disabled = waiting;
     if (w.add) w.add.disabled = waiting;
     if (w.select) {
@@ -118,10 +123,94 @@
     setStatus(w, template.replace("{count}", String(n)));
   }
 
+
+  // ---- single-value combobox (st-ux-erp-12) ------------------------------
+
+  function isCombo(widget) {
+    return !!widget && widget.classList.contains("ha-autocomplete--combobox");
+  }
+
+  function comboOptions(w) {
+    var out = [];
+    for (var i = 0; i < w.select.options.length; i++) {
+      if (w.select.options[i].value !== "") out.push(w.select.options[i]);
+    }
+    return out;
+  }
+
+  function syncLabel(w) {
+    var chosen = w.select.selectedOptions && w.select.selectedOptions[0];
+    w.input.value = chosen && chosen.value !== "" ? chosen.textContent : "";
+    syncClear(w);
+  }
+
+  function setActive(w, option) {
+    for (var i = 0; i < w.select.options.length; i++) {
+      w.select.options[i].removeAttribute("data-ha-active");
+    }
+    if (option) {
+      if (!option.id) option.id = w.select.id + "-opt-" + option.index;
+      option.setAttribute("data-ha-active", "");
+      w.input.setAttribute("aria-activedescendant", option.id);
+      if (option.scrollIntoView) option.scrollIntoView({ block: "nearest" });
+    } else {
+      w.input.removeAttribute("aria-activedescendant");
+    }
+  }
+
+  function activeOption(w) {
+    return w.select.querySelector("option[data-ha-active]");
+  }
+
+  function sizeList(w) {
+    w.select.size = Math.max(2, Math.min(6, comboOptions(w).length));
+  }
+
+  function openList(w) {
+    if (w.input.disabled || w.widget.classList.contains("is-open")) return;
+    sizeList(w);
+    w.widget.classList.add("is-open");
+    w.input.setAttribute("aria-expanded", "true");
+    w.select.removeAttribute("aria-hidden");
+  }
+
+  function closeList(w) {
+    setActive(w, null);
+    w.widget.classList.remove("is-open");
+    w.input.setAttribute("aria-expanded", "false");
+    w.select.setAttribute("aria-hidden", "true");
+  }
+
+  function choose(w, option) {
+    option.selected = true;
+    w.select.dispatchEvent(new Event("change", { bubbles: true }));
+    w.input.focus();
+  }
+
+  function enhance(w) {
+    if (!w.input || !w.select || w.select.multiple) return;
+    w.widget.classList.add("ha-autocomplete--combobox");
+    w.input.setAttribute("role", "combobox");
+    w.input.setAttribute("aria-autocomplete", "list");
+    w.input.setAttribute("aria-haspopup", "listbox");
+    w.input.setAttribute("aria-expanded", "false");
+    w.select.setAttribute("role", "listbox");
+    w.select.setAttribute("aria-hidden", "true");
+    w.select.setAttribute("tabindex", "-1");
+    sizeList(w);
+    syncLabel(w);
+  }
+
+  function comboOf(node) {
+    var widget = node && node.closest ? node.closest(WIDGET) : null;
+    return isCombo(widget) ? parts(widget) : null;
+  }
+
   function init(widget) {
     if (widget.hasAttribute("data-ha-autocomplete-ready")) return;
     widget.setAttribute("data-ha-autocomplete-ready", "");
     var w = parts(widget);
+    enhance(w);
     syncClear(w);
     if (widget.hasAttribute("data-depends-on")) {
       setWaiting(w, parentValue(widget) === "");
@@ -207,6 +296,7 @@
     var widget = select.closest(WIDGET);
     if (!widget) return;
     announceResults(parts(widget));
+    if (isCombo(widget)) setActive(parts(widget), null);
     var chosen = select.haChosen;
     select.haChosen = null;
     if (select.multiple) return;
@@ -225,6 +315,78 @@
       select.options[0].after(kept);
     } else {
       select.selectedIndex = 0;
+    }
+    if (isCombo(widget)) sizeList(parts(widget));
+  });
+
+
+  // Combobox behaviour: open on focus/click/typing, pick by click or keyboard.
+  document.addEventListener("focusin", function (event) {
+    var w = comboOf(event.target);
+    if (w && event.target === w.input) openList(w);
+  });
+
+  document.addEventListener("focusout", function (event) {
+    var w = comboOf(event.target);
+    if (!w || (event.relatedTarget && w.widget.contains(event.relatedTarget))) return;
+    closeList(w);
+    syncLabel(w);
+  });
+
+  document.addEventListener("click", function (event) {
+    var target = event.target;
+    var w = comboOf(target);
+    if (!w) return;
+    if (target === w.input) {
+      openList(w);
+    } else if (target.tagName === "OPTION" && target.parentNode === w.select) {
+      if (target.value !== "") choose(w, target);
+    }
+  });
+
+  // Keep focus in the input while the pointer works the list.
+  document.addEventListener("mousedown", function (event) {
+    var target = event.target;
+    var w = comboOf(target);
+    if (w && (target === w.select || target.parentNode === w.select)) event.preventDefault();
+  });
+
+  document.addEventListener("input", function (event) {
+    var w = comboOf(event.target);
+    if (w && event.target === w.input) openList(w);
+  });
+
+  // The select is the value carrier: any change (pick, test, popup-created row) refreshes the label.
+  document.addEventListener("change", function (event) {
+    var w = comboOf(event.target);
+    if (!w || event.target !== w.select) return;
+    syncLabel(w);
+    closeList(w);
+  });
+
+  document.addEventListener("keydown", function (event) {
+    var w = comboOf(event.target);
+    if (!w || event.target !== w.input) return;
+    var open = w.widget.classList.contains("is-open");
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      openList(w);
+      var options = comboOptions(w);
+      if (!options.length) return;
+      var at = options.indexOf(activeOption(w));
+      var step = event.key === "ArrowDown" ? 1 : -1;
+      var next = at === -1 ? (step === 1 ? 0 : options.length - 1) : (at + step + options.length) % options.length;
+      setActive(w, options[next]);
+    } else if (event.key === "Enter" && open && activeOption(w)) {
+      event.preventDefault();
+      choose(w, activeOption(w));
+    } else if (event.key === "Escape" && open) {
+      event.preventDefault(); // a type=search input would otherwise clear itself and reopen
+      event.stopPropagation();
+      closeList(w);
+      syncLabel(w);
+    } else if (event.key === "Tab") {
+      closeList(w);
     }
   });
 
@@ -257,6 +419,10 @@
     if (clear) {
       var widget = clear.closest(WIDGET);
       var w = parts(widget);
+      if (isCombo(widget) && w.select.value !== "") {
+        w.select.value = "";
+        w.select.dispatchEvent(new Event("change", { bubbles: true }));
+      }
       if (w.input) {
         w.input.value = "";
         w.input.focus();

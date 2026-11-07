@@ -22,7 +22,8 @@ Registered models:
 
 Seeded rows: suppliers 42 "Acme" (Paris), 43 "Acme Packaging" (Lyon) and
 44 "Brabant Bakkerij" (Tilburg); variants 1 "Blue" (supplier 42) and 2 "Red"
-(supplier 43); brand 1 "Generic".
+(supplier 43); brand 1 "Generic"; contacts 1-60 and invoice 1 whose customer is contact 60
+(past the 50-option preload window).
 """
 
 # No `from __future__ import annotations`: SQLModel resolves `Mapped[...]` relationship
@@ -101,6 +102,31 @@ class Product(SQLModel, table=True):
     brand: Mapped[Brand | None] = Relationship()
 
 
+class Contact(SQLModel, table=True):
+    __tablename__ = "e2e_ac_contact"
+
+    id: int | None = Field(default=None, primary_key=True)
+    name: str = Field(min_length=1)
+
+
+class Invoice(SQLModel, table=True):
+    __tablename__ = "e2e_ac_invoice"
+
+    id: int | None = Field(default=None, primary_key=True)
+    number: str = Field(min_length=1)
+    contact_id: int | None = Field(default=None, foreign_key="e2e_ac_contact.id", title="Customer")
+
+    contact: Mapped[Contact | None] = Relationship()
+
+
+class ContactAdmin(ModelAdmin):
+    adapter_class = SQLModelAdapter
+
+
+class InvoiceAdmin(ModelAdmin):
+    adapter_class = SQLModelAdapter
+
+
 class SupplierAdmin(ModelAdmin):
     adapter_class = SQLModelAdapter
 
@@ -145,6 +171,10 @@ async def _seed() -> None:
                     Brand(id=1, name="Generic"),
                 ]
             )
+        if (await session.execute(select(Contact))).first() is None:
+            # 60 contacts: the invoice's customer (60) is past the 50-option preload window.
+            session.add_all([Contact(id=i, name=f"Contact {i:02d}") for i in range(1, 61)])
+            session.add(Invoice(id=1, number="INV-1", contact_id=60))
         await session.commit()
 
 
@@ -166,6 +196,8 @@ site._registry = {}
 site.register(Supplier, SupplierAdmin)
 site.register(Variant, VariantAdmin)
 site.register(Product, ProductAdmin)
+site.register(Contact, ContactAdmin)
+site.register(Invoice, InvoiceAdmin)
 
 admin = Admin(
     app,

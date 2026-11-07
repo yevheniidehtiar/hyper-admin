@@ -79,7 +79,7 @@ def test_fk_field_renders_autocomplete_widget_by_default(
     expect(search).to_be_visible()
     expect(search).to_have_attribute("type", "search")
     expect(search).to_have_attribute("hx-get", autocomplete_base_url + SUPPLIER_CHOICES)
-    expect(search).to_have_attribute("placeholder", "Search supplier")
+    expect(search).to_have_attribute("placeholder", "Choose a supplier…")
     # And the native select carries the value, preloaded with the seeded suppliers,
     # labelled with the same relation_display template the search results use
     select = page.get_by_test_id("autocomplete-select-supplier_id")

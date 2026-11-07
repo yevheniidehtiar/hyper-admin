@@ -36,7 +36,7 @@ def test_widget_carries_the_combobox_design_markup():
     assert 'class="ha-combobox"' in widget
     assert 'role="status"' in widget
     assert 'aria-describedby="supplier_id-status"' in widget
-    assert 'placeholder="Search supplier id"' in widget
+    assert 'placeholder="Choose a supplier id…"' in widget
     assert 'aria-label="Clear supplier id"' in widget
     # The label points at the search input; the select keeps the field's name.
     assert 'for="supplier_id"' in body

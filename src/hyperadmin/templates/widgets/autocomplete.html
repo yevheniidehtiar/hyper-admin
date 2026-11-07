@@ -21,7 +21,7 @@
     {%- set placeholder = widget.placeholder or _('Choose a %(parent)s first', parent=parent_label) -%}
 {%- else -%}
     {%- set parent_label = '' -%}
-    {%- set placeholder = widget.placeholder or _('Search %(label)s', label=label_lower) -%}
+    {%- set placeholder = widget.placeholder or _('Choose a %(label)s…', label=label_lower) -%}
 {%- endif -%}
 {%- call field_wrapper(field) -%}
 <div class="ha-autocomplete{%- if widget.multiple %} ha-autocomplete--multiple{%- endif -%}" {# -#}
