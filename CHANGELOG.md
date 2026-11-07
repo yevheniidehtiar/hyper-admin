@@ -9,6 +9,13 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
 
 ## [Unreleased]
 
+### Fixed
+- **Phone navbar and touch targets** (#1018, #1014, #1026). Below 640px the language and theme
+  controls move into the account menu and the brand shrinks to its mark (the link keeps the site
+  name as its label), so pages no longer scroll sideways at 360px. Sidebar group toggles, pin
+  buttons, the rail toggle and list sort links reach 44px under a coarse pointer. Sidebar pin
+  buttons now show only on hover, focus, the current page and pinned items.
+
 ### Added
 - **Connection pool settings** (#231, #232). `database_pool_size`, `database_max_overflow`,
   `database_pool_timeout`, `database_pool_recycle` and `database_pool_pre_ping` on
