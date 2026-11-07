@@ -235,6 +235,7 @@
 }
 
 .ha-btn.ha-btn--icon.ha-btn--danger-icon:hover,
+.ha-btn.ha-btn--icon.ha-btn--danger-icon:active,
 .ha-btn.ha-btn--icon.ha-btn--danger-icon:focus-visible {
   color: var(--ha-color-danger-text);
 }

@@ -278,8 +278,9 @@ class PermissionMatrixPage:
             "group_gone": False,
             "create_group_url": None,
         }
-        if selected is None:
+        if not groups:
             context["create_group_url"] = await self._create_group_url(request)
+        if selected is None:
             return context
         try:
             context["grid"] = await self.matrix.load_grid(selected)

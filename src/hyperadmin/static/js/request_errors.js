@@ -56,14 +56,30 @@
     toast.focus();
   }
 
+  var unloading = false;
+  window.addEventListener('beforeunload', function () { unloading = true; });
+
+  // Only writes (post/put/patch/delete) can fail to "save". Reads (search,
+  // sort, pagination, pickers, polling) and components that render their own
+  // error (data-ha-own-errors, or a handler that called preventDefault) are
+  // left alone.
+  function isSave(e) {
+    if (unloading || e.defaultPrevented) return false;
+    var cfg = e.detail && e.detail.requestConfig;
+    var verb = String((cfg && cfg.verb) || 'get').toLowerCase();
+    if (verb === 'get') return false;
+    var el = e.detail && e.detail.elt;
+    return !(el && el.closest && el.closest('[data-ha-own-errors]'));
+  }
+
   document.addEventListener('htmx:responseError', function (e) {
     var xhr = e.detail && e.detail.xhr;
-    if (xhr && xhr.status >= 500) show(text('message', 'The server could not save this record. Your edits are kept.'));
+    if (isSave(e) && xhr && xhr.status >= 500) show(text('message', 'The server could not save this record. Your edits are kept.'));
   });
-  document.addEventListener('htmx:sendError', function () {
-    show(text('offline', 'Could not reach the server. Your edits are kept.'));
+  document.addEventListener('htmx:sendError', function (e) {
+    if (isSave(e)) show(text('offline', 'Could not reach the server. Your edits are kept.'));
   });
-  document.addEventListener('htmx:timeout', function () {
-    show(text('offline', 'Could not reach the server. Your edits are kept.'));
+  document.addEventListener('htmx:timeout', function (e) {
+    if (isSave(e)) show(text('offline', 'Could not reach the server. Your edits are kept.'));
   });
 })();
