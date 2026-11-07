@@ -1,15 +1,27 @@
 import enum
 from datetime import date
+from typing import Any
 
 from sqlmodel import Field, Relationship, SQLModel
 
 from examples.erp.contacts.models import Contact
 
 
+def _to_pay_tone(row: Any) -> tuple[str, str] | str:
+    """A bill still to pay past its due date reads "Overdue" (danger tone)."""
+    due = row.get("date_due") if row is not None else None
+    if isinstance(due, date) and due < date.today():  # noqa: DTZ011
+        return ("Overdue", "danger")
+    return "warning"
+
+
 class BillStatus(str, enum.Enum):
     DRAFT = "Draft"
     TO_PAY = "To Pay"
     PAID = "Paid"
+
+    # Pill tones in lists (see ``ha_pill``): member name to a tone or a row callable.
+    __ha_tones__ = {"DRAFT": "", "TO_PAY": _to_pay_tone, "PAID": "success"}  # noqa: RUF012
 
 
 class Bill(SQLModel, table=True):
