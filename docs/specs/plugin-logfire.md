@@ -1,205 +1,297 @@
-# SDD: hyperadmin-logfire — first official plugin
+# SDD: hyperadmin-logfire — Logfire observability plugin
 
 | Field | Value |
 |---|---|
 | Author | Claude Code |
-| Status | Draft |
+| Status | In Review (revision 2) |
 | Issue | TBD |
-| Milestone | v0.8.0 — Plugins |
+| Milestone | v0.8.0 — Plugins & AI |
 | Created | 2026-05-05 |
-| Last updated | 2026-05-05 |
+| Last updated | 2026-11-07 |
 
 ---
 
 ## Problem
 
-Admin perf problems hide until users complain — slow list queries, N+1, validation
-bottlenecks. There is no first-party observability story for HyperAdmin. The plugin
-registry SDD (`docs/specs/plugin-registry.md`) defines the contract; this SDD is the
-**first consumer** of that contract and the **proof-of-concept that it works without
-core modification**.
+Admin performance problems stay hidden until users complain: slow list queries, N+1 queries,
+forms that fail validation over and over. HyperAdmin has no first-party observability story.
 
-If this plugin requires any change to `core/` beyond the hooks defined in the registry
-SDD, the registry SDD is wrong and must be revised. That is the design pressure on
-this work.
+The plugin registry (`docs/specs/plugin-registry.md`) has shipped phase 1, the UI seams.
+`hyperadmin-reports` and `hyperadmin-tasks` use only those seams. `hyperadmin-logfire` is the
+first plugin that needs the **phase 2 lifecycle hooks**, so it is the proof that those hooks are
+enough.
+
+If this plugin needs a change to `src/hyperadmin/` beyond the hooks in the registry SDD, the
+registry SDD is wrong and gets revised first. That is the design pressure on this work.
+
+### What changed since revision 1 (2026-05-05)
+
+- **Second plugin, not first.** Reports and tasks shipped first on the phase 1 seams
+  (registry SDD, Decision Log 2026-10-18).
+- **Phase 2 is still not fired.** `Admin.dispatch_hook()` and `LIFECYCLE_HOOKS` exist, but no
+  core call site calls them yet. This SDD now splits into phase A (ships on today's core) and
+  phase B (needs registry phase 2).
+- **Logfire API checked against logfire 5.5.0** (2026-11-07 probe; see Decision Log):
+  - `instrument_sqlalchemy(engine=...)` accepts an `AsyncEngine`. SQL spans nest under an open
+    `admin.adapter.*` span.
+  - A span entered in one sync call and exited in another, bridged by a `ContextVar`, survives
+    an `await` in between. That is the `on_before` / `on_after_adapter_call` pattern.
+  - Before `logfire.configure()`, logfire itself emits a `LogfireNotConfiguredWarning` and
+    records nothing. The plugin's own one-shot warning (revision 1) is redundant and is dropped.
+  - The OpenTelemetry SQLAlchemy instrumentation supports `sqlalchemy>=1.0,<2.1` and raises
+    `RuntimeError` on 2.1. HyperAdmin allows `sqlalchemy>=2.0.46` and locks 2.0.54.
+- **Install path.** The plugins are not on PyPI. Like `hyperadmin-tasks`, users install from a
+  git subdirectory until the plugin release pipeline exists.
+- **Two new hooks and an error path.** Revision 1 asked for `on_validation_error` and
+  `on_auth_event`, but they were never added to the registry SDD, so this PR adds them. It also
+  adds an `error` argument to `on_after_adapter_call`: without it, an adapter that raises
+  leaves its span open.
 
 ## Goals
 
-1. **One-call setup**: `instrument_admin(admin)` wires everything.
-2. **Adapter spans**: `admin.adapter.<op>` spans with attributes `model`, `op`, paging
-   and filter context — emitted via `on_before_adapter_call` / `on_after_adapter_call`.
-3. **HTTP + SQL coverage**: leverage `logfire.instrument_fastapi(admin.app)` and
-   `logfire.instrument_sqlalchemy(admin.engine)` for transparent HTTP/SQL spans
-   parented under the adapter span.
-4. **Validation events**: structured `admin.validation_error` events when admin form
-   validation fails, with `model` and `field_errors` attributes.
-5. **Auth events**: `admin.auth.login_success`, `admin.auth.login_failure`,
-   `admin.auth.logout`, `admin.auth.permission_denied`.
-6. **No-op when unconfigured**: if `logfire.configure()` was not called, the plugin
-   logs a one-shot warning and emits nothing — never crashes.
-7. **Zero changes to `src/hyperadmin/core/`** — proves the plugin contract.
+1. **One-call setup:** `instrument_admin(admin)` turns on HTTP and SQL spans. *(phase A)*
+2. **HTTP and SQL spans:** `logfire.instrument_fastapi(admin.app)` and
+   `logfire.instrument_sqlalchemy(engine=admin.engine)`, each with an opt-out. *(phase A)*
+3. **Adapter spans:** `admin.adapter.<op>` spans with the attributes `model` and `op`, plus
+   paging, search and filter context. SQL spans nest under them. They are emitted through
+   `on_before_adapter_call` / `on_after_adapter_call`. *(phase B)*
+4. **Validation events:** a structured `admin.validation_error` event when an admin form fails
+   validation. It carries `model` and the error types per field, never the submitted values.
+   *(phase B)*
+5. **Auth events:** `admin.auth.login_success`, `admin.auth.login_failure`,
+   `admin.auth.logout`, `admin.auth.permission_denied`. *(phase B)*
+6. **Never crashes:** without `logfire.configure()` it emits nothing and raises nothing. An
+   unsupported SQLAlchemy version skips SQL spans with one warning; HTTP and adapter spans
+   keep working.
+7. **No core changes beyond the registry SDD hooks.**
 
 ## Non-Goals
 
-- **In-admin perf dashboard widget** — RFC #276 Phase 2; deferred to v0.8.1+.
-- **OTel-generic variant (`hyperadmin-otel`)** — defer until there's a user with a
-  non-Logfire OTel backend who complains.
-- **Sampling configuration** — defer; users configure sampling on their `logfire`
-  client directly.
-- **Custom span attributes per model** — `AdminOptions.observability_attrs` etc. is
-  out of scope; if a user needs this, they wrap their own adapter.
+- **In-admin performance dashboard widget.** RFC #276 phase 2; deferred to v0.8.1 or later.
+- **A generic OpenTelemetry variant (`hyperadmin-otel`).** Logfire already exports OTLP; wait
+  for a user whose backend it cannot reach.
+- **Sampling, scrubbing and token configuration.** These belong to `logfire.configure()`, which
+  the plugin never calls.
+- **Custom span attributes per model** (`AdminOptions.observability_attrs`). Users who need it
+  wrap their own adapter.
+- **`logfire.instrument_pydantic()`.** It traces every Pydantic validation in the process, not
+  only admin forms. Too noisy.
+- **A root `hyper-admin[logfire]` extra.** This waits until the plugin is on PyPI; an extra
+  can't point at a git subdirectory. It goes in its own dependency PR.
+
+## Phasing
+
+| Phase | Scope | Needs core change? |
+|---|---|---|
+| A — `lf-scaffold` | Package, entry point, `LogfirePlugin` (`on_register` only), `instrument_admin()` (HTTP + SQL), SQLAlchemy-version guard, README, docs page. Unit tests with logfire's `TestExporter`. | No |
+| B0 — registry phase 2 (registry epic) | `_AdapterHookWrapper`, CRUD hook call sites, and the two new hooks `on_validation_error` and `on_auth_event`, with their call sites. | Yes, in the registry epic |
+| B — `lf-hooks` | Plugin hook methods for adapter spans, validation events and auth events. E2E against a test sink. | No |
+
+Phase A is useful on its own (request and query traces of the admin) and proves the package,
+CI and install path before phase B0 touches core.
 
 ## BDD Scenarios
 
 ```
-Scenario: instrument_admin attaches the plugin and emits adapter spans
-  Given logfire is configured to capture spans in a test sink
+Scenario: instrument_admin emits HTTP and SQL spans                       (phase A)
+  Given logfire is configured with a test exporter
   And   instrument_admin(admin) has been called
-  When  the admin.products list view is requested
-  Then  the test sink contains a span named "admin.adapter.list" with attribute model="Product"
+  When  GET /admin/product/ is requested
+  Then  the exporter holds an HTTP server span for the request
+  And   at least one SQL span is a descendant of it
 
-Scenario: validation failure emits a structured event
-  Given logfire is configured to capture events
-  When  POST /admin/products/create with an invalid payload
-  Then  the sink contains an event "admin.validation_error" with attributes model="Product" and field_errors non-empty
+Scenario: instrument_admin skips SQL spans on an unsupported SQLAlchemy  (phase A)
+  Given logfire.instrument_sqlalchemy raises RuntimeError for the installed SQLAlchemy
+  When  instrument_admin(admin) is called
+  Then  no exception is raised
+  And   one WARNING log record names hyperadmin-logfire and the SQLAlchemy version
+  And   HTTP spans are still emitted
 
-Scenario: failed login emits an auth event
-  Given logfire is configured to capture events
-  When  POST /admin/login with username=alice password=wrong
-  Then  the sink contains an event "admin.auth.login_failure" with attribute username="alice"
-
-Scenario: plugin no-ops when logfire is not configured
-  Given logfire.configure() was NOT called
-  When  Admin is constructed and a list view is requested
-  Then  no exceptions are raised
-  And   a single warning log mentions hyperadmin-logfire requires logfire.configure()
-
-Scenario: plugin is not loaded when disabled
+Scenario: instrument_admin is a no-op when the plugin is disabled         (phase A)
   Given hyperadmin-logfire is installed
-  When  Admin(app, engine=engine, disabled_plugins=["logfire"]) is constructed
-  Then  no admin.adapter.* spans are emitted on subsequent requests
+  And   Admin(app, engine=engine, disabled_plugins=["logfire"]) is constructed
+  When  instrument_admin(admin) is called and GET /admin/product/ is requested
+  Then  the exporter holds no spans from the admin
+
+Scenario: list view emits an adapter span                                 (phase B)
+  Given logfire is configured with a test exporter
+  And   instrument_admin(admin) has been called
+  When  GET /admin/product/ is requested
+  Then  the exporter holds a span "admin.adapter.list" with attributes model="Product", op="list"
+  And   the list query's SQL span is its child
+
+Scenario: an adapter error closes its span with the exception             (phase B)
+  Given the Product adapter's get raises RuntimeError
+  When  GET /admin/product/1/ is requested
+  Then  the span "admin.adapter.get" is ended
+  And   it records the RuntimeError
+
+Scenario: validation failure emits a structured event                     (phase B)
+  Given logfire is configured with a test exporter
+  When  POST /admin/product/create with price="abc"
+  Then  the exporter holds an event "admin.validation_error" with model="Product"
+  And   its field_errors attribute maps "price" to a list of error types
+  And   the value "abc" appears in no attribute
+
+Scenario: failed login emits an auth event                                (phase B)
+  Given logfire is configured with a test exporter
+  When  POST /admin/login with username=alice password=wrong
+  Then  the exporter holds an event "admin.auth.login_failure" with username="alice"
+  And   no attribute contains "wrong"
+
+Scenario: plugin records nothing when logfire is not configured           (phase B)
+  Given logfire.configure() was not called
+  When  Admin is constructed and GET /admin/product/ is requested
+  Then  the response is 200
+  And   no exception is raised by a plugin hook
 ```
+
+Phase B scenarios that need the new core hooks get matching scenarios in the registry SDD's
+phase 2 E2E story (hook firing and failure isolation).
 
 ## Design
 
 ### Architecture
 
-**Repo layout decision: monorepo subpath at `plugins/hyperadmin-logfire/`** with its
-own `pyproject.toml`. Reasons:
-
-- Atomic dual-PR with Epic 1 hook changes (any missing hook can be added in the same PR).
-- Single CI matrix; no second repo to bootstrap.
-- Promote to its own GitHub repo later (after v0.8.0) if community contribution warrants.
+Monorepo subpath `plugins/hyperadmin-logfire/`, same layout as `hyperadmin-tasks`:
 
 ```
 plugins/hyperadmin-logfire/
-  pyproject.toml                           # name="hyperadmin-logfire", entry-point: logfire = "hyperadmin_logfire:LogfirePlugin"
+  pyproject.toml               # name="hyperadmin-logfire"; deps: hyper-admin, logfire[fastapi,sqlalchemy]>=5,<6
+                               # entry point: [project.entry-points."hyperadmin.plugins"] logfire = "hyperadmin_logfire:LogfirePlugin"
   README.md
   src/hyperadmin_logfire/
-    __init__.py                            # exports: LogfirePlugin, instrument_admin
-    plugin.py                              # LogfirePlugin(Plugin) with all hook methods
-    adapter_spans.py                       # span helpers — pure functions
-    auth_events.py                         # auth event emit helpers
-    _config_check.py                       # one-shot warning when logfire not configured
+    __init__.py                # exports LogfirePlugin, instrument_admin
+    plugin.py                  # LogfirePlugin: on_register (A); hook methods (B)
+    instrument.py              # instrument_admin() and the SQLAlchemy-version guard (A)
+    spans.py                   # ContextVar span bridge and attribute builders, pure functions (B)
   tests/
-    unit/
-      test_plugin.py
-      test_adapter_spans.py
-      test_no_logfire_config.py
-    e2e/
-      test_end_to_end_spans.py
-      test_disabled_plugin.py
+    conftest.py                # logfire.configure(send_to_logfire=False, console=False, additional_span_processors=[SimpleSpanProcessor(TestExporter())])
+    unit/test_instrument.py    # A
+    unit/test_spans.py         # B
+    e2e/test_spans_e2e.py      # B
 ```
 
-Root `pyproject.toml` adds `plugins/hyperadmin-logfire` to `[tool.uv.workspace.members]`
-so `uv sync --all-extras` picks it up for development. Published to PyPI separately.
+The root `pyproject.toml` adds `plugins/hyperadmin-logfire` to `[tool.uv.workspace.members]`.
+That is a hotspot and dependency change, so it ships in its own small PR before the scaffold
+(conflict-avoidance rules).
 
-### Hook usage (consumes only Epic 1 contract)
+Dependency flow: `hyperadmin_logfire` → `hyperadmin` (public API only: `Admin`, the `Plugin`
+protocol) and `logfire`. Nothing in `hyperadmin` imports the plugin.
 
-| Plugin behaviour | Hook used |
-|---|---|
-| Adapter span open + close | `on_before_adapter_call` / `on_after_adapter_call` |
-| Validation error event | New hook **not yet in registry SDD**: `on_validation_error(admin, model, field_errors)`. **Action: add to Epic 1 SDD before merging.** Alternative: emit directly from `instrument_admin` by patching `PydanticForm.validate()` — rejected (violates "no core changes"). |
-| Auth events | New hook **not yet in registry SDD**: `on_auth_event(admin, event_type, user, **context)`. **Action: add to Epic 1 SDD before merging.** Alternative: ASGI middleware that listens on the existing auth response codes — possible but fragile (can't distinguish login_success from any other 302). |
-| `instrument_admin(admin)` | Calls `logfire.instrument_fastapi(admin.app)` and `logfire.instrument_sqlalchemy(admin.engine)` directly. These are public Logfire APIs — no HyperAdmin hook needed. |
+### Hook usage
 
-**Net effect on Epic 1 SDD**: two hooks must be added (`on_validation_error`,
-`on_auth_event`) before this epic's SDD is approved. They are uncontroversial additions
-(observer-pattern hooks like the rest), but the dependency is explicit.
+| Plugin behaviour | Hook | Exists today? |
+|---|---|---|
+| Adapter span open | `on_before_adapter_call(admin, model, op, kwargs)` | Name in `LIFECYCLE_HOOKS`, never fired |
+| Adapter span close | `on_after_adapter_call(admin, model, op, result, error)` | Same; `error` is **new in this revision** |
+| Validation event | `on_validation_error(admin, model, field_errors)` | **New**; added to the registry SDD by this PR |
+| Auth events | `on_auth_event(admin, event, user, username, request)` | **New**; added to the registry SDD by this PR |
+| HTTP and SQL spans | none (public Logfire APIs, called from `instrument_admin`) | n/a |
+
+Changes this PR makes to the registry SDD (doc only; the code lands with phase B0):
+
+- `on_after_adapter_call` gains `error: BaseException | None`. `_AdapterHookWrapper` fires it
+  in `finally`, with `result=None` and the exception when the call raises, then re-raises.
+- `on_validation_error(admin, model, field_errors)` is fired by the `DynamicModelView` create
+  and update handlers when the form returns errors. `field_errors` is
+  `dict[str, list[str]]` of field name → pydantic error *types* (`"float_parsing"`), never
+  input values.
+- `on_auth_event(admin, event, user, username, request)` is fired from `auth/views.py` for
+  `login_success`, `login_failure` and `logout`, and from the permission check for
+  `permission_denied`. `user` is `None` on `login_failure`. The password is never passed.
+
+### API
+
+```python
+# hyperadmin_logfire/__init__.py
+def instrument_admin(admin: Admin, *, http: bool = True, sql: bool = True) -> None:
+    """Instrument the admin's app and engine with Logfire.
+
+    No-op if the plugin is disabled ("logfire" not in admin.plugins). Pass http=False or
+    sql=False when the app already calls logfire.instrument_fastapi / instrument_sqlalchemy
+    itself, so spans are not recorded twice.
+    """
+
+class LogfirePlugin:
+    name = "logfire"
+    def on_register(self, admin: Admin) -> None: ...                  # phase A: nothing to contribute
+    def on_before_adapter_call(self, *, admin, model, op, kwargs) -> None: ...  # phase B
+    def on_after_adapter_call(self, *, admin, model, op, result, error) -> None: ...
+    def on_validation_error(self, *, admin, model, field_errors) -> None: ...
+    def on_auth_event(self, *, admin, event, user, username, request) -> None: ...
+```
+
+`on_before_adapter_call` enters a `logfire.span("admin.adapter.{op}", model=..., op=...)` and
+pushes it on a `ContextVar` stack. `on_after_adapter_call` pops it, records `error` if any, and
+exits it. A stack, not a single slot: an adapter call can nest another one (inline relations).
+
+`instrument_admin` stays explicit, not automatic in `on_register`. It instruments the
+**host** app and the user's engine, which is a process-wide effect the user should opt into.
+It also lets apps that already instrument FastAPI turn off the duplicate.
 
 ### Data Model Changes
 
 No data model changes.
 
-### API / Protocol Changes
-
-New public API in the plugin package:
-
-```python
-# hyperadmin_logfire/__init__.py
-def instrument_admin(admin: "Admin") -> None:
-    """One-call setup. Idempotent.
-
-    1. logfire.instrument_fastapi(admin.app)
-    2. logfire.instrument_sqlalchemy(admin.engine)
-    3. (Plugin already discovered and on_register'd; no further action needed.)
-    """
-
-class LogfirePlugin:
-    name = "logfire"
-    def on_register(self, admin): ...
-    def on_before_adapter_call(self, admin, model, op, kwargs): ...
-    def on_after_adapter_call(self, admin, model, op, result): ...
-    def on_validation_error(self, admin, model, field_errors): ...
-    def on_auth_event(self, admin, event_type, user, **ctx): ...
-```
-
-The plugin uses `contextvars` to carry the open `logfire.span` between
-`on_before_adapter_call` and `on_after_adapter_call`. Failure to find an open span
-in `on_after_*` is logged at WARNING and otherwise ignored.
-
 ### Configuration Changes
 
-`pip install hyperadmin-logfire` (or `pip install hyperadmin[logfire]` if we add a
-`[project.optional-dependencies].logfire = ["hyperadmin-logfire>=0.1"]` extra to root —
-recommended for discoverability).
+No new `Admin()` parameters and no settings model. Logfire's own configuration
+(`logfire.configure()`, `LOGFIRE_TOKEN`, scrubbing, sampling) is the user's.
 
-No new env vars. Logfire's own configuration (`LOGFIRE_TOKEN`, etc.) is unchanged.
+Install (until the plugin is on PyPI):
+
+```bash
+uv add "hyperadmin-logfire @ git+https://github.com/yevheniidehtiar/hyper-admin#subdirectory=plugins/hyperadmin-logfire"
+```
 
 ## Edge Cases & Error Handling
 
 | Case | Handling |
 |---|---|
-| `logfire.configure()` not called | One-shot WARNING logged on first hook fire; all subsequent hooks no-op. Tracked via module-level `_warned` flag. |
-| `logfire` not installed | Plugin entry point won't import; `PluginRegistry.discover` logs ERROR and skips. (Per Epic 1 contract — no special handling here.) |
-| Open span lost (e.g. exception between before/after hook) | `on_after_adapter_call` notices missing context, logs WARNING, no-ops. |
-| `instrument_admin` called twice | Logfire's `instrument_fastapi` / `instrument_sqlalchemy` are idempotent — second call no-ops at their layer. We add no extra guard. |
-| Plugin disabled via `disabled_plugins=["logfire"]` | Per Epic 1 contract — plugin not loaded; `instrument_admin` called by user is also a no-op (we check `"logfire" in admin.plugins` before doing the FastAPI/SQLAlchemy instrumentation). |
-| Auth event fired before `admin.user` available | `user` arg may be `None` for `login_failure`; documented in the hook signature. |
-| Validation errors contain non-serialisable objects | Stringified before logging. |
+| `logfire.configure()` not called | Logfire emits its own `LogfireNotConfiguredWarning` and records nothing. The plugin adds no warning of its own. |
+| `logfire` not installed | It is a hard dependency of the plugin, so this cannot happen in a normal install. If the import fails anyway, `PluginRegistry` logs ERROR and skips the plugin (`load_error`). |
+| SQLAlchemy ≥ 2.1 (instrumentation refuses it) | `instrument_admin` catches the `RuntimeError`, logs one WARNING naming the version, and continues with HTTP spans. We do not pass `skip_dep_check=True`. |
+| App already instruments FastAPI or SQLAlchemy | `instrument_admin(admin, http=False)` or `sql=False`. The README says so. |
+| `instrument_admin` called twice | Guarded by a flag on the plugin instance; the second call is a no-op. Revision 1 assumed Logfire is idempotent here, which is not verified. |
+| Plugin disabled (`disabled_plugins=["logfire"]` or `HYPERADMIN_DISABLED_PLUGINS`) | Hooks never run; `instrument_admin` returns early. |
+| Adapter raises between before and after | `on_after_adapter_call` receives `error`, records it, and closes the span (phase B0 fires it in `finally`). |
+| `on_after_adapter_call` finds an empty stack | WARNING log, no-op. This happens only if another plugin's `on_before` raised in a way that broke ordering. |
+| Validation errors hold user input | Only field names and error types are recorded, never `input` or `ctx` values. |
+| Auth event before a user exists | `user=None`; `username` is the submitted name; the password is never a hook argument. |
+| A plugin hook raises | The registry logs at ERROR and continues (existing failure isolation); the request is unaffected. |
 
 ## Migration & Backward Compatibility
 
-Pure addition. No core changes (modulo the two new hooks added to Epic 1 SDD).
+Pure addition, with one contract change to an unfired hook. The `error` argument on
+`on_after_adapter_call` changes a hook no core code fires yet and no shipped plugin implements,
+so nothing breaks.
 
 ## Open Questions
 
-- [ ] **Add `[project.optional-dependencies].logfire = ["hyperadmin-logfire>=0.1"]`
-      to root `pyproject.toml`?** Recommend yes — `pip install hyperadmin[logfire]`
-      is cleaner UX than two installs. Confirm at SDD review.
-- [ ] **Span name convention** — `admin.adapter.list` vs `hyperadmin.adapter.list`?
-      RFC #276 uses `admin.*`; recommend keeping that. Confirm.
-- [ ] **Should `instrument_admin` also call `logfire.instrument_pydantic()`?** Tempting
-      but noisy (instruments ALL Pydantic validation, not just admin forms). Recommend no.
-- [ ] **Test sink fixture** — Logfire ships a test capture utility; confirm it works
-      under our pytest-asyncio setup before story #8 is dispatched.
+- [x] **Root `[logfire]` extra?** No, not until the plugin is on PyPI (see Non-Goals).
+- [x] **Span name prefix:** `admin.*`, matching RFC #276.
+- [x] **`instrument_pydantic()`?** No; too noisy (see Non-Goals).
+- [x] **Test sink under pytest-asyncio?** `logfire.testing.TestExporter` with a
+      `SimpleSpanProcessor` works; verified with logfire 5.5.0. `logfire.testing` imports
+      pytest, so it is test-only.
+- [ ] **Record `username` on `login_failure`?** It is personal data. Recommend yes by default
+      (it is what makes brute-force patterns visible) and let Logfire scrubbing remove it.
+      Owner to confirm.
+- [ ] **CI job for the plugin.** The bot token cannot edit `.github/workflows`, so the owner
+      adds `plugins/hyperadmin-logfire` to the test and type-check lines (same as the owed
+      `hyperadmin-tasks` edits).
 
 ## Decision Log
 
 | Decision | Rationale | Alternatives considered |
 |---|---|---|
-| Monorepo subpath `plugins/hyperadmin-logfire/` | Atomic dual-PR with Epic 1; single CI matrix; can promote later | Separate repo from day 1 — premature, slows iteration during the proof-of-concept window |
-| Add two new hooks to Epic 1 SDD (`on_validation_error`, `on_auth_event`) | Avoids monkey-patching `PydanticForm` and parsing 302 redirects in middleware; matches the observer-hook pattern of the rest of the contract | (a) Patch `PydanticForm.validate()` — violates "no core changes"; (b) ASGI middleware sniffing auth responses — fragile, can't distinguish event types |
-| Use `contextvars` to bridge before/after adapter hooks | Async-safe, request-scoped, doesn't require passing state through the hook signature | (a) `dict` keyed on `(thread_id, model, op)` — broken under asyncio; (b) Stash on `admin` — global mutable state |
-| `instrument_admin()` does both Logfire instrumentation AND verifies plugin discovery | One call for users; clear failure mode if plugin disabled | Split into two functions — extra docs surface for no benefit |
-| No span on `on_register` | One-shot; not interesting | Span — clutter in dashboards |
+| Monorepo subpath `plugins/hyperadmin-logfire/` | Same as reports and tasks: one CI, one workspace, atomic PRs with core hook changes | Separate repo; premature |
+| Split into phase A (no core) and phase B (registry phase 2), 2026-11-07 | HTTP and SQL traces are useful now and prove packaging; the hook wiring is a separate core epic | Wait for phase 2 before starting; nothing ships for weeks |
+| Add `on_validation_error` and `on_auth_event` to the registry SDD | Avoids patching `PydanticForm` or sniffing 302s in middleware; observer pattern like the other hooks | Patch `PydanticForm.validate()`, which violates "no core changes"; ASGI middleware, which can't tell login success from any other 302 |
+| `on_after_adapter_call` gets `error` and fires in `finally` | Otherwise a raising adapter leaves its span open and the trace is wrong exactly when it matters | A separate `on_adapter_error` hook; one more name for the same moment |
+| `ContextVar` **stack** bridges before and after | Async-safe and request-scoped; verified across an `await`; a stack handles nested adapter calls | A single `ContextVar` slot breaks on nesting; a dict keyed by thread breaks under asyncio |
+| Drop the plugin's "not configured" warning | Logfire 5.x already warns (`LogfireNotConfiguredWarning`); two warnings for one cause is noise | Keep `_config_check.py` from revision 1 |
+| `instrument_admin` is explicit, with `http` / `sql` opt-outs | It touches the host app and the user's engine; apps that already instrument would get duplicate spans | Instrument automatically in `on_register` |
+| Catch the SQLAlchemy-version `RuntimeError` instead of `skip_dep_check=True` | Forcing an incompatible instrumentation "may produce no spans or errors" (logfire's words) | Pin `sqlalchemy<2.1` in the plugin, which would cap every user's SQLAlchemy |
+| Record field error *types*, not messages or inputs | Messages and `ctx` can echo the submitted value (passwords, personal data) | Record the full pydantic error dicts |
