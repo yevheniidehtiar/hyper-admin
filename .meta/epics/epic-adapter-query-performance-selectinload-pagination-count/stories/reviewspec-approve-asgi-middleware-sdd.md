@@ -2,7 +2,7 @@
 type: story
 id: st-perf-02
 title: "review(spec): approve ASGI middleware SDD"
-status: todo
+status: done
 priority: high
 assignee: null
 labels:

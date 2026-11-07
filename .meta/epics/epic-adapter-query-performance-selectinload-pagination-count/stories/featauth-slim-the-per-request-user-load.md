@@ -2,7 +2,7 @@
 type: story
 id: st-perf-01
 title: "feat(auth): load the current user without eager-loading groups and permissions"
-status: todo
+status: done
 priority: high
 assignee: null
 labels:
