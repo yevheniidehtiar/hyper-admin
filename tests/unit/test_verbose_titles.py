@@ -94,10 +94,10 @@ def test_declared_verbose_name_wins(client: TestClient) -> None:
     Scenario: a declared verbose name is used
       Given an admin with verbose_name "Ledger book"
       When  its list and create pages render
-      Then  they say "Ledger books" and "Create ledger book"
+      Then  they say "Ledger books" and "Create Ledger book"
     """
     assert "Ledger books" in client.get("/admin/vtledger").text
-    assert "Create ledger book" in client.get("/admin/vtledger/create").text
+    assert "Create Ledger book" in client.get("/admin/vtledger/create").text
 
 
 def test_leading_acronym_is_kept_in_the_button(client: TestClient) -> None:
@@ -148,3 +148,66 @@ def test_view_with_a_plain_admin_object_falls_back_to_the_class_name() -> None:
     # Then
     assert labels["verbose_name"] == "Vt journal line"
     assert labels["verbose_name_plural"] == "Vt journal lines"
+
+
+def test_no_camel_case_class_name_on_list_detail_create_and_bulk_pages(client: TestClient) -> None:
+    """
+    Scenario: no CamelCase class name reaches the rendered text
+      Given a JournalLine record
+      When  its list, detail and create pages render
+      Then  none of their model labels contains the class name "VtJournalLine"
+    """
+    # Given
+    client.post("/admin/vtledger/", data={"name": "L"})
+    client.post("/admin/vtjournalline/", data={"ledger_id": "1", "memo": "m"})
+
+    # When
+    pages = [
+        client.get("/admin/vtjournalline").text,
+        client.get("/admin/vtjournalline/1").text,
+        client.get("/admin/vtjournalline/create").text,
+    ]
+
+    # Then
+    # (a record's own default ``__str__`` is "VtJournalLine (1)": not a model label)
+    for html in pages:
+        for label in (
+            "VtJournalLine list",
+            "VtJournalLine Detail",
+            "Create New",
+            "Create VtJournalLine",
+        ):
+            assert label not in html
+    assert ">VtJournalLine<" not in pages[0]
+    assert "Vt journal line list" in pages[0]
+    assert "Vt journal line Detail | HyperAdmin" in pages[1]
+
+
+def test_declared_name_is_not_lowercased_and_may_equal_the_class_name() -> None:
+    """
+    Scenario: declared names are used as given
+      Given admins declaring "Acme invoice", the bare class name and a lazy name
+      When  the verbose labels are built
+      Then  the declared text is kept and only derived names are lowercased
+    """
+    from hyperadmin.i18n.loader import gettext_lazy
+    from hyperadmin.views.dynamic.base import DynamicModelViewBase
+
+    def labels(admin_cls: type[ModelAdmin]) -> dict[str, str]:
+        view = DynamicModelViewBase.__new__(DynamicModelViewBase)
+        view.model = VtJournalLine
+        view._admin_instance = admin_cls(VtJournalLine)
+        return view._verbose_labels()
+
+    class Acme(ModelAdmin):
+        verbose_name = "Acme invoice"
+
+    class SameAsClass(ModelAdmin):
+        verbose_name = "VtJournalLine"
+
+    class Lazy(ModelAdmin):
+        verbose_name = gettext_lazy("Rechnung")
+
+    assert labels(Acme)["verbose_name_lower"] == "Acme invoice"
+    assert labels(SameAsClass)["verbose_name"] == "VtJournalLine"
+    assert labels(Lazy)["verbose_name_lower"] == "Rechnung"

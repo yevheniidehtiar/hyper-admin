@@ -115,15 +115,18 @@ class DynamicModelViewBase:
         admin = self._admin_instance
         singular = humanize_class_name(model.__name__)
         plural = pluralize(singular)
+        declared_name = False
         if admin is not None and hasattr(admin, "get_verbose_name"):
             declared = str(admin.get_verbose_name(model))
-            if declared != model.__name__:
+            if getattr(admin, "verbose_name", None) is not None:
                 singular = declared
+                declared_name = True
             plural = str(admin.get_verbose_name_plural(model))
         first = singular.split(" ", 1)[0]
-        lower = (
-            singular if len(first) > 1 and first.isupper() else singular[:1].lower() + singular[1:]
-        )
+        # A declared name is used as given ("Acme invoice", German nouns); only a
+        # name derived from the class gets its initial lowercased.
+        keep_case = declared_name or (len(first) > 1 and first.isupper())
+        lower = singular if keep_case else singular[:1].lower() + singular[1:]
         return {
             "verbose_name": singular,
             "verbose_name_lower": lower,
