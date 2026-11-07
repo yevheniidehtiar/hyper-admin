@@ -2,7 +2,7 @@
 type: epic
 id: UuoF0wG2oyTQ
 title: "epic(plugin-tasks): app integration — in-process worker, transactional enqueue, example app, docs"
-status: backlog
+status: done
 priority: medium
 owner: null
 labels:
@@ -18,7 +18,7 @@ github:
   repo: yevheniidehtiar/hyper-admin
   synced_at: 2026-11-01T00:00:00Z
 created_at: 2026-10-29T00:00:00Z
-updated_at: 2026-10-29T00:00:00Z
+updated_at: 2026-11-07T00:00:00Z
 ---
 
 ## Overview

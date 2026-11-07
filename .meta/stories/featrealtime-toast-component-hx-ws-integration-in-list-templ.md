@@ -2,7 +2,7 @@
 type: story
 id: YhAU7COff6_D
 title: "feat(realtime): Toast component + hx-ws integration in list templates"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -20,7 +20,7 @@ github:
   last_sync_hash: sha256:b8eb681bd7817e9bcc80b39d216dbcc40ded0edc3a69c4efef3d18ae78773fb4
   synced_at: 2026-04-07T17:23:23.791Z
 created_at: 2026-03-29T06:59:15Z
-updated_at: 2026-09-28T00:00:00Z
+updated_at: 2026-11-07T00:00:00Z
 ---
 
 ## Context
