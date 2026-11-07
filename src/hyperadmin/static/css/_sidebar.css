@@ -155,16 +155,17 @@
   color: var(--ha-color-primary-text);
 }
 
-/* No hover on touch: a hidden pin must not catch taps meant for the link. */
+/* No hover on touch: every pin stays tappable, dimmed until it is the current page, focused or pinned.
+   Coarse pointers reserve 44px at the row end (below), so a pin never covers the link text. */
 @media (hover: none) {
   .ha-nav-pin {
-    pointer-events: none;
+    opacity: 0.5;
   }
 
   .ha-nav-row:focus-within > .ha-nav-pin,
   .ha-nav-row:has(> [aria-current="page"]) > .ha-nav-pin,
   .ha-nav-pin[aria-pressed="true"] {
-    pointer-events: auto;
+    opacity: 1;
   }
 }
 
