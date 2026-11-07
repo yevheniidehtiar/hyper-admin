@@ -1,11 +1,11 @@
 {%- extends "_base.html" -%}
 {%- from "components/_icons.html" import icon -%}
 
-{%- block title -%}Annual Profit & Loss — {{ year }}{%- endblock -%}
+{%- block title -%}Profit & Loss — {{ year }}{%- endblock -%}
 
 {%- block content -%}
     <div class="ha-page-header">
-        <h1 class="ha-page-title">Annual Profit / Loss Report</h1>
+        <h1 class="ha-page-title">Profit &amp; Loss</h1>
         {# ── Year navigation ── #}
         <div class="ha-page-header-actions ha-year-nav">
             <a href="{{ report_url }}?year={{ prev_year }}"
@@ -32,9 +32,9 @@
                 {%- if lines -%}
                 {%- for row in lines -%}
                 <tr class="ha-table-row">
-                    <td class="ha-table-cell" data-label="Account">{{ row.account_name }}</td>
+                    <th class="ha-table-cell ha-table-title" scope="row" data-label="Account">{{ row.account_name }}</th>
                     <td class="ha-table-cell" data-label="Type">{{ row.account_type.value }}</td>
-                    <td class="ha-table-cell ha-num" data-label="Amount">{{ "%.2f"|format(row.amount) }}</td>
+                    <td class="ha-table-cell ha-num" data-label="Amount">{{ row.amount|ha_number }}</td>
                 </tr>
                 {%- endfor -%}
                 {%- else -%}
@@ -48,19 +48,19 @@
 
     {# ── Summary totals ── #}
     <div class="ha-table-wrapper">
-        <table class="ha-table" data-testid="pl-summary">
+        <table class="ha-table ha-table--pairs" data-testid="pl-summary">
             <tbody class="ha-table-body">
                 <tr class="ha-table-row">
-                    <th class="ha-table-cell" scope="row" data-label="">Total Revenue</th>
-                    <td class="ha-table-cell ha-num" data-label="" data-testid="total-revenue">{{ "%.2f"|format(total_revenue) }}</td>
+                    <th class="ha-table-cell ha-table-title" scope="row" data-label="">Total Revenue</th>
+                    <td class="ha-table-cell ha-num" data-label="" data-testid="total-revenue">{{ total_revenue|ha_number }}</td>
                 </tr>
                 <tr class="ha-table-row">
-                    <th class="ha-table-cell" scope="row" data-label="">Total Expenses</th>
-                    <td class="ha-table-cell ha-num" data-label="" data-testid="total-expenses">{{ "%.2f"|format(total_expenses) }}</td>
+                    <th class="ha-table-cell ha-table-title" scope="row" data-label="">Total Expenses</th>
+                    <td class="ha-table-cell ha-num" data-label="" data-testid="total-expenses">{{ total_expenses|ha_number }}</td>
                 </tr>
                 <tr class="ha-table-row">
-                    <th class="ha-table-cell ha-strong" scope="row" data-label="">Net Profit / Loss</th>
-                    <td class="ha-table-cell ha-num ha-strong {{ 'ha-text-success' if net_profit >= 0 else 'ha-text-danger' }}" data-label="" data-testid="net-profit">{{ "%.2f"|format(net_profit) }}</td>
+                    <th class="ha-table-cell ha-table-title ha-strong" scope="row" data-label="">Net Profit / Loss</th>
+                    <td class="ha-table-cell ha-num ha-strong {{ 'ha-text-success' if net_profit >= 0 else 'ha-text-danger' }}" data-label="" data-testid="net-profit">{{ net_profit|ha_number }}</td>
                 </tr>
             </tbody>
         </table>
