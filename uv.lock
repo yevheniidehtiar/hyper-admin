@@ -12,6 +12,7 @@ resolution-markers = [
 [manifest]
 members = [
     "hyper-admin",
+    "hyperadmin-logfire",
     "hyperadmin-reports",
     "hyperadmin-tasks",
 ]
@@ -2004,6 +2005,7 @@ s3 = [
 [package.dev-dependencies]
 dev = [
     { name = "faker" },
+    { name = "hyperadmin-logfire" },
     { name = "hyperadmin-reports" },
     { name = "hyperadmin-tasks" },
 ]
@@ -2077,9 +2079,21 @@ provides-extras = ["dev", "redis", "realtime", "s3", "loadtest"]
 [package.metadata.requires-dev]
 dev = [
     { name = "faker", specifier = ">=40.41.0" },
+    { name = "hyperadmin-logfire", editable = "plugins/hyperadmin-logfire" },
     { name = "hyperadmin-reports", editable = "plugins/hyperadmin-reports" },
     { name = "hyperadmin-tasks", editable = "plugins/hyperadmin-tasks" },
 ]
+
+[[package]]
+name = "hyperadmin-logfire"
+version = "0.1.0"
+source = { editable = "plugins/hyperadmin-logfire" }
+dependencies = [
+    { name = "hyper-admin" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "hyper-admin", editable = "." }]
 
 [[package]]
 name = "hyperadmin-reports"
