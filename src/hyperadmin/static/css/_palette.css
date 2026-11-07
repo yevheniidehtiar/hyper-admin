@@ -33,6 +33,15 @@
   background-color: var(--ha-color-scrim);
 }
 
+/* Phones: the on-screen keyboard shrinks the visual viewport, so pin the dialog near the
+   top and size it from dvh; otherwise the results sit under the keyboard. */
+@media (max-width: 767px) {
+  .ha-palette {
+    margin-block: var(--ha-space-3) auto;
+    max-block-size: min(560px, 100dvh - 2 * var(--ha-space-3));
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   .ha-palette[open] {
     animation: ha-palette-in var(--ha-duration-fast) var(--ha-ease-default);
@@ -52,10 +61,11 @@
 }
 
 .ha-palette__control > .ha-icon:first-child {
-  inset-inline-start: calc(var(--ha-space-3) + 10px);
+  inset-inline-start: calc(var(--ha-space-3) + 14px);
 }
 
 .ha-palette__control > .ha-input {
+  padding-inline-start: 46px;
   padding-inline-end: calc(var(--ha-space-3) + 40px);
   font-size: var(--ha-font-size-base);
 }
@@ -67,7 +77,8 @@
 /* ---------- listbox (design-system Combobox) ---------- */
 
 .ha-palette__list {
-  flex: 1;
+  /* auto basis: Safari resolves `flex: 1` (0%) against an auto-height dialog to zero. */
+  flex: 1 1 auto;
   min-block-size: 0;
   margin: 0;
   padding: var(--ha-space-1) var(--ha-space-2) var(--ha-space-2);
