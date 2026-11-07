@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-07 09:09+0100\n"
+"POT-Creation-Date: 2026-11-07 09:12+0100\n"
 "PO-Revision-Date: 2026-05-05 12:00+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: th\n"
@@ -266,7 +266,6 @@ msgstr[0] ""
 
 #: src/hyperadmin/i18n/validation_messages.py:125
 #: src/hyperadmin/templates/components/shortcuts_overlay.html:16
-#: src/hyperadmin/templates/list_layout.html:8
 #, fuzzy
 msgid "List"
 msgstr "รายการ"
@@ -527,8 +526,9 @@ msgid "Breadcrumb"
 msgstr "เส้นทางนำทาง"
 
 #: src/hyperadmin/templates/create.html:4
+#: src/hyperadmin/templates/list_layout.html:12
 #, fuzzy, python-format
-msgid "Create %(model_name)s"
+msgid "Create %(name)s"
 msgstr "สร้าง %(model_name)s"
 
 #: src/hyperadmin/templates/components/bulk_form.html:74
@@ -616,13 +616,8 @@ msgstr "บันทึก"
 
 #: src/hyperadmin/templates/list_layout.html:4
 #, fuzzy, python-format
-msgid "%(model_name)s List | HyperAdmin"
+msgid "%(plural)s | HyperAdmin"
 msgstr "รายการ %(model_name)s | HyperAdmin"
-
-#: src/hyperadmin/templates/list_layout.html:12
-#, fuzzy, python-format
-msgid "Create New %(model_name)s"
-msgstr "สร้าง %(model_name)s ใหม่"
 
 #: src/hyperadmin/templates/components/filter_bar.html:10
 #: src/hyperadmin/templates/components/filter_sidebar.html:13
@@ -2049,4 +2044,7 @@ msgstr "อัปเดตรายการสำเร็จ"
 
 #~ msgid "Are you sure you want to delete this item?"
 #~ msgstr "คุณแน่ใจหรือไม่ว่าต้องการลบรายการนี้?"
+
+#~ msgid "Create New %(model_name)s"
+#~ msgstr "สร้าง %(model_name)s ใหม่"
 

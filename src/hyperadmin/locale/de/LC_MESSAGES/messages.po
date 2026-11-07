@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
 "Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2026-11-07 09:09+0100\n"
+"POT-Creation-Date: 2026-11-07 09:12+0100\n"
 "PO-Revision-Date: 2026-05-05 12:00+0200\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language: de\n"
@@ -293,7 +293,6 @@ msgstr[1] ""
 
 #: src/hyperadmin/i18n/validation_messages.py:125
 #: src/hyperadmin/templates/components/shortcuts_overlay.html:16
-#: src/hyperadmin/templates/list_layout.html:8
 #, fuzzy
 msgid "List"
 msgstr "Liste"
@@ -556,9 +555,10 @@ msgid "Breadcrumb"
 msgstr "Brotkrumennavigation"
 
 #: src/hyperadmin/templates/create.html:4
-#, fuzzy, python-format
-msgid "Create %(model_name)s"
-msgstr "%(model_name)s erstellen"
+#: src/hyperadmin/templates/list_layout.html:12
+#, python-format
+msgid "Create %(name)s"
+msgstr "%(name)s erstellen"
 
 #: src/hyperadmin/templates/components/bulk_form.html:74
 #: src/hyperadmin/templates/components/bulk_form.html:76
@@ -646,14 +646,9 @@ msgid "Save"
 msgstr "Speichern"
 
 #: src/hyperadmin/templates/list_layout.html:4
-#, fuzzy, python-format
-msgid "%(model_name)s List | HyperAdmin"
-msgstr "%(model_name)s-Liste | HyperAdmin"
-
-#: src/hyperadmin/templates/list_layout.html:12
-#, fuzzy, python-format
-msgid "Create New %(model_name)s"
-msgstr "Neues %(model_name)s erstellen"
+#, python-format
+msgid "%(plural)s | HyperAdmin"
+msgstr "%(plural)s | HyperAdmin"
 
 #: src/hyperadmin/templates/components/filter_bar.html:10
 #: src/hyperadmin/templates/components/filter_sidebar.html:13
@@ -2098,4 +2093,7 @@ msgstr "Element erfolgreich aktualisiert"
 
 #~ msgid "Are you sure you want to delete this item?"
 #~ msgstr "Möchten Sie dieses Element wirklich löschen?"
+
+#~ msgid "Create New %(model_name)s"
+#~ msgstr "Neues %(model_name)s erstellen"
 
