@@ -9,6 +9,7 @@ from fastapi import HTTPException, Request
 from sqlalchemy.exc import IntegrityError
 from starlette.responses import Response
 
+from hyperadmin.adapters.introspection import introspect_primary_key
 from hyperadmin.core.choices import ChoiceItem, SelectFieldMeta
 from hyperadmin.core.display import get_display_name
 from hyperadmin.core.fields import classify_field
@@ -132,11 +133,38 @@ class RelationViewMixin(FormDataMixin):
             # Only when configured: adapters predating ``label_fn`` keep working.
             filters["label_fn"] = label_fn
         raw_choices = await self.adapter.get_choices(rel_name, **filters)
-        current = str(selected_values.get(name, ""))
-        return [
+        current = selected_values.get(name)
+        current = "" if current is None else str(current)
+        choices = [
             ChoiceItem(value=c["value"], label=c["label"], selected=c["value"] == current)
             for c in raw_choices
         ]
+        if current and not any(c["selected"] for c in choices):
+            choices.insert(0, await self._current_choice(name, rel_name, current, label_fn))
+        return choices
+
+    async def _current_choice(
+        self,
+        name: str,
+        rel_name: str,
+        current: str,
+        label_fn: Callable[[Any], str] | None,
+    ) -> ChoiceItem:
+        """The selected option for a stored key that fell outside the preload window.
+
+        Looked up by the target's primary key so it carries the real label; when
+        the lookup finds nothing (row out of scope) the key is kept with an opaque label.
+        """
+        target = self._relation_target_for_field(name)
+        found: list[ChoiceItem] = []
+        if target is not None:
+            lookup: dict[str, Any] = {introspect_primary_key(target).attr: current}
+            if label_fn is not None:
+                lookup["label_fn"] = label_fn
+            found = await self.adapter.get_choices(rel_name, limit=1, **lookup)
+        if found:
+            return ChoiceItem(value=found[0]["value"], label=found[0]["label"], selected=True)
+        return self._opaque_selected_choices(target, current)[0]
 
     def _relation_label_fn(self, name: str, rel_name: str) -> Callable[[Any], str] | None:
         """Return the ``label_fn`` for the relation widget ``name`` renders, or ``None``.
