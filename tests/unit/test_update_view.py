@@ -115,7 +115,7 @@ def test_update_view_validation_error(client: TestClient):
     )
 
     assert response.status_code == 422
-    assert "Input should be a valid number" in response.text
+    assert "Enter a number" in response.text
     assert "Updated description" in response.text
 
 

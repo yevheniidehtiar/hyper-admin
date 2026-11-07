@@ -36,15 +36,15 @@ def test_widget_carries_the_combobox_design_markup():
     assert 'class="ha-combobox"' in widget
     assert 'role="status"' in widget
     assert 'aria-describedby="supplier_id-status"' in widget
-    assert 'placeholder="Choose a supplier id…"' in widget
-    assert 'aria-label="Clear supplier id"' in widget
+    assert 'placeholder="Choose a supplier…"' in widget
+    assert 'aria-label="Clear supplier"' in widget
     # The label points at the search input; the select keeps the field's name.
     assert 'for="supplier_id"' in body
     assert 'id="supplier_id-select"' in widget
-    assert 'aria-label="Supplier id"' in widget
+    assert 'aria-label="Supplier"' in widget
 
     add = body.split('data-testid="autocomplete-add-supplier_id"', 1)[0].rsplit("<button", 1)[1]
-    assert 'aria-label="Add supplier id"' in add
+    assert 'aria-label="Add supplier"' in add
     assert 'aria-haspopup="dialog"' in add
     assert "ha-btn--icon" in add
 
@@ -57,7 +57,7 @@ def test_dependent_widget_renders_waiting_copy_for_the_script():
 
     assert 'data-depends-on="supplier_id"' in group
     assert 'placeholder="Choose a supplier first"' in group
-    assert 'data-text-waiting="Pick the supplier above to list its variant id options."' in group
+    assert 'data-text-waiting="Pick the supplier above to list its variant options."' in group
     assert 'data-text-cleared="Cleared because the supplier changed."' in group
     assert 'aria-describedby="variant_id-status variant_id-help"' in group
 

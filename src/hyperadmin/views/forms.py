@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import types
+import uuid
 from dataclasses import dataclass
 from dataclasses import field as dc_field
 from datetime import date, datetime, tzinfo
@@ -10,7 +11,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, Any, ClassVar, Literal, Union, get_args, get_origin
 
 from markupsafe import Markup
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, TypeAdapter, ValidationError
 from pydantic.fields import FieldInfo
 
 from hyperadmin.core.choices import ChoiceItem
@@ -131,6 +132,23 @@ class _FormData(dict):
         if name in object.__getattribute__(self, "_hidden"):
             raise AttributeError(name)
         return super().__getattribute__(name)
+
+
+def _placeholder_key(annotation: Any) -> Any:
+    """A value ``annotation`` accepts, standing in for a parent key not yet assigned.
+
+    A new parent has no key while its inline rows are validated; the real key
+    replaces this one when the rows are saved. Returns ``None`` when no
+    candidate validates, which leaves the field to report its own error.
+    """
+    adapter = TypeAdapter(annotation)
+    for candidate in (0, uuid.UUID(int=0), ""):
+        try:
+            adapter.validate_python(candidate)
+        except ValidationError:
+            continue
+        return candidate
+    return None
 
 
 @dataclass(slots=True)
@@ -1048,6 +1066,10 @@ class InlineFormset:
             data = {k: v for k, v in row.items() if not k.startswith("_")}
             if parent_pk is not None:
                 data[self.spec.fk_field] = parent_pk
+            else:
+                fk_info = schema_for(self.spec.model).model_fields.get(self.spec.fk_field)
+                if fk_info is not None and fk_info.is_required():
+                    data.setdefault(self.spec.fk_field, _placeholder_key(fk_info.annotation))
 
             # Clean empty strings to None for optional fields
             model_fields = schema_for(self.spec.model).model_fields
