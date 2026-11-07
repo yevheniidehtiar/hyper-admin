@@ -66,6 +66,11 @@ when its remaining stories, demo or real-app proof are done.
   the mapper (`schema_for`), with an `examples/sqlalchemy/` app.
 - **Real-app proof (dogfood):** Polar, Langflow, Mealie and Open WebUI run unmodified and
   every model's pages render; see [Compatibility & Performance](compatibility.md)
+- **Navigation & list UX (v0.5.9):** sidebar grouped by domain (`NavGroup`, `nav_group`,
+  `nav_order`, icons), icon rail, per-user pinned pages, a <kbd>⌘K</kbd> command palette,
+  clickable list rows, a red delete icon with a shared confirmation dialog, keyboard shortcuts
+  with a `?` overlay, and an unsaved-changes warning with a sticky save bar; see
+  [Navigation, Lists & Keyboard](guides/navigation.md). Left: opt-in record search in the palette
 - **Bulk actions & autocomplete (v0.5.5):** list-view checkbox column and action toolbar,
   bulk-action endpoint with a result for each row, `@action` bulk / form parameters, autocomplete
   widget, create popup, `relation_filters` / `relation_display`, inline-row error highlighting

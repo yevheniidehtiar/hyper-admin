@@ -72,6 +72,11 @@ It's built model-first (domain → logic → views → UI) and developed with an
 - Bulk actions with a result for each row, and custom `@action`s that can take a form
 - File and image uploads: local or S3-compatible storage, thumbnails, EXIF auto-rotation, drag-and-drop, progress and retry
 
+**Navigation**
+- Sidebar grouped by domain with icons, a collapsible icon rail, and per-user pinned pages
+- <kbd>⌘K</kbd> command palette over models, pages and recent records
+- Rows that open on click (edit or view, by permission), a red delete icon with a confirmation, keyboard shortcuts (`j`/`k`, `x`, `c`, `?`), and a warning before unsaved form changes are lost
+
 **Finding data**
 - Filter sidebar (date range, choice, boolean, relation, "mine only"), per-user saved views, filters you can share by URL
 - Tabbed, lazy-loaded detail panels, including streamed PDF panels

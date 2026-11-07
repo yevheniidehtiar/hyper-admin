@@ -79,6 +79,13 @@ admin.mount("/admin")
 - File and image uploads: local or S3-compatible storage, thumbnails, EXIF auto-rotation,
   drag-and-drop, and a progress bar with retry
 
+**Navigation**
+
+- A sidebar grouped by domain, with icons, a collapsible icon rail and per-user pinned pages
+- A <kbd>⌘K</kbd> command palette that finds models, pages and recent records
+- Rows that open on click, a delete icon that asks first, keyboard shortcuts, and a warning
+  before unsaved form changes are lost ([guide](guides/navigation.md))
+
 **Finding data**
 
 - A filter sidebar with date-range, choice, boolean, relation and "mine only" filters

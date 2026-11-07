@@ -142,7 +142,8 @@ site.register(Invoice, options=AdminOptions(
 
 ### Sidebar groups and icons
 
-Group models by domain and give each one an icon on its admin class:
+Group models by domain and give each one an icon on its admin class. The
+[Navigation, Lists & Keyboard](guides/navigation.md) guide shows every feature with screenshots.
 
 ```python
 from hyperadmin import Admin, NavGroup
