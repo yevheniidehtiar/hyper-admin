@@ -73,6 +73,11 @@
     {#- Shortcut registry (window.haShortcuts) first: palette.js registers Cmd/Ctrl+K on it. -#}
     <script src="{{ url_for('static', path='/js/shortcuts.js') }}" defer></script>
     <script src="{{ url_for('static', path='/js/palette.js') }}" defer></script>
+    <script src="{{ url_for('static', path='/js/request_errors.js') }}" defer
+            data-title="{{ _('Not saved') }}"
+            data-message="{{ _('The server could not save this record. Your edits are kept.') }}"
+            data-offline="{{ _('Could not reach the server. Your edits are kept.') }}"
+            data-close="{{ _('Close') }}"></script>
     <script>
       // Escape cancels an open inline cell editor. Delegated on document so
       // it works the instant htmx swaps the editor in (no per-fragment init race).
