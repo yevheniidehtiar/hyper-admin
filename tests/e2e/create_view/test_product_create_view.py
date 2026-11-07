@@ -25,7 +25,7 @@ def test_create_product_validation_error(page: Page, demo_base_url: str):
     page.get_by_role("button", name="Create").click()
     error_list = page.get_by_test_id("name-errors")
     expect(error_list).to_be_visible()
-    expect(error_list).to_contain_text("String should have at least 1 character")
+    expect(error_list).to_contain_text("This field is required")
 
 
 def test_create_product_successful_submission(page: Page, demo_base_url: str):
