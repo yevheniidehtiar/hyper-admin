@@ -74,6 +74,21 @@ def _is_datetime_annotation(annotation: Any) -> bool:
     return annotation_datetime_kind(annotation) is not None
 
 
+class _FormData(dict):
+    """Submitted values handed to schema validation.
+
+    SQLModel table models read their relationships back with ``getattr(data, name)``;
+    on a plain dict a relationship named ``items``, ``keys`` or ``values`` resolves
+    to the dict method and is assigned to the relationship. Public attribute lookups
+    raise ``AttributeError`` here so SQLModel skips them.
+    """
+
+    def __getattribute__(self, name: str) -> Any:
+        if name.startswith("_"):
+            return super().__getattribute__(name)
+        raise AttributeError(name)
+
+
 @dataclass(slots=True)
 class HtmxWidget:
     """A minimal widget abstraction capable of rendering via a Jinja template.
@@ -740,7 +755,7 @@ class PydanticForm:
         instance: BaseModel | None = None
         errs: dict[str, ErrorList] = {}
         try:
-            instance = schema_for(self.model).model_validate(cleaned_data)
+            instance = schema_for(self.model).model_validate(_FormData(cleaned_data))
         except ValidationError as e:
             for error in e.errors():
                 loc = error["loc"][0]
@@ -981,7 +996,7 @@ class InlineFormset:
                     data[field_name] = None
 
             try:
-                instance = schema_for(self.spec.model).model_validate(data)
+                instance = schema_for(self.spec.model).model_validate(_FormData(data))
                 result = instance.model_dump()
                 if "_pk" in row:
                     result["_pk"] = row["_pk"]
