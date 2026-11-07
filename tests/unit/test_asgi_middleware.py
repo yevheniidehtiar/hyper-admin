@@ -110,6 +110,64 @@ async def test_locale_header_disabled_leaves_response_untouched() -> None:
 
 
 # ---------------------------------------------------------------------------
+# StartupGuardMiddleware (already plain ASGI: pinned here so it stays so)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("scope_type", ["websocket", "lifespan"])
+async def test_startup_guard_non_http_scopes_pass_through_untouched(scope_type: str) -> None:
+    """
+    Scenario: non-HTTP scopes pass through untouched
+      Given the admin app
+      When  a websocket or lifespan scope arrives
+      Then  each middleware forwards it to the inner app
+    """
+    from types import SimpleNamespace
+
+    from hyperadmin.core.lifecycle import StartupGuardMiddleware
+
+    inner = _Recorder()
+    lifecycle: Any = SimpleNamespace(started=True)
+    mw = StartupGuardMiddleware(inner, lifecycle=lifecycle, admin_prefix="/admin")
+    scope: dict[str, Any] = {"type": scope_type}
+
+    await mw(scope, _noop_receive, _discard)
+
+    assert inner.scopes == [scope]
+
+
+async def test_stack_does_not_buffer_a_streaming_response() -> None:
+    """
+    Scenario: a streaming response is not buffered
+      Given an SSE-like app behind the locale and auth middleware
+      When  the client reads the stream
+      Then  the first chunk is sent before the app produces the second
+    """
+    from hyperadmin.auth.middleware import AuthenticationMiddleware
+
+    events: list[str] = []
+
+    async def streaming_app(scope: Any, receive: Any, send: Any) -> None:
+        await send({"type": "http.response.start", "status": 200, "headers": []})
+        events.append("produce-1")
+        await send({"type": "http.response.body", "body": b"a", "more_body": True})
+        events.append("produce-2")
+        await send({"type": "http.response.body", "body": b"b", "more_body": False})
+
+    stack = LocaleMiddleware(
+        AuthenticationMiddleware(streaming_app, _Backend(_User())), HyperAdminSettings()
+    )
+
+    async def send(message: dict[str, Any]) -> None:
+        if message["type"] == "http.response.body":
+            events.append(f"recv-{message['body'].decode()}")
+
+    await stack(_http_scope(path="/admin/"), _noop_receive, send)
+
+    assert events == ["produce-1", "recv-a", "produce-2", "recv-b"]
+
+
+# ---------------------------------------------------------------------------
 # AuthenticationMiddleware
 # ---------------------------------------------------------------------------
 
