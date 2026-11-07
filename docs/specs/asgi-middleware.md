@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Author | Claude Code |
-| Status | Draft |
+| Status | Approved |
 | Issue | st-perf-03 |
 | Milestone | v0.7.0a (scale-core) |
 | Created | 2026-11-07 |
