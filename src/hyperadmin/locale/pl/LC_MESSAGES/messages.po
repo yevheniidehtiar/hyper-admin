@@ -1088,6 +1088,21 @@ msgstr "Szukaj modeli i stron"
 msgid "Search models and pages…"
 msgstr "Szukaj modeli i stron…"
 
+#: src/hyperadmin/templates/components/command_palette.html:19
+#, fuzzy
+msgid "Records"
+msgstr "Rekordy"
+
+#: src/hyperadmin/templates/components/command_palette.html:31
+#, fuzzy
+msgid "Search models, pages and records"
+msgstr "Szukaj modeli, stron i rekordów"
+
+#: src/hyperadmin/templates/components/command_palette.html:32
+#, fuzzy
+msgid "Search models, pages and records…"
+msgstr "Szukaj modeli, stron i rekordów…"
+
 #: src/hyperadmin/templates/components/command_palette.html:36
 #, fuzzy
 msgid "Results"

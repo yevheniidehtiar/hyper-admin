@@ -1041,6 +1041,21 @@ msgstr "모델 및 페이지 검색"
 msgid "Search models and pages…"
 msgstr "모델 및 페이지 검색…"
 
+#: src/hyperadmin/templates/components/command_palette.html:19
+#, fuzzy
+msgid "Records"
+msgstr "레코드"
+
+#: src/hyperadmin/templates/components/command_palette.html:31
+#, fuzzy
+msgid "Search models, pages and records"
+msgstr "모델, 페이지 및 레코드 검색"
+
+#: src/hyperadmin/templates/components/command_palette.html:32
+#, fuzzy
+msgid "Search models, pages and records…"
+msgstr "모델, 페이지 및 레코드 검색…"
+
 #: src/hyperadmin/templates/components/command_palette.html:36
 #, fuzzy
 msgid "Results"

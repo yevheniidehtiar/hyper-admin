@@ -7,6 +7,7 @@ from hyperadmin.views.dynamic.actions import ActionViewMixin
 from hyperadmin.views.dynamic.create import CreateViewMixin
 from hyperadmin.views.dynamic.detail import DetailViewMixin
 from hyperadmin.views.dynamic.list_view import ListViewMixin
+from hyperadmin.views.dynamic.palette_search import PaletteSearchMixin
 from hyperadmin.views.dynamic.update import UpdateViewMixin
 
 
@@ -16,6 +17,7 @@ class DynamicModelView(
     CreateViewMixin,
     UpdateViewMixin,
     ActionViewMixin,
+    PaletteSearchMixin,
 ):
     """View handler that serves all CRUD endpoints for a registered model.
 

@@ -4,6 +4,9 @@
  * permission-filtered #ha-nav-data island, so no request per keystroke.
  * Recent visits live in localStorage "ha-recent" (newest first, max 8); a page
  * records data.current, or <body data-ha-recent='{"label","url","kind"}'>.
+ * Record search (st-v059-nav-05): when the island has a search_url, a query of
+ * 2+ characters also asks the server, 250 ms after the last keystroke, and the
+ * matches are added under Records. Each keystroke cancels the pending request.
  */
 (function () {
   'use strict';
@@ -23,6 +26,8 @@
   var options = [];
   var active = -1;
   var opener = null;
+  var timer = 0;
+  var inflight = null;
 
   data.groups.forEach(function (g) {
     g.items.forEach(function (it) { items.push(it); byKey[it.key] = it; });
@@ -182,9 +187,53 @@
       section(L.models, hits.filter(kind('model')));
       section(L.pages, hits.filter(kind('page')));
     }
+    finish();
+    searchRecords(input.value.trim());
+  }
+
+  function finish() {
     empty.hidden = options.length > 0;
     status.textContent = options.length ? L.results.replace('{n}', options.length) : L.none;
-    move(options.length ? 0 : -1);
+    if (active < 0) move(options.length ? 0 : -1);
+  }
+
+  function cancel() {
+    clearTimeout(timer);
+    if (inflight) inflight.abort();
+    inflight = null;
+  }
+
+  function searchRecords(raw) {
+    cancel();
+    if (!local(data.search_url) || raw.length < 2 || !window.fetch || !window.AbortController) return;
+    timer = setTimeout(function () {
+      var ctl = inflight = new AbortController();
+      fetch(data.search_url + '?q=' + encodeURIComponent(raw), {
+        credentials: 'same-origin', headers: { Accept: 'application/json' }, signal: ctl.signal
+      }).then(function (r) { return r.ok ? r.json() : { groups: [] }; }).then(function (res) {
+        if (inflight !== ctl || input.value.trim() !== raw) return;
+        inflight = null;
+        showRecords(res.groups || [], fold(raw));
+      }).catch(function () { /* aborted or offline: models and pages still work */ });
+    }, 250);
+  }
+
+  // Only models in this user's island, and same-origin urls, ever render.
+  function showRecords(groups, q) {
+    var found = [];
+    groups.forEach(function (g) {
+      var model = byKey[g.key];
+      if (!model) return;
+      (g.items || []).forEach(function (r) {
+        if (!local(r.url)) return;
+        var it = { label: String(r.label), group: model.label, url: r.url, icon: model.icon, kind: 'record' };
+        var m = match(it, q);
+        found.push({ it: it, marks: m ? m[1] : [] });
+      });
+    });
+    if (!found.length) return;
+    section(L.records, found);
+    finish();
   }
 
   // Same-origin paths only, so a stored or injected url can never be javascript: or off-site.
@@ -221,6 +270,7 @@
   });
   dlg.addEventListener('click', function (e) { if (e.target === dlg) dlg.close(); });
   dlg.addEventListener('close', function () {
+    cancel();
     if (opener && opener.focus) opener.focus();
     opener = null;
   });

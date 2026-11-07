@@ -287,6 +287,15 @@ class AdminOptions(BaseModel):
     and confirming a delete, never ask. Set to ``False`` to turn this off for
     the model. ``Cmd/Ctrl+S`` saves either way.
     """
+    palette_search: bool = False
+    """Whether the Cmd/Ctrl+K command palette also finds this model's records.
+
+    Off by default, so the palette never queries a table the host did not opt
+    in. When ``True``, the palette sends the typed text (2 characters or more)
+    to one endpoint that runs this model's list search over ``search_fields``
+    and returns at most 5 matches, for users who hold ``view_<model>`` and
+    inside ``get_queryset``. A model without search fields is never queried.
+    """
 
     @field_validator("list_filter")
     @classmethod

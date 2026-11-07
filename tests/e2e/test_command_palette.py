@@ -151,3 +151,55 @@ def test_esc_closes_and_returns_focus(page: Page, palette_base_url: str) -> None
     # Then the dialog closes and focus is back on the trigger
     expect(page.get_by_test_id("command-palette")).to_be_hidden()
     expect(trigger).to_be_focused()
+
+
+def test_records_of_opted_in_models_appear_in_the_palette(
+    page: Page, palette_base_url: str
+) -> None:
+    """
+    Scenario: records of opted-in models appear in the palette
+      Given OrderAdmin(palette_search=True) and order "ORD-1042"
+      When  the user types "1042" in the palette
+      Then  "ORD-1042" is listed under Records, as an Orders record
+      And   Enter opens its edit page
+    """
+    # Given OrderAdmin(palette_search=True) and order "ORD-1042"
+    _login(page, palette_base_url, "alice")
+    page.get_by_test_id("palette-trigger").click()
+
+    # When the user types "1042" in the palette
+    page.get_by_test_id("palette-input").fill("1042")
+
+    # Then "ORD-1042" is listed under Records, as an Orders record
+    records = page.get_by_role("group", name="Records")
+    found = records.get_by_test_id("palette-result").filter(has_text="ORD-1042")
+    expect(found).to_be_visible()
+    expect(found).to_contain_text("Orders")
+
+    # And Enter opens its edit page
+    page.get_by_test_id("palette-input").press("Enter")
+    expect(page).to_have_url(f"{palette_base_url}/admin/order/1042/edit")
+
+
+def test_models_without_opt_in_are_never_queried(page: Page, palette_base_url: str) -> None:
+    """
+    Scenario: models without opt-in are never queried
+      Given InvoiceAdmin without palette_search, and invoice "INV-1042"
+      When  the user types "1042" in the palette
+      Then  the record search answers for Orders only
+      And   "INV-1042" is not listed
+    """
+    # Given InvoiceAdmin without palette_search, and invoice "INV-1042"
+    _login(page, palette_base_url, "alice")
+    page.get_by_test_id("palette-trigger").click()
+
+    # When the user types "1042" in the palette
+    with page.expect_response(lambda r: "/admin/nav/search" in r.url) as answer:
+        page.get_by_test_id("palette-input").fill("1042")
+
+    # Then the record search answers for Orders only
+    assert [group["key"] for group in answer.value.json()["groups"]] == ["order"]
+    expect(page.get_by_role("group", name="Records")).to_be_visible()
+
+    # And "INV-1042" is not listed
+    expect(_result(page, "INV-1042")).to_have_count(0)

@@ -1089,6 +1089,21 @@ msgstr "Modelle und Seiten durchsuchen"
 msgid "Search models and pages…"
 msgstr "Modelle und Seiten durchsuchen…"
 
+#: src/hyperadmin/templates/components/command_palette.html:19
+#, fuzzy
+msgid "Records"
+msgstr "Datensätze"
+
+#: src/hyperadmin/templates/components/command_palette.html:31
+#, fuzzy
+msgid "Search models, pages and records"
+msgstr "Modelle, Seiten und Datensätze durchsuchen"
+
+#: src/hyperadmin/templates/components/command_palette.html:32
+#, fuzzy
+msgid "Search models, pages and records…"
+msgstr "Modelle, Seiten und Datensätze durchsuchen…"
+
 #: src/hyperadmin/templates/components/command_palette.html:36
 #, fuzzy
 msgid "Results"

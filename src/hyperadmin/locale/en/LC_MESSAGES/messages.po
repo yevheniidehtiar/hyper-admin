@@ -903,6 +903,18 @@ msgstr ""
 msgid "Search models and pages…"
 msgstr ""
 
+#: src/hyperadmin/templates/components/command_palette.html:19
+msgid "Records"
+msgstr ""
+
+#: src/hyperadmin/templates/components/command_palette.html:31
+msgid "Search models, pages and records"
+msgstr ""
+
+#: src/hyperadmin/templates/components/command_palette.html:32
+msgid "Search models, pages and records…"
+msgstr ""
+
 #: src/hyperadmin/templates/components/command_palette.html:36
 msgid "Results"
 msgstr ""

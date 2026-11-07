@@ -1106,6 +1106,21 @@ msgstr "البحث في النماذج والصفحات"
 msgid "Search models and pages…"
 msgstr "البحث في النماذج والصفحات…"
 
+#: src/hyperadmin/templates/components/command_palette.html:19
+#, fuzzy
+msgid "Records"
+msgstr "السجلات"
+
+#: src/hyperadmin/templates/components/command_palette.html:31
+#, fuzzy
+msgid "Search models, pages and records"
+msgstr "البحث في النماذج والصفحات والسجلات"
+
+#: src/hyperadmin/templates/components/command_palette.html:32
+#, fuzzy
+msgid "Search models, pages and records…"
+msgstr "البحث في النماذج والصفحات والسجلات…"
+
 #: src/hyperadmin/templates/components/command_palette.html:36
 #, fuzzy
 msgid "Results"

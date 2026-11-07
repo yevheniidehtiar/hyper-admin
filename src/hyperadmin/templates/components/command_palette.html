@@ -16,6 +16,7 @@
     "recent": _("Recent"),
     "models": _("Models"),
     "pages": _("Pages"),
+    "records": _("Records"),
     "results": _("%(count)s results", count="{n}"),
     "none": _("No results"),
 } -%}
@@ -27,8 +28,13 @@
         <input id="ha-palette-input" class="ha-input" type="text" role="combobox"
                aria-expanded="true" aria-controls="ha-palette-list" aria-autocomplete="list"
                autocomplete="off" spellcheck="false"
+               {%- if _palette.search_url %}
+               aria-label="{{ _('Search models, pages and records') }}"
+               placeholder="{{ _('Search models, pages and records…') }}"
+               {%- else %}
                aria-label="{{ _('Search models and pages') }}"
                placeholder="{{ _('Search models and pages…') }}"
+               {%- endif %}
                data-testid="palette-input">
         <span class="ha-combobox__tools"><kbd class="ha-kbd">Esc</kbd></span>
     </div>

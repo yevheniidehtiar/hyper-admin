@@ -971,6 +971,18 @@ msgstr "Пошук моделей і сторінок"
 msgid "Search models and pages…"
 msgstr "Пошук моделей і сторінок…"
 
+#: src/hyperadmin/templates/components/command_palette.html:19
+msgid "Records"
+msgstr "Записи"
+
+#: src/hyperadmin/templates/components/command_palette.html:31
+msgid "Search models, pages and records"
+msgstr "Пошук моделей, сторінок і записів"
+
+#: src/hyperadmin/templates/components/command_palette.html:32
+msgid "Search models, pages and records…"
+msgstr "Пошук моделей, сторінок і записів…"
+
 #: src/hyperadmin/templates/components/command_palette.html:36
 msgid "Results"
 msgstr "Результати"

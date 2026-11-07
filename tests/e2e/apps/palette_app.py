@@ -3,7 +3,8 @@
 Spec: ``docs/specs/navigation-and-list-ux.md`` (Palette).
 
 Models: ``Invoice`` and ``Bill`` in the "Accounting" group, ``Order`` in "Sales"
-(seeded with order "ORD-1042", id 1042).
+(seeded with order "ORD-1042", id 1042, and invoice "INV-1042"). Only ``Order``
+opts in to record search in the palette (``palette_search=True``, st-v059-nav-05).
 
 Seeded users (password ``secret123``):
   * ``alice`` — superuser: sees everything, may create everything.
@@ -26,6 +27,7 @@ from hyperadmin.auth.permissions import ModelPermissionChecker, PermissionSyncSe
 from hyperadmin.auth.session import SessionAuthBackend
 from hyperadmin.core.app import Admin
 from hyperadmin.core.model import ModelAdmin
+from hyperadmin.core.options import AdminOptions
 from hyperadmin.core.registry import site
 from hyperadmin.core.settings import HyperAdminSettings
 
@@ -67,6 +69,7 @@ class BillAdmin(ModelAdmin):
 class OrderAdmin(ModelAdmin):
     nav_group = "Sales"
     icon = "shopping-cart"
+    options = AdminOptions(palette_search=True, search_fields=["number"])
 
 
 _DB_PATH = os.environ.get("HYPERADMIN_E2E_PALETTE_DB", "/tmp/hyperadmin-e2e-palette.db")  # noqa: S108
@@ -102,6 +105,7 @@ async def _seed() -> None:
                 )
             session.add(Order(id=1042, number="ORD-1042"))
             session.add(Invoice(id=1, number="INV-1"))
+            session.add(Invoice(id=2, number="INV-1042"))
             session.add(Bill(id=1, number="BILL-1"))
             await session.commit()
         perms = {p.codename: p.id for p in (await session.execute(select(Permission))).scalars()}

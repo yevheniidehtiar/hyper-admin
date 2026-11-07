@@ -23,6 +23,7 @@ from hyperadmin.realtime.emitting import EventEmittingAdapter, notifications_ena
 from hyperadmin.views.dynamic import DynamicModelView
 from hyperadmin.views.navigation import register_nav_globals
 from hyperadmin.views.palette_context import register_palette_globals
+from hyperadmin.views.palette_search import PaletteSearch, PaletteSource
 from hyperadmin.views.route import make_admin_route_class
 from hyperadmin.views.template_filters import register_template_filters
 
@@ -130,8 +131,13 @@ def create_admin_router(  # noqa: PLR0912, PLR0913, PLR0915, PLR0917
     count_cache: CountCache | None = None,
     concurrency_use_updated_at: bool = False,
     occ_render_dialog: bool = True,
+    palette_search: PaletteSearch | None = None,
 ) -> APIRouter:
-    """Creates an APIRouter for a given model with the specified admin options."""
+    """Creates an APIRouter for a given model with the specified admin options.
+
+    With ``palette_search`` and ``options.palette_search``, the model's view also
+    joins the command palette's record search (st-v059-nav-05).
+    """
     router = APIRouter(route_class=route_class)
     # session_factory is forwarded only when set, so a third-party adapter_class
     # that still uses the pre-0.5.8, engine-only __init__(self, model, engine)
@@ -198,6 +204,10 @@ def create_admin_router(  # noqa: PLR0912, PLR0913, PLR0915, PLR0917
         occ_render_dialog=occ_render_dialog,
     )
     model_name = model.__name__.lower()
+    if palette_search is not None and options.palette_search and options.can_list:
+        palette_search.add(
+            PaletteSource(key=model_name, label=model_nav_label(model, admin_class), view=view)
+        )
 
     prefix = f"/{model_name}"
     # Int keys keep `{item_id:int}` byte-for-byte; UUID keys use Starlette's
@@ -528,6 +538,7 @@ class HyperAdminRouter:
             name="admin-dashboard",
         )
         self.routers.append(dashboard_router)
+        palette_search = PaletteSearch()
 
         for model, admin_class in site._registry.items():
             admin_instance = admin_class(model)
@@ -579,6 +590,7 @@ class HyperAdminRouter:
                 count_cache=self.count_cache,
                 concurrency_use_updated_at=self.concurrency_use_updated_at,
                 occ_render_dialog=self.occ_render_dialog,
+                palette_search=palette_search,
             )
             self.routers.append(router)
             if (
@@ -601,6 +613,11 @@ class HyperAdminRouter:
                 }
             )
 
+        # The palette's record search; registered on the dashboard router, so
+        # `/nav/search` matches before any model's `/{model}/{item_id}` route.
+        if palette_search.sources:
+            palette_search.register(dashboard_router)
+        self.templates.env.globals["palette_search_models"] = palette_search.keys
         self.templates.env.globals["nav_items"] = nav_items
         # HyperAdmin.mount() rebuilds it with the plugin entries and nav_groups.
         self.templates.env.globals["nav_tree"] = build_nav_tree(self.nav_sources, ())
