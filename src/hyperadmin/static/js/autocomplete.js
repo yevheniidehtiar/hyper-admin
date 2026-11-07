@@ -323,7 +323,10 @@
   // Combobox behaviour: open on focus/click/typing, pick by click or keyboard.
   document.addEventListener("focusin", function (event) {
     var w = comboOf(event.target);
-    if (w && event.target === w.input) openList(w);
+    if (w && event.target === w.input) {
+      openList(w);
+      w.input.select();
+    }
   });
 
   document.addEventListener("focusout", function (event) {

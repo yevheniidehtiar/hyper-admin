@@ -133,15 +133,20 @@ class RelationViewMixin(FormDataMixin):
             # Only when configured: adapters predating ``label_fn`` keep working.
             filters["label_fn"] = label_fn
         raw_choices = await self.adapter.get_choices(rel_name, **filters)
-        current = selected_values.get(name)
-        current = "" if current is None else str(current)
+        stored = selected_values.get(name)
+        if isinstance(stored, (list, tuple, set)):
+            keys = [str(k) for k in stored if k not in (None, "")]
+        else:
+            keys = [] if stored in (None, "") else [str(stored)]
+        wanted = set(keys)
         choices = [
-            ChoiceItem(value=c["value"], label=c["label"], selected=c["value"] == current)
+            ChoiceItem(value=c["value"], label=c["label"], selected=c["value"] in wanted)
             for c in raw_choices
         ]
-        if current and not any(c["selected"] for c in choices):
-            choices.insert(0, await self._current_choice(name, rel_name, current, label_fn))
-        return choices
+        present = {c["value"] for c in choices}
+        missing = [k for k in keys if k not in present]
+        extra = [await self._current_choice(name, rel_name, k, label_fn) for k in missing]
+        return extra + choices
 
     async def _current_choice(
         self,

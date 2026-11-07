@@ -156,3 +156,22 @@ def test_current_value_label_follows_relation_display() -> None:
     body = client.get("/admin/fkinvoice/1/edit").text
 
     assert re.search(r'<option value="60"\s*selected>CONTACT 60</option>', body)
+
+
+def test_multi_relation_keeps_every_stored_key_selected() -> None:
+    """
+    Scenario: a multi relation keeps all stored keys selected
+      Given stored keys 5 (in the window) and 99 (outside it)
+      When  the preload choices are built
+      Then  5 is selected in place, 99 is added selected, and no key is a stringified list
+    """
+    five = {"value": "5", "label": "Five", "selected": False}
+    probe = _probe([five])
+    probe.adapter.get_choices.side_effect = [[five], []]  # type: ignore[attr-defined]
+
+    result = anyio.run(probe._preload_choices, "contacts", "contacts", None, {"contacts": [5, 99]})
+
+    assert result == [
+        {"value": "99", "label": "FkContact (99)", "selected": True},
+        {"value": "5", "label": "Five", "selected": True},
+    ]
