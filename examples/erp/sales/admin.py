@@ -1,15 +1,23 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import ClassVar
+from typing import TYPE_CHECKING, Any, ClassVar
 
+from fastapi import HTTPException
+
+from examples.erp.filters import OverdueFilter
 from examples.erp.sales.models import Invoice, InvoiceItem, InvoiceStatus, TaxRate
 from hyperadmin.adapters.sqlmodel import SQLModelAdapter
+from hyperadmin.core.actions import action
 from hyperadmin.core.inlines import InlineModelSpec
 from hyperadmin.core.model import ModelAdmin
 from hyperadmin.core.options import AdminOptions
 from hyperadmin.core.registry import site
+from hyperadmin.filters import DateRangeFilter, MultiFKFilter
 from hyperadmin.panels import pdf_stream_panel
+
+if TYPE_CHECKING:
+    from fastapi import Request
 
 # The bundled streaming demo (docs/specs/detail-panels.md): an issued invoice's detail
 # page gets an "Invoice" tab that shows this sample PDF inline. Drafts have no tab.
@@ -29,7 +37,14 @@ class InvoiceAdmin(ModelAdmin):
         "status",
         "total_amount",
     ]
-    list_filter: ClassVar[list[str]] = ["status"]
+    # A clerk narrows 500 invoices by status, customer and due date. "Overdue" is the
+    # Sent status with a due date before today (the status pill already reads "Overdue").
+    list_filter: ClassVar[list[Any]] = [
+        "status",
+        MultiFKFilter(field="customer_id", label="Customer"),
+        DateRangeFilter(field="date_due", label="Due date"),
+        OverdueFilter(field="date_due", open_status=InvoiceStatus.SENT),
+    ]
     search_fields: ClassVar[list[str]] = ["number"]
     # Demonstrates AdminOptions.inlines: invoice items are edited directly on
     # the Invoice create/update page instead of needing a separate list page.
@@ -53,6 +68,14 @@ class InvoiceAdmin(ModelAdmin):
             ),
         ],
     )
+
+    @action(label="Mark paid", bulk=True)
+    async def mark_paid(self, request: Request, item_id: int, *, params: Any = None) -> None:  # noqa: ARG002
+        """Marks the selected Sent invoices as paid; other statuses are refused."""
+        invoice = await self.adapter.get(item_id)
+        if invoice is None or invoice.status != InvoiceStatus.SENT:
+            raise HTTPException(status_code=409, detail="Only Sent invoices can be marked paid")
+        await self.adapter.update(item_id, {"status": InvoiceStatus.PAID})
 
 
 class InvoiceItemAdmin(ModelAdmin):

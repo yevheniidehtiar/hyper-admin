@@ -135,7 +135,7 @@ def test_table_renders_as_stacked_cards_on_mobile_viewport(page: Page, demo_base
 
     # Then it renders as a block-level card (not a table row)
     row_display = first_row.evaluate("el => window.getComputedStyle(el).display")
-    assert row_display == "block"
+    assert row_display in {"block", "flex"}  # cards are a flex column, never a table-row
 
     # And the body cells carry data-label attributes that drive the inline labels
     first_cell = first_row.locator("td").first

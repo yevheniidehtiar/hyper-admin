@@ -1,9 +1,19 @@
 import enum
-from datetime import date
+from datetime import date, datetime, timezone
+from typing import Any
 
 from sqlmodel import Field, Relationship, SQLModel
 
 from examples.erp.contacts.models import Contact
+from hyperadmin import gettext_lazy as _
+
+
+def _sent_tone(row: Any) -> tuple[str, str] | str:
+    """A Sent invoice whose due date has passed reads "Overdue" (danger tone)."""
+    due = row.get("date_due") if row is not None else None
+    if isinstance(due, date) and due < datetime.now(tz=timezone.utc).date():
+        return (_("Overdue"), "danger")
+    return "info"
 
 
 class InvoiceStatus(str, enum.Enum):
@@ -11,6 +21,9 @@ class InvoiceStatus(str, enum.Enum):
     SENT = "Sent"
     PAID = "Paid"
     CANCELLED = "Cancelled"
+
+    # Pill tones in lists (see ``ha_pill``): member name to a tone or a row callable.
+    __ha_tones__ = {"DRAFT": "", "SENT": _sent_tone, "PAID": "success", "CANCELLED": "danger"}  # noqa: RUF012
 
 
 class Invoice(SQLModel, table=True):

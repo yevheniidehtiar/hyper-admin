@@ -1,0 +1,36 @@
+{#- The dashboard's "what needs attention" tiles (st-ux-erp-19). Loaded by htmx into
+    dashboard.html; each tile links to the list it counts, already filtered. -#}
+{%- set invoices = admin_prefix ~ '/invoice' -%}
+{%- set bills = admin_prefix ~ '/bill' -%}
+<div class="ha-grid" data-testid="dashboard-figures">
+    <a class="ha-card" style="text-decoration:none;color:inherit" href="{{ invoices }}?filter_status=SENT" data-testid="figure-open-invoices">
+        <div class="ha-card-body">
+            <p class="ha-text-muted">{{ _('Open invoices') }}</p>
+            <p class="ha-page-title">{{ open_invoices }}</p>
+        </div>
+    </a>
+    <a class="ha-card" style="text-decoration:none;color:inherit" href="{{ invoices }}?filter_status=SENT&amp;date_due__lte={{ yesterday.isoformat() }}" data-testid="figure-overdue-invoices">
+        <div class="ha-card-body">
+            <p class="ha-text-muted">{{ _('Overdue invoices') }}</p>
+            <p class="ha-page-title{{ ' ha-text-danger' if overdue_invoices }}">{{ overdue_invoices }}</p>
+        </div>
+    </a>
+    <a class="ha-card" style="text-decoration:none;color:inherit" href="{{ invoices }}?filter_status=SENT&amp;date_due__gte={{ today.isoformat() }}&amp;date_due__lte={{ week_end.isoformat() }}" data-testid="figure-due-this-week">
+        <div class="ha-card-body">
+            <p class="ha-text-muted">{{ _('Invoices due this week') }}</p>
+            <p class="ha-page-title">{{ due_this_week }}</p>
+        </div>
+    </a>
+    <a class="ha-card" style="text-decoration:none;color:inherit" href="{{ bills }}?filter_status=TO_PAY" data-testid="figure-bills-to-pay">
+        <div class="ha-card-body">
+            <p class="ha-text-muted">{{ _('Bills to pay') }}</p>
+            <p class="ha-page-title">{{ bills_to_pay }}</p>
+        </div>
+    </a>
+    <a class="ha-card" style="text-decoration:none;color:inherit" href="{{ admin_prefix }}/erp/profit-loss" data-testid="figure-month-result">
+        <div class="ha-card-body">
+            <p class="ha-text-muted">{% trans month=month_label %}Result in {{ month }}{% endtrans %}</p>
+            <p class="ha-page-title {{ 'ha-text-success' if month_result >= 0 else 'ha-text-danger' }}">{{ month_result|ha_number }}</p>
+        </div>
+    </a>
+</div>

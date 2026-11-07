@@ -49,3 +49,13 @@ class JournalLine(SQLModel, table=True):
 
     entry: JournalEntry = Relationship(back_populates="lines")
     account: Account = Relationship(sa_relationship_kwargs={"lazy": "selectin"})
+
+    @property
+    def debit_amount(self) -> float | str:
+        """The debit, or an empty cell when this line is on the credit side."""
+        return self.debit or ""
+
+    @property
+    def credit_amount(self) -> float | str:
+        """The credit, or an empty cell when this line is on the debit side."""
+        return self.credit or ""

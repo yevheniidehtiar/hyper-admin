@@ -35,7 +35,7 @@ class JournalLineAdmin(ModelAdmin):
     nav_group = "Accounting"
     nav_order = 2
     icon = "columns-3"
-    list_display: ClassVar[list[str]] = ["entry", "account", "debit", "credit"]
+    list_display: ClassVar[list[str]] = ["entry", "account", "debit_amount", "credit_amount"]
     options: ClassVar[AdminOptions] = AdminOptions(realtime_notifications=False)
 
 
