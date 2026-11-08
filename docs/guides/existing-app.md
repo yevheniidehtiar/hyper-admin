@@ -406,13 +406,15 @@ The admin is mounted as a private sub-application:
 - **User cache and staleness.** `HYPERADMIN_USER_CACHE_TTL` (seconds, default `0`
   = off, at most `60`) keeps the signed-in user and its permission set in memory,
   per worker and per session user id, so a request skips two database round trips.
-  Each request gets its own copy of the cached user. The cache applies only with the
+  Each request gets its own copy of the cached user: a detached object with column
+  data only, so its relationships are empty on a cache hit. The cache applies only with the
   built-in `SessionAuthBackend` and `ModelPermissionChecker` (or no checker) and only
   to sessions carrying an integer `user_id`; with a custom `auth_backend` or
   `permission_checker`, or with UUID or string ids, the setting has no effect (a
   warning is logged for the former). A write to a user, group or permission on the
   same worker drops the affected entries at commit, including bulk `UPDATE`,
-  `DELETE` and `INSERT` statements run through a session. Other workers are not
+  `DELETE` and `INSERT` statements run through a session (but not `text()` SQL,
+  Core connection writes or `bulk_*_mappings`, which count as outside writes below). Other workers are not
   told: with N workers, one can keep serving the old user or permission set for up
   to the TTL after you deactivate an account or revoke a permission on another, and
   so can writes made outside the process (a CLI, a migration) or through a bare

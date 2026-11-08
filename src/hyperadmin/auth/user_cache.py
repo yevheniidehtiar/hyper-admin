@@ -8,6 +8,7 @@ workers may serve a stale entry for up to the TTL (see the production notes).
 from __future__ import annotations
 
 import copy
+import functools
 import time
 import weakref
 from collections import OrderedDict
@@ -46,7 +47,8 @@ def clone_user(user: Any) -> Any | None:
     """Return a fresh detached copy of a mapped ``user``'s loaded columns.
 
     ``None`` when ``user`` is not an ORM instance (it is then not cacheable). The copy
-    is transient with no pending changes; relationships stay empty.
+    is transient with no pending changes; relationships stay empty, unloaded columns read
+    as ``None`` and nested column values (JSON) are deep-copied.
     """
     state = sa_inspect(user, raiseerr=False)
     if state is None:
@@ -55,7 +57,7 @@ def clone_user(user: Any) -> Any | None:
     clone = mapper.class_manager.new_instance()
     for attr in mapper.column_attrs:
         if attr.key in state.dict:
-            set_committed_value(clone, attr.key, copy.copy(state.dict[attr.key]))
+            set_committed_value(clone, attr.key, copy.deepcopy(state.dict[attr.key]))
     return clone
 
 
@@ -143,6 +145,8 @@ def _collect(session: Session, _flush_context: Any) -> None:
         UserPermission,
     )
 
+    if not _CACHES:
+        return
     dirty: set[Any] = session.info.setdefault(_DIRTY_KEY, set())
     for obj in (*session.new, *session.dirty, *session.deleted):
         owner: Any
@@ -158,6 +162,7 @@ def _collect(session: Session, _flush_context: Any) -> None:
             dirty.add(owner)
 
 
+@functools.cache
 def _auth_table_names() -> frozenset[str]:
     from hyperadmin.auth.models import (  # noqa: PLC0415 - lazy: keeps auth tables unregistered on import
         Group,
@@ -177,7 +182,7 @@ def _collect_bulk(state: ORMExecuteState) -> None:
 
     These statements skip the unit of work, so ``_collect`` never sees them.
     """
-    if not (state.is_insert or state.is_update or state.is_delete):
+    if not _CACHES or not (state.is_insert or state.is_update or state.is_delete):
         return
     table = getattr(state.statement, "table", None)
     if getattr(table, "name", None) in _auth_table_names():

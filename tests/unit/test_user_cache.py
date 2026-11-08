@@ -139,9 +139,32 @@ async def test_repeated_requests_load_the_user_once() -> None:
         status, scope = await _call(mw, {"user_id": 1})
         assert status == 200
         assert scope["state"]["user_permissions"] == frozenset({"view_x"})
+        assert (scope["state"]["user"].id, scope["state"]["user"].username) == (1, "u1")
 
     assert backend.loads == 1
     assert checker.calls == 1
+
+
+async def test_user_and_permissions_are_reloaded_after_the_ttl() -> None:
+    """
+    Scenario: an expired entry reloads the user and its permissions
+      Given an active user is cached with a TTL of 5
+      When  a request arrives once the TTL has passed
+      Then  the user and the permissions are loaded a second time
+    """
+    backend, checker, clock = _backend(_user()), _checker(), _Clock()
+    mw = AuthenticationMiddleware(
+        _Inner(), backend, permission_checker=checker, user_cache_ttl=5, clock=clock
+    )
+    await _call(mw, {"user_id": 1})
+    clock.now = 4.9
+    await _call(mw, {"user_id": 1})
+    assert (backend.loads, checker.calls) == (1, 1)
+
+    clock.now = 5.0
+    await _call(mw, {"user_id": 1})
+
+    assert (backend.loads, checker.calls) == (2, 2)
 
 
 async def test_deactivated_user_is_locked_out_after_the_ttl() -> None:
@@ -181,19 +204,19 @@ async def test_ttl_zero_keeps_todays_behaviour() -> None:
     assert checker.calls == 2
 
 
-async def test_inactive_user_is_rejected_whatever_the_ttl() -> None:
+async def test_inactive_user_is_rejected_only_when_the_cache_is_on() -> None:
     """
-    Scenario: an inactive user never gets in, cache or not
+    Scenario: an inactive user never gets cached, and TTL 0 is unchanged
       Given the backend returns an inactive user
       When  a request arrives with user_cache_ttl 0, then with 5
-      Then  both redirect to login
+      Then  the first is let through as before and the second redirects to login
     """
     user = _user()
     user.is_active = False
 
-    for ttl in (0, 5):
+    for ttl, expected in ((0, 200), (5, 302)):
         mw = AuthenticationMiddleware(_Inner(), _backend(user), user_cache_ttl=ttl)
-        assert (await _call(mw, {"user_id": 1}))[0] == 302
+        assert (await _call(mw, {"user_id": 1}))[0] == expected
 
 
 async def test_entries_are_keyed_by_session_user_id() -> None:
@@ -201,14 +224,22 @@ async def test_entries_are_keyed_by_session_user_id() -> None:
     Scenario: one user's entry is never served to another
       Given user 1 is cached
       When  a request arrives from a session of user 2
-      Then  user 2 is loaded and its own user is exposed
+      Then  user 2 is loaded and its own user and permissions are exposed
     """
 
     async def per_session(request: Any) -> Any:
         return _user(request.session["user_id"])
 
+    checker: Any = _make(ModelPermissionChecker)
+
+    async def get_user_permissions(user: Any) -> set[str]:
+        return {f"p{user.id}"}
+
+    checker.get_user_permissions = get_user_permissions
     backend = _backend(load=per_session)
-    mw = AuthenticationMiddleware(_Inner(), backend, user_cache_ttl=5, clock=_Clock())
+    mw = AuthenticationMiddleware(
+        _Inner(), backend, permission_checker=checker, user_cache_ttl=5, clock=_Clock()
+    )
 
     _, first = await _call(mw, {"user_id": 1})
     _, second = await _call(mw, {"user_id": 2})
@@ -216,6 +247,9 @@ async def test_entries_are_keyed_by_session_user_id() -> None:
 
     assert (first["state"]["user"].id, second["state"]["user"].id) == (1, 2)
     assert again["state"]["user"].id == 1
+    assert first["state"]["user_permissions"] == frozenset({"p1"})
+    assert second["state"]["user_permissions"] == frozenset({"p2"})
+    assert again["state"]["user_permissions"] == frozenset({"p1"})
     assert backend.loads == 2
 
 
@@ -387,6 +421,130 @@ async def test_group_permission_change_invalidates_everyone(factory: Any) -> Non
 
     assert cache.get(a.id) is None
     assert cache.get(b.id) is None
+
+
+async def test_direct_user_permission_invalidates_only_that_user(factory: Any) -> None:
+    """
+    Scenario: granting a permission directly drops that user's entry
+      Given users a and b are cached
+      When  a UserPermission row for a is committed
+      Then  a's entry is gone and b's remains
+    """
+    a, b, p = _row("a"), _row("b"), Permission(codename="c", name="C")
+    await _commit(factory, a, b, p)
+    cache = UserCache(60)
+    cache.set(a.id, CachedUser(a, None), cache.generation)
+    cache.set(b.id, CachedUser(b, None), cache.generation)
+
+    await _commit(factory, UserPermission(user_id=a.id, permission_id=p.id))
+
+    assert cache.get(a.id) is None
+    assert cache.get(b.id) is not None
+
+
+@pytest.mark.parametrize("kind", ["group", "permission"])
+async def test_group_or_permission_write_invalidates_everyone(factory: Any, kind: str) -> None:
+    """
+    Scenario: editing a group or a permission drops every entry
+      Given two cached users
+      When  a Group or a Permission row is updated and committed
+      Then  all entries are gone
+    """
+    a, b, g, p = _row("a"), _row("b"), Group(name="g"), Permission(codename="c", name="C")
+    await _commit(factory, a, b, g, p)
+    cache = UserCache(60)
+    cache.set(a.id, CachedUser(a, None), cache.generation)
+    cache.set(b.id, CachedUser(b, None), cache.generation)
+
+    if kind == "group":
+        g.name = "renamed"
+    else:
+        p.name = "Renamed"
+    await _commit(factory, g if kind == "group" else p)
+
+    assert cache.get(a.id) is None
+    assert cache.get(b.id) is None
+
+
+async def test_rolled_back_savepoint_does_not_invalidate(factory: Any) -> None:
+    """
+    Scenario: a rolled-back savepoint leaves the cache alone
+      Given a user is cached
+      When  the user is changed inside a savepoint that is rolled back, then the session commits
+      Then  the entry remains
+    """
+    a = _row("a")
+    await _commit(factory, a)
+    cache = UserCache(60)
+    cache.set(a.id, CachedUser(a, None), cache.generation)
+
+    async with factory() as session:
+        nested = await session.begin_nested()
+        row = await session.get(User, a.id)
+        assert row is not None
+        row.is_active = False
+        await session.flush()
+        await nested.rollback()
+        await session.commit()
+
+    assert cache.get(a.id) is not None
+
+
+async def test_write_hooks_do_nothing_without_a_live_cache(
+    factory: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """
+    Scenario: sessions pay nothing once no cache is alive
+      Given no UserCache exists
+      When  a User is flushed and a bulk UPDATE on an auth table runs
+      Then  the session records nothing
+    """
+    import weakref
+
+    from hyperadmin.auth import user_cache
+
+    monkeypatch.setattr(user_cache, "_CACHES", weakref.WeakSet())
+    async with factory() as session:
+        session.add(_row("z"))
+        await session.flush()
+        await session.execute(update(User).values(is_active=True))
+        assert user_cache._DIRTY_KEY not in session.sync_session.info
+
+
+async def test_commit_after_a_user_update_reloads_through_the_middleware(factory: Any) -> None:
+    """
+    Scenario: a committed user write makes the next request reload
+      Given a real SessionAuthBackend and a warm cache for user 1
+      When  user 1 is updated and committed, then an unrelated row is committed
+      Then  the next request reloads (2 loads) and the one after an unrelated commit does not
+    """
+    a = _row("a")
+    await _commit(factory, a)
+    backend = SessionAuthBackend(session_factory=factory)
+    real = backend.get_current_user
+    loads = 0
+
+    async def counting(request: Any) -> Any:
+        nonlocal loads
+        loads += 1
+        return await real(request)
+
+    backend.get_current_user = counting  # type: ignore[method-assign]
+    mw = AuthenticationMiddleware(_Inner(), backend, user_cache_ttl=5, clock=_Clock())
+    session = {"user_id": a.id}
+
+    assert (await _call(mw, session))[0] == 200
+    assert (await _call(mw, session))[0] == 200
+    assert loads == 1
+
+    a.first_name = "Changed"
+    await _commit(factory, a)
+    assert (await _call(mw, session))[0] == 200
+    assert loads == 2
+
+    await _commit(factory, _row("other"))
+    assert (await _call(mw, session))[0] == 200
+    assert loads == 2
 
 
 async def test_rolled_back_write_does_not_invalidate(factory: Any) -> None:
@@ -619,5 +777,85 @@ async def test_new_user_without_an_id_does_not_invalidate_by_none(factory: Any) 
     cache.set(a.id, CachedUser(a, None), cache.generation)
 
     await _commit(factory, _row("b"))
+
+    assert cache.get(a.id) is not None
+
+
+async def test_nested_column_values_are_not_shared_with_the_clone() -> None:
+    """
+    Scenario: mutating a nested column value on a clone leaves the original alone
+      Given a user whose JSON-like column holds a nested dict
+      When  the clone's nested value is changed
+      Then  the original keeps its value
+    """
+    from sqlalchemy.orm.attributes import set_committed_value
+
+    user = _user()
+    set_committed_value(user, "email", {"a": {"b": 1}})
+
+    clone = clone_user(user)
+    assert clone is not None
+    clone.email["a"]["b"] = 2
+
+    assert user.email == {"a": {"b": 1}}
+
+
+def test_admin_passes_user_cache_ttl_to_the_middleware(monkeypatch: pytest.MonkeyPatch) -> None:
+    """
+    Scenario: Admin wires user_cache_ttl into the authentication middleware
+      Given settings with user_cache_ttl=5
+      When  Admin is built with the built-in session auth and mounted
+      Then  AuthenticationMiddleware is registered with user_cache_ttl=5
+    """
+    from fastapi import FastAPI
+    from starlette.applications import Starlette
+
+    from hyperadmin.core.app import Admin
+
+    seen: list[dict[str, Any]] = []
+    original = Starlette.add_middleware
+
+    def spy(self: Any, cls: Any, *args: Any, **kwargs: Any) -> Any:
+        if cls is AuthenticationMiddleware:
+            seen.append(kwargs)
+        return original(self, cls, *args, **kwargs)
+
+    monkeypatch.setattr(Starlette, "add_middleware", spy)
+    engine = create_async_engine("sqlite+aiosqlite://")
+    settings = HyperAdminSettings(create_tables=False, secret_key="k", user_cache_ttl=5)
+    admin = Admin(
+        FastAPI(), engine=engine, settings=settings, auth_backend=SessionAuthBackend(engine=engine)
+    )
+    admin.mount()
+
+    assert [kw["user_cache_ttl"] for kw in seen] == [5]
+
+
+async def test_flushing_a_non_auth_object_keeps_entries(factory: Any) -> None:
+    """
+    Scenario: writing an unrelated mapped object keeps the cache
+      Given a user is cached
+      When  an object of a non-auth model is flushed and committed
+      Then  the entry remains
+    """
+    from sqlalchemy import Integer
+    from sqlalchemy.orm import DeclarativeBase, mapped_column
+
+    class Base(DeclarativeBase):
+        pass
+
+    class Elsewhere(Base):
+        __tablename__ = "elsewhere_objects"
+        id = mapped_column(Integer, primary_key=True)
+
+    a = _row("a")
+    await _commit(factory, a)
+    cache = UserCache(60)
+    cache.set(a.id, CachedUser(a, None), cache.generation)
+
+    async with factory() as session:
+        await session.run_sync(lambda s: Base.metadata.create_all(s.connection()))
+        session.add(Elsewhere(id=1))
+        await session.commit()
 
     assert cache.get(a.id) is not None
