@@ -62,6 +62,7 @@ class PaletteSearchMixin(DynamicModelViewBase):
                 search=query,
                 order_by=self._default_sort_field(),
                 search_fields=self.search_fields,
+                **self._list_load_kwargs(),
             )
         except SQLAlchemyError:
             logger.exception("Palette search on %s failed", self.model.__name__)

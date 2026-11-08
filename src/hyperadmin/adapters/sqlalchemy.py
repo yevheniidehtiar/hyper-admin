@@ -11,6 +11,7 @@ from sqlmodel import SQLModel
 from hyperadmin.adapters._estimate import estimate_table_rows
 from hyperadmin.adapters._filter_clause import build_clauses
 from hyperadmin.adapters._occ import claim_version
+from hyperadmin.adapters._relation_loading import relation_load_options
 from hyperadmin.adapters._search import contains_clause, detect_search_columns
 from hyperadmin.adapters.introspection import coerce_column_value, introspect_primary_key
 from hyperadmin.adapters.introspection import datetime_kind as _introspect_datetime_kind
@@ -55,12 +56,15 @@ class SQLAlchemyAdapter(BaseAdapter):
         except KeyError:
             return None
 
-    async def get(self, pk: Any) -> Any:
+    async def get(self, pk: Any, *, load_relations: builtins.list[str] | None = None) -> Any:
         """Retrieve an object by primary key, applying any ``get_queryset`` filters.
 
         Filters returned by :meth:`get_queryset` are ANDed with the primary-key
         predicate so excluded rows resolve to ``None`` (not raised). ``pk`` that
         does not parse as this model's key type also resolves to ``None``.
+
+        ``load_relations`` names relations to eager-load with ``selectinload``; ``None``
+        and ``[]`` load none, and an unknown name raises :class:`ValueError`.
 
         Raises:
             NotImplementedError: For a composite primary key.
@@ -70,14 +74,15 @@ class SQLAlchemyAdapter(BaseAdapter):
         except InvalidPrimaryKey:
             return None
         queryset_filters = self._resolve_queryset_filters()
+        options = relation_load_options(self.model, load_relations) if load_relations else []
         async with self._session() as session:
-            if not queryset_filters:
+            if not queryset_filters and not options:
                 return await session.get(self.model, parsed_pk)
             pk_col = getattr(self.model, self.pk.attr)
             conditions = [pk_col == parsed_pk]
             for key, value in queryset_filters.items():
                 conditions.append(getattr(self.model, key) == value)
-            query = select(self.model).where(and_(*conditions))
+            query = select(self.model).where(and_(*conditions)).options(*options)
             result = await session.execute(query)
             return result.unique().scalar_one_or_none()
 
@@ -89,8 +94,12 @@ class SQLAlchemyAdapter(BaseAdapter):
         filters: Mapping[str, Any] | Sequence[FilterCondition] | None = None,
         order_by: str | None = None,
         search_fields: list[str] | None = None,
+        load_relations: builtins.list[str] | None = None,
     ) -> tuple[list[Any], int]:
         """Retrieve a paginated, filtered, searched and ordered list of objects.
+
+        ``load_relations`` names the relations to eager-load with ``selectinload``;
+        ``None`` and ``[]`` load none, and an unknown name raises :class:`ValueError`.
 
         ``filters`` accepts either the legacy ``{column: value}`` equality
         mapping or a ``Sequence[FilterCondition]``; both are resolved through
@@ -120,6 +129,8 @@ class SQLAlchemyAdapter(BaseAdapter):
                 where_conditions.append(or_(*search_clauses))
 
         items_query = select(self.model)
+        if load_relations:
+            items_query = items_query.options(*relation_load_options(self.model, load_relations))
         if where_conditions:
             items_query = items_query.where(and_(*where_conditions))
 

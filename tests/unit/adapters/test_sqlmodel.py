@@ -281,8 +281,8 @@ async def test_get_schema(adapter: SQLModelAdapter):
 
 
 @pytest.mark.anyio
-async def test_list_eagerly_loads_relationships(post_adapter: SQLModelAdapter, engine):
-    """Relationships are accessible after list() returns (session is closed)."""
+async def test_list_eagerly_loads_requested_relationships(post_adapter: SQLModelAdapter, engine):
+    """Requested relationships are accessible after list() returns (session is closed)."""
     async with AsyncSession(engine) as session:
         post = Post(title="Eager Post", content="Content")
         session.add(post)
@@ -293,7 +293,7 @@ async def test_list_eagerly_loads_relationships(post_adapter: SQLModelAdapter, e
         session.add(comment)
         await session.commit()
 
-    items, total = await post_adapter.list()
+    items, total = await post_adapter.list(load_relations=["comments"])
     assert total == 1
     # Access the relationship outside the adapter's session — would raise
     # DetachedInstanceError without selectinload

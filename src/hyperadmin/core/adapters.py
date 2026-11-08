@@ -461,6 +461,7 @@ class BaseAdapter(ABC):
         filters: Mapping[str, Any] | Sequence[FilterCondition] | None = None,
         order_by: str | None = None,
         search_fields: builtins.list[str] | None = None,
+        load_relations: builtins.list[str] | None = None,
     ) -> tuple[builtins.list[Any], int]:
         """
         Retrieves a list of objects with optional pagination, searching, and filtering.
@@ -475,6 +476,9 @@ class BaseAdapter(ABC):
                 Implementations resolve either form through
                 :func:`hyperadmin.core.filtering.normalize_filters`.
             order_by: The field to order the results by.
+            load_relations: Relations to eager-load. ``None`` and ``[]`` load none.
+                The views pass it only when there is something to load, so adapters
+                written before it existed keep working.
 
         Returns:
             A tuple containing the list of objects and the total count of objects.

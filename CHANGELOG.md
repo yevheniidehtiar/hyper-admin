@@ -134,6 +134,15 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
   `sliders-horizontal`) available through `icon(name)`.
 
 ### Changed
+- **BREAKING: list pages no longer load every relation** (#215, #216, #217, #218).
+  `SQLModelAdapter.list()` used to `selectinload` every relationship, one extra query per
+  relation on every request. It now loads none unless asked: the admin loads the relations named
+  in `column_list` (`"category"` or `"category.name"`; turn off with
+  `AdminOptions(auto_select_related=False)`) plus `AdminOptions(list_select_related=[...])`. Add
+  any other relation your list template or `__str__` reads to `list_select_related`, or it raises
+  `DetachedInstanceError`. `adapter.list()` and `adapter.get()` take `load_relations=[...]`
+  (`SQLAlchemyAdapter` honours it too); an unknown name raises `ValueError`. Detail pages are
+  unchanged unless you set `AdminOptions(detail_select_related=[...])` (`[]` loads none).
 - **List cell display** (st-ux-erp-04, -13). Every `float`/`Decimal` list cell now shows locale grouping and at least two
   decimals (`4.5` reads `4.50`, up to six places), and every `Enum` list cell renders as a status pill whose tone comes
   from the enum's `__ha_tones__` or a built-in table keyed on the member name. Detail, edit and CSV export are unchanged.

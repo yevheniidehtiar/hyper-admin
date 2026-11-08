@@ -29,6 +29,7 @@ from hyperadmin.core.options import AdminOptions
 from hyperadmin.core.panels import PanelDef, resolve_panels
 from hyperadmin.core.primary_key import InvalidPrimaryKey, PrimaryKeyInfo
 from hyperadmin.core.registry import site
+from hyperadmin.core.relation_loading import resolve_list_relations
 from hyperadmin.core.schema import dump_instance, schema_for
 from hyperadmin.core.sensitive import (
     is_sensitive,
@@ -332,10 +333,23 @@ class DynamicModelViewBase:
 
     async def _get_or_404(self, item_id: Any) -> Any:
         """Load ``item_id`` under the active queryset scope or raise 404."""
-        item = await self.adapter.get(pk=item_id)
+        detail_relations = getattr(self.options, "detail_select_related", None)
+        # Only passed when configured, so adapters that predate load_relations keep working.
+        load = {} if detail_relations is None else {"load_relations": detail_relations}
+        item = await self.adapter.get(pk=item_id, **load)
         if not item:
             raise HTTPException(status_code=404, detail="Item not found")
         return item
+
+    def _list_load_kwargs(self) -> dict[str, Any]:
+        """``load_relations`` for ``adapter.list()``, empty when no relation needs loading."""
+        relations = resolve_list_relations(
+            getattr(self.options, "list_select_related", None),
+            self.column_list,
+            self._relation_targets().keys(),
+            auto=getattr(self.options, "auto_select_related", True),
+        )
+        return {"load_relations": relations} if relations else {}
 
     async def _check_object_permission(self, request: Request, obj: Any, action: str) -> None:
         """Raise 403 if ``obj`` fails the configured object-level permission check.

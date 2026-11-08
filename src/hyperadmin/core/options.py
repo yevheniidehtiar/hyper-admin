@@ -220,6 +220,20 @@ class AdminOptions(BaseModel):
         AdminOptions(relation_display={"supplier_id": "{name} — {city}"})
         ```
     """
+    list_select_related: list[str] | None = None
+    """Relations the list page loads in addition to those derived from ``column_list``.
+
+    The list page loads no relation by default, which saves one query per relation on
+    every request. Name a relation here when a list template or ``__str__`` reads it
+    without it appearing in ``column_list``.
+    """
+    auto_select_related: bool = True
+    """Whether ``column_list`` entries that name a relation (``"category"`` or
+    ``"category.name"``) load that relation on the list page. ``False`` loads only
+    :attr:`list_select_related`."""
+    detail_select_related: list[str] | None = None
+    """Relations the detail page loads. ``None`` loads every relation, as before;
+    ``[]`` loads none."""
     preload_threshold: int | None = Field(default=500, ge=0)
     """Row count at which a foreign-key widget stops preloading its options.
 

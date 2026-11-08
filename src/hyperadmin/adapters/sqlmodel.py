@@ -10,6 +10,7 @@ from sqlmodel import SQLModel, select
 from hyperadmin.adapters._estimate import estimate_table_rows
 from hyperadmin.adapters._filter_clause import build_clauses
 from hyperadmin.adapters._occ import claim_version
+from hyperadmin.adapters._relation_loading import relation_load_options
 from hyperadmin.adapters._search import contains_clause, detect_search_columns
 from hyperadmin.adapters.introspection import coerce_column_value, introspect_primary_key
 from hyperadmin.adapters.introspection import datetime_kind as _introspect_datetime_kind
@@ -55,7 +56,7 @@ class SQLModelAdapter(BaseAdapter):
         except KeyError:
             return None
 
-    async def get(self, pk: Any) -> Any:
+    async def get(self, pk: Any, *, load_relations: builtins.list[str] | None = None) -> Any:
         """
         Retrieves a single object by its primary key.
 
@@ -64,6 +65,9 @@ class SQLModelAdapter(BaseAdapter):
 
         Args:
             pk: The primary key of the object to retrieve.
+            load_relations: Relations to eager-load. ``None`` loads every relation,
+                ``[]`` none, and a list exactly those; an unknown name raises
+                :class:`ValueError`.
 
         Returns:
             The retrieved object, or ``None`` if not found, or if ``pk`` does not
@@ -78,8 +82,9 @@ class SQLModelAdapter(BaseAdapter):
             return None
         queryset_filters = self._resolve_queryset_filters()
         async with self._session() as session:
-            mapper = inspect(self.model)
-            options = [selectinload(getattr(self.model, rel.key)) for rel in mapper.relationships]
+            if load_relations is None:
+                load_relations = [rel.key for rel in inspect(self.model).relationships]
+            options = relation_load_options(self.model, load_relations)
             query = (
                 select(self.model)
                 .where(getattr(self.model, self.pk.attr) == parsed_pk)
@@ -98,9 +103,13 @@ class SQLModelAdapter(BaseAdapter):
         filters: Mapping[str, Any] | Sequence[FilterCondition] | None = None,
         order_by: str | None = None,
         search_fields: list[str] | None = None,
+        load_relations: builtins.list[str] | None = None,
     ) -> tuple[list[Any], int]:
         """
         Retrieves a list of objects with optional pagination, searching, and filtering.
+
+        ``load_relations`` names the relations to eager-load with ``selectinload``;
+        ``None`` and ``[]`` load none, and an unknown name raises :class:`ValueError`.
 
         Filters returned by :meth:`get_queryset` are applied **before** any
         view-layer ``filters`` so they cannot be bypassed. The same predicates are
@@ -116,10 +125,8 @@ class SQLModelAdapter(BaseAdapter):
         async with self._session() as session:
             query = select(self.model)
 
-            # Eagerly load all relationships to avoid DetachedInstanceError
-            mapper = inspect(self.model)
-            for rel in mapper.relationships:
-                query = query.options(selectinload(getattr(self.model, rel.key)))
+            if load_relations:
+                query = query.options(*relation_load_options(self.model, load_relations))
 
             # Apply queryset hook filters first (RLS / tenant scoping)
             for key, value in queryset_filters.items():
