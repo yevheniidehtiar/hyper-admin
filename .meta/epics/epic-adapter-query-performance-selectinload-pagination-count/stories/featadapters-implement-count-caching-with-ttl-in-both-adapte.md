@@ -2,7 +2,7 @@
 type: story
 id: nabFnLa2KyuY
 title: "feat(adapters): implement count caching with TTL in both adapters"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

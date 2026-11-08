@@ -2,7 +2,7 @@
 type: story
 id: 9aveq7r0Uoe-
 title: "feat(core): add count caching protocol to BaseAdapter"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

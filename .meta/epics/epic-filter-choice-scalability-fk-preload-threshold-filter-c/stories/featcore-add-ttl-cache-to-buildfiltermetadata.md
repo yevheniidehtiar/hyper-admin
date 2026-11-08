@@ -2,7 +2,7 @@
 type: story
 id: 1e68Ekrku4wj
 title: "feat(core): add TTL cache to build_filter_metadata()"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
