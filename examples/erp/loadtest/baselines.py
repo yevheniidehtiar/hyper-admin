@@ -10,6 +10,11 @@ CLI::
 
     python -m examples.erp.loadtest.baselines --stats run_stats.csv             # compare
     python -m examples.erp.loadtest.baselines --stats run_stats.csv --update-baseline
+
+Repeated-run regression gate (see ``repeat_runs``)::
+
+    python -m examples.erp.loadtest.baselines aggregate --stats run1.csv run2.csv --out agg.json
+    python -m examples.erp.loadtest.baselines compare --base base.json --head head.json
 """
 
 from __future__ import annotations
@@ -135,13 +140,18 @@ def render_table(
 
 
 def run(argv: list[str] | None = None) -> int:
+    args_list = sys.argv[1:] if argv is None else argv
+    if args_list and args_list[0] in ("aggregate", "compare"):
+        from examples.erp.loadtest.repeat_runs import run as run_repeat  # noqa: PLC0415
+
+        return run_repeat(args_list)
     parser = argparse.ArgumentParser(description="Compare a Locust run against a baseline.")
     parser.add_argument("--stats", required=True, type=Path, help="Locust *_stats.csv path")
     parser.add_argument("--baseline", type=Path, default=DEFAULT_BASELINE)
     parser.add_argument("--update-baseline", action="store_true", help="overwrite the baseline")
     parser.add_argument("--p95-factor", type=float, default=DEFAULT_P95_FACTOR)
     parser.add_argument("--max-error-rate", type=float, default=DEFAULT_MAX_ERROR_RATE)
-    args = parser.parse_args(argv)
+    args = parser.parse_args(args_list)
 
     current = parse_locust_stats(args.stats.read_text(encoding="utf-8"))
     if not current:
