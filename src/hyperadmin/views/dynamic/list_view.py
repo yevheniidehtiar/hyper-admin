@@ -376,6 +376,7 @@ class ListViewMixin(SavedViewsMixin):
                 filters=filters.conditions,
                 order_by=order_by,
                 search_fields=self.search_fields,
+                **self._list_load_kwargs(),
             )
 
             # Calculate pagination info
