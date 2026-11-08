@@ -3,11 +3,11 @@
 | Field | Value |
 |---|---|
 | Author | Claude Code |
-| Status | In Review |
+| Status | Approved (2026-11-08) |
 | Issue | #211 |
 | Milestone | v0.7.0 — High-Volume & High-Load Scalability |
 | Created | 2026-05-05 |
-| Last updated | 2026-11-01 |
+| Last updated | 2026-11-08 |
 
 ---
 
@@ -45,8 +45,8 @@ keyset pagination support. v0.7.0 cannot meet its load-testing acceptance criter
 - **A1 — Configurable selectinload.** Default list views to **load nothing** (no
   `selectinload`); reduce list-view query count by **at least 5 SELECTs per request** on
   models with 5+ relations. Provide explicit opt-in (`list_select_related: list[str]`) and an
-  opt-in helper (`auto_select_related=True`) that auto-derives needed relations from
-  `column_list`. Detail view keeps current auto-detect behaviour for backward compatibility.
+  `auto_select_related` (on by default) that derives the needed relations from the
+  relation accessors in `column_list`. Detail view keeps current auto-detect behaviour for backward compatibility.
 - **A2 — Configurable search_fields parity.** `SQLAlchemyAdapter.list()` honours the
   `search_fields` argument identically to `SQLModelAdapter`. When unset, both adapters fall
   back to the same heuristic (string columns excluding the primary key) so users get
@@ -105,11 +105,16 @@ Scenario: list_select_related explicitly loads named relations
   Then  selectinload is applied for "category" and "vendor"
   And   no selectinload is applied for any other relation
 
-Scenario: auto_select_related derives relations from column_list
-  Given AdminOptions(column_list=["name", "category.name"], auto_select_related=True)
+Scenario: a relation accessor in column_list loads that relation
+  Given AdminOptions(column_list=["name", "category.name"]) and auto_select_related left at its default
   When  the adapter list() is called
   Then  selectinload is applied for "category"
   And   no other relation is loaded
+
+Scenario: auto_select_related=False opts out of the derivation
+  Given AdminOptions(column_list=["name", "category.name"], auto_select_related=False)
+  When  the adapter list() is called
+  Then  no selectinload is applied
 
 Scenario: detail view preserves auto-detect (backward compatible)
   Given AdminOptions(detail_select_related=None)
@@ -333,7 +338,7 @@ Detail (`get()`) keeps current behaviour — auto-detects FK relations needed by
 rendering — controlled separately by `detail_select_related` (semantics: `None` = auto-detect,
 `[]` = none, `[...]` = explicit).
 
-`auto_select_related=True` on `AdminOptions` makes the view layer derive `load_relations` from
+`auto_select_related` (default `True`) on `AdminOptions` makes the view layer derive `load_relations` from
 `column_list` entries containing `.` (relation accessors, e.g. `"category.name"` →
 `load_relations=["category"]`).
 
@@ -464,7 +469,7 @@ New / clarified `AdminOptions` fields:
 |---|---|---|---|---|
 | `list_select_related` | `list[str] \| None` | `None` | **BREAKING** | `None` now = "load nothing" on list path (was "auto-load all"). Document loudly in CHANGELOG. |
 | `detail_select_related` | `list[str] \| None` | `None` | BC | `None` = "auto-detect FK relations needed by `__str__`". Existing implicit behaviour, now explicit. |
-| `auto_select_related` | `bool` | `False` | BC | When `True`, view layer derives `list_select_related` from dotted entries in `column_list`. |
+| `auto_select_related` | `bool` | `True` | BC | When `True`, view layer derives `list_select_related` from dotted entries in `column_list`; `False` loads only `list_select_related`. |
 | `search_fields` | `list[str] \| None` | `None` (existing) | BC | Was a parity bug in `SQLAlchemyAdapter` (silently ignored). After A2, both adapters honour it. |
 | `count_cache_ttl` | `int` (seconds) | `0` | BC | `0` = caching disabled. Must be >= 0. |
 | `count_estimate_threshold` | `int \| None` | `None` | BC | `None` = always exact. When set, an unfiltered list total at or above it uses `estimate_row_count()` instead of `count(*)`. Must be > 0. |
@@ -517,13 +522,14 @@ different: any template that walks a relation off a list-view item without that 
 `MissingGreenlet` / `DetachedInstanceError`). Mitigations:
 
 1. **CHANGELOG note** at the top of v0.7.0:
-   *"BREAKING: list views no longer eagerly load all model relations. Add
-   `list_select_related=[...]` (or `auto_select_related=True`) to `AdminOptions` for any
-   relation rendered in `column_list` or list-view templates."*
+   *"BREAKING: list views no longer eagerly load all model relations. Relations named in
+   `column_list` (e.g. `"category.name"`) are still loaded; add
+   `list_select_related=[...]` to `AdminOptions` for any other relation rendered in
+   list-view templates."*
 2. **Migration guide section** in `docs/migration/v0.7.0.md` walking through the
    one-line fix per registered model.
-3. **`auto_select_related=True`** as the recommended drop-in for users who do not want to
-   audit each `column_list` manually.
+3. **`auto_select_related`** is on by default, so a model whose relations all appear in
+   `column_list` needs no change.
 
 Detail views are **not** affected — `detail_select_related=None` keeps current behaviour.
 
@@ -553,34 +559,19 @@ cursor mode until they override.
 
 ## Open Questions
 
-- [ ] **Should `column_list` containing relation accessors auto-trigger
-      `auto_select_related=True`?** Recommended yes for ergonomics — a user writing
-      `column_list=["category.name"]` clearly wants `category` loaded. But silently flipping
-      a default contradicts the BREAKING note we are already issuing for A1. **Proposal:**
-      keep `auto_select_related=False` as the default in v0.7.0 (explicit-is-better-than-
-      implicit), revisit for v0.8 once the explicit migration has settled.
-- [ ] **Cache eviction policy for `InMemoryTTLCache`.** TTL alone or LRU+TTL? On a large
-      site with many distinct filter combinations, pure TTL can balloon. **Proposal:**
-      LRU+TTL with `max_entries=1024` default — bounded memory; tunable via `Admin()`.
-- [ ] **Cursor signing.** Cursors are opaque base64 today but **not signed**. A motivated
-      attacker could craft a tuple to peek at rows ordered around any value. RLS
-      (`get_queryset()`) still applies, so this is not an authz bypass — only a
-      enumeration aid. **Proposal:** ship unsigned in v0.7.0; add HMAC signing in v0.7.1
-      behind a `pagination_cursor_secret` setting if user feedback raises it.
-- [ ] **Should `BaseAdapter.list()` be removed in v1.0 or kept indefinitely?** Removal is
-      cleaner but third-party adapters benefit from a stable shim. **Proposal:** decide at
-      v0.9 retro based on third-party adapter survey.
+All resolved on 2026-11-08 (owner decisions):
 
-- [ ] **Default for `count_estimate_threshold`.** *(added 2026-11-01)* `None` (always exact)
-      keeps totals unchanged for every existing deployment, but means nobody benefits until they
-      set it. **Proposal:** `None` in v0.7.0 for BC (the displayed total changes from `4,200,001`
-      to `~4.2M`); the runtime advisor's slow-count warning recommends the option by name;
-      revisit a default of `1_000_000` for v0.8.
-- [ ] **Stale estimates.** `reltuples` is only refreshed by `VACUUM`/`ANALYZE`; right after a
-      bulk load it can be 0. **Proposal:** treat an estimate `<= 0` as "cannot estimate" and fall
-      back to the exact count.
-
-These must be settled before Status → Approved.
+- [x] **`column_list` relation accessors auto-trigger `auto_select_related`.** Yes: it is on by
+      default; `False` opts out.
+- [x] **Cache eviction for `InMemoryTTLCache`.** LRU+TTL, `max_entries=1024` by default,
+      tunable via `count_cache_max_entries`. The docs state the per-worker memory cost.
+- [x] **Cursor signing.** Cursors ship unsigned in v0.7.0; HMAC signing arrives in v0.7.1
+      behind a `pagination_cursor_secret` setting. RLS still applies to every page.
+- [x] **`BaseAdapter.list()` after the deprecation.** Kept; it is not removed in v1.0.
+- [x] **Default for `count_estimate_threshold`.** `None` in v0.7.0 (exact totals). The docs
+      recommend the option and the runtime advisor's slow-count warning names it.
+- [x] **Stale estimates.** An estimate `<= 0` means "cannot estimate" and falls back to the
+      exact count.
 
 ## Decision Log
 
@@ -589,7 +580,7 @@ These must be settled before Status → Approved.
 | Single umbrella SDD covering A1-A4 | All four touch `BaseAdapter.list()` / `list_paginated()` — splitting would require duplicating the protocol surface across 4 specs. | 4 separate SDDs (rejected — overlapping surface, hard to keep in sync) |
 | List default = "load nothing" (BREAKING) | The status quo is the bug — 5 unconditional SELECTs on every list request is the #1 named bottleneck in the milestone. A pure-additive opt-in fixes nothing for existing users. | Keep "load all" default + add opt-out flag (rejected — does not fix the actual scalability problem; users would not migrate) |
 | Detail default kept as auto-detect | `__str__` rendering breaks if FK relations are not loaded; many users rely on this implicitly. | Apply same BREAKING change to detail (rejected — too disruptive, low scalability payoff vs list path) |
-| `auto_select_related` opt-in (default False) | Avoids a second silently-flipped default; users who want it can flip one boolean. | Default True (rejected — see Open Question 1) |
+| `auto_select_related` on by default (2026-11-08) | A user writing `column_list=["category.name"]` clearly wants `category` loaded; deriving it removes most of the A1 migration cost. Owner decision. | Default False (rejected — adds a manual step to the breaking change) |
 | A3 ships in-memory only; Redis deferred to v0.8 | YAGNI — most v0.7.0 deployments are single-process or behind a load balancer with sticky sessions. Redis adds an infra dependency we can't justify yet. | Ship Redis in v0.7.0 (rejected — scope creep; protocol declaration is enough seam) |
 | Cache key excludes pagination params | Pagination doesn't change the count — including page would shatter the cache pointlessly. | Include page (rejected — every page-flip would miss) |
 | `pagination_mode="offset"` default | Cursor changes pagination URL semantics; flipping default would break every bookmarked admin URL. | Default cursor (rejected — observable URL change) |
@@ -600,3 +591,7 @@ These must be settled before Status → Approved.
 | `core/cache.py` module shared with epic #213 | Both epics need a generic TTL cache; one module avoids duplication. The module is owned by #213's SDD; this SDD declares only the consumer-facing `CountCache` Protocol shape. | Two separate cache modules (rejected — duplicate eviction logic) |
 | Deprecate `list()` in v0.7.0, remove in v1.0 | One-cycle deprecation respects third-party adapter authors and is the project's stated semver discipline. | Hard-remove in v0.7.0 (rejected — too aggressive for a `0.x.0` minor) |
 | Pagination template logic in `components/pagination.html` | Existing partial included from `components/table.html:44`; cleanest place for cursor/page branching. | New `cursor_pagination.html` partial (rejected — duplicates surrounding markup) |
+| Cursor signing deferred to v0.7.1 (2026-11-08) | RLS still applies, so unsigned cursors are an enumeration aid only, not an authz bypass; keeps A4 small. | Sign in v0.7.0 (rejected — widens A4, needs a secret setting) |
+| Keep `BaseAdapter.list()` (2026-11-08) | Third-party adapters keep a stable shim. | Remove in v1.0 (rejected) |
+| `count_estimate_threshold` default `None` (2026-11-08) | Totals stay exact for every existing deployment; docs and the advisor point at the option. | Default `1_000_000` (rejected for v0.7.0; revisit in v0.8) |
+| Estimate `<= 0` falls back to exact count (2026-11-08) | `reltuples` is 0 or -1 on never-analyzed tables and right after a bulk load. | Trust the estimate (rejected — shows a total of 0) |
