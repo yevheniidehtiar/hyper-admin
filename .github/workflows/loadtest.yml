@@ -39,9 +39,13 @@ jobs:
       TOLERANCE: ${{ inputs.tolerance || '0.15' }}
       RUN_TIME: 30s
       USERS: "10"
+      MIN_RUNS: "3"
     steps:
       - uses: actions/checkout@v7
         with:
+          # The PR head commit itself, not the refs/pull/N/merge commit: the merge ref pulls
+          # unrelated develop changes into head that base lacks.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           path: head
       - uses: actions/checkout@v7
         with:
@@ -57,10 +61,12 @@ jobs:
           (cd base && uv sync --locked --all-extras)
           (cd head && uv sync --locked --all-extras)
 
-      # The script and the aggregate CLI always come from head, so a base that predates them
-      # still runs. Each iteration starts a fresh app and database for its side.
+      # The script, the aggregate CLI and the load-test scenario always come from head: head's
+      # examples/erp/loadtest/ is copied over base's, so both sides run the same workload even
+      # when the PR edits the locustfile. Each iteration starts a fresh app and database.
       - name: Run base and head alternately
         run: |
+          cp -R head/examples/erp/loadtest/. base/examples/erp/loadtest/
           mkdir -p out/base out/head
           for i in $(seq 1 "$RUNS"); do
             for side in base head; do
@@ -71,13 +77,34 @@ jobs:
       - name: Aggregate and compare
         working-directory: head
         run: |
+          shopt -s nullglob
+          out="$GITHUB_WORKSPACE/out"
+          base_csvs=("$out"/base/run*_stats.csv)
+          head_csvs=("$out"/head/run*_stats.csv)
+          if [ "${#base_csvs[@]}" -eq 0 ] || [ "${#head_csvs[@]}" -eq 0 ]; then
+            echo "no stats CSVs produced (base: ${#base_csvs[@]}, head: ${#head_csvs[@]})" >&2
+            exit 1
+          fi
           uv run python -m examples.erp.loadtest.baselines aggregate \
-            --stats "$GITHUB_WORKSPACE"/out/base/run*_stats.csv --out "$GITHUB_WORKSPACE/out/base-agg.json"
+            --stats "${base_csvs[@]}" --out "$out/base-agg.json" --min-runs "$MIN_RUNS"
           uv run python -m examples.erp.loadtest.baselines aggregate \
-            --stats "$GITHUB_WORKSPACE"/out/head/run*_stats.csv --out "$GITHUB_WORKSPACE/out/head-agg.json"
+            --stats "${head_csvs[@]}" --out "$out/head-agg.json" --min-runs "$MIN_RUNS"
           uv run python -m examples.erp.loadtest.baselines compare \
-            --base "$GITHUB_WORKSPACE/out/base-agg.json" --head "$GITHUB_WORKSPACE/out/head-agg.json" \
-            --tolerance "$TOLERANCE" --report "$GITHUB_WORKSPACE/out/report.md"
+            --base "$out/base-agg.json" --head "$out/head-agg.json" \
+            --tolerance "$TOLERANCE" --min-runs "$MIN_RUNS" --report "$out/report.md"
+
+      # compare appends its report to the summary itself; this covers any earlier failure.
+      - name: Step summary when no report exists
+        if: always() && !cancelled()
+        run: |
+          if [ ! -s out/report.md ]; then
+            {
+              echo "### Load test regression gate"
+              echo
+              echo "**No report was produced**: an earlier step failed before the comparison."
+              echo "See the step logs and the app logs in the \`locust-smoke-report\` artifact."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Upload CSVs and report
         if: always()
