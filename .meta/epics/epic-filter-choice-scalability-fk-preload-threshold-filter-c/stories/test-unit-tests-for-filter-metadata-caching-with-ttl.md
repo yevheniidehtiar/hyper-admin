@@ -2,7 +2,7 @@
 type: story
 id: ceCydi5Q5_d6
 title: "test: unit tests for filter metadata caching with TTL"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

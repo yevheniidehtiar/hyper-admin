@@ -2,7 +2,7 @@
 type: story
 id: -pdMvUOl6B4r
 title: "feat(adapters): add estimate_row_count() to BaseAdapter"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

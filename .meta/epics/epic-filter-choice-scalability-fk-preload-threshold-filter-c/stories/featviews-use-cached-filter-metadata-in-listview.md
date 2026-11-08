@@ -2,7 +2,7 @@
 type: story
 id: gAlhYeNF0add
 title: "feat(views): use cached filter metadata in list_view"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
