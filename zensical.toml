@@ -20,6 +20,7 @@ nav = [
     { "Bring Your Own Auth" = "guides/external-auth.md" },
     { "Realtime" = "guides/realtime.md" },
     { "Background Tasks" = "plugins/tasks.md" },
+    { "Large Tables & Performance" = "guides/performance.md" },
     { "Compatibility & Performance" = "compatibility.md" },
     { "Examples" = [
       { "Overview" = "examples.md" },
