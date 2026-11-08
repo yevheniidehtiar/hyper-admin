@@ -220,6 +220,15 @@ class AdminOptions(BaseModel):
         AdminOptions(relation_display={"supplier_id": "{name} — {city}"})
         ```
     """
+    preload_threshold: int | None = Field(default=500, ge=0)
+    """Row count at which a foreign-key widget stops preloading its options.
+
+    A foreign key to a table with at least this many rows renders as a lazy
+    autocomplete that fetches options as the user types, instead of embedding
+    every option in the form. The row count is a cheap estimate (planner
+    statistics where the database has them). ``None`` always preloads, and an
+    adapter that cannot estimate keeps preloading.
+    """
     use_autocomplete_widget: bool = True
     """Whether FK/M2M fields render via :class:`AutocompleteWidget`.
 
