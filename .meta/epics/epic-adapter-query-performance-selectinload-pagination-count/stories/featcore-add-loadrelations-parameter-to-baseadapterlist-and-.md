@@ -2,7 +2,7 @@
 type: story
 id: jERrprk0OO7H
 title: "feat(core): add load_relations parameter to BaseAdapter.list() and .get()"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

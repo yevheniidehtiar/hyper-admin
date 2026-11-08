@@ -2,7 +2,7 @@
 type: story
 id: Nxk4hCwfTwHy
 title: "feat(core): add preload_threshold to AdminOptions and classify_field()"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
