@@ -18,6 +18,12 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
   (no hover) they stay tappable on every row, dimmed until current, focused or pinned.
 
 ### Added
+- **Rate limiting** (#233, #234, #235). `rate_limit_requests`, `rate_limit_login_requests`
+  and `rate_limit_window_seconds` on `HyperAdminSettings` (`HYPERADMIN_RATE_LIMIT_*`) make
+  the admin answer `429` with `Retry-After` once one client passes the limit. Static assets
+  are never counted. Off by default. A `RateLimiter` protocol and a per-process
+  `InMemoryRateLimiter` live in `hyperadmin.core.rate_limit`; pass
+  `Admin(app, rate_limiter=...)` to share one limit across workers.
 - **Record search in the command palette** (st-v059-nav-05). `AdminOptions(palette_search=True)` lets
   Cmd/Ctrl+K find a model's records through its `search_fields`, under a new "Records" section. One
   endpoint, `GET {prefix}/nav/search`, checks `view_<model>`, applies `get_queryset()` and returns at
