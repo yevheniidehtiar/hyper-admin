@@ -1,6 +1,6 @@
 {
   "repo": "yevheniidehtiar/hyper-admin",
-  "last_sync": "2026-11-08T08:47:04.220Z",
+  "last_sync": "2026-11-08T09:13:10.479Z",
   "entities": {
     "dqmi_70iAUbv": {
       "local_hash": "sha256:0c241e5668b04857314c6bf866015a7d5715e683844b27f32c24f0fe99ce1743",
@@ -2675,9 +2675,9 @@
     },
     "v059-nav-01": {
       "github_milestone_number": 35,
-      "local_hash": "sha256:c51951a199018cfcb9b1bbda89cf19a298e3765ed3feade239989e4fea8898d3",
-      "remote_hash": "sha256:c51951a199018cfcb9b1bbda89cf19a298e3765ed3feade239989e4fea8898d3",
-      "synced_at": "2026-11-07T07:18:48.521Z"
+      "local_hash": "sha256:42b8055696aeaf883bb888647909f11f9c146103eaac83fddfb97baa08e58a69",
+      "remote_hash": "sha256:42b8055696aeaf883bb888647909f11f9c146103eaac83fddfb97baa08e58a69",
+      "synced_at": "2026-11-08T09:13:08.993Z"
     },
     "epic-inline-cell-editing": {
       "github_issue_number": 807,
@@ -2795,9 +2795,10 @@
     },
     "ep-v059-nav-01": {
       "github_issue_number": 824,
-      "local_hash": "sha256:617eff1edafdf8c956d3d4d8ef7fe01d8a29913e5075a0628579cec96dbfdd18",
-      "remote_hash": "sha256:617eff1edafdf8c956d3d4d8ef7fe01d8a29913e5075a0628579cec96dbfdd18",
-      "synced_at": "2026-11-07T07:18:50.849Z"
+      "local_hash": "sha256:ec3b31f85e8f96011cf4602534f9cb12fefe71e1eeffc28cae7c316dacc6c137",
+      "remote_hash": "sha256:ec3b31f85e8f96011cf4602534f9cb12fefe71e1eeffc28cae7c316dacc6c137",
+      "synced_at": "2026-11-08T09:13:09.762Z",
+      "closed_on_remote": true
     },
     "ep-v070b-keyset-01": {
       "github_issue_number": 825,
@@ -3747,9 +3748,10 @@
     },
     "st-v059-nav-05": {
       "github_issue_number": 964,
-      "local_hash": "sha256:9d0d413cb87f24eee0d281b2c0b555b9641565424805f4fac66c9d0e3fe4a7ea",
-      "remote_hash": "sha256:9d0d413cb87f24eee0d281b2c0b555b9641565424805f4fac66c9d0e3fe4a7ea",
-      "synced_at": "2026-11-08T08:47:04.213Z"
+      "local_hash": "sha256:8d36175d54a268900e95d28ab5a8fa78669dd6e87f6dc05ee0a62b829749944d",
+      "remote_hash": "sha256:8d36175d54a268900e95d28ab5a8fa78669dd6e87f6dc05ee0a62b829749944d",
+      "synced_at": "2026-11-08T09:13:10.475Z",
+      "closed_on_remote": true
     },
     "st-v059-nav-03": {
       "github_issue_number": 965,
