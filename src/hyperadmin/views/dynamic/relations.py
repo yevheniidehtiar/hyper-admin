@@ -3,6 +3,7 @@
 import functools
 import logging
 from collections.abc import Callable
+from dataclasses import replace
 from typing import Any
 
 from fastapi import HTTPException, Request
@@ -59,6 +60,7 @@ class RelationViewMixin(FormDataMixin):
         # FK-column → relationship-name mapping so that country_id → "country"
         # for get_choices() and the HTMX URL.
         fk_to_rel = self._fk_to_relation()
+        row_counts: dict[Any, int | None] = {}
 
         for name, field_info in schema_for(self.model).model_fields.items():
             if field_names and name not in field_names:
@@ -80,6 +82,8 @@ class RelationViewMixin(FormDataMixin):
             )
             choices: list[ChoiceItem]
             target = self._relation_target_for_field(name)
+            if meta.preload and await self._exceeds_preload_threshold(target, row_counts):
+                meta = replace(meta, preload=False)
             if request is not None and not await self._may_view_related(request, target):
                 choices = self._opaque_selected_choices(target, sv.get(name))
             elif meta.preload:
@@ -106,6 +110,26 @@ class RelationViewMixin(FormDataMixin):
                 popup_url=popup_url,
             )
         return widgets
+
+    async def _exceeds_preload_threshold(
+        self, target: Any, row_counts: dict[Any, int | None]
+    ) -> bool:
+        """Return whether ``target`` holds too many rows to preload as options.
+
+        ``row_counts`` memoises the estimate per target for one request, so
+        several foreign keys to the same table cost one query. A target whose
+        adapter cannot estimate counts as small, which keeps it preloaded.
+        """
+        threshold = getattr(self.options, "preload_threshold", None)
+        if threshold is None or target is None:
+            return False
+        if target not in row_counts:
+            try:
+                row_counts[target] = await self.adapter.for_model(target).estimate_row_count()
+            except NotImplementedError:
+                row_counts[target] = None
+        count = row_counts[target]
+        return count is not None and count >= threshold
 
     async def _preload_choices(
         self,
