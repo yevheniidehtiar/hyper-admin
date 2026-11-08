@@ -7,7 +7,7 @@
 | Issue | TBD |
 | Milestone | v0.8.0 — Plugins & AI |
 | Created | 2026-05-05 |
-| Last updated | 2026-11-07 |
+| Last updated | 2026-11-08 |
 
 ---
 
@@ -50,8 +50,12 @@ registry SDD is wrong and gets revised first. That is the design pressure on thi
 ## Goals
 
 1. **One-call setup:** `instrument_admin(admin)` turns on HTTP and SQL spans. *(phase A)*
-2. **HTTP and SQL spans:** `logfire.instrument_fastapi(admin.app)` and
-   `logfire.instrument_sqlalchemy(engine=admin.engine)`, each with an opt-out. *(phase A)*
+2. **HTTP and SQL spans:** HTTP spans come from FastAPI's native telemetry when the installed
+   FastAPI has it (it accepts `FastAPI(telemetry=...)`), else from
+   `logfire.instrument_fastapi` on the admin sub-app (`admin.asgi_app`; the host app in router
+   mode). SQL spans come from `logfire.instrument_sqlalchemy(engine=admin.engine)`, or from the
+   plugin's built-in listeners where that instrumentor cannot instrument the engine
+   (SQLAlchemy 2.1, a second engine in the process). Each has an opt-out. *(phase A)*
 3. **Adapter spans:** `admin.adapter.<op>` spans with the attributes `model` and `op`, plus
    paging, search and filter context. SQL spans nest under them. They are emitted through
    `on_before_adapter_call` / `on_after_adapter_call`. *(phase B)*
@@ -60,9 +64,9 @@ registry SDD is wrong and gets revised first. That is the design pressure on thi
    *(phase B)*
 5. **Auth events:** `admin.auth.login_success`, `admin.auth.login_failure`,
    `admin.auth.logout`, `admin.auth.permission_denied`. *(phase B)*
-6. **Never crashes:** without `logfire.configure()` it emits nothing and raises nothing. An
-   unsupported SQLAlchemy version skips SQL spans with one warning; HTTP and adapter spans
-   keep working.
+6. **Never crashes, never drops a supported version:** without `logfire.configure()` it emits
+   nothing and raises nothing. Every FastAPI (`>=0.116`) and SQLAlchemy (`>=2.0.46`, including
+   2.1) that hyper-admin supports gets HTTP and SQL spans.
 7. **No core changes beyond the registry SDD hooks.**
 
 ## Non-Goals
@@ -83,7 +87,7 @@ registry SDD is wrong and gets revised first. That is the design pressure on thi
 
 | Phase | Scope | Needs core change? |
 |---|---|---|
-| A — `lf-scaffold` | Package, entry point, `LogfirePlugin` (`on_register` only), `instrument_admin()` (HTTP + SQL), SQLAlchemy-version guard, README, docs page. Unit tests with logfire's `TestExporter`. | No |
+| A — `lf-scaffold` | Package, entry point, `LogfirePlugin` (`on_register` only), `instrument_admin()` (HTTP + SQL), built-in SQL spans for engines the instrumentor cannot take, README, docs page. Unit tests with logfire's `TestExporter`. | No |
 | B0 — registry phase 2 (registry epic) | `_AdapterHookWrapper`, CRUD hook call sites, and the two new hooks `on_validation_error` and `on_auth_event`, with their call sites. | Yes, in the registry epic |
 | B — `lf-hooks` | Plugin hook methods for adapter spans, validation events and auth events. E2E against a test sink. | No |
 
@@ -100,18 +104,21 @@ Scenario: instrument_admin emits HTTP and SQL spans                       (phase
   Then  the exporter holds an HTTP server span for the request
   And   at least one SQL span is a descendant of it
 
-Scenario: instrument_admin skips SQL spans on an unsupported SQLAlchemy  (phase A)
+Scenario: instrument_admin falls back to built-in SQL spans on SQLAlchemy 2.1  (phase A)
   Given logfire.instrument_sqlalchemy raises RuntimeError for the installed SQLAlchemy
-  When  instrument_admin(admin) is called
+  When  instrument_admin(admin) is called and GET /admin/product is requested
   Then  no exception is raised
-  And   one WARNING log record names hyperadmin-logfire and the SQLAlchemy version
-  And   HTTP spans are still emitted
+  And   an INFO log record names the SQLAlchemy version
+  And   built-in SQL spans ("SELECT <db>", db.system, db.statement) are in the request's trace
 
 Scenario: instrument_admin is a no-op when the plugin is disabled         (phase A)
   Given hyperadmin-logfire is installed
   And   Admin(app, engine=engine, disabled_plugins=["logfire"]) is constructed
   When  instrument_admin(admin) is called and GET /admin/product/ is requested
-  Then  the exporter holds no spans from the admin
+  Then  neither FastAPI nor SQLAlchemy is instrumented
+  And   the exporter holds no SQL spans
+  (A FastAPI with native telemetry still records its own HTTP spans; the plugin does not
+   control those.)
 
 Scenario: list view emits an adapter span                                 (phase B)
   Given logfire is configured with a test exporter
@@ -163,7 +170,8 @@ plugins/hyperadmin-logfire/
   src/hyperadmin_logfire/
     __init__.py                # exports LogfirePlugin, instrument_admin
     plugin.py                  # LogfirePlugin: on_register (A); hook methods (B)
-    instrument.py              # instrument_admin() and the SQLAlchemy-version guard (A)
+    instrument.py              # instrument_admin(), FastAPI-native detection, engine bookkeeping (A)
+    sql_spans.py               # built-in SQL spans (SQLAlchemy 2.1, extra engines) (A)
     spans.py                   # ContextVar span bridge and attribute builders, pure functions (B)
   tests/
     conftest.py                # logfire.configure(send_to_logfire=False, console=False, additional_span_processors=[SimpleSpanProcessor(TestExporter())])
@@ -251,8 +259,10 @@ uv add "hyperadmin-logfire @ git+https://github.com/yevheniidehtiar/hyper-admin#
 |---|---|
 | `logfire.configure()` not called | Logfire emits its own `LogfireNotConfiguredWarning` and records nothing. The plugin adds no warning of its own. |
 | `logfire` not installed | It is a hard dependency of the plugin, so this cannot happen in a normal install. If the import fails anyway, `PluginRegistry` logs ERROR and skips the plugin (`load_error`). |
-| SQLAlchemy ≥ 2.1 (instrumentation refuses it) | `instrument_admin` catches the `RuntimeError`, logs one WARNING naming the version, and continues with HTTP spans. We do not pass `skip_dep_check=True`. |
+| SQLAlchemy ≥ 2.1 (instrumentation refuses it) | `instrument_admin` catches the `RuntimeError`, logs one INFO naming the version, and attaches the plugin's built-in SQL listeners (`sql_spans.py`: SQLAlchemy's public `before/after_cursor_execute` and `handle_error` events, OpenTelemetry API, the instrumentor's span name and `db.*` attributes). We do not pass `skip_dep_check=True`. Verified with SQLAlchemy 2.1.8 installed. |
 | App already instruments FastAPI or SQLAlchemy | `instrument_admin(admin, http=False)` or `sql=False`. The README says so. |
+| FastAPI with native telemetry (0.143 has it; hyper-admin allows `>=0.116`) | Found while implementing (2026-11-08). FastAPI traces every app itself once `logfire.configure()` sets a tracer provider, and records the full route (`/admin/product`). `logfire.instrument_fastapi(app)` replaces those spans with ASGI ones that only see the `/admin` mount, and calls `suppress_scopes('fastapi')`, which silences FastAPI's native spans **process-wide**. So `instrument_admin` skips `instrument_fastapi` when `FastAPI` accepts `telemetry=`, and on older FastAPI instruments the admin sub-app (`admin.asgi_app`), whose spans carry the admin route (`/product`) instead of the mount (`/admin`); in router mode, the host app. |
+| SQLAlchemy instrumentor is a process-wide singleton | A second `instrument()` call is a silent no-op. The plugin remembers the engines it instrumented (weakly); a further admin engine gets the built-in listeners. If the app instrumented SQLAlchemy before the plugin did, the plugin leaves it to the app. |
 | `instrument_admin` called twice | Guarded by a flag on the plugin instance; the second call is a no-op. Revision 1 assumed Logfire is idempotent here, which is not verified. |
 | Plugin disabled (`disabled_plugins=["logfire"]` or `HYPERADMIN_DISABLED_PLUGINS`) | Hooks never run; `instrument_admin` returns early. |
 | Adapter raises between before and after | `on_after_adapter_call` receives `error`, records it, and closes the span (phase B0 fires it in `finally`). |
@@ -294,4 +304,6 @@ so nothing breaks.
 | Drop the plugin's "not configured" warning | Logfire 5.x already warns (`LogfireNotConfiguredWarning`); two warnings for one cause is noise | Keep `_config_check.py` from revision 1 |
 | `instrument_admin` is explicit, with `http` / `sql` opt-outs | It touches the host app and the user's engine; apps that already instrument would get duplicate spans | Instrument automatically in `on_register` |
 | Catch the SQLAlchemy-version `RuntimeError` instead of `skip_dep_check=True` | Forcing an incompatible instrumentation "may produce no spans or errors" (logfire's words) | Pin `sqlalchemy<2.1` in the plugin, which would cap every user's SQLAlchemy |
+| Built-in SQL listeners as the fallback (2026-11-08) | No supported version loses SQL spans; only public SQLAlchemy events and the OpenTelemetry API, so no dependency on the instrumentor's internals | Drive the instrumentor's `EngineTracer` directly (internal API, changes between betas); only warn (SQLAlchemy 2.1 users lose SQL spans) |
 | Record field error *types*, not messages or inputs | Messages and `ctx` can echo the submitted value (passwords, personal data) | Record the full pydantic error dicts |
+| Leave HTTP spans to FastAPI's native telemetry when it has one (2026-11-08) | Native spans carry the full route and don't suppress other apps' spans process-wide | Always call `instrument_fastapi` (coarser `/admin` route, process-wide suppression); version-pin FastAPI (we don't know the first release with native telemetry, and the `telemetry=` parameter is the public signal) |
