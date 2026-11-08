@@ -119,30 +119,51 @@ class TestCompare:
         cmp = rr.compare_aggregates(_agg(count=10), _agg(p95=900), min_requests=100)
         assert cmp.findings == []
         assert cmp.rows[0][3] == "SKIPPED"
-        assert "too few requests" in cmp.notes[0]
+        assert "too few pooled requests" in cmp.notes[0]
+        assert "base 30, head 1500" in cmp.notes[0]
 
     def test_skipped_endpoint_still_checks_errors(self):
         cmp = rr.compare_aggregates(_agg(count=10), _agg(count=10, failures=5), min_requests=100)
         assert cmp.rows[0][3] == "REGRESSED errors"
 
-    def test_one_thin_run_counts_not_the_total(self):
+    @pytest.mark.parametrize(("per_run", "gated"), [(33, False), (34, True)])
+    def test_pooled_minimum_boundary(self, per_run, gated):
         """
-        Scenario: the request minimum applies per run
-          Given base runs of 500, 500 and 5 requests
-          Then  the endpoint is skipped although the total is above the minimum
+        Scenario: the request minimum is the pooled total per side
+          Given base runs of 33 requests each (99 total) or 34 (102 total)
+          Then  99 is skipped and 102 is gated
         """
-        base = _agg_of({"count": 500}, {"count": 500}, {"count": 5})
-        cmp = rr.compare_aggregates(base, _same(p95=900), min_requests=100)
-        assert cmp.rows[0][3] == "SKIPPED"
+        base = _same(count=per_run, p95=1000)
+        cmp = rr.compare_aggregates(base, _same(count=500, p95=3000), min_requests=100)
+        assert (cmp.rows[0][3] == "SKIPPED") is (not gated)
+        assert bool(cmp.findings) is gated
+
+    def test_exactly_the_minimum_is_gated(self):
+        base = _agg_of({"count": 50, "p95": 1000}, {"count": 50, "p95": 1000})
+        head = _agg_of({"count": 50, "p95": 3000}, {"count": 50, "p95": 3000})
+        cmp = rr.compare_aggregates(base, head, min_requests=100, min_runs=2)
+        assert [f.kind for f in cmp.findings] == ["p95"]
+
+    def test_sparse_single_runs_are_gated_when_pooled_enough(self):
+        """
+        Scenario: sparse runs add up
+          Given base runs of 5, 5, 5, 5 and 90 requests (110 pooled)
+          When  head's p95 doubles
+          Then  the endpoint is gated and a "p95" finding is raised
+        """
+        sparse = [{"count": c, "p95": 1000} for c in (5, 5, 5, 5, 90)]
+        head = [{"count": c, "p95": 2000} for c in (5, 5, 5, 5, 90)]
+        cmp = rr.compare_aggregates(_agg_of(*sparse), _agg_of(*head), min_requests=100)
+        assert [f.kind for f in cmp.findings] == ["p95"]
 
     def test_head_collapse_is_a_finding_not_skipped(self):
         """
         Scenario: head stops serving an endpoint
           Given base serves 500 requests per run
-          When  head serves 0 in one run
+          When  head serves 30 in total
           Then  a "requests" finding is raised
         """
-        head = _agg_of({"count": 500}, {"count": 500}, {"count": 0})
+        head = _agg_of({"count": 10}, {"count": 10}, {"count": 10})
         cmp = rr.compare_aggregates(_agg(), head, min_requests=100)
         assert [f.kind for f in cmp.findings] == ["requests"]
         assert cmp.rows[0][3] == "REGRESSED requests"
@@ -164,12 +185,33 @@ class TestCompare:
         assert cmp.findings == []
         assert any("base p95 is 0" in n for n in cmp.notes)
 
-    def test_aggregated_row_never_gates_latency(self):
-        base = _same(name="Aggregated", p95=1000)
-        head = _same(name="Aggregated", p95=5000)
+    def test_aggregated_row_regression_fails(self):
+        """
+        Scenario: a pooled Aggregated slowdown fails the gate
+          Given base Aggregated p50 100 ms and p95 1000 ms
+          When  head's are 200 ms and 2000 ms
+          Then  p50 and p95 findings are raised for Aggregated
+        """
+        base = _same(name="Aggregated", p50=100, p95=1000)
+        head = _same(name="Aggregated", p50=200, p95=2000)
+        cmp = rr.compare_aggregates(base, head)
+        assert [(f.name, f.kind) for f in cmp.findings] == [
+            ("Aggregated", "p50"),
+            ("Aggregated", "p95"),
+        ]
+        assert cmp.rows[0][3] == "REGRESSED p50, p95"
+
+    def test_aggregated_row_within_tolerance_passes(self):
+        base = _same(name="Aggregated", p50=100, p95=1000)
+        head = _same(name="Aggregated", p50=110, p95=1100, p99=9000, rps=1.0)
         cmp = rr.compare_aggregates(base, head)
         assert cmp.findings == []
-        assert cmp.rows[0][3] == "INFO"
+        assert cmp.rows[0][3] == "OK"
+
+    def test_aggregated_row_honours_the_delta_floor(self):
+        base = _same(name="Aggregated", p50=10, p95=10)
+        head = _same(name="Aggregated", p50=19, p95=19)
+        assert not rr.compare_aggregates(base, head, min_delta_ms=20).findings
 
     @pytest.mark.parametrize("side", ["base", "head"])
     def test_too_few_runs_fails(self, side):

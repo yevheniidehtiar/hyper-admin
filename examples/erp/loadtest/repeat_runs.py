@@ -4,8 +4,9 @@ A single short Locust run is too noisy to gate on. CI therefore runs base and he
 several times on one runner, aggregates each side into per-endpoint medians (with min/max
 spread), and compares the medians with a relative tolerance. Pure stdlib, no ``locust`` import.
 
-Only median p50/p95 latency, error rate, vanished endpoints and request collapse gate. req/s and
-p99 are reported for information (see the README for why).
+Only median p50/p95 latency (per endpoint and for the pooled Aggregated row), error rate, vanished
+endpoints and request collapse gate. req/s and p99 are reported for information (see the README
+for why).
 
 Reached through ``python -m examples.erp.loadtest.baselines aggregate|compare``.
 """
@@ -28,10 +29,9 @@ if TYPE_CHECKING:
 
 DEFAULT_TOLERANCE = 0.15
 DEFAULT_MAX_ERROR_RATE = 0.01
-DEFAULT_MIN_REQUESTS = 20  # per run, not the total across runs
+DEFAULT_MIN_REQUESTS = 100  # pooled: total requests per side across all runs (~20 x 5 runs)
 DEFAULT_MIN_RUNS = 3
 DEFAULT_MIN_DELTA_MS = 20.0  # ignore latency rises smaller than this, whatever the ratio
-AGGREGATED = "Aggregated"  # Locust's whole-task-mix row: latency is informational only
 
 _TABLE_HEADER = (
     "| Endpoint | runs b/h | req/s base | req/s head | req/s Δ | p50 base | p50 head | p50 Δ "
@@ -174,9 +174,11 @@ def compare_aggregates(
 ) -> Comparison:
     """Flag errors, vanished endpoints and a rise in median p50/p95 beyond ``tolerance``.
 
-    A latency rise only counts when it also exceeds ``min_delta_ms`` in absolute terms. req/s and
-    p99 are shown but never gate: with think time the load is closed-loop, so req/s barely moves,
-    and p99 over a few hundred requests is a single slow request. ``min_requests`` is per run.
+    A latency rise only counts when it also exceeds ``min_delta_ms`` in absolute terms. The
+    Aggregated row (every request pooled, the most stable signal) is gated like any endpoint.
+    req/s and p99 are shown but never gate: with think time the load is closed-loop, so req/s
+    barely moves, and p99 over a few hundred requests is a single slow request. ``min_requests``
+    is the pooled total per side across all runs, so sparse single runs still count.
     """
     findings: list[Finding] = []
     notes: list[str] = []
@@ -194,17 +196,15 @@ def compare_aggregates(
             notes.append(f"{name}: not in base, latency not compared")
             rows.append((name, h, None, _status(bad, "NEW")))
             continue
-        if b.min_run_requests < min_requests:
+        if b.requests < min_requests:
             notes.append(
-                f"{name}: skipped, base has a run with too few requests "
-                f"({b.min_run_requests} < {min_requests})"
+                f"{name}: skipped, too few pooled requests "
+                f"(base {b.requests}, head {h.requests}; need {min_requests} per side)"
             )
             rows.append((name, h, b, _status(bad, "SKIPPED")))
             continue
-        if h.min_run_requests < min_requests:
-            findings.append(
-                Finding(name, "requests", b.min_run_requests, h.min_run_requests, min_requests)
-            )
+        if h.requests < min_requests:
+            findings.append(Finding(name, "requests", b.requests, h.requests, min_requests))
             bad.append("requests")
             rows.append((name, h, b, _status(bad, "")))
             continue
@@ -215,14 +215,14 @@ def compare_aggregates(
                 notes.append(f"{name}: base {kind} is 0 (missing data), not compared")
                 continue
             limit = bv * (1 + tolerance)
-            if name != AGGREGATED and hv > limit and hv - bv > min_delta_ms:
+            if hv > limit and hv - bv > min_delta_ms:
                 findings.append(Finding(name, kind, bv, hv, limit))
                 bad.append(kind)
-        rows.append((name, h, b, _status(bad, "INFO" if name == AGGREGATED else "OK")))
+        rows.append((name, h, b, _status(bad, "OK")))
     for n in sorted(set(base) - set(head)):
         b = base[n]
-        if b.min_run_requests >= min_requests:
-            findings.append(Finding(n, "missing", b.min_run_requests, 0, min_requests))
+        if b.requests >= min_requests:
+            findings.append(Finding(n, "missing", b.requests, 0, min_requests))
         else:
             notes.append(f"{n}: in base but missing from head (base too sparse to gate)")
     return Comparison(findings, notes, rows)
@@ -250,7 +250,10 @@ def render_markdown(cmp: Comparison, *, tolerance: float) -> str:
     lines = [
         f"### Load test regression gate (p50/p95 tolerance {tolerance * 100:.0f}%)",
         "",
-        "req/s and p99 are informational; the Aggregated row never gates latency.",
+        (
+            "p50 and p95 gate, per endpoint and for the pooled Aggregated row; req/s and p99 are "
+            "informational."
+        ),
         "",
         _TABLE_HEADER,
         _TABLE_RULE,
@@ -330,7 +333,10 @@ def run(argv: list[str]) -> int:
     cmp.add_argument("--tolerance", type=float, default=DEFAULT_TOLERANCE)
     cmp.add_argument("--max-error-rate", type=float, default=DEFAULT_MAX_ERROR_RATE)
     cmp.add_argument(
-        "--min-requests", type=int, default=DEFAULT_MIN_REQUESTS, help="minimum per run"
+        "--min-requests",
+        type=int,
+        default=DEFAULT_MIN_REQUESTS,
+        help="minimum total requests per side, pooled over all runs",
     )
     cmp.add_argument("--min-runs", type=int, default=DEFAULT_MIN_RUNS)
     cmp.add_argument("--min-delta-ms", type=float, default=DEFAULT_MIN_DELTA_MS)

@@ -8,8 +8,8 @@
 # stops the app. Needs `uv sync --all-extras` done in <checkout-dir>.
 #
 # Environment (all optional):
-#   RUN_TIME    Locust run time per run            (default 30s)
-#   USERS       concurrent users                   (default 10)
+#   RUN_TIME    Locust run time per run            (default 90s)
+#   USERS       concurrent users                   (default 20)
 #   SPAWN_RATE  users spawned per second           (default 5)
 #   SEED_COUNT  rows to seed                       (default 1000)
 #   PORT        app port                           (default 8000)
@@ -30,8 +30,8 @@ CHECKOUT=$(cd "$1" && pwd)
 mkdir -p "$2"
 OUT=$(cd "$2" && pwd)
 N=$3
-RUN_TIME="${RUN_TIME:-30s}"
-USERS="${USERS:-10}"
+RUN_TIME="${RUN_TIME:-90s}"
+USERS="${USERS:-20}"
 SPAWN_RATE="${SPAWN_RATE:-5}"
 SEED_COUNT="${SEED_COUNT:-1000}"
 PORT="${PORT:-8000}"

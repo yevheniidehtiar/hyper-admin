@@ -33,12 +33,13 @@ jobs:
     name: Regression gate (SQLite, base vs head)
     if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 40
     env:
       RUNS: ${{ inputs.runs || '5' }}
       TOLERANCE: ${{ inputs.tolerance || '0.15' }}
-      RUN_TIME: 30s
-      USERS: "10"
+      RUN_TIME: 90s
+      USERS: "20"
+      SPAWN_RATE: "5"
       MIN_RUNS: "3"
     steps:
       - uses: actions/checkout@v7
