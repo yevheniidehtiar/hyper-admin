@@ -2,9 +2,9 @@
 type: milestone
 id: v059-nav-01
 title: "v0.5.9 — Navigation & List UX"
-status: in_progress
+status: done
 created_at: 2026-11-01T00:00:00Z
-updated_at: 2026-11-06T00:00:00Z
+updated_at: 2026-11-08T00:00:00Z
 ---
 
 **Roadmap position: right after v0.5.8 (proposed 2026-11-01; the owner may move it).**
