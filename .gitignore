@@ -59,6 +59,7 @@ __pycache__/
 *.egg-info/
 *.py[cdo]
 .venv/
+.venv-py314/
 dist/
 
 # Ruff

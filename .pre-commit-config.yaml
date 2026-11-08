@@ -72,31 +72,51 @@ repos:
       - id: mypy
         name: mypy
         entry: uv run mypy
-        args: [src, plugins/hyperadmin-reports/src, plugins/hyperadmin-tasks/src]
+        args: [src, plugins/hyperadmin-reports/src, plugins/hyperadmin-tasks/src, plugins/hyperadmin-logfire/src]
         language: system
         types: [python]
         pass_filenames: false
+        stages: [pre-commit, pre-push]
       - id: basedpyright
         name: basedpyright
         entry: uv run basedpyright
-        args: [src, plugins/hyperadmin-reports/src, plugins/hyperadmin-tasks/src]
+        args: [src, plugins/hyperadmin-reports/src, plugins/hyperadmin-tasks/src, plugins/hyperadmin-logfire/src]
         language: system
         types: [python]
         pass_filenames: false
+        stages: [pre-commit, pre-push]
+      # Pre-push runs what CI's lint job runs, in check mode (the pre-commit ruff hooks only fix).
+      - id: ruff-check-ci
+        name: ruff check (CI)
+        entry: uv run ruff check .
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+        types_or: [python, pyi]
+      - id: ruff-format-ci
+        name: ruff format --check (CI)
+        entry: uv run ruff format --check .
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+        types_or: [python, pyi]
+      # Unit tests once, on the newest Python with the locked (highest) dependencies, in their own
+      # venv so the 3.11 dev .venv is untouched. The other Pythons, lowest-direct and e2e run on CI.
       - id: test-unit
-        name: unit tests
-        entry: uv run pytest -vv -q -n auto --dist loadgroup tests/unit plugins/hyperadmin-reports/tests plugins/hyperadmin-tasks/tests
+        name: unit tests (Python 3.14)
+        entry: env UV_PROJECT_ENVIRONMENT=.venv-py314 uv run --python 3.14 --all-extras --all-packages --locked poe test:unit
         language: system
         pass_filenames: false
         stages: [pre-push]
         types_or: [python, html, css, javascript]
+      # Not on pre-push (CI runs it): `pre-commit run test-e2e --hook-stage manual`
       - id: test-e2e
         name: e2e tests
         # -n auto is four Playwright workers here (E2E_WORKERS=<n> overrides); see tests/e2e/conftest.py
         entry: uv run pytest -n auto tests/e2e --ignore=tests/e2e/test_profit_loss_report.py
         language: system
         pass_filenames: false
-        stages: [pre-push]
+        stages: [manual]
         types_or: [python, html, css, javascript]
       - id: security-check
         name: security check
