@@ -416,7 +416,9 @@ The admin is mounted as a private sub-application:
   told: with N workers, one can keep serving the old user or permission set for up
   to the TTL after you deactivate an account or revoke a permission on another, and
   so can writes made outside the process (a CLI, a migration) or through a bare
-  connection. Deactivated users are rejected on every uncached load. Keep the TTL at
+  connection. After such a write on the same worker (raw `text()` SQL, a bare
+  connection), call `hyperadmin.auth.user_cache.invalidate_user(user_id)` or
+  `invalidate_all()` to drop the entries at once. Deactivated users are rejected on every uncached load. Keep the TTL at
   a few seconds, or leave it `0` when you need a revocation to take effect on every
   worker immediately.
 
