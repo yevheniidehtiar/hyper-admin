@@ -2,7 +2,7 @@
 type: story
 id: 1bib4-MOM19u
 title: "test: unit tests for count caching and approximate count support"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
@@ -21,7 +21,7 @@ github:
   last_sync_hash: sha256:28f475aa2b99d6c85fa866084870a8f4b4b5ce98a7ed283b1cda90524e23cacb
   synced_at: 2026-04-07T17:23:23.790Z
 created_at: 2026-03-27T00:40:28Z
-updated_at: 2026-03-27T00:40:28Z
+updated_at: 2026-11-08T00:00:00Z
 ---
 
 ## Context

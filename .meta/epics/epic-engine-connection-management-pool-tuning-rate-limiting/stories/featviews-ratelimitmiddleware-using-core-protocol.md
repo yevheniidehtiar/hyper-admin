@@ -27,17 +27,19 @@ updated_at: 2026-03-29T18:26:21Z
 Part of Epic #212 (B2: Rate limiting middleware).
 
 ## Acceptance criteria
-- [ ] ASGI middleware that checks `RateLimiter.is_allowed()` on each request
-- [ ] Returns HTTP 429 with Retry-After header when rate exceeded
-- [ ] Configurable via `HyperAdminApp` constructor: `rate_limiter: RateLimiter | None = None`
-- [ ] Skips static asset paths (e.g., `/static/`)
-- [ ] Per-IP rate limiting using client IP from request
-- [ ] All tests from B2.1 pass
+- [ ] Pure-ASGI `RateLimitMiddleware` calls `RateLimiter.acquire()` once per http request below the admin prefix; websocket scopes and host routes outside the prefix pass through
+- [ ] Over the limit answers HTTP 429 with a `Retry-After` header, before the startup sync, session, authentication or any database work (outermost middleware)
+- [ ] Configured by `rate_limit_requests` / `rate_limit_window_seconds` (`HYPERADMIN_RATE_LIMIT_*`) or `Admin(app, rate_limiter=...)` (corrected from a `HyperAdminApp` constructor, which does not exist). Off by default
+- [ ] Skips static assets (`/static/` below the admin prefix)
+- [ ] Per-client limit keyed by `scope["client"]`. It never reads `X-Forwarded-For`, which any client can forge; behind a proxy the server must rewrite the client address (uvicorn `--proxy-headers` with `--forwarded-allow-ips`), as the docs state
+- [ ] A separate, normally stricter limit on login form POSTs (`rate_limit_login_requests`): only the MFA resend was throttled before, so password guessing was not
+- [ ] All tests from #233 pass
 
 ## Files
-- `src/hyperadmin/views/middleware.py` (new)
+- `src/hyperadmin/views/rate_limit.py` (new)
 - `src/hyperadmin/core/app.py`
+- `src/hyperadmin/core/settings.py`
 
 ## Dependencies
-- Blocked by: #234 (B2.2 core protocol)
+- Blocked by: #234
 - Blocking: D1.1

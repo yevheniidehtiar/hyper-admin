@@ -29,15 +29,17 @@ Part of Epic #212 (B2: Rate limiting middleware).
 No rate limiting exists — 100 req/s spikes hit the DB directly.
 
 ## Acceptance criteria
-- [ ] Test that requests exceeding per-IP limit get HTTP 429
-- [ ] Test global rate limit enforcement
-- [ ] Test configurable limits (requests per window)
-- [ ] Test bypass for static asset paths
-- [ ] Test that rate limiter is pluggable (protocol-based)
+- [ ] Requests over the per-client limit get HTTP 429 with `Retry-After`, and the app is not called
+- [ ] Limits are per client address; a missing client counts as one `unknown` client
+- [ ] Configurable limits and window; refill over time; no banking beyond the limit
+- [ ] Static assets, websocket scopes and host routes outside the admin prefix bypass the limit
+- [ ] The limiter is pluggable: a custom protocol implementation passed as `Admin(rate_limiter=...)` replaces the in-memory one
+- [ ] The login limit counts only login POSTs, and either limit can deny them
+- [ ] A single global bucket is intentionally not built: it would let one client lock everyone out (corrected from "global rate limit enforcement")
 
 ## Files
-- `tests/unit/test_rate_limit_middleware.py` (new)
+- `tests/unit/test_rate_limit.py` (new)
 
 ## Dependencies
 - Blocked by: none
-- Blocking: B2.2
+- Blocking: #234
