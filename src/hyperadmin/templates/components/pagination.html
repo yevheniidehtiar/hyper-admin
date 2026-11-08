@@ -5,7 +5,7 @@
             {%- for key, value in active_filters.items() -%}&filter_{{ key }}={{ value }}{%- endfor -%}
         {%- endset -%}
     <div class="ha-pagination-info" data-testid="pagination-info">
-        {% trans start=pagination.start_index, end=pagination.end_index, total=pagination.total_items %}Showing {{ start }} to {{ end }} of {{ total }} results{% endtrans %}
+        {% trans start=pagination.start_index, end=pagination.end_index, total=('~' ~ pagination.total_items if pagination.total_is_estimate else pagination.total_items) %}Showing {{ start }} to {{ end }} of {{ total }} results{% endtrans %}
     </div>
     <div class="ha-pagination-sizes" role="group" aria-label="{{ _('Rows per page') }}" data-testid="page-size">
         <span class="ha-text-muted">{{ _("Rows per page") }}</span>

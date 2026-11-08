@@ -287,6 +287,15 @@ class AdminOptions(BaseModel):
     updates or deletes a row of this model. Rows written elsewhere show up in the
     total once the TTL passes.
     """
+    count_estimate_threshold: int | None = Field(default=None, gt=0)
+    """Row count from which an unfiltered list shows the table estimate as its total.
+
+    ``count(*)`` on a table with millions of rows can take seconds, and the unfiltered
+    first page is the request that pays for it most often. At or above this many rows
+    (by the database's planner statistics) the pager shows ``~4200000`` instead of an
+    exact total. Filtered and searched lists always count exactly, and so does any
+    database or adapter without row estimates. ``None`` (default) always counts.
+    """
     filter_cache_ttl: int = Field(default=60, ge=0)
     """Seconds to cache the related rows listed by this model's foreign-key filters.
 

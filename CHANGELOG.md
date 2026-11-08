@@ -18,6 +18,11 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
   (no hover) they stay tappable on every row, dimmed until current, focused or pinned.
 
 ### Added
+- **Estimated list totals** (#211). `AdminOptions(count_estimate_threshold=1_000_000)` makes an
+  unfiltered list of a table the database estimates at that many rows or more skip `count(*)`
+  and show the planner estimate, marked `~4200000` in the pager. Filtered and searched lists,
+  tables below the threshold, stale estimates (0 or less) and databases without row estimates
+  still count exactly. Off by default, so existing totals do not change.
 - **Rate limiting** (#233, #234, #235). `rate_limit_requests`, `rate_limit_login_requests`
   and `rate_limit_window_seconds` on `HyperAdminSettings` (`HYPERADMIN_RATE_LIMIT_*`) make
   the admin answer `429` with `Retry-After` once one client passes the limit. Static assets
