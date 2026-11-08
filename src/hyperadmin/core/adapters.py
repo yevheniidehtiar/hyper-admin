@@ -135,6 +135,11 @@ _QUERYSET_SCOPE: ContextVar[QuerysetScope | None] = ContextVar(
     "hyperadmin_queryset_scope", default=None
 )
 
+#: Whether the latest list total in this request came from the table estimate. A
+#: ``ContextVar`` rather than an adapter attribute, because the adapter is shared by
+#: concurrent requests.
+_TOTAL_IS_ESTIMATE: ContextVar[bool] = ContextVar("hyperadmin_total_is_estimate", default=False)
+
 
 @contextmanager
 def queryset_scope(request: Any, resolver: QuerysetFilterResolver) -> Iterator[QuerysetScope]:
@@ -209,6 +214,10 @@ class BaseAdapter(ABC):
     #: How long the first rows of a related model are cached for this model's list filters.
     #: Set by the router from ``AdminOptions.filter_cache_ttl``; ``0`` disables caching.
     filter_cache_ttl: int = 0
+    #: Unfiltered list totals at or above this many rows use :meth:`estimate_row_count`
+    #: instead of ``count(*)``. Set by the router from ``AdminOptions.count_estimate_threshold``;
+    #: ``None`` (the default) always counts exactly.
+    count_estimate_threshold: int | None = None
     #: Concurrency-token field (``version`` / ``updated_at``) when optimistic concurrency
     #: control is enforced for this model. Set by the router from
     #: ``AdminOptions.enforce_occ``; ``None`` (the default) keeps last-write-wins.
@@ -262,7 +271,17 @@ class BaseAdapter(ABC):
 
         ``page``, ``page_size`` and ordering do not change a total, so they are not
         part of the key. A query whose values cannot be hashed bypasses the cache.
+
+        An unfiltered list of a table the planner estimates at or above
+        :attr:`count_estimate_threshold` rows skips the count and returns the estimate
+        (see :meth:`total_is_estimate`).
         """
+        _TOTAL_IS_ESTIMATE.set(False)
+        if not (filters or search or queryset_filters):
+            estimate = await self._estimated_total()
+            if estimate is not None:
+                _TOTAL_IS_ESTIMATE.set(True)
+                return estimate
         cache = self.count_cache
         if cache is None or self.count_cache_ttl <= 0:
             return await compute()
@@ -284,6 +303,29 @@ class BaseAdapter(ABC):
         total = await compute()
         await cache.set(key, total, self.count_cache_ttl)
         return total
+
+    async def _estimated_total(self) -> int | None:
+        """The planner's whole-table row estimate when it is large enough to use, else ``None``.
+
+        ``None`` means count exactly: no threshold, an adapter that cannot estimate, a
+        count that is not a planner estimate (SQLite counts for real), a stale estimate
+        of 0 or less, or a table below the threshold.
+        """
+        threshold = self.count_estimate_threshold
+        if threshold is None:
+            return None
+        try:
+            rows = await self.estimate_row_count()
+        except NotImplementedError:
+            return None
+        # Read straight after the await: nothing else runs in between on the event loop.
+        if not self.estimates_row_count or rows <= 0 or rows < threshold:
+            return None
+        return rows
+
+    def total_is_estimate(self) -> bool:
+        """Whether the list total of the current request is a planner estimate, not a count."""
+        return _TOTAL_IS_ESTIMATE.get()
 
     def _count_cache_model_key(self) -> str:
         """Module-qualified so same-named models in different modules never share entries."""

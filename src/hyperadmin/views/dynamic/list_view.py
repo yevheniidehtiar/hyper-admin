@@ -391,6 +391,7 @@ class ListViewMixin(SavedViewsMixin):
                 "total_pages": total_pages,
                 "start_index": start_index,
                 "end_index": end_index,
+                "total_is_estimate": self.adapter.total_is_estimate(),
             }
 
         except SQLAlchemyError as exc:

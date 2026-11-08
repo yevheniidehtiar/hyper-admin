@@ -150,6 +150,7 @@ def create_admin_router(  # noqa: PLR0912, PLR0913, PLR0915, PLR0917
     adapter.count_cache = count_cache
     adapter.count_cache_ttl = options.count_cache_ttl
     adapter.filter_cache_ttl = options.filter_cache_ttl
+    adapter.count_estimate_threshold = options.count_estimate_threshold
     adapter.version_field = resolve_version_field(
         model, enforce=options.enforce_occ, use_updated_at=concurrency_use_updated_at
     )
