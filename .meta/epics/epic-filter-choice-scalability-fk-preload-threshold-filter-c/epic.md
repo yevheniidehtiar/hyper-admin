@@ -2,7 +2,7 @@
 type: epic
 id: PFtDf4Pyy04h
 title: "epic: Filter & Choice Scalability (FK preload threshold, filter cache)"
-status: in_progress
+status: done
 priority: medium
 owner: null
 labels:

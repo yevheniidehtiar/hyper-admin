@@ -2,7 +2,7 @@
 type: story
 id: i3QYzFLktFLY
 title: "test: unit tests for configurable selectinload in BaseAdapter and SQLModelAdapter"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

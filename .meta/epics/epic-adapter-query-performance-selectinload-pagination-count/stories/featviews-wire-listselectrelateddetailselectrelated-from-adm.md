@@ -2,7 +2,7 @@
 type: story
 id: zPmQgPhzRGt0
 title: "feat(views): wire list_select_related/detail_select_related from AdminOptions into view handlers"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

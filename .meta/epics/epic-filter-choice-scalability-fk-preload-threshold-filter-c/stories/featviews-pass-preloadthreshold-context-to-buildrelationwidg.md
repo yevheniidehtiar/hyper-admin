@@ -2,7 +2,7 @@
 type: story
 id: tcxn220YlZuY
 title: "feat(views): pass preload_threshold context to _build_relation_widgets"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

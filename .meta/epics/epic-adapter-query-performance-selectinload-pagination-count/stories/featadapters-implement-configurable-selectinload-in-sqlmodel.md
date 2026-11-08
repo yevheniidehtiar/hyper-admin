@@ -2,7 +2,7 @@
 type: story
 id: tDOH8LOpKYmK
 title: "feat(adapters): implement configurable selectinload in SQLModelAdapter and SQLAlchemyAdapter"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
