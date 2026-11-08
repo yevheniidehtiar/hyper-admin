@@ -44,6 +44,7 @@ if TYPE_CHECKING:
     from hyperadmin.auth.bridge import ExternalAuth
     from hyperadmin.core.adapters import SessionFactory
     from hyperadmin.core.csrf import EffectiveCsrfMode
+    from hyperadmin.core.rate_limit import RateLimiter
     from hyperadmin.db import TableScope
     from hyperadmin.views.csrf import CsrfGuard
     from hyperadmin.views.nav_pins import NavPins
@@ -95,6 +96,7 @@ class Admin:
         disabled_plugins: "Iterable[str]" = (),
         plugin_settings: "Mapping[str, Mapping[str, Any]] | None" = None,
         nav_groups: "Iterable[NavGroup]" = (),
+        rate_limiter: "RateLimiter | None" = None,
     ) -> None:
         """Initialise HyperAdmin and attach it to a FastAPI application.
 
@@ -141,6 +143,11 @@ class Admin:
                 collapse state. Models join a group through ``nav_group`` on their
                 admin class; undeclared groups still appear, after these. See
                 ``docs/specs/navigation-and-list-ux.md``.
+            rate_limiter: A ``RateLimiter`` applied per client to every admin request
+                except static assets; over the limit gets ``429`` with ``Retry-After``.
+                When ``None``, ``settings.rate_limit_requests`` builds an in-memory one
+                (and no limit applies if that is unset either). Pass a shared
+                implementation to enforce one limit across several workers.
 
         Raises:
             ValueError: ``auth`` is combined with ``auth_backend`` or
@@ -216,6 +223,7 @@ class Admin:
             discover_admin_modules(self.settings.discover_apps)
 
         self.nav_groups: tuple[NavGroup, ...] = tuple(nav_groups)
+        self.rate_limiter = rate_limiter
         self._nav_sources: list[ModelNavSource] = []
         #: Sidebar pins (``views/nav_pins.py``); set in mount() when auth is configured.
         self._nav_pins: NavPins | None = None
@@ -890,6 +898,34 @@ class Admin:
             admin_path=admin_path if scoped_cookie else None,
         )
 
+    def _add_rate_limit_middleware(self, target: FastAPI, admin_prefix: str) -> None:
+        """Add the rate-limit middleware to ``target`` when a limit is configured.
+
+        Call it last so it is outermost: a throttled request is answered before the
+        startup sync, session, authentication or any database work.
+        """
+        from hyperadmin.core.rate_limit import InMemoryRateLimiter
+        from hyperadmin.views.rate_limit import RateLimitMiddleware
+
+        settings = self.settings
+        window = settings.rate_limit_window_seconds
+        limiter = self.rate_limiter
+        if limiter is None and settings.rate_limit_requests is not None:
+            limiter = InMemoryRateLimiter(settings.rate_limit_requests, window)
+        login_limiter = (
+            InMemoryRateLimiter(settings.rate_limit_login_requests, window)
+            if settings.rate_limit_login_requests is not None
+            else None
+        )
+        if limiter is None and login_limiter is None:
+            return
+        target.add_middleware(
+            RateLimitMiddleware,
+            limiter=limiter,
+            login_limiter=login_limiter,
+            admin_prefix=admin_prefix,
+        )
+
     def _add_locale_middleware(self, target: FastAPI) -> None:
         """Add the locale-resolution middleware to ``target``."""
         from hyperadmin.i18n import LocaleMiddleware
@@ -1303,6 +1339,7 @@ class Admin:
         sub_app.add_middleware(AdminScopeMiddleware, namespace=self.settings.route_namespace)
         # Every sub-app request is an admin request, hence the "/" prefix.
         sub_app.add_middleware(StartupGuardMiddleware, lifecycle=self._lifecycle, admin_prefix="/")
+        self._add_rate_limit_middleware(sub_app, "/")
 
         self.app.mount(admin_prefix, sub_app, name=self.settings.route_namespace)
         self._asgi_app = sub_app
@@ -1339,3 +1376,4 @@ class Admin:
         self.app.add_middleware(
             StartupGuardMiddleware, lifecycle=self._lifecycle, admin_prefix=admin_prefix
         )
+        self._add_rate_limit_middleware(self.app, admin_prefix)

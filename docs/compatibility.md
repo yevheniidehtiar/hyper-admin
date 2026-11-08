@@ -165,6 +165,36 @@ These values are a starting point for PostgreSQL, not a measured optimum. Each w
 process has its own pool, so keep `workers * (pool_size + max_overflow)` below the server's
 `max_connections`.
 
+### Rate limiting
+
+A traffic spike goes straight to the database. HyperAdmin can answer `429 Too Many
+Requests` with a `Retry-After` header once one client passes a limit. It is off until you
+set one:
+
+| Setting | Environment variable | Meaning |
+|---|---|---|
+| `rate_limit_requests` | `HYPERADMIN_RATE_LIMIT_REQUESTS` | Admin requests one client may make per window |
+| `rate_limit_login_requests` | `HYPERADMIN_RATE_LIMIT_LOGIN_REQUESTS` | A further limit on login form submissions |
+| `rate_limit_window_seconds` | `HYPERADMIN_RATE_LIMIT_WINDOW_SECONDS` | Window length, 60 by default |
+
+The limiter is a token bucket: a client may burst up to the limit, then sustains the
+average rate. Static assets are never counted, and host routes outside the admin prefix are
+not touched. The login limit is the one that slows password guessing, so set it low (for
+example 5 per minute).
+
+Three things to know before you rely on it:
+
+- **Counts are per process.** With 3 workers a client gets up to 3 times the limit. To
+  enforce one limit across workers, pass your own shared implementation of
+  `hyperadmin.core.rate_limit.RateLimiter` (a single `async acquire(key)` method) as
+  `Admin(app, rate_limiter=...)`.
+- **Behind a reverse proxy, the client is the proxy** unless the server rewrites the client
+  address. Run uvicorn with `--proxy-headers` and `--forwarded-allow-ips` set to your
+  proxy. HyperAdmin never reads `X-Forwarded-For` itself, because any client could forge it
+  to escape the limit.
+- **It protects the admin only.** A limiter on a gateway or CDN in front of the whole app
+  is still the better place for broad abuse protection.
+
 ### Load testing your own deployment
 
 HyperAdmin ships a Locust suite and a synthetic data generator for measuring a real

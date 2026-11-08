@@ -260,6 +260,15 @@ class HyperAdminSettings(BaseSettings):
     #: Most list totals the built-in count cache keeps; the least recently used go first.
     #: Only used by models that set ``AdminOptions.count_cache_ttl``.
     count_cache_max_entries: int = Field(default=1024, ge=1)
+    #: Requests one client may make to the admin per ``rate_limit_window_seconds``;
+    #: over that gets ``429``. ``None`` (default) applies no limit. Counted per process,
+    #: so N workers allow up to N times this; pass ``Admin(rate_limiter=...)`` for a
+    #: shared limiter. Static assets are never counted.
+    rate_limit_requests: int | None = Field(default=None, ge=1)
+    #: A further, normally stricter, limit on login form submissions per client, within
+    #: the same window. ``None`` (default) applies none.
+    rate_limit_login_requests: int | None = Field(default=None, ge=1)
+    rate_limit_window_seconds: int = Field(default=60, ge=1)
 
     # ── Concurrency (docs/specs/realtime-occ.md) ──────────────────────────────
     #: Let ``updated_at`` act as the version field of models with no ``version`` column.
