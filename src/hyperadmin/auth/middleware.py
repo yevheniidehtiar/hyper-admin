@@ -91,7 +91,10 @@ class AuthenticationMiddleware:
                 user id in this worker; ``0`` (default) loads them on every request.
                 Honoured only with the built-in ``SessionAuthBackend`` and
                 ``ModelPermissionChecker`` (or no checker); otherwise it is ignored
-                with a warning, since only their tables invalidate the cache.
+                with a warning, since only their tables invalidate the cache. With
+                the cache on, a hit exposes ``request.state.user`` as a detached copy
+                holding only column data (no relationships), and an inactive user is
+                rejected.
             clock: Monotonic clock of the cache (injectable for tests).
         """
         self.app = app
@@ -217,8 +220,9 @@ class AuthenticationMiddleware:
             if cached is not None:
                 return clone_user(cached.user), cached
         user = await self.auth_backend.get_current_user(request)
-        if getattr(user, "is_active", True) is False:
-            # A deactivated user never gets in, with or without the cache.
+        if self._user_cache is not None and getattr(user, "is_active", True) is False:
+            # The cache would keep serving a deactivated user for a TTL, so it must not
+            # start with one. With the cache off the backend's answer passes unchanged.
             return None, None
         return user, None
 
