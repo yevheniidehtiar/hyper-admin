@@ -185,6 +185,26 @@ class TestCompare:
         assert cmp.findings == []
         assert any("base p95 is 0" in n for n in cmp.notes)
 
+    @pytest.mark.parametrize("method", ["POST", "PUT", "PATCH", "DELETE"])
+    def test_write_endpoints_gate_on_p50_only(self, method):
+        """
+        Scenario: a write endpoint's p95 swing does not fail the gate, its p50 rise does
+          Given a write endpoint whose head p95 is 4x base
+          Then  no finding is raised
+          When  head's p50 is also 2x base
+          Then  only a p50 finding is raised
+        """
+        name = f"{method} /admin/contact [write]"
+        base = _same(name=name, p50=100, p95=1000)
+        assert not rr.compare_aggregates(base, _same(name=name, p50=100, p95=4000)).findings
+        cmp = rr.compare_aggregates(base, _same(name=name, p50=200, p95=4000))
+        assert [f.kind for f in cmp.findings] == ["p50"]
+
+    def test_read_endpoints_still_gate_on_p95(self):
+        base = _same(name="GET /admin/contact [list]", p95=1000)
+        head = _same(name="GET /admin/contact [list]", p95=4000)
+        assert [f.kind for f in rr.compare_aggregates(base, head).findings] == ["p95"]
+
     def test_aggregated_row_regression_fails(self):
         """
         Scenario: a pooled Aggregated slowdown fails the gate

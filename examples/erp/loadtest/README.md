@@ -17,7 +17,7 @@ One short Locust run is too noisy to gate on, so the `smoke` job in
    plus a pooled error rate (`baselines aggregate`);
 4. compares head against base (`baselines compare`). It fails when, for an endpoint with enough
    pooled requests, the median p50 or p95 rises by more than the tolerance (default 15%)
-   and by more than 20 ms in absolute terms; when the head error rate exceeds 1%; when an
+   and by more than 20 ms in absolute terms (write endpoints, POST/PUT/PATCH/DELETE, gate on p50 only: their p95 swings on SQLite write-lock stalls); when the head error rate exceeds 1%; when an
    endpoint with enough base traffic vanishes from head or collapses below the pooled request
    minimum; or when either side has fewer than 3 usable runs. "Enough" means the total requests
    per side across all runs is at least 100 (about 20 per run over 5 runs), so one thin run does

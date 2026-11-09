@@ -41,6 +41,14 @@ _TABLE_RULE = "|---|---:|" + "---:|" * 13 + "---|"
 
 METRICS = ("rps", "p50", "p95", "p99")
 GATED_LATENCY = ("p50", "p95")
+# Writes see few requests and occasional SQLite write-lock stalls, which swing a bucketed p95 by
+# several x between identical runs; their p50 still gates.
+WRITE_METHODS = ("POST ", "PUT ", "PATCH ", "DELETE ")
+
+
+def gated_latency(name: str) -> tuple[str, ...]:
+    """Metrics that gate for ``name``: write endpoints gate on p50 only, the rest on p50 and p95."""
+    return ("p50",) if name.startswith(WRITE_METHODS) else GATED_LATENCY
 
 
 @dataclass(frozen=True)
@@ -176,9 +184,10 @@ def compare_aggregates(
 
     A latency rise only counts when it also exceeds ``min_delta_ms`` in absolute terms. The
     Aggregated row (every request pooled, the most stable signal) is gated like any endpoint.
-    req/s and p99 are shown but never gate: with think time the load is closed-loop, so req/s
-    barely moves, and p99 over a few hundred requests is a single slow request. ``min_requests``
-    is the pooled total per side across all runs, so sparse single runs still count.
+    Write endpoints (POST/PUT/PATCH/DELETE) gate on p50 only. req/s and p99 are shown but never
+    gate: with think time the load is closed-loop, so req/s barely moves, and p99 over a few
+    hundred requests is a single slow request. ``min_requests`` is the pooled total per side
+    across all runs, so sparse single runs still count.
     """
     findings: list[Finding] = []
     notes: list[str] = []
@@ -208,7 +217,7 @@ def compare_aggregates(
             bad.append("requests")
             rows.append((name, h, b, _status(bad, "")))
             continue
-        for kind in GATED_LATENCY:
+        for kind in gated_latency(name):
             bv = getattr(b, kind).median
             hv = getattr(h, kind).median
             if bv <= 0:
