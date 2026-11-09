@@ -163,6 +163,14 @@ jobs:
             --stats out/run1_stats.csv out/run2_stats.csv out/run3_stats.csv \
             --out out/nightly-postgres.json
 
+      # Absolute targets at ~70 req/s: the median run must stay under p95 300 ms and p99 2 s,
+      # and the load must have reached 65 req/s so a run that never got there cannot pass.
+      - name: Check SLO (p95 < 300 ms, p99 < 2 s at ~70 req/s)
+        run: |
+          uv run python -m examples.erp.loadtest.baselines slo \
+            --agg out/nightly-postgres.json \
+            --max-p95-ms 300 --max-p99-ms 2000 --min-rps 65 --report out/slo.md
+
       # A recorded aggregate is committed by hand from the uploaded artifact; no numbers are
       # invented here. Without the file there is nothing to compare against.
       - name: Compare against recorded aggregate

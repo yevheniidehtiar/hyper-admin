@@ -39,6 +39,7 @@ _TABLE_HEADER = (
 )
 _TABLE_RULE = "|---|---:|" + "---:|" * 13 + "---|"
 
+AGGREGATED = "Aggregated"
 METRICS = ("rps", "p50", "p95", "p99")
 GATED_LATENCY = ("p50", "p95")
 # Writes see few requests and occasional SQLite write-lock stalls, which swing a bucketed p95 by
@@ -329,6 +330,68 @@ def run_compare(base: Path, head: Path, limits: Thresholds, report_path: Path | 
     return 1 if cmp.findings else 0
 
 
+@dataclass(frozen=True)
+class Slo:
+    """Absolute targets for the pooled Aggregated row, at a stated load."""
+
+    max_p95_ms: float
+    max_p99_ms: float
+    min_rps: float
+
+
+def check_slo(aggs: dict[str, Aggregate], slo: Slo, *, name: str = AGGREGATED) -> list[Finding]:
+    """Median p95/p99 of ``name`` must stay under the targets while the load reached ``min_rps``.
+
+    The load check keeps a run that never reached the target load from passing vacuously.
+    """
+    agg = aggs.get(name)
+    if agg is None:
+        return [Finding(name, "missing", 0, 0, 0)]
+    findings: list[Finding] = []
+    if agg.rps.median < slo.min_rps:
+        findings.append(Finding(name, "rps", agg.rps.median, agg.rps.median, slo.min_rps))
+    for kind, limit in (("p95", slo.max_p95_ms), ("p99", slo.max_p99_ms)):
+        value = getattr(agg, kind).median
+        if value >= limit:
+            findings.append(Finding(name, kind, value, value, limit))
+    return findings
+
+
+def _slo_row(
+    label: str, spread: Spread, target: str, findings: list[Finding], kind: str, worst: str = "max"
+) -> str:
+    status = "MISSED" if any(f.kind == kind for f in findings) else "OK"
+    edge = spread.low if worst == "min" else spread.high
+    return f"| {label} | {spread.median:.1f} | {edge:.1f} | {target} | {status} |"
+
+
+def run_slo(path: Path, slo: Slo, report_path: Path | None = None) -> int:
+    aggs = load_aggregate(path)
+    findings = check_slo(aggs, slo)
+    agg = aggs.get(AGGREGATED)
+    lines = [f"### Load test SLO ({agg.runs if agg else 0} runs, median)", ""]
+    if agg:
+        lines += [
+            "| Metric | Median | Worst run | Target | Status |",
+            "|---|---:|---:|---|---|",
+            _slo_row("req/s", agg.rps, f">= {slo.min_rps:.0f}", findings, "rps", worst="min"),
+            _slo_row("p95 ms", agg.p95, f"< {slo.max_p95_ms:.0f}", findings, "p95"),
+            _slo_row("p99 ms", agg.p99, f"< {slo.max_p99_ms:.0f}", findings, "p99"),
+            "",
+        ]
+    lines.append(f"**FAILED**: {len(findings)} SLO miss(es)" if findings else "**PASSED**")
+    report = "\n".join(lines) + "\n"
+    print(report)
+    if report_path is not None:
+        report_path.parent.mkdir(parents=True, exist_ok=True)
+        report_path.write_text(report, encoding="utf-8")
+    summary = os.environ.get("GITHUB_STEP_SUMMARY")
+    if summary:
+        with open(summary, "a", encoding="utf-8") as fh:
+            fh.write(report)
+    return 1 if findings else 0
+
+
 def run(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(prog="baselines", description="Repeated-run regression gate.")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -350,7 +413,16 @@ def run(argv: list[str]) -> int:
     cmp.add_argument("--min-runs", type=int, default=DEFAULT_MIN_RUNS)
     cmp.add_argument("--min-delta-ms", type=float, default=DEFAULT_MIN_DELTA_MS)
     cmp.add_argument("--report", type=Path, help="also write the markdown report to this file")
+    slo = sub.add_parser("slo", help="check absolute p95/p99 targets on the Aggregated row")
+    slo.add_argument("--agg", required=True, type=Path)
+    slo.add_argument("--max-p95-ms", type=float, required=True)
+    slo.add_argument("--max-p99-ms", type=float, required=True)
+    slo.add_argument("--min-rps", type=float, required=True, help="load the targets apply at")
+    slo.add_argument("--report", type=Path)
     args = parser.parse_args(argv)
+    if args.command == "slo":
+        target = Slo(args.max_p95_ms, args.max_p99_ms, args.min_rps)
+        return run_slo(args.agg, target, report_path=args.report)
     if args.command == "aggregate":
         return run_aggregate(args.stats, args.out, min_runs=args.min_runs)
     limits = Thresholds(

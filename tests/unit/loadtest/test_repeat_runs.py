@@ -338,3 +338,43 @@ class TestCli:
         )
         assert bl.run() == 0
         assert out.exists()
+
+
+class TestSlo:
+    SLO = rr.Slo(max_p95_ms=300, max_p99_ms=2000, min_rps=65)
+
+    def _aggs(self, **kw):
+        return _same(name="Aggregated", **kw)
+
+    def test_within_targets_passes(self):
+        """
+        Scenario: p95 and p99 under target at the target load
+          Given Aggregated p95 210 ms, p99 1500 ms and 73 req/s
+          Then  no SLO finding is raised
+        """
+        assert rr.check_slo(self._aggs(p95=210, p99=1500, rps=73.0), self.SLO) == []
+
+    @pytest.mark.parametrize(
+        ("kw", "kind"),
+        [
+            ({"p95": 300, "p99": 1500, "rps": 73.0}, "p95"),
+            ({"p95": 210, "p99": 2000, "rps": 73.0}, "p99"),
+            ({"p95": 210, "p99": 1500, "rps": 60.0}, "rps"),
+        ],
+    )
+    def test_each_miss_is_reported(self, kw, kind):
+        assert [f.kind for f in rr.check_slo(self._aggs(**kw), self.SLO)] == [kind]
+
+    def test_missing_aggregated_row_fails(self):
+        assert [f.kind for f in rr.check_slo({}, self.SLO)] == ["missing"]
+
+    def test_cli_exit_codes_and_report(self, tmp_path, monkeypatch):
+        monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
+        path = tmp_path / "agg.json"
+        rr.dump_aggregate(path, self._aggs(p95=210, p99=1500, rps=73.0))
+        report = tmp_path / "slo.md"
+        args = ["slo", "--agg", str(path), "--max-p95-ms", "300", "--max-p99-ms", "2000"]
+        assert rr.run([*args, "--min-rps", "65", "--report", str(report)]) == 0
+        assert "**PASSED**" in report.read_text()
+        assert rr.run([*args, "--min-rps", "80", "--report", str(report)]) == 1
+        assert "MISSED" in report.read_text()

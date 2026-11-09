@@ -35,7 +35,11 @@ base), so editing the locustfile does not change the workload between sides.
 The markdown table goes to the job summary and to `report.md` in the `locust-smoke-report`
 artifact, next to every run's CSV. Dispatch the workflow manually to change `runs` and `tolerance`.
 
-The nightly PostgreSQL job runs Locust 3 times and uploads the aggregate. It compares against
+The nightly PostgreSQL job runs Locust 3 times (100 users, about 73 req/s on a hosted runner) and
+uploads the aggregate. It always asserts absolute targets on the pooled `Aggregated` row
+(`baselines slo`): median p95 under 300 ms and median p99 under 2 s, and the load must have
+reached 65 req/s so a run that never got there cannot pass. Recorded numbers (3 runs): p95
+190-210 ms, p99 1300-1800 ms. It also compares against
 `baselines/nightly-postgres.json` only when that file exists; to enable it, commit the
 `nightly-postgres.json` from a nightly run's artifact.
 

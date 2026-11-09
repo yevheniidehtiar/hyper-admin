@@ -141,7 +141,7 @@ def render_table(
 
 def run(argv: list[str] | None = None) -> int:
     args_list = sys.argv[1:] if argv is None else argv
-    if args_list and args_list[0] in ("aggregate", "compare"):
+    if args_list and args_list[0] in ("aggregate", "compare", "slo"):
         from examples.erp.loadtest.repeat_runs import run as run_repeat  # noqa: PLC0415
 
         return run_repeat(args_list)
