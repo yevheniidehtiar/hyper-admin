@@ -188,8 +188,8 @@ Evaluate every item below. Label each **PASS** or **FAIL**:
 - [ ] Hotspot files get a minimal diff in their own hunk
 
 **Git — git-workflow.md**
-- [ ] All commits use identity `user.name="Claude Code"`, `user.email="noreply+claude-code@anthropic.com"`
-- [ ] No `Co-Authored-By` trailers on any commit
+- [ ] All commits use identity `user.name="dodjer88"`, `user.email="11336795+dodjer88@users.noreply.github.com"`
+- [ ] No `Co-Authored-By` trailers on any commit, and no AI attribution in commit messages or the PR body
 - [ ] Commit messages follow Conventional Commits: `type(scope): description (#<issue>)`
 - [ ] PR will be created with `GH_TOKEN="$CLAUDE_GH_TOKEN"` against `$BASE`
 
@@ -261,7 +261,7 @@ Run the decision ladder:
 
   ```bash
   git add -A
-  git -c user.name="Claude Code" -c user.email="noreply+claude-code@anthropic.com" \
+  git -c user.name="dodjer88" -c user.email="11336795+dodjer88@users.noreply.github.com" \
     commit -m "feat: partial implementation, waiting on a decision (#$ISSUE)"
   git push --force-with-lease origin HEAD
   # Skip the create when a draft PR already exists from an earlier run
@@ -342,7 +342,7 @@ hashes on the base branch, so the branch must be current to produce a clean diff
 
 ```bash
 git add -A
-git -c user.name="Claude Code" -c user.email="noreply+claude-code@anthropic.com" \
+git -c user.name="dodjer88" -c user.email="11336795+dodjer88@users.noreply.github.com" \
   commit -m "feat: <description> (#$ISSUE)"
 
 git fetch origin "$BASE"

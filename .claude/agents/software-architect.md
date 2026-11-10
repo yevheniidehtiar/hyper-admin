@@ -63,7 +63,7 @@ Input: an epic whose `review(spec)` story is `todo` and whose SDD in `docs/specs
 7. **Commit on the epic branch** and push:
 
    ```bash
-   git -c user.name="Claude Code" -c user.email="noreply+claude-code@anthropic.com" \
+   git -c user.name="dodjer88" -c user.email="11336795+dodjer88@users.noreply.github.com" \
      commit -m "docs(spec): approve SDD for <feature> (#<spec-issue>)"
    git push origin HEAD
    ```

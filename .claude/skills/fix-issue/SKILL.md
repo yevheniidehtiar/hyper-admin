@@ -111,7 +111,7 @@ Commit first, then rebase (`git rebase` refuses to start with uncommitted change
 
 ```bash
 git add -A
-git -c user.name="Claude Code" -c user.email="noreply+claude-code@anthropic.com" \
+git -c user.name="dodjer88" -c user.email="11336795+dodjer88@users.noreply.github.com" \
   commit -m "fix: <description> (#$ISSUE)"
 git fetch origin "$BASE"
 git rebase "origin/$BASE"

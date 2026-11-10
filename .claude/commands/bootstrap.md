@@ -108,7 +108,7 @@ Check which of these are set. Print their presence (not their values):
 
 | Variable | Purpose | Required for |
 |----------|---------|-------------|
-| `CLAUDE_GH_TOKEN` | GitHub bot token for PR creation | Creating PRs as Claude Code identity |
+| `CLAUDE_GH_TOKEN` | GitHub bot token for PR creation | Creating PRs as the bot account |
 | `GITHUB_TOKEN` | General GitHub API access | `gh` CLI, issue/label operations |
 | `ANTHROPIC_API_KEY` | Claude API access | Any agent that calls Claude directly |
 
