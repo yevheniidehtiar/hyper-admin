@@ -1,6 +1,6 @@
 ---
 name: oss-triage-auditor
-description: Use this agent to audit ALL open GitHub issues, PRs, and milestones. Detects AI-slop, ego-PRs, duplicates, enforces label lifecycle, closes stale items, and produces a structured audit report. Optional — not part of the core 8-agent workflow.
+description: Use this agent to audit ALL open GitHub issues, PRs, and milestones. Detects AI-slop, ego-PRs, duplicates, enforces label lifecycle, closes stale items, and produces a structured audit report. Optional — not part of the core delivery workflow.
 tools: Bash, Read, Grep, Glob, Write
 model: sonnet
 ---

@@ -8,8 +8,10 @@ Reference this file in commands via `@.claude/project-config.md`.
 This project uses **gitpm** for git-native project management. All issue, epic, milestone,
 and roadmap data lives in `.meta/` as plain-text YAML/Markdown files.
 
-**Agents read and write `.meta/` files directly** — no `gh issue` or GitHub Projects API.
-PRs are still managed via `gh pr` (gitpm does not handle PRs).
+**Agents read `.meta/` files directly** — no GitHub Projects API. Writes are limited: planning
+PRs add new files, and the autopilot writes status in the open-epic and close-epic commits.
+PRs are managed via `gh pr` (gitpm does not handle PRs). Mid-epic progress labels and comments
+on story issues are written by the autopilot via `gh issue`.
 
 ### GitPM CLI
 
@@ -91,12 +93,8 @@ grep -rl 'status: todo' .meta/stories/ .meta/epics/*/stories/ \
 # Read a story by GitHub issue number
 grep -rl 'issue_number: 375' .meta/stories/ .meta/epics/*/stories/
 
-# Update story status (edit the YAML frontmatter directly)
-# Then sync to GitHub:
-bun "$GITPM_CLI" push --meta-dir .meta --token "$GITHUB_TOKEN"
-
-# Pull latest from GitHub into .meta/
-bun "$GITPM_CLI" pull --meta-dir .meta --token "$GITHUB_TOKEN"
+# Story status is written by the autopilot only (see Status State Machine below).
+# Syncing .meta/ to GitHub is done by the GitPM Sync workflow after a merge to develop.
 
 # Validate .meta/ tree integrity
 ./scripts/gitpm.sh validate
@@ -105,10 +103,13 @@ bun "$GITPM_CLI" pull --meta-dir .meta --token "$GITHUB_TOKEN"
 ### Sync Workflow
 
 ```
-Agent reads .meta/ → edits story frontmatter → runs `./scripts/gitpm.sh validate`
-  → commits .meta/ changes → PR (CI validates + previews the sync)
-  → merge to develop → GitPM Sync workflow pushes status/labels/assignee to GitHub
+open-epic / close-epic commit on epic/<slug> → `./scripts/gitpm.sh validate`
+  → epic PR (CI validates + previews the sync)
+  → owner approves, rebase-merge to develop → GitPM Sync workflow pushes status/labels to GitHub
 ```
+
+Planning PRs that only add new `.meta` files (new epics, stories) go to `develop` directly and
+sync the same way.
 
 Do not run `gitpm push` yourself, even after bulk edits: CI keeps the sync state on the
 `gitpm-state` branch, and a local push can create duplicate issues. The first live sync, and any
@@ -116,123 +117,79 @@ re-run, is started from Actions > GitPM Sync > Run workflow (untick `dry_run`).
 
 ---
 
-## Epic Locking Protocol
+## Epic Branch Protocol
 
-**The epic is the unit of work ownership.** Before an agent can work on any story inside an
-epic, it must first acquire a lock on the epic by merging a `.meta/` status-change PR into
-`develop`. Git merge conflicts are the distributed lock — two agents cannot claim the same
-epic because the second PR will conflict.
-
-### Lock Acquisition Flow
+**The epic is the unit of work ownership, and its branch is the lock.** An epic in flight has
+exactly one branch `epic/<slug>`, where `<slug>` names the epic directory under `.meta/epics/`
+(`ops/autopilot/README.md` has the exact mapping). Whoever creates the branch owns the epic.
 
 ```
-1. Agent picks an epic with status: todo
-2. Branch: meta/lock-<epic-slug>
-3. Edit epic.md: status → in_progress, assignee → claude-code
-4. Commit + push + open PR (squash-merge, auto-merge enabled)
-5. WAIT for PR to merge into develop
-6. After merge: the GitPM Sync workflow syncs status + labels to GitHub
-7. NOW the agent may begin implementing the epic's stories
+develop  ──────────────────────────────●──▶   owner approves 1 PR per epic
+           \                          /
+epic/<slug> ●──st-01──st-02──st-03───┘        autopilot rebase-merges story PRs, no human
+             ▲         ▲
+        feat/st-01  feat/st-02 ...            worker worktrees, one per story
 ```
 
-### Step-by-Step Commands
+### Lock = branch creation through the API
 
 ```bash
-EPIC_SLUG="<epic-directory-name>"
-EPIC_FILE=".meta/epics/$EPIC_SLUG/epic.md"
-ISSUE_NUMBER=$(grep 'issue_number:' "$EPIC_FILE" | awk '{print $2}')
-LOCK_BRANCH="meta/lock-$EPIC_SLUG"
+SLUG="<slug>"
+SHA=$(gh api "repos/$REPO/git/ref/heads/develop" --jq .object.sha)
 
-# 1. Branch from latest develop
-git fetch origin develop
-git checkout -b "$LOCK_BRANCH" origin/develop
-
-# 2. Update epic status (edit frontmatter)
-#    status: todo → in_progress
-#    assignee: null → "claude-code"
-#    Add locked_at and locked_by fields:
-#      locked_at: <ISO-8601 timestamp>
-#      locked_by: <agent-session-id or "conductor">
-
-# 3. Commit with Claude Code identity
-git add "$EPIC_FILE"
-git -c user.name="Claude Code" \
-    -c user.email="noreply+claude-code@anthropic.com" \
-    commit -m "lock(meta): claim epic #$ISSUE_NUMBER for implementation"
-
-# 4. Push and open PR
-git push origin "$LOCK_BRANCH"
-GH_TOKEN="$CLAUDE_GH_TOKEN" gh pr create \
-  --title "lock(meta): claim epic #$ISSUE_NUMBER — $EPIC_SLUG" \
-  --body "Acquiring epic lock. Auto-merge on green." \
-  --base develop
-
-# 5. Enable auto-merge (squash)
-LOCK_PR=$(GH_TOKEN="$CLAUDE_GH_TOKEN" gh pr view --json number -q .number)
-GH_TOKEN="$CLAUDE_GH_TOKEN" gh pr merge "$LOCK_PR" --auto --squash
-
-# 6. WAIT — poll until merged
-while true; do
-  STATE=$(GH_TOKEN="$CLAUDE_GH_TOKEN" gh pr view "$LOCK_PR" --json state -q .state)
-  [ "$STATE" = "MERGED" ] && break
-  [ "$STATE" = "CLOSED" ] && { echo "LOCK FAILED: PR closed (conflict or rejected)"; exit 1; }
-  sleep 10
-done
-
-# 7. After merge — sync to adapter platform (GitHub labels/status)
-git checkout develop && git pull origin develop
-bun "$GITPM_CLI" push --meta-dir .meta --token "$GITHUB_TOKEN"
-
-# 8. Now proceed with story implementation
+# Returns 422 "Reference already exists" when another run already owns the epic.
+GH_TOKEN="$CLAUDE_GH_TOKEN" gh api -X POST "repos/$REPO/git/refs" \
+  -f ref="refs/heads/epic/$SLUG" -f sha="$SHA"
 ```
 
-### Race Condition Resolution
+A plain `git push` of an existing ref exits 0, so it is not a lock. Only the API call is. On 422,
+pick a different epic.
 
-When two agents attempt to lock the same epic simultaneously:
+### Open the epic
 
-```
-Agent A: creates PR changing epic status: todo → in_progress  ← merges first ✓
-Agent B: creates PR changing epic status: todo → in_progress  ← MERGE CONFLICT ✗
-```
+1. First commit on `epic/<slug>`, touching only the epic's `epic.md`:
+   `status: in_progress`, `locked_by: autopilot`, `branch: epic/<slug>`.
+   Message: `chore(meta): open epic <slug>`.
+2. Open the epic PR `epic/<slug>` → `develop` as a **draft** straight away. Every story merge
+   pushes the epic branch, so CI runs on the integrated state and the owner can watch the diff grow.
 
-Agent B's PR will have a merge conflict on the epic file. Agent B MUST:
-1. Detect the conflict (PR cannot merge)
-2. Close its lock PR
-3. Delete the lock branch
-4. Pick a different epic from the queue
+### Story PRs
 
-### Lock Release (Epic Completion)
+- Branch from `origin/epic/<slug>`, target `epic/<slug>`, and carry a `Story: <story-id>` line in
+  the PR body.
+- The tick merges a story PR with `gh pr merge --rebase --delete-branch` when all checks are green,
+  the PR has `ai-approved` and no `needs-human`, and it is rebased on the epic tip. `--auto` is not
+  usable on `epic/**` (no pending rules there).
+- Story PRs do not edit `status:` in `.meta` (see `.claude/rules/conflict-avoidance.md`).
 
-When all stories in an epic reach `status: done`:
+### Close and integrate the epic (`integrate-epic` job)
 
-```bash
-# Update epic status
-#   status: in_progress → done
-#   Remove locked_at / locked_by fields
+Gate: zero open PRs with base `epic/<slug>`, the `review(spec)` story is approved, all AI review
+threads are resolved.
 
-# Same PR workflow as lock acquisition:
-RELEASE_BRANCH="meta/release-$EPIC_SLUG"
-git checkout -b "$RELEASE_BRANCH" origin/develop
-# Edit epic.md: status → done
-git add "$EPIC_FILE"
-git -c user.name="Claude Code" \
-    -c user.email="noreply+claude-code@anthropic.com" \
-    commit -m "release(meta): complete epic #$ISSUE_NUMBER"
-git push origin "$RELEASE_BRANCH"
-GH_TOKEN="$CLAUDE_GH_TOKEN" gh pr create \
-  --title "release(meta): complete epic #$ISSUE_NUMBER" \
-  --body "All stories done. Releasing epic lock." \
-  --base develop
-GH_TOKEN="$CLAUDE_GH_TOKEN" gh pr merge --auto --squash
-```
+1. Rebase `epic/<slug>` on `origin/develop`, force-push with lease. GitHub's rebase-merge needs a
+   clean replay, so the branch must be exactly rebased.
+2. Commit `chore(meta): close epic <slug>`: epic `status: done`, lock fields (`locked_by`, `branch`)
+   removed, every story and the `review(spec)` story `status: done`.
+3. Mark the PR ready, request the owner's review, enable `gh pr merge --auto --rebase`.
+4. **Freeze the branch.** Any further push dismisses the owner's approval.
+
+After the owner approves, the story commits land linearly on `develop` and the GitPM Sync workflow
+updates all issues in one run.
+
+### Rebasing the epic branch
+
+Only at creation, when `develop` changes a hotspot file the epic also touches, and right before the
+PR is marked ready. Only when no story PR is open against it, or the same job rebases every open
+story branch too. Always `--force-with-lease`.
 
 ### Rules
 
-- **Never start story work without a merged lock PR.** The lock PR on `develop` is proof of ownership.
-- **One epic per agent at a time.** An agent must release (or complete) its current epic before locking another.
-- **Lock PRs are tiny.** They touch only the epic's `epic.md` file — no code, fast review, fast merge.
-- **Stale lock detection.** If an epic has `status: in_progress` for >48 hours with no story PRs opened,
-  the project-manager agent may force-release the lock (set `status: todo`, remove `locked_by`).
+- **Never start story work without the epic branch.** Its existence, plus the open-epic commit, is
+  the proof of ownership.
+- **`.meta` status changes for an epic live in the two commits above** and nowhere else.
+- **A stale epic** (branch exists, no story PR for more than 48 hours, no running job) is reported
+  in the digest. Nobody deletes the branch without the owner's go.
 
 ## Runtime-Derived Variables
 
@@ -249,15 +206,25 @@ REPO_NAME=$(echo "$REPO" | cut -d'/' -f2)
 
 ```bash
 PUBLIC_REPO="Damdy-OSS/hyper-admin"      # Official public OSS mirror — never push autonomously
-DEFAULT_BASE_BRANCH="develop"             # Target branch for all autonomous merges
-DEV_AGENT_LIMIT=3                         # Max dev agents per conductor cycle
-CONDUCTOR_CYCLE_LIMIT=3                   # Max cycles per session (9 issues total cap)
-MERGE_QUEUE_DEPTH=2                       # Max concurrent merge-granted PRs (prevents post-rebase conflicts)
+DEFAULT_BASE_BRANCH="develop"             # Base for epic branches and for hotfix / standalone PRs
+EPIC_BRANCH_PATTERN="epic/<slug>"         # Base for story PRs of an epic
+DEV_AGENT_LIMIT=3                         # Max parallel implement jobs (1 when free memory < 4 GB)
 ```
+
+Autopilot runtime (see `ops/autopilot/README.md`):
+
+| Name | Value |
+|------|-------|
+| Entry point | `ops/autopilot/autopilot.sh tick` (launchd label `com.hyperadmin.autopilot`, every 15 min) |
+| Job prompts | `ops/autopilot/prompts/{implement,review,fix-pr,fix-develop,approve-sdd,integrate-epic,digest}.md` |
+| State | `~/.hyperadmin-autopilot/state.json` (cooldown, running jobs, retry counters) |
+| Worktree pool | `.claude/worktrees/ap-1..3` |
+| `AUTOPILOT=1` | Set for every headless job; skills use it to tell an unattended run from an interactive one |
+| `AUTOPILOT_DRY_RUN=1` | The tick prints its planned actions and takes none |
 
 ## GitHub Auth
 
-PRs and label writes still use the bot token:
+PRs, label writes and epic-branch creation use the bot token:
 
 ```bash
 GH_TOKEN="$CLAUDE_GH_TOKEN"
@@ -273,10 +240,10 @@ GitPM sync uses `$GITHUB_TOKEN` (read/write issues, milestones).
 ```
 $REPO  (private dev, default branch: develop)
   └── .meta/ is the source of truth for issues, epics, milestones
-  └── autonomous agents open PRs here (via gh pr)
-  └── review-agent auto-approves here
-  └── conductor grants merge permission here
-  └── delivery-manager merges to develop here
+  └── epic/<slug> branches: one per epic in flight, created and merged into by the autopilot
+  └── story PRs target epic/<slug>; the autopilot rebase-merges them, no human
+  └── one epic PR (epic/<slug> → develop) per epic; the owner approves it
+  └── hotfix, Dependabot and fix-develop PRs target develop; the owner approves them
 
 Damdy-OSS/hyper-admin  (public OSS mirror)
   └── receives human-reviewed merges only
@@ -293,23 +260,50 @@ backlog → todo → in_progress → in_review → done
 | Status | Set by | Meaning |
 |--------|--------|---------|
 | `backlog` | plan-to-issues | Newly created, not yet prioritized |
-| `todo` | project-manager / human | Ready for implementation |
-| `in_progress` | conductor / dev agent | Dev agent claimed the story |
-| `in_review` | dev agent | PR open, awaiting review |
-| `done` | delivery-manager | PR merged, story complete |
+| `todo` | planning PR / human | Ready for implementation |
+| `done` | autopilot (close-epic commit) | Story PR merged into the epic branch |
 | `cancelled` | human / triage | No longer needed |
 
-## Label State Machine (PR lifecycle — still GitHub-native)
+The autopilot is the only writer of `status:` once an epic is open, and it writes it in exactly two
+commits on the epic branch:
+
+| Commit | Content |
+|--------|---------|
+| `chore(meta): open epic` | `epic.md`: `status: in_progress`, `locked_by: autopilot`, `branch: epic/<slug>` |
+| `chore(meta): close epic` | `epic.md`: `status: done`, lock fields removed; every story and the `review(spec)` story: `status: done` |
+
+There are no per-story status commits, so `in_progress` and `in_review` are not written to story
+files while an epic is in flight. Mid-epic progress is shown by the `ap:*` labels on the story
+issue (below). The GitPM Sync workflow overwrites the status-mapped labels when the epic PR merges
+to `develop`, which is the correct final state.
+
+## Label State Machine (GitHub-native, written by the autopilot)
+
+Story issue:
 
 ```
-PR opened → review label → merge-requested → merge-granted → squash-merged
-                                            ↘ merge-deferred
+ap:in-progress → ap:in-review → ap:done
 ```
 
-| Label | Set by | Meaning |
-|-------|--------|---------|
-| `review` | dev agent (on PR) | PR open, awaiting review |
-| `merge-requested` | delivery-manager | PR approved + CI green, queued for conductor |
-| `merge-granted` | conductor | Safe to merge, no conflict risk |
-| `merge-deferred` | conductor | Merge blocked; reason in PR comment |
-| `needs-human` | any agent | Escalation required |
+Story PR (base `epic/<slug>`):
+
+```
+PR opened → review job → ai-approved            → all checks green → rebase-merged by the tick
+                       ↘ ai-changes-requested   → fix-pr job → review job again
+```
+
+| Label | On | Set by | Meaning |
+|-------|----|--------|---------|
+| `ap:in-progress` | story issue | autopilot tick | An `implement` job is running for the story |
+| `ap:in-review` | story issue | autopilot tick | Story PR is open (one comment links it) |
+| `ap:done` | story issue | autopilot tick | Story PR merged into the epic branch |
+| `ai-approved` | PR | `review` job | Reviewer verdict: approved (the bot cannot approve its own PR) |
+| `ai-changes-requested` | PR | `review` job | Reviewer verdict: changes required; details in the review comment |
+| `needs-human` | PR or issue | any job | Hard stop or exhausted retry budget; the exact question is in a comment |
+| `superseded` | story issue | planning PR | Story replaced by other work; not picked up |
+
+A story PR is merged when all of its checks are green, it carries `ai-approved`, it does not carry
+`needs-human`, and it is rebased on the epic branch tip.
+
+Retry budgets (kept in `~/.hyperadmin-autopilot/state.json`): one CI rerun for a cancelled or
+timed-out check, 3 `fix-pr` rounds per PR, 2 `review` rounds per PR, then `needs-human`.

@@ -1,45 +1,103 @@
 ---
 name: implement-feature
-description: "Self-evaluating agentic workflow: plan → validate → implement with blocker handling → learn"
-argument-hint: "<issue-number>"
+description: "Self-evaluating agentic workflow: plan → validate → implement with self-unblocking → open the PR"
+argument-hint: "<issue-number> [base-branch]"
 disable-model-invocation: true
-allowed-tools: Read, Grep, Glob, Write, Edit, Bash(git *), Bash(gh *), Bash(just *), Bash(uv run *), CronCreate, CronDelete, CronList, ToolSearch
+allowed-tools: Read, Grep, Glob, Write, Edit, Agent, Bash(git *), Bash(gh *), Bash(uv run *), Bash(uv sync *), Bash(./scripts/gitpm.sh *)
 ---
 
-Implement story for GitHub issue #$ARGUMENTS using the self-evaluating agentic loop.
+Implement one story using the self-evaluating agentic loop.
+
+Arguments: `$ARGUMENTS`
+
+- First token: the GitHub issue number of the story (`ISSUE` below).
+- Optional second token: the base branch (`BASE` below). Story PRs of an epic use `epic/<slug>`;
+  standalone work uses `develop`. When it is omitted, derive it in A1.
+
+This skill ends when the PR is open. Review, CI repair, rebases and the merge belong to the
+autopilot tick (`ops/autopilot/autopilot.sh tick`), not to this session.
+
+It never waits for a human. When something is unclear, apply the decision ladder below and keep
+going. Only the hard stops end the run early.
+
+---
+
+## Decision ladder (used by the A4 gate and by B3 blockers)
+
+Work down the list and stop at the first step that answers the question:
+
+1. **Memory.** Read the project memory index (`MEMORY.md`) and the entries whose description
+   matches the topic.
+2. **Project sources.** The story, its SDD (`docs/specs/`), `CONSTITUTION.md`, `.claude/rules/`,
+   and the existing code and tests for the nearest similar feature.
+3. **Research subagent.** Spawn one `Agent` with a narrow question (library behaviour, prior art
+   in the repo, an upstream API). Use its answer as input, not as a decision.
+4. **Decide.** Choose the most reversible option that satisfies `CONSTITUTION.md`. Record it in the
+   `## Assumptions` section of the PR body and, when the story has an SDD, as a row in the SDD's
+   Decision Log. Continue.
+
+### Hard stops
+
+Do not decide these yourself:
+
+- secrets or billing
+- pushing to the public mirror
+- deleting data
+- a PyPI release
+- breaking public API (`__init__.py` exports, semver major)
+- changing runtime dependency floors (`[project.dependencies]`)
+- data-model migrations
+
+On a hard stop: post the exact question as one comment on the issue, add the `needs-human` label,
+and move on. Finish every part of the story that does not depend on the answer, open the PR as a
+draft, and end the run. Never loop or sleep waiting for a reply.
+
+```bash
+GH_TOKEN="$CLAUDE_GH_TOKEN" gh issue comment "$ISSUE" --body "$(cat <<'EOF'
+## needs-human
+
+**Question:** <one precise question with the options you see>
+
+**Why it is a hard stop:** <which item of the list above>
+
+**State:** <what is done, what waits on the answer; link to the draft PR>
+EOF
+)"
+GH_TOKEN="$CLAUDE_GH_TOKEN" gh issue edit "$ISSUE" --add-label needs-human
+```
 
 ---
 
 ## Phase A — Planning Loop (no code written yet)
 
-### A1. Read and understand the story
-
-Read the story from `.meta/`:
+### A1. Read the story and resolve the base branch
 
 ```bash
+ISSUE=<first token of the arguments>
+BASE=<second token of the arguments, may be empty>
+
 # Find story file by issue number
-STORY_FILE=$(grep -rl "issue_number: $ARGUMENTS" .meta/stories/ .meta/epics/*/stories/ 2>/dev/null | head -1)
+STORY_FILE=$(grep -rl "issue_number: $ISSUE" .meta/stories/ .meta/epics/*/stories/ 2>/dev/null | head -1)
 cat "$STORY_FILE"
+STORY_ID=$(grep -m1 '^id:' "$STORY_FILE" | awk '{print $2}')
+
+# Parent epic, when the story lives under .meta/epics/<epic>/stories/
+EPIC_FILE="$(dirname "$(dirname "$STORY_FILE")")/epic.md"
 ```
 
-**Verify epic lock** — if this story belongs to an epic, the epic MUST have `status: in_progress`
-(meaning the lock PR was already merged). If the epic is not locked, **HALT** and report:
+Resolve `BASE` when it was not passed:
 
-```bash
-# Check parent epic lock status
-EPIC_DIR=$(dirname "$(dirname "$STORY_FILE")")
-EPIC_FILE="$EPIC_DIR/epic.md"
-if [ -f "$EPIC_FILE" ]; then
-  EPIC_STATUS=$(grep '^status:' "$EPIC_FILE" | awk '{print $2}')
-  [ "$EPIC_STATUS" != "in_progress" ] && {
-    echo "HALT: Parent epic is not locked (status: $EPIC_STATUS). Run epic lock first."
-    exit 1
-  }
-fi
-```
+1. The story has a parent epic and `git ls-remote --heads origin 'epic/*'` shows that epic's
+   branch (its name is also the `branch:` field of `epic.md` on that branch) → `BASE=epic/<slug>`.
+2. The story is standalone (`.meta/stories/`) → `BASE=develop`.
+3. The story has a parent epic but no epic branch exists → the epic is not open. Do not create the
+   branch yourself: the autopilot tick owns the lock (see Epic Branch Protocol in
+   `.claude/project-config.md`). Print `SKIPPED: epic for #$ISSUE is not open` and end the run.
+   This is a normal outcome, not an escalation: post nothing.
 
 Then:
-- Read `ROADMAP.md` to confirm scope and priority — do NOT expand scope beyond the story
+- Read `ROADMAP.md` to confirm scope and priority. Do NOT expand scope beyond the story
+- Read the SDD the story links to (`Spec: docs/specs/{slug}.md`), if any
 - Read every source file and test file referenced in the story body
 - Explore relevant modules in `src/hyperadmin/` to understand existing patterns
 
@@ -83,53 +141,61 @@ Evaluate every item below. Label each **PASS** or **FAIL**:
 - [ ] Every logic sub-task has a corresponding test-first step (failing test before implementation)
 - [ ] E2E tests use accessibility-first locators: `get_by_role` > `get_by_label` > `get_by_text` > `get_by_test_id`
 - [ ] E2E tests contain NO `page.locator('.ha-*')` or positional CSS selectors
-- [ ] Coverage target for new code: 99%
+- [ ] Every changed line under `src/` is covered (`poe test:cov-diff`, 100% patch)
+
+**Conflicts — conflict-avoidance.md**
+- [ ] The plan touches only the files in the story's `## Files to Change` (plus new files)
+- [ ] No sub-task edits a story's or epic's `status:` in `.meta`
+- [ ] Hotspot files get a minimal diff in their own hunk
 
 **Git — git-workflow.md**
 - [ ] All commits use identity `user.name="Claude Code"`, `user.email="noreply+claude-code@anthropic.com"`
 - [ ] No `Co-Authored-By` trailers on any commit
-- [ ] Commit messages follow Conventional Commits: `type(scope): description (#$ARGUMENTS)`
-- [ ] PR will be created with `GH_TOKEN="$CLAUDE_GH_TOKEN"` — verify token is set before proceeding
+- [ ] Commit messages follow Conventional Commits: `type(scope): description (#<issue>)`
+- [ ] PR will be created with `GH_TOKEN="$CLAUDE_GH_TOKEN"` against `$BASE`
 
 ### A4. Gate decision
 
 **If ALL items are PASS** → proceed to Phase B.
 
-**If ANY item is FAIL**:
-1. List every failing item and the specific question that must be answered to resolve it
-2. Post the list as a questionnaire on the issue:
-   ```bash
-   gh issue comment $ARGUMENTS --body "$(cat <<'EOF'
-   ## Planning Gate — Questions Before Implementation
+**If ANY item is FAIL**, do not post a questionnaire and do not stop. For each failing item:
 
-   Before I can proceed, the following items in my plan are ambiguous or blocked:
+1. If the plan itself is wrong (ordering, a forbidden file name, a missing test step), fix the plan
+   and re-evaluate.
+2. If the item fails because something is ambiguous or undecided, run the decision ladder. The
+   outcome of step 4 goes into your notes for the PR's `## Assumptions` section.
+3. If resolving it needs one of the hard stops, follow the hard-stop procedure for that part only
+   and plan the rest of the story around it.
 
-   <list each failing checklist item and your specific question>
-
-   Please update the issue with your answers and re-run `/implement-feature $ARGUMENTS`.
-   EOF
-   )"
-   ```
-3. Print: `STOPPED: Questionnaire posted on issue #$ARGUMENTS. Re-run this skill after the issue is updated.`
-4. **HALT. Do not write any code.**
+Proceed to Phase B once every item is PASS or covered by a recorded assumption.
 
 ---
 
-## Phase B — Implementation with Blocker Handling
+## Phase B — Implementation with self-unblocking
 
-### B1. Start worktree
+### B1. Start the worktree
 
-Run `/wt feat/issue-$ARGUMENTS` to create an isolated worktree branched from `develop`.
+**Autopilot run (`AUTOPILOT=1`)**: the job already runs inside a pool worktree
+(`.claude/worktrees/ap-N`). Do not create another one:
 
-Then sync the environment:
+```bash
+git fetch origin "$BASE"
+git switch -C "feat/issue-$ISSUE" "origin/$BASE"
+```
+
+**Interactive run**: `/wt feat/issue-$ISSUE $BASE` creates an isolated worktree branched from
+`origin/$BASE`.
+
+Then sync the environment (interactive runs only; the autopilot pool syncs its worktrees itself):
 ```bash
 uv sync --all-extras
 ```
 
-All subsequent commands (file edits, `just lint`, `just test`, `uv run`, etc.) run from inside
+All subsequent commands (file edits, `uv run poe lint`, `uv run poe test`, etc.) run from inside
 the worktree.
 
-If a draft PR already exists for this branch, resume from the rebased worktree state — do not restart.
+If the branch or a draft PR already exists from an earlier run, resume from it (rebase on
+`origin/$BASE` first). Do not restart.
 
 ### B2. TDD execution loop
 
@@ -138,68 +204,47 @@ For each sub-task in the plan, in strict order:
 1. **Write the failing test first** — unit test in `tests/unit/` or E2E in `tests/e2e/`
 2. **Implement the minimal code** to make the test pass
 3. **Refactor** — add strict type hints, remove any placeholders, ensure line length ≤ 100
-4. **Verify**: `just test`
+4. **Verify**: `uv run poe test:unit`
 
 After completing all backend sub-tasks (before moving to UI), run an early lint check:
 ```bash
-just lint
+uv run poe lint
 ```
 Fix any issues before continuing to UI sub-tasks.
 
 ### B3. Blocker protocol
 
-When you encounter a blocker (failing test you cannot fix, missing dependency, unclear
-requirement, architectural ambiguity, or any issue that prevents moving forward):
+A blocker is anything that prevents moving forward: a failing test you cannot fix, a missing
+dependency, an unclear requirement, an architectural ambiguity.
 
-**Step 1 — Search memory for prior solutions:**
+Run the decision ladder:
 
-Read your project memory index (`MEMORY.md`) and any files whose description
-matches the blocker topic. The auto-memory system provides the concrete path
-at runtime.
+- Steps 1–3 found the answer → apply it and continue.
+- Otherwise step 4: pick the most reversible option, write it down for `## Assumptions` (and the
+  SDD Decision Log), continue.
+- The blocker is a hard stop → follow the hard-stop procedure. Commit what is done (hooks on, never
+  `--no-verify`; if a hook fails, fix the cause), push, and open the PR as a draft against `$BASE`
+  so the progress is visible:
 
-**If a relevant solution is found** → apply it and continue. Update the memory entry if you
-discovered a refinement.
+  ```bash
+  git -c user.name="Claude Code" -c user.email="noreply+claude-code@anthropic.com" \
+    commit -m "feat: partial implementation, waiting on a decision (#$ISSUE)"
+  git push origin HEAD
+  GH_TOKEN="$CLAUDE_GH_TOKEN" gh pr create --draft --base "$BASE" \
+    --title "<type(scope): description> (#$ISSUE)" --body-file <body-file, see C3>
+  ```
 
-**If no solution is found** → proceed to Step 2.
+  Then continue with any sub-task that does not depend on the answer. End the run when nothing
+  independent is left.
 
-**Step 2 — Document, commit WIP, and halt:**
-
-```bash
-# Commit everything in-progress (skip pre-commit hooks — this is a WIP save)
-git -c user.name="Claude Code" -c user.email="noreply+claude-code@anthropic.com" \
-  commit -n -m "wip: partial implementation, blocked (#$ARGUMENTS)"
-
-git push origin HEAD
-
-# Create draft PR (or update existing one)
-GH_TOKEN="$CLAUDE_GH_TOKEN" gh pr create --draft --fill
-# If draft already exists: GH_TOKEN="$CLAUDE_GH_TOKEN" gh pr ready --undo
-```
-
-Post blocker details as an issue comment:
-```bash
-gh issue comment $ARGUMENTS --body "$(cat <<'EOF'
-## Implementation Blocker
-
-**What was attempted:** <describe what you tried>
-
-**The blocker:** <precise description of the error, ambiguity, or missing piece>
-
-**What is needed to unblock:** <specific ask — e.g., clarify X, provide Y, decide between A and B>
-
-Draft PR with current progress is open. Re-run `/implement-feature $ARGUMENTS` after the blocker is resolved.
-EOF
-)"
-```
-
-Print: `STOPPED: Blocker documented on issue #$ARGUMENTS. Draft PR contains current progress.`
-
-**HALT.**
+A test that still fails after three distinct fix attempts is not a reason to stop either: record
+what was tried in the PR body, mark the PR as draft, and end the run. The tick's `fix-pr` job and
+its retry budget take over.
 
 ### B4. Memory update after resolving a blocker
 
-Once a blocker is resolved (either by memory lookup or by human input on the issue), write a
-memory entry before continuing:
+Once a blocker is resolved by steps 2–4 of the ladder, write a memory entry before continuing so
+the next run stops at step 1:
 
 Create a new file in your project memory directory (the directory containing `MEMORY.md`).
 
@@ -231,11 +276,16 @@ Then update `MEMORY.md` to add a pointer:
 ### C1. Full quality gates
 
 ```bash
-just lint   # must pass with zero errors
-just test   # all unit + E2E tests must pass
+uv run poe lint                                  # pre-commit hooks, zero errors
+uv run ruff check . && uv run ruff format --check .   # what CI runs
+uv run poe test:cov-diff                         # unit tests + 100% of changed lines covered
+uv run poe test:e2e                              # only when the story touches templates, CSS or views
 ```
 
-Do not proceed until both pass. Fix every failure before continuing.
+Do not proceed until they pass. Fix every failure before continuing.
+
+`test:cov-diff` compares against `origin/develop`. On an epic branch the diff also contains the
+epic's earlier stories; they are covered already, so the result still has to be 100%.
 
 ### C2. Final self-review
 
@@ -245,33 +295,56 @@ Confirm each item before committing:
 - [ ] No commented-out code, no `TODO` or `pass` placeholders
 - [ ] No `.ha-*` CSS class selectors in E2E tests
 - [ ] Type hints on all new functions and methods
+- [ ] No `.meta` `status:` edits in the diff
 
 ### C3. Commit and open PR
 
-Rebase onto the latest `develop` before committing. This project uses rebase-merge: merged PRs
-rewrite hashes on `develop`, so the branch must be current to produce a clean diff.
+Rebase onto the latest base before pushing. This project uses rebase-merge: merged PRs rewrite
+hashes on the base branch, so the branch must be current to produce a clean diff.
 
 ```bash
-git fetch origin develop
-git rebase origin/develop
+git fetch origin "$BASE"
+git rebase "origin/$BASE"
 
 git -c user.name="Claude Code" -c user.email="noreply+claude-code@anthropic.com" \
-  commit -m "feat: <description> (#$ARGUMENTS)"
+  commit -m "feat: <description> (#$ISSUE)"
 
-git push origin HEAD
+git push --force-with-lease origin HEAD
 ```
 
-**If a draft PR already exists** (from a prior blocker stop):
+Write the PR body to a file. The `Story:` line and the `## Assumptions` section are required: the
+tick matches the PR to its story by the first, the reviewer and the owner read the second.
+
+```markdown
+Story: <STORY_ID>
+Issue: #<ISSUE>
+
+## Summary
+<what changed and why, 2–5 lines>
+
+## Assumptions
+<one bullet per decision taken at ladder step 4: the question, the option chosen, why it is the
+most reversible one. Write "None." when there were none.>
+
+## Test plan
+- `poe test:cov-diff`: <result>
+- <manual test scenarios for user-facing changes>
+```
+
+**If a draft PR already exists** (from a hard stop that has since been answered):
 ```bash
+GH_TOKEN="$CLAUDE_GH_TOKEN" gh pr edit --body-file <body-file>
 GH_TOKEN="$CLAUDE_GH_TOKEN" gh pr ready
 ```
 
 **If no PR exists yet:**
 ```bash
-GH_TOKEN="$CLAUDE_GH_TOKEN" gh pr create --fill
+GH_TOKEN="$CLAUDE_GH_TOKEN" gh pr create --base "$BASE" \
+  --title "<type(scope): description> (#$ISSUE)" --body-file <body-file>
 ```
 
-**If `CLAUDE_GH_TOKEN` is not set: STOP and tell the user** — do not create the PR under their identity.
+**If `CLAUDE_GH_TOKEN` is not set:** do not create the PR under the user's identity. Leave the
+branch pushed, print `STOPPED: CLAUDE_GH_TOKEN is not set`, and end the run.
 
 ### C4. Write implementation memory
 
@@ -280,7 +353,7 @@ patterns that future implementations should reuse:
 
 ```markdown
 ---
-name: issue-$ARGUMENTS-learnings
+name: issue-<ISSUE>-learnings
 description: <one-line summary of the key pattern or decision made>
 type: project
 ---
@@ -294,151 +367,13 @@ type: project
 
 Add the entry to `MEMORY.md`.
 
----
+### C5. Hand over
 
-## Phase D — PR Review Monitor
+Print the PR number, the base branch and the list of assumptions, then end the run.
 
-Register a cron job that watches the PR every 10 minutes and drives it through its full lifecycle:
-CI failures → review changes → approved → merged → close issue. All states are handled autonomously.
+From here the autopilot tick owns the PR: the `review` job sets `ai-approved` or
+`ai-changes-requested`, the `fix-pr` job repairs failing checks and review findings, and the tick
+rebase-merges the PR into `$BASE` when everything is green. Do not register a monitor, do not
+merge, do not close the issue, and do not edit the story's status.
 
-### D1. Capture PR number and branch
-
-```bash
-PR_NUMBER=$(GH_TOKEN="$CLAUDE_GH_TOKEN" gh pr view --json number -q .number)
-BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
-echo "Monitoring PR #$PR_NUMBER on branch $BRANCH_NAME for issue #$ARGUMENTS"
-```
-
-### D2. Check for existing monitor (resume guard)
-
-Use `CronList` to see if a monitor for this issue is already registered. If a cron whose name
-matches `pr-monitor-$ARGUMENTS` already exists, skip D3 — it is already running.
-
-### D3. Register the monitoring cron
-
-Use `CronCreate` with:
-- **Name:** `pr-monitor-$ARGUMENTS`
-- **Schedule:** `*/10 * * * *`
-- **Prompt** (with `$ARGUMENTS` and `$PR_NUMBER` substituted at registration time):
-
-```
-You are the PR lifecycle monitor for issue #$ARGUMENTS in yevheniidehtiar/hyper-admin.
-Run every step in order. Do not skip steps.
-
-## Step 1 — Fetch full PR state
-
-Run both commands:
-  gh pr view $PR_NUMBER --json number,state,reviewDecision,mergedAt,headRefName \
-    --repo yevheniidehtiar/hyper-admin
-  gh pr checks $PR_NUMBER --repo yevheniidehtiar/hyper-admin
-
-Collect:
-  - `state`          (OPEN / MERGED / CLOSED)
-  - `reviewDecision` (null / REVIEW_REQUIRED / APPROVED / CHANGES_REQUESTED)
-  - `failingChecks`  — list of check names where status is FAIL or ERROR
-
-## Step 2 — Merged → close issue and stop
-
-If `state == "MERGED"`:
-  1. Close the issue:
-       gh issue close $ARGUMENTS --reason completed \
-         --comment "Closed: merged via PR #$PR_NUMBER." \
-         --repo yevheniidehtiar/hyper-admin
-  2. Delete this cron using CronDelete (name: pr-monitor-$ARGUMENTS).
-  3. Print: "PR #$PR_NUMBER merged. Issue #$ARGUMENTS closed. Monitor stopped."
-  HALT.
-
-## Step 3 — Failing CI checks → diagnose and fix
-
-If `failingChecks` is non-empty:
-  1. For each failing check, fetch the log:
-       gh run list --branch $BRANCH_NAME --repo yevheniidehtiar/hyper-admin \
-         --json databaseId,name,conclusion --limit 5
-       gh run view <run-id> --log-failed --repo yevheniidehtiar/hyper-admin
-  2. Check out the branch and rebase onto latest develop:
-       git fetch origin
-       git checkout $BRANCH_NAME
-       git rebase origin/develop
-     Rebase is required because this project uses rebase-merge — merged PRs rewrite hashes
-     on develop, and a stale branch produces a misleading diff and may fail CI on tree conflicts.
-  3. Read the error output carefully. Diagnose root cause (lint error, type error,
-     failing test, import error, etc.) and apply the minimal fix using Edit/Write.
-  4. Run the same check locally to confirm the fix:
-       just lint   (if lint check failed)
-       just test   (if test check failed)
-     Do not proceed until the local check passes.
-  5. Commit and push (force-with-lease because rebase rewrites history):
-       git -c user.name="Claude Code" -c user.email="noreply+claude-code@anthropic.com" \
-         commit -m "fix(ci): fix failing checks (#$ARGUMENTS)"
-       git push --force-with-lease origin HEAD
-  6. Comment on the PR:
-       gh pr comment $PR_NUMBER \
-         --body "CI fix pushed: $(git rev-parse --short HEAD) — re-running checks." \
-         --repo yevheniidehtiar/hyper-admin
-  7. Print: "CI fixes pushed. Continuing to monitor."
-  Continue (do NOT stop the cron — wait for checks to go green).
-
-## Step 4 — Changes requested → apply review feedback
-
-If `reviewDecision == "CHANGES_REQUESTED"` (and no failing checks from Step 3):
-  1. Fetch all review comments:
-       gh api repos/yevheniidehtiar/hyper-admin/pulls/$PR_NUMBER/reviews
-       gh api repos/yevheniidehtiar/hyper-admin/pulls/$PR_NUMBER/comments
-  2. Check out the branch and rebase onto latest develop:
-       git fetch origin
-       git checkout $BRANCH_NAME
-       git rebase origin/develop
-     Rebase is required because this project uses rebase-merge — merged PRs rewrite hashes
-     on develop, and a stale branch produces a misleading diff.
-  3. Read each review comment and apply the requested change using Edit/Write.
-  4. Run quality gates locally:
-       just lint
-       just test
-     Fix any failures before committing.
-  5. Commit and push (force-with-lease because rebase rewrites history):
-       git -c user.name="Claude Code" -c user.email="noreply+claude-code@anthropic.com" \
-         commit -m "fix(review): address review feedback (#$ARGUMENTS)"
-       git push --force-with-lease origin HEAD
-  6. Re-request review from the reviewer(s) who left change requests:
-       gh pr edit $PR_NUMBER --add-reviewer <reviewer-login> \
-         --repo yevheniidehtiar/hyper-admin
-  7. Comment on the issue:
-       gh issue comment $ARGUMENTS \
-         --body "Review feedback addressed in $(git rev-parse --short HEAD). Re-requested review." \
-         --repo yevheniidehtiar/hyper-admin
-  8. Print: "Review changes applied. Re-requested review. Continuing to monitor."
-  Continue (do NOT stop the cron).
-
-## Step 5 — Approved and checks green → enable auto-merge
-
-If `reviewDecision == "APPROVED"` and `failingChecks` is empty and `state == "OPEN"`:
-  1. Enable squash auto-merge:
-       GH_TOKEN="$CLAUDE_GH_TOKEN" gh pr merge $PR_NUMBER --auto --squash \
-         --repo yevheniidehtiar/hyper-admin
-  2. Comment on the PR:
-       gh pr comment $PR_NUMBER \
-         --body "Auto-merge enabled — all checks green and review approved." \
-         --repo yevheniidehtiar/hyper-admin
-  3. Print: "PR #$PR_NUMBER approved and checks green. Auto-merge enabled."
-  Continue (do NOT stop the cron — next cycle detects the merge).
-
-## Step 6 — Waiting
-
-If `state == "OPEN"` and no action was taken in Steps 3–5:
-  Print: "PR #$PR_NUMBER is open — checks: <summary>, review: <reviewDecision>. Next check in 10 min."
-  HALT (cron fires again automatically).
-```
-
-### D4. Confirm registration
-
-After `CronCreate` succeeds, print:
-```
-Monitor registered: pr-monitor-$ARGUMENTS (every 10 min)
-  PR: #$PR_NUMBER
-  Issue: #$ARGUMENTS
-  Branch: $BRANCH_NAME
-  Will fix failing CI checks, address review changes, enable auto-merge on approval,
-  close issue on merge, and stop itself automatically.
-```
-
-**DONE.** The workflow is now fully autonomous until the issue is closed.
+For an interactive debugging run without launchd, `/autopilot-tick` runs one tick by hand.

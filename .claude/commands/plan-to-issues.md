@@ -119,7 +119,7 @@ updated_at: <ISO-8601>
 - [ ] criterion 1
 - [ ] criterion 2
 
-## Files Likely Affected
+## Files to Change
 - `path/to/file.py`
 
 ## Dependencies
@@ -139,22 +139,18 @@ Use a simple nanoid-style ID for each entity. Generate via:
 cat /dev/urandom | LC_ALL=C tr -dc 'a-zA-Z0-9_' | head -c 12
 ```
 
-### 6. Sync to GitHub
+### 6. Validate and open the planning PR
 
-After all `.meta/` files are created, push to GitHub to create the corresponding issues:
+After all `.meta/` files are created, validate the tree:
 
 ```bash
-# Validate the tree first
-bun "$GITPM_CLI" validate --meta-dir .meta
-
-# Push to create GitHub issues from .meta/ stories
-bun "$GITPM_CLI" push --meta-dir .meta --token "$GITHUB_TOKEN"
-
-# Pull back to get the assigned issue numbers
-bun "$GITPM_CLI" pull --meta-dir .meta --token "$GITHUB_TOKEN"
+./scripts/gitpm.sh validate
 ```
 
-After the pull, each story file will have its `github.issue_number` populated.
+Commit the new files on a branch from `origin/develop` and open a PR to `develop` (a planning PR
+only adds `.meta` files, so it does not conflict with feature work). Never run `gitpm push` or
+`gitpm sync` locally: after the PR merges, the GitPM Sync workflow creates the GitHub issues and
+records each `github.issue_number`.
 
 ### 7. Output summary
 
@@ -167,4 +163,4 @@ Print a markdown table:
 | story-slug-2 | test(auth): add login tests | S | test | story-slug |
 ```
 
-End with: "Created N stories in .meta/. Epic: $EPIC_SLUG. Synced to GitHub."
+End with: "Created N stories in .meta/. Epic: $EPIC_SLUG. Issues are created by GitPM Sync after the planning PR merges."

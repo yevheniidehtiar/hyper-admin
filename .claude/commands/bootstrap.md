@@ -16,7 +16,6 @@ Run these checks and report what you find:
 uname -s          # OS: Linux / Darwin / ...
 python3 --version # Python available?
 uv --version      # uv available?
-just --version    # just available?
 git --version     # git available?
 ```
 
@@ -39,28 +38,18 @@ source $HOME/.local/bin/env 2>/dev/null || export PATH="$HOME/.local/bin:$PATH"
 
 Verify: `uv --version` must print a version string.
 
-### just (task runner — required to run project recipes)
+### poe (task runner)
+
+Nothing to install: `poethepoet` is a dev dependency and comes with `uv sync --all-extras` in
+Phase 3. Run tasks as `uv run poe <task>`.
+
+### Python 3.11+ (uv manages its own Python, but verify the minimum)
 
 ```bash
-# Linux / macOS via cargo (if Rust is available)
-cargo install just
-
-# macOS via Homebrew
-brew install just
-
-# Linux binary (no Rust needed)
-curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to /usr/local/bin
+uv python install 3.11   # installs a managed Python if none found
 ```
 
-Verify: `just --version` must print a version string.
-
-### Python 3.10+ (uv manages its own Python, but verify the minimum)
-
-```bash
-uv python install 3.10   # installs a managed Python if none found
-```
-
-Verify: `uv run python --version` reports 3.10 or higher.
+Verify: `uv run python --version` reports 3.11 or higher.
 
 ### git (should be pre-installed; install if missing)
 
@@ -84,7 +73,7 @@ This installs all runtime + dev + extras into `.venv/`. Expected output: `Instal
 
 If this fails:
 - Check that `pyproject.toml` exists in the current directory.
-- Check Python version compatibility: HyperAdmin requires Python >=3.10.
+- Check Python version compatibility: HyperAdmin requires Python >=3.11.
 
 ---
 
@@ -106,7 +95,7 @@ uv run pre-commit install
 uv run playwright install chromium --with-deps
 ```
 
-This downloads the Chromium binary used by `just test-e2e`. On a headless server,
+This downloads the Chromium binary used by `poe test:e2e`. On a headless server,
 `--with-deps` installs the system-level libraries Chromium needs.
 
 Verify: `uv run playwright --version` prints a version string.
@@ -144,7 +133,7 @@ export ANTHROPIC_API_KEY="sk-ant-..."
 Run the following in order and report pass/fail for each:
 
 ```bash
-just --list                          # task runner works
+uv run poe --help                    # task runner works, lists all tasks
 uv run python -c "import hyperadmin; print('import OK')"   # package importable
 uv run ruff check src --quiet        # linter works
 uv run mypy src --quiet              # type checker works (warnings OK, errors not)
@@ -156,10 +145,10 @@ If all pass, print:
 ```
 ✓ Environment is fully operational.
   - uv: <version>
-  - just: <version>
+  - poe: <version>
   - Python: <version>
   - Playwright: <version>
-  Run `just --list` to see all available tasks.
+  Run `uv run poe --help` to see all available tasks.
 ```
 
 If any step fails, show the error output and suggest the fix before stopping.

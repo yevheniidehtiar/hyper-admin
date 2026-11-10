@@ -1,7 +1,7 @@
 ## Conflict Avoidance
 
 Goal: parallel PRs merge without conflicts, or very rarely. Merges are rebase-only, so every conflict costs a
-manual rebase. Apply these rules when planning stories and when writing code.
+rebase. Apply these rules when planning stories and when writing code.
 
 ### Additive by default
 
@@ -34,23 +34,36 @@ If your story needs a hotspot that another in-flight story owns, add a `Blocked 
 
 ### `.meta` status
 
-- Feature PRs do **not** edit a story's `status:`. Until the merge-event automation lands, only the merge-sync PR does.
+- Feature PRs do **not** edit a story's or an epic's `status:`.
+- `status:` changes happen in exactly two commits per epic, both written by the autopilot on the epic branch:
+  `chore(meta): open epic` (epic `in_progress`, `locked_by: autopilot`, `branch: epic/<slug>`) and
+  `chore(meta): close epic` (epic, its stories and the `review(spec)` story `done`, lock fields removed) right
+  before the epic PR is marked ready. No per-story status commits, no status-sync PRs to `develop`.
+- Mid-epic progress is shown on GitHub, not in `.meta`: labels `ap:in-progress`, `ap:in-review`, `ap:done` on
+  the story issue.
 - Feature PRs may add new `.meta` files (new stories, epics); that is additive and does not conflict.
 
 ### Branch hygiene
 
-- Branch from a fresh `origin/develop` (`git fetch origin develop` first).
+- Branch from a fresh base (`git fetch origin <base>` first): `origin/epic/<slug>` for a story of an epic,
+  `origin/develop` for hotfix and standalone work.
 - Keep PRs small and merge them the same day where possible. Long-lived branches collect conflicts.
-- `git pull --rebase origin develop` before every push.
+- `git pull --rebase origin <base>` before every push.
 - Force-push with `--force-with-lease` only.
 - No pre-emptive rebases of open PRs (`gh pr update-branch`): `develop` does not require up-to-date branches, the
   rebase merge rebases at merge time anyway, and a push restarts CI and dismisses approvals. After each `develop`
-  merge, find the open PRs whose `mergeable` turned `CONFLICTING`; only their owners rebase them. Revisit this if the
-  ruleset turns on strict status checks.
+  merge, the autopilot tick finds the open PRs whose `mergeable` turned `CONFLICTING`; only the autopilot rebases
+  them (`fix-pr` job). Revisit this if the ruleset turns on strict status checks.
+- **Epic-branch exception.** A story PR must be rebased on the tip of `epic/<slug>` before the tick merges it, so
+  the tick rebases story PRs as part of merging. The epic branch itself is rebased on `develop` only at creation,
+  when `develop` changes a hotspot file the epic also touches, and right before the epic PR is marked ready, and
+  only when no story PR is open against it (or the same job rebases every open story branch too). Once the epic
+  PR is marked ready the branch is frozen: any push dismisses the owner's approval.
 
 ### Stacking
 
 - Do not stack PRs under rebase-only merges: rebasing the base rewrites its commits and the child PR conflicts.
+  Story PRs on an epic branch are not a stack: each one branches from the epic tip and merges into it.
 - If stacking is unavoidable, run `git rebase --onto origin/develop <old-base-tip>` on the child right after the base
   merges, then force-push with lease.
 

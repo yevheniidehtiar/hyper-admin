@@ -40,7 +40,8 @@ Before creating any GitHub issue, verify:
 
 1. **BDD scenarios written** — issue body has a `## Scenarios` section with ≥1 Given/When/Then
 2. **SDD created** (if required) — `docs/specs/{slug}.md` exists and links from the epic body
-3. **Spec review sub-task** — if SDD is required, first sub-task is `review(spec): approve SDD`
+3. **Spec review sub-task** — if SDD is required, first sub-task is `review(spec): approve SDD` (approved by the
+   architect agent, see `.claude/rules/sdd-conventions.md`)
 4. **Test sub-task before impl sub-task** — per TDD mandate
 5. **Acceptance criteria derived from scenarios** — each scenario → one checkbox
 
