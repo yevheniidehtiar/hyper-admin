@@ -1,6 +1,6 @@
 {
   "repo": "yevheniidehtiar/hyper-admin",
-  "last_sync": "2026-11-08T18:45:24.679Z",
+  "last_sync": "2026-11-10T18:28:24.457Z",
   "entities": {
     "dqmi_70iAUbv": {
       "local_hash": "sha256:0c241e5668b04857314c6bf866015a7d5715e683844b27f32c24f0fe99ce1743",
@@ -2837,15 +2837,17 @@
     },
     "st-conflict-04": {
       "github_issue_number": 828,
-      "local_hash": "sha256:1d5f9202f33962784bd245b155970ac146f7a6eb6174052ccf8fe2eeea50acf7",
-      "remote_hash": "sha256:1d5f9202f33962784bd245b155970ac146f7a6eb6174052ccf8fe2eeea50acf7",
-      "synced_at": "2026-11-01T20:45:02.140Z"
+      "local_hash": "sha256:8154cac4aab8ee946daee0e6a8590d6e0f9e787b7b46aed8385d048f855183fb",
+      "remote_hash": "sha256:8154cac4aab8ee946daee0e6a8590d6e0f9e787b7b46aed8385d048f855183fb",
+      "synced_at": "2026-11-10T18:28:22.915Z",
+      "closed_on_remote": true
     },
     "st-conflict-03": {
       "github_issue_number": 829,
-      "local_hash": "sha256:f97f4936213257c454199162b4d5da386eead53cb823da25c3955d6a018935eb",
-      "remote_hash": "sha256:f97f4936213257c454199162b4d5da386eead53cb823da25c3955d6a018935eb",
-      "synced_at": "2026-11-01T20:45:02.592Z"
+      "local_hash": "sha256:feb0e21f612f54345fce94884957070f95d1bf6aea696cc4ee13e29893a82db5",
+      "remote_hash": "sha256:feb0e21f612f54345fce94884957070f95d1bf6aea696cc4ee13e29893a82db5",
+      "synced_at": "2026-11-10T18:28:24.445Z",
+      "closed_on_remote": true
     },
     "st-conflict-05": {
       "github_issue_number": 830,
@@ -3996,6 +3998,36 @@
       "local_hash": "sha256:3cd355bf31665d2c33cd97ada51981b064a4740f59d6e3fbd5183e7e7f493a44",
       "remote_hash": "sha256:3cd355bf31665d2c33cd97ada51981b064a4740f59d6e3fbd5183e7e7f493a44",
       "synced_at": "2026-11-08T11:46:35.094Z"
+    },
+    "ep-autopilot-01": {
+      "github_issue_number": 1069,
+      "local_hash": "sha256:a19c2a7a8d5167ef5b2ad36a12543b8a3ae657b77900b2e3c5e9f283b8290cba",
+      "remote_hash": "sha256:a19c2a7a8d5167ef5b2ad36a12543b8a3ae657b77900b2e3c5e9f283b8290cba",
+      "synced_at": "2026-11-10T18:28:19.581Z"
+    },
+    "st-autopilot-01": {
+      "github_issue_number": 1070,
+      "local_hash": "sha256:323da967c8ed745b20e8f8006e2d316abf1f695f8cb67c570ba2e36290e6ba4e",
+      "remote_hash": "sha256:323da967c8ed745b20e8f8006e2d316abf1f695f8cb67c570ba2e36290e6ba4e",
+      "synced_at": "2026-11-10T18:28:20.020Z"
+    },
+    "st-autopilot-04": {
+      "github_issue_number": 1071,
+      "local_hash": "sha256:144283db1327de3980edbf043ba290bf8484f38a40fa59041341a99876f3bacd",
+      "remote_hash": "sha256:144283db1327de3980edbf043ba290bf8484f38a40fa59041341a99876f3bacd",
+      "synced_at": "2026-11-10T18:28:20.446Z"
+    },
+    "st-autopilot-02": {
+      "github_issue_number": 1072,
+      "local_hash": "sha256:bc35696de20ba09bbdfa65a073f4c398edb9fa5a74c9b465dfad6a33cfef98d7",
+      "remote_hash": "sha256:bc35696de20ba09bbdfa65a073f4c398edb9fa5a74c9b465dfad6a33cfef98d7",
+      "synced_at": "2026-11-10T18:28:20.881Z"
+    },
+    "st-autopilot-03": {
+      "github_issue_number": 1073,
+      "local_hash": "sha256:1261cac452d0d302712dd7b29f10dc9f8a3358a57cd2f84d2cf319d0e1449376",
+      "remote_hash": "sha256:1261cac452d0d302712dd7b29f10dc9f8a3358a57cd2f84d2cf319d0e1449376",
+      "synced_at": "2026-11-10T18:28:21.289Z"
     }
   }
 }
