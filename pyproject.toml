@@ -409,6 +409,32 @@ type = "simple"
   help = "Run OSS triage audit (dry-run by default). Pass 'live' for mutations."
   cmd = "python scripts/triage_audit.py"
 
+  # Local autopilot supervisor (ops/autopilot/README.md). A tick is also what launchd runs.
+  [tool.poe.tasks."autopilot:tick"]
+  help = "Run one autopilot tick now (AUTOPILOT_DRY_RUN=1 prints the plan only)"
+  cmd = "ops/autopilot/autopilot.sh tick"
+
+  [tool.poe.tasks."autopilot:dry-run"]
+  help = "Print what an autopilot tick would do; changes nothing"
+  cmd = "ops/autopilot/autopilot.sh tick"
+  env = { AUTOPILOT_DRY_RUN = "1" }
+
+  [tool.poe.tasks."autopilot:status"]
+  help = "Show autopilot state (cooldown, running jobs) and the launchd agent"
+  cmd = "ops/autopilot/autopilot.sh status"
+
+  [tool.poe.tasks."autopilot:logs"]
+  help = "Show the tail of the autopilot tick log"
+  cmd = "ops/autopilot/autopilot.sh logs"
+
+  [tool.poe.tasks."autopilot:install"]
+  help = "Render the launchd plist for the autopilot and load it (tick every 15 minutes)"
+  cmd = "ops/autopilot/autopilot.sh install"
+
+  [tool.poe.tasks."autopilot:uninstall"]
+  help = "Unload the autopilot launchd agent and remove its plist"
+  cmd = "ops/autopilot/autopilot.sh uninstall"
+
   [tool.poe.tasks."i18n:extract"]
   help = "Extract translatable strings from src/hyperadmin to messages.pot"
   cmd = "pybabel extract -F babel.cfg -k gettext_noop -k ngettext_noop:1,2 -k gettext_lazy -o messages.pot ."

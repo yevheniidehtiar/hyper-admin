@@ -1,0 +1,16 @@
+{
+  "type": "object",
+  "properties": {
+    "verdict": {
+      "type": "string",
+      "enum": ["approved", "escalated"]
+    },
+    "summary": {
+      "type": "string"
+    },
+    "question": {
+      "type": "string"
+    }
+  },
+  "required": ["verdict", "summary"]
+}
