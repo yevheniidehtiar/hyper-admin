@@ -2,7 +2,7 @@
 type: story
 id: st-conflict-03
 title: "ci(meta): set .meta story status from PR merge events"
-status: todo
+status: cancelled
 priority: high
 assignee: null
 labels:
@@ -10,12 +10,20 @@ labels:
   - planned
   - area:ci
   - gitpm
+  - superseded
 estimate: null
 epic_ref:
   id: ep-conflict-avoidance-01
 created_at: 2026-10-18T00:00:00Z
-updated_at: 2026-10-18T00:00:00Z
+updated_at: 2026-11-10T00:00:00Z
 ---
+
+## Superseded (2026-11-10)
+
+Superseded by `epic-autopilot`. An Action cannot commit a status change to `develop` under the PR-only ruleset. Story
+status now changes in the open-epic and close-epic commits on the `epic/<slug>` branch, and mid-epic progress is shown
+with the `ap:in-progress`, `ap:in-review` and `ap:done` labels. The `Story:` line in the PR template moved to
+`st-autopilot-01`. Do not start this story.
 
 ## Summary
 
