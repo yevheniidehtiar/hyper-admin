@@ -2,7 +2,7 @@
 type: story
 id: st-autopilot-04
 title: "docs(agentic-workflow): autopilot"
-status: todo
+status: in_progress
 priority: medium
 assignee: null
 labels:
@@ -24,6 +24,10 @@ per epic, hotfix and Dependabot PRs to `develop`, hard-stop questions in the dai
 and stop the launchd agent.
 
 Contributor docs get the same sweep: `main` to `develop`, `just` to `poe`, epic branches, and a merge-hygiene section.
+In `docs/contributing.md` this story owns the `## Merge hygiene` heading and writes two subsections under it,
+`### Story status` (open-epic and close-epic commits, `ap:*` labels) and `### Conflicting PRs` (the autopilot rebases
+them). Those were planned as stubs for st-conflict-03/04, which are now cancelled. st-conflict-01 and st-conflict-02
+afterwards add only `### Dependencies` and `### Releases` under the existing heading.
 `justfile release` points at `master`. `scripts/setup-github.sh` creates the new labels (`ai-approved`,
 `ai-changes-requested`, `ap:in-progress`, `ap:in-review`, `ap:done`, `superseded`) and drops the merge-queue labels.
 
@@ -32,7 +36,9 @@ Contributor docs get the same sweep: `main` to `develop`, `just` to `poe`, epic 
 - `docs/agentic-workflow/index.md`, `orchestration.md`, `dev-agents.md`, `onboarding-agents.md`,
   `onboarding-humans.md`, `roadmap-planning-agent.md`
 - `docs/agentic-workflow/system-diagram.svg`
-- `CONTRIBUTING.md`, `docs/contributing.md` — `main` to `develop`, `just` to `poe`, epic branches, merge hygiene
+- `CONTRIBUTING.md` — `main` to `develop`, `just` to `poe`, epic branches
+- `docs/contributing.md` — the same sweep, plus `## Merge hygiene` with `### Story status` and
+  `### Conflicting PRs` (no `### Dependencies` or `### Releases`; those belong to st-conflict-01/02)
 - `justfile` — `release` recipe only: `main` to `master` (own hunk; st-autopilot-02 appends aliases elsewhere)
 - `scripts/setup-github.sh` — new labels, merge-queue labels removed
 
@@ -63,6 +69,7 @@ Scenario: Label setup matches the label machine
 - [ ] The owner can operate the autopilot from the docs
 - [ ] Label setup matches the label machine
 - [ ] The docs no longer describe the conductor, the delivery manager or the `.meta` lock PR
+- [ ] `docs/contributing.md` has one `## Merge hygiene` heading with `### Story status` and `### Conflicting PRs`
 - [ ] `poe docs:build` passes
 
 ## Blocked by

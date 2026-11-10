@@ -2,7 +2,7 @@
 type: story
 id: st-autopilot-03
 title: "refactor(agents): epic-branch flow and self-unblocking"
-status: todo
+status: in_progress
 priority: high
 assignee: null
 labels:
@@ -96,8 +96,12 @@ Scenario: Architect approves a Draft SDD
 - [ ] Story PR targets the epic branch
 - [ ] Reviewer verdict is a label
 - [ ] Architect approves a Draft SDD
-- [ ] No `bun "$GITPM_CLI"`, `--auto --squash`, `just` command or merge-queue label is left under `.claude/`
-- [ ] No file references the deleted agents or `/run-autonomous-team`
+- [ ] No `bun "$GITPM_CLI"`, `--auto --squash` or merge-queue label is left in the files listed above, and `just`
+      is replaced by `poe` in those files (the `just cc-*` recipes documented under `.claude/container/` stay)
+- [ ] No file under `.claude/agents`, `.claude/commands`, `.claude/skills`, `.claude/rules`,
+      `.claude/project-config.md`, `CLAUDE.md` or `AGENTS.md` references the deleted agents or
+      `/run-autonomous-team` (`docs/agentic-workflow/**` and `scripts/setup-github.sh` are st-autopilot-04;
+      `.claude/experiments/**` and historical `.meta` stories stay as they are)
 - [ ] `poe lint` passes
 
 ## Blocked by
