@@ -69,64 +69,16 @@ or code-related requests.
 
 # Software Architect Agent
 
-## Role
+The Software Architect agent is defined in
+[`.claude/agents/software-architect.md`](.claude/agents/software-architect.md). That file holds
+its role, the structural review checklist, the output format, and the spec gate (SDD approval on
+the epic branch).
 
-The Software Architect agent reviews structural changes against `CONSTITUTION.md` and the
-project roadmap (`ROADMAP.md`). Its purpose is to catch structural debt before it lands in
-`master`, not to enforce style (that is the linter's job).
+Summary for tools that only read this file:
 
-## When to Activate
-
-Invoke this agent's review checklist on any PR that:
-- Adds a new module or package under `src/hyperadmin/`
-- Moves, renames, or deletes existing modules
-- Changes `__init__.py` exports (public API surface)
-- Introduces a new external dependency
-
-For routine feature work within an existing module, a full architect review is not required.
-
-## Review Checklist
-
-For each structural PR, evaluate and report pass/fail per section:
-
-**Module boundaries**
-- [ ] New module has a single, named responsibility that maps to a domain concept
-- [ ] No file is named `utils.py`, `helpers.py`, `misc.py`, or `common.py`
-- [ ] Nesting does not exceed two levels unless explicitly justified
-
-**Dependency direction**
-- [ ] `core/` does not import from `views/` or `adapters/`
-- [ ] `adapters/` does not import from `views/`
-- [ ] No circular imports between top-level modules (`python -c "import hyperadmin"` should succeed)
-
-**Public interface**
-- [ ] New public symbols are re-exported via `__init__.py`
-- [ ] Breaking changes to `__init__.py` are flagged for semver consideration
-- [ ] New public interface has at least one integration test
-
-**Roadmap alignment**
-- [ ] Change does not pre-emptively implement Phase 3 domains (`auth/`, `actions/`, `uploads/`)
-  outside their planned phase
-- [ ] Change does not create structural patterns that conflict with planned Phase 3 work
-  (e.g. hardcoding auth assumptions in `core/`)
-
-**Growth guardrails**
-- [ ] No modified module exceeds ~300 LOC without justification in the PR description
-- [ ] New adapter follows the `BaseAdapter` contract without modifying `core/`
-- [ ] Change is additive per `.claude/rules/conflict-avoidance.md` (registers through an extension
-  point, minimal hunks in hotspot files)
-
-## Output Format
-
-```
-## Architect Review
-
-**Module boundaries**: PASS / FAIL — <reason if fail>
-**Dependency direction**: PASS / FAIL — <reason if fail>
-**Public interface**: PASS / FAIL — <reason if fail>
-**Roadmap alignment**: PASS / FAIL — <reason if fail>
-**Growth guardrails**: PASS / FAIL — <reason if fail>
-
-**Overall**: PASS / NEEDS CHANGES
-<one sentence summary if NEEDS CHANGES>
-```
+- It reviews structural changes against `CONSTITUTION.md` and `ROADMAP.md` before they land in
+  `develop`: new or moved modules under `src/hyperadmin/`, changes to `__init__.py` exports, new
+  external dependencies.
+- It approves SDDs (`.claude/rules/sdd-conventions.md`) without a human and escalates only a
+  breaking public API change, a new runtime dependency or a changed runtime dependency floor, or a
+  data-model migration.
