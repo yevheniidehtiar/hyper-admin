@@ -2,7 +2,7 @@
 type: epic
 id: ep-autopilot-01
 title: "epic(autopilot): hands-off delivery with one owner approval per epic"
-status: todo
+status: in_progress
 priority: high
 owner: null
 labels:
@@ -65,6 +65,10 @@ Target design in short:
 This epic is delivered as five non-stacked PRs to `develop`. The fifth is the `chore(meta)` PR that adds this epic; it
 has no story of its own. The epic bootstraps the autopilot, so it does not run on an `epic/autopilot` branch itself.
 
+The epic and its four stories are `status: in_progress` from the start, because all four branches already exist. That
+keeps the project manager, the swarm and the tick from picking them up as ready `todo` work. The usual merge-sync
+`chore(meta)` PR sets them to `done`.
+
 st-autopilot-01 merges first: until `epic/**` is in `pull_request.branches`, story PRs against an epic branch get no
 CI at all. It is also the only story that touches `.github/**`, and it is pushed under the owner's git credential
 because the bot token lacks the `workflow` scope.
@@ -93,6 +97,10 @@ because the bot token lacks the `workflow` scope.
 (`main` to `master`). The hunks are apart, and 04 is blocked by 02 so that it rebases last. Hotspots: `.github/**`
 (owner 01) and `pyproject.toml` (owner 02, poe tasks only, no dependency or `uv.lock` change).
 
+Overlap with `epic-conflict-avoidance`: st-conflict-01 and st-conflict-02 (both `todo`) also edit
+`docs/contributing.md`. st-autopilot-04 creates `## Merge hygiene` there with `### Story status` and
+`### Conflicting PRs`; st-conflict-01/02 then add only `### Dependencies` and `### Releases` under it.
+
 ## Supersedes
 
 - `st-conflict-03` (ci(meta): set .meta story status from PR merge events): an Action cannot commit to `develop`
@@ -101,6 +109,11 @@ because the bot token lacks the `workflow` scope.
   rebases them itself.
 
 Both are `status: cancelled` with the `superseded` label (GitPM has no `superseded` status).
+
+Follow-up, outside this epic's files: `.meta/epics/epic-conflict-avoidance/epic.md` still lists both stories as
+ordinary rows, plans `meta-status.yml` and `conflict-check.yml` in its matrix and promises merge-event status sync,
+and st-conflict-01 still plans the `## Merge hygiene` heading with stubs for 03/04. Both need a small `chore(meta)`
+edit once the owner agrees.
 
 ## Out of scope
 
