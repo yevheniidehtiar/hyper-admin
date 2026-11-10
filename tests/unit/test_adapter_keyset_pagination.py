@@ -140,7 +140,6 @@ async def test_list_still_returns_items_and_total_tuple(adapter: SQLModelAdapter
     assert total == TOTAL_ROWS
 
 
-@pending
 def test_admin_options_pagination_mode_defaults_to_offset() -> None:
     """
     Scenario: pagination_mode defaults to offset
@@ -157,7 +156,6 @@ def test_admin_options_pagination_mode_defaults_to_offset() -> None:
     assert cursor.pagination_mode == "cursor"  # type: ignore[attr-defined]
 
 
-@pending
 def test_admin_options_rejects_unknown_pagination_mode() -> None:
     """
     Scenario: an unknown pagination_mode is rejected
@@ -170,7 +168,6 @@ def test_admin_options_rejects_unknown_pagination_mode() -> None:
         AdminOptions(pagination_mode="keyset")  # type: ignore[call-arg]
 
 
-@pending
 @pytest.mark.anyio
 async def test_offset_mode_list_paginated_uses_page_numbers(
     adapter: SQLModelAdapter, statements: list[str]
@@ -395,7 +392,6 @@ async def test_cursor_chain_on_non_unique_column_uses_pk_tiebreaker(
 # ---------------------------------------------------------------------------
 
 
-@pending
 @pytest.mark.anyio
 async def test_prev_cursor_returns_the_previous_page(cursor_adapter: SQLModelAdapter) -> None:
     """
@@ -455,7 +451,6 @@ async def test_cursor_mode_on_empty_table_returns_no_cursors(
     assert result.total is None
 
 
-@pending
 @pytest.mark.anyio
 async def test_first_page_has_no_prev_cursor(cursor_adapter: SQLModelAdapter) -> None:
     """
@@ -508,7 +503,6 @@ async def test_last_page_has_no_next_cursor(cursor_adapter: SQLModelAdapter) -> 
     assert last.has_prev is True
 
 
-@pending
 @pytest.mark.anyio
 async def test_exactly_one_full_page_has_no_next(cursor_adapter: SQLModelAdapter) -> None:
     """
@@ -536,7 +530,6 @@ async def test_exactly_one_full_page_has_no_next(cursor_adapter: SQLModelAdapter
 # ---------------------------------------------------------------------------
 
 
-@pending
 @pytest.mark.anyio
 async def test_cursor_pages_keep_queryset_filters(cursor_adapter: SQLModelAdapter) -> None:
     """
@@ -561,7 +554,6 @@ async def test_cursor_pages_keep_queryset_filters(cursor_adapter: SQLModelAdapte
 # ---------------------------------------------------------------------------
 
 
-@pending
 @pytest.mark.anyio
 @pytest.mark.parametrize(
     "cursor",
@@ -596,7 +588,6 @@ async def test_invalid_cursor_raises_invalid_cursor_error(
 # ---------------------------------------------------------------------------
 
 
-@pending
 @pytest.mark.anyio
 async def test_nullable_sort_with_nulls_falls_back_to_offset(
     cursor_adapter: SQLModelAdapter,
