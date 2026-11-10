@@ -8,7 +8,7 @@ what each real-app run showed, and the timings we measured.
 
 | Layer | Supported | How we verify it |
 |---|---|---|
-| Python | 3.11, 3.12, 3.13, 3.14 | CI runs all four on Ubuntu and 3.11 + 3.14 on macOS. The Polar and Mealie runs used 3.14 |
+| Python | 3.11, 3.12, 3.13, 3.14, 3.15 | CI runs all five on Ubuntu and 3.11, 3.14 + 3.15 on macOS. The Polar and Mealie runs used 3.14 |
 | FastAPI | 0.116 and later | Runtime dependency, CI |
 | Pydantic | v2 (2.10.1+; 2.12+ on Python 3.14) | Runtime dependency, CI lowest/highest resolution |
 | SQLModel | 0.0.19+ `table=True` models | CI, ERP and full demo apps, Langflow (SQLModel 0.0.48) |
