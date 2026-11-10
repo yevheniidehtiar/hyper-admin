@@ -149,8 +149,11 @@ def test_chart_respects_the_report_filter_context(page: Page, report_charts_base
     # When the page's bucket switch changes the period
     page.get_by_test_id("report-period").get_by_role("link", name="Quarter").click()
 
-    # Then the chart follows
+    # Then the chart follows (wait for the new page: the link is a full navigation, so the
+    # year page's frame is still attached right after the click)
+    expect(page.get_by_role("columnheader", name="Q1 2025")).to_be_visible()
     frame = _chart_titled(page, "Revenue trend")
+    expect(frame).to_be_visible()
     frame.get_by_text("Show as table").click()
     table = frame.get_by_test_id("chart-data-table-chart-revenue-trend").get_by_role("table")
     expect(table.get_by_role("rowheader")).to_have_text(["2025-Q1", "2025-Q2"])
