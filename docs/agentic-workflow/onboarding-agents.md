@@ -10,25 +10,28 @@ Structured reference for LLM agents operating in this repository. Read top-to-bo
 |----------|------|---------|
 | **Must** | `CLAUDE.md` | Project-wide instructions, hook-first rule, dev commands |
 | **Must** | `CONSTITUTION.md` | Architecture boundaries, module structure, violation definitions |
-| **Must** | `AGENTS.md` | Software Architect review checklist, hook-first planning rules |
-| **Must** | `.claude/project-config.md` | Runtime constants, GitPM (.meta/) reference, status state machine |
+| **Must** | `AGENTS.md` | Hook-first planning rules; points at the software-architect agent |
+| **Must** | `.claude/project-config.md` | Runtime constants, GitPM (.meta/) reference, branch-as-lock, status and label machines |
 | **Must** | `.meta/` | Git-native project state: stories, epics, milestones, roadmap |
-| **Reference** | `ROADMAP.md` | Current phase, reserved Phase 3 domains |
-| **Reference** | `docs/agentic-workflow/` | Full workflow spec |
+| **Reference** | `ops/autopilot/README.md` | How the local supervisor runs jobs |
+| **Reference** | `docs/agentic-workflow/` | Full workflow spec, start with `orchestration.md` |
 
 ---
 
 ## 2. Agents
 
-| Agent | Model | Tools | Role |
-|-------|-------|-------|------|
-| `conductor` | Opus | Bash, Read, Grep, Glob, Agent, EnterWorktree, ExitWorktree, Tasks, Write | Reads `.meta/` work queue, dispatches agents, owns merge queue |
-| `delivery-manager` | Haiku | Cron, Bash, Skill, Tasks, Worktree, Read, Edit, Write | PR monitoring, E2E tests, merge execution, updates `.meta/` on merge |
-| `project-manager` | Sonnet | Bash, Read, Grep, Glob, Write, Agent | Sprint cadence via `.meta/`, priority triage, health |
-| `hyper-admin-code-reviewer` | Sonnet | Bash, Read, Grep, Write | Architecture review, VERDICT output |
-| `oss-triage-auditor` | Sonnet | Bash, Read, Grep, Glob, Write | AI-slop detection, label enforcement |
+| Agent | Model | Role | Started by |
+|-------|-------|------|------------|
+| `software-architect` | Opus | Spec gate: reviews a Draft SDD, resolves open questions, approves it | `approve-sdd` job |
+| `hyper-admin-code-reviewer` | Sonnet | Architecture review; JSON verdict, sets `ai-approved` or `ai-changes-requested` | `review` job |
+| `project-manager` | Haiku | Daily owner digest template | `digest` job |
+| `oss-triage-auditor` | Sonnet | AI-slop detection, label enforcement | Ad hoc |
 
-**Dispatch chain:** conductor → implement-feature skill → code-reviewer agent → delivery-manager
+There is no conductor and no delivery-manager. Dispatch, merging, rebasing and
+cleanup are done by the supervisor script `ops/autopilot/autopilot.sh`, not by
+an agent.
+
+**Chain:** tick → `implement` (implement-feature skill) → `review` (code reviewer) → `fix-pr` if needed → tick merges into `epic/<slug>` → `integrate-epic` → owner approves the epic PR
 
 ---
 
@@ -36,30 +39,74 @@ Structured reference for LLM agents operating in this repository. Read top-to-bo
 
 | Skill | Path | Purpose | Invoked by |
 |-------|------|---------|------------|
-| `implement-feature` | `.claude/skills/implement-feature/SKILL.md` | Self-evaluating TDD loop with planning gate, blocker protocol, memory | conductor |
-| `fix-issue` | `.claude/skills/fix-issue/SKILL.md` | Lightweight TDD bug fix loop | conductor |
+| `implement-feature` | `.claude/skills/implement-feature/SKILL.md` | TDD loop with planning gate and decision ladder | `implement` job, or by hand |
+| `fix-issue` | `.claude/skills/fix-issue/SKILL.md` | Lightweight TDD bug fix loop | By hand, or for `size:S` stories |
+
+Both take a base-branch argument (`epic/<slug>` for stories in an epic,
+`develop` otherwise).
 
 **implement-feature phases:**
 
-- **A (Planning)**: Read issue → bottom-up plan → self-eval against 16+ checklist items → PASS → proceed; FAIL → post questionnaire, HALT
-- **B (Implementation)**: TDD per sub-task → blocker protocol (search memory → commit WIP as draft PR → HALT)
-- **C (Submission)**: `poe lint` + `poe test` → final checklist → commit + PR → write memory
+- **A (Planning)**: Read story → bottom-up plan → self-eval against the checklist → on a failed check, resolve it with the decision ladder and continue
+- **B (Implementation)**: TDD per sub-task → blockers go through the same ladder
+- **C (Submission)**: `poe lint` + `poe test:unit` → final checklist → commit + PR with `Story:` line and `## Assumptions` → write memory
+
+There is no monitoring phase. The tick watches the PR.
 
 ---
 
-## 4. Commands
+## 4. If you are an autopilot job
+
+You were started by `ops/autopilot/autopilot.sh` with `AUTOPILOT=1` set, in one
+of the pool worktrees `.claude/worktrees/ap-1..3`. Your prompt came from
+`ops/autopilot/prompts/<job>.md`.
+
+- Nobody is at the keyboard. Do not ask questions and do not wait.
+- Stay inside your worktree and your branch.
+- You have a tool allowlist. A denied call is a signal that the action is out of
+  scope, not something to work around.
+- Do the one job you were given, then exit. The next tick decides what follows.
+- Do not edit `.meta` status in a story PR. Only the open-epic and close-epic
+  commits change it.
+- Never run a GitPM push. Sync happens in CI.
+
+### Decision ladder
+
+When something is unclear:
+
+1. Project memory (`MEMORY.md`).
+2. The story, the SDD, `CONSTITUTION.md`, the existing code.
+3. A research subagent.
+4. Choose the most reversible option that satisfies the constitution. Write it
+   under `## Assumptions` in the PR body and in the SDD Decision Log. Continue.
+
+### Hard stops
+
+Label the issue `needs-human`, post the exact question, end the job:
+
+- Secrets or billing
+- Pushing to the public mirror
+- Deleting data
+- A PyPI release
+- Breaking public API (`__init__` exports, semver major)
+- Changing runtime dependency floors
+- Data-model migrations
+
+---
+
+## 5. Commands
 
 | Command | Path | Purpose |
 |---------|------|---------|
-| `/run-autonomous-team` | `.claude/commands/run-autonomous-team.md` | Invoke conductor for full orchestration cycle |
-| `/implement-feature` | `.claude/commands/implement-feature.md` | Redirects to implement-feature skill |
-| `/plan-to-issues` | `.claude/commands/plan-to-issues.md` | Create GitHub issues from implementation plan |
-| `/plan-to-issues-dry-run` | `.claude/commands/plan-to-issues-dry-run.md` | Preview issues without creating |
+| `/autopilot-tick` | `.claude/commands/autopilot-tick.md` | Run one tick interactively, for debugging |
+| `/implement-feature` | `.claude/skills/implement-feature/SKILL.md` | Implement one story by hand |
+| `/wt` | `.claude/commands/wt.md` | New isolated worktree; optional base branch |
+| `/plan-to-issues` | `.claude/commands/plan-to-issues.md` | Create `.meta/` stories from an implementation plan |
 | `/plan-roadmap` | `.claude/commands/plan-roadmap.md` | Decompose spec into milestones/epics/tasks |
 | `/bootstrap` | `.claude/commands/bootstrap.md` | Set up dev environment from scratch |
 | `/lint` | `.claude/commands/lint.md` | Run linter and auto-fix |
 | `/test` | `.claude/commands/test.md` | Run test suite with coverage |
-| `/release` | `.claude/commands/release.md` | Cut a new release |
+| `/release` | `.claude/commands/release.md` | Cut a new release (owner only) |
 | `/refactor` | `.claude/commands/refactor.md` | Structural refactoring |
 | `/optimize` | `.claude/commands/optimize.md` | Algorithmic optimization review |
 | `/scaffold` | `.claude/commands/scaffold.md` | Generate new module from patterns |
@@ -67,18 +114,21 @@ Structured reference for LLM agents operating in this repository. Read top-to-bo
 
 ---
 
-## 5. Rules
+## 6. Rules
 
 | Rule | Path | Enforced by |
 |------|------|-------------|
 | code-style | `.claude/rules/code-style.md` | code-reviewer, implement-feature skill, `poe lint` |
-| git-workflow | `.claude/rules/git-workflow.md` | code-reviewer, implement-feature skill, delivery-manager |
+| git-workflow | `.claude/rules/git-workflow.md` | code-reviewer, implement-feature skill, pre-commit |
 | planning-playbook | `.claude/rules/planning-playbook.md` | code-reviewer, implement-feature skill, plan-to-issues |
 | testing | `.claude/rules/testing.md` | code-reviewer, implement-feature skill, `poe test` |
+| conflict-avoidance | `.claude/rules/conflict-avoidance.md` | tick (overlap check), code-reviewer |
+| sdd-conventions | `.claude/rules/sdd-conventions.md` | software-architect |
+| bdd-conventions | `.claude/rules/bdd-conventions.md` | implement-feature skill, code-reviewer |
 
 ---
 
-## 6. Enforcement Matrix
+## 7. Enforcement Matrix
 
 | Rule | Planning Gate | Code Review | CI |
 |------|-------------|-------------|-----|
@@ -87,10 +137,11 @@ Structured reference for LLM agents operating in this repository. Read top-to-bo
 | `code-style.md` | Type hints, patterns | Style review | `poe lint` |
 | `testing.md` | E2E locator plan | Locator enforcement | `poe test` |
 | `git-workflow.md` | Commit format plan | Identity + format | pre-commit |
+| `sdd-conventions.md` | Spec gate (architect) | SDD matches the code | — |
 
 ---
 
-## 7. Hooks & Automation
+## 8. Hooks & Automation
 
 ### UserPromptSubmit — `fetch-rules.sh`
 
@@ -101,15 +152,18 @@ Runs before every prompt. Queries Rippletide for coding rules, injects as `[Codi
 | Trigger | Action |
 |---------|--------|
 | `Edit` or `Write` on `*.py` | `uv run ruff format <file>` |
-| `TaskUpdate` with `status=completed` | `scripts/redeploy-example.sh` |
+| `TaskUpdate` with `status=completed` | `scripts/redeploy-example.sh` (skipped when `AUTOPILOT=1`) |
 
-### Permission allowlist — `.claude/settings.local.json`
+### Permissions
 
-Pre-approved: `uv lock/run/pip`, `poe test:unit/lint`, `git add/push/checkout`, `gh pr/issue/run/label/api`, `docker compose`.
+Interactive sessions use the allowlist in `.claude/settings.local.json`.
+Autopilot jobs get their allowlist on the command line from the supervisor:
+`git`, `gh pr|api|run|issue`, `uv run`, `scripts/gitpm.sh` and the file tools.
+`gh release`, `gh repo` and pushes to the public mirror are denied.
 
 ---
 
-## 8. MCP Servers
+## 9. MCP Servers
 
 | Server | URL | Purpose |
 |--------|-----|---------|
@@ -119,15 +173,14 @@ Default model: `claude-sonnet-4-6`
 
 ---
 
-## 9. Agent Memory
+## 10. Memory and State
 
-| Agent | Directory |
-|-------|-----------|
-| `conductor` | `.claude/agent-memory/conductor/` |
-| `delivery-manager` | `.claude/agent-memory/delivery-manager/` |
-| `hyper-admin-code-reviewer` | `.claude/agent-memory/hyper-admin-code-reviewer/` |
+| What | Where |
+|------|-------|
+| Project memory | `~/.claude/projects/.../memory/MEMORY.md` |
+| Autopilot state (cooldown, running jobs, retry counters) | `~/.hyperadmin-autopilot/state.json` |
 
-Project-level memory: `~/.claude/projects/.../memory/MEMORY.md`
+Agents read and write project memory. Only the supervisor writes the state file.
 
 Memory format:
 ```markdown
@@ -144,23 +197,21 @@ Do not save: code patterns, git history, anything in CLAUDE.md.
 
 ---
 
-## 10. The 5-Agent Workflow
+## 11. The Workflow at a Glance
 
 ```
-Human → Plan (/plan-to-issues) → .meta/ stories → Conductor
-                                                      ↓
-                     Delivery Manager ← Code Reviewer ← Dev Agents (implement-feature)
-                          ↓
-                   Merge → .meta/ status: done
+Owner → Plan (/plan-to-issues) → .meta/ stories
+                                      ↓
+        tick: create epic/<slug> + draft epic PR
+                                      ↓
+        approve-sdd → implement → review → (fix-pr) → tick merges into epic/<slug>
+                                      ↓
+        integrate-epic → owner approves the epic PR → develop → GitPM Sync
 ```
 
-| Agent | Model | Role |
-|-------|-------|------|
-| Conductor | Opus | Dispatches dev agents in worktrees, coordinates review, merge queue authority |
-| Delivery Manager | Haiku | PR monitoring, E2E tests, merge execution, delivery notifications |
-| Project Manager | Sonnet | Sprint cadence, priority triage, staleness cleanup, milestone demos |
-| Code Reviewer | Sonnet | 8-section checklist, machine-readable VERDICT output |
-| OSS Triage Auditor | Sonnet | AI-slop detection, duplicate detection, label lifecycle enforcement |
+Story status machine (`.meta/`): `backlog → todo → in_progress → in_review → done`.
+On the epic branch only two commits touch it: open epic and close epic.
 
-Story status machine (`.meta/`): `backlog → todo → in_progress → in_review → done`
-PR label machine (GitHub): `review → merge-requested → merge-granted → squash-merged`
+Story PR labels: `ai-approved | ai-changes-requested | needs-human`
+
+Story issue labels (written by the tick): `ap:in-progress → ap:in-review → ap:done`
