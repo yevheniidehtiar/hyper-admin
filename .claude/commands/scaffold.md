@@ -7,4 +7,4 @@ Include:
 - Source module with type hints and docstrings
 - Corresponding test file in `tests/`
 - Update `__init__.py` exports if needed
-Run `just lint` after generation.
+Run `uv run poe lint` after generation.

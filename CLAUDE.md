@@ -3,7 +3,8 @@
 For architectural principles, naming conventions, module boundaries, and dependency rules,
 see [`CONSTITUTION.md`](CONSTITUTION.md). All planning and code generation must comply with it.
 
-The Software Architect agent role and its review checklist are defined in [`AGENTS.md`](AGENTS.md).
+The Software Architect agent role and its review checklist are defined in
+[`.claude/agents/software-architect.md`](.claude/agents/software-architect.md).
 
 ---
 
@@ -20,7 +21,7 @@ All planning, issue creation, and implementation in this project follows three j
 ### SDD — Specification-Driven Development (`.claude/rules/sdd-conventions.md`)
 - Any `size:L` issue or epic touching ≥ 2 top-level modules **must** have a Design Doc at `docs/specs/{slug}.md` before implementation starts.
 - SDD template: `docs/specs/TEMPLATE.md`.
-- First sub-task of any SDD-required epic is `review(spec): approve SDD` — a **human gate**.
+- First sub-task of any SDD-required epic is `review(spec): approve SDD` — the **spec gate**, passed by the architect agent (the owner can veto on the epic PR).
 - All implementation sub-tasks are `blocked_by` the spec review task.
 
 ### Bottom-Up Architecture (`.claude/rules/planning-playbook.md`)
@@ -51,7 +52,7 @@ HyperAdmin is a library consumed by other projects, so dependency bounds matter:
 
 - **Runtime deps** (`[project.dependencies]`): Keep conservative lower bounds (e.g., `pydantic>=2.7`). Only bump when code requires a newer API or a security fix exists.
 - **Dev deps** (`[project.optional-dependencies].dev`): Bump freely to latest — they only affect contributors.
-- **Dependabot**: Configured for monthly automated dev dep bumps via PR.
+- **Dependabot**: Configured for weekly automated dev dep bumps via PR.
 
 ### Bumping Dependencies
 
@@ -200,13 +201,20 @@ When adding new interactive or assertable elements to templates, add a `data-tes
 
 ## Agentic Workflow
 
-This project follows a 5-agent Claude Code workflow. See `docs/agentic-workflow/`:
+Delivery runs unattended from a local autopilot (`ops/autopilot/`, launchd label
+`com.hyperadmin.autopilot`). Each tick does deterministic `gh`/`git` checks and starts headless
+jobs only when there is work. See `docs/agentic-workflow/` and `.claude/project-config.md`:
 
-1. **Conductor** → orchestrates autonomous team cycles (Opus)
-2. **Delivery Manager** → PR monitoring, E2E orchestration, merge execution (Haiku)
-3. **Project Manager** → strategic planning, sprint cadence, priority triage (Sonnet)
-4. **Code Reviewer** → architectural review against CONSTITUTION.md (Sonnet)
+1. **Implementer** (`implement-feature` skill) → one story per job, PR to `epic/<slug>` (Opus)
+2. **Code Reviewer** → review against CONSTITUTION.md; verdict label `ai-approved` / `ai-changes-requested` (Sonnet)
+3. **Software Architect** → approves SDDs on the epic branch, structural review (Opus)
+4. **Project Manager** → daily owner digest (Haiku when run as the `digest` job)
 5. **OSS Triage Auditor** → detect AI-slop, enforce labels (Sonnet, optional)
+
+Branch model: one `epic/<slug>` branch per epic. Story PRs merge into it without a human; the
+owner approves one PR per epic (`epic/<slug>` → `develop`). Agents do not stop to ask: they follow
+the decision ladder in the `implement-feature` skill and escalate only its hard stops with the
+`needs-human` label.
 
 ## MCP Servers in Use
 
@@ -235,7 +243,8 @@ GitHub are overwritten the next time that entity changes.
 |------|---------|
 | `.meta/` | Git-native project state (stories, epics, milestones) |
 | `scripts/gitpm.sh` | GitPM CLI wrapper |
-| `justfile` | All dev targets |
+| `pyproject.toml` (`[tool.poe.tasks]`) | All dev tasks (`poe <task>`) |
+| `ops/autopilot/` | Local autopilot: tick script, job prompts, launchd template |
 | `scripts/` | Automation helpers |
 | `.claude/commands/` | Claude slash commands |
 | `docs/` | Zensical documentation source (config: `zensical.toml`) |

@@ -1,32 +1,39 @@
 ---
-description: "Start work in a new isolated worktree branched from develop"
-argument-hint: "<branch-name>"
+description: "Start work in a new isolated worktree branched from develop (or a given base branch)"
+argument-hint: "<branch-name> [base-branch]"
 ---
 
 Start a new isolated worktree session for feature work. This ensures parallel agents
 don't collide and keeps the main working tree clean.
 
+## Arguments
+
+`$ARGUMENTS`
+
+- First token: the branch name. If it is missing, generate a random name
+  (e.g., `work/agent-<4-random-hex-chars>`).
+- Optional second token: the base branch (`BASE`). Default: `develop`. Story work for an epic
+  passes `epic/<slug>`.
+
 ## Steps
 
-1. **Pull latest develop**
+1. **Fetch the base**
 
 ```bash
-git fetch origin develop
+git fetch origin "$BASE"
 ```
 
 2. **Enter worktree**
 
-Use `EnterWorktree` with the branch name provided by the user: `$ARGUMENTS`
+Use `EnterWorktree` with the branch name.
 
-If `$ARGUMENTS` is empty, generate a random name (e.g., `work/agent-<4-random-hex-chars>`).
+3. **Reset to the base tip**
 
-3. **Reset to latest develop**
-
-Since this is a fresh worktree with no prior work, reset to the tip of develop
+Since this is a fresh worktree with no prior work, reset to the tip of the base
 instead of rebasing (avoids replaying the entire history and hitting conflicts):
 
 ```bash
-git reset --hard origin/develop
+git reset --hard "origin/$BASE"
 ```
 
 4. **Bootstrap the environment**
@@ -40,7 +47,7 @@ uv sync --all-extras
 Print a status summary:
 - Worktree path
 - Branch name
-- Base commit (short SHA + subject from develop)
+- Base branch and base commit (short SHA + subject)
 - Environment status (uv sync result)
 
 Then say: **Ready. What are we working on?**

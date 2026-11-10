@@ -52,8 +52,8 @@ note the omission and why.
 
 | Field | Value |
 |---|---|
-| Author | Claude Code / {human reviewer} |
-| Status | Draft / In Review / Approved / Superseded |
+| Author | Claude Code |
+| Status | Draft / In Review / Approved (architect) / Superseded |
 | Issue | #{github-issue-number} |
 | Milestone | {v0.x.y — Title} |
 | Created | {YYYY-MM-DD} |
@@ -118,8 +118,8 @@ List failure modes, boundary conditions, and how each is handled.
 
 ## Open Questions
 
-Questions that must be resolved before implementation starts. Clear these before moving to
-"Approved" status.
+Questions that must be resolved before implementation starts. The architect agent resolves them
+and moves each one into the Decision Log before setting "Approved (architect)".
 
 ## Decision Log
 
@@ -139,9 +139,17 @@ Draft → In Review → Approved → (implementation begins) → Superseded (if 
 ```
 
 1. **Draft**: Planning agent writes the SDD as part of epic creation.
-2. **In Review**: Human reviews the SDD — checks goals, edge cases, breaking changes.
-3. **Approved**: Human approves. Implementation sub-tasks are unblocked.
+2. **In Review**: The architect agent (`.claude/agents/software-architect.md`, autopilot job
+   `approve-sdd`) reviews the SDD on the epic branch: runs the checklist below, resolves the Open
+   Questions with the decision ladder, fills the Decision Log.
+3. **Approved (architect)**: The architect agent approves and commits the SDD on the epic branch.
+   Implementation sub-tasks are unblocked. The owner can veto on the epic PR, where the SDD change
+   is part of the diff.
 4. **Superseded**: If design changes significantly mid-implementation, update the SDD and note the change in the Decision Log.
+
+The architect escalates to the owner (`needs-human` on the spec issue, with the exact question)
+only when the design needs a breaking public API change, a new runtime dependency or a changed
+runtime dependency floor, or a data-model migration. In that case the SDD stays `In Review`.
 
 An SDD in `Draft` or `In Review` status BLOCKS implementation sub-tasks.
 The implementation sub-task description MUST link to the SDD: `Spec: docs/specs/{slug}.md`.
@@ -155,7 +163,8 @@ When creating a `size:L` issue or an epic touching ≥ 2 modules:
 1. Create the SDD file at `docs/specs/{slug}.md` (status: Draft).
 2. Commit it to the feature branch before creating implementation sub-tasks.
 3. Link the SDD in the epic body: `**Spec**: [docs/specs/{slug}.md](../docs/specs/{slug}.md)`.
-4. Set the first sub-task as: `review(spec): approve SDD for {feature}` — this is the human gate.
+4. Set the first sub-task as: `review(spec): approve SDD for {feature}` — this is the spec gate, passed by the
+   architect agent.
 5. All implementation sub-tasks are `blocked_by` the spec review task.
 
 Example dependency chain:
@@ -167,7 +176,7 @@ SDD Draft committed → spec-review sub-task → impl sub-tasks → test sub-tas
 
 ## Reviewing an SDD
 
-The human reviewer checks:
+The architect agent checks (the owner uses the same list when reading the epic PR):
 
 - [ ] Problem statement is clear and scoped
 - [ ] Goals are measurable
