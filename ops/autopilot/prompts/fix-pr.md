@@ -4,6 +4,9 @@ Arguments: `pr` (the number), `branch` (its head branch, checked out), `reason` 
 autopilot sent you: failed checks, cancelled checks, a conflict, or review findings),
 `epic_pr` (`true` when this is the draft pull request of an epic branch).
 
+If the pull request carried `ai-approved`, whatever you push is reviewed again before the
+merge: the approval counts only for the commit the reviewer saw.
+
 1. Read the state: `gh pr view <pr> --json title,body,baseRefName,mergeable,statusCheckRollup,labels,comments`.
 2. Failed checks: read the logs with `gh run view <run-id> --log-failed` (the run id is in the
    check's details URL), find the cause and fix it in the code or the tests. Do not weaken or

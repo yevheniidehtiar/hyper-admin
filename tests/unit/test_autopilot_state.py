@@ -268,7 +268,7 @@ def job(kind: str, job_id: str = "j1", **fields: object) -> dict:
         (job("implement", story="st-1"), "stories", "st-1", "implement"),
         (job("review", pr=12), "prs", "12", "review"),
         (job("fix-pr", pr=12), "prs", "12", "fix"),
-        (job("fix-develop", run="99"), "runs", "99", "fix-develop"),
+        (job("fix-develop", run="99", workflow="Test"), "workflows", "Test", "fix-develop"),
         (job("approve-sdd", epic="epic-demo"), "epics", "epic-demo", "sdd"),
         (job("integrate-epic", epic="epic-demo", pr=100), "epics", "epic-demo", "integrate"),
     ],
@@ -396,6 +396,29 @@ def test_reap_drops_jobs_whose_runner_is_gone() -> None:
     assert "fix-pr 5 died (job dead)" in [note["text"] for note in state["digest"]["notes"]]
 
 
+def test_reap_drops_a_job_far_past_its_wall_clock_limit_even_if_its_pid_is_alive() -> None:
+    """After a reboot the pid of a dead runner can belong to another process."""
+    state = st.new_state()
+    st.job_start(state, job("fix-pr", "old", pr=5, pid=10, timeout=3600), NOW)
+    st.job_start(state, job("review", "fresh", pr=6, pid=10, timeout=3600), NOW + 3000)
+    st.job_start(state, job("digest", "nolimit", slot=0, pid=10), NOW)
+    late = NOW + 3600 + st.REAP_MARGIN
+
+    assert st.reap(state, lambda _pid: True, late) == []
+    assert st.reap(state, lambda _pid: True, late + 1) == ["old"]
+    assert sorted(state["jobs"]) == ["fresh", "nolimit"]
+
+
+def test_clear_forgets_one_item_of_a_scope() -> None:
+    state = st.new_state()
+    st.bump(state, "workflows", "Deploy Docs", "fix-develop")
+    st.bump(state, "workflows", "Test", "fix-develop")
+
+    assert st.clear(state, "workflows", "Deploy Docs") is True
+    assert st.clear(state, "workflows", "Deploy Docs") is False
+    assert state["workflows"] == {"Test": {"fix-develop": 1}}
+
+
 def test_busy_items_and_used_slots() -> None:
     state = st.new_state()
     st.job_start(state, job("implement", "a", story="st-1", slot=1), NOW)
@@ -405,6 +428,7 @@ def test_busy_items_and_used_slots() -> None:
     assert st.busy(state, "story") == {"st-1"}
     assert st.busy(state, "pr") == {"12"}
     assert st.busy(state, "epic") == set()
+    assert st.busy(state, "branch") == set()
     assert st.used_slots(state) == {1, 3}
 
 
@@ -485,6 +509,12 @@ def test_cli_set_get_note_bump_and_reap(tmp_path: Path) -> None:
     assert run_state(path, "set", "janitor.approved", "true").returncode == 0
     assert run_state(path, "get", "janitor.approved").stdout == "true\n"
     assert run_state(path, "bump", "prs", "12", "rerun").stdout == "1\n"
+    assert run_state(path, "bump", "prs", "12", "review", "--by", "2").stdout == "2\n"
+    assert run_state(path, "bump", "prs", "12", "review", "--by", "-1").stdout == "1\n"
+    assert run_state(path, "bump", "workflows", "Deploy Docs", "fix-develop").stdout == "1\n"
+    assert run_state(path, "clear", "workflows", "Deploy Docs").returncode == 0
+    assert run_state(path, "clear", "workflows", "never seen").returncode == 0
+    assert run_state(path, "get", "workflows").stdout == "{}\n"
     assert run_state(path, "note", "hello").returncode == 0
     dead = json.dumps(job("review", "job-9", pr=3, pid=2_000_000_000))
     assert run_state(path, "job-start", dead).returncode == 0
@@ -493,7 +523,7 @@ def test_cli_set_get_note_bump_and_reap(tmp_path: Path) -> None:
 
     state = json.loads(path.read_text())
     assert state["jobs"] == {}
-    assert state["prs"] == {"12": {"rerun": 1}, "3": {"review": 1}}
+    assert state["prs"] == {"12": {"rerun": 1, "review": 1}, "3": {"review": 1}}
     assert state["digest"]["notes"] == []
     assert state["digest"]["last_date"]
 
@@ -585,6 +615,7 @@ def pull(
         "author": {"login": author},
         "baseRefName": base,
         "headRefName": head,
+        "headRefOid": f"sha-{number}",
         "isDraft": draft,
         "mergeable": mergeable,
         "labels": [{"name": label} for label in labels],
@@ -604,6 +635,11 @@ def decide(*prs: dict, **inputs: object) -> list[tuple[str, ...]]:
 
 def spent(**counters: int) -> dict:
     return {"prs": {"12": counters}}
+
+
+def reviewed(*numbers: int, **counters: int) -> dict:
+    """State in which the reviewer approved the current head of the given pull requests."""
+    return {"prs": {str(n): {"approved_sha": f"sha-{n}", **counters} for n in numbers}}
 
 
 def test_failed_checks_start_a_fix_round_until_the_budget_is_spent() -> None:
@@ -656,31 +692,88 @@ def test_a_green_unreviewed_pull_request_is_reviewed_at_most_twice() -> None:
     assert decide(green) == [("spawn", "review", "12")]
     assert decide(green, state=spent(review=1)) == [("spawn", "review", "12")]
     assert decide(green, state=spent(review=2)) == [
-        ("needs-human", "12", "review budget spent without an approval")
+        ("needs-human", "12", "review budget spent without an approval of its head commit")
     ]
+
+
+def test_the_review_job_is_told_which_commit_it_reviews() -> None:
+    actions = plan.build_plan({"now": NOW, "limit": 3, "bot": BOT, "prs": [pull()]})
+
+    spawn = next(action for action in actions if action.kind == "spawn")
+    assert spawn.args[:4] == ("review", "12", "1", "")
+    assert json.loads(spawn.args[5])["head_sha"] == "sha-12"
 
 
 def test_an_approved_green_pull_request_is_merged_when_up_to_date() -> None:
     approved = pull(labels=("ai-approved",))
+    unknown = pull(labels=("ai-approved",), mergeable="UNKNOWN")
 
-    assert decide(approved, behind={"12": "0"}) == [("merge", "12", "st-1")]
-    assert decide(approved, behind={"12": "3"}) == [("update-branch", "12")]
-    assert decide(approved, behind={}) == []
-    assert decide(pull(labels=("ai-approved",), mergeable="UNKNOWN"), behind={"12": "0"}) == []
+    assert decide(approved, behind={"12": "0"}, state=reviewed(12)) == [("merge", "12", "st-1")]
+    assert decide(approved, behind={"12": "3"}, state=reviewed(12)) == [
+        ("update-branch", "12", "sha-12")
+    ]
+    assert decide(approved, behind={}, state=reviewed(12)) == []
+    assert decide(unknown, behind={"12": "0"}, state=reviewed(12)) == []
+
+
+def test_the_merge_names_the_approved_commit() -> None:
+    actions = plan.build_plan(
+        {
+            "now": NOW,
+            "limit": 3,
+            "bot": BOT,
+            "prs": [pull(labels=("ai-approved",))],
+            "behind": {"12": "0"},
+            "state": reviewed(12),
+        }
+    )
+
+    assert [action.args for action in actions if action.kind == "merge"] == [
+        ("12", "st-1", "", "sha-12")
+    ]
+
+
+def test_an_approval_of_an_older_commit_does_not_merge() -> None:
+    """A fix-pr push after the approval is reviewed before it reaches the epic branch."""
+    approved = pull(labels=("ai-approved",))
+    older = {"prs": {"12": {"approved_sha": "sha-before-the-fix", "review": 1, "fix": 1}}}
+    spent_reviews = {"prs": {"12": {"approved_sha": "sha-before-the-fix", "review": 2}}}
+
+    actions = plan.build_plan(
+        {
+            "now": NOW,
+            "limit": 3,
+            "bot": BOT,
+            "prs": [approved],
+            "behind": {"12": "0"},
+            "state": older,
+        }
+    )
+
+    assert [(action.kind, action.args[0], action.why) for action in actions] == [
+        ("spawn", "review", "green, changed since its approval")
+    ]
+    assert decide(approved, behind={"12": "0"}) == [("spawn", "review", "12")]
+    assert decide(approved, behind={"12": "0"}, state=spent_reviews) == [
+        ("needs-human", "12", "review budget spent without an approval of its head commit")
+    ]
 
 
 def test_nothing_is_merged_while_checks_run_or_are_missing() -> None:
     running = pull(labels=("ai-approved",), checks=[check("", "IN_PROGRESS")])
     silent = pull(labels=("ai-approved",), checks=[])
 
-    assert decide(running, behind={"12": "0"}) == []
-    assert decide(silent, behind={"12": "0"}) == []
+    assert decide(running, behind={"12": "0"}, state=reviewed(12)) == []
+    assert decide(silent, behind={"12": "0"}, state=reviewed(12)) == []
 
 
 def test_a_merge_without_a_story_line_is_noted() -> None:
     approved = pull(labels=("ai-approved",), body="no story line")
 
-    assert decide(approved, behind={"12": "0"}) == [("note",), ("merge", "12", "")]
+    assert decide(approved, behind={"12": "0"}, state=reviewed(12)) == [
+        ("note",),
+        ("merge", "12", ""),
+    ]
 
 
 def test_draft_and_busy_and_foreign_pull_requests_are_left_alone() -> None:
@@ -760,7 +853,7 @@ def test_no_job_is_spawned_during_a_cooldown_but_deterministic_actions_continue(
             "bot": BOT,
             "prs": [red, cancelled, approved],
             "behind": {"14": "0"},
-            "state": cooling,
+            "state": {**cooling, **reviewed(14)},
             "digest_hour": 0,
         }
     )
@@ -793,7 +886,11 @@ def test_jobs_beyond_the_free_slots_wait_and_repairs_go_first() -> None:
 
 def test_running_jobs_hold_their_slots() -> None:
     held = {"jobs": {"j": {"kind": "review", "pr": 99, "slot": 2, "pid": 1}}}
-    prs = [pull(21, checks=[check("FAILURE")]), pull(22, checks=[check("FAILURE")]), pull(23)]
+    prs = [
+        pull(21, head="feat/a", checks=[check("FAILURE")]),
+        pull(22, head="feat/b", checks=[check("FAILURE")]),
+        pull(23, head="feat/c"),
+    ]
 
     actions = plan.build_plan(
         {"now": NOW, "limit": 3, "pool": 3, "bot": BOT, "prs": prs, "state": held}
@@ -806,7 +903,10 @@ def test_running_jobs_hold_their_slots() -> None:
 
 
 def test_low_memory_means_one_job_at_a_time() -> None:
-    prs = [pull(21, checks=[check("FAILURE")]), pull(22, checks=[check("FAILURE")])]
+    prs = [
+        pull(21, head="feat/a", checks=[check("FAILURE")]),
+        pull(22, head="feat/b", checks=[check("FAILURE")]),
+    ]
 
     def slots(**inputs: object) -> list[str]:
         base = {"now": NOW, "limit": 3, "pool": 3, "bot": BOT, "prs": prs, **inputs}
@@ -895,9 +995,43 @@ def test_develop_is_not_repaired_twice_for_the_same_run() -> None:
     fix_open = pull(50, base="develop", head="fix/develop-3", checks=[check("", "IN_PROGRESS")])
     running = {"jobs": {"j": {"kind": "fix-develop", "run": "3", "slot": 1, "pid": 1}}}
 
-    assert health(red, state={"runs": {"3": {"fix-develop": 1}}}) == [("note",)]
+    assert health(red, state={"workflows": {"Test": {"fix-develop": 1}}}) == [("note",)]
     assert health(red, prs=[fix_open]) == [("note",)]
     assert health(red, state=running) == []
+
+
+def test_the_fix_develop_budget_belongs_to_the_workflow_not_to_the_run() -> None:
+    """Every push makes a new run id; a failure nobody could fix must not start a job each."""
+    tried = {"workflows": {"Test": {"fix-develop": 1}}}
+
+    assert health([run(101, "failure"), run(100, "failure")], state=tried) == [("note",)]
+    assert health(nightly=[run(9, "failure"), run(8, "failure")], state=tried) == [
+        ("spawn", "fix-develop", "9")
+    ]
+
+
+def test_a_green_run_gives_the_workflow_its_fix_budget_back() -> None:
+    tried = {"workflows": {"Test": {"fix-develop": 1}}}
+
+    assert health([run(102), run(101, "failure")], state=tried) == [
+        ("clear-budget", "workflows", "Test")
+    ]
+    assert health([run(102), run(101, "failure")]) == []
+    assert health([run(103, None, "in_progress"), run(102)], state=tried) == []
+
+
+def test_the_fix_develop_job_carries_its_workflow_for_the_budget() -> None:
+    actions = plan.build_plan(
+        {"now": NOW, "limit": 3, "bot": BOT, "runs": {"push": {"Deploy Docs": [run(7, "failure")]}}}
+    )
+
+    spec = json.loads(next(action for action in actions if action.kind == "spawn").args[5])
+    state = st.new_state()
+    st.job_start(state, {"id": "j", "kind": "fix-develop", **spec}, NOW)
+
+    assert spec["workflow"] == "Deploy Docs"
+    assert state["workflows"] == {"Deploy Docs": {"fix-develop": 1}}
+    assert state["runs"] == {}
 
 
 def test_a_nightly_workflow_is_repaired_only_when_red_twice() -> None:
@@ -924,6 +1058,8 @@ def test_plan_cli_reads_a_directory_of_observations(tmp_path: Path) -> None:
             {"now": NOW, "limit": 3, "pool": 3, "bot": BOT, "state_file": str(tmp_path / "s.json")}
         )
     )
+    state_text = json.dumps(reviewed(12))
+    (tmp_path / "s.json").write_text(state_text)
     (tmp_path / "prs.json").write_text(json.dumps([pull(labels=("ai-approved",))]))
     (tmp_path / "behind.tsv").write_text("12\t0\n13\t\n")
     (tmp_path / "epic-branches.txt").write_text("")
@@ -941,4 +1077,12 @@ def test_plan_cli_reads_a_directory_of_observations(tmp_path: Path) -> None:
     assert done.returncode == 0, done.stderr
     rows = [line.split(plan.SEP) for line in done.stdout.splitlines()]
     assert [row[:3] for row in rows] == [["rerun-run", "3", ""], ["merge", "12", "st-1"]]
-    assert not (tmp_path / "s.json").exists()
+    assert rows[1][4] == "sha-12"
+    assert (tmp_path / "s.json").read_text() == state_text
+    assert sorted(path.name for path in tmp_path.iterdir() if path.is_file()) == [
+        "behind.tsv",
+        "env.json",
+        "epic-branches.txt",
+        "prs.json",
+        "s.json",
+    ]

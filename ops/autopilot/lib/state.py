@@ -44,14 +44,16 @@ BUDGETS = {
     "implement": 2,  # implement attempts per story
     "sdd": 2,  # approve-sdd attempts per epic
     "integrate": 2,  # integrate-epic attempts per epic
-    "fix-develop": 1,  # fix-develop attempts per failed run
+    "fix-develop": 1,  # fix-develop attempts per workflow, until that workflow is green again
 }
+# A job this long past its own wall-clock limit is gone, whatever its pid says now.
+REAP_MARGIN = 600
 # Which budget a spawned job draws from: job -> (scope, field of the job that is the key, kind).
 JOB_BUDGET = {
     "implement": ("stories", "story", "implement"),
     "review": ("prs", "pr", "review"),
     "fix-pr": ("prs", "pr", "fix"),
-    "fix-develop": ("runs", "run", "fix-develop"),
+    "fix-develop": ("workflows", "workflow", "fix-develop"),
     "approve-sdd": ("epics", "epic", "sdd"),
     "integrate-epic": ("epics", "epic", "integrate"),
 }
@@ -75,6 +77,7 @@ def new_state() -> dict:
         "jobs": {},
         "prs": {},
         "runs": {},
+        "workflows": {},
         "stories": {},
         "epics": {},
         "janitor": {"approved": False, "last_run": 0, "candidates": []},
@@ -282,16 +285,28 @@ def _remember_session(state: dict, job: dict, result: dict) -> None:
         entry.update(session=session, slot=job.get("slot"))
 
 
+def _overdue(job: dict, now: int) -> bool:
+    """Tell whether a job is past its wall-clock limit by more than the margin."""
+    started, limit = int(job.get("started_at") or 0), int(job.get("timeout") or 0)
+    return started > 0 and limit > 0 and now > started + limit + REAP_MARGIN
+
+
+def clear(state: dict, scope: str, key: object) -> bool:
+    """Forget everything recorded for one item of a scope; return whether there was any."""
+    return state.get(scope, {}).pop(str(key), None) is not None
+
+
 def reap(state: dict, alive, now: int) -> list[str]:
     """Drop jobs whose runner process is gone and return their ids.
 
-    ``alive`` is a callable taking a pid. The budget stays charged: a job that died without a
-    result still used its attempt.
+    ``alive`` is a callable taking a pid. After a reboot a pid can belong to another process,
+    so a job far past its own wall-clock limit is dropped as well. The budget stays charged:
+    a job that died without a result still used its attempt.
     """
     gone = [
         job_id
         for job_id, job in state["jobs"].items()
-        if not job.get("pid") or not alive(int(job["pid"]))
+        if not job.get("pid") or not alive(int(job["pid"])) or _overdue(job, now)
     ]
     for job_id in gone:
         job = state["jobs"].pop(job_id)
@@ -451,6 +466,10 @@ def _parser() -> argparse.ArgumentParser:
     budget.add_argument("scope")
     budget.add_argument("key")
     budget.add_argument("kind", choices=sorted(BUDGETS))
+    budget.add_argument("--by", type=int, default=1, help="attempts to add (negative refunds)")
+    forget = commands.add_parser("clear", help="forget one item of a scope")
+    forget.add_argument("scope", choices=["prs", "runs", "workflows", "stories", "epics"])
+    forget.add_argument("key")
     start = commands.add_parser("job-start", help="register a spawned job (JSON object)")
     start.add_argument("job")
     finish = commands.add_parser("job-finish", help="record a finished job")
@@ -476,7 +495,9 @@ def _run(args: argparse.Namespace, state: dict, now: int) -> tuple[str, bool]:  
         add_note(state, args.text, now)
         return "", True
     if args.command == "bump":
-        return f"{bump(state, args.scope, args.key, args.kind)}\n", True
+        return f"{bump(state, args.scope, args.key, args.kind, args.by)}\n", True
+    if args.command == "clear":
+        return "", clear(state, args.scope, args.key)
     if args.command == "reap":
         return "".join(f"{job_id}\n" for job_id in reap(state, _pid_alive, now)), True
     if args.command == "job-start":

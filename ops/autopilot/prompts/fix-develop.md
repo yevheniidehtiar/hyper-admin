@@ -1,7 +1,12 @@
 ## Job: repair a red run on develop
 
-Arguments: `run` (the id of the failed workflow run), `branch` (`fix/develop-<run>`, cut from
-`origin/develop` and checked out).
+Arguments: `run` (the id of the failed workflow run), `workflow` (its name), `branch`
+(`fix/develop-<run>`, cut from `origin/develop` and checked out).
+
+This is the one repair attempt the workflow gets until it is green again, so finish with
+either a pull request or an issue. Before opening an issue, look for an open one about the
+same failure (`gh issue list --label needs-human --search "<workflow>"`) and comment there
+instead of opening a second one.
 
 1. Read the failure: `gh run view <run> --json workflowName,headSha,event,conclusion,jobs,url`
    and `gh run view <run> --log-failed`.

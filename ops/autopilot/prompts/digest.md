@@ -1,9 +1,9 @@
 ## Job: write the daily owner digest
 
 The `Input` section below is JSON: `notes` are the lines the autopilot queued since the last
-digest, `janitor` holds the clean-up candidates and whether clean-up is approved. Do not
-change anything in this job; you may read with `gh pr list`, `gh pr view` and `gh issue list`
-to check what is still true.
+digest, `janitor` holds the clean-up candidates and whether clean-up is approved. This job
+has read-only tools and runs outside the repository checkout; you may read with `gh pr list`,
+`gh pr view` and `gh issue list` to check what is still true.
 
 Write the digest as your final message, in plain Markdown, and nothing else (no greeting, no
 `Applying rules` line, no closing remark). It is posted as it is. Keep it short; leave out a

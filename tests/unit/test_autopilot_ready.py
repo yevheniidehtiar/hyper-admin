@@ -562,7 +562,18 @@ def test_cli_usage(capsys: pytest.CaptureFixture[str]) -> None:
 # --- the planner: epics and story dispatch --------------------------------------------------
 
 
-def epic_pr(number: int = 100, *, draft: bool = True, labels: tuple[str, ...] = ()) -> dict:
+FAILED_CHECK = {"name": "unit", "status": "COMPLETED", "conclusion": "FAILURE"}
+
+
+def epic_pr(
+    number: int = 100,
+    *,
+    draft: bool = True,
+    labels: tuple[str, ...] = (),
+    mergeable: str = "MERGEABLE",
+    checks: tuple[dict, ...] = (),
+    review: str = "REVIEW_REQUIRED",
+) -> dict:
     return {
         "number": number,
         "title": "epic(core): demo",
@@ -570,10 +581,11 @@ def epic_pr(number: int = 100, *, draft: bool = True, labels: tuple[str, ...] = 
         "baseRefName": "develop",
         "headRefName": f"epic/{EPIC}",
         "isDraft": draft,
-        "mergeable": "MERGEABLE",
+        "mergeable": mergeable,
+        "reviewDecision": review,
         "labels": [{"name": label} for label in labels],
         "body": "",
-        "statusCheckRollup": [],
+        "statusCheckRollup": list(checks),
     }
 
 
@@ -779,3 +791,228 @@ def test_an_epic_in_progress_takes_an_epic_lane() -> None:
 
     assert rows == [("spawn", "implement", "st-1")]
     assert ("open-epic", "epic-b") in plan_rows(meta, epic_allow="epic-b", max_epics=2)
+
+
+# --- the planner: the epic branch is shared -------------------------------------------------
+
+
+def plan_actions(meta: ready.Meta, **inputs: object) -> list[plan.Action]:
+    base: dict[str, object] = {
+        "now": 1_800_000_000,
+        "limit": 3,
+        "pool": 3,
+        "bot": BOT,
+        "meta": meta,
+        "epic_branches": [f"epic/{EPIC}"],
+        "prs": [epic_pr()],
+    }
+    base.update(inputs)
+    return plan.build_plan(base)
+
+
+def test_a_conflicting_draft_epic_pull_request_is_not_sent_to_fix_pr() -> None:
+    """fix-pr may not rebase an epic branch, so a conflict with develop is integrate's."""
+    meta = make_meta(make_story("st-1", issue=1, files=("src/a.py",)))
+    conflicting = epic_pr(mergeable="CONFLICTING")
+
+    actions = plan_actions(meta, prs=[conflicting])
+
+    assert [(a.kind, *a.args[:2]) for a in actions if a.kind != "info"] == [
+        ("spawn", "implement", "st-1")
+    ]
+    assert "epic PR #100 conflicts with develop; integrate-epic rebases it at the end" in [
+        a.why for a in actions
+    ]
+    assert plan_rows(meta, prs=[conflicting], state={"prs": {"100": {"fix": 3}}}) == [
+        ("spawn", "implement", "st-1")
+    ]
+
+
+def test_a_conflicting_finished_epic_goes_to_integrate_which_rebases_it() -> None:
+    meta = make_meta(make_story("st-1", issue=1, files=("src/a.py",)))
+    merged = {EPIC: [{"number": 7, "body": "Story: st-1\n"}]}
+
+    rows = plan_rows(meta, merged=merged, prs=[epic_pr(mergeable="CONFLICTING")])
+
+    assert rows == [("spawn", "integrate-epic", EPIC)]
+
+
+def test_failed_checks_of_a_draft_epic_pull_request_are_fixed_without_a_rebase() -> None:
+    meta = make_meta(make_story("st-1", issue=1, files=("src/a.py",)))
+    red = epic_pr(mergeable="CONFLICTING", checks=(FAILED_CHECK,))
+
+    actions = plan_actions(meta, prs=[red])
+
+    spawn = next(a for a in actions if a.kind == "spawn" and a.args[0] == "fix-pr")
+    spec = json.loads(spawn.args[5])
+    assert spawn.args[:5] == ("fix-pr", "100", "1", f"epic/{EPIC}", f"origin/epic/{EPIC}")
+    assert (spec["reason"], spec["epic_pr"], spec["epic"]) == ("checks failed", True, EPIC)
+
+
+def test_two_jobs_never_get_the_same_epic_branch_in_one_tick() -> None:
+    """A red epic PR whose stories are all merged wants fix-pr and integrate-epic at once."""
+    meta = make_meta(make_story("st-1", issue=1, files=("src/a.py",)))
+    merged = {EPIC: [{"number": 7, "body": "Story: st-1\n"}]}
+
+    actions = plan_actions(meta, merged=merged, prs=[epic_pr(checks=(FAILED_CHECK,))])
+
+    assert [a.args[:4] for a in actions if a.kind == "spawn"] == [
+        ("fix-pr", "100", "1", f"epic/{EPIC}")
+    ]
+    assert f"integrate-epic {EPIC} waits: branch epic/{EPIC} is in use" in [a.why for a in actions]
+
+
+def test_a_running_job_on_the_epic_branch_holds_the_other_epic_jobs() -> None:
+    done = make_meta(make_story("st-1", issue=1, files=("src/a.py",)))
+    gated = make_meta(
+        make_story("st-00", title="review(spec): approve the SDD", issue=1),
+        make_story("st-1", issue=2, files=("src/a.py",)),
+    )
+    merged = {EPIC: [{"number": 7, "body": "Story: st-1\n"}]}
+    fixing = {
+        "jobs": {
+            "j": {
+                "kind": "fix-pr",
+                "pr": 100,
+                "epic": EPIC,
+                "branch": f"epic/{EPIC}",
+                "slot": 1,
+                "pid": 1,
+            }
+        }
+    }
+    # A job recorded before the epic field existed still holds its branch.
+    legacy = {"jobs": {"j": {"kind": "fix-pr", "pr": 100, "branch": f"epic/{EPIC}", "slot": 1}}}
+
+    assert plan_rows(done, merged=merged, state=fixing) == []
+    assert plan_rows(done, merged=merged, state=legacy) == []
+    assert plan_rows(gated, state=fixing) == []
+    assert plan_rows(gated, state=legacy) == []
+
+
+def test_a_fix_job_never_shares_a_branch_with_a_running_job() -> None:
+    meta = make_meta(make_story("st-1", issue=1, files=("src/a.py",)))
+    red = {**story_pr(201, "st-1"), "isDraft": False, "statusCheckRollup": [FAILED_CHECK]}
+    implementing = {
+        "jobs": {"j": {"kind": "implement", "story": "st-1", "branch": "feat/st-1", "slot": 1}}
+    }
+
+    actions = plan_actions(meta, prs=[epic_pr(), red], state=implementing)
+
+    assert [a for a in actions if a.kind == "spawn"] == []
+    assert "fix-pr 201 waits: branch feat/st-1 is in use" in [a.why for a in actions]
+
+
+# --- the planner: an epic handed to the owner -----------------------------------------------
+
+
+def test_a_ready_epic_that_conflicts_is_taken_back_once() -> None:
+    meta = make_meta(make_story("st-1", issue=1, files=("src/a.py",)))
+    conflicting = epic_pr(draft=False, mergeable="CONFLICTING")
+    approved = epic_pr(draft=False, mergeable="CONFLICTING", review="APPROVED")
+    escalated = epic_pr(draft=False, mergeable="CONFLICTING", labels=("needs-human",))
+
+    assert plan_rows(meta, prs=[conflicting]) == [("epic-to-draft", "100", EPIC)]
+    assert plan_rows(meta, prs=[conflicting], state={"epics": {EPIC: {"integrate": 1}}}) == [
+        ("epic-to-draft", "100", EPIC)
+    ]
+    for inputs in (
+        {"prs": [conflicting], "state": {"epics": {EPIC: {"integrate": 2}}}},
+        {"prs": [approved]},
+        {"prs": [escalated]},
+        {"prs": [conflicting], "state": {"jobs": {"j": {"kind": "integrate-epic", "epic": EPIC}}}},
+    ):
+        actions = plan_actions(meta, **inputs)
+        assert [(a.kind, a.why) for a in actions] == [
+            ("note", f"epic PR #100 ({EPIC}) is ready but conflicts with develop; it needs a look")
+        ]
+
+
+def test_a_ready_epic_with_red_checks_does_not_ask_for_an_approval() -> None:
+    meta = make_meta(make_story("st-1", issue=1, files=("src/a.py",)))
+
+    actions = plan_actions(meta, prs=[epic_pr(draft=False, checks=(FAILED_CHECK,))])
+
+    assert [(a.kind, a.why) for a in actions] == [
+        ("note", f"epic PR #100 ({EPIC}) is ready but its checks are red; it needs a look")
+    ]
+
+
+# --- the planner: a pull request without its Story line -------------------------------------
+
+
+def test_an_open_pull_request_without_a_story_line_is_matched_by_its_branch() -> None:
+    """Otherwise the story would be implemented a second time on the same branch."""
+    meta = make_meta(
+        make_story("st-1", issue=1, files=("src/a.py",)),
+        make_story("st-2", issue=2, files=("src/a.py",)),
+        make_story("st-3", issue=3, files=("src/c.py",)),
+    )
+    nameless = {**story_pr(201, "st-1"), "headRefName": "feat/1-story-st-1", "body": "Summary."}
+
+    assert plan_rows(meta, prs=[epic_pr(), nameless]) == [("spawn", "implement", "st-3")]
+
+
+def test_a_merged_pull_request_without_a_story_line_still_finishes_its_story() -> None:
+    meta = make_meta(
+        make_story("st-1", issue=1, files=("src/a.py",)),
+        make_story("st-2", issue=2, files=("src/b.py",), blocked_by=("#1",)),
+    )
+    by_branch = {EPIC: [{"number": 7, "body": "", "headRefName": "feat/1-story-st-1"}]}
+    elsewhere = {EPIC: [{"number": 7, "body": None, "headRefName": "feat/unrelated"}]}
+
+    assert plan_rows(meta, merged=by_branch) == [("spawn", "implement", "st-2")]
+    assert plan_rows(meta, merged=elsewhere) == [("spawn", "implement", "st-1")]
+
+
+def test_the_branch_fallback_stays_inside_the_epic_of_the_pull_request() -> None:
+    meta = make_meta(
+        make_story("st-1", issue=1, files=("src/a.py",)),
+        make_story("st-9", epic="epic-other", issue=9, files=("src/z.py",)),
+    )
+    foreign = {**story_pr(201, "x"), "headRefName": "feat/9-story-st-9", "body": ""}
+
+    assert plan_rows(meta, prs=[epic_pr(), foreign]) == [("spawn", "implement", "st-1")]
+
+
+def test_a_story_line_with_windows_line_ends_is_read() -> None:
+    assert ready.story_id_from_body("Summary\r\nStory: st-1\r\n\r\nMore") == "st-1"
+
+
+# --- the planner: an epic branch without its open-epic commit -------------------------------
+
+
+def epic_branch_meta(text: str) -> ready.Meta:
+    meta = make_meta(make_story("st-1", issue=1, files=("src/a.py",)))
+    meta.epics[EPIC] = ready.parse_epic(text, EPIC)
+    return meta
+
+
+def test_parse_epic_reads_the_lock_field() -> None:
+    assert ready.parse_epic("---\nstatus: todo\n---\n", EPIC).locked_by == ""
+    locked = ready.open_epic_text("---\nstatus: todo\n---\n", EPIC)
+    assert ready.parse_epic(locked, EPIC).locked_by == "autopilot"
+
+
+def test_an_epic_branch_without_the_open_epic_commit_gets_it_first() -> None:
+    """The branch was created and the commit then failed: no PR can be opened without it."""
+    develop = make_meta(make_story("st-1", issue=1, files=("src/a.py",)))
+    unlocked = epic_branch_meta("---\nstatus: todo\n---\n")
+    locked = epic_branch_meta("---\nstatus: in_progress\nlocked_by: autopilot\n---\n")
+    closed = epic_branch_meta("---\nstatus: done\n---\n")
+
+    assert plan_rows(develop, prs=[], epic_meta={EPIC: unlocked}) == [("open-epic-commit", EPIC)]
+    assert plan_rows(develop, epic_meta={EPIC: unlocked}) == [("open-epic-commit", EPIC)]
+    assert plan_rows(develop, prs=[], epic_meta={EPIC: locked}) == [
+        ("open-epic-pr", EPIC),
+        ("spawn", "implement", "st-1"),
+    ]
+    # develop's own copy says nothing about the branch (a dry run may have nothing else).
+    assert plan_rows(develop, prs=[]) == [("open-epic-pr", EPIC), ("spawn", "implement", "st-1")]
+    # The close-epic commit removes the lock fields; a frozen branch gets no further commit.
+    assert ("open-epic-commit", EPIC) not in plan_rows(develop, epic_meta={EPIC: closed})
+    assert plan_rows(develop, prs=[epic_pr(draft=False)], epic_meta={EPIC: unlocked}) == [("note",)]
+    busy = {"jobs": {"j": {"kind": "integrate-epic", "epic": EPIC, "slot": 1}}}
+    assert ("open-epic-commit", EPIC) not in plan_rows(
+        develop, epic_meta={EPIC: unlocked}, state=busy
+    )
