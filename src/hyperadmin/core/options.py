@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Callable, Sequence
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
@@ -295,6 +295,15 @@ class AdminOptions(BaseModel):
     (by the database's planner statistics) the pager shows ``~4200000`` instead of an
     exact total. Filtered and searched lists always count exactly, and so does any
     database or adapter without row estimates. ``None`` (default) always counts.
+    """
+    pagination_mode: Literal["offset", "cursor"] = "offset"
+    """How the list view pages: ``"offset"`` (default) or ``"cursor"``.
+
+    ``"offset"`` shows page numbers and a total, but each page skips all rows before it,
+    so deep pages of a table with millions of rows get slow. ``"cursor"`` pages by the
+    sort column and primary key instead: every page costs the same, the list shows
+    previous/next links without a total, and links to a page number stop working. Lists
+    sorted by a column that holds NULLs fall back to page numbers.
     """
     filter_cache_ttl: int = Field(default=60, ge=0)
     """Seconds to cache the related rows listed by this model's foreign-key filters.

@@ -1,12 +1,15 @@
 from __future__ import annotations
 
+import base64
+import json
 import logging
+import warnings
 from abc import ABC, abstractmethod
 from collections.abc import Awaitable, Callable, Iterator, Mapping, Sequence
 from contextlib import AbstractAsyncContextManager, contextmanager
 from contextvars import ContextVar
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Protocol, cast
+from typing import TYPE_CHECKING, Any, Literal, Protocol, cast
 
 from hyperadmin.core.primary_key import DEFAULT_PK, InvalidPrimaryKey, PrimaryKeyInfo
 from hyperadmin.core.schema import schema_for
@@ -170,6 +173,106 @@ def scoped_queryset_filters(model: Any, request: Any = None) -> dict[str, Any]:
     return scope.filters_for(model, request)
 
 
+#: How a model's list view pages: page numbers with ``OFFSET`` (the default), or keyset
+#: cursors over ``(sort_col, pk)`` that stay fast deep into a table with millions of rows.
+PaginationMode = Literal["offset", "cursor"]
+
+#: Which way a cursor points: rows after its key (``"next"``) or before it (``"prev"``).
+CursorDirection = Literal["next", "prev"]
+
+#: Version of the cursor payload. A cursor of any other version is rejected.
+CURSOR_VERSION = 1
+_CURSOR_DIRECTIONS: frozenset[str] = frozenset(("next", "prev"))
+#: A cursor key is ``[pk, sort_value]``.
+_CURSOR_KEY_LEN = 2
+
+
+class InvalidCursorError(ValueError):
+    """A pagination cursor is malformed, tampered with, or from another payload version.
+
+    The view layer answers it with HTTP 400 "Invalid pagination cursor".
+    """
+
+
+class KeysetFallbackWarning(UserWarning):
+    """Cursor pagination was requested but the list was served as an ``OFFSET`` page.
+
+    Emitted when the adapter cannot page this list by keyset (no keyset support, or a
+    sort column holding NULLs), so operators learn why deep pages stay slow.
+    """
+
+
+@dataclass(frozen=True)
+class Cursor:
+    """A decoded pagination cursor.
+
+    Attributes:
+        key: ``(pk, sort_value)`` of the row the cursor points at. Values come back as
+            JSON scalars; the adapter coerces them to the column types.
+        direction: ``"next"`` pages after ``key``, ``"prev"`` pages before it.
+    """
+
+    key: tuple[Any, Any]
+    direction: CursorDirection
+
+
+def encode_cursor(pk: Any, sort_value: Any, direction: CursorDirection) -> str:
+    """Encode an opaque cursor: unpadded base64url of ``{"k": [pk, sort], "d", "v"}``.
+
+    Values JSON cannot represent natively (datetimes, UUIDs, decimals) are written as
+    their ``str()``.
+    """
+    payload = {"k": [pk, sort_value], "d": direction, "v": CURSOR_VERSION}
+    raw = json.dumps(payload, default=str, separators=(",", ":")).encode()
+    return base64.urlsafe_b64encode(raw).decode().rstrip("=")
+
+
+def decode_cursor(cursor: str) -> Cursor:
+    """Decode a cursor made by :func:`encode_cursor`.
+
+    Raises:
+        InvalidCursorError: The cursor is not base64url JSON, has another version, an
+            unknown direction, or a key that is not a ``[pk, sort_value]`` pair.
+    """
+    try:
+        raw = base64.urlsafe_b64decode(cursor + "=" * (-len(cursor) % 4))
+        payload = json.loads(raw)
+    except (ValueError, TypeError) as exc:
+        raise InvalidCursorError("Invalid pagination cursor") from exc
+    if not isinstance(payload, dict) or payload.get("v") != CURSOR_VERSION:
+        raise InvalidCursorError("Invalid pagination cursor")
+    key = payload.get("k")
+    direction = payload.get("d")
+    if (
+        direction not in _CURSOR_DIRECTIONS
+        or not isinstance(key, list)
+        or len(key) != _CURSOR_KEY_LEN
+    ):
+        raise InvalidCursorError("Invalid pagination cursor")
+    return Cursor(key=(key[0], key[1]), direction=cast("CursorDirection", direction))
+
+
+@dataclass
+class ListResult:
+    """One page of a list, in offset or cursor mode.
+
+    Attributes:
+        items: The rows of this page.
+        total: Rows matching the query; ``None`` in cursor mode, which never counts.
+        next_cursor: Cursor of the following page, or ``None`` (always in offset mode).
+        prev_cursor: Cursor of the preceding page, or ``None`` (always in offset mode).
+        has_next: Whether a following page exists.
+        has_prev: Whether a preceding page exists.
+    """
+
+    items: list[Any]
+    total: int | None
+    next_cursor: str | None = None
+    prev_cursor: str | None = None
+    has_next: bool = False
+    has_prev: bool = False
+
+
 @dataclass
 class PaginationMeta:
     """Pagination metadata for list responses."""
@@ -218,6 +321,9 @@ class BaseAdapter(ABC):
     #: instead of ``count(*)``. Set by the router from ``AdminOptions.count_estimate_threshold``;
     #: ``None`` (the default) always counts exactly.
     count_estimate_threshold: int | None = None
+    #: ``"cursor"`` pages lists by keyset instead of ``OFFSET``. Set by the router from
+    #: ``AdminOptions.pagination_mode``; ``"offset"`` (the default) keeps page numbers.
+    pagination_mode: PaginationMode = "offset"
     #: Concurrency-token field (``version`` / ``updated_at``) when optimistic concurrency
     #: control is enforced for this model. Set by the router from
     #: ``AdminOptions.enforce_occ``; ``None`` (the default) keeps last-write-wins.
@@ -526,6 +632,58 @@ class BaseAdapter(ABC):
             A tuple containing the list of objects and the total count of objects.
         """
         raise NotImplementedError
+
+    async def list_paginated(  # noqa: PLR0913 - mirrors list() plus the cursor
+        self,
+        *,
+        page: int = 1,
+        page_size: int = 10,
+        cursor: str | None = None,
+        search: str | None = None,
+        filters: Mapping[str, Any] | Sequence[FilterCondition] | None = None,
+        order_by: str | None = None,
+        search_fields: builtins.list[str] | None = None,
+        load_relations: builtins.list[str] | None = None,
+    ) -> ListResult:
+        """Return one page of the list as a :class:`ListResult`.
+
+        In ``"offset"`` mode ``page`` selects the page and both cursors are ``None``.
+        Adapters that support keyset pagination override this to honour ``cursor`` when
+        :attr:`pagination_mode` is ``"cursor"``. This default serves every request as an
+        offset page through :meth:`list`, so adapters written before it keep working; in
+        cursor mode it still rejects a malformed ``cursor`` and emits a
+        :class:`KeysetFallbackWarning`.
+
+        Raises:
+            InvalidCursorError: ``cursor`` is malformed or tampered with.
+        """
+        if cursor is not None:
+            decode_cursor(cursor)
+        if self.pagination_mode == "cursor":
+            warnings.warn(
+                f"{type(self).__name__} does not support cursor pagination; "
+                "serving an OFFSET page instead",
+                KeysetFallbackWarning,
+                stacklevel=2,
+            )
+        kwargs: dict[str, Any] = {}
+        if load_relations:
+            kwargs["load_relations"] = load_relations
+        items, total = await self.list(
+            page=page,
+            page_size=page_size,
+            search=search,
+            filters=filters,
+            order_by=order_by,
+            search_fields=search_fields,
+            **kwargs,
+        )
+        return ListResult(
+            items=items,
+            total=total,
+            has_next=page * page_size < total,
+            has_prev=page > 1,
+        )
 
     @abstractmethod
     async def create(self, data: dict[str, Any]) -> Any:
