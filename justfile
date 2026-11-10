@@ -207,6 +207,32 @@ setup-github repo="":
 secure repo="":
     bash scripts/secure-repo.sh {{ repo }}
 
+# ── Autopilot ─────────────────────────────────────────────────
+
+# Run one autopilot tick now (see ops/autopilot/README.md)
+autopilot-tick:
+    uv run poe autopilot:tick
+
+# Print what an autopilot tick would do; changes nothing
+autopilot-dry-run:
+    uv run poe autopilot:dry-run
+
+# Show autopilot state and the launchd agent
+autopilot-status:
+    uv run poe autopilot:status
+
+# Show the tail of the autopilot tick log
+autopilot-logs:
+    uv run poe autopilot:logs
+
+# Load the autopilot launchd agent (tick every 15 minutes)
+autopilot-install:
+    uv run poe autopilot:install
+
+# Unload the autopilot launchd agent
+autopilot-uninstall:
+    uv run poe autopilot:uninstall
+
 # -- Local dev -------------────────────────────────────────────
 
 # Run erp example

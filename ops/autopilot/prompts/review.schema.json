@@ -1,0 +1,25 @@
+{
+  "type": "object",
+  "properties": {
+    "verdict": {
+      "type": "string",
+      "enum": ["approve", "request_changes"]
+    },
+    "summary": {
+      "type": "string"
+    },
+    "blocking": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "file": {"type": "string"},
+          "line": {"type": "integer"},
+          "issue": {"type": "string"}
+        },
+        "required": ["issue"]
+      }
+    }
+  },
+  "required": ["verdict", "summary", "blocking"]
+}

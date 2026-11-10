@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  launchd agent for the HyperAdmin autopilot. Rendered by `ops/autopilot/autopilot.sh install`
+  (poe autopilot:install), which replaces @REPO@, @HOME@ and @LABEL@.
+
+  zsh -lc: a login shell, so CLAUDE_GH_TOKEN, the Homebrew PATH and the keychain session load.
+  caffeinate -i: the Mac does not idle-sleep in the middle of a tick.
+  AbandonProcessGroup: jobs the tick starts in the background outlive the tick.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>@LABEL@</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/zsh</string>
+    <string>-lc</string>
+    <string>caffeinate -i ops/autopilot/autopilot.sh tick</string>
+  </array>
+  <key>WorkingDirectory</key>
+  <string>@REPO@</string>
+  <key>StartInterval</key>
+  <integer>900</integer>
+  <key>RunAtLoad</key>
+  <false/>
+  <key>AbandonProcessGroup</key>
+  <true/>
+  <key>ProcessType</key>
+  <string>Background</string>
+  <key>StandardOutPath</key>
+  <string>@HOME@/.hyperadmin-autopilot/logs/launchd.log</string>
+  <key>StandardErrorPath</key>
+  <string>@HOME@/.hyperadmin-autopilot/logs/launchd.log</string>
+</dict>
+</plist>
