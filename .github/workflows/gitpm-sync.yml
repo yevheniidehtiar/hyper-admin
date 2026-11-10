@@ -2,7 +2,8 @@ name: GitPM Sync
 
 # Pushes .meta/ (stories, epics, milestones) to GitHub issues and milestones with gitpm.
 #
-# - Pull requests that touch .meta/: validate the tree and preview the sync (no writes).
+# - Pull requests (to develop or an epic branch) that touch .meta/: validate the tree and
+#   preview the sync (no writes).
 # - Merges to develop that touch .meta/: push to GitHub, once the state branch exists.
 # - Manual run (workflow_dispatch): preview by default; untick "dry_run" for a live sync.
 #   The first live sync must be started this way: it creates the state branch.
@@ -19,7 +20,8 @@ on:
       - ".github/workflows/gitpm-sync.yml"
       - "scripts/gitpm_merge_state.mjs"
   pull_request:
-    branches: [develop]
+    # Filters on the base branch: story PRs target epic/<slug>.
+    branches: [develop, "epic/**"]
     paths:
       - ".meta/**"
       - ".github/workflows/gitpm-sync.yml"

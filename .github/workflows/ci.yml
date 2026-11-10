@@ -5,7 +5,8 @@ on:
   push:
     branches: [master, develop]
   pull_request:
-    branches: [master, develop]
+    # Filters on the base branch: story PRs target epic/<slug>.
+    branches: [master, develop, "epic/**"]
 
 permissions:
   contents: read

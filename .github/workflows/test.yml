@@ -7,15 +7,20 @@ on:
     branches:
       - develop
       - master
+      # Epic branch pushes (a story PR merged) run Lint + E2E on the integrated
+      # state; the full matrix job below skips them.
+      - "epic/**"
     tags:
       - "v*.*.*"
   pull_request:
+    # Filters on the base branch: story PRs target epic/<slug>.
     branches:
       - develop
       - master
+      - "epic/**"
 
 # A newer push to the same PR supersedes the run in progress. Pushes to
-# develop/master and tags are never cancelled.
+# develop/master, epic branches and tags are never cancelled.
 concurrency:
   group: test-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
@@ -57,7 +62,9 @@ jobs:
         run: uv run poe lint
 
   test:
-    if: github.event_name == 'push'
+    # Full matrix on develop/master pushes and tags only. On a pull_request
+    # github.ref is refs/pull/<n>/merge, so PRs (any base) get test-pr instead.
+    if: github.event_name == 'push' && !startsWith(github.ref, 'refs/heads/epic/')
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
