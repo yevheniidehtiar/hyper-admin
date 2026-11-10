@@ -25,7 +25,7 @@ import overlap
 
 PRIORITY = {"critical": 0, "high": 1, "medium": 2, "low": 3}
 EPIC_BRANCH_PREFIX = "epic/"
-STORY_LINE = re.compile(r"^Story:[ \t]*`?([A-Za-z0-9_.-]+)`?[ \t]*$", re.MULTILINE)
+STORY_LINE = re.compile(r"^Story:[ \t]*`?([A-Za-z0-9_.-]+)`?[ \t]*\r?$", re.MULTILINE)
 DEP_SECTION = re.compile(
     r"^##+[ \t]*(blocked by|dependencies|depends on)[ \t]*$", re.IGNORECASE | re.MULTILINE
 )
@@ -177,6 +177,7 @@ class Epic:
     priority: str = "medium"
     labels: frozenset[str] = frozenset()
     issue: int | None = None
+    locked_by: str = ""
 
     @property
     def branch(self) -> str:
@@ -249,6 +250,7 @@ def parse_epic(text: str, slug: str) -> Epic:
         priority=str(data.get("priority") or "medium"),
         labels=_labels(data),
         issue=_issue(data),
+        locked_by=str(data.get("locked_by") or ""),
     )
 
 

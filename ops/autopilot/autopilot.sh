@@ -119,6 +119,11 @@ job_defaults() {
 
 # ── worktree pool ─────────────────────────────────────────────────────────────
 
+# slot_busy SLOT: true when the state lists a running job in that pool slot.
+slot_busy() {
+  state get jobs | jq -e --argjson slot "$1" 'any(.[]?; .slot == $slot)' >/dev/null 2>&1
+}
+
 # pool_prepare SLOT JOB BRANCH BASE: point .claude/worktrees/ap-SLOT at the job's branch.
 # The worktree is reused between jobs; `uv sync` runs only when uv.lock changed.
 pool_prepare() {
@@ -135,9 +140,15 @@ pool_prepare() {
     git -C "$wt" checkout -q --detach "$base" || return 1
   else
     # A slot whose runner died may still hold this branch; an idle slot can let go of it.
+    # A slot with a running job never does: the planner gives a branch to one job at a time,
+    # and if that ever fails this job is not started rather than pulling the branch away.
     for other in 1 2 3; do
       if [ "$other" != "$slot" ] && [ -e "$AP_MAIN/.claude/worktrees/ap-$other/.git" ] &&
         [ "$(git -C "$AP_MAIN/.claude/worktrees/ap-$other" branch --show-current)" = "$branch" ]; then
+        if slot_busy "$other"; then
+          log "  !! $branch is in use by the job in ap-$other"
+          return 1
+        fi
         git -C "$AP_MAIN/.claude/worktrees/ap-$other" checkout -q --detach || return 1
       fi
     done
@@ -145,14 +156,21 @@ pool_prepare() {
     if [ "$job" = "implement" ] && git -C "$wt" rev-parse -q --verify "origin/$branch^{commit}" >/dev/null 2>&1; then
       base="origin/$branch"
     fi
-    # --no-track: a plain `git push` must never land on the base (the epic branch).
-    git -C "$wt" checkout -q --no-track -B "$branch" "$base" || return 1
+    if git -C "$wt" rev-parse -q --verify "refs/heads/$branch^{commit}" >/dev/null 2>&1 &&
+      git -C "$wt" merge-base --is-ancestor "$base" "refs/heads/$branch" 2>/dev/null; then
+      # The local branch is the base plus commits an earlier attempt never pushed (a job
+      # ended by the wall-clock limit, say): keep them, the next attempt continues there.
+      git -C "$wt" checkout -q "$branch" || return 1
+    else
+      # --no-track: a plain `git push` must never land on the base (the epic branch).
+      git -C "$wt" checkout -q --no-track -B "$branch" "$base" || return 1
+    fi
   fi
   lock="$(git -C "$wt" rev-parse HEAD:uv.lock 2>/dev/null || true)"
   stamp="$AP_HOME/pool/ap-$slot.uvlock"
   if [ ! -d "$wt/.venv" ] || [ "$(cat "$stamp" 2>/dev/null || true)" != "$lock" ]; then
     log "  .. uv sync in ap-$slot"
-    (cd "$wt" && uv sync --all-extras --quiet) || return 1
+    (cd "$wt" && with_alarm 900 uv sync --all-extras --quiet) || return 1
     echo "$lock" >"$stamp"
   fi
 }
@@ -174,17 +192,51 @@ do_rerun_pr() {
   done
 }
 
-do_update_branch() {
-  planned "rebase PR #$1 on its base (gh pr update-branch --rebase)" "$2" || return 0
-  gh_bot pr update-branch "$1" -R "$AP_GH_REPO" --rebase
+do_clear_budget() {
+  planned "clear the retry counters of $1 '$2'" "$3" || return 0
+  state clear "$1" "$2"
 }
 
+# do_update_branch PR SHA WHY: let GitHub rebase an approved story PR on its epic branch.
+# The approval is tied to a commit, so it is moved to the rebased head: the same commits,
+# replayed by GitHub on a base that was itself reviewed. If the new head does not show up
+# in time the approval stays on the old commit and the PR is simply reviewed again.
+do_update_branch() {
+  local pr="$1" old="$2" new="" try
+  planned "rebase PR #$pr on its base (gh pr update-branch --rebase)" "$3" || return 0
+  gh_bot pr update-branch "$pr" -R "$AP_GH_REPO" --rebase || return 1
+  if [ -z "$old" ] || [ "$(state_value "prs.$pr.approved_sha")" != "$old" ]; then
+    return 0
+  fi
+  for try in 1 2 3 4 5; do
+    new="$(pr_head "$pr")"
+    if [ -n "$new" ] && [ "$new" != "$old" ]; then
+      state set "prs.$pr.approved_sha" "\"$new\""
+      return 0
+    fi
+    [ "$try" = 5 ] || sleep 3
+  done
+  log "  .. PR #$pr: rebased head not visible yet; it will be reviewed again"
+}
+
+# do_merge PR STORY ISSUE SHA WHY: merge exactly the commit the reviewer approved.
 do_merge() {
-  local pr="$1" story="$2" issue="$3"
-  planned "rebase-merge story PR #$pr${story:+ (story $story)}" "$4" || return 0
-  gh_bot pr merge "$pr" -R "$AP_GH_REPO" --rebase --delete-branch || return 1
+  local pr="$1" story="$2" issue="$3" sha="$4"
+  planned "rebase-merge story PR #$pr${story:+ (story $story)}${sha:+ at ${sha:0:9}}" "$5" || return 0
+  [ -n "$sha" ] || return 1
+  gh_bot pr merge "$pr" -R "$AP_GH_REPO" --rebase --delete-branch --match-head-commit "$sha" || return 1
   issue_stage "$issue" ap:done
   state note "merged story PR #$pr${story:+ ($story)} into its epic branch"
+}
+
+# do_epic_to_draft PR SLUG WHY: a ready epic PR that conflicts with develop can never
+# auto-merge. Take it back to draft so integrate-epic rebases and hands it over again.
+do_epic_to_draft() {
+  local pr="$1" slug="$2"
+  planned "turn epic PR #$pr back into a draft (auto-merge off)" "$3" || return 0
+  gh_bot pr merge "$pr" -R "$AP_GH_REPO" --disable-auto >/dev/null 2>&1 || true
+  gh_bot pr ready "$pr" -R "$AP_GH_REPO" --undo || return 1
+  state note "epic $slug: PR #$pr conflicted with develop after the hand-over; it is integrated again"
 }
 
 do_needs_human() {
@@ -214,13 +266,29 @@ Story pull requests are rebase-merged into \`epic/$slug\` by the autopilot once 
 # do_open_epic SLUG: take the epic. Creating the branch through the API is the lock: a second
 # attempt gets 422 "Reference already exists". The first commit marks the epic in_progress.
 do_open_epic() {
-  local slug="$1" branch="epic/$1" path=".meta/epics/$1/epic.md" sha blob
+  local slug="$1" branch="epic/$1" sha
   planned "create branch $branch from develop (lock), commit 'chore(meta): open epic', open draft PR" "$2" || return 0
   sha="$(gh_ro api "repos/$AP_GH_REPO/git/ref/heads/develop" --jq .object.sha)" || return 1
   if ! gh_bot api -X POST "repos/$AP_GH_REPO/git/refs" -f "ref=refs/heads/$branch" -f "sha=$sha" >/dev/null; then
     log "  .. $branch already exists or could not be created; leaving it alone"
     return 0
   fi
+  # If the commit fails here the branch stays: a later tick sees an epic branch without
+  # `locked_by: autopilot` and plans open-epic-commit, then open-epic-pr.
+  open_epic_commit "$slug" || return 1
+  do_open_epic_pr "$slug" "$2"
+}
+
+# do_open_epic_commit SLUG WHY: make the open-epic commit on a branch that lacks it.
+do_open_epic_commit() {
+  planned "commit 'chore(meta): open epic $1' on epic/$1" "$2" || return 0
+  open_epic_commit "$1"
+}
+
+# open_epic_commit SLUG: write status in_progress and the lock fields into the epic.md of
+# the epic branch, as one commit through the contents API (no checkout needed).
+open_epic_commit() {
+  local slug="$1" branch="epic/$1" path=".meta/epics/$1/epic.md" blob
   blob="$(gh_ro api "repos/$AP_GH_REPO/contents/$path?ref=$branch" --jq .sha)" || return 1
   gh_ro api "repos/$AP_GH_REPO/contents/$path?ref=$branch" -H "Accept: application/vnd.github.raw" \
     >"$TICK_TMP/epic.md" || return 1
@@ -232,7 +300,6 @@ do_open_epic() {
     -f "committer[name]=Claude Code" -f "committer[email]=noreply+claude-code@anthropic.com" \
     >/dev/null || return 1
   state note "opened epic $slug on $branch"
-  do_open_epic_pr "$slug" "$2"
 }
 
 # do_spawn JOB TARGET SLOT BRANCH BASE META WHY: start one headless job in the background.
@@ -245,7 +312,8 @@ do_spawn() {
     return 1
   }
   id="$(date +%Y%m%d-%H%M%S)-$job-$(safe_name "$target")"
-  cwd="$AP_MAIN"
+  # A job without a pool slot (the digest) reads only: it runs outside every checkout.
+  cwd="$AP_HOME"
   if [ "$slot" -gt 0 ]; then
     cwd="$AP_MAIN/.claude/worktrees/ap-$slot"
     if ! pool_prepare "$slot" "$job" "$branch" "$base"; then
@@ -299,11 +367,14 @@ execute_plan() {
         dry || state note "$why"
         ;;
       rerun-run) do_rerun_run "$a" "$why" || log "  !! rerun-run $a failed" ;;
+      clear-budget) do_clear_budget "$a" "$b" "$why" || log "  !! clear-budget $a $b failed" ;;
       rerun-pr) do_rerun_pr "$a" "$b" "$why" || log "  !! rerun-pr $a failed" ;;
-      update-branch) do_update_branch "$a" "$why" || log "  !! update-branch $a failed" ;;
-      merge) do_merge "$a" "$b" "$c" "$why" || log "  !! merge of PR #$a failed" ;;
+      update-branch) do_update_branch "$a" "$b" "$why" || log "  !! update-branch $a failed" ;;
+      merge) do_merge "$a" "$b" "$c" "$d" "$why" || log "  !! merge of PR #$a failed" ;;
       needs-human) do_needs_human "$a" "$b" "$why" || log "  !! needs-human on PR #$a failed" ;;
+      epic-to-draft) do_epic_to_draft "$a" "$b" "$why" || log "  !! epic-to-draft of PR #$a failed" ;;
       open-epic) do_open_epic "$a" "$why" || log "  !! open-epic $a failed" ;;
+      open-epic-commit) do_open_epic_commit "$a" "$why" || log "  !! open-epic-commit $a failed" ;;
       open-epic-pr) do_open_epic_pr "$a" "$why" || log "  !! open-epic-pr $a failed" ;;
       spawn) do_spawn "$a" "$b" "$c" "$d" "$e" "$f" "$why" || log "  !! spawn $a $b failed" ;;
       *) log "  !! unknown plan row: $kind" ;;
@@ -370,7 +441,7 @@ janitor_scan() {
     in_develop "$name" || continue
     printf 'branch\t%s\t\n' "$name"
   done <"$TICK_TMP/branches.txt"
-  git -C "$AP_MAIN" ls-remote --heads origin 'worktree-*' 'ap-*' 2>/dev/null >"$TICK_TMP/remote-heads.txt" || true
+  net_git -C "$AP_MAIN" ls-remote --heads origin 'worktree-*' 'ap-*' 2>/dev/null >"$TICK_TMP/remote-heads.txt" || true
   while read -r sha name; do
     name="${name#refs/heads/}"
     grep -qxF "$name" "$TICK_TMP/merged-heads.txt" || continue
@@ -402,7 +473,7 @@ janitor_apply() {
         ;;
       remote)
         log "DO   janitor: delete remote branch $name"
-        git -C "$AP_MAIN" push origin --delete "$name" >/dev/null 2>&1 || log "  !! could not delete origin/$name"
+        net_git -C "$AP_MAIN" push origin --delete "$name" >/dev/null 2>&1 || log "  !! could not delete origin/$name"
         ;;
     esac
   done 3<"$1"
@@ -458,6 +529,10 @@ tick_setup() {
   AP_MAIN="$(main_checkout)"
   AP_GH_REPO="$(repo_slug)"
   [ -n "$AP_GH_REPO" ] || die "cannot tell the GitHub repository from the origin remote"
+  # Nobody answers a prompt under launchd: a credential or host-key question must fail at
+  # once instead of holding the tick (and its lock) for good.
+  export GIT_TERMINAL_PROMPT=0
+  export GIT_SSH_COMMAND="${GIT_SSH_COMMAND:-ssh -oBatchMode=yes}"
   trap tick_cleanup EXIT
   if ! dry; then
     [ -n "${CLAUDE_GH_TOKEN:-}" ] || die "CLAUDE_GH_TOKEN is not set (the bot identity is required)"
@@ -481,14 +556,14 @@ cmd_tick() {
   log "tick start: repo $AP_GH_REPO, checkout $AP_REPO$(dry && echo ', DRY RUN (nothing is changed)')"
   if dry; then
     if [ "${AUTOPILOT_DRY_FETCH:-0}" = "1" ]; then
-      git -C "$AP_REPO" fetch origin --prune --quiet
+      with_alarm 300 git -C "$AP_REPO" fetch origin --prune --quiet || die "git fetch failed or timed out"
     else
       log "  .. dry run: no git fetch; origin/develop is as of $(git -C "$AP_REPO" log -1 --format=%cr origin/develop)"
     fi
   else
     state init
     state reap >/dev/null
-    git -C "$AP_REPO" fetch origin --prune --quiet
+    with_alarm 300 git -C "$AP_REPO" fetch origin --prune --quiet || die "git fetch failed or timed out"
   fi
   state show | sed 's/^/  state: /'
   AP_BOT="$(bot_login)"
@@ -523,6 +598,7 @@ job_field() {
 # after_job: the deterministic follow-up of a finished job (labels, comments, state).
 after_job() {
   local spec="$1" result="$2" status="$3" kind pr issue story branch epic verdict text day
+  local body head approved
   kind="$(job_field "$spec" kind)"
   pr="$(job_field "$spec" pr)"
   case "$kind" in
@@ -532,6 +608,14 @@ after_job() {
       branch="$(job_field "$spec" branch)"
       pr="$(gh_bot pr list -R "$AP_GH_REPO" --head "$branch" --state open --json number --jq '.[0].number // empty' || true)"
       if [ -n "$pr" ]; then
+        # The Story line is how the tick links the pull request to its story; add it when
+        # the job forgot (the planner also falls back to the head branch).
+        body="$(gh_ro pr view "$pr" -R "$AP_GH_REPO" --json body --jq .body 2>/dev/null || true)"
+        if [ -n "$story" ] && ! printf '%s\n' "$body" | grep -qE '^Story:[[:space:]]*`?[A-Za-z0-9_.-]+'; then
+          gh_bot pr edit "$pr" -R "$AP_GH_REPO" --body "Story: $story
+
+$body" >/dev/null || log "  !! could not add the Story line to PR #$pr"
+        fi
         issue_stage "$issue" ap:in-review
         [ -z "$issue" ] || gh_bot issue comment "$issue" -R "$AP_GH_REPO" \
           --body "The autopilot opened #$pr for this story." >/dev/null || true
@@ -541,15 +625,32 @@ after_job() {
       ;;
     review)
       verdict="$(jq -r '.structured_output.verdict // empty' "$result" 2>/dev/null || true)"
+      head="$(job_field "$spec" head_sha)"
       case "$verdict" in
-        approve) label_swap pr "$pr" ai-approved ai-changes-requested ;;
-        request_changes) label_swap pr "$pr" ai-changes-requested ai-approved ;;
+        approve)
+          # The approval stands for the commit that was reviewed; the tick merges only that.
+          state set "prs.$pr.approved_sha" "\"$head\""
+          label_swap pr "$pr" ai-approved ai-changes-requested
+          ;;
+        request_changes)
+          state set "prs.$pr.approved_sha" '""'
+          label_swap pr "$pr" ai-changes-requested ai-approved
+          ;;
         *) state note "review of PR #$pr returned no verdict ($status)" ;;
       esac
       ;;
     fix-pr)
       if [ "$status" = "ok" ]; then
         gh_bot pr edit "$pr" -R "$AP_GH_REPO" --remove-label ai-changes-requested >/dev/null 2>&1 || true
+        approved="$(state_value "prs.$pr.approved_sha")"
+        head="$(pr_head "$pr")"
+        if [ -n "$approved" ] && [ -n "$head" ] && [ "$head" != "$approved" ]; then
+          # The fix changed an approved pull request: what it pushed is reviewed before the
+          # merge, and that extra review does not count against the two rounds.
+          state set "prs.$pr.approved_sha" '""'
+          state bump prs "$pr" review --by -1 >/dev/null
+          gh_bot pr edit "$pr" -R "$AP_GH_REPO" --remove-label ai-approved >/dev/null 2>&1 || true
+        fi
       fi
       ;;
     approve-sdd)
@@ -567,11 +668,13 @@ after_job() {
       [ -n "$text" ] || return 0
       printf '%s\n' "$text" >"$AP_HOME/digests/$day.md"
       if [ -n "${AUTOPILOT_SLACK_WEBHOOK:-}" ]; then
-        curl -fsS -X POST -H 'Content-Type: application/json' \
+        curl -fsS --max-time 30 -X POST -H 'Content-Type: application/json' \
           -d "$(jq -n --arg text "$text" '{text: $text}')" "$AUTOPILOT_SLACK_WEBHOOK" >/dev/null || return 1
       elif [ -n "${AUTOPILOT_DIGEST_ISSUE:-}" ]; then
         gh_bot issue comment "$AUTOPILOT_DIGEST_ISSUE" -R "$AP_GH_REPO" \
           --body-file "$AP_HOME/digests/$day.md" >/dev/null || return 1
+      else
+        log "digest written to $AP_HOME/digests/$day.md only: set AUTOPILOT_SLACK_WEBHOOK or AUTOPILOT_DIGEST_ISSUE to have it delivered"
       fi
       state digest-sent
       ;;
@@ -603,11 +706,27 @@ $(jq -r 'del(.cwd, .session, .resume, .resume_slot, .model, .turns, .timeout, .s
 
 $(cat "$AP_HOME/jobs/$id.input.json")"
   fi
-  flags=(--permission-mode acceptEdits --permission-prompts none
-    --allowedTools 'Bash(git:*)' 'Bash(gh pr:*)' 'Bash(gh api:*)' 'Bash(gh run:*)' 'Bash(gh issue:*)'
-    'Bash(uv run:*)' 'Bash(./scripts/gitpm.sh:*)' Read Edit Write Glob Grep Agent
-    --disallowedTools 'Bash(gh release:*)' 'Bash(gh repo:*)' "Bash(git push:*${AP_MIRROR}*)"
-    --output-format json --max-turns "$(job_field "$spec" turns)" --model "$(job_field "$spec" model)")
+  case "$kind" in
+    review | digest)
+      # These jobs only read and report, so they get no edit tools at all (--tools), no
+      # edit-accepting mode, and an allowlist of read commands. review may post its comment.
+      flags=(--permission-mode manual --permission-prompts none
+        --tools Read Glob Grep Bash
+        --allowedTools Read Glob Grep 'Bash(gh pr view:*)' 'Bash(gh pr diff:*)' 'Bash(gh pr list:*)'
+        'Bash(gh pr checks:*)' 'Bash(gh issue view:*)' 'Bash(gh issue list:*)' 'Bash(gh run view:*)'
+        'Bash(git log:*)' 'Bash(git diff:*)' 'Bash(git show:*)' 'Bash(git status:*)')
+      if [ "$kind" = "review" ]; then
+        flags+=('Bash(gh pr comment:*)')
+      fi
+      ;;
+    *)
+      flags=(--permission-mode acceptEdits --permission-prompts none
+        --allowedTools 'Bash(git:*)' 'Bash(gh pr:*)' 'Bash(gh api:*)' 'Bash(gh run:*)' 'Bash(gh issue:*)'
+        'Bash(uv run:*)' 'Bash(./scripts/gitpm.sh:*)' Read Edit Write Glob Grep Agent
+        --disallowedTools 'Bash(gh release:*)' 'Bash(gh repo:*)' "Bash(git push:*${AP_MIRROR}*)")
+      ;;
+  esac
+  flags+=(--output-format json --max-turns "$(job_field "$spec" turns)" --model "$(job_field "$spec" model)")
   if [ -n "$(job_field "$spec" resume)" ]; then
     flags+=(--resume "$(job_field "$spec" resume)")
   else
@@ -622,7 +741,10 @@ $(cat "$AP_HOME/jobs/$id.input.json")"
     cd "$cwd"
     # The job acts as the bot on GitHub and commits as Claude Code. AUTOPILOT=1 turns the
     # interactive hooks of .claude/settings.json into no-ops.
+    # shellcheck disable=SC2031  # gh_bot sets GH_TOKEN in its own subshell; this is another one
     export AUTOPILOT=1 GH_TOKEN="${CLAUDE_GH_TOKEN:-}" GIT_TERMINAL_PROMPT=0
+    # GH_REPO: plain `gh` finds the repository even where the job runs outside a checkout.
+    export GH_REPO="$AP_GH_REPO"
     export GIT_AUTHOR_NAME="Claude Code" GIT_AUTHOR_EMAIL="noreply+claude-code@anthropic.com"
     export GIT_COMMITTER_NAME="Claude Code" GIT_COMMITTER_EMAIL="noreply+claude-code@anthropic.com"
     with_alarm "$(job_field "$spec" timeout)" claude -p "$prompt" "${flags[@]}" \
@@ -656,10 +778,20 @@ cmd_logs() {
 }
 
 cmd_install() {
+  local main branch
   if dry; then
-    log "DRY  render $AP_PLIST from the template and bootstrap it into launchd"
+    log "DRY  render $AP_PLIST from the template (repository $AP_REPO) and bootstrap it into launchd"
     return 0
   fi
+  # launchd runs the autopilot.sh and the prompts of the checkout named in the plist. A
+  # feature worktree is on some branch and may be removed later, so only the main checkout
+  # is accepted unless the owner insists.
+  main="$(main_checkout)"
+  branch="$(git -C "$AP_REPO" branch --show-current)"
+  if [ "$AP_REPO" != "$main" ] && [ "${AUTOPILOT_INSTALL_ANYWHERE:-0}" != "1" ]; then
+    die "install from the main checkout ($main), not from $AP_REPO (AUTOPILOT_INSTALL_ANYWHERE=1 overrides)"
+  fi
+  echo "installing for $AP_REPO (branch ${branch:-detached}); this checkout must stay on develop"
   mkdir -p "$AP_HOME/logs" "$(dirname "$AP_PLIST")"
   sed -e "s|@REPO@|$AP_REPO|g" -e "s|@HOME@|$HOME|g" -e "s|@LABEL@|$AP_LABEL|g" \
     "$AP_DIR/$AP_LABEL.plist.tmpl" >"$AP_PLIST"

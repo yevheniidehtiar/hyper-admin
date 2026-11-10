@@ -12,12 +12,15 @@ Output: one row per action, fields separated by the unit separator (0x1f):
   info            print only
   note            print and queue for the daily digest
   rerun-run       RUN_ID                         rerun a cancelled or timed-out develop run
+  clear-budget    SCOPE KEY                      forget the retry counters of one item
   rerun-pr        PR RUN_IDS                     rerun cancelled checks of a pull request
-  update-branch   PR                             rebase an approved story PR on its epic branch
-  merge           PR STORY_ID ISSUE              rebase-merge a story PR into its epic branch
+  update-branch   PR HEAD_SHA                    rebase an approved story PR on its epic branch
+  merge           PR STORY_ID ISSUE HEAD_SHA     rebase-merge a story PR into its epic branch
   needs-human     PR REASON                      label and comment once, then leave it alone
   open-epic       SLUG                           create epic/<slug> (the lock) and its draft PR
+  open-epic-commit SLUG                          make the open-epic commit a branch still lacks
   open-epic-pr    SLUG                           open the missing draft PR of an epic branch
+  epic-to-draft   PR SLUG                        take back a ready epic PR that conflicts
   spawn           JOB TARGET SLOT BRANCH BASE META   start a headless job
 
 Usage:
@@ -120,6 +123,8 @@ class Planner:
         self.done: set[str] = set()
         self.busy_prs = st.busy(self.state, "pr")
         self.busy_epics = st.busy(self.state, "epic")
+        self._lookup: dict | None = None
+        self._branches: dict[tuple[str, str], str] | None = None
 
     # --- small helpers --------------------------------------------------------------------
 
@@ -149,6 +154,26 @@ class Planner:
         prefixes = (ready.EPIC_BRANCH_PREFIX, FIX_DEVELOP_PREFIX)
         return base.startswith(ready.EPIC_BRANCH_PREFIX) or head.startswith(prefixes)
 
+    def _story_of(self, pr: dict, slug: str | None = None) -> str:
+        """Return the story a pull request delivers ("" when it cannot be told).
+
+        The ``Story: <id>`` line of the body wins. A pull request without it is matched by its
+        head branch against the working branches of the stories of its epic, so a forgotten
+        line neither starts the story twice nor keeps the epic from finishing.
+        """
+        story = ready.story_id_from_body(pr.get("body"))
+        if story:
+            return story
+        if self._branches is None:
+            self._branches = {
+                (item.epic or "", item.branch): item.id
+                for item in self._index().values()
+                if isinstance(item, ready.Story)
+            }
+        if slug is None:
+            slug = str(pr.get("baseRefName") or "").removeprefix(ready.EPIC_BRANCH_PREFIX)
+        return self._branches.get((slug, str(pr.get("headRefName") or "")), "")
+
     # --- develop and nightly workflows ----------------------------------------------------
 
     def develop_health(self) -> None:
@@ -163,6 +188,13 @@ class Planner:
         if not history or history[0].get("status") != "completed":
             return
         recent = [run for run in history if run.get("status") == "completed"][:need]
+        if history[0].get("conclusion") in PASSING_RUN:
+            # Green again: the next red streak of this workflow gets a fresh repair budget.
+            if st.used(self.state, "workflows", workflow, "fix-develop"):
+                self.add(
+                    "clear-budget", f"{workflow} on develop is green again", "workflows", workflow
+                )
+            return
         if len(recent) < need or any(run.get("conclusion") in PASSING_RUN for run in recent):
             return
         latest = recent[0]
@@ -175,9 +207,14 @@ class Planner:
             if latest.get("conclusion") == "cancelled":
                 self.note(f"{where} was cancelled again after one rerun")
                 return
-        self._repair_develop(run_id, where)
+        self._repair_develop(workflow, run_id, where)
 
-    def _repair_develop(self, run_id: str, where: str) -> None:
+    def _repair_develop(self, workflow: str, run_id: str, where: str) -> None:
+        """Start the one repair a red workflow gets.
+
+        The budget belongs to the workflow, not to the run: every push and every night makes
+        a new run, and a failure the job could not fix must not start a job per run.
+        """
         open_fix = [
             pr for pr in self.prs if str(pr.get("headRefName")).startswith(FIX_DEVELOP_PREFIX)
         ]
@@ -187,7 +224,7 @@ class Planner:
             self.note(f"{where} is red; fix PR #{open_fix[0].get('number')} waits for the owner")
         elif planned or running:
             self.info(f"{where} is red; a fix-develop job is already on it")
-        elif st.allowed(self.state, "runs", run_id, "fix-develop"):
+        elif st.allowed(self.state, "workflows", workflow, "fix-develop"):
             self.spawn(
                 "fix-develop",
                 run_id,
@@ -195,9 +232,10 @@ class Planner:
                 branch=f"{FIX_DEVELOP_PREFIX}{run_id}",
                 base="origin/develop",
                 run=run_id,
+                workflow=workflow,
             )
         else:
-            self.note(f"{where} is still red after a fix attempt")
+            self.note(f"{workflow} on develop is still red after a fix attempt; it needs a look")
 
     # --- pull requests --------------------------------------------------------------------
 
@@ -227,8 +265,8 @@ class Planner:
         number = pr.get("number")
         if st.allowed(self.state, "prs", number, "fix"):
             head = str(pr.get("headRefName"))
-            story = ready.story_id_from_body(pr.get("body")) or ""
-            memory = self.state["stories"].get(story, {})
+            memory = self.state["stories"].get(self._story_of(pr), {})
+            epic_pr = head.startswith(ready.EPIC_BRANCH_PREFIX)
             self.spawn(
                 "fix-pr",
                 number,
@@ -237,7 +275,9 @@ class Planner:
                 base=f"origin/{head}",
                 pr=number,
                 reason=reason,
-                epic_pr=head.startswith(ready.EPIC_BRANCH_PREFIX),
+                epic_pr=epic_pr,
+                # The epic field marks the epic branch as taken for the other epic jobs.
+                epic=head.removeprefix(ready.EPIC_BRANCH_PREFIX) if epic_pr else "",
                 resume=memory.get("session") or "",
                 resume_slot=memory.get("slot") or 0,
             )
@@ -249,10 +289,14 @@ class Planner:
         if not self.state["prs"].get(str(number), {}).get("escalated"):
             self.add("needs-human", f"PR #{number}: {reason}", number, reason)
 
-    def _repair(self, pr: dict, checks: str, runs: list[str]) -> bool:
-        """Queue the repair a red or conflicting PR needs; return whether one was needed."""
+    def _repair(self, pr: dict, checks: str, runs: list[str], *, rebase: bool = True) -> bool:
+        """Queue the repair a red or conflicting PR needs; return whether one was needed.
+
+        With ``rebase=False`` a conflict is not a reason for a fix round (the draft pull
+        request of an epic branch, which fix-pr must not rebase).
+        """
         number = pr.get("number")
-        if pr.get("mergeable") == "CONFLICTING":
+        if rebase and pr.get("mergeable") == "CONFLICTING":
             self._fix(pr, "conflicts with its base branch")
         elif checks == "failed":
             self._fix(pr, "checks failed")
@@ -265,12 +309,12 @@ class Planner:
             return False
         return True
 
-    def _owner_pr(self, pr: dict, what: str) -> None:
+    def _owner_pr(self, pr: dict, what: str, *, rebase: bool = True) -> None:
         """Keep a PR to ``develop`` green; merging it is the owner's click."""
         if self._blocked(pr, what):
             return
         checks, runs = classify_checks(pr.get("statusCheckRollup"))
-        if self._repair(pr, checks, runs):
+        if self._repair(pr, checks, runs, rebase=rebase):
             return
         if checks == "green" and not pr.get("isDraft"):
             self.note(f"{what} is green and waits for the owner: {pr.get('title')}")
@@ -291,39 +335,53 @@ class Planner:
             self.info(f"{what}: no checks reported yet (is epic/** in the workflow triggers?)")
         elif checks == "pending":
             self.info(f"{what}: checks running")
-        elif "ai-approved" not in labels:
+        elif "ai-approved" not in labels or not self._approved_head(pr):
+            # The label alone is not enough: it must stand for the commit that is merged.
+            stale = "ai-approved" in labels
             if st.allowed(self.state, "prs", number, "review"):
                 head = str(pr.get("headRefName"))
                 self.spawn(
-                    "review", number, "green, not reviewed", base=f"origin/{head}", pr=number
+                    "review",
+                    number,
+                    "green, changed since its approval" if stale else "green, not reviewed",
+                    base=f"origin/{head}",
+                    pr=number,
+                    head_sha=str(pr.get("headRefOid") or ""),
                 )
             else:
-                self._escalate(pr, "review budget spent without an approval")
+                self._escalate(pr, "review budget spent without an approval of its head commit")
         else:
             self._merge(pr, what)
 
+    def _approved_head(self, pr: dict) -> bool:
+        """Tell whether the reviewer approved exactly the commit the PR is at now."""
+        approved = self.state["prs"].get(str(pr.get("number")), {}).get("approved_sha")
+        return bool(approved) and approved == pr.get("headRefOid")
+
     def _merge(self, pr: dict, what: str) -> None:
         number = pr.get("number")
+        sha = str(pr.get("headRefOid") or "")
         behind = (self.inputs.get("behind") or {}).get(str(number))
         if pr.get("mergeable") != "MERGEABLE" or behind is None:
             self.info(f"{what}: approved and green, mergeability not known yet")
         elif int(behind) > 0:
-            self.add("update-branch", f"{what} is {behind} commits behind its epic", number)
+            self.add("update-branch", f"{what} is {behind} commits behind its epic", number, sha)
         else:
-            story = ready.story_id_from_body(pr.get("body")) or ""
+            story = self._story_of(pr)
             if not story:
-                self.note(f"{what} has no 'Story: <id>' line; its story will not count as done")
+                self.note(f"{what} names no story; its story will not count as done")
             item = self._index().get(story)
             issue = item.issue if item is not None and item.issue else ""
-            self.add("merge", f"{what}: green, ai-approved, up to date", number, story, issue)
+            self.add("merge", f"{what}: green, ai-approved, up to date", number, story, issue, sha)
 
     # --- epics ----------------------------------------------------------------------------
 
     def _index(self) -> dict:
-        index = self.develop.index()
-        for meta in self.epic_meta.values():
-            index.update(meta.index())
-        return index
+        if self._lookup is None:
+            self._lookup = self.develop.index()
+            for meta in self.epic_meta.values():
+                self._lookup.update(meta.index())
+        return self._lookup
 
     def epics(self) -> None:
         """Advance every epic branch and open new epics when there is room."""
@@ -349,16 +407,26 @@ class Planner:
             self.info(f"branch epic/{slug} has no .meta/epics/{slug}/epic.md; ignored")
             return False
         pr = self._epic_pr(slug)
+        if pr is not None and not pr.get("isDraft"):
+            self._ready_epic(slug, pr)
+            return False
+        if self._lock_commit_missing(slug, epic):
+            # Nothing else can happen first: without a commit ahead of develop the draft
+            # pull request cannot even be opened.
+            self.add("open-epic-commit", f"epic/{slug} has no open-epic commit yet", slug)
+            return True
         if pr is None:
             self.add("open-epic-pr", f"epic/{slug} has no pull request to develop", slug)
-        elif not pr.get("isDraft"):
-            self.note(f"epic PR #{pr.get('number')} ({slug}) is ready and waits for the owner")
-            return False
         else:
-            self._owner_pr(pr, f"epic PR #{pr.get('number')}")
+            what = f"epic PR #{pr.get('number')}"
+            if pr.get("mergeable") == "CONFLICTING":
+                # fix-pr must not rebase a branch that open story PRs build on; the rebase
+                # on develop is integrate-epic's, when no story PR is open.
+                self.info(f"{what} conflicts with develop; integrate-epic rebases it at the end")
+            self._owner_pr(pr, what, rebase=False)
         stories = [story for story in meta.stories_of(slug) if story.status != "cancelled"]
         merged = (self.inputs.get("merged") or {}).get(slug) or []
-        done = {ready.story_id_from_body(item.get("body")) or "" for item in merged}
+        done = {self._story_of(item, slug) for item in merged}
         done |= {story.id for story in stories if story.status == "done"}
         specs = [story for story in stories if story.is_spec and story.id not in done]
         if specs and self.state["epics"].get(slug, {}).get("spec") != "approved":
@@ -373,11 +441,44 @@ class Planner:
             self._integrate(slug, pr)
         return True
 
+    def _lock_commit_missing(self, slug: str, epic: ready.Epic) -> bool:
+        """Tell whether the epic branch still lacks its ``chore(meta): open epic`` commit.
+
+        That happens when the branch was created and the commit then failed. Only the
+        epic.md read from the epic branch itself counts (a dry run may only have develop's),
+        and never once the epic is closed: the close-epic commit removes the lock fields.
+        """
+        return (
+            slug in self.epic_meta
+            and epic.locked_by != "autopilot"
+            and epic.status not in {"done", "cancelled"}
+            and slug not in self.busy_epics
+        )
+
+    def _ready_epic(self, slug: str, pr: dict) -> None:
+        """Report an epic PR that was handed to the owner; take it back when it conflicts."""
+        number = pr.get("number")
+        what = f"epic PR #{number} ({slug})"
+        if pr.get("mergeable") == "CONFLICTING":
+            idle = slug not in self.busy_epics and "needs-human" not in _labels(pr)
+            approved = pr.get("reviewDecision") == "APPROVED"
+            if idle and not approved and st.allowed(self.state, "epics", slug, "integrate"):
+                # develop moved after the hand-over: auto-merge can never fire like this.
+                self.add(
+                    "epic-to-draft", f"{what} is ready but conflicts with develop", number, slug
+                )
+            else:
+                self.note(f"{what} is ready but conflicts with develop; it needs a look")
+        elif classify_checks(pr.get("statusCheckRollup"))[0] == "failed":
+            self.note(f"{what} is ready but its checks are red; it needs a look")
+        else:
+            self.note(f"{what} is ready and waits for the owner")
+
     def _spec(self, slug: str) -> None:
         if self.state["epics"].get(slug, {}).get("spec") == "escalated":
             self.note(f"epic {slug}: the SDD needs an owner decision (see the spec issue)")
         elif slug in self.busy_epics:
-            self.info(f"epic {slug}: SDD review running")
+            self.info(f"epic {slug}: a job is running on the epic branch")
         elif st.allowed(self.state, "epics", slug, "sdd"):
             branch = ready.EPIC_BRANCH_PREFIX + slug
             self.spawn(
@@ -446,7 +547,7 @@ class Planner:
         index = self._index()
         in_flight: dict[str, ready.Story] = {}
         flying = st.busy(self.state, "story") | {
-            ready.story_id_from_body(pr.get("body")) or ""
+            self._story_of(pr)
             for pr in self.prs
             if str(pr.get("baseRefName")).startswith(ready.EPIC_BRANCH_PREFIX)
         }
@@ -524,10 +625,19 @@ class Planner:
         cooling = st.in_cooldown(self.state, self.now)
         order = {job: position for position, job in enumerate(SPAWN_ORDER)}
         waiting = 0
+        # One job per branch: a second job would detach the first one's worktree or push
+        # over it. Running jobs hold their branch, and so does a job queued earlier here.
+        taken = st.busy(self.state, "branch")
         for spec in sorted(self.spawns, key=lambda item: order.get(item["job"], len(order))):
+            branch = str(spec.get("branch") or "")
+            if branch in taken:
+                self.info(f"{spec['job']} {spec['target']} waits: branch {branch} is in use")
+                continue
             if cooling or (spec["job"] != "digest" and not free):
                 waiting += 1
                 continue
+            if branch:
+                taken.add(branch)
             slot = 0 if spec["job"] == "digest" else self._slot(spec, free)
             meta = {key: value for key, value in spec.items() if key not in {"why", "job"}}
             self.add(

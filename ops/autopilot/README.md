@@ -38,7 +38,7 @@ no branch, no fetch, no state file. Its only writes go to a temporary directory 
 | `implement <story>` | implements one story on a branch cut from `epic/<slug>`, opens the PR to the epic branch | opus | 2 per story |
 | `review <pr>` | reviews a green story PR, comments, returns a verdict; the tick sets `ai-approved` or `ai-changes-requested` | sonnet | 2 per PR |
 | `fix-pr <pr>` | repairs failed checks, conflicts or review findings, one round per run | opus | 3 per PR |
-| `fix-develop <run>` | fixes or reverts what broke `develop` on `fix/develop-<run>`, PR to `develop` for the owner | opus | 1 per run |
+| `fix-develop <run>` | fixes or reverts what broke `develop` on `fix/develop-<run>`, PR to `develop` for the owner | opus | 1 per workflow, until that workflow is green again |
 | `approve-sdd <epic>` | architect review of the epic's SDD, approves or escalates | opus | 2 per epic |
 | `integrate-epic <slug>` | rebases the epic on `develop`, close-epic commit, marks the PR ready with auto-merge | sonnet | 2 per epic |
 | `digest` | writes the daily digest from the queued notes | haiku | once a day |
@@ -60,6 +60,13 @@ AUTOPILOT=1 claude -p "<prompts/_common.md + prompts/<job>.md + arguments>" \
 
 - No `--dangerously-skip-permissions`. Anything outside the allowlist is denied without a prompt
   and shows up in the result's `permission_denials`, which the digest reports.
+- `review` and `digest` only read, so they get a narrower set: `--tools Read Glob Grep Bash`
+  (no edit tools exist for them), `--permission-mode manual`, and an allowlist of read
+  commands (`gh pr view|diff|list|checks`, `gh issue view|list`, `gh run view`,
+  `git log|diff|show|status`); `review` may also run `gh pr comment`. The digest runs in
+  `~/.hyperadmin-autopilot`, not in a checkout.
+- One job per branch: a job is not started while another job, running or queued in the same
+  tick, uses its branch, and a pool slot with a running job is never switched away.
 - No `--max-budget-usd`: it counts list prices and would stop long runs on a subscription.
 - A wall-clock limit per job (a small `perl` alarm wrapper; macOS has no `timeout`) ends the
   job's whole process group, because a job can block at the usage limit instead of failing.
@@ -91,13 +98,29 @@ AUTOPILOT=1 claude -p "<prompts/_common.md + prompts/<job>.md + arguments>" \
   `.github/`, visual snapshots, and the single hotspot files of
   `.claude/rules/conflict-avoidance.md`). A story without a files section runs alone in its epic.
 - A story counts as done when a pull request with `Story: <id>` in its body is merged into the
-  epic branch. Feature pull requests do not edit `.meta` status; the story issue gets
-  `ap:in-progress`, `ap:in-review`, `ap:done` instead.
+  epic branch. A pull request without that line is matched by its head branch (the story's
+  working branch), and the runner adds the line after the implement job. Feature pull requests
+  do not edit `.meta` status; the story issue gets `ap:in-progress`, `ap:in-review`, `ap:done`
+  instead.
 - A story pull request is merged with `gh pr merge --rebase --delete-branch` when all its checks
   are green, it carries `ai-approved`, has no `needs-human`, and is not behind its epic branch
   (the tick rebases it with `gh pr update-branch --rebase` first when it is).
+- `ai-approved` counts only for the commit the reviewer saw. The reviewed head is kept in
+  `state.json` and the merge uses `--match-head-commit`. A rebase the tick asks GitHub for
+  carries the approval over; anything a `fix-pr` job pushes afterwards drops the label and is
+  reviewed again (that review is not charged to the two rounds). Setting the label by hand
+  does not merge a pull request: the reviewer job has to approve the head commit.
+- A draft epic pull request that conflicts with `develop` is left alone until the end:
+  `fix-pr` must not rebase a branch that story pull requests build on, so the rebase is
+  `integrate-epic`'s. Failed checks on it are still repaired, with normal commits.
 - When every story is merged and no story pull request is open, `integrate-epic` hands the epic
-  pull request to the owner. From then on the branch is frozen.
+  pull request to the owner. From then on the branch is frozen. If `develop` moves and the
+  ready pull request conflicts before the owner approved it, the tick turns it back into a
+  draft and integrates it once more; after that, or when its checks go red, the digest says it
+  needs a look instead of asking for an approval.
+- If opening an epic stops between creating the branch and the open-epic commit, the next tick
+  sees an epic branch whose `epic.md` lacks `locked_by: autopilot` and makes the commit, then
+  opens the draft pull request.
 
 ## Usage limits
 
@@ -156,6 +179,8 @@ repository):
 | `AUTOPILOT_DRY_RUN` | `0` | `1` prints actions only |
 | `AUTOPILOT_DRY_FETCH` | `0` | `1` lets a dry run `git fetch` first |
 | `AUTOPILOT_HOME` | `~/.hyperadmin-autopilot` | state, logs, job files |
+| `AUTOPILOT_NET_SECONDS` | `120` | wall-clock limit of one `gh` or remote `git` call of the tick |
+| `AUTOPILOT_INSTALL_ANYWHERE` | `0` | `1` lets `install` run from a checkout other than the main one |
 
 ## Before the first live tick
 
@@ -166,8 +191,15 @@ repository):
 4. `git push` works without a prompt from that shell (the jobs set `GIT_TERMINAL_PROMPT=0`).
 5. A dry run prints a plan you agree with, and the janitor list has been dealt with.
 6. `AUTOPILOT_EPICS` names the pilot epic.
+7. The digest has somewhere to go: `AUTOPILOT_SLACK_WEBHOOK`, or `AUTOPILOT_DIGEST_ISSUE` set to
+   the number of a standing issue (the autopilot does not create one). With neither, the
+   digest is only written to `~/.hyperadmin-autopilot/digests/`.
 
-Then `poe autopilot:install`. `launchctl print gui/$UID/com.hyperadmin.autopilot` shows it
+Then `poe autopilot:install`, run from the main checkout: launchd runs the `autopilot.sh` and
+the prompts of the checkout named in the plist, so `install` refuses a feature worktree, and
+the main checkout has to stay on `develop`. The tick never prompts: its `gh` and remote `git`
+calls run with `GIT_TERMINAL_PROMPT=0`, ssh `BatchMode` and a wall-clock limit each, and a
+job that is far past its own limit is dropped from the state even if its pid is in use again. `launchctl print gui/$UID/com.hyperadmin.autopilot` shows it
 loaded; `pmset` settings decide whether the Mac wakes for the schedule.
 
 ## Files

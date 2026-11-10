@@ -8,10 +8,13 @@
 AP_PUSH_WORKFLOWS="${AUTOPILOT_PUSH_WORKFLOWS:-CI|Test|Deploy Docs|GitPM Sync}"
 AP_NIGHTLY_WORKFLOWS="${AUTOPILOT_NIGHTLY_WORKFLOWS:-Load Test|Demo|Scheduled Health Agent}"
 AP_LABELS="ai-approved ai-changes-requested needs-human ap:in-progress ap:in-review ap:done"
-AP_PR_FIELDS="number,title,author,baseRefName,headRefName,isDraft,mergeable,labels,body,statusCheckRollup,url"
+AP_PR_FIELDS="number,title,author,baseRefName,headRefName,headRefOid,isDraft,mergeable,reviewDecision,labels,body,statusCheckRollup,url"
+# Wall-clock limit of one gh or git network call. Under launchd nobody can answer a prompt
+# and a stalled call would hold the tick lock for good, so every such call is bounded.
+AP_NET_SECONDS="${AUTOPILOT_NET_SECONDS:-120}"
 
 gh_ro() {
-  gh "$@"
+  with_alarm "$AP_NET_SECONDS" gh "$@"
 }
 
 gh_bot() {
@@ -19,7 +22,21 @@ gh_bot() {
     log "CLAUDE_GH_TOKEN is not set: refusing to write to GitHub under another identity"
     return 1
   fi
-  GH_TOKEN="$CLAUDE_GH_TOKEN" gh "$@"
+  # A subshell, so the token is in the environment of this one call only.
+  (
+    export GH_TOKEN="$CLAUDE_GH_TOKEN"
+    with_alarm "$AP_NET_SECONDS" gh "$@"
+  )
+}
+
+# net_git ARGS...: git against the remote, bounded like the gh calls.
+net_git() {
+  with_alarm "$AP_NET_SECONDS" git "$@"
+}
+
+# pr_head PR: print the head commit of a pull request as GitHub has it now.
+pr_head() {
+  gh_ro pr view "$1" -R "$AP_GH_REPO" --json headRefOid --jq .headRefOid 2>/dev/null || true
 }
 
 # repo_slug: print owner/name of the origin remote.
@@ -37,7 +54,7 @@ bot_login() {
   if [ -n "${AUTOPILOT_BOT_LOGIN:-}" ]; then
     echo "$AUTOPILOT_BOT_LOGIN"
   elif [ -n "${CLAUDE_GH_TOKEN:-}" ]; then
-    GH_TOKEN="$CLAUDE_GH_TOKEN" gh api user --jq .login 2>/dev/null || true
+    gh_bot api user --jq .login 2>/dev/null || true
   fi
 }
 
