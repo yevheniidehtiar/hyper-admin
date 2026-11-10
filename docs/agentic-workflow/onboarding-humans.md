@@ -80,15 +80,19 @@ uv run playwright install chromium --with-deps
 | Variable | Purpose | Required for |
 |----------|---------|-------------|
 | `CLAUDE_GH_TOKEN` | GitHub bot token for PR creation | Creating PRs as Claude Code identity; the autopilot |
-| `GITHUB_TOKEN` | General GitHub API access | `gh` CLI, issues, labels |
+| `GITHUB_TOKEN` | General GitHub API access where `gh auth login` is not possible | CI runners and cloud VMs only |
 
 ```bash
 export CLAUDE_GH_TOKEN="ghp_..."
-export GITHUB_TOKEN="ghp_..."
 ```
 
-Put these in your login shell profile (`~/.zprofile` or similar) if you run the
-autopilot: launchd starts it through a login shell.
+On a workstation, `gh auth login` covers reads and everything done under your
+own identity; you do not need `GITHUB_TOKEN`.
+
+If you run the autopilot, put `CLAUDE_GH_TOKEN` in your login shell profile
+(`~/.zprofile` or similar): launchd starts the tick through a login shell. Do
+not export `GITHUB_TOKEN` there. `gh` prefers it over the keychain login, so
+every `gh` call in the tick and its jobs would run as that token.
 
 ### 7. Smoke test
 
@@ -129,6 +133,18 @@ Only the maintainer runs it. It needs macOS, a logged-in Claude Code session
 | `poe autopilot:tick` | Run one tick now |
 | `poe autopilot:uninstall` | Stop and remove it |
 | `AUTOPILOT_DRY_RUN=1 ops/autopilot/autopilot.sh tick` | Print what a tick would do, change nothing |
+
+First-time setup, in this order:
+
+1. Run `AUTOPILOT_DRY_RUN=1 ops/autopilot/autopilot.sh tick` and read the
+   janitor list (stale worktrees and branches it would remove).
+2. Say go on that list once and let the cleanup run. It comes before the
+   worktree pool exists, because each stale worktree costs a
+   `uv sync --all-extras`.
+3. `poe autopilot:install`.
+4. Check that it is loaded: `launchctl print gui/$UID/com.hyperadmin.autopilot`.
+5. Schedule a wake with `pmset` (for example `sudo pmset repeat wakeorpoweron
+   MTWRFSU 06:00:00`) so the Mac is awake for the ticks you care about.
 
 State is kept in `~/.hyperadmin-autopilot/state.json`. Jobs run in three reused
 worktrees, `.claude/worktrees/ap-1` to `ap-3`. To pause everything, uninstall

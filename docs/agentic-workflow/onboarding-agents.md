@@ -40,7 +40,7 @@ an agent.
 | Skill | Path | Purpose | Invoked by |
 |-------|------|---------|------------|
 | `implement-feature` | `.claude/skills/implement-feature/SKILL.md` | TDD loop with planning gate and decision ladder | `implement` job, or by hand |
-| `fix-issue` | `.claude/skills/fix-issue/SKILL.md` | Lightweight TDD bug fix loop | By hand, or for `size:S` stories |
+| `fix-issue` | `.claude/skills/fix-issue/SKILL.md` | Lightweight TDD bug fix loop | By hand, for a small fix |
 
 Both take a base-branch argument (`epic/<slug>` for stories in an epic,
 `develop` otherwise).

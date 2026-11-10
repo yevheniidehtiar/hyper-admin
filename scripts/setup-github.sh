@@ -37,6 +37,10 @@ gh label create "ap:in-progress"       --repo "$REPO" --color "FBCA04" --descrip
 gh label create "ap:in-review"         --repo "$REPO" --color "1D76DB" --description "Autopilot: story PR is open" || true
 gh label create "ap:done"              --repo "$REPO" --color "5319E7" --description "Autopilot: story PR merged into the epic branch" || true
 gh label create "superseded"           --repo "$REPO" --color "CFD3D7" --description "Replaced by other work, will not be implemented" || true
+gh label create "deferred"             --repo "$REPO" --color "CFD3D7" --description "Parked: the autopilot does not pick the story up" || true
+
+# Triage Labels (see docs/agentic-workflow/oss-triage-auditor.md)
+gh label create "suspicious"           --repo "$REPO" --color "D93F0B" --description "Flagged by triage audit, needs human review" || true
 
 echo "✓ GitHub labels configured for $REPO"
 
