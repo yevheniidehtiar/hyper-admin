@@ -79,7 +79,7 @@ uv run playwright install chromium --with-deps
 
 | Variable | Purpose | Required for |
 |----------|---------|-------------|
-| `CLAUDE_GH_TOKEN` | GitHub bot token for PR creation | Creating PRs as Claude Code identity; the autopilot |
+| `CLAUDE_GH_TOKEN` | GitHub bot token for PR creation | Opening PRs as the bot account; the autopilot |
 | `GITHUB_TOKEN` | General GitHub API access where `gh auth login` is not possible | CI runners and cloud VMs only |
 
 ```bash
