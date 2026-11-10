@@ -2,17 +2,17 @@
 
 ### Commit authorship
 
-All commits made by Claude must use the Claude Code identity — not the user's identity, not co-authored:
+All agent commits use the bot account identity (author and committer), not the owner's identity, not co-authored:
 
 ```bash
-git -c user.name="Claude Code" \
-    -c user.email="noreply+claude-code@anthropic.com" \
+git -c user.name="dodjer88" \
+    -c user.email="11336795+dodjer88@users.noreply.github.com" \
     commit -m "type: description (#issue)"
 ```
 
 The `-c` flags belong to the `git` command, not to `commit` — combining them with `commit -m` causes a fatal error.
 
-Never add `Co-Authored-By` trailers. The user must remain a clean reviewer.
+Never add `Co-Authored-By` trailers. No AI attribution anywhere: no "Generated with ..." footer and no tool or model named as author in commit messages, PR titles, PR bodies or review comments. The user must remain a clean reviewer.
 
 ### PR authorship
 

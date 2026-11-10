@@ -54,8 +54,8 @@ Verify `data-testid` values match the documented naming table (CLAUDE.md is the 
 - New elements: follow `<view>-<element>` pattern.
 
 ### 6. Git & Commit Hygiene
-- Commits must use Claude Code identity (`noreply+claude-code@anthropic.com`), not the user's.
-- No `Co-Authored-By` trailers.
+- Commits must use the bot identity `dodjer88` (`11336795+dodjer88@users.noreply.github.com`), not the user's.
+- No `Co-Authored-By` trailers and no AI attribution (no "Generated with" footer, no tool or model named as author) in commits, PR bodies or comments.
 - Commit messages must follow Conventional Commits: `type(scope): description (#issue)`.
 - Valid types: `build`, `chore`, `ci`, `docs`, `feat`, `fix`, `perf`, `refactor`, `revert`, `style`, `test`.
 - PRs must be created using `CLAUDE_GH_TOKEN`.
