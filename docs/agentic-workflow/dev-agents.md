@@ -112,8 +112,9 @@ uv run ruff check . && uv run ruff format --check .
 poe test:cov-diff     # 100% of changed lines
 ```
 
-Then commit as Claude Code (Conventional Commits) and open the PR with the bot
-token. The PR body contains:
+Then commit as the bot account `dodjer88` (Conventional Commits) and open the PR
+with the bot token. Neither carries AI attribution: no co-author trailer in the
+commit, no generated-with footer in the PR. The PR body contains:
 
 - `Story: <story-id>`: the tick uses this line to map the PR to its story.
 - A summary and test notes. Manual test scenarios for user-facing changes.
@@ -178,7 +179,7 @@ Dev agents enforce all project rules during the planning gate:
 | Bottom-up task ordering | `planning-playbook.md` | Models before logic before views before UI |
 | Type hints, `selectinload()`, line length | `code-style.md` | All new code |
 | Accessibility-first locators, no `ha-*` selectors | `testing.md` | All E2E tests |
-| Claude Code identity, Conventional Commits, base branch per PR type | `git-workflow.md` | All commits and PRs |
+| Bot identity (`dodjer88`) with no AI attribution, Conventional Commits, base branch per PR type | `git-workflow.md` | All commits and PRs |
 | Files touched match `## Files to Change`; no `.meta` status edits | `conflict-avoidance.md` | Every story PR |
 | BDD scenarios | `bdd-conventions.md` | Every feat/test issue |
 | SDD for large features | `sdd-conventions.md` | size:L or multi-module |
