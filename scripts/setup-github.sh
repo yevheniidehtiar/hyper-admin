@@ -16,7 +16,7 @@ gh label create "qa-passed" --repo "$REPO" --color "0E8A16" --description "All t
 gh label create "released" --repo "$REPO" --color "5319E7" --description "Shipped in a release" || true
 gh label create "needs-human" --repo "$REPO" --color "D93F0B" --description "Agent escalation, human intervention needed" || true
 
-# Work Queue Labels (used by conductor / run-autonomous-team)
+# Work Queue Labels
 gh label create "agent-task" --repo "$REPO" --color "D4C5F9" --description "Assigned to autonomous agent for implementation" || true
 gh label create "ready"      --repo "$REPO" --color "0E8A16" --description "Issue unblocked and approved — ready for autonomous pickup" || true
 
@@ -30,10 +30,13 @@ gh label create "community" --repo "$REPO" --color "BFDADC" --description "From 
 gh label create "scheduled:auto" --repo "$REPO" --color "FEF2C0" --description "Created by scheduled agent (high confidence)" || true
 gh label create "scheduled:review-needed" --repo "$REPO" --color "F9D0C4" --description "Needs human review" || true
 
-# Merge Queue Labels (used by conductor / delivery-manager)
-gh label create "merge-requested" --repo "$REPO" --color "FEF2C0" --description "PR approved + CI green, queued for conductor evaluation" || true
-gh label create "merge-granted"   --repo "$REPO" --color "0E8A16" --description "Conductor approved merge — safe to merge, no conflict risk" || true
-gh label create "merge-deferred"  --repo "$REPO" --color "D93F0B" --description "Conductor deferred merge — reason in PR comment" || true
+# Autopilot Labels (set by ops/autopilot; see docs/agentic-workflow/orchestration.md)
+gh label create "ai-approved"          --repo "$REPO" --color "0E8A16" --description "AI reviewer verdict: approved" || true
+gh label create "ai-changes-requested" --repo "$REPO" --color "E99695" --description "AI reviewer verdict: changes requested" || true
+gh label create "ap:in-progress"       --repo "$REPO" --color "FBCA04" --description "Autopilot: a worker is implementing the story" || true
+gh label create "ap:in-review"         --repo "$REPO" --color "1D76DB" --description "Autopilot: story PR is open" || true
+gh label create "ap:done"              --repo "$REPO" --color "5319E7" --description "Autopilot: story PR merged into the epic branch" || true
+gh label create "superseded"           --repo "$REPO" --color "CFD3D7" --description "Replaced by other work, will not be implemented" || true
 
 echo "✓ GitHub labels configured for $REPO"
 

@@ -186,8 +186,8 @@ release:
         exit 1
     fi
     CURRENT_BRANCH=$(git branch --show-current)
-    if [ "$CURRENT_BRANCH" != "main" ] && [ "$CURRENT_BRANCH" != "develop" ]; then
-        echo "❌ Not on release branch (main or develop). Current: $CURRENT_BRANCH"
+    if [ "$CURRENT_BRANCH" != "master" ] && [ "$CURRENT_BRANCH" != "develop" ]; then
+        echo "❌ Not on release branch (master or develop). Current: $CURRENT_BRANCH"
         exit 1
     fi
     echo "==> Bumping version and generating changelog..."
