@@ -6,7 +6,8 @@
 
 <!-- Link to issue: Closes #XX -->
 
-Story: <!-- .meta story id, e.g. st-autopilot-01. Required for PRs into epic/<slug>; delete the line if there is none -->
+<!-- .meta story id for the line below. Required for PRs into an epic branch; delete the line if there is none -->
+Story:
 
 ## How
 
