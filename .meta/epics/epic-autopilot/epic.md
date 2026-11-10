@@ -57,10 +57,10 @@ Target design in short:
 
 | ID | Story | Size | Branch | Blocked by |
 |---|---|---|---|---|
-| st-autopilot-01 | [ci(autopilot): epic branch lane](stories/ciautopilot-epic-branch-lane.md) | S | `ci/autopilot-epic-lane` | none |
+| st-autopilot-01 | [ci(autopilot): epic branch lane](stories/ciautopilot-epic-branch-lane.md) | S | `ci/autopilot-epic-branches` | none |
 | st-autopilot-02 | [feat(autopilot): local supervisor](stories/featautopilot-local-supervisor.md) | L | `feat/autopilot-supervisor` | st-autopilot-01 |
-| st-autopilot-03 | [refactor(agents): epic-branch flow and self-unblocking](stories/refactoragents-epic-branch-flow-and-self-unblocking.md) | L | `refactor/agents-epic-branch-flow` | st-autopilot-01 |
-| st-autopilot-04 | [docs(agentic-workflow): autopilot](stories/docsagentic-workflow-autopilot.md) | M | `docs/agentic-workflow-autopilot` | st-autopilot-01, st-autopilot-02 |
+| st-autopilot-03 | [refactor(agents): epic-branch flow and self-unblocking](stories/refactoragents-epic-branch-flow-and-self-unblocking.md) | L | `refactor/agents-epic-flow` | st-autopilot-01 |
+| st-autopilot-04 | [docs(agentic-workflow): autopilot](stories/docsagentic-workflow-autopilot.md) | M | `docs/autopilot-workflow` | st-autopilot-01, st-autopilot-02 |
 
 This epic is delivered as five non-stacked PRs to `develop`. The fifth is the `chore(meta)` PR that adds this epic; it
 has no story of its own. The epic bootstraps the autopilot, so it does not run on an `epic/autopilot` branch itself.
