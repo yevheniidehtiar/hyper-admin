@@ -2,7 +2,7 @@
 type: story
 id: st-autopilot-02
 title: "feat(autopilot): local supervisor"
-status: todo
+status: in_progress
 priority: high
 assignee: null
 labels:

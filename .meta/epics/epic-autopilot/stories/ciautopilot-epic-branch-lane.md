@@ -2,7 +2,7 @@
 type: story
 id: st-autopilot-01
 title: "ci(autopilot): epic branch lane"
-status: todo
+status: in_progress
 priority: high
 assignee: null
 labels:
