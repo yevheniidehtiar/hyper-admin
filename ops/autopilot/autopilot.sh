@@ -29,6 +29,9 @@ fi
 AP_PYTHON="${AUTOPILOT_PYTHON:-python3}"
 AP_DRY="${AUTOPILOT_DRY_RUN:-0}"
 AP_MIRROR="${AUTOPILOT_MIRROR:-Damdy-OSS}"
+# Identity of every commit the autopilot and its jobs make (author and committer).
+AP_GIT_NAME="${AUTOPILOT_GIT_NAME:-dodjer88}"
+AP_GIT_EMAIL="${AUTOPILOT_GIT_EMAIL:-11336795+dodjer88@users.noreply.github.com}"
 DEV_AGENT_LIMIT="${DEV_AGENT_LIMIT:-3}"
 AP_MAIN=""
 AP_GH_REPO=""
@@ -296,8 +299,8 @@ open_epic_commit() {
   gh_bot api -X PUT "repos/$AP_GH_REPO/contents/$path" \
     -f "message=chore(meta): open epic $slug" -f "branch=$branch" -f "sha=$blob" \
     -f "content=$(base64 <"$TICK_TMP/epic.new.md" | tr -d '\n')" \
-    -f "author[name]=Claude Code" -f "author[email]=noreply+claude-code@anthropic.com" \
-    -f "committer[name]=Claude Code" -f "committer[email]=noreply+claude-code@anthropic.com" \
+    -f "author[name]=$AP_GIT_NAME" -f "author[email]=$AP_GIT_EMAIL" \
+    -f "committer[name]=$AP_GIT_NAME" -f "committer[email]=$AP_GIT_EMAIL" \
     >/dev/null || return 1
   state note "opened epic $slug on $branch"
 }
@@ -739,14 +742,14 @@ $(cat "$AP_HOME/jobs/$id.input.json")"
   log "job $id: $kind $(job_field "$spec" target) in $cwd"
   (
     cd "$cwd"
-    # The job acts as the bot on GitHub and commits as Claude Code. AUTOPILOT=1 turns the
+    # The job acts as the bot on GitHub and commits with the configured identity. AUTOPILOT=1 turns the
     # interactive hooks of .claude/settings.json into no-ops.
     # shellcheck disable=SC2031  # gh_bot sets GH_TOKEN in its own subshell; this is another one
     export AUTOPILOT=1 GH_TOKEN="${CLAUDE_GH_TOKEN:-}" GIT_TERMINAL_PROMPT=0
     # GH_REPO: plain `gh` finds the repository even where the job runs outside a checkout.
     export GH_REPO="$AP_GH_REPO"
-    export GIT_AUTHOR_NAME="Claude Code" GIT_AUTHOR_EMAIL="noreply+claude-code@anthropic.com"
-    export GIT_COMMITTER_NAME="Claude Code" GIT_COMMITTER_EMAIL="noreply+claude-code@anthropic.com"
+    export GIT_AUTHOR_NAME="$AP_GIT_NAME" GIT_AUTHOR_EMAIL="$AP_GIT_EMAIL"
+    export GIT_COMMITTER_NAME="$AP_GIT_NAME" GIT_COMMITTER_EMAIL="$AP_GIT_EMAIL"
     with_alarm "$(job_field "$spec" timeout)" claude -p "$prompt" "${flags[@]}" \
       >"$result" 2>"$AP_HOME/jobs/$id.stderr"
   ) || rc=$?
