@@ -2,19 +2,25 @@
 type: story
 id: st-conflict-04
 title: "ci: detect and label conflicting PRs after develop merges"
-status: todo
+status: cancelled
 priority: medium
 assignee: null
 labels:
   - size:S
   - planned
   - area:ci
+  - superseded
 estimate: null
 epic_ref:
   id: ep-conflict-avoidance-01
 created_at: 2026-10-18T00:00:00Z
-updated_at: 2026-10-18T00:00:00Z
+updated_at: 2026-11-10T00:00:00Z
 ---
+
+## Superseded (2026-11-10)
+
+Superseded by `epic-autopilot`. The autopilot tick (`st-autopilot-02`) finds open PRs that turned `CONFLICTING` and
+rebases them itself, so a labelling workflow and a `needs-rebase` label are not needed. Do not start this story.
 
 ## Summary
 
