@@ -125,10 +125,10 @@ Skill definitions:
 - `.claude/skills/implement-feature/SKILL.md`: full workflow
 - `.claude/skills/fix-issue/SKILL.md`: lightweight workflow
 
-| Size | Skill |
-|---|---|
-| `size:S` | `fix-issue` |
-| `size:M`, `size:L` | `implement-feature` (an SDD is required for `size:L` or multi-module work; the architect agent approves it) |
+The autopilot `implement` job always runs `implement-feature`, whatever the
+story size. `fix-issue` is a by-hand path for a small, self-contained fix. An
+SDD is required for `size:L` or multi-module work; the architect agent approves
+it.
 
 ---
 

@@ -283,6 +283,10 @@ Runs as part of the tick:
 The first run is a dry run. Its list goes into the digest, the owner says go
 once, the approval is recorded in `state.json`, and from then on it is routine.
 
+The janitor runs before the worktree pool is created: every stale worktree
+costs a `uv sync --all-extras` in disk and time. Do the first dry run and get
+the go before `poe autopilot:install`.
+
 ## Labels
 
 Created by `scripts/setup-github.sh`.
@@ -298,6 +302,7 @@ Created by `scripts/setup-github.sh`.
 | `ap:in-review` | Tick | Story issue | Story PR is open |
 | `ap:done` | Tick | Story issue | Story PR merged into the epic branch |
 | `superseded` | Planning | Story issue | Replaced by other work; will not be implemented |
+| `deferred` | Owner or planning | Story issue | Parked; the tick does not dispatch the story |
 
 ### Planning and triage labels
 
