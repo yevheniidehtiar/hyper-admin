@@ -48,9 +48,14 @@ Do not decide these yourself:
 - changing runtime dependency floors (`[project.dependencies]`)
 - data-model migrations
 
-On a hard stop: post the exact question as one comment on the issue, add the `needs-human` label,
-and move on. Finish every part of the story that does not depend on the answer, open the PR as a
-draft, and end the run. Never loop or sleep waiting for a reply.
+On a hard stop: post the exact question as one comment on the issue, add the `needs-human` label
+to the issue, and move on. Finish every part of the story that does not depend on the answer, open
+the PR as a draft, put `needs-human` on the PR as well, and end the run. Never loop or sleep
+waiting for a reply.
+
+The merge rule reads the label on the PR ("`ai-approved` and no `needs-human`"), so the label on
+the issue alone does not keep the PR out of the merge path. A PR that carries `needs-human` stays
+a draft: this skill never runs `gh pr ready` on it (see C3).
 
 ```bash
 GH_TOKEN="$CLAUDE_GH_TOKEN" gh issue comment "$ISSUE" --body "$(cat <<'EOF'
@@ -64,6 +69,9 @@ GH_TOKEN="$CLAUDE_GH_TOKEN" gh issue comment "$ISSUE" --body "$(cat <<'EOF'
 EOF
 )"
 GH_TOKEN="$CLAUDE_GH_TOKEN" gh issue edit "$ISSUE" --add-label needs-human
+
+# As soon as the draft PR exists (B3 opens it):
+GH_TOKEN="$CLAUDE_GH_TOKEN" gh pr edit <pr> --add-label needs-human
 ```
 
 ---
@@ -94,6 +102,37 @@ Resolve `BASE` when it was not passed:
    branch yourself: the autopilot tick owns the lock (see Epic Branch Protocol in
    `.claude/project-config.md`). Print `SKIPPED: epic for #$ISSUE is not open` and end the run.
    This is a normal outcome, not an escalation: post nothing.
+
+**Autopilot run (`AUTOPILOT=1`): check out the work branch now, before reading anything else.**
+The job runs inside a reused pool worktree (`.claude/worktrees/ap-N`) whose checkout is whatever
+the previous job left, while the architect rewrites story bodies and the SDD on the epic branch.
+Planning from that checkout would use a stale story or SDD.
+
+An earlier run may have left work behind (a hard stop that has since been answered, or a draft PR
+after three failed fix attempts). Look for it first and resume from it. Never reset an existing
+branch to the base: that drops its commits, and the later push would overwrite the branch behind
+the draft PR.
+
+```bash
+git fetch origin "$BASE"
+if git ls-remote --exit-code --heads origin "feat/issue-$ISSUE" >/dev/null; then
+  # Earlier run, pushed: resume from the remote branch
+  git fetch origin "feat/issue-$ISSUE"
+  git switch -C "feat/issue-$ISSUE" "origin/feat/issue-$ISSUE"
+  git rebase "origin/$BASE"
+elif git rev-parse -q --verify "refs/heads/feat/issue-$ISSUE" >/dev/null; then
+  # Earlier run, never pushed: resume from the local branch
+  git switch "feat/issue-$ISSUE"
+  git rebase "origin/$BASE"
+else
+  git switch -C "feat/issue-$ISSUE" "origin/$BASE"
+fi
+
+cat "$STORY_FILE"   # read the story again, now from the right checkout
+```
+
+When resuming, read the existing commits (`git log "origin/$BASE"..HEAD`), the draft PR body and
+the answers on the issue, and plan only what is still missing.
 
 Then:
 - Read `ROADMAP.md` to confirm scope and priority. Do NOT expand scope beyond the story
@@ -176,15 +215,12 @@ Proceed to Phase B once every item is PASS or covered by a recorded assumption.
 ### B1. Start the worktree
 
 **Autopilot run (`AUTOPILOT=1`)**: the job already runs inside a pool worktree
-(`.claude/worktrees/ap-N`). Do not create another one:
+(`.claude/worktrees/ap-N`) and A1 put it on `feat/issue-$ISSUE`. Do not create another worktree
+and do not switch again.
 
-```bash
-git fetch origin "$BASE"
-git switch -C "feat/issue-$ISSUE" "origin/$BASE"
-```
-
-**Interactive run**: `/wt feat/issue-$ISSUE $BASE` creates an isolated worktree branched from
-`origin/$BASE`.
+**Interactive run**: `/wt feat/issue-$ISSUE $BASE` creates an isolated worktree. It starts from
+`origin/feat/issue-$ISSUE` when that branch exists (resume, then `git rebase "origin/$BASE"`) and
+from `origin/$BASE` otherwise.
 
 Then sync the environment (interactive runs only; the autopilot pool syncs its worktrees itself):
 ```bash
@@ -193,9 +229,6 @@ uv sync --all-extras
 
 All subsequent commands (file edits, `uv run poe lint`, `uv run poe test`, etc.) run from inside
 the worktree.
-
-If the branch or a draft PR already exists from an earlier run, resume from it (rebase on
-`origin/$BASE` first). Do not restart.
 
 ### B2. TDD execution loop
 
@@ -227,15 +260,19 @@ Run the decision ladder:
   so the progress is visible:
 
   ```bash
+  git add -A
   git -c user.name="Claude Code" -c user.email="noreply+claude-code@anthropic.com" \
     commit -m "feat: partial implementation, waiting on a decision (#$ISSUE)"
-  git push origin HEAD
+  git push --force-with-lease origin HEAD
+  # Skip the create when a draft PR already exists from an earlier run
   GH_TOKEN="$CLAUDE_GH_TOKEN" gh pr create --draft --base "$BASE" \
     --title "<type(scope): description> (#$ISSUE)" --body-file <body-file, see C3>
+  GH_TOKEN="$CLAUDE_GH_TOKEN" gh pr edit --add-label needs-human
   ```
 
   Then continue with any sub-task that does not depend on the answer. End the run when nothing
-  independent is left.
+  independent is left. The PR stays a draft with `needs-human` for the rest of this run, however
+  much of the story gets finished.
 
 A test that still fails after three distinct fix attempts is not a reason to stop either: record
 what was tried in the PR body, mark the PR as draft, and end the run. The tick's `fix-pr` job and
@@ -299,18 +336,22 @@ Confirm each item before committing:
 
 ### C3. Commit and open PR
 
-Rebase onto the latest base before pushing. This project uses rebase-merge: merged PRs rewrite
+Commit first, then rebase onto the latest base, then push. `git rebase` refuses to start with
+uncommitted changes, so the order matters. This project uses rebase-merge: merged PRs rewrite
 hashes on the base branch, so the branch must be current to produce a clean diff.
 
 ```bash
-git fetch origin "$BASE"
-git rebase "origin/$BASE"
-
+git add -A
 git -c user.name="Claude Code" -c user.email="noreply+claude-code@anthropic.com" \
   commit -m "feat: <description> (#$ISSUE)"
 
+git fetch origin "$BASE"
+git rebase "origin/$BASE"
+
 git push --force-with-lease origin HEAD
 ```
+
+If the rebase changed anything under `src/` or `tests/`, run the C1 gates again before the push.
 
 Write the PR body to a file. The `Story:` line and the `## Assumptions` section are required: the
 tick matches the PR to its story by the first, the reviewer and the owner read the second.
@@ -331,11 +372,23 @@ most reversible one. Write "None." when there were none.>
 - <manual test scenarios for user-facing changes>
 ```
 
-**If a draft PR already exists** (from a hard stop that has since been answered):
+**If a draft PR already exists** (from a hard stop or from an earlier run), update its body, then
+check whether a question is still open before touching the draft state:
+
 ```bash
 GH_TOKEN="$CLAUDE_GH_TOKEN" gh pr edit --body-file <body-file>
-GH_TOKEN="$CLAUDE_GH_TOKEN" gh pr ready
+gh pr view --json labels --jq '.labels[].name'
+gh issue view "$ISSUE" --json labels --jq '.labels[].name'
 ```
+
+- `needs-human` is on the PR or on the issue, or this run raised a hard stop: **do not run
+  `gh pr ready`**. Leave the PR a draft and go to C5. The owner's answer removes the label; the
+  next run of this skill finishes the story and marks the PR ready.
+- Neither carries `needs-human`, the story is complete and the C1 gates pass:
+
+  ```bash
+  GH_TOKEN="$CLAUDE_GH_TOKEN" gh pr ready
+  ```
 
 **If no PR exists yet:**
 ```bash
@@ -369,7 +422,8 @@ Add the entry to `MEMORY.md`.
 
 ### C5. Hand over
 
-Print the PR number, the base branch and the list of assumptions, then end the run.
+Print the PR number, whether it is a draft (and the open `needs-human` question when there is
+one), the base branch and the list of assumptions, then end the run.
 
 From here the autopilot tick owns the PR: the `review` job sets `ai-approved` or
 `ai-changes-requested`, the `fix-pr` job repairs failing checks and review findings, and the tick
