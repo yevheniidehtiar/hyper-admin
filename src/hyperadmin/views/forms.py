@@ -11,6 +11,8 @@ from pydantic import BaseModel, ValidationError
 from pydantic.fields import FieldInfo
 from starlette.templating import Jinja2Templates
 
+from hyperadmin.core.timestamps import utcnow
+
 
 @dataclass(slots=True)
 class HtmxWidget:
@@ -153,7 +155,7 @@ class PydanticForm:
             if sa_column_kwargs and isinstance(sa_column_kwargs, dict):
                 if "server_default" in sa_column_kwargs or "onupdate" in sa_column_kwargs:
                     return True
-            if field.default_factory == datetime.now:
+            if field.default_factory in (datetime.now, utcnow):
                 return True
         return False
 

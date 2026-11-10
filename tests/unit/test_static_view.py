@@ -43,6 +43,7 @@ async def test_list_view(model_view, mock_adapter):
     request = Request({"type": "http", "method": "GET", "path": "/"})
     await view.list_view(request)
     mock_template_response.assert_called_with(
+        request,
         "list.html",
         {
             "request": request,
@@ -63,6 +64,7 @@ async def test_detail_view_found(model_view, mock_adapter):
     mock_adapter.get.return_value = item
     await view.detail_view(request, item_id=1)
     mock_template_response.assert_called_with(
+        request,
         "detail.html",
         {
             "request": request,
@@ -88,6 +90,7 @@ async def test_create_view_get(model_view):
     request = Request({"type": "http", "method": "GET", "path": "/create"})
     await view.create_view(request)
     mock_template_response.assert_called_with(
+        request,
         "create.html",
         {
             "request": request,
@@ -121,6 +124,7 @@ async def test_update_view_get(model_view, mock_adapter):
     mock_adapter.get.return_value = item
     await view.update_view(request, item_id=1)
     mock_template_response.assert_called_with(
+        request,
         "update.html",
         {
             "request": request,

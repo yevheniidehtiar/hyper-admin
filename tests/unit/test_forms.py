@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Any
 
 from markupsafe import Markup
@@ -143,3 +144,21 @@ def test_pydantic_form_media():
 
     form = PydanticForm(model=MediaTestModel, widgets={"name": MediaWidget()})
     assert form.media == ("test.css", "test.js")
+
+
+def test_utcnow_is_timezone_aware():
+    from hyperadmin.core.timestamps import utcnow
+
+    assert utcnow().utcoffset() is not None
+
+
+def test_utcnow_default_factory_is_auto_now_field():
+    from pydantic import BaseModel, Field
+
+    from hyperadmin.core.timestamps import utcnow
+    from hyperadmin.views.forms import PydanticForm
+
+    class Stamped(BaseModel):
+        created_at: datetime = Field(default_factory=utcnow)
+
+    assert PydanticForm._is_auto_now_field(Stamped.model_fields["created_at"]) is True

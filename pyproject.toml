@@ -205,7 +205,7 @@ trap cleanup EXIT
 echo "==> Upgrading lock file to latest compatible versions..."
 uv lock --upgrade
 
-COMBOS="3.10:lowest-direct 3.13:lowest-direct 3.13:highest"
+COMBOS="3.10:lowest-direct 3.13:lowest-direct 3.13:highest 3.15:highest"
 
 for combo in $COMBOS; do
   pyver="${combo%%:*}"

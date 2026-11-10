@@ -37,10 +37,11 @@ poe deps:bump         # Bump lock file and verify across compatibility matrix
 
 This command:
 1. Runs `uv lock --upgrade` to resolve latest compatible versions
-2. Verifies lint + unit tests + security checks across 3 combos:
+2. Verifies lint + unit tests + security checks across 4 combos:
    - Python 3.10 + lowest-direct
    - Python 3.13 + lowest-direct
    - Python 3.13 + highest
+   - Python 3.15 + highest
 3. Restores the default environment when done (even on failure)
 
 ## Branch and Commit Conventions
