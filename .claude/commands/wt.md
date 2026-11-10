@@ -10,7 +10,7 @@ don't collide and keeps the main working tree clean.
 
 `$ARGUMENTS`
 
-- First token: the branch name. If it is missing, generate a random name
+- First token: the branch name (`BRANCH`). If it is missing, generate a random name
   (e.g., `work/agent-<4-random-hex-chars>`).
 - Optional second token: the base branch (`BASE`). Default: `develop`. Story work for an epic
   passes `epic/<slug>`.
@@ -27,9 +27,16 @@ git fetch origin "$BASE"
 
 Use `EnterWorktree` with the branch name.
 
-3. **Reset to the base tip**
+3. **Reset to the base tip, or resume the branch**
 
-Since this is a fresh worktree with no prior work, reset to the tip of the base
+If the branch already exists on `origin` (an earlier run pushed work, possibly behind a draft PR),
+resume from it. Resetting it to the base would drop that work:
+
+```bash
+git fetch origin "$BRANCH" && git reset --hard "origin/$BRANCH" && git rebase "origin/$BASE"
+```
+
+Otherwise this is a fresh worktree with no prior work: reset to the tip of the base
 instead of rebasing (avoids replaying the entire history and hitting conflicts):
 
 ```bash

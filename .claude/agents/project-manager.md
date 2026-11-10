@@ -37,7 +37,10 @@ gh pr list --repo "$REPO" --label needs-human --state open --json number,title,u
 
 # 3. Epics in flight: branch, draft PR, story progress
 git ls-remote --heads origin 'epic/*'
-gh pr list --repo "$REPO" --state open --search "base:epic/" --json number,title,baseRefName,labels
+# (the `base:` search qualifier matches an exact branch name, not a prefix: filter client-side)
+gh pr list --repo "$REPO" --state open --limit 200 \
+  --json number,title,baseRefName,labels,isDraft \
+  --jq '[.[] | select(.baseRefName | startswith("epic/"))]'
 gh issue list --repo "$REPO" --label ap:in-progress --state open --json number,title
 gh issue list --repo "$REPO" --label ap:in-review --state open --json number,title
 gh issue list --repo "$REPO" --label ap:done --state all --search "updated:>$SINCE" --json number,title
@@ -101,11 +104,19 @@ there. Plain sentences, no filler, one line per item, every item with its link.
 
 ## Posting
 
-Post to the destination the job names: the Slack webhook when one is configured, otherwise one
-comment on the standing autopilot issue.
+Always print the finished digest as your final answer.
+
+- **Slack webhook configured:** you do not call the webhook (you have no `curl` and the headless
+  allowlist does not permit it). `ops/autopilot/autopilot.sh` delivers the digest you printed.
+  Post nothing yourself.
+- **No webhook:** post one comment on the standing autopilot issue the job names. You have no
+  Write tool, so pass the body inline instead of from a file:
 
 ```bash
-GH_TOKEN="$CLAUDE_GH_TOKEN" gh issue comment <standing-issue> --repo "$REPO" --body-file <digest-file>
+GH_TOKEN="$CLAUDE_GH_TOKEN" gh issue comment <standing-issue> --repo "$REPO" --body "$(cat <<'EOF'
+<the digest>
+EOF
+)"
 ```
 
 One digest per day. If a digest for today already exists there, do not post a second one.
