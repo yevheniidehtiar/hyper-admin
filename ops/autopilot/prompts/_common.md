@@ -9,7 +9,9 @@ worktree that is already on the right branch. The job-specific instructions and 
 
 - Read `CONSTITUTION.md` and `.claude/rules/` before changing code, and follow them.
 - Start your final message with `Applying rules: none returned by hook`.
-- Commits follow Conventional Commits and carry no `Co-Authored-By` trailer. The author
+- Commits follow Conventional Commits and carry no `Co-Authored-By` trailer. Commit messages,
+  PR titles, PR bodies and comments carry no AI attribution: no "Generated with" footer and no
+  tool or model named as author. The author
   identity and the GitHub identity are preset in the environment: use plain `git commit` and
   plain `gh`. Never use `--no-verify`; if a hook fails, fix the cause.
 - Push with `git push -u origin HEAD`. After a rebase use `git push --force-with-lease`, and

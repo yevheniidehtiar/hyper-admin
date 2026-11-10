@@ -75,7 +75,8 @@ AUTOPILOT=1 claude -p "<prompts/_common.md + prompts/<job>.md + arguments>" \
   (`prompts/<job>.schema.json`); the runner applies it, the model does not set labels.
 - `fix-pr` resumes the session that implemented the story when it ran in the same pool slot.
 - The job acts on GitHub as the bot (`GH_TOKEN` is set from `CLAUDE_GH_TOKEN`) and commits as
-  `Claude Code`. `AUTOPILOT=1` turns the interactive hooks in `.claude/settings.json` off.
+  `AUTOPILOT_GIT_NAME` / `AUTOPILOT_GIT_EMAIL` (default: the bot account), with no co-author
+  trailer and no AI attribution in commits or PR text. `AUTOPILOT=1` turns the interactive hooks in `.claude/settings.json` off.
 
 ## Epics and stories
 
@@ -174,6 +175,7 @@ repository):
 | `DEV_AGENT_LIMIT` | `3` | jobs at once (1 when less than 4 GB of memory is free) |
 | `AUTOPILOT_PR_SCOPE` | `all` | `autopilot` limits repairs to epic, story and `fix/develop-*` pull requests |
 | `AUTOPILOT_DIGEST_HOUR` | `8` | local hour after which the daily digest is written |
+| `AUTOPILOT_GIT_NAME`, `AUTOPILOT_GIT_EMAIL` | `dodjer88` and its GitHub noreply address | author and committer of every commit the autopilot and its jobs make |
 | `AUTOPILOT_SLACK_WEBHOOK` | empty | digest target; else `AUTOPILOT_DIGEST_ISSUE` (an issue number); else only `~/.hyperadmin-autopilot/digests/` |
 | `AUTOPILOT_MODEL_<JOB>` | see table | model per job, for example `AUTOPILOT_MODEL_FIX_PR=sonnet` |
 | `AUTOPILOT_DRY_RUN` | `0` | `1` prints actions only |
