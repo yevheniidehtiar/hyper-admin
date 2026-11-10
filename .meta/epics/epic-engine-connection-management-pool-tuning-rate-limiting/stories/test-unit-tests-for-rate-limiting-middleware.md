@@ -2,7 +2,7 @@
 type: story
 id: uB0aWo6B3cwo
 title: "test: unit tests for rate limiting middleware"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

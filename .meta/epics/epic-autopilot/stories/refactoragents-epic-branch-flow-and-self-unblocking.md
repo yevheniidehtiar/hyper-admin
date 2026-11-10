@@ -2,7 +2,7 @@
 type: story
 id: st-autopilot-03
 title: "refactor(agents): epic-branch flow and self-unblocking"
-status: in_progress
+status: done
 priority: high
 assignee: null
 labels:

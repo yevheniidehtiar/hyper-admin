@@ -2,7 +2,7 @@
 type: story
 id: R8lzBDObsA9w
 title: "feat(views): RateLimitMiddleware using core protocol"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

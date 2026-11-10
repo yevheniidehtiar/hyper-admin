@@ -2,7 +2,7 @@
 type: epic
 id: ed1DCvpnaZ1w
 title: "epic: Engine & Connection Management (pool tuning, rate limiting)"
-status: in_progress
+status: done
 priority: medium
 owner: null
 labels:
