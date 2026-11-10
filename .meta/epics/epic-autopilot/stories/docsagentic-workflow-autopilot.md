@@ -2,7 +2,7 @@
 type: story
 id: st-autopilot-04
 title: "docs(agentic-workflow): autopilot"
-status: in_progress
+status: done
 priority: medium
 assignee: null
 labels:

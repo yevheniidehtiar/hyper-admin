@@ -2,7 +2,7 @@
 type: epic
 id: ep-autopilot-01
 title: "epic(autopilot): hands-off delivery with one owner approval per epic"
-status: in_progress
+status: done
 priority: high
 owner: null
 labels:

@@ -2,7 +2,7 @@
 type: story
 id: xFDbO4WWuQv5
 title: "feat(core): rate limiter protocol and in-memory implementation"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
