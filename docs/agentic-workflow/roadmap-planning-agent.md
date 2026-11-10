@@ -72,7 +72,8 @@ Pragmatic scan that identifies:
 Each task includes:
 
 - **Title** — imperative verb + noun (`Add retry logic to HTTP client`)
-- **Description** — what to implement, acceptance criteria, which files to touch
+- **Description** — what to implement and the acceptance criteria
+- **`## Files to Change`** — every file the story will touch. The autopilot uses this list to decide which stories can run in parallel, so it must be complete. Stories that share a file are given an explicit dependency or a hotspot owner.
 - **Labels** — `area:core`, `size:S/M/L`, `agent:ai`
 - **Estimated effort** — S=1-2h, M=2-4h, L=4-8h
 - **Agent tier** — which dev agent should handle this
@@ -100,7 +101,7 @@ Rules:
 | New file/module implementation | implement-feature | Full self-eval loop with TDD |
 | Refactoring existing code | implement-feature | Good at reading context, systematic changes |
 | Bug fix with clear reproduction | fix-issue | Lightweight TDD loop, fast turnaround |
-| Complex architecture decision | implement-feature + human checkpoint | Needs deep trade-off reasoning |
+| Complex architecture decision | SDD + `review(spec)` story, then implement-feature | The software-architect agent approves the SDD; the owner is asked only for breaking API, new runtime deps, or migrations |
 | Test writing | fix-issue | Mechanical, straightforward scope |
 | Documentation | implement-feature | Prose + code examples |
 | API design review | Claude Opus (manual) | Backward compat implications |
@@ -111,23 +112,32 @@ Rules:
 Milestone v0.1.0 (MVP core)
   Tasks: 12 (8 via implement-feature, 3 via fix-issue, 1 Opus review)
   Claude capacity needed: ~30 messages per cycle
-  Human review time: ~4 hours
-  Calendar estimate: 1 week (evenings/weekends)
+  Human review time: one epic PR per epic
+  Calendar estimate: 1 week
 ```
+
+### Epics as the unit of delivery
+
+Each epic is delivered on its own branch, `epic/<slug>`, and reaches `develop`
+as a single pull request that the owner approves once (see
+[Orchestration](orchestration.md)). Plan with that in mind:
+
+- Keep an epic small enough to review as one PR.
+- Stories inside an epic should be independent where possible, so up to three
+  can run at the same time.
+- An epic that needs an SDD gets a `review(spec)` story. The architect agent
+  completes it before implementation stories are dispatched.
+- Label a story `deferred` to keep the autopilot from picking it up.
 
 ## Materialisation via GitPM (.meta/)
 
-Plans are materialised as `.meta/` files — epics, stories, and milestones — then synced to GitHub.
+Plans are materialised as `.meta/` files — epics, stories, and milestones — then synced to GitHub by CI.
 
 ### Setup Sequence
 
 ```bash
-# Create labels (one-time, still via gh)
-gh label create "size:S" --color "C5DEF5" --description "1-2 hours"
-gh label create "size:M" --color "BFD4F2" --description "2-4 hours"
-gh label create "size:L" --color "A2C4EA" --description "4-8 hours"
-gh label create "agent:ai" --color "F9D0C4" --description "Assigned to Claude Code"
-gh label create "epic" --color "7057FF" --description "Parent issue with sub-issues"
+# Create labels (one-time, run by the owner)
+bash scripts/setup-github.sh
 
 # Create milestones in .meta/
 # Write .meta/roadmap/milestones/<slug>.md with milestone frontmatter
@@ -135,9 +145,13 @@ gh label create "epic" --color "7057FF" --description "Parent issue with sub-iss
 # Create epics + stories in .meta/
 # Write .meta/epics/<slug>/epic.md and .meta/epics/<slug>/stories/<slug>.md
 
-# Sync to GitHub
-bun "$GITPM_CLI" push --meta-dir .meta --token "$GITHUB_TOKEN"
+# Open a planning PR against develop (chore(meta): ...)
 ```
+
+There is no local sync step. The planning PR shows a GitPM dry-run preview, and
+when it merges to `develop` the GitPM Sync workflow
+(`.github/workflows/gitpm-sync.yml`) creates the issues and milestones. Never
+run a GitPM push from a workstation.
 
 ### .meta/ as the Project Board
 
@@ -191,9 +205,10 @@ See `.claude/commands/plan-to-issues.md` for the full creation workflow.
 
 | Checkpoint | What happens | Human action |
 |---|---|---|
-| Plan review | Agent presents full plan as GitHub Project board | Approve, modify, adjust scope |
-| Milestone gate | Before next milestone, agent reports progress | Approve next phase or re-plan |
-| Escalation | Task rejected repeatedly | Review failure pattern, decide |
+| Plan review | Agent opens a planning PR with the `.meta/` epics and stories | Approve, modify, adjust scope |
+| Epic PR | Autopilot marks `epic/<slug>` → `develop` ready when all stories are done | Approve once; it merges on approval |
+| Milestone gate | The digest reports when the last epic of a milestone has merged | Cut the release or re-plan |
+| Escalation | A story hits a hard stop or uses up its retry budget (`needs-human`) | Answer the question on the issue |
 
 ## Risks & Mitigations
 
