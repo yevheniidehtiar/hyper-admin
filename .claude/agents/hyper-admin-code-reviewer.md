@@ -107,14 +107,37 @@ VERDICT: APPROVED | VERDICT: CHANGES_REQUIRED
 The bot account authors the PRs, so it cannot approve them through GitHub's review API. The
 verdict is a **label plus one review comment** on the PR:
 
-```bash
-# 1. The review itself (the markdown above), as a comment-type review
-GH_TOKEN="$CLAUDE_GH_TOKEN" gh pr review <pr> --comment --body-file <review-file>
+Get the PR yourself; nobody hands you the files:
 
-# 2. The verdict label. Exactly one of the two is present after a review.
+```bash
+gh pr view <pr> --json title,body,baseRefName,headRefName,labels,isDraft
+gh pr diff <pr>
+```
+
+Post the review (the markdown above) as a comment-type review:
+
+```bash
+GH_TOKEN="$CLAUDE_GH_TOKEN" gh pr review <pr> --comment --body-file <review-file>
+```
+
+Then set the verdict label. Run **one** of the two commands below, never both: exactly one of the
+two labels is present after a review.
+
+Approved:
+
+```bash
 GH_TOKEN="$CLAUDE_GH_TOKEN" gh pr edit <pr> --add-label ai-approved --remove-label ai-changes-requested
+```
+
+Changes requested:
+
+```bash
 GH_TOKEN="$CLAUDE_GH_TOKEN" gh pr edit <pr> --add-label ai-changes-requested --remove-label ai-approved
 ```
+
+The labels are created by `scripts/setup-github.sh` and must exist before the first `review` job:
+`gh pr edit --add-label` fails on a label the repo does not have. If it fails for that reason, say
+so in your final answer and do not invent another label.
 
 | Verdict | Label | When |
 |---------|-------|------|
@@ -123,7 +146,12 @@ GH_TOKEN="$CLAUDE_GH_TOKEN" gh pr edit <pr> --add-label ai-changes-requested --r
 
 Add `needs-human` (with the exact question in the comment) only when the PR contains a hard stop:
 a breaking public API change, a changed runtime dependency floor, a data-model migration, secrets,
-or deleted data. Do not use it for ordinary defects.
+or deleted data. Do not use it for ordinary defects. It is set in addition to the verdict label
+and keeps the PR out of the merge path whatever the verdict is:
+
+```bash
+GH_TOKEN="$CLAUDE_GH_TOKEN" gh pr edit <pr> --add-label needs-human
+```
 
 There are at most 2 review rounds per PR. On the second round, review only whether the earlier
 "must fix" issues are resolved and whether the fix introduced new ones. Do not raise new optional
@@ -152,7 +180,8 @@ without a schema, keep the `VERDICT:` line first in the Verdict section.
 
 ## Behavior Rules
 
-- If you cannot see the code (no files provided, no diff), ask the user to share the relevant files or describe what was changed.
+- Interactive review: if you cannot see the code (no files provided, no diff), ask the user to share the relevant files or describe what was changed.
+- PR review (the `review` job, or any run with `AUTOPILOT=1`): never ask and never wait. If the diff cannot be fetched, set no label, post no review, and end with one sentence that says why.
 - Be specific: always cite file name and line number when flagging an issue.
 - Do not approve code that violates the E2E selector convention, module boundary rules, or commit authorship rules — these are hard failures.
 - When a rule from the planning playbook is violated (e.g., UI implemented before domain model), flag it as a blocking issue and explain the correct ordering.

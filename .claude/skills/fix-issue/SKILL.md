@@ -25,10 +25,19 @@ It never waits for a human: when something is unclear, use the decision ladder.
 4. Choose the most reversible option that satisfies `CONSTITUTION.md`, record it under
    `## Assumptions` in the PR body (and in the SDD Decision Log when there is an SDD), continue.
 
-Hard stops (post the exact question as an issue comment, add the `needs-human` label, finish what
-does not depend on the answer, open a draft PR, end the run): secrets or billing, pushing to the
-public mirror, deleting data, a PyPI release, breaking public API (`__init__.py` exports, semver
-major), changing runtime dependency floors, data-model migrations.
+Hard stops (post the exact question as an issue comment, add the `needs-human` label to the issue,
+finish what does not depend on the answer, open a draft PR, add `needs-human` to the PR too, end
+the run): secrets or billing, pushing to the public mirror, deleting data, a PyPI release, breaking
+public API (`__init__.py` exports, semver major), changing runtime dependency floors, data-model
+migrations.
+
+```bash
+GH_TOKEN="$CLAUDE_GH_TOKEN" gh issue edit "$ISSUE" --add-label needs-human
+GH_TOKEN="$CLAUDE_GH_TOKEN" gh pr edit <pr> --add-label needs-human   # once the draft PR exists
+```
+
+The merge rule reads the label on the PR, so the issue label alone is not enough. A PR with
+`needs-human` stays a draft: never run `gh pr ready` on it.
 
 ## Steps
 
@@ -45,15 +54,30 @@ Check `ROADMAP.md` to confirm priority and scope. Do not expand scope.
 ### 2. Start worktree
 
 Autopilot run (`AUTOPILOT=1`): the job is already in a pool worktree
-(`.claude/worktrees/ap-N`), so only switch the branch:
+(`.claude/worktrees/ap-N`), so only switch the branch. If the branch exists from an earlier run,
+resume from it. Never reset an existing branch to the base: that drops its commits, and the push in
+step 7 would overwrite the branch behind the draft PR.
 
 ```bash
 git fetch origin "$BASE"
-git switch -C "fix/issue-$ISSUE" "origin/$BASE"
+if git ls-remote --exit-code --heads origin "fix/issue-$ISSUE" >/dev/null; then
+  # Earlier run, pushed: resume from the remote branch
+  git fetch origin "fix/issue-$ISSUE"
+  git switch -C "fix/issue-$ISSUE" "origin/fix/issue-$ISSUE"
+  git rebase "origin/$BASE"
+elif git rev-parse -q --verify "refs/heads/fix/issue-$ISSUE" >/dev/null; then
+  # Earlier run, never pushed: resume from the local branch
+  git switch "fix/issue-$ISSUE"
+  git rebase "origin/$BASE"
+else
+  git switch -C "fix/issue-$ISSUE" "origin/$BASE"
+fi
+
+cat "$STORY_FILE"   # read the story again: the pool worktree may have been on a stale checkout
 ```
 
-Interactive run: `/wt fix/issue-$ISSUE $BASE` creates an isolated worktree branched from
-`origin/$BASE`, then:
+Interactive run: `/wt fix/issue-$ISSUE $BASE` creates an isolated worktree (from
+`origin/fix/issue-$ISSUE` when that branch exists, else from `origin/$BASE`), then:
 
 ```bash
 uv sync --all-extras
@@ -83,15 +107,22 @@ uv run poe test:cov-diff
 All must pass. Fix any failures before continuing. Never commit with `--no-verify`.
 
 ### 7. Commit and PR
+Commit first, then rebase (`git rebase` refuses to start with uncommitted changes), then push:
+
 ```bash
-git fetch origin "$BASE"
-git rebase "origin/$BASE"
+git add -A
 git -c user.name="Claude Code" -c user.email="noreply+claude-code@anthropic.com" \
   commit -m "fix: <description> (#$ISSUE)"
+git fetch origin "$BASE"
+git rebase "origin/$BASE"
 git push --force-with-lease origin HEAD
 GH_TOKEN="$CLAUDE_GH_TOKEN" gh pr create --base "$BASE" \
   --title "fix: <description> (#$ISSUE)" --body-file <body-file>
 ```
+
+If a draft PR already exists from an earlier run, update it with `gh pr edit --body-file` instead
+of creating one. Run `gh pr ready` only when neither the PR nor the issue carries `needs-human`
+and this run raised no hard stop; otherwise leave it a draft and end the run.
 
 The PR body must contain:
 
