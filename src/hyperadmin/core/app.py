@@ -521,6 +521,7 @@ class Admin:
             count_cache=InMemoryTTLCache(self.settings.count_cache_max_entries),
             concurrency_use_updated_at=self.settings.concurrency_use_updated_at,
             occ_render_dialog=self.settings.occ_render_dialog,
+            hook_dispatcher=self.dispatch_hook,
         )
         admin_router.generate_routes()
         self._nav_sources = admin_router.nav_sources

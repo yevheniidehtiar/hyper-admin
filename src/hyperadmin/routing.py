@@ -132,6 +132,7 @@ def create_admin_router(  # noqa: PLR0912, PLR0913, PLR0915, PLR0917
     concurrency_use_updated_at: bool = False,
     occ_render_dialog: bool = True,
     palette_search: PaletteSearch | None = None,
+    hook_dispatcher: Any = None,
 ) -> APIRouter:
     """Creates an APIRouter for a given model with the specified admin options.
 
@@ -204,6 +205,7 @@ def create_admin_router(  # noqa: PLR0912, PLR0913, PLR0915, PLR0917
         admin_lookup=admin_lookup,
         debug=debug,
         occ_render_dialog=occ_render_dialog,
+        hook_dispatcher=hook_dispatcher,
     )
     model_name = model.__name__.lower()
     if palette_search is not None and options.palette_search and options.can_list:
@@ -489,8 +491,10 @@ class HyperAdminRouter:
         count_cache: CountCache | None = None,
         concurrency_use_updated_at: bool = False,
         occ_render_dialog: bool = True,
+        hook_dispatcher: Any = None,
     ):
         self.engine = engine
+        self.hook_dispatcher = hook_dispatcher
         self.debug = debug
         # The admin's own HyperAdminRoute (auth bridge, CSRF), or a default one
         # bound to these templates when the router is used on its own.
@@ -593,6 +597,7 @@ class HyperAdminRouter:
                 concurrency_use_updated_at=self.concurrency_use_updated_at,
                 occ_render_dialog=self.occ_render_dialog,
                 palette_search=palette_search,
+                hook_dispatcher=self.hook_dispatcher,
             )
             self.routers.append(router)
             if (
