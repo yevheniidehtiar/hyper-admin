@@ -2,7 +2,7 @@
 type: story
 id: 9HiNmVNJ3mKb
 title: "feat(views): wire keyset pagination into list_view and pagination template"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

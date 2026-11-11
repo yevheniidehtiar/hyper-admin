@@ -2,7 +2,7 @@
 type: story
 id: uqdz7fJRu_fC
 title: "feat(adapters): implement keyset pagination in SQLModelAdapter"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
