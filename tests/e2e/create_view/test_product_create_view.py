@@ -48,5 +48,5 @@ def test_create_product_successful_submission(page: Page, demo_base_url: str):
     expect(page.get_by_test_id("detail-fields")).to_contain_text("Test Product")
     expect(page.get_by_test_id("detail-fields")).to_contain_text("A great product")
     expect(page.get_by_test_id("detail-fields")).to_contain_text("12.34")
-    expect(page.get_by_test_id("detail-fields")).to_contain_text("True")
+    expect(page.get_by_test_id("detail-fields")).to_contain_text("Yes")
     expect(page.get_by_test_id("detail-fields")).to_contain_text("Books")

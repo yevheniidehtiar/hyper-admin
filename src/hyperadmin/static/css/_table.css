@@ -14,6 +14,22 @@
   max-width: 100%;
 }
 
+/* Quiet scrollbars: a scroll area draws its bar only while hovered or focused.
+   It still scrolls (wheel, touch, keyboard) and shows the bar as soon as the
+   pointer or focus is on it, so nothing is lost for accessibility. */
+.ha-table-wrapper,
+.ha-sidebar-inner {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.ha-table-wrapper:hover,
+.ha-table-wrapper:focus-within,
+.ha-sidebar-inner:hover,
+.ha-sidebar-inner:focus-within {
+  scrollbar-color: var(--ha-color-border) transparent;
+}
+
 /* Scroll shadows (st-ux-erp-08): a wide table that scrolls sideways shows a soft
    shadow on the edge that still hides columns. The "local" covers hide each
    shadow once the table is scrolled to that end. Pure CSS; the covers are placed

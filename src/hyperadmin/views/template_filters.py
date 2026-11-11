@@ -144,9 +144,23 @@ def ha_timezone_name(ctx: Context) -> str:
     return str(resolve_tz(ctx))
 
 
+def _bool_mark(value: bool) -> Markup:
+    """A read-only checkbox mark: ticked for ``True``, empty for ``False``.
+
+    The visually hidden text keeps the value readable for assistive technology
+    and for text search; the box itself is drawn by CSS (``.ha-bool``).
+    """
+    state, label = ("on", "Yes") if value else ("off", "No")
+    return Markup(
+        '<span class="ha-bool ha-bool-{}" data-value="{}"><span class="ha-sr-only">{}</span></span>'
+    ).format(state, str(value).lower(), label)
+
+
 @pass_context
 def ha_display(ctx: Context, value: Any) -> Any:
-    """Render an aware datetime as a ``<time>`` element; pass everything else through.
+    """Render an aware datetime as a ``<time>`` element and a ``bool`` as a checkbox mark.
+
+    Everything else passes through.
 
     The ``datetime`` attribute carries the UTC instant (machine-readable and
     diff-stable); the element text is the value localised to the resolved
@@ -159,6 +173,8 @@ def ha_display(ctx: Context, value: Any) -> Any:
     ``ContactType.CUSTOMER``; a list, tuple or set of members (a
     ``list[Enum]`` multi-select column) renders as comma-separated labels.
     """
+    if isinstance(value, bool):
+        return _bool_mark(value)
     if isinstance(value, Enum):
         return get_enum_label(value)
     if (

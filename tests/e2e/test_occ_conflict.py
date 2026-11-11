@@ -124,7 +124,7 @@ def test_stale_inline_cell_save_is_marked_stale(
 
     # When Alice saves her inline edit
     page.get_by_role("textbox", name="Customer", exact=True).fill("Alicia")
-    page.get_by_test_id("cell-save-customer-42").click()
+    page.get_by_role("textbox", name="Customer", exact=True).press("Enter")
 
     # Then the cell shows Bob's value with a stale marker
     expect(page.get_by_test_id("cell-stale-customer-42")).to_be_visible()

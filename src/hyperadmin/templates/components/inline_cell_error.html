@@ -5,7 +5,7 @@
 {%- set item_token = item_pk|ha_dom_token -%}
 <td class="ha-table-cell ha-inline-editor ha-inline-editor-error"
     id="cell-{{ model_name|lower }}-{{ item_token }}-{{ field }}">
-    <form class="ha-inline-form"
+    <form class="ha-inline-form" data-inline-dirty
           data-testid="cell-editor-{{ field }}-{{ item_token }}"
           hx-post="{{- url_for(model_name|lower ~ '-inline-save', item_id=item_pk, field=field) -}}"
           hx-target="closest td"
@@ -30,7 +30,8 @@
                 <li>{{- error -}}</li>
             {%- endfor -%}
         </ul>
-        <div class="ha-inline-actions">
+        <span class="ha-sr-only">{{ _("Enter saves, Escape cancels.") }}</span>
+        <div class="ha-inline-actions" hidden>
             <button type="submit"
                     class="ha-btn ha-btn-primary ha-btn-inline"
                     data-testid="cell-save-{{ field }}-{{ item_token }}">
