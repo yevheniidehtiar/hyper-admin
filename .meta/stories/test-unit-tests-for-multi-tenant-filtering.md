@@ -2,7 +2,7 @@
 type: story
 id: t4NqU5jku3Pd
 title: "test: unit tests for multi-tenant filtering"
-status: todo
+status: cancelled
 priority: medium
 assignee: null
 labels:

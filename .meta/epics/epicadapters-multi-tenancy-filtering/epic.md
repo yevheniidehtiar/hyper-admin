@@ -2,7 +2,7 @@
 type: epic
 id: vjTPDDofso4Q
 title: "epic(adapters): Multi-Tenancy Filtering"
-status: todo
+status: cancelled
 priority: medium
 owner: null
 labels:

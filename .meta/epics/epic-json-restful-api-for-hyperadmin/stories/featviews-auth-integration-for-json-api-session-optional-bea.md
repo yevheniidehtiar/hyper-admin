@@ -2,7 +2,7 @@
 type: story
 id: ua3tGxIa1LSu
 title: "feat(views): auth integration for JSON API (session + optional bearer token)"
-status: todo
+status: cancelled
 priority: medium
 assignee: null
 labels:

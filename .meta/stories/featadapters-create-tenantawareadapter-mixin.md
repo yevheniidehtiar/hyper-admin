@@ -2,7 +2,7 @@
 type: story
 id: _EqSV4j-Hhj3
 title: "feat(adapters): create TenantAwareAdapter mixin"
-status: todo
+status: cancelled
 priority: medium
 assignee: null
 labels:

@@ -2,7 +2,7 @@
 type: epic
 id: 0Ds0szEo93g1
 title: "Epic: JSON RESTful API for HyperAdmin"
-status: in_progress
+status: cancelled
 priority: medium
 owner: null
 labels:
