@@ -1,6 +1,6 @@
 {
   "repo": "yevheniidehtiar/hyper-admin",
-  "last_sync": "2026-11-10T19:57:35.968Z",
+  "last_sync": "2026-11-11T16:32:34.627Z",
   "entities": {
     "dqmi_70iAUbv": {
       "local_hash": "sha256:0c241e5668b04857314c6bf866015a7d5715e683844b27f32c24f0fe99ce1743",
@@ -991,34 +991,39 @@
       "closed_on_remote": true
     },
     "uqdz7fJRu_fC": {
-      "local_hash": "sha256:7db36df448dd21ad7a8d01681684200b9d4ddca93ee23046af66d5cef761036d",
-      "remote_hash": "sha256:7db36df448dd21ad7a8d01681684200b9d4ddca93ee23046af66d5cef761036d",
-      "synced_at": "2026-04-07T17:23:23.790Z",
-      "github_issue_number": 228
+      "local_hash": "sha256:9628a904a2ff445beb74094fd564687111ece8d9a3d3866cd206f512c0aaa075",
+      "remote_hash": "sha256:9628a904a2ff445beb74094fd564687111ece8d9a3d3866cd206f512c0aaa075",
+      "synced_at": "2026-11-11T16:32:29.476Z",
+      "github_issue_number": 228,
+      "closed_on_remote": true
     },
     "gbWVcv_3ZVCR": {
-      "local_hash": "sha256:49c5db11d1bc89c3070ae293ac1595131da6d1a12d316f81172aa360e559665e",
-      "remote_hash": "sha256:49c5db11d1bc89c3070ae293ac1595131da6d1a12d316f81172aa360e559665e",
-      "synced_at": "2026-04-07T17:23:23.790Z",
-      "github_issue_number": 227
+      "local_hash": "sha256:00001c9ef4655c04b2b70ea43516173b49009c1988b36c1c9b82e69d18027831",
+      "remote_hash": "sha256:00001c9ef4655c04b2b70ea43516173b49009c1988b36c1c9b82e69d18027831",
+      "synced_at": "2026-11-11T16:32:30.769Z",
+      "github_issue_number": 227,
+      "closed_on_remote": true
     },
     "Gjw_YwMZKHDr": {
-      "local_hash": "sha256:3979b389b2252d1c6e3f2291de93d78be8a5fa4e527ed5bcdb41aa3aedeae3b1",
-      "remote_hash": "sha256:3979b389b2252d1c6e3f2291de93d78be8a5fa4e527ed5bcdb41aa3aedeae3b1",
-      "synced_at": "2026-04-07T17:23:23.790Z",
-      "github_issue_number": 230
+      "local_hash": "sha256:ef035c4835396ecd01bb000083760f9d89992a77ea810891f41ffcb9ff5145d2",
+      "remote_hash": "sha256:ef035c4835396ecd01bb000083760f9d89992a77ea810891f41ffcb9ff5145d2",
+      "synced_at": "2026-11-11T16:32:31.932Z",
+      "github_issue_number": 230,
+      "closed_on_remote": true
     },
     "9HiNmVNJ3mKb": {
-      "local_hash": "sha256:f97c6b40f9f7414a37f19d26ac449bcc4aaa6d2f1b0ad98459e83fdd491be4ab",
-      "remote_hash": "sha256:f97c6b40f9f7414a37f19d26ac449bcc4aaa6d2f1b0ad98459e83fdd491be4ab",
-      "synced_at": "2026-04-07T17:23:23.790Z",
-      "github_issue_number": 229
+      "local_hash": "sha256:6eb41d6cca5974b2a06e3f3137c7bac528d1063e7b5a87332807c85491b91f16",
+      "remote_hash": "sha256:6eb41d6cca5974b2a06e3f3137c7bac528d1063e7b5a87332807c85491b91f16",
+      "synced_at": "2026-11-11T16:32:33.302Z",
+      "github_issue_number": 229,
+      "closed_on_remote": true
     },
     "3jllWZHZIhbL": {
-      "local_hash": "sha256:8e4608b5023e6dc4312165df6daf6a451b2ca4932cf5acad546a5f7210076837",
-      "remote_hash": "sha256:8e4608b5023e6dc4312165df6daf6a451b2ca4932cf5acad546a5f7210076837",
-      "synced_at": "2026-04-07T17:23:23.790Z",
-      "github_issue_number": 226
+      "local_hash": "sha256:30c1e687988e896c4bc0f6f8444c3cddcf4e357b07beb2ce4e128b337f6255be",
+      "remote_hash": "sha256:30c1e687988e896c4bc0f6f8444c3cddcf4e357b07beb2ce4e128b337f6255be",
+      "synced_at": "2026-11-11T16:32:34.623Z",
+      "github_issue_number": 226,
+      "closed_on_remote": true
     },
     "THJntOBspNTC": {
       "local_hash": "sha256:12d3f6548e311ef7b95d680341617b42903a744ffb686e8d9e0550e833933ed4",
@@ -2823,9 +2828,10 @@
     },
     "ep-v070b-keyset-01": {
       "github_issue_number": 825,
-      "local_hash": "sha256:fdbaa951df19fdb9d1e8db38c3f3f8642f740c413fe7946f19ce6aae821040d0",
-      "remote_hash": "sha256:fdbaa951df19fdb9d1e8db38c3f3f8642f740c413fe7946f19ce6aae821040d0",
-      "synced_at": "2026-11-01T20:44:17.887Z"
+      "local_hash": "sha256:a6cccf72ee45c7b5cbd3cea9d3df0699bfb8b7f805361a96b04f1c89f4f494d4",
+      "remote_hash": "sha256:a6cccf72ee45c7b5cbd3cea9d3df0699bfb8b7f805361a96b04f1c89f4f494d4",
+      "synced_at": "2026-11-11T16:32:28.200Z",
+      "closed_on_remote": true
     },
     "st-conflict-01": {
       "github_issue_number": 826,
