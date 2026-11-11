@@ -176,15 +176,27 @@ missing_labels() {
   done
 }
 
+# label_add NUMBER LABEL / label_drop NUMBER LABEL: one label on an issue or a pull request.
+# Both go through the REST issues endpoint, where a pull request is an issue: `gh pr edit`
+# needs token scopes that `gh issue edit` does not, and the bot token may lack them.
+label_add() {
+  gh_bot api -X POST "repos/$AP_GH_REPO/issues/$1/labels" -f "labels[]=$2" --silent
+}
+
+label_drop() {
+  local label="${2//:/%3A}"
+  gh_bot api -X DELETE "repos/$AP_GH_REPO/issues/$1/labels/${label// /%20}" --silent >/dev/null 2>&1 || true
+}
+
 # label_swap KIND NUMBER ADD [REMOVE...]: add one label and drop others on an issue or PR.
-# A missing label is reported, never fatal: the label machine is created by setup-github.sh.
+# A failure is reported with GitHub's answer, never fatal.
 label_swap() {
-  local kind="$1" number="$2" add="$3" label
+  local kind="$1" number="$2" add="$3" label err
   shift 3
-  gh_bot "$kind" edit "$number" -R "$AP_GH_REPO" --add-label "$add" >/dev/null 2>&1 ||
-    log "  !! could not add label $add to $kind #$number (does the label exist?)"
+  err="$(label_add "$number" "$add" 2>&1)" ||
+    log "  !! could not add label $add to $kind #$number: $(printf '%s\n' "$err" | head -1)"
   for label in "$@"; do
-    gh_bot "$kind" edit "$number" -R "$AP_GH_REPO" --remove-label "$label" >/dev/null 2>&1 || true
+    label_drop "$number" "$label"
   done
 }
 
