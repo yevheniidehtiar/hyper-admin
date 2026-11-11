@@ -2,7 +2,7 @@
 type: story
 id: QZofycs5D6M_
 title: "feat(concurrency): OCC in BaseAdapter + SQLModelAdapter + SQLAlchemyAdapter"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

@@ -2,7 +2,7 @@
 type: story
 id: x9kubACVE3Q-
 title: "test(concurrency): version_field detection + StaleRecordError unit tests"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

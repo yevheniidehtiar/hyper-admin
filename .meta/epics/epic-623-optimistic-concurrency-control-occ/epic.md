@@ -2,7 +2,7 @@
 type: epic
 id: UxLOg-H5WxzR
 title: "Epic 6.2.3: Optimistic Concurrency Control (OCC)"
-status: todo
+status: done
 priority: medium
 owner: null
 labels:
