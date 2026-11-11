@@ -19,8 +19,16 @@ worktree that is already on the right branch. The job-specific instructions and 
 - Stay on the branch you were given. Never push to `develop` or `master`, never merge a pull
   request, never change repository settings, rulesets or releases, never run `gitpm push`.
 - Do not edit a story's `status:` in `.meta`; the autopilot tracks status with labels.
-- Tool calls outside the allowlist are denied without a prompt. Do not look for a way around
-  a denial: it marks something that needs the owner.
+- Tool calls outside the allowlist are denied without a prompt. Most denials are about the
+  form of a shell command, not its goal: a loop, a heredoc, `cd ... &&`, a redirect, or a
+  write outside the worktree (`/tmp`, `.git/`). Do not end the job for that. Redo the step as
+  plain single commands run from the worktree root, and create files with the Write tool
+  inside the worktree (a pull request body goes to `reports/pr-body.md`, then
+  `gh pr create --body-file reports/pr-body.md`). Only when a plain single command is denied
+  too does the denial mark something that needs the owner; do not work around that one.
+- The bot token cannot push changes under `.github/workflows/`. Keep such a change out of your
+  commits, push and open the pull request with the rest, paste the workflow diff in a fenced
+  block under `## Owner action` in the pull request body, and add the `needs-human` label.
 - Before a push run what CI runs: `uv run ruff check . && uv run ruff format --check .` and
   the unit tests that cover your change (`uv run poe test:unit`, plus `uv run poe test:cov-diff`
   when you changed code under `src/`).
