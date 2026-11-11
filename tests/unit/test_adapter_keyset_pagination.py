@@ -10,9 +10,8 @@ These tests are written ahead of the implementation (TDD red). They pin the cont
 - ``InvalidCursorError`` for malformed or future-version cursors;
 - ``KeysetFallbackWarning`` and OFFSET fallback when the sort column holds NULLs.
 
-Every test that needs the new API carries the ``pending`` marker: a strict ``xfail``. The story
-that makes a test pass (#227 core contract, #228 SQLModelAdapter) removes the marker from it;
-a strict xfail that starts passing fails the suite, so the marker cannot be forgotten.
+They were written ahead of the implementation as strict ``xfail`` tests; #227 (core contract)
+and #228 (``SQLModelAdapter``) made them pass and removed the markers.
 """
 
 from __future__ import annotations
@@ -30,11 +29,6 @@ from sqlmodel import Field, SQLModel
 from hyperadmin.adapters.sqlmodel import SQLModelAdapter
 from hyperadmin.core import adapters as core_adapters
 from hyperadmin.core.options import AdminOptions
-
-pending = pytest.mark.xfail(
-    strict=True,
-    reason="keyset pagination is implemented by #227 (core) and #228 (SQLModelAdapter)",
-)
 
 TOTAL_ROWS = 25
 PAGE_SIZE = 10
@@ -71,18 +65,28 @@ def cursor_adapter(adapter: SQLModelAdapter) -> SQLModelAdapter:
 
 
 @pytest.fixture
-def statements(engine: AsyncEngine) -> Iterator[list[str]]:
-    """Collect the SQL text of every statement the engine executes."""
-    captured: list[str] = []
+def statements(engine: AsyncEngine) -> Iterator[list[tuple[str, Any]]]:
+    """Collect the SQL text and bound parameters of every statement the engine executes."""
+    captured: list[tuple[str, Any]] = []
 
     def _capture(
-        _conn: Any, _cursor: Any, statement: str, _params: Any, _context: Any, _many: bool
+        _conn: Any, _cursor: Any, statement: str, params: Any, _context: Any, _many: bool
     ) -> None:
-        captured.append(statement)
+        captured.append((statement, params))
 
     event.listen(engine.sync_engine, "before_cursor_execute", _capture)
     yield captured
     event.remove(engine.sync_engine, "before_cursor_execute", _capture)
+
+
+def _skips_rows(executed: tuple[str, Any]) -> bool:
+    """Whether a statement skips rows with a non-zero ``OFFSET``.
+
+    SQLite renders ``LIMIT ? OFFSET ?`` for every limited query, binding ``0`` when no offset
+    was asked for, so the bound value (the last positional parameter) tells a real skip apart.
+    """
+    sql, params = executed
+    return "OFFSET" in sql.upper() and tuple(params)[-1] != 0
 
 
 async def _seed(adapter: SQLModelAdapter, count: int = TOTAL_ROWS) -> None:
@@ -170,7 +174,7 @@ def test_admin_options_rejects_unknown_pagination_mode() -> None:
 
 @pytest.mark.anyio
 async def test_offset_mode_list_paginated_uses_page_numbers(
-    adapter: SQLModelAdapter, statements: list[str]
+    adapter: SQLModelAdapter, statements: list[tuple[str, Any]]
 ) -> None:
     """
     Scenario: pagination_mode="offset" preserves current behaviour
@@ -190,7 +194,7 @@ async def test_offset_mode_list_paginated_uses_page_numbers(
     )
 
     # Then
-    assert any("OFFSET" in sql.upper() for sql in statements)
+    assert any(_skips_rows(executed) for executed in statements)
     assert _ids(result.items) == list(range(11, 21))
     assert result.total == TOTAL_ROWS
     assert result.next_cursor is None
@@ -202,10 +206,9 @@ async def test_offset_mode_list_paginated_uses_page_numbers(
 # ---------------------------------------------------------------------------
 
 
-@pending
 @pytest.mark.anyio
 async def test_first_page_in_cursor_mode_returns_next_cursor(
-    cursor_adapter: SQLModelAdapter, statements: list[str]
+    cursor_adapter: SQLModelAdapter, statements: list[tuple[str, Any]]
 ) -> None:
     """
     Scenario: the first cursor page has a next cursor and no OFFSET
@@ -225,7 +228,7 @@ async def test_first_page_in_cursor_mode_returns_next_cursor(
     )
 
     # Then
-    assert not any("OFFSET" in sql.upper() for sql in statements)
+    assert not any(_skips_rows(executed) for executed in statements)
     assert isinstance(result, core_adapters.ListResult)  # type: ignore[attr-defined]
     assert _ids(result.items) == list(range(1, 11))
     assert result.has_next is True
@@ -235,7 +238,6 @@ async def test_first_page_in_cursor_mode_returns_next_cursor(
     assert result.total is None
 
 
-@pending
 @pytest.mark.anyio
 async def test_after_cursor_returns_the_next_page(cursor_adapter: SQLModelAdapter) -> None:
     """
@@ -263,10 +265,9 @@ async def test_after_cursor_returns_the_next_page(cursor_adapter: SQLModelAdapte
     assert second.total is None
 
 
-@pending
 @pytest.mark.anyio
 async def test_cursor_after_page_is_not_offset_dependent(
-    cursor_adapter: SQLModelAdapter, statements: list[str]
+    cursor_adapter: SQLModelAdapter, statements: list[tuple[str, Any]]
 ) -> None:
     """
     Scenario: a cursor page filters on the key tuple instead of skipping rows
@@ -288,7 +289,7 @@ async def test_cursor_after_page_is_not_offset_dependent(
 
     # Then
     assert statements
-    assert not any("OFFSET" in sql.upper() for sql in statements)
+    assert not any(_skips_rows(executed) for executed in statements)
 
 
 # ---------------------------------------------------------------------------
@@ -296,7 +297,6 @@ async def test_cursor_after_page_is_not_offset_dependent(
 # ---------------------------------------------------------------------------
 
 
-@pending
 @pytest.mark.anyio
 async def test_cursor_chain_ordered_by_pk_visits_every_row_once(
     cursor_adapter: SQLModelAdapter,
@@ -318,7 +318,6 @@ async def test_cursor_chain_ordered_by_pk_visits_every_row_once(
     assert [pk for page in pages for pk in page] == list(range(1, TOTAL_ROWS + 1))
 
 
-@pending
 @pytest.mark.anyio
 async def test_cursor_chain_ordered_by_pk_descending(cursor_adapter: SQLModelAdapter) -> None:
     """
@@ -338,7 +337,6 @@ async def test_cursor_chain_ordered_by_pk_descending(cursor_adapter: SQLModelAda
     assert [pk for page in pages for pk in page] == list(range(TOTAL_ROWS, 0, -1))
 
 
-@pending
 @pytest.mark.anyio
 async def test_cursor_without_order_by_sorts_by_pk(cursor_adapter: SQLModelAdapter) -> None:
     """
@@ -362,7 +360,6 @@ async def test_cursor_without_order_by_sorts_by_pk(cursor_adapter: SQLModelAdapt
 # ---------------------------------------------------------------------------
 
 
-@pending
 @pytest.mark.anyio
 @pytest.mark.parametrize("order_by", ["rank", "-rank"])
 async def test_cursor_chain_on_non_unique_column_uses_pk_tiebreaker(
@@ -426,7 +423,6 @@ async def test_prev_cursor_returns_the_previous_page(cursor_adapter: SQLModelAda
 # ---------------------------------------------------------------------------
 
 
-@pending
 @pytest.mark.anyio
 async def test_cursor_mode_on_empty_table_returns_no_cursors(
     cursor_adapter: SQLModelAdapter,
@@ -472,7 +468,6 @@ async def test_first_page_has_no_prev_cursor(cursor_adapter: SQLModelAdapter) ->
     assert result.prev_cursor is None
 
 
-@pending
 @pytest.mark.anyio
 async def test_last_page_has_no_next_cursor(cursor_adapter: SQLModelAdapter) -> None:
     """
