@@ -530,6 +530,7 @@ class Admin:
             occ_render_dialog=self.settings.occ_render_dialog,
             home_page=lambda: self.plugins.home_page,
             default_page_size=self.settings.items_per_page,
+            hook_dispatcher=self.dispatch_hook,
         )
         admin_router.generate_routes()
         self._nav_sources = admin_router.nav_sources

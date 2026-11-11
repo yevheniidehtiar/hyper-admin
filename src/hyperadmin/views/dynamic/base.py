@@ -69,10 +69,13 @@ class DynamicModelViewBase:
         debug: bool = False,
         occ_render_dialog: bool = True,
         default_page_size: int = 10,
+        hook_dispatcher: Callable[..., None] | None = None,
     ) -> None:
         self.adapter = adapter
         # ``settings.items_per_page``: the list page size without a ``page_size`` query.
         self.default_page_size = default_page_size
+        # ``Admin.dispatch_hook``: fires the app-level plugin lifecycle hooks.
+        self._hook_dispatcher = hook_dispatcher
         # ``settings.debug``: list_view re-raises database errors instead of
         # rendering the list-error banner (BYOA SDD D.2).
         self.debug = debug
@@ -108,6 +111,11 @@ class DynamicModelViewBase:
         )
         self.panels: list[PanelDef] = resolve_panels(panel_source, self.model)
         self._panel_map: dict[str, PanelDef] = {p.slug: p for p in self.panels}
+
+    def _fire_hook(self, hook: str, **kwargs: Any) -> None:
+        """Fire an app-level plugin hook for this view's model (no-op without an admin)."""
+        if self._hook_dispatcher is not None:
+            self._hook_dispatcher(hook, model=self.model, **kwargs)
 
     def _verbose_labels(self) -> dict[str, str]:
         """Template context with the model's readable names.

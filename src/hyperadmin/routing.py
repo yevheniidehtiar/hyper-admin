@@ -138,6 +138,7 @@ def create_admin_router(  # noqa: PLR0912, PLR0913, PLR0915, PLR0917
     occ_render_dialog: bool = True,
     palette_search: PaletteSearch | None = None,
     default_page_size: int = 10,
+    hook_dispatcher: Any = None,
 ) -> APIRouter:
     """Creates an APIRouter for a given model with the specified admin options.
 
@@ -211,6 +212,7 @@ def create_admin_router(  # noqa: PLR0912, PLR0913, PLR0915, PLR0917
         debug=debug,
         occ_render_dialog=occ_render_dialog,
         default_page_size=default_page_size,
+        hook_dispatcher=hook_dispatcher,
     )
     model_name = model.__name__.lower()
     if palette_search is not None and options.palette_search and options.can_list:
@@ -500,10 +502,12 @@ class HyperAdminRouter:
         occ_render_dialog: bool = True,
         home_page: "Callable[[], PluginHomePage | None] | None" = None,
         default_page_size: int = 10,
+        hook_dispatcher: Any = None,
     ) -> None:
         self.engine = engine
         #: Lookup of the plugin home page (read per request); ``None`` = the welcome page.
         self.home_page = home_page
+        self.hook_dispatcher = hook_dispatcher
         self.debug = debug
         # The admin's own HyperAdminRoute (auth bridge, CSRF), or a default one
         # bound to these templates when the router is used on its own.
@@ -608,6 +612,7 @@ class HyperAdminRouter:
                 occ_render_dialog=self.occ_render_dialog,
                 palette_search=palette_search,
                 default_page_size=self.default_page_size,
+                hook_dispatcher=self.hook_dispatcher,
             )
             self.routers.append(router)
             if (
