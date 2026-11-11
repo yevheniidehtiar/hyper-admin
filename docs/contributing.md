@@ -51,6 +51,37 @@ activated virtual environment.
   and all review threads resolved.
 - New and changed lines must be covered by tests (`poe test:cov-diff`).
 
+## Merge hygiene
+
+Parallel PRs are merged by rebase only, so every conflict costs a rebase. Keep PRs small and additive.
+
+### Dependencies
+
+Dependency, extra and version changes ship in their **own small PR**, never bundled into a feature PR.
+
+Never hand-merge `uv.lock`. CI runs `uv lock --check` and fails when the committed lock differs from what
+`uv lock` produces. On a lock conflict:
+
+```bash
+git fetch origin develop
+git checkout origin/develop -- uv.lock   # take develop's lock
+git rebase origin/develop
+uv lock                                  # regenerate against your pyproject.toml
+git add uv.lock && git commit -m "build(deps): regenerate uv.lock"
+```
+
+### Releases
+
+Release process notes are added here.
+
+### Story status
+
+Story status tracking notes are added here.
+
+### Conflicting PRs
+
+Handling of conflicting PRs is described here.
+
 ## Code style
 
 - **Linter/formatter**: ruff (runs via `poe lint`)
