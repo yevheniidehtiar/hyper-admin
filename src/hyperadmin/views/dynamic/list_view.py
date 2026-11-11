@@ -3,16 +3,17 @@
 import logging
 import math
 from collections.abc import Sequence
-from typing import Any
+from typing import Any, cast
 from urllib.parse import urlencode
 
-from fastapi import Query, Request
+from fastapi import HTTPException, Query, Request
 from markupsafe import Markup
 from pydantic import BaseModel
 from sqlalchemy.exc import SQLAlchemyError
 from starlette.datastructures import QueryParams
 from starlette.responses import RedirectResponse
 
+from hyperadmin.core.adapters import InvalidCursorError, PaginationMode
 from hyperadmin.core.choices import ChoiceItem
 from hyperadmin.core.discovery import build_filter_metadata
 from hyperadmin.core.display import get_display_name, preview_structured
@@ -39,6 +40,15 @@ from hyperadmin.views.dynamic.saved_views import SavedViewsMixin
 from hyperadmin.views.template_filters import TIMEZONE_GLOBAL, request_tz
 
 logger = logging.getLogger(__name__)
+
+#: Pager keys of a list with no cursor links (offset pages and failed queries).
+_NO_NEIGHBOURS: dict[str, Any] = {
+    "cursor": None,
+    "has_next": False,
+    "has_prev": False,
+    "next_cursor": None,
+    "prev_cursor": None,
+}
 
 
 class ListViewMixin(SavedViewsMixin):
@@ -315,6 +325,82 @@ class ListViewMixin(SavedViewsMixin):
         )
         return row_target, can_delete
 
+    @property
+    def _pagination_mode(self) -> PaginationMode:
+        """``options.pagination_mode``, ``"offset"`` for options objects that predate it."""
+        return cast("PaginationMode", getattr(self.options, "pagination_mode", "offset"))
+
+    def _offset_pagination(self, page: int, page_size: int, total_items: int) -> dict[str, Any]:
+        """The pager context of a page-numbered list: page counts, row range and total."""
+        total_pages = math.ceil(total_items / page_size) if page_size > 0 else 0
+        return {
+            "mode": "offset",
+            "page": page,
+            "page_size": page_size,
+            "total_items": total_items,
+            "total_pages": total_pages,
+            "start_index": (page - 1) * page_size + 1 if total_items > 0 else 0,
+            "end_index": min(page * page_size, total_items),
+            "total_is_estimate": self.adapter.total_is_estimate(),
+            **_NO_NEIGHBOURS,
+            "has_next": page < total_pages,
+            "has_prev": page > 1,
+        }
+
+    async def _cursor_page(
+        self,
+        *,
+        page: int,
+        page_size: int,
+        cursor: str | None,
+        search: str | None,
+        filters: list[FilterCondition],
+        order_by: str,
+    ) -> tuple[list[Any], dict[str, Any]]:
+        """One keyset page and its pager context (``pagination_mode="cursor"``).
+
+        The pager carries ``has_next``/``has_prev`` and the ``next_cursor``/``prev_cursor``
+        links, and ``total_items`` is ``None``: keyset pages never count. When the adapter
+        serves the list as an ``OFFSET`` page instead (a sort keyset cannot page, with a
+        :class:`KeysetFallbackWarning`), the pager is the page-numbered one.
+
+        Raises:
+            HTTPException: 400 when ``cursor`` is malformed or tampered with.
+        """
+        try:
+            result = await self.adapter.list_paginated(
+                page=page,
+                page_size=page_size,
+                cursor=cursor,
+                search=search,
+                filters=filters,
+                order_by=order_by,
+                search_fields=self.search_fields,
+                **self._list_load_kwargs(),
+            )
+        except InvalidCursorError as exc:
+            raise HTTPException(status_code=400, detail="Invalid pagination cursor") from exc
+        if result.total is not None:
+            return result.items, self._offset_pagination(page, page_size, result.total)
+        shown = len(result.items)
+        return result.items, {
+            "mode": "cursor",
+            "cursor": cursor,
+            # Page numbers do not apply to keyset pages; these keep the offset pager
+            # renderable (no numbered next/previous links) until it reads the cursors.
+            "page": 1,
+            "page_size": page_size,
+            "total_items": None,
+            "total_pages": 0,
+            "start_index": 1 if shown else 0,
+            "end_index": shown,
+            "total_is_estimate": False,
+            "has_next": result.has_next,
+            "has_prev": result.has_prev,
+            "next_cursor": result.next_cursor,
+            "prev_cursor": result.prev_cursor,
+        }
+
     @_request_scoped
     async def list_view(
         self,
@@ -324,6 +410,7 @@ class ListViewMixin(SavedViewsMixin):
         search: str = Query(""),
         sort_by: str = Query(None),
         sort_direction: str = Query("asc", pattern="^(asc|desc)$"),
+        cursor: str = Query(""),
     ):
         """Renders the list view for the model with pagination, sorting, and filtering.
 
@@ -333,6 +420,10 @@ class ListViewMixin(SavedViewsMixin):
         through ``FilterDef.compile`` (filter library SDD). An HTMX request from
         the filter sidebar gets only the ``<tbody>`` plus ``HX-Push-Url``, so
         the URL stays the source of truth; ``?view=<id>`` loads a saved view.
+
+        With ``pagination_mode="cursor"`` the page comes from ``?cursor=`` (keyset over
+        ``(sort_col, pk)``, no total); a malformed cursor is a 400. In ``"offset"`` mode
+        ``cursor`` is ignored and ``page`` selects the page.
         """
         await self._check_permission(request, "view")
         query = request.query_params
@@ -369,30 +460,26 @@ class ListViewMixin(SavedViewsMixin):
         try:
             # The handler runs inside the request's queryset scope, so
             # ModelAdmin.get_queryset(request) is merged into the WHERE clause.
-            items, total_items = await self.adapter.list(
-                page=page,
-                page_size=page_size,
-                search=search or None,
-                filters=filters.conditions,
-                order_by=order_by,
-                search_fields=self.search_fields,
-                **self._list_load_kwargs(),
-            )
-
-            # Calculate pagination info
-            total_pages = math.ceil(total_items / page_size) if page_size > 0 else 0
-            start_index = (page - 1) * page_size + 1 if total_items > 0 else 0
-            end_index = min(page * page_size, total_items)
-
-            pagination = {
-                "page": page,
-                "page_size": page_size,
-                "total_items": total_items,
-                "total_pages": total_pages,
-                "start_index": start_index,
-                "end_index": end_index,
-                "total_is_estimate": self.adapter.total_is_estimate(),
-            }
+            if self._pagination_mode == "cursor":
+                items, pagination = await self._cursor_page(
+                    page=page,
+                    page_size=page_size,
+                    cursor=cursor or None,
+                    search=search or None,
+                    filters=filters.conditions,
+                    order_by=order_by,
+                )
+            else:
+                items, total_items = await self.adapter.list(
+                    page=page,
+                    page_size=page_size,
+                    search=search or None,
+                    filters=filters.conditions,
+                    order_by=order_by,
+                    search_fields=self.search_fields,
+                    **self._list_load_kwargs(),
+                )
+                pagination = self._offset_pagination(page, page_size, total_items)
 
         except SQLAlchemyError as exc:
             # Only database errors are handled here; user input is validated
@@ -409,6 +496,8 @@ class ListViewMixin(SavedViewsMixin):
                 "total_pages": 0,
                 "start_index": 0,
                 "end_index": 0,
+                **_NO_NEIGHBOURS,
+                "mode": self._pagination_mode,
             }
 
         file_fields = self._get_file_fields()
