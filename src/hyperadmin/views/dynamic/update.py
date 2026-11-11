@@ -144,6 +144,16 @@ class UpdateViewMixin(RelationViewMixin, InlineViewMixin):
             status_code=status_code,
         )
 
+    async def _update_with_hooks(
+        self, pk: Any, update_data: dict[str, Any], expected_version: str | None
+    ) -> None:
+        """Run the adapter update between the ``on_before_update`` / ``on_after_update`` hooks."""
+        self._fire_hook("on_before_update", pk=pk, data=update_data)
+        updated = await self.adapter.update(
+            pk=pk, data=update_data, **self._occ_kwargs(expected_version)
+        )
+        self._fire_hook("on_after_update", instance=updated)
+
     @_request_scoped
     async def update_view(self, request: Request, item_id: Any):
         """Handles form submission for updating an item."""
@@ -244,7 +254,7 @@ class UpdateViewMixin(RelationViewMixin, InlineViewMixin):
         update_data.pop(self.pk.attr, None)
         update_data.update(file_uploads)
         try:
-            await self.adapter.update(pk=pk, data=update_data, **self._occ_kwargs(expected_version))
+            await self._update_with_hooks(pk, update_data, expected_version)
         except StaleRecordError as exc:
             current = await self.adapter.get(pk=pk)
             return self._conflict_response(request, exc, update_data, current, item_id=pk)
@@ -281,7 +291,9 @@ class UpdateViewMixin(RelationViewMixin, InlineViewMixin):
 
         file_paths = self._collect_file_paths(item)
         try:
+            self._fire_hook("on_before_delete", pk=pk)
             await self.adapter.delete(pk=pk)
+            self._fire_hook("on_after_delete", pk=pk)
         except IntegrityError:
             # Still referenced by other rows (FK RESTRICT / NO ACTION); nothing was deleted.
             logger.info("Delete of %s %s blocked by referencing rows", self.model.__name__, pk)
