@@ -2,7 +2,7 @@
 type: story
 id: NhD19V-mLp6e
 title: "test(concurrency): BaseAdapter.update() with expected_version parameter"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

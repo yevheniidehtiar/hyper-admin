@@ -2,7 +2,7 @@
 type: story
 id: N7sT13tnRVqR
 title: "feat(concurrency): conflict_dialog.html component"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

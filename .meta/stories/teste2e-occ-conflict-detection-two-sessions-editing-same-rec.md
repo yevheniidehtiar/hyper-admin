@@ -2,7 +2,7 @@
 type: story
 id: GRr9-cj3oNeS
 title: "test(e2e): OCC conflict detection — two sessions editing same record"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

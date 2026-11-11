@@ -2,7 +2,7 @@
 type: story
 id: eHm5sgt4MF3K
 title: "feat(concurrency): core/concurrency.py — version detection + StaleRecordError"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
