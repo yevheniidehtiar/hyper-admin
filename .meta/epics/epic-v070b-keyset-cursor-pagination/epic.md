@@ -2,9 +2,7 @@
 type: epic
 id: ep-v070b-keyset-01
 title: "epic(adapters): keyset (cursor) pagination for 10M+ row lists"
-status: in_progress
-locked_by: autopilot
-branch: epic/epic-v070b-keyset-cursor-pagination
+status: done
 priority: medium
 owner: null
 labels:

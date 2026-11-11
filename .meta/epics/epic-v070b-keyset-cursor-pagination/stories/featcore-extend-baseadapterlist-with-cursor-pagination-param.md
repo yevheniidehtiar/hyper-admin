@@ -2,7 +2,7 @@
 type: story
 id: gbWVcv_3ZVCR
 title: "feat(core): extend BaseAdapter.list() with cursor pagination params"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

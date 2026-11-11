@@ -2,7 +2,7 @@
 type: story
 id: Gjw_YwMZKHDr
 title: "feat(templates): update pagination component for cursor mode"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

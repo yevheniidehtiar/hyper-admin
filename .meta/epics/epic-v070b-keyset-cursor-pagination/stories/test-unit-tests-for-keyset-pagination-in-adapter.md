@@ -2,7 +2,7 @@
 type: story
 id: 3jllWZHZIhbL
 title: "test: unit tests for keyset pagination in adapter"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
