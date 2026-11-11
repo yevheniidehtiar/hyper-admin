@@ -166,7 +166,7 @@ def test_maintaining_tickets_as_a_staff_user_behaves_the_same_with_the_cache(
     page.get_by_test_id("search-input").press_sequentially("Renamed")
     page.get_by_test_id(f"cell-edit-status-{pk}").click()
     page.get_by_test_id(f"cell-editor-status-{pk}").get_by_role("textbox").fill("closed")
-    page.get_by_test_id(f"cell-save-status-{pk}").click()
+    page.get_by_test_id(f"cell-editor-status-{pk}").get_by_role("textbox").press("Enter")
     # Then the cell shows the new value
     expect(page.get_by_test_id(f"cell-value-status-{pk}")).to_contain_text("closed")
 

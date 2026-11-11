@@ -168,6 +168,8 @@ def test_get_inline_edit_form_renders_editor_with_current_value() -> None:
     assert 'data-testid="cell-editor-name-1"' in body
     assert 'data-testid="cell-save-name-1"' in body
     assert 'data-testid="cell-cancel-name-1"' in body
+    # The buttons stay for the keyboard handler but are hidden: Enter saves, Escape cancels.
+    assert '<div class="ha-inline-actions" hidden>' in body
 
 
 def test_get_inline_edit_form_for_non_editable_field_returns_403() -> None:

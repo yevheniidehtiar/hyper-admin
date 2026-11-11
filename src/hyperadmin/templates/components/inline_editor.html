@@ -63,7 +63,9 @@
                    aria-label="{{ form_field.label if form_field else field }}"
                    autofocus>
         {%- endif -%}
-        <div class="ha-inline-actions">
+        <span class="ha-sr-only">{{ _("Enter saves, Escape cancels.") }}</span>
+        {#- Save and Cancel stay in the DOM for inline_edit.js, but are not shown. -#}
+        <div class="ha-inline-actions" hidden>
             <button type="submit"
                     class="ha-btn ha-btn-primary ha-btn-inline"
                     data-testid="cell-save-{{ field }}-{{ item_token }}">

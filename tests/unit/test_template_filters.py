@@ -137,6 +137,24 @@ def test_ha_display_passes_through_non_datetime_values() -> None:
     assert _render("{{ value|ha_display }}", request=request, value=42) == "42"
 
 
+def test_ha_display_renders_booleans_as_checkbox_marks() -> None:
+    """Scenario: a boolean shows as a ticked or empty box, with text for screen readers.
+
+    Given True and False values
+    When  ha_display runs
+    Then  True is the ticked mark (Yes) and False the empty mark (No)
+    """
+    request = _request(None)
+
+    on = _render("{{ value|ha_display }}", request=request, value=True)
+    off = _render("{{ value|ha_display }}", request=request, value=False)
+
+    assert 'class="ha-bool ha-bool-on"' in on
+    assert ">Yes<" in on
+    assert 'class="ha-bool ha-bool-off"' in off
+    assert ">No<" in off
+
+
 def test_ha_datetime_input_uses_the_resolved_timezone() -> None:
     """``ha_datetime_input`` localises an aware value for a datetime-local input."""
     value = datetime(2026, 1, 1, 0, 0, tzinfo=UTC)

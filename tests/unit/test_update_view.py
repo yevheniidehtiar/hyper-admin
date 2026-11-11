@@ -134,7 +134,7 @@ def test_update_view_uncheck_boolean(client: TestClient):
     )
 
     get_response = client.get("/admin/producttestupdate/1")
-    assert '"is_active": false' in get_response.text.lower() or "False" in get_response.text
+    assert '"is_active": false' in get_response.text.lower() or "ha-bool-off" in get_response.text
 
 
 def test_update_view_partial_update_preserves_missing_text_field(client: TestClient):

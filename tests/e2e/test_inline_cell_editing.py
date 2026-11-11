@@ -48,9 +48,9 @@ def test_opening_the_editor_swaps_the_cell_to_an_inline_input(
     # Then the cell is replaced by an inline form with an input pre-filled
     editor = page.get_by_test_id(f"cell-editor-name-{pk}")
     expect(editor).to_be_visible()
-    expect(page.get_by_test_id(f"cell-save-name-{pk}")).to_be_visible()
-    expect(page.get_by_test_id(f"cell-cancel-name-{pk}")).to_be_visible()
-    # And Save and Cancel buttons are present
+    # And there are no visible Save or Cancel buttons (Enter saves, Escape cancels)
+    expect(page.get_by_test_id(f"cell-save-name-{pk}")).to_be_hidden()
+    expect(page.get_by_test_id(f"cell-cancel-name-{pk}")).to_be_hidden()
 
 
 def test_saving_a_valid_value_persists_and_re_renders_the_cell(
@@ -66,8 +66,8 @@ def test_saving_a_valid_value_persists_and_re_renders_the_cell(
     name_input = page.get_by_role("textbox", name="Name", exact=True)
     name_input.fill("Alicia")
 
-    # When the user clicks Save
-    page.get_by_test_id(f"cell-save-name-{pk}").click()
+    # When the user presses Enter
+    name_input.press("Enter")
 
     # Then the cell is re-rendered with the new value
     expect(page.get_by_test_id(f"cell-edit-name-{pk}")).to_be_visible()
@@ -86,16 +86,16 @@ def test_invalid_input_shows_error_fragment_without_persisting(
     page.get_by_test_id(f"cell-edit-name-{pk}").click()
     expect(page.get_by_test_id(f"cell-editor-name-{pk}")).to_be_visible()
 
-    # When the user clears the input and clicks Save
+    # When the user clears the input and presses Enter
     name_input = page.get_by_role("textbox", name="Name", exact=True)
     name_input.fill("")
-    page.get_by_test_id(f"cell-save-name-{pk}").click()
+    name_input.press("Enter")
 
     # Then the cell shows a field-error list
     expect(page.get_by_test_id("name-errors")).to_be_visible()
 
     # And the original value is still in the database — cancel and verify
-    page.get_by_test_id(f"cell-cancel-name-{pk}").click()
+    page.get_by_role("textbox", name="Name", exact=True).press("Escape")
     expect(page.get_by_test_id(f"cell-value-name-{pk}")).to_have_text(original)
 
 
@@ -110,12 +110,68 @@ def test_cancelling_restores_the_static_cell(page: Page, demo_base_url: str) -> 
     # Mutate the input but DON'T save
     page.get_by_role("textbox", name="Name", exact=True).fill("DRAFT — should not persist")
 
-    # When the user clicks Cancel
-    page.get_by_test_id(f"cell-cancel-name-{pk}").click()
+    # When the user presses Escape
+    page.get_by_role("textbox", name="Name", exact=True).press("Escape")
 
     # Then the cell is restored to its read-only form with the original value
     expect(page.get_by_test_id(f"cell-edit-name-{pk}")).to_be_visible()
     expect(page.get_by_test_id(f"cell-value-name-{pk}")).to_have_text(original)
+
+
+def test_clicking_outside_an_unchanged_editor_just_closes_it(
+    page: Page, demo_base_url: str
+) -> None:
+    # Given the inline editor is open and nothing was typed
+    page.goto(demo_base_url + "/admin/user")
+    pk = _first_user_row_id(page)
+    original = page.get_by_test_id(f"cell-value-name-{pk}").text_content() or ""
+    page.get_by_test_id(f"cell-edit-name-{pk}").click()
+    expect(page.get_by_test_id(f"cell-editor-name-{pk}")).to_be_visible()
+
+    # When the user clicks outside the editor
+    page.get_by_role("heading", level=1).click()
+
+    # Then the editor closes without asking
+    expect(page.get_by_test_id("dialog-inline-discard")).to_have_count(0)
+    expect(page.get_by_test_id(f"cell-value-name-{pk}")).to_have_text(original)
+
+
+def test_clicking_outside_a_changed_editor_asks_and_discard_keeps_the_old_value(
+    page: Page, demo_base_url: str
+) -> None:
+    # Given the inline editor is open and the value was changed
+    page.goto(demo_base_url + "/admin/user")
+    pk = _first_user_row_id(page)
+    original = page.get_by_test_id(f"cell-value-name-{pk}").text_content() or ""
+    page.get_by_test_id(f"cell-edit-name-{pk}").click()
+    page.get_by_role("textbox", name="Name", exact=True).fill("DRAFT — discard me")
+
+    # When the user clicks outside the editor
+    page.get_by_role("heading", level=1).click()
+
+    # Then a dialog offers Save or Discard
+    expect(page.get_by_test_id("dialog-inline-discard")).to_be_visible()
+
+    # And Discard restores the original value
+    page.get_by_test_id("inline-confirm-discard").click()
+    expect(page.get_by_test_id(f"cell-value-name-{pk}")).to_have_text(original)
+
+
+def test_clicking_outside_a_changed_editor_and_choosing_save_persists(
+    page: Page, demo_base_url: str
+) -> None:
+    # Given the inline editor is open and the value was changed
+    page.goto(demo_base_url + "/admin/user")
+    pk = _first_user_row_id(page)
+    page.get_by_test_id(f"cell-edit-name-{pk}").click()
+    page.get_by_role("textbox", name="Name", exact=True).fill("Alicia Saved")
+
+    # When the user clicks outside and chooses Save
+    page.get_by_role("heading", level=1).click()
+    page.get_by_test_id("inline-confirm-save").click()
+
+    # Then the new value is shown
+    expect(page.get_by_test_id(f"cell-value-name-{pk}")).to_contain_text("Alicia Saved")
 
 
 def test_non_editable_field_cannot_be_posted_inline(page: Page, demo_base_url: str) -> None:

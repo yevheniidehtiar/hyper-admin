@@ -127,7 +127,7 @@ def test_uuid_inline_edit(page: Page, pk_types_base_url: str) -> None:
     page.get_by_test_id(f"cell-edit-title-{pk}").click()
     expect(page.get_by_test_id(f"cell-editor-title-{pk}")).to_be_visible()
     page.get_by_role("textbox", name="Title", exact=True).fill("Beta inline")
-    page.get_by_test_id(f"cell-save-title-{pk}").click()
+    page.get_by_role("textbox", name="Title", exact=True).press("Enter")
 
     # Then the cell shows the new title
     expect(page.get_by_test_id(f"cell-value-title-{pk}")).to_have_text("Beta inline")

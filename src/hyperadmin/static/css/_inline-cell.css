@@ -22,7 +22,7 @@
   vertical-align: middle;
 }
 
-/* Always visible (nothing is hover-only); brightens on row hover and focus. */
+/* Hover-only on pointer devices, always visible on touch (see the end of this file). */
 .ha-cell-editable .ha-cell-edit {
   display: inline-flex;
   align-items: center;
@@ -117,4 +117,106 @@
 
 .ha-occ-differs {
   background-color: var(--ha-color-warning-light);
+}
+
+/* --------------------------------------------------------------------------
+   Pencil: shown on row hover or keyboard focus only. Touch screens have no
+   hover, so there it stays visible (otherwise the cell could not be edited).
+   -------------------------------------------------------------------------- */
+@media (hover: hover) {
+  .ha-cell-editable .ha-cell-edit {
+    opacity: 0;
+  }
+
+  .ha-table-row:hover .ha-cell-edit,
+  .ha-table-row:focus-within .ha-cell-edit,
+  .ha-cell-editable .ha-cell-edit:focus-visible {
+    opacity: 1;
+  }
+}
+
+/* The editor has no Save/Cancel buttons (inline_edit.js), so it is just the control. */
+.ha-inline-form .ha-inline-actions[hidden] {
+  display: none;
+}
+
+.ha-inline-form input[type="checkbox"].ha-input-inline {
+  width: 1.125rem;
+  min-width: 0;
+  height: 1.125rem;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  accent-color: var(--ha-color-primary);
+}
+
+.ha-inline-confirm {
+  padding: var(--ha-space-4);
+  max-width: min(20rem, calc(100vw - 2rem));
+}
+
+.ha-inline-confirm__title {
+  margin: 0 0 var(--ha-space-3);
+  font-weight: var(--ha-font-semibold);
+}
+
+.ha-inline-confirm__actions {
+  display: flex;
+  gap: var(--ha-space-2);
+  justify-content: flex-end;
+}
+
+/* --------------------------------------------------------------------------
+   Boolean values: a read-only checkbox, ticked or empty (ha_display).
+   -------------------------------------------------------------------------- */
+.ha-bool {
+  position: relative;
+  display: inline-block;
+  inline-size: 1.125rem;
+  block-size: 1.125rem;
+  vertical-align: middle;
+  border: 1.5px solid var(--ha-color-border);
+  border-radius: var(--ha-radius-sm);
+  background: transparent;
+}
+
+.ha-bool-on {
+  background: var(--ha-color-primary);
+  border-color: var(--ha-color-primary);
+}
+
+.ha-bool-on::after {
+  content: "";
+  position: absolute;
+  inset-block-start: 1px;
+  inset-inline-start: 5px;
+  inline-size: 4px;
+  block-size: 9px;
+  border: solid var(--ha-color-on-primary);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* --------------------------------------------------------------------------
+   Phone cards: the pencil stays next to its value instead of drifting away.
+   -------------------------------------------------------------------------- */
+@media (max-width: 767px) {
+  /* The pencil sits right after its value, keeps a 44px tap target, and does not
+     make the line taller (negative block margin, like the delete button). */
+  .ha-cell-editable .ha-cell-edit {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    margin-inline-start: 0;
+    margin-block: -0.75rem;
+  }
+
+  .ha-cell-editable .ha-cell-value {
+    margin-inline-start: 0;
+  }
+
+  /* The open editor takes the whole line, the value left and nothing beside it. */
+  .ha-table-row > .ha-inline-editor {
+    flex: 1 1 100%;
+    padding-block: var(--ha-space-1);
+  }
 }

@@ -37,8 +37,16 @@ The inline-editing piece was scoped but never tracked as a sub-issue.
   `PydanticForm` validators and either re-renders the cell (success, with an
   `aria-live` confirmation) or returns a 422 fragment with field errors.
 - Cancelling restores the static cell.
-- Keyboard: `Enter` submits, `Escape` cancels, focus is returned to the edit
-  affordance after save/cancel.
+- No visible Save/Cancel buttons (they stay in the DOM, hidden, for the
+  handlers in `static/js/inline_edit.js`). `Enter` saves (an unchanged editor
+  just closes), `Escape` cancels and discards, and a click outside closes an
+  unchanged editor or, when the value changed, asks Save or Discard. "Changed"
+  compares each control with its server-rendered default; an editor returned
+  after a failed save always counts as changed.
+- The pencil shows on row hover or keyboard focus only; on touch screens
+  (no hover) it stays visible.
+- Boolean values render as a read-only checkbox, ticked or empty, with
+  "Yes"/"No" for screen readers.
 - Mobile/responsive: works inside the existing v0.4.0 stacked-card layout.
 - WCAG 2.1: editor input has a visible label (`aria-label`), errors expose
   `aria-live="polite"`, focus management is preserved.
@@ -74,13 +82,13 @@ Scenario: opening the editor swaps the cell to an inline input
   Then  the cell is replaced by an inline form with an input pre-filled
         with "Alice"
   And   the input is focused
-  And   Save and Cancel buttons are present
+  And   no Save or Cancel buttons are shown
 ```
 
 ```
 Scenario: saving a valid value persists and re-renders the cell
   Given the inline editor for Alice's name cell is open
-  When  the user types "Alicia" and clicks Save
+  When  the user types "Alicia" and presses Enter
   Then  the database row's name field is "Alicia"
   And   the cell is re-rendered with the new value
   And   an aria-live region announces "Saved"
@@ -91,7 +99,7 @@ Scenario: invalid input shows an error fragment without persisting
   Given the User model declares list_editable = ["name"]
   And   the User schema requires name min_length=1
   And   the inline editor for Alice's name cell is open
-  When  the user clears the input and clicks Save
+  When  the user clears the input and presses Enter
   Then  the response status is 422
   And   the cell shows a field-error list with data-testid "name-errors"
   And   Alice's name in the database is still "Alice"
@@ -100,7 +108,7 @@ Scenario: invalid input shows an error fragment without persisting
 ```
 Scenario: cancelling restores the static cell
   Given the inline editor for Alice's name cell is open
-  When  the user clicks Cancel
+  When  the user presses Escape
   Then  the cell is restored to its read-only form with the original value
   And   no request is made to the update endpoint
 ```
