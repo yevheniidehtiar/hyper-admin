@@ -615,7 +615,7 @@ after_job() {
         # the job forgot (the planner also falls back to the head branch).
         body="$(gh_ro pr view "$pr" -R "$AP_GH_REPO" --json body --jq .body 2>/dev/null || true)"
         if [ -n "$story" ] && ! printf '%s\n' "$body" | grep -qE '^Story:[[:space:]]*`?[A-Za-z0-9_.-]+'; then
-          gh_bot pr edit "$pr" -R "$AP_GH_REPO" --body "Story: $story
+          gh_bot api -X PATCH "repos/$AP_GH_REPO/pulls/$pr" --silent -f body="Story: $story
 
 $body" >/dev/null || log "  !! could not add the Story line to PR #$pr"
         fi
@@ -644,7 +644,7 @@ $body" >/dev/null || log "  !! could not add the Story line to PR #$pr"
       ;;
     fix-pr)
       if [ "$status" = "ok" ]; then
-        gh_bot pr edit "$pr" -R "$AP_GH_REPO" --remove-label ai-changes-requested >/dev/null 2>&1 || true
+        label_drop "$pr" ai-changes-requested
         approved="$(state_value "prs.$pr.approved_sha")"
         head="$(pr_head "$pr")"
         if [ -n "$approved" ] && [ -n "$head" ] && [ "$head" != "$approved" ]; then
@@ -652,7 +652,7 @@ $body" >/dev/null || log "  !! could not add the Story line to PR #$pr"
           # merge, and that extra review does not count against the two rounds.
           state set "prs.$pr.approved_sha" '""'
           state bump prs "$pr" review --by -1 >/dev/null
-          gh_bot pr edit "$pr" -R "$AP_GH_REPO" --remove-label ai-approved >/dev/null 2>&1 || true
+          label_drop "$pr" ai-approved
         fi
       fi
       ;;
