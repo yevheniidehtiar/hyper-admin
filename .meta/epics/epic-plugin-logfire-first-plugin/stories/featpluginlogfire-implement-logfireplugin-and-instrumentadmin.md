@@ -2,7 +2,7 @@
 type: story
 id: xbcCPwi1Ikew
 title: "feat(plugin-logfire): implement LogfirePlugin and instrument_admin()"
-status: todo
+status: done
 priority: high
 assignee: null
 labels:

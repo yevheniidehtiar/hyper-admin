@@ -2,7 +2,7 @@
 type: story
 id: LrSvJLyCHmOl
 title: "chore: scaffold plugins/hyperadmin-logfire package"
-status: todo
+status: done
 priority: high
 assignee: null
 labels:
