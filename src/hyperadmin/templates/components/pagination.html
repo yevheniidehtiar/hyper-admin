@@ -1,11 +1,17 @@
 {%- from "components/_icons.html" import icon -%}
+{#- Keyset lists (pagination.mode == "cursor") have no page numbers and no total:
+    prev/next links carry ?cursor= and the "of N" labels are hidden.
+    Every other pager (offset mode, a keyset fallback to OFFSET) is page-numbered. -#}
+{%- set cursor_mode = pagination.mode|default('offset') == 'cursor' -%}
 <nav aria-label="{{ _('Pagination') }}">
 <div class="ha-pagination">
         {%- set filter_params -%}
             {%- for key, value in active_filters.items() -%}&filter_{{ key }}={{ value }}{%- endfor -%}
         {%- endset -%}
     <div class="ha-pagination-info" data-testid="pagination-info">
+        {%- if not cursor_mode %}
         {% trans start=pagination.start_index, end=pagination.end_index, total=('~' ~ pagination.total_items if pagination.total_is_estimate else pagination.total_items) %}Showing {{ start }} to {{ end }} of {{ total }} results{% endtrans %}
+        {%- endif %}
     </div>
     <div class="ha-pagination-sizes" role="group" aria-label="{{ _('Rows per page') }}" data-testid="page-size">
         <span class="ha-text-muted">{{ _("Rows per page") }}</span>
@@ -20,6 +26,36 @@
         {%- endfor %}
     </div>
     <div class="ha-pagination-controls">
+        {%- if cursor_mode -%}
+        {%- set list_url = url_for(model_name|lower ~ '-list') -%}
+        {%- set keep_params -%}
+            &search={{ search_query }}&sort_by={{ sort_by }}&sort_direction={{ sort_direction }}{{ filter_params }}&page_size={{ pagination.page_size }}{{ filter_query|default('')|safe }}
+        {%- endset -%}
+        {%- if pagination.has_prev and pagination.prev_cursor -%}
+        <a href="{{ list_url }}?cursor={{ pagination.prev_cursor|urlencode }}{{ keep_params }}"
+           hx-get="{{ list_url }}?cursor={{ pagination.prev_cursor|urlencode }}{{ keep_params }}"
+           hx-target="#model-list"
+           hx-swap="outerHTML"
+           rel="prev"
+           aria-label="{{ _('Previous page') }}"
+           class="ha-pagination-btn"
+           data-testid="pagination-prev">
+            {{ icon('chevron-left', 'ha-icon-sm ha-icon--mirror') }}{{ _("Previous") }}
+        </a>
+        {%- endif -%}
+        {%- if pagination.has_next and pagination.next_cursor -%}
+        <a href="{{ list_url }}?cursor={{ pagination.next_cursor|urlencode }}{{ keep_params }}"
+           hx-get="{{ list_url }}?cursor={{ pagination.next_cursor|urlencode }}{{ keep_params }}"
+           hx-target="#model-list"
+           hx-swap="outerHTML"
+           rel="next"
+           aria-label="{{ _('Next page') }}"
+           class="ha-pagination-btn"
+           data-testid="pagination-next">
+            {{ _("Next") }}{{ icon('chevron-right', 'ha-icon-sm ha-icon--mirror') }}
+        </a>
+        {%- endif -%}
+        {%- else -%}
         {%- if pagination.page > 1 -%}
         <a href="{{- url_for(model_name|lower ~ '-list') }}?page={{ pagination.page - 1 }}&search={{ search_query }}&sort_by={{ sort_by }}&sort_direction={{ sort_direction }}{{ filter_params }}&page_size={{ pagination.page_size }}{{ filter_query|default('')|safe -}}"
            hx-get="{{- url_for(model_name|lower ~ '-list') }}?page={{ pagination.page - 1 }}&search={{ search_query }}&sort_by={{ sort_by }}&sort_direction={{ sort_direction }}{{ filter_params }}&page_size={{ pagination.page_size }}{{ filter_query|default('')|safe -}}"
@@ -44,6 +80,7 @@
            data-testid="pagination-next">
             {{ _("Next") }}{{ icon('chevron-right', 'ha-icon-sm ha-icon--mirror') }}
         </a>
+        {%- endif -%}
         {%- endif -%}
     </div>
 </div>
