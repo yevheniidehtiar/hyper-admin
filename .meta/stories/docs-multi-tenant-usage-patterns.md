@@ -2,7 +2,7 @@
 type: story
 id: 9IYFURzpu7Ws
 title: "docs: multi-tenant usage patterns"
-status: todo
+status: cancelled
 priority: medium
 assignee: null
 labels:

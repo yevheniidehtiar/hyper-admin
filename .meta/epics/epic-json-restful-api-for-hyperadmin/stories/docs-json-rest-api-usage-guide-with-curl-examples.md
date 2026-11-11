@@ -2,7 +2,7 @@
 type: story
 id: RDrYbtwOEWCE
 title: "docs: JSON REST API usage guide with curl examples"
-status: todo
+status: cancelled
 priority: medium
 assignee: null
 labels:

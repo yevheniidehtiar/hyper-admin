@@ -2,7 +2,7 @@
 type: story
 id: CQXB9ZrRkLB1
 title: "test(e2e): multi-tenant list isolation"
-status: todo
+status: cancelled
 priority: medium
 assignee: null
 labels:

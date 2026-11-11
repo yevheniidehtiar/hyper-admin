@@ -2,7 +2,7 @@
 type: story
 id: sL38TExGtK1z
 title: "test: integration tests for JSON API CRUD with permission checks"
-status: todo
+status: cancelled
 priority: medium
 assignee: null
 labels:

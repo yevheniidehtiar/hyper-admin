@@ -2,7 +2,7 @@
 type: story
 id: 9S2zPfgGGD9R
 title: "feat(auth): create TenantMiddleware for tenant resolution"
-status: todo
+status: cancelled
 priority: medium
 assignee: null
 labels:

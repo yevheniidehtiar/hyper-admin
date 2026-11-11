@@ -2,7 +2,7 @@
 type: story
 id: EpBJb_MSI-xe
 title: "feat(views): JsonApiRouter generating 5 CRUD endpoints per registered model"
-status: todo
+status: cancelled
 priority: medium
 assignee: null
 labels:

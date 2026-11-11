@@ -2,7 +2,7 @@
 type: story
 id: 1JmK6STiUpqa
 title: "feat(core): add tenant configuration to AdminOptions"
-status: todo
+status: cancelled
 priority: medium
 assignee: null
 labels:
