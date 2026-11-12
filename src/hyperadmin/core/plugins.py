@@ -469,3 +469,75 @@ class PluginRegistry:
                 logger.exception(
                     "plugin %r hook %s raised", name, hook, extra={"plugin": name, "hook": hook}
                 )
+
+
+#: ``BaseAdapter`` methods the adapter-call hooks observe; the value is the ``op`` name.
+_HOOKED_ADAPTER_METHODS: dict[str, str] = {
+    "get": "get",
+    "list": "list",
+    "list_paginated": "list",
+    "create": "create",
+    "update": "update",
+    "delete": "delete",
+    "get_related": "get_related",
+    "get_choices": "get_choices",
+    "save_inline_rows": "save_inline_rows",
+    "get_schema": "get_schema",
+}
+
+
+class _AdapterHookWrapper:
+    """Delegating proxy that fires ``on_before/after_adapter_call`` around adapter calls.
+
+    Everything not hooked (attributes, ``pk``, ``for_model``, ``to_dict`` ...) is
+    forwarded to the inner adapter untouched. ``on_after_adapter_call`` fires in a
+    ``finally``: on failure ``result`` is ``None`` and ``error`` is the exception,
+    which is then re-raised (SDD "Adapter wrapping strategy").
+    """
+
+    def __init__(self, *, inner: Any, dispatch: Callable[..., None], model: type) -> None:
+        object.__setattr__(self, "_ha_inner", inner)
+        object.__setattr__(self, "_ha_dispatch", dispatch)
+        object.__setattr__(self, "_ha_model", model)
+
+    def __getattr__(self, name: str) -> Any:
+        attr = getattr(object.__getattribute__(self, "_ha_inner"), name)
+        op = _HOOKED_ADAPTER_METHODS.get(name)
+        if op is None:
+            return attr
+        return self._hooked(attr, op)
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        setattr(object.__getattribute__(self, "_ha_inner"), name, value)
+
+    def _hooked(self, method: Callable[..., Any], op: str) -> Callable[..., Any]:
+        dispatch = object.__getattribute__(self, "_ha_dispatch")
+        model = object.__getattribute__(self, "_ha_model")
+
+        async def wrapper(*args: Any, **kwargs: Any) -> Any:
+            call_kwargs = {"args": args, **kwargs} if args else dict(kwargs)
+            dispatch("on_before_adapter_call", model=model, op=op, kwargs=call_kwargs)
+            result: Any = None
+            error: BaseException | None = None
+            try:
+                result = await method(*args, **kwargs)
+            except BaseException as exc:
+                error = exc
+                raise
+            finally:
+                dispatch("on_after_adapter_call", model=model, op=op, result=result, error=error)
+            return result
+
+        return wrapper
+
+
+def wrap_adapter_with_hooks(
+    adapter: Any, *, plugins: PluginRegistry | None, dispatch: Callable[..., None], model: type
+) -> Any:
+    """Return ``adapter`` wrapped in the hook proxy, or itself when no plugin listens."""
+    if plugins is None or not (
+        plugins.has_handlers("on_before_adapter_call")
+        or plugins.has_handlers("on_after_adapter_call")
+    ):
+        return adapter
+    return _AdapterHookWrapper(inner=adapter, dispatch=dispatch, model=model)
