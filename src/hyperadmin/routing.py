@@ -19,6 +19,7 @@ from hyperadmin.core.display import get_field_label
 from hyperadmin.core.introspection import infer_list_display, infer_list_filter, infer_search_fields
 from hyperadmin.core.navigation import ModelNavSource, build_nav_tree, model_nav_label
 from hyperadmin.core.options import AdminOptions
+from hyperadmin.core.plugins import wrap_adapter_with_hooks
 from hyperadmin.realtime.emitting import EventEmittingAdapter, notifications_enabled
 from hyperadmin.views.dynamic import DynamicModelView
 from hyperadmin.views.navigation import register_nav_globals
@@ -139,6 +140,7 @@ def create_admin_router(  # noqa: PLR0912, PLR0913, PLR0915, PLR0917
     palette_search: PaletteSearch | None = None,
     default_page_size: int = 10,
     hook_dispatcher: Any = None,
+    plugins: Any = None,
 ) -> APIRouter:
     """Creates an APIRouter for a given model with the specified admin options.
 
@@ -170,6 +172,13 @@ def create_admin_router(  # noqa: PLR0912, PLR0913, PLR0915, PLR0917
             )
     elif realtime_settings is not None and notifications_enabled(options, realtime_settings):
         adapter = EventEmittingAdapter(adapter, realtime_emitter)
+    if hook_dispatcher is not None:
+        adapter = wrap_adapter_with_hooks(
+            adapter,
+            plugins=plugins,
+            dispatch=hook_dispatcher,
+            model=model,
+        )
     pk = adapter.pk
 
     # Composite keys (BYOA SDD A.5 point 4): item-scoped routes are never
@@ -503,11 +512,13 @@ class HyperAdminRouter:
         home_page: "Callable[[], PluginHomePage | None] | None" = None,
         default_page_size: int = 10,
         hook_dispatcher: Any = None,
+        plugins: Any = None,
     ) -> None:
         self.engine = engine
         #: Lookup of the plugin home page (read per request); ``None`` = the welcome page.
         self.home_page = home_page
         self.hook_dispatcher = hook_dispatcher
+        self.plugins = plugins
         self.debug = debug
         # The admin's own HyperAdminRoute (auth bridge, CSRF), or a default one
         # bound to these templates when the router is used on its own.
@@ -613,6 +624,7 @@ class HyperAdminRouter:
                 palette_search=palette_search,
                 default_page_size=self.default_page_size,
                 hook_dispatcher=self.hook_dispatcher,
+                plugins=self.plugins,
             )
             self.routers.append(router)
             if (

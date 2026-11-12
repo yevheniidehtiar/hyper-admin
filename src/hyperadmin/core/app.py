@@ -531,6 +531,7 @@ class Admin:
             home_page=lambda: self.plugins.home_page,
             default_page_size=self.settings.items_per_page,
             hook_dispatcher=self.dispatch_hook,
+            plugins=self.plugins,
         )
         admin_router.generate_routes()
         self._nav_sources = admin_router.nav_sources
