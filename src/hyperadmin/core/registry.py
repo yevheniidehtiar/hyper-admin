@@ -1,4 +1,5 @@
 import threading
+from collections.abc import Callable
 from typing import Any
 
 from hyperadmin.adapters.registry import adapter_registry
@@ -20,6 +21,25 @@ class SiteRegistry:
     def __init__(self) -> None:
         self._registry: dict[Any, Any] = {}
         self._lock = threading.Lock()
+        #: ``Admin.dispatch_hook`` of the mounted admin; ``None`` until one mounts.
+        self._hook_dispatcher: Callable[..., None] | None = None
+
+    def attach_hook_dispatcher(self, dispatcher: Callable[..., None] | None) -> None:
+        """Route ``on_model_register`` to ``dispatcher`` (the latest mounted admin wins).
+
+        Models registered before the attach (host ``site.register()`` calls at
+        import time) fire once, now; later ``register()`` calls fire as they happen.
+        """
+        with self._lock:
+            self._hook_dispatcher = dispatcher
+            pending = list(self._registry.items()) if dispatcher is not None else []
+        for model, admin_class in pending:
+            self._fire_model_register(model, admin_class)
+
+    def _fire_model_register(self, model: Any, admin_class: Any) -> None:
+        dispatcher = self._hook_dispatcher
+        if dispatcher is not None:
+            dispatcher("on_model_register", model=model, options=admin_class.options)
 
     def register(
         self,
@@ -76,6 +96,9 @@ class SiteRegistry:
             admin_class.options = options
             admin_class.adapter_class = adapter_registry.find_adapter_for_model(model)
             self._registry[model] = admin_class
+
+        # After the lock is released: a plugin may read the registry from its hook.
+        self._fire_model_register(model, admin_class)
 
     def unregister(self, model: Any) -> None:
         """
