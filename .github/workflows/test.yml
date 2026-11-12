@@ -26,11 +26,27 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  changes:
+    # A pull request that only touches docs, .meta, .claude or reports needs no code checks.
+    name: Detect code changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      code: ${{ steps.detect.outputs.code }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - id: detect
+        run: bash scripts/ci-code-changed.sh "${{ github.event_name }}" "${{ github.base_ref }}"
+
   lint:
     # ``poe lint`` (every pre-commit hook: ruff, mypy, basedpyright, ...) runs
     # once, on the lowest supported Python and the locked set, instead of in
     # every matrix row below.
     name: Lint
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -118,7 +134,11 @@ jobs:
         run: uv run poe security-check
 
   test-pr:
+    # No job-level `if` on the code change: both rows are required checks, and a skipped matrix
+    # job reports under its unexpanded name, so the required contexts would never appear. The
+    # job always runs on a pull request; its steps skip on a non-code change.
     if: github.event_name == 'pull_request'
+    needs: changes
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
@@ -137,9 +157,11 @@ jobs:
 
     steps:
       - name: Checkout
+        if: needs.changes.outputs.code == 'true'
         uses: actions/checkout@v7
 
       - name: Install uv and Python ${{ matrix.python-version }}
+        if: needs.changes.outputs.code == 'true'
         uses: astral-sh/setup-uv@v7
         with:
           python-version: ${{ matrix.python-version }}
@@ -147,6 +169,7 @@ jobs:
           cache-suffix: ${{ matrix.resolution }}
 
       - name: Check uv.lock is up to date
+        if: needs.changes.outputs.code == 'true'
         run: uv lock --check
 
       - name: Install dependencies
@@ -155,6 +178,7 @@ jobs:
         # That re-resolve rewrites uv.lock, and any later plain `uv run` would re-lock
         # at highest and reinstall. So restore the committed lock and set UV_NO_SYNC
         # for every following step (nested `uv run` in pre-commit hooks included).
+        if: needs.changes.outputs.code == 'true'
         run: |
           if [ "${{ matrix.resolution }}" = "highest" ]; then
             uv sync --locked --all-extras --python ${{ matrix.python-version }}
@@ -165,13 +189,14 @@ jobs:
           fi
 
       - name: Test package
+        if: needs.changes.outputs.code == 'true'
         run: uv run poe test:unit
 
       - name: Security checks
         # Audits the shipped (locked, highest) set. lowest-direct rows are a
         # compatibility check of the declared floors, whose old releases carry
         # known advisories by definition.
-        if: matrix.resolution == 'highest'
+        if: needs.changes.outputs.code == 'true' && matrix.resolution == 'highest'
         run: uv run poe security-check
 
   e2e:
@@ -179,6 +204,8 @@ jobs:
     # split into shards: every shard takes every Nth test file (sorted) and runs
     # them with pytest-xdist (tests/e2e/conftest.py sizes the worker pool).
     name: E2E (shard ${{ matrix.shard }}/3)
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
 

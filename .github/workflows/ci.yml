@@ -18,10 +18,26 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  changes:
+    # A pull request that only touches docs, .meta, .claude or reports needs no code checks.
+    name: Detect code changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      code: ${{ steps.detect.outputs.code }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - id: detect
+        run: bash scripts/ci-code-changed.sh "${{ github.event_name }}" "${{ github.base_ref }}"
+
   lint:
     # Static checks once, on the lowest supported Python; the test matrix
     # below no longer repeats them in every row.
     name: Lint & typecheck
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -39,7 +55,11 @@ jobs:
       - run: uv run basedpyright src plugins/hyperadmin-reports/src
 
   test:
+    # No job-level `if`: Test (Py 3.11 on ubuntu-latest) and Test (Py 3.14 on macos-latest) are
+    # required checks, and a skipped matrix job reports under its unexpanded name, so the required
+    # contexts would never appear. The job always runs; the steps skip on a non-code change.
     name: Test (Py ${{ matrix.python-version }} on ${{ matrix.os }})
+    needs: changes
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     env:
@@ -47,7 +67,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.11", "3.12", "3.13", "3.14", "3.15"]
+        # Pull requests: the lowest and highest Python only. The full range runs on develop/master.
+        python-version: ${{ fromJSON(github.event_name == 'pull_request' && '["3.11", "3.14"]' || '["3.11", "3.12", "3.13", "3.14", "3.15"]') }}
         os: [ubuntu-latest, macos-latest]
         # macOS only on the lowest and highest supported Python; Ubuntu keeps all.
         exclude:
@@ -57,13 +78,18 @@ jobs:
             python-version: "3.13"
     steps:
       - uses: actions/checkout@v7
+        if: needs.changes.outputs.code == 'true'
       - uses: astral-sh/setup-uv@v7
+        if: needs.changes.outputs.code == 'true'
         with:
           python-version: ${{ matrix.python-version }}
           enable-cache: true
       - run: uv sync --locked --all-extras
+        if: needs.changes.outputs.code == 'true'
       - run: uv run pytest -n auto --dist loadgroup --tb=short --cov=src/hyperadmin --cov=plugins/hyperadmin-reports/src/hyperadmin_reports --cov-report=xml --ignore=tests/e2e
+        if: needs.changes.outputs.code == 'true'
       - name: Upload coverage to Codecov
+        if: needs.changes.outputs.code == 'true'
         uses: codecov/codecov-action@v7
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
