@@ -1263,6 +1263,12 @@ class Admin:
         admin_prefix = path.rstrip("/")
         isolated = self._resolve_mount_mode(admin_prefix)
 
+        from hyperadmin.core.registry import site
+
+        # Plugins hear about every model from here on, and once about those
+        # registered earlier (``on_model_register``).
+        site.attach_hook_dispatcher(self.dispatch_hook)
+
         # Every admin route uses HyperAdminRoute (SDD B.2): 403/404/409 render inside
         # the admin layout for people (JSON stays for API callers), and it is the one
         # place for the auth-error translation, token-cookie bridge and CSRF hook.
