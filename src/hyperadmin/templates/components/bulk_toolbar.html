@@ -18,8 +18,12 @@
       - model_name: the model class name (route names use ``model_name|lower``)
 -#}
 {%- from "components/_icons.html" import icon -%}
+{#- The bar stays out of the way until a row is ticked, unless an action runs without a
+    selection (then it must stay reachable). Without JavaScript it is always shown. -#}
+{%- set hide_when_empty = bulk_actions|selectattr('requires_selection')|list|length == bulk_actions|length -%}
 <form id="bulk-action-form" class="ha-bulkbar" data-testid="bulk-bar"
       aria-label="{{ _('Bulk actions') }}"
+      {%- if hide_when_empty %} x-bind:hidden="n === 0"{% endif %}
       method="post"
       action="{{- url_for(model_name|lower ~ '-bulk-action', action_name=bulk_actions[0].name) -}}"
       hx-post="{{- url_for(model_name|lower ~ '-bulk-action', action_name=bulk_actions[0].name) -}}"

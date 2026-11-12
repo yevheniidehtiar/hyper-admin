@@ -82,6 +82,35 @@ def test_h2_inline_row_error_highlight(page: Page, full_demo_base_url: str) -> N
     expect(page.get_by_test_id("inline-orderitem-row-0-error")).to_have_count(0)
 
 
+def test_h3_bulk_bar_appears_only_while_rows_are_ticked(
+    page: Page, full_demo_base_url: str
+) -> None:
+    """
+    Scenario: the bulk bar stays hidden until a row is ticked
+      Given the order list with nothing selected
+      When  alice ticks one row, then clears the selection
+      Then  the bar is hidden, then shows "1 selected", then hides again
+    """
+    # Given the order list with nothing selected
+    _login(page, full_demo_base_url)
+    page.goto(full_demo_base_url + ORDER_LIST)
+    expect(page.get_by_test_id("list-row")).to_have_count(5)
+    expect(page.get_by_test_id("bulk-bar")).to_be_hidden()
+
+    # When she ticks one row
+    page.get_by_role("checkbox", name="Select 1", exact=True).check()
+
+    # Then the bar shows the count
+    expect(page.get_by_test_id("bulk-bar")).to_be_visible()
+    expect(page.get_by_test_id("bulk-count")).to_have_text("1 selected")
+
+    # When she clears the selection
+    page.get_by_role("button", name="Clear selection").click()
+
+    # Then the bar hides again
+    expect(page.get_by_test_id("bulk-bar")).to_be_hidden()
+
+
 def test_h3_bulk_action_per_row_outcome(page: Page, full_demo_base_url: str) -> None:
     """
     Scenario: a bulk action over 5 rows where 1 fails reports each row's outcome

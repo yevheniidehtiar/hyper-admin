@@ -379,6 +379,10 @@
   border-block-end: var(--ha-border-width) solid var(--ha-color-border-light);
 }
 
+.ha-bulkbar[hidden] {
+  display: none;
+}
+
 .ha-bulkbar__count {
   display: inline-flex;
   align-items: center;
