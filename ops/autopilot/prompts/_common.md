@@ -29,9 +29,16 @@ worktree that is already on the right branch. The job-specific instructions and 
 - The bot token cannot push changes under `.github/workflows/`. Keep such a change out of your
   commits, push and open the pull request with the rest, paste the workflow diff in a fenced
   block under `## Owner action` in the pull request body, and add the `needs-human` label.
-- Before a push run what CI runs: `uv run ruff check . && uv run ruff format --check .` and
-  the unit tests that cover your change (`uv run poe test:unit`, plus `uv run poe test:cov-diff`
-  when you changed code under `src/`).
+- A push takes long: the pre-push hook runs lint, type checks and the whole unit suite, 5 to 20
+  minutes under load. A job that ends while its push is still running loses the push and opens
+  no pull request. So run `git push` as one foreground Bash call with `timeout` set to 600000,
+  never in the background, never with `&`. Never end your turn to "wait" for anything: a headless
+  job cannot be woken, so ending the turn ends the job. If the call times out, check
+  `git status -sb` and `git ls-remote origin HEAD`; when the branch is not on the remote, run
+  the same push again. Open the pull request in the very next call after the push succeeded.
+- Before a push run `uv run ruff check . && uv run ruff format --check .` and, when you changed
+  code under `src/`, `uv run poe test:cov-diff`. The hook runs the plain unit suite itself, so do
+  not run `uv run poe test:unit` just before pushing.
 
 ## When you are unsure: decide, do not stop
 
