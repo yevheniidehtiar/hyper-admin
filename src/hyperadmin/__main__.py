@@ -2,6 +2,7 @@ import typer
 
 from hyperadmin.management.commands.createsuperuser import app as createsuperuser_app
 from hyperadmin.management.commands.initdb import app as initdb_app
+from hyperadmin.management.commands.plugins import app as plugins_app
 from hyperadmin.management.commands.seed import app as seed_app
 
 app = typer.Typer(
@@ -14,6 +15,7 @@ app = typer.Typer(
 app.add_typer(createsuperuser_app)
 app.add_typer(initdb_app)
 app.add_typer(seed_app)
+app.add_typer(plugins_app, name="plugins")
 
 if __name__ == "__main__":
     app()
