@@ -73,6 +73,14 @@ class BulkProductAdmin(ModelAdmin):
         return
 
 
+class SelectionOnlyAdmin(ModelAdmin):
+    adapter_class = SQLModelAdapter
+
+    @action(label="Archive", bulk=True)
+    async def archive(self, request: Request, item_id: int, *, params=None) -> None:
+        return None
+
+
 @pytest.fixture(autouse=True)
 def _cleanup_registry():
     site._registry = {}
@@ -235,6 +243,40 @@ def test_result_page_omits_retry_when_every_row_succeeds():
 # ---------------------------------------------------------------------------
 # Design system (#664): BulkActionFlow states
 # ---------------------------------------------------------------------------
+
+
+def test_bulk_bar_hides_until_a_row_is_ticked_when_every_action_needs_one():
+    """
+    Scenario: the bulk bar stays out of the way until a row is ticked
+      Given a ModelAdmin whose bulk actions all require a selection
+      When  the list view renders
+      Then  the bar is bound to hide while no row is ticked
+    """
+    # Given
+    client = _client(SelectionOnlyAdmin)
+
+    # When
+    html = client.get("/admin/bulkuiproduct/").text
+
+    # Then
+    assert re.search(r'<form[^>]*data-testid="bulk-bar"[^>]*x-bind:hidden="n === 0"', html)
+
+
+def test_bulk_bar_stays_visible_when_an_action_runs_without_a_selection():
+    """
+    Scenario: the bulk bar stays visible when an action needs no selection
+      Given a ModelAdmin with a bulk action that runs without selected rows
+      When  the list view renders
+      Then  the bar is not bound to hide, so that action stays reachable
+    """
+    # Given
+    client = _client(BulkProductAdmin)
+
+    # When
+    html = client.get("/admin/bulkuiproduct/").text
+
+    # Then
+    assert "x-bind:hidden" not in html
 
 
 def test_bulk_bar_reads_right_without_javascript():

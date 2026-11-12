@@ -90,6 +90,21 @@
   }
 }
 
+/* Small controls whose visible box stays small: the hit area grows, not the glyph. */
+@media (pointer: coarse) {
+  .ha-check,
+  .ha-navbar-brand,
+  .ha-combobox__tools button {
+    min-inline-size: var(--ha-target-touch);
+    min-block-size: var(--ha-target-touch);
+    justify-content: center;
+  }
+
+  .ha-navbar-brand {
+    justify-content: flex-start;
+  }
+}
+
 /* ==========================================================================
    Accessibility: reduced motion
    ========================================================================== */

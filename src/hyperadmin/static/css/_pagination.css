@@ -12,6 +12,18 @@
   border-block-start: var(--ha-border-width) solid var(--ha-color-border-light);
 }
 
+/* From tablet up the footer is one row: count at the start, sizes and pager at the end. */
+@media (min-width: 768px) {
+  .ha-pagination {
+    flex-wrap: nowrap;
+  }
+
+  .ha-pagination-info {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+}
+
 .ha-pagination-info {
   font-size: 0.8125rem;
   color: var(--ha-color-text-muted);
