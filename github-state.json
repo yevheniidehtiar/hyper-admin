@@ -1,6 +1,6 @@
 {
   "repo": "yevheniidehtiar/hyper-admin",
-  "last_sync": "2026-11-11T20:13:56.140Z",
+  "last_sync": "2026-11-12T17:07:25.624Z",
   "entities": {
     "dqmi_70iAUbv": {
       "local_hash": "sha256:0c241e5668b04857314c6bf866015a7d5715e683844b27f32c24f0fe99ce1743",
@@ -4064,6 +4064,12 @@
       "remote_hash": "sha256:b34292844874102df5a76a1ddc04e5d9d2a0516f518fd50e81f590882512139c",
       "synced_at": "2026-11-10T19:57:32.778Z",
       "closed_on_remote": true
+    },
+    "Vq7nTd2KxHs_": {
+      "github_issue_number": 1094,
+      "local_hash": "sha256:de0d597507634bfff315ade9870efa1586146b133152ef825f2efec4bd9093e1",
+      "remote_hash": "sha256:de0d597507634bfff315ade9870efa1586146b133152ef825f2efec4bd9093e1",
+      "synced_at": "2026-11-12T17:07:25.616Z"
     }
   }
 }
