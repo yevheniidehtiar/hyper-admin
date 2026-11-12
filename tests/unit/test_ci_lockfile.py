@@ -80,6 +80,9 @@ def test_test_workflow_checks_the_lock_in_every_job() -> None:
     workflow = _load_workflow("test.yml")
     for job_name, job in workflow["jobs"].items():
         runs = [step.get("run", "") for step in job["steps"]]
+        if not any("uv sync" in run for run in runs):
+            # Jobs that install nothing (the ``changes`` detector) have no lock to check.
+            continue
         assert any("uv lock --check" in run for run in runs), job_name
 
 
@@ -142,8 +145,26 @@ def test_security_audit_runs_on_the_locked_highest_set_only() -> None:
     for job_name, job in workflow["jobs"].items():
         steps = [s for s in job["steps"] if "security-check" in s.get("run", "")]
         for step in steps:
-            assert step.get("if") == "matrix.resolution == 'highest'", job_name
+            # A code-change gate may sit beside the resolution condition (docs-only pull requests).
+            assert "matrix.resolution == 'highest'" in step.get("if", ""), job_name
         if steps:
             audited_jobs.append(job_name)
     # Every unit-test row audits; the lint and E2E jobs run no dependency audit.
     assert audited_jobs == ["test", "test-pr"]
+
+
+def test_required_matrix_jobs_are_never_skipped_by_the_code_change_gate() -> None:
+    """Scenario: a docs-only pull request is not blocked on required checks.
+
+    A matrix job skipped by a job-level ``if`` reports under its unexpanded name, so the required
+    status contexts (``Test (Py 3.11 on ubuntu-latest)`` and the like) would never appear and the
+    pull request would wait forever. These jobs run always; their steps skip instead.
+    """
+    ci_test = _load_workflow("ci.yml")["jobs"]["test"]
+    pr_test = _load_workflow("test.yml")["jobs"]["test-pr"]
+
+    assert "if" not in ci_test
+    assert pr_test["if"] == "github.event_name == 'pull_request'"
+    for job in (ci_test, pr_test):
+        gated = [s for s in job["steps"] if "needs.changes.outputs.code" in s.get("if", "")]
+        assert len(gated) == len(job["steps"])
