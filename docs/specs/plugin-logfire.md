@@ -3,11 +3,11 @@
 | Field | Value |
 |---|---|
 | Author | Claude Code |
-| Status | In Review (revision 2) |
+| Status | Approved (architect) |
 | Issue | TBD |
 | Milestone | v0.8.0 — Plugins & AI |
 | Created | 2026-05-05 |
-| Last updated | 2026-11-08 |
+| Last updated | 2026-11-11 |
 
 ---
 
@@ -285,12 +285,11 @@ so nothing breaks.
 - [x] **Test sink under pytest-asyncio?** `logfire.testing.TestExporter` with a
       `SimpleSpanProcessor` works; verified with logfire 5.5.0. `logfire.testing` imports
       pytest, so it is test-only.
-- [ ] **Record `username` on `login_failure`?** It is personal data. Recommend yes by default
-      (it is what makes brute-force patterns visible) and let Logfire scrubbing remove it.
-      Owner to confirm.
-- [ ] **CI job for the plugin.** The bot token cannot edit `.github/workflows`, so the owner
-      adds `plugins/hyperadmin-logfire` to the test and type-check lines (same as the owed
-      `hyperadmin-tasks` edits).
+- [x] **Record `username` on `login_failure`?** Yes, by default (see Decision Log, 2026-11-11).
+- [x] **CI job for the plugin.** Deferred with justification: the bot token cannot edit
+      `.github/workflows`, so the owner adds `plugins/hyperadmin-logfire` to the test and
+      type-check lines (same as the owed `hyperadmin-tasks` edits). It blocks only the CI
+      story, not the package, hooks or tests.
 
 ## Decision Log
 
@@ -307,3 +306,5 @@ so nothing breaks.
 | Built-in SQL listeners as the fallback (2026-11-08) | No supported version loses SQL spans; only public SQLAlchemy events and the OpenTelemetry API, so no dependency on the instrumentor's internals | Drive the instrumentor's `EngineTracer` directly (internal API, changes between betas); only warn (SQLAlchemy 2.1 users lose SQL spans) |
 | Record field error *types*, not messages or inputs | Messages and `ctx` can echo the submitted value (passwords, personal data) | Record the full pydantic error dicts |
 | Leave HTTP spans to FastAPI's native telemetry when it has one (2026-11-08) | Native spans carry the full route and don't suppress other apps' spans process-wide | Always call `instrument_fastapi` (coarser `/admin` route, process-wide suppression); version-pin FastAPI (we don't know the first release with native telemetry, and the `telemetry=` parameter is the public signal) |
+| Record `username` on `login_failure`, never the password (2026-11-11, architect) | It makes brute-force patterns visible; Logfire scrubbing owns redaction; trivially reversible | Omit it (loses the main security signal); hash it (unreadable, still personal data) |
+| CI workflow edit stays an owner task (2026-11-11, architect) | Bot token lacks `workflow` scope and `.github/**` is a hotspot; package work does not depend on it | Skip CI for the plugin |

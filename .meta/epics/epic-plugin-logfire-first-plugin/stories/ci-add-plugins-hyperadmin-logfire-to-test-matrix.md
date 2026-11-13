@@ -46,6 +46,14 @@ Publish to TestPyPI on tag push, real PyPI on manual workflow dispatch.
 
 - `chore-scaffold-pluginshyperadmin-logfire-package`
 
+## Delivery notes
+
+- `test.yml` needs no change: `lint` runs `poe lint` over the whole repo and `poe test:unit`
+  already lists `plugins/hyperadmin-logfire/tests`. The plugin has no E2E suite yet, so no
+  extra E2E step was added.
+- `publish-hyperadmin-logfire.yml` is under `.github/workflows/`, which the bot token cannot
+  push. The owner adds it from the pull request body (`## Owner action`).
+
 ## Parent
 
 - Epic: `epic-plugin-logfire-first-plugin`
