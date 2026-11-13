@@ -12,79 +12,114 @@ on:
   schedule:
     - cron: "0 3 * * *"  # nightly full run at 03:00 UTC
   workflow_dispatch:
+    inputs:
+      runs:
+        description: "Smoke: runs per side (base and head each run this many times)"
+        default: "5"
+        type: string
+      tolerance:
+        description: "Smoke: allowed relative regression, 0.15 = 15%"
+        default: "0.15"
+        type: string
 
 permissions:
   contents: read
 
 jobs:
-  # Fast SQLite smoke test on PRs that touch the hot query paths. Must finish in < 2 min.
+  # SQLite regression gate on PRs that touch the hot query paths. Runs base and head alternately
+  # (base, head, base, head, ...) on the same runner so runner drift hits both sides equally, then
+  # compares per-endpoint medians. See examples/erp/loadtest/README.md.
   smoke:
-    name: Smoke (SQLite, 10 users, 30s)
+    name: Regression gate (SQLite, base vs head)
     if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    timeout-minutes: 8
+    timeout-minutes: 40
+    env:
+      RUNS: ${{ inputs.runs || '5' }}
+      TOLERANCE: ${{ inputs.tolerance || '0.15' }}
+      RUN_TIME: 90s
+      USERS: "20"
+      SPAWN_RATE: "5"
+      MIN_RUNS: "3"
     steps:
       - uses: actions/checkout@v7
+        with:
+          # The PR head commit itself, not the refs/pull/N/merge commit: the merge ref pulls
+          # unrelated develop changes into head that base lacks.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          path: head
+      - uses: actions/checkout@v7
+        with:
+          # PR base commit, or develop for a manual dispatch.
+          ref: ${{ github.event.pull_request.base.sha || 'develop' }}
+          path: base
       - uses: astral-sh/setup-uv@v7
         with:
           python-version: "3.12"
           enable-cache: true
-      - run: uv sync --locked --all-extras
-
-      - name: Start ERP app (SQLite) and seed 1K rows
-        env:
-          HYPERADMIN_SECRET_KEY: loadtest-ci
+      - name: Install base and head
         run: |
-          rm -f erp.db
-          uv run uvicorn examples.erp.main:app --host 127.0.0.1 --port 8000 > app.log 2>&1 &
-          echo $! > app.pid
-          # Wait for the lifespan (schema + admin + demo seed) to finish.
-          for _ in $(seq 1 60); do
-            code=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8000/admin/login || true)
-            [ "$code" = "200" ] && break
-            sleep 2
+          (cd base && uv sync --locked --all-extras)
+          (cd head && uv sync --locked --all-extras)
+
+      # The script, the aggregate CLI and the load-test scenario always come from head: head's
+      # examples/erp/loadtest/ is copied over base's, so both sides run the same workload even
+      # when the PR edits the locustfile. Each iteration starts a fresh app and database.
+      - name: Run base and head alternately
+        run: |
+          cp -R head/examples/erp/loadtest/. base/examples/erp/loadtest/
+          mkdir -p out/base out/head
+          for i in $(seq 1 "$RUNS"); do
+            for side in base head; do
+              FIRST_RUN="$i" head/scripts/loadtest_repeat.sh "$side" "out/$side" 1
+            done
           done
-          # Top up to ~1K rows for representative pagination/search behaviour.
-          uv run hyperadmin seed --count 1000 \
-            --database-url "sqlite:///erp.db" --no-progress || true
 
-      - name: Run Locust (headless)
-        env:
-          LOADTEST_USER: admin
-          LOADTEST_PASSWORD: admin
-          LOADTEST_MAX_ID: "80"
+      - name: Aggregate and compare
+        working-directory: head
         run: |
-          uv run locust -f examples/erp/loadtest/locustfile.py \
-            --host http://127.0.0.1:8000 \
-            --headless --users 10 --spawn-rate 5 --run-time 30s \
-            --csv loadtest --html loadtest-report.html --only-summary
+          shopt -s nullglob
+          out="$GITHUB_WORKSPACE/out"
+          base_csvs=("$out"/base/run*_stats.csv)
+          head_csvs=("$out"/head/run*_stats.csv)
+          if [ "${#base_csvs[@]}" -eq 0 ] || [ "${#head_csvs[@]}" -eq 0 ]; then
+            echo "no stats CSVs produced (base: ${#base_csvs[@]}, head: ${#head_csvs[@]})" >&2
+            exit 1
+          fi
+          uv run python -m examples.erp.loadtest.baselines aggregate \
+            --stats "${base_csvs[@]}" --out "$out/base-agg.json" --min-runs "$MIN_RUNS"
+          uv run python -m examples.erp.loadtest.baselines aggregate \
+            --stats "${head_csvs[@]}" --out "$out/head-agg.json" --min-runs "$MIN_RUNS"
+          uv run python -m examples.erp.loadtest.baselines compare \
+            --base "$out/base-agg.json" --head "$out/head-agg.json" \
+            --tolerance "$TOLERANCE" --min-runs "$MIN_RUNS" --report "$out/report.md"
 
-      - name: Compare against baseline
+      # compare appends its report to the summary itself; this covers any earlier failure.
+      - name: Step summary when no report exists
+        if: always() && !cancelled()
         run: |
-          uv run python -m examples.erp.loadtest.baselines \
-            --stats loadtest_stats.csv \
-            --baseline examples/erp/loadtest/baselines/smoke-sqlite.json
+          if [ ! -s out/report.md ]; then
+            {
+              echo "### Load test regression gate"
+              echo
+              echo "**No report was produced**: an earlier step failed before the comparison."
+              echo "See the step logs and the app logs in the \`locust-smoke-report\` artifact."
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
 
-      - name: Stop app
-        if: always()
-        run: kill "$(cat app.pid)" 2>/dev/null || true
-
-      - name: Upload Locust report
+      - name: Upload CSVs and report
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: locust-smoke-report
-          path: |
-            loadtest-report.html
-            loadtest_stats.csv
-            app.log
+          path: out/
 
-  # Heavy nightly run against PostgreSQL via docker-compose: 100K rows, 100 users, 5 min.
+  # Heavy nightly run against PostgreSQL via docker-compose: 100K rows, 100 users, 3 runs of 3 min.
   nightly:
-    name: Nightly (PostgreSQL, 100 users, 5m)
+    name: Nightly (PostgreSQL, 100 users, 3 x 3m)
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
       - uses: actions/checkout@v7
       - uses: astral-sh/setup-uv@v7
@@ -108,22 +143,47 @@ jobs:
             uv run hyperadmin seed --count 100000 \
             --database-url postgresql://hyperadmin:hyperadmin@postgres:5432/erp --no-progress
 
-      - name: Run Locust (headless, 100 users, 5m)
+      - name: Run Locust 3 times (headless, 100 users, 3m each)
         env:
           LOADTEST_USER: admin
           LOADTEST_PASSWORD: admin
           LOADTEST_MAX_ID: "5000"
         run: |
-          uv run locust -f examples/erp/loadtest/locustfile.py \
-            --host http://127.0.0.1:8000 \
-            --headless --users 100 --spawn-rate 20 --run-time 5m \
-            --csv loadtest --html loadtest-report.html --only-summary
+          mkdir -p out
+          for i in 1 2 3; do
+            uv run locust -f examples/erp/loadtest/locustfile.py \
+              --host http://127.0.0.1:8000 \
+              --headless --users 100 --spawn-rate 20 --run-time 3m \
+              --reset-stats --csv "out/run${i}" --html "out/run${i}-report.html" --only-summary
+          done
 
-      - name: Compare against baseline
+      - name: Aggregate runs
         run: |
-          uv run python -m examples.erp.loadtest.baselines \
-            --stats loadtest_stats.csv \
-            --baseline examples/erp/loadtest/baselines/nightly-postgres.json
+          uv run python -m examples.erp.loadtest.baselines aggregate \
+            --stats out/run1_stats.csv out/run2_stats.csv out/run3_stats.csv \
+            --out out/nightly-postgres.json
+
+      # Absolute targets at ~70 req/s: the median run must stay under p95 300 ms and p99 2 s,
+      # and the load must have reached 65 req/s so a run that never got there cannot pass.
+      - name: Check SLO (p95 < 300 ms, p99 < 2 s at ~70 req/s)
+        run: |
+          uv run python -m examples.erp.loadtest.baselines slo \
+            --agg out/nightly-postgres.json \
+            --max-p95-ms 300 --max-p99-ms 2000 --min-rps 65 --report out/slo.md
+
+      # A recorded aggregate is committed by hand from the uploaded artifact; no numbers are
+      # invented here. Without the file there is nothing to compare against.
+      - name: Compare against recorded aggregate
+        env:
+          BASELINE: examples/erp/loadtest/baselines/nightly-postgres.json
+        run: |
+          if [ ! -f "$BASELINE" ]; then
+            echo "::notice::No $BASELINE recorded, skipping the nightly comparison. Commit out/nightly-postgres.json from this run's artifact to enable it."
+            exit 0
+          fi
+          uv run python -m examples.erp.loadtest.baselines compare \
+            --base "$BASELINE" --head out/nightly-postgres.json \
+            --tolerance 0.25 --report out/report.md
 
       - name: Show app logs
         if: failure()
@@ -138,6 +198,4 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: locust-nightly-report
-          path: |
-            loadtest-report.html
-            loadtest_stats.csv
+          path: out/
