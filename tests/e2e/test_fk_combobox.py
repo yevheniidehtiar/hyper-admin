@@ -99,3 +99,24 @@ def test_the_combobox_is_operable_from_the_keyboard(page: Page, autocomplete_bas
     customer.press("Escape")
     expect(customer).to_have_attribute("aria-expanded", "false")
     expect(customer).to_have_value("Contact 07")
+
+
+def test_the_open_list_has_no_chevron_in_dark_mode(page: Page, autocomplete_base_url: str) -> None:
+    """
+    Scenario: the open list shows options only, in dark mode too
+      Given the OS prefers a dark colour scheme and the invoice create form is open
+      When  the user opens the Customer list
+      Then  the list popup carries no chevron background image
+    """
+    # Given the OS prefers a dark colour scheme and the invoice create form is open
+    _login(page, autocomplete_base_url)
+    page.emulate_media(color_scheme="dark")
+    page.goto(autocomplete_base_url + INVOICE_CREATE)
+
+    # When the user opens the Customer list
+    page.get_by_role("combobox", name="Customer").click()
+
+    # Then the list popup carries no chevron (it used to tile at full size)
+    expect(page.get_by_test_id("autocomplete-select-contact_id")).to_have_css(
+        "background-image", "none"
+    )
