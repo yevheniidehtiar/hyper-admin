@@ -87,6 +87,29 @@ admin = Admin(
 admin.mount(path="/admin")
 
 
+def _instrument_logfire(target: Admin) -> bool:
+    """Send admin request spans and their SQL to Logfire; ``DEMO_LOGFIRE=0`` turns it off.
+
+    Without a ``LOGFIRE_TOKEN`` nothing leaves the machine: Logfire prints the spans to this
+    terminal. With a token they also go to the Logfire dashboard. Off for the qualification
+    suite (``E2E_TESTING``) and when the plugin is not installed.
+    """
+    if os.environ.get("DEMO_LOGFIRE", "1") == "0" or os.environ.get("E2E_TESTING"):
+        return False
+    try:
+        import logfire  # noqa: PLC0415
+
+        from hyperadmin_logfire import instrument_admin  # noqa: PLC0415
+    except ImportError:
+        return False
+    logfire.configure(service_name="hyperadmin-full-demo", send_to_logfire="if-token-present")
+    instrument_admin(target)
+    return True
+
+
+_instrument_logfire(admin)
+
+
 @app.get("/")
 def root() -> dict[str, str]:
     return {"message": "Go to /admin (alice / secret123)."}
