@@ -540,6 +540,10 @@ input[type="file"].ha-input {
   z-index: var(--ha-z-popover);
   padding: var(--ha-space-1);
   background: var(--ha-surface-overlay);
+  /* The popup is a listbox, not a closed select: no chevron. The dark-mode
+     chevron rules above out-specify this block, and the shorthand just reset
+     background-size and -repeat, so without this the arrow tiles at full size. */
+  background-image: none !important;
   border: var(--ha-border-width) solid var(--ha-color-border-light);
   border-radius: var(--ha-radius-lg);
   box-shadow: var(--ha-shadow-lg);
