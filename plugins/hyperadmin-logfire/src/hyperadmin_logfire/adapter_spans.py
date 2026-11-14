@@ -25,7 +25,11 @@ def model_name(model: Any) -> str:
 
 
 def safe_attributes(op: str, kwargs: dict[str, Any]) -> dict[str, Any]:
-    """Whitelisted span attributes per operation: no field values, no search-free payloads."""
+    """Whitelisted span attributes per operation: no field values, no payloads.
+
+    The list search term is recorded as ``search`` because the spec requires it; drop it here if
+    search terms must be treated as personal data.
+    """
     if op in ("list", "list_paginated"):
         return {
             "page": kwargs.get("page"),
