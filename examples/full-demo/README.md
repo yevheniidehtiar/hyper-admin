@@ -61,6 +61,21 @@ Switches (example-app variables, not `HYPERADMIN_*` settings):
 |---|---|---|
 | `DEMO_REALTIME` | `1` | `0` builds `Admin(realtime=None)`: no socket, no toasts, no presence. |
 | `REDIS_URL` | unset | Puts pub/sub and presence on Redis (needs the `[redis]` extra, already in `--all-extras`). |
+| `DEMO_LOGFIRE` | `1` | `0` skips the Logfire instrumentation below. |
+| `LOGFIRE_TOKEN` | unset | Also sends the spans to your Logfire project. |
+
+## Logs and traces (Logfire)
+
+The app is instrumented with [`hyperadmin-logfire`](../../plugins/hyperadmin-logfire/README.md):
+every admin request becomes a span with its SQL queries nested under it. Boot as usual and click
+around; each request prints its span tree in the terminal that runs the server, so no account is
+needed. To see them in the Logfire dashboard as well, export a write token first:
+
+```bash
+LOGFIRE_TOKEN=<write token> uv run examples/full-demo/main.py
+```
+
+The qualification suite (`E2E_TESTING=1`) and `DEMO_LOGFIRE=0` leave it off.
 
 ## Qualification suite
 
