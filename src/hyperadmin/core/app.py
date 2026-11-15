@@ -547,15 +547,19 @@ class Admin:
         # host served under a root_path (e.g. "/api/admin/", not "/admin/").
         async def login_get(request: Request):
             base = request_admin_path(request, admin_prefix)
-            return await login_view(request, templates, auth_backend, base, otp_service)
+            return await login_view(
+                request, templates, auth_backend, base, otp_service, self.dispatch_hook
+            )
 
         async def login_post(request: Request):
             base = request_admin_path(request, admin_prefix)
-            return await login_view(request, templates, auth_backend, base, otp_service)
+            return await login_view(
+                request, templates, auth_backend, base, otp_service, self.dispatch_hook
+            )
 
         async def logout_post(request: Request):
             base = request_admin_path(request, admin_prefix)
-            return await logout_view(request, auth_backend, base)
+            return await logout_view(request, auth_backend, base, self.dispatch_hook)
 
         self.router.add_api_route("/login", login_get, methods=["GET"], name="admin-login")
         self.router.add_api_route("/login", login_post, methods=["POST"], name="admin-login-post")

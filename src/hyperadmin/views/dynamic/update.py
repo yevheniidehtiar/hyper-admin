@@ -207,6 +207,7 @@ class UpdateViewMixin(RelationViewMixin, InlineViewMixin):
             inline_valid_data.append((formset, valid_rows))
 
         if errs or has_inline_errors:
+            self._fire_validation_error(form)
             legacy_errs = {k: v[0] for k, v in errs.items() if v} if errs else {}
             for formset in inline_formsets:
                 if not formset.errors:
