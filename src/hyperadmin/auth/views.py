@@ -26,10 +26,25 @@ from hyperadmin.auth.otp import (
 from hyperadmin.i18n import gettext as _
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from fastapi.templating import Jinja2Templates
     from starlette.requests import Request
 
     from hyperadmin.core.adapters import SessionFactory
+
+
+def _fire_auth_event(
+    hook_dispatcher: Callable[..., None] | None,
+    event: str,
+    user: Any,
+    username: str | None,
+    *,
+    request: Request,
+) -> None:
+    """Fire ``on_auth_event`` (no-op without a dispatcher); never carries a password."""
+    if hook_dispatcher is not None:
+        hook_dispatcher("on_auth_event", event=event, user=user, username=username, request=request)
 
 
 async def login_view(
@@ -38,6 +53,7 @@ async def login_view(
     auth_backend: Any,
     admin_prefix: str,
     otp_service: Any | None = None,
+    hook_dispatcher: Callable[..., None] | None = None,
 ) -> Any:
     """Handle GET (render form) and POST (authenticate) for login.
 
@@ -50,6 +66,9 @@ async def login_view(
       is NOT created yet — the partial marker is the *only* state.
     * Otherwise, fall through to the existing single-factor path:
       ``auth_backend.login(request, user)`` and redirect to ``/admin/``.
+
+    ``hook_dispatcher`` (``Admin.dispatch_hook``) receives ``on_auth_event`` for
+    ``login_success`` and ``login_failure``; the password is never passed.
 
     On rate-limit (``RateLimitError``) we still write the partial marker so
     the user can resume after the cooldown — per the SDD's "Rate limit
@@ -98,7 +117,9 @@ async def login_view(
                     return templates.TemplateResponse(request, "login.html", fail_context)
                 return RedirectResponse(url=f"{admin_prefix}/mfa/challenge", status_code=302)
             await auth_backend.login(request, user)
+            _fire_auth_event(hook_dispatcher, "login_success", user, user.username, request=request)
             return RedirectResponse(url=f"{admin_prefix}/", status_code=302)
+        _fire_auth_event(hook_dispatcher, "login_failure", None, str(username), request=request)
         error = "Invalid username or password."
 
     context: dict[str, Any] = {
@@ -113,9 +134,14 @@ async def logout_view(
     request: Request,
     auth_backend: Any,
     admin_prefix: str,
+    hook_dispatcher: Callable[..., None] | None = None,
 ) -> RedirectResponse:
     """Handle POST logout — clear session and redirect to login."""
+    user = getattr(request.state, "user", None)
     await auth_backend.logout(request)
+    _fire_auth_event(
+        hook_dispatcher, "logout", user, getattr(user, "username", None), request=request
+    )
     return RedirectResponse(url=f"{admin_prefix}/login", status_code=302)
 
 
