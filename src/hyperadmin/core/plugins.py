@@ -43,6 +43,8 @@ LIFECYCLE_HOOKS: frozenset[str] = frozenset(
         "on_after_delete",
         "on_before_adapter_call",
         "on_after_adapter_call",
+        "on_validation_error",
+        "on_auth_event",
     }
 )
 

@@ -586,6 +586,8 @@ class PydanticForm:
         self.initial = initial or {}
         self.choices_base_url = choices_base_url
         self.errors: dict[str, ErrorList] = {}
+        #: Field -> pydantic error types of the last ``validate`` (never input values).
+        self.error_types: dict[str, list[str]] = {}
         self._fields: list[FormField] = []
         self._fieldset_specs: list[FieldsetSpec] = fieldsets or []
         self._form_layout: FormLayout | None = form_layout
@@ -833,6 +835,7 @@ class PydanticForm:
 
         instance: BaseModel | None = None
         errs: dict[str, ErrorList] = {}
+        error_types: dict[str, list[str]] = {}
         try:
             instance = schema_for(self.model).model_validate(_FormData(cleaned_data, self.model))
         except ValidationError as e:
@@ -840,8 +843,12 @@ class PydanticForm:
                 loc = error["loc"][0]
                 key = str(loc)
                 errs.setdefault(key, []).append(friendly_error(error))
+                error_types.setdefault(key, []).append(error["type"])
         # A datetime the form could not parse replaces pydantic's message for it.
         errs.update(datetime_errors)
+        for name in datetime_errors:
+            error_types[name] = ["datetime_parsing"]
+        self.error_types = error_types
         self.errors = errs
         if not errs:
             return instance, {}

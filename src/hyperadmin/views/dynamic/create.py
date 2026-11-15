@@ -126,6 +126,7 @@ class CreateViewMixin(RelationViewMixin, InlineViewMixin):
         )
 
         if errs or has_inline_errors:
+            self._fire_validation_error(form)
             legacy_errs = {k: v[0] for k, v in errs.items() if v} if errs else {}
             # Rebuild inline formsets from submitted data for re-rendering
             for formset in inline_formsets:
