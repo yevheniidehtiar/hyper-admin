@@ -105,9 +105,8 @@ class LogfirePlugin:
 ## Blocked by
 
 - `featpluginlogfire-implement-logfireplugin-and-instrumentadmin`
-- Epic 1: `on_auth_event` fire sites added (covered by Epic 1 view-hooks story
-  + auth-middleware additions, both gated behind the Epic 1 SDD update for the
-  two new hooks)
+- `featviewsauth-fire-onvalidationerror-and-onauthevent-hooks` (plugin registry epic; fires
+  `on_auth_event`)
 
 ## Parent
 
