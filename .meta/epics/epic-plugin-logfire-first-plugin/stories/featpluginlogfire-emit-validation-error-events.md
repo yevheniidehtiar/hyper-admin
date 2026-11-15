@@ -83,8 +83,8 @@ def _stringify(errors: dict) -> dict:
 ## Blocked by
 
 - `featpluginlogfire-implement-logfireplugin-and-instrumentadmin`
-- Epic 1: `featviews-fire-onbeforeafter-create-update-delete-around-views`
-  (where `on_validation_error` is fired from)
+- `featviewsauth-fire-onvalidationerror-and-onauthevent-hooks` (plugin registry epic; fires
+  `on_validation_error`)
 
 ## Parent
 
