@@ -9,6 +9,11 @@ report pages under ``{prefix}/reports/`` with a "Reports" sidebar group (the
 index, then one entry per registered report the user may view), and one
 permission codename per report registered so far (``view_report_{slug}`` by
 default).
+
+When dashboard widgets are registered (``register_widget``), it also adds the
+dashboard page under ``ReportsSettings.dashboard_prefix`` and either serves it
+at the admin index (``dashboard_home``, the default) or links it from the
+"Reports" sidebar group (SDD ``docs/specs/dashboard-builder.md``).
 """
 
 from __future__ import annotations
@@ -16,6 +21,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, ClassVar
 
+from hyperadmin_reports.dashboard.routes import INDEX_ROUTE, build_dashboard_router, index_endpoint
+from hyperadmin_reports.dashboard.widgets import registered_widgets
 from hyperadmin_reports.routes import build_router
 from hyperadmin_reports.settings import ReportsSettings
 from hyperadmin_reports.view import registered_reports
@@ -68,3 +75,29 @@ class ReportsPlugin:
                 continue
             declared.add(codename)
             plugins.add_permission(self, codename, name=f"Can view report {report.get_label()}")
+        self._register_dashboard(admin)
+
+    def _register_dashboard(self, admin: Any) -> None:
+        """Add the dashboard page, and claim the admin index or add its sidebar link.
+
+        Nothing is added without a registered widget, so installing the plugin
+        does not change an admin that declares none.
+        """
+        if not registered_widgets():
+            return
+        plugins = admin.plugins
+        settings: ReportsSettings = plugins.settings(self.name)
+        router = build_dashboard_router(admin, settings)
+        plugins.add_page(self, router, prefix=settings.dashboard_prefix)
+        if settings.dashboard_home:
+            plugins.set_home_page(self, index_endpoint(router))
+            return
+        plugins.add_nav_entry(
+            self,
+            label="Dashboard",
+            url_name=INDEX_ROUTE,
+            icon="layout-grid",
+            section=NAV_SECTION,
+            order=-1,
+            testid="nav-dashboard",
+        )

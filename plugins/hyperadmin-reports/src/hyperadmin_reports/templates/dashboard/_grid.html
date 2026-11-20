@@ -1,0 +1,27 @@
+{#-
+    The dashboard grid: one card per visible widget, in the user's order. It is the
+    HTMX swap target of the move and reset forms (hx-target="#dashboard-grid"), so it
+    carries everything the cards need. After a move, data-moved-* tell dashboard.js
+    which button to focus again and what to announce.
+
+    Context: cards ([{widget, body, fragment_url, detail_url}]), can_reorder, grid_id,
+    layout_url, move_url, moved ({key, direction, title, position, total} or none).
+-#}
+{%- from "components/_icons.html" import icon -%}
+{%- if cards %}
+<div id="{{ grid_id }}" class="ha-dash-grid" data-testid="dashboard-grid" data-dashboard-grid data-ha-own-errors
+     data-layout-url="{{ layout_url }}"
+     {%- if moved %} data-moved-key="{{ moved.key }}" data-moved-direction="{{ moved.direction }}" data-announce="{{ _('Moved %(title)s to position %(position)s of %(total)s', title=moved.title, position=moved.position, total=moved.total) }}"{% endif %}>
+    {%- for card in cards %}
+    {%- set is_first = loop.first %}
+    {%- set is_last = loop.last %}
+    {%- include "dashboard/_card.html" %}
+    {%- endfor %}
+</div>
+{%- else %}
+<section id="{{ grid_id }}" class="ha-card ha-empty" data-testid="dashboard-empty" aria-labelledby="dashboard-empty-title">
+    <span class="ha-empty-glyph">{{ icon('layout-grid') }}</span>
+    <h2 id="dashboard-empty-title" class="ha-h3">{{ _("Nothing to show yet") }}</h2>
+    <p class="ha-empty-text">{{ _("You don't have access to any widget of this dashboard. Ask an administrator for the report permissions you need.") }}</p>
+</section>
+{%- endif %}

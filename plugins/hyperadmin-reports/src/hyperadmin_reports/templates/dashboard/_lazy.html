@@ -1,0 +1,11 @@
+{#-
+    The loading state of a lazy card body: a skeleton that requests the widget's
+    fragment on load and is replaced by it, so aria-busy goes away with the skeleton.
+
+    Context: widget, fragment_url.
+-#}
+<div class="ha-dash-lazy" hx-get="{{ fragment_url }}" hx-trigger="load" hx-swap="outerHTML" aria-busy="true" data-testid="widget-loading">
+    <span class="ha-skel ha-dash-lazy__value"></span>
+    <span class="ha-skel ha-dash-lazy__line"></span>
+    <span class="ha-sr-only">{{ _("Loading %(title)s", title=widget.title) }}</span>
+</div>

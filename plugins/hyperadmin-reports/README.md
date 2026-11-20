@@ -110,6 +110,99 @@ Each report route requires the report's codename (`view_report_{slug}` with `-` 
 a user who lacks it gets a 403 card naming the permission to ask for (`data-testid="report-forbidden"`).
 Without auth every report is open.
 
+## Dashboard
+
+Put report numbers, report charts and shortcut links on the admin home page. Register widgets
+after their reports and before `Admin(...)` is built; registration order is the default order.
+
+```python
+from hyperadmin_reports import (
+    ChartWidget,
+    QuickAction,
+    QuickActionsWidget,
+    StatWidget,
+    register_report,
+    register_widget,
+)
+
+register_report(OrderRevenueReport)
+register_report(OrdersByMonthReport)
+register_widget(StatWidget(OrderRevenueReport))          # grand total of its first aggregate
+register_widget(ChartWidget(OrdersByMonthReport))        # the report's chart fragment
+register_widget(QuickActionsWidget([
+    QuickAction("New order", "order-create-form", permission="add_order"),
+    QuickAction("All reports", "reports-index"),
+]))
+admin = Admin(app, engine=engine)
+```
+
+| Widget | Shows | Options |
+|---|---|---|
+| `StatWidget(report)` | one total of a report aggregate, folded with `Aggregate.total()`; "—" and "No data" without rows | `value="sum_amount"` (the aggregate's `name`; default: the first aggregate with totals), `key`, `title`, `span` |
+| `ChartWidget(report)` | the report's chart, loaded from `{prefix}/reports/{slug}/chart?embed=1` | `key`, `title`, `span` (default 2) |
+| `QuickActionsWidget(actions)` | links to named admin routes; an action with a `permission` shows only to users who hold it | `key`, `title`, `span` |
+
+A widget's `key` (default `stat-{slug}` / `chart-{slug}` / `quick-actions`) is its identity in
+saved layouts; `span` is 1 to 4 grid columns (the grid has four columns on a desktop, two on a
+tablet, one on a phone). A bad key, a duplicate key, a span outside 1..4, a report that is not
+registered, an aggregate without totals or a report that cannot be charted raises `ValueError`
+when the widget is built or registered, not on the first request.
+
+For anything else, subclass `DashboardWidget`:
+
+```python
+from hyperadmin_reports import DashboardWidget, WidgetBody, register_widget
+
+
+class OpenTicketsWidget(DashboardWidget):
+    key = "open-tickets"
+    title = "Open tickets"
+
+    def permission(self) -> str | None:
+        return "view_ticket"
+
+    async def render(self, request, admin) -> WidgetBody:
+        return WidgetBody("my_app/open_tickets.html", {"count": await count_open_tickets()})
+
+
+register_widget(OpenTicketsWidget())
+```
+
+**Where it is served.** With at least one widget registered, the dashboard replaces the welcome
+page at `{prefix}/` and is also at `{prefix}/dashboard/`. Without widgets nothing changes.
+
+| Route | Name | Response |
+|---|---|---|
+| `GET {prefix}/dashboard/` | `hyperadmin:dashboard-index` | the dashboard page |
+| `GET {prefix}/dashboard/widgets/{key}` | `hyperadmin:dashboard-widget` | one card body (each data widget loads in its own request) |
+| `POST {prefix}/dashboard/layout` | `hyperadmin:dashboard-layout` | save the order: form field `widgets`, repeated |
+| `POST {prefix}/dashboard/layout/move` | `hyperadmin:dashboard-layout-move` | move one card: `key`, `direction` (`up` / `down`) |
+| `POST {prefix}/dashboard/reset` | `hyperadmin:dashboard-reset` | back to the default order |
+
+**Settings.** `Admin(..., plugin_settings={"reports": {...}})` or `HYPERADMIN_REPORTS_*`
+environment variables:
+
+| Setting | Default | Meaning |
+|---|---|---|
+| `dashboard_home` | `True` | serve the dashboard at `{prefix}/`; `False` keeps the welcome page and adds a "Dashboard" link to the "Reports" sidebar group |
+| `dashboard_layouts` | `True` | remember each user's order; `False` shows the default order without reorder controls and never touches the layout table |
+| `dashboard_prefix` | `"/dashboard"` | prefix of the dashboard page; change it when a model's slug is `dashboard` |
+
+**Permissions.** A `StatWidget` or `ChartWidget` needs its report's codename
+(`view_report_{slug}`). A user who lacks it does not get the card, cannot load its fragment
+(403) and cannot save an order naming it (400). Without auth every widget shows. A user who
+may view none sees an empty state.
+
+**Order.** Signed-in users reorder cards by dragging the handle or with the "Move up" /
+"Move down" buttons, which also work from the keyboard and without JavaScript; "Reset layout"
+returns to the default order. A widget registered after a user saved an order appears at the
+end. Saving needs a signed-in user (`request.state.user_key`) and the layout table below.
+
+**Failures.** A widget whose `render()` raises shows "Widget unavailable" with a Retry button
+and is logged with its traceback; the other cards are not affected.
+
+Design: [`docs/specs/dashboard-builder.md`](../../docs/specs/dashboard-builder.md).
+
 ## Dashboard layouts
 
 The dashboard remembers each user's widget order in one table the plugin owns,

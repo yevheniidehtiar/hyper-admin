@@ -1,0 +1,30 @@
+{#-
+    The dashboard page: header (with "Reset layout" when the order can be saved),
+    the live region the move buttons announce through, and the grid.
+
+    Context: cards, can_reorder, grid_id, layout_url, move_url, reset_url, moved.
+-#}
+{%- extends "base.html" -%}
+{%- from "components/_icons.html" import icon -%}
+
+{%- block title -%}{{ _("Dashboard") }} | {{ site_title | default("HyperAdmin") }}{%- endblock -%}
+
+{%- block content -%}
+    <link rel="stylesheet" href="{{ url_for('static', path='/plugins/reports/charts.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/plugins/reports/dashboard.css') }}">
+    <div class="ha-page-header" data-testid="page-header">
+        <h1 class="ha-h1">{{ _("Dashboard") }}</h1>
+        {%- if can_reorder and cards %}
+        <div class="ha-page-header-actions">
+            <form method="post" action="{{ reset_url }}" hx-post="{{ reset_url }}" hx-target="#{{ grid_id }}" hx-swap="outerHTML">
+                {{ csrf_input() if csrf_input is defined }}
+                <button type="submit" class="ha-btn ha-btn-secondary" data-testid="dashboard-reset">{{ icon('rotate-ccw') }}{{ _("Reset layout") }}</button>
+            </form>
+        </div>
+        {%- endif %}
+    </div>
+    {%- if can_reorder and cards %}
+    <p class="ha-sr-only" aria-live="polite" data-dashboard-live data-testid="dashboard-live"></p>
+    {%- endif %}
+    {%- include "dashboard/_grid.html" %}
+{%- endblock -%}

@@ -25,6 +25,16 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
   querystring, and the XLSX "Filters used" sheet lists what was applied.
   `ReportView.run(filters=..., binding=...)` does the same from code.
 
+- **Dashboard** (#422). With `hyperadmin-reports` installed, `register_widget(...)` puts report
+  numbers (`StatWidget`), report charts (`ChartWidget`) and shortcut links
+  (`QuickActionsWidget`) on the admin home page; custom cards subclass `DashboardWidget`. A card
+  shows only to users who hold its report's permission, a failing card shows an error state
+  with Retry, and each user can reorder the cards by drag and drop or with keyboard "Move up" /
+  "Move down" buttons. The order is kept in a table the plugin owns
+  (`hyperadmin_reports_dashboard_layout`), which hosts create on purpose with
+  `create_layout_table()`; without it the default order is shown. Without registered widgets
+  nothing changes. Plugin settings: `dashboard_home`, `dashboard_layouts`, `dashboard_prefix`
+  (`HYPERADMIN_REPORTS_*`). New plugin seam: `PluginRegistry.set_home_page()`.
 - **Estimated list totals** (#211). `AdminOptions(count_estimate_threshold=1_000_000)` makes an
   unfiltered list of a table the database estimates at that many rows or more skip `count(*)`
   and show the planner estimate, marked `~4200000` in the pager. Filtered and searched lists,
