@@ -22,6 +22,12 @@ nav = [
     { "Background Tasks" = "plugins/tasks.md" },
     { "Large Tables & Performance" = "guides/performance.md" },
     { "Compatibility & Performance" = "compatibility.md" },
+    { "Migrating" = [
+      { "Overview" = "migration/index.md" },
+      { "From Django Admin" = "migration/from-django-admin.md" },
+      { "From SQLAdmin" = "migration/from-sqladmin.md" },
+      { "From Flask-Admin" = "migration/from-flask-admin.md" },
+    ] },
     { "Examples" = [
       { "Overview" = "examples.md" },
       { "ERP (Bookkeeping)" = "examples/erp.md" },
