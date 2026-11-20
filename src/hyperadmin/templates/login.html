@@ -18,6 +18,12 @@
             {{ error }}
         </div>
         {%- endif -%}
+        {%- set oauth_notice = oauth_flash(request) if oauth_flash is defined else none -%}
+        {%- if oauth_notice -%}
+        <div class="ha-alert ha-alert-info" data-testid="login-notice" role="status">
+            {{ _(oauth_notice.message) }}
+        </div>
+        {%- endif -%}
 
         <form method="post" action="{{ admin_prefix }}/login" data-testid="login-form" aria-labelledby="login-title">
             {{ csrf_input() if csrf_input is defined }}

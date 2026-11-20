@@ -897,6 +897,11 @@ class Admin:
             user_cache_ttl=settings.user_cache_ttl,
             public_paths=self._oauth_public_paths(),
         )
+        if self.oauth_backend is not None:
+            # Between the session and authentication middleware (add_middleware prepends).
+            from hyperadmin.auth.oauth import wiring as oauth_wiring
+
+            oauth_wiring.add_refresh_middleware(self, target)
         target.add_middleware(
             AdminSessionMiddleware,
             secret_key=settings.secret_key,
