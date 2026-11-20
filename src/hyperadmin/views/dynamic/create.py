@@ -33,7 +33,7 @@ class CreateViewMixin(RelationViewMixin, InlineViewMixin):
         errors: dict | None = None,
         status_code: int = 200,
         inline_formsets: list[InlineFormset] | None = None,
-    ):
+    ) -> Response:
         """Renders the create form.
 
         For HTMX requests, only the inner form body is returned to prevent nesting the full page
@@ -92,7 +92,7 @@ class CreateViewMixin(RelationViewMixin, InlineViewMixin):
         )
 
     @_request_scoped
-    async def create_view(self, request: Request):
+    async def create_view(self, request: Request) -> Response:
         """Handles form submission for creating a new item."""
         await self._check_permission(request, "add")
         form_data = await request.form()

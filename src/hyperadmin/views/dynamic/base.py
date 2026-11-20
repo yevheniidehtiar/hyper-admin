@@ -68,7 +68,7 @@ class DynamicModelViewBase:
         admin_lookup: Callable[[Any], Any] | None = None,
         debug: bool = False,
         occ_render_dialog: bool = True,
-    ):
+    ) -> None:
         self.adapter = adapter
         # ``settings.debug``: list_view re-raises database errors instead of
         # rendering the list-error banner (BYOA SDD D.2).

@@ -191,7 +191,7 @@ class InlineViewMixin(ConcurrencyViewMixin):
         item_id: Any,
         field: str,
         cancel: int = Query(0),
-    ):
+    ) -> Response:
         """Renders the inline editor fragment for a single editable cell.
 
         ``?cancel=1`` returns the static cell instead — used by the Cancel
@@ -243,7 +243,7 @@ class InlineViewMixin(ConcurrencyViewMixin):
         return self.templates.TemplateResponse(request, "components/inline_editor.html", context)
 
     @_request_scoped
-    async def inline_save_view(self, request: Request, item_id: Any, field: str):
+    async def inline_save_view(self, request: Request, item_id: Any, field: str) -> Response:
         """Validates and persists a single field for ``item_id``."""
         pk = self._resolve_pk(item_id)
         await self._check_permission(request, "change")

@@ -232,6 +232,15 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
 - `get_display_name` skips attributes that can't load on a detached row (#773).
 
 ### Documentation
+- **Public API audit** (st-v100-freeze-03). A snapshot test (`tests/unit/test_public_api.py`)
+  records the public API defined in the versioning policy and fails on any change to it. New
+  API reference pages for authentication and permissions, plugins, uploads and realtime; the
+  core and views pages now cover settings, actions, fieldsets, inlines, concurrency errors,
+  rate limiting, panels, filters and `admin_url_for`. The docs now say plainly that
+  `items_per_page` is not read, that plugin lifecycle hooks are reserved but not fired, that
+  built-in auth does not create `action_<name>` and panel permissions, and that a dotted
+  `list_display` accessor is loaded but not rendered. The realtime guide installs
+  `hyper-admin[realtime]` and `hyper-admin[redis]` (it named the wrong distribution).
 - README and docs list the shipped features, supported stacks and real-app results.
 - Fixed code samples that called `Admin()` with settings that are not constructor
   arguments (`discover_apps=`, `template_dirs=`): these go through `HyperAdminSettings`.

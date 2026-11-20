@@ -27,7 +27,8 @@ class HyperAdminModel(BaseModel, abc.ABC):
     how models are displayed, validated, and managed in the admin panel.
 
     It includes abstract methods for CRUD operations and placeholder methods
-    for lifecycle hooks, which should be implemented by subclasses.
+    for lifecycle hooks. The admin does not call the lifecycle hooks yet, and
+    this class is not part of the documented public API.
     """
 
     class Meta:
@@ -61,16 +62,16 @@ class HyperAdminModel(BaseModel, abc.ABC):
         raise NotImplementedError
 
     async def before_save(self) -> None:
-        """Lifecycle hook called before saving the model."""
+        """Reserved lifecycle hook (before saving the model); HyperAdmin does not call it yet."""
 
     async def after_save(self) -> None:
-        """Lifecycle hook called after saving the model."""
+        """Reserved lifecycle hook (after saving the model); HyperAdmin does not call it yet."""
 
     async def before_delete(self) -> None:
-        """Lifecycle hook called before deleting the model."""
+        """Reserved lifecycle hook (before deleting the model); HyperAdmin does not call it yet."""
 
     async def after_delete(self) -> None:
-        """Lifecycle hook called after deleting the model."""
+        """Reserved lifecycle hook (after deleting the model); HyperAdmin does not call it yet."""
 
 
 from hyperadmin.views.static import ModelView

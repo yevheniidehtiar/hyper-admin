@@ -46,6 +46,10 @@ nav = [
     { "Core Components" = "api/core.md" },
     { "Adapters" = "api/adapters.md" },
     { "Routing" = "api/routing.md" },
+    { "Authentication & Permissions" = "api/auth.md" },
+    { "Plugins" = "api/plugins.md" },
+    { "Uploads" = "api/uploads.md" },
+    { "Realtime" = "api/realtime.md" },
   ] },
   { "Community" = [
     { "Contributing" = "contributing.md" },

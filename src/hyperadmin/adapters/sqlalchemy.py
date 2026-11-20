@@ -31,6 +31,14 @@ _MAX_CHOICES_LIMIT = 200
 
 
 class SQLAlchemyAdapter(BaseAdapter):
+    """Data adapter for plain SQLAlchemy declarative models (async engine or session factory).
+
+    Cursor (keyset) pagination is not implemented here: a list request with a cursor is served
+    as a page-numbered ``OFFSET`` page and emits
+    :class:`~hyperadmin.core.adapters.KeysetFallbackWarning`. Only
+    :class:`~hyperadmin.adapters.sqlmodel.SQLModelAdapter` pages by keyset.
+    """
+
     def __init__(
         self,
         model: type[SQLModel],
