@@ -181,6 +181,12 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
   machine drafts marked `#, fuzzy`, so they keep rendering English until a native speaker
   reviews them (`docs/specs/i18n-top-20-locales.md`). `poe i18n:extract` now also extracts
   `gettext_lazy` strings, which picks up the "Plugins" and "Access" sidebar groups.
+- **Permissions are read once per request** (#1057). `ModelPermissionChecker` reads a user's
+  direct and group permissions the first time they are needed and remembers the set on that
+  user object, so a page costs two permission queries however many models are registered
+  (it was two per check). Nothing is kept between requests: a grant or revocation shows on
+  the next request. If you change permissions and keep checking the same user object, call
+  `hyperadmin.auth.permissions.forget_user_permissions(user)` (the permissions matrix does).
 
 ### Fixed
 - A foreign-key field keeps its stored value on the edit form even when the related row

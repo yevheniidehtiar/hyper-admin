@@ -816,6 +816,12 @@ class Admin:
             return False
         if self.permission_checker is None:
             return True
+        # A socket keeps one user object for its whole life, so the permission set
+        # remembered on it is dropped: each subscribe reads the database. Looked up,
+        # not imported (see ``__init__``: the module registers the hyperadmin_* tables).
+        permissions = sys.modules.get("hyperadmin.auth.permissions")
+        if permissions is not None:
+            permissions.forget_user_permissions(user)
         return bool(await self.permission_checker.has_permission(user, f"view_{name}"))
 
     def _notification_model_labels(self) -> dict[str, tuple[Any, Any]]:
