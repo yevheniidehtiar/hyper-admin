@@ -2,7 +2,7 @@
 type: milestone
 id: n0i4JG7BXNtK
 title: "JSON REST API"
-status: in_progress
+status: cancelled
 github:
   milestone_id: 10
   repo: yevheniidehtiar/hyper-admin
@@ -15,3 +15,5 @@ updated_at: 2026-09-28T00:00:00Z
 **Roadmap position 14/16 (2026-09-28 re-cut).** Kept on the roadmap. Protocol layer shipped (`JsonApiAdapter`, `ListEnvelope`, `PaginationMeta` — #197/#198). Remaining: `JsonApiRouter` (#199), auth (#200), integration tests (#201), docs (#202).
 
 Original scope (before the 2026-09-28 split): JSON API endpoints — under evaluation. May be deferred or dropped.
+
+**Dropped (2026-11-11).** The owner dropped the JSON REST API epic from the roadmap (#76 closed as not planned). The protocol layer that shipped (`JsonApiAdapter`, `ListEnvelope`, `PaginationMeta`) stays.
