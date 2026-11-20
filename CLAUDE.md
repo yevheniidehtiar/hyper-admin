@@ -198,6 +198,14 @@ E2E tests use Playwright's accessibility-first locators. Query priority (highest
 | Status pill in a list row | `row-status` |
 | ERP dashboard figures grid / its live region | `dashboard-figures` / `dashboard-figures-region` |
 | ERP dashboard figure tile | `figure-{name}` (e.g. `figure-overdue-invoices`) |
+| Reports dashboard grid / empty state / "Reset layout" button | `dashboard-grid` / `dashboard-empty` / `dashboard-reset` |
+| Reports dashboard card / its stat value | `widget-{key}` (e.g. `widget-stat-orders-revenue`) / `stat-{key}` |
+| Dashboard card "Move up" / "Move down" / drag handle | `widget-move-up` / `widget-move-down` / `widget-drag-handle` |
+| Dashboard card link to its report / loading skeleton | `widget-open` / `widget-loading` |
+| Dashboard card error state / its Retry button / 403 fragment | `widget-error` / `widget-retry` / `widget-forbidden` |
+| Dashboard quick actions list / its empty line | `widget-actions` / `widget-actions-empty` |
+| Dashboard move announcement (live region) | `dashboard-live` |
+| Sidebar "Dashboard" link (`dashboard_home=False`) | `nav-dashboard` |
 
 When adding new interactive or assertable elements to templates, add a `data-testid` following the `<view>-<element>` naming pattern.
 
