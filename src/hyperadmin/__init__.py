@@ -27,3 +27,26 @@ __all__ = [
     "gettext_lazy",
     "pdf_stream_panel",
 ]
+
+# OAuth sign-in (docs/specs/oauth-sso.md) is opt-in and needs the ``oauth`` extra, so
+# its names resolve on first access (PEP 562) and ``import hyperadmin`` never loads it.
+# They stay out of ``__all__``: a star import must not load the built-in auth models.
+_OAUTH_EXPORTS = frozenset(
+    {
+        "AccountLinkRequiredError",
+        "OAuthBackend",
+        "OAuthProviderConfig",
+        "OAuthProviderError",
+        "github_provider",
+        "google_provider",
+    }
+)
+
+
+def __getattr__(name: str) -> object:
+    if name not in _OAUTH_EXPORTS:
+        msg = f"module {__name__!r} has no attribute {name!r}"
+        raise AttributeError(msg)
+    from hyperadmin.auth import oauth  # noqa: PLC0415 - lazy: needs the oauth extra
+
+    return getattr(oauth, name)

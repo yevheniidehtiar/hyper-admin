@@ -35,6 +35,13 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
   `create_layout_table()`; without it the default order is shown. Without registered widgets
   nothing changes. Plugin settings: `dashboard_home`, `dashboard_layouts`, `dashboard_prefix`
   (`HYPERADMIN_REPORTS_*`). New plugin seam: `PluginRegistry.set_home_page()`.
+- **OAuth sign-in with Google and GitHub** (#420). `Admin(oauth_backend=OAuthBackend(providers=...))`
+  adds "Sign in with ..." buttons to the built-in login page, with PKCE, a single-use state,
+  tokens encrypted at rest (`HYPERADMIN_OAUTH_TOKEN_SECRET`), a token refresh middleware, MFA
+  after the OAuth step and link/unlink at `{prefix}/oauth/settings`. Accounts are never linked by
+  email. Opt-in: needs `pip install 'hyper-admin[oauth]'` and the new `hyperadmin_oauth_tokens`
+  table (`hyperadmin init-db` or your migrations); without `oauth_backend` nothing changes and no
+  existing table is altered. See the OAuth Sign-In guide.
 - **Estimated list totals** (#211). `AdminOptions(count_estimate_threshold=1_000_000)` makes an
   unfiltered list of a table the database estimates at that many rows or more skip `count(*)`
   and show the planner estimate, marked `~4200000` in the pager. Filtered and searched lists,
