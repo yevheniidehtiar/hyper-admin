@@ -13,21 +13,34 @@ import importlib
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
+    from hyperadmin.auth.oauth.providers import (
+        OAuthProviderConfig,
+        github_provider,
+        google_provider,
+    )
     from hyperadmin.auth.oauth.tokens import (
         FernetTokenCipher,
         configure_token_cipher,
         token_cipher,
     )
 
+_PROVIDERS_MODULE = "hyperadmin.auth.oauth.providers"
+_TOKENS_MODULE = "hyperadmin.auth.oauth.tokens"
 _LAZY_EXPORTS: dict[str, str] = {
-    "FernetTokenCipher": "hyperadmin.auth.oauth.tokens",
-    "configure_token_cipher": "hyperadmin.auth.oauth.tokens",
-    "token_cipher": "hyperadmin.auth.oauth.tokens",
+    "OAuthProviderConfig": _PROVIDERS_MODULE,
+    "github_provider": _PROVIDERS_MODULE,
+    "google_provider": _PROVIDERS_MODULE,
+    "FernetTokenCipher": _TOKENS_MODULE,
+    "configure_token_cipher": _TOKENS_MODULE,
+    "token_cipher": _TOKENS_MODULE,
 }
 
 __all__ = [
     "FernetTokenCipher",
+    "OAuthProviderConfig",
     "configure_token_cipher",
+    "github_provider",
+    "google_provider",
     "token_cipher",
 ]
 
