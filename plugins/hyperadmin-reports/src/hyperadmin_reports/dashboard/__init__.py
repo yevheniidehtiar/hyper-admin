@@ -10,6 +10,7 @@ from hyperadmin_reports.dashboard.layout import (
     create_layout_table,
     dashboard_metadata,
 )
+from hyperadmin_reports.dashboard.service import DashboardService, LayoutRejectedError
 from hyperadmin_reports.dashboard.widgets import (
     ChartWidget,
     DashboardWidget,
@@ -25,7 +26,9 @@ from hyperadmin_reports.dashboard.widgets import (
 
 __all__ = [
     "ChartWidget",
+    "DashboardService",
     "DashboardWidget",
+    "LayoutRejectedError",
     "LayoutStore",
     "LayoutUnavailableError",
     "QuickAction",
