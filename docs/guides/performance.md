@@ -89,3 +89,16 @@ drops them when the related model is written through its adapter.
 Filter caches hold up to 1000 choices per filter, so they are the largest cache. Plan for roughly
 a hundred kilobytes per cached filter and a few megabytes per worker on a typical admin. Every
 worker process keeps its own copy.
+
+## Permission checks
+
+With the built-in `ModelPermissionChecker`, a request reads the signed-in user's direct and group
+permissions once (two queries) and answers every check in that request from the result: the
+sidebar, the route guard and the per-row actions. Superusers cost no permission query. Nothing is
+kept between requests, so a grant or a revocation shows on the next one.
+
+The set is remembered on the user object the auth backend returns for the request. Code that
+changes permissions and then keeps checking the same user object should call
+`hyperadmin.auth.permissions.forget_user_permissions(user)` first. To also skip the user and
+permission queries on repeat requests, see `HYPERADMIN_USER_CACHE_TTL` in
+[Add HyperAdmin to an existing FastAPI app](existing-app.md).

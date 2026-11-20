@@ -35,6 +35,7 @@ from sqlmodel import select
 from starlette.routing import NoMatchFound
 
 from hyperadmin.auth.models import Group
+from hyperadmin.auth.permissions import forget_user_permissions
 from hyperadmin.core.adapters import open_session
 from hyperadmin.permissions import (
     ConflictError,
@@ -399,6 +400,8 @@ class PermissionMatrixPage:
         except Exception:
             logger.exception("permission matrix save failed for group %s", grid.group_id)
             return await self._outcome(request, "failed", status_code=500, group_id=grid.group_id)
+        # The save may have changed what the operator holds through this group.
+        forget_user_permissions(user)
         response = await self._outcome(
             request,
             "saved",

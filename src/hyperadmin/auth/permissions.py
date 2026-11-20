@@ -7,6 +7,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
+from sqlalchemy import inspect as sa_inspect
+from sqlalchemy.orm import InstanceState
 from sqlmodel import select
 
 from hyperadmin.auth.models import (
@@ -28,6 +30,34 @@ if TYPE_CHECKING:
     from hyperadmin.core.adapters import AsyncSessionLike, SessionFactory
 
 _ACTIONS = ("view", "add", "change", "delete")
+
+#: Key in the user instance's SQLAlchemy ``InstanceState.info`` holding its resolved set.
+_RESOLVED_KEY = "hyperadmin_permissions"
+
+
+def _resolved_store(user: Any) -> dict[Any, Any] | None:
+    """Return the per-instance dict the resolved set lives in, or ``None`` if unmapped.
+
+    The auth backend builds a new user object for every request, so what is stored here
+    ends with the request. A user that is not an ORM instance gets no store: nothing
+    says how long such an object lives, so its permissions are read on every check.
+    """
+    state = sa_inspect(user, raiseerr=False)
+    if not isinstance(state, InstanceState):
+        return None
+    info: dict[Any, Any] = state.info
+    return info
+
+
+def forget_user_permissions(user: Any) -> None:
+    """Drop the permission set remembered on ``user``; the next check reads it again.
+
+    Call it after a write that may change what this user object holds while the object
+    is still in use (the permissions matrix does, after a save).
+    """
+    store = _resolved_store(user)
+    if store is not None:
+        store.pop(_RESOLVED_KEY, None)
 
 
 def generate_default_permissions(model_name: str) -> list[tuple[str, str]]:
@@ -122,11 +152,31 @@ class ModelPermissionChecker:
         """Return ``True`` if the user holds the given permission."""
         if user.is_superuser:
             return True
-        perms = await self.get_user_permissions(user)
-        return codename in perms
+        return codename in await self._resolve(user)
 
     async def get_user_permissions(self, user: User) -> set[str]:
-        """Return the union of direct + group-inherited permission codenames."""
+        """Return the union of direct + group-inherited permission codenames.
+
+        The set is read once per user object and remembered on it, so every later check
+        for the same object (one request) costs no query. The caller gets its own copy.
+        """
+        return set(await self._resolve(user))
+
+    async def _resolve(self, user: User) -> frozenset[str]:
+        """Return the user's permission set, reading it at most once per user object."""
+        store = _resolved_store(user)
+        # Keyed by checker too, so two checkers on different databases never share a set.
+        resolved = store.get(_RESOLVED_KEY) if store is not None else None
+        if resolved is not None and resolved[0] is self:
+            permissions: frozenset[str] = resolved[1]
+            return permissions
+        permissions = await self._load(user.id)
+        if store is not None:
+            store[_RESOLVED_KEY] = (self, permissions)
+        return permissions
+
+    async def _load(self, user_id: Any) -> frozenset[str]:
+        """Read direct and group-inherited codenames in one session (two statements)."""
         async with self._session() as session:
             # Direct permissions
             stmt = (
@@ -135,7 +185,7 @@ class ModelPermissionChecker:
                     UserPermission,
                     UserPermission.permission_id == Permission.id,  # type: ignore[arg-type]
                 )
-                .where(UserPermission.user_id == user.id)
+                .where(UserPermission.user_id == user_id)
             )
             direct = set((await session.execute(stmt)).scalars().all())
 
@@ -148,8 +198,8 @@ class ModelPermissionChecker:
                 )
                 .join(Group, Group.id == GroupPermission.group_id)  # type: ignore[arg-type]
                 .join(UserGroup, UserGroup.group_id == Group.id)  # type: ignore[arg-type]
-                .where(UserGroup.user_id == user.id)
+                .where(UserGroup.user_id == user_id)
             )
             inherited = set((await session.execute(stmt)).scalars().all())
 
-            return direct | inherited
+            return frozenset(direct | inherited)
