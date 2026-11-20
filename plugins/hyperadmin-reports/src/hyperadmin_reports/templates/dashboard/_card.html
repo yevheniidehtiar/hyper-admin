@@ -1,0 +1,51 @@
+{#-
+    One dashboard card: title, the link to the page behind the widget, the reorder
+    controls and the body. A lazy widget's body is a skeleton that loads its fragment
+    over HTMX; the link in the header works before it loads and without JavaScript.
+
+    The move buttons are a plain POST form (303 back to the dashboard) upgraded with
+    hx-post. A button at the edge is aria-disabled, not disabled, so it keeps the focus
+    after a move put its card first or last. The drag handle only works with
+    dashboard.js, which un-hides it.
+
+    Context: card ({widget, body, fragment_url, detail_url}), is_first, is_last,
+    can_reorder, grid_id, move_url.
+-#}
+{%- from "components/_icons.html" import icon -%}
+{%- set widget = card.widget -%}
+<article class="ha-card ha-dash-card" data-span="{{ widget.span }}" data-testid="widget-{{ widget.key }}"
+         data-widget-key="{{ widget.key }}" aria-labelledby="widget-{{ widget.key }}-title">
+    <header class="ha-dash-card__head">
+        <h2 class="ha-h4" id="widget-{{ widget.key }}-title">{{ widget.title }}</h2>
+        <div class="ha-dash-card__tools">
+            {%- if card.detail_url %}
+            <a href="{{ card.detail_url }}" class="ha-dash-card__open" data-testid="widget-open">{{ _(widget.detail_label) }}<span class="ha-sr-only">: {{ widget.title }}</span></a>
+            {%- endif %}
+            {%- if can_reorder %}
+            <form method="post" action="{{ move_url }}" class="ha-dash-card__move"
+                  hx-post="{{ move_url }}" hx-target="#{{ grid_id }}" hx-swap="outerHTML">
+                {{ csrf_input() if csrf_input is defined }}
+                <input type="hidden" name="key" value="{{ widget.key }}">
+                <button type="submit" name="direction" value="up" class="ha-btn ha-btn-ghost ha-btn-sm ha-dash-card__btn"
+                        aria-label="{{ _('Move %(title)s up', title=widget.title) }}"
+                        {%- if is_first %} aria-disabled="true"{% endif %} data-testid="widget-move-up">{{ icon('arrow-up', 'ha-icon--sm') }}</button>
+                <button type="submit" name="direction" value="down" class="ha-btn ha-btn-ghost ha-btn-sm ha-dash-card__btn"
+                        aria-label="{{ _('Move %(title)s down', title=widget.title) }}"
+                        {%- if is_last %} aria-disabled="true"{% endif %} data-testid="widget-move-down">{{ icon('arrow-down', 'ha-icon--sm') }}</button>
+            </form>
+            <button type="button" class="ha-btn ha-btn-ghost ha-btn-sm ha-dash-card__btn ha-dash-card__handle" hidden data-drag-handle
+                    aria-label="{{ _('Drag to reorder %(title)s', title=widget.title) }}" data-testid="widget-drag-handle">
+                <svg class="ha-icon ha-icon--sm" viewBox="0 0 24 24" fill="currentColor" stroke="none" aria-hidden="true" focusable="false"><circle cx="9" cy="5" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="9" cy="19" r="1.5"/><circle cx="15" cy="5" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="15" cy="19" r="1.5"/></svg>
+            </button>
+            {%- endif %}
+        </div>
+    </header>
+    <div class="ha-dash-card__body" data-widget-body{% if widget.body_testid %} data-testid="{{ widget.body_testid }}"{% endif %}>
+        {%- if card.body is not none %}
+        {{ card.body }}
+        {%- else %}
+        {%- set fragment_url = card.fragment_url %}
+        {%- include "dashboard/_lazy.html" %}
+        {%- endif %}
+    </div>
+</article>

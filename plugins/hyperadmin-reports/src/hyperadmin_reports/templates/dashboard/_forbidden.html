@@ -1,0 +1,9 @@
+{#-
+    The 403 fragment of a widget the user may not view. It names neither the widget
+    nor its permission: the dashboard never shows that a hidden report exists.
+-#}
+{%- from "components/_icons.html" import icon -%}
+<div class="ha-empty ha-dash-state" data-testid="widget-forbidden">
+    <span class="ha-empty-glyph">{{ icon('lock') }}</span>
+    <p class="ha-empty-text">{{ _("You don't have access to this widget.") }}</p>
+</div>
