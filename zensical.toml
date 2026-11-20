@@ -34,6 +34,11 @@ nav = [
       { "ERP (Bookkeeping)" = "examples/erp.md" },
     ] },
   ] },
+  { "Plugins" = [
+    { "Overview" = "plugins/index.md" },
+    { "Writing a Plugin" = "plugins/authoring.md" },
+    { "Hook Reference" = "plugins/hooks.md" },
+  ] },
   { "Frontend" = [
     { "Overview" = "frontend/overview.md" },
     { "Widgets" = "frontend/widgets.md" },
