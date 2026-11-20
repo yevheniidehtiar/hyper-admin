@@ -1,0 +1,16 @@
+{#-
+    StatWidget body (design system: components/StatCard): the grand total of one report
+    aggregate. Without rows the value is an em dash and a muted line says why; a real
+    zero prints 0.
+
+    Context: widget, value, report.
+-#}
+<div class="ha-stat">
+    {%- if value is none %}
+    <span class="ha-stat__value ha-muted" data-testid="stat-{{ widget.key }}">&mdash;</span>
+    <span class="ha-caption ha-muted">{{ _("No data") }}</span>
+    {%- else %}
+    <span class="ha-stat__value" data-testid="stat-{{ widget.key }}">{{ value }}</span>
+    <span class="ha-caption ha-muted">{{ report.get_label() }}</span>
+    {%- endif %}
+</div>

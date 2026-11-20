@@ -1,0 +1,12 @@
+{#-
+    The error state of a widget whose render() raised. Served with status 200, so
+    HTMX swaps it; Retry requests the widget fragment again into the card body.
+
+    Context: widget, retry_url.
+-#}
+{%- from "components/_icons.html" import icon -%}
+<div class="ha-empty ha-dash-state ha-dash-state--error" role="alert" data-testid="widget-error">
+    <span class="ha-empty-glyph">{{ icon('circle-x') }}</span>
+    <p class="ha-empty-text">{{ _("Widget unavailable") }}</p>
+    <button type="button" class="ha-btn ha-btn-sm" hx-get="{{ retry_url }}" hx-target="closest [data-widget-body]" hx-swap="innerHTML" data-testid="widget-retry">{{ _("Retry") }}<span class="ha-sr-only">: {{ widget.title }}</span></button>
+</div>

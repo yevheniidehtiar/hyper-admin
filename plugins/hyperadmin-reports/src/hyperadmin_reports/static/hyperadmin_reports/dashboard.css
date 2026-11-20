@@ -1,0 +1,184 @@
+/* ==========================================================================
+   Dashboard (docs/specs/dashboard-builder.md; stat cards follow
+   docs/design/system/components/StatCard)
+   Dashboard-specific classes only: the grid, the card frame with its reorder
+   controls, the stat body, the quick actions and the card states. The generic
+   pieces (ha-card, ha-btn, ha-empty, ha-skel, ha-caption, ha-muted) come from
+   the core stylesheet and are not repeated here.
+   ========================================================================== */
+
+/* Joins the core cascade layer the admin declares in hyperadmin.css, so it ranks
+   exactly as the core components do whether linked or imported. */
+@layer components {
+  /* --- Grid: 1 column on a phone, 2 from ha-bp-md, 4 from ha-bp-lg -------- */
+  .ha-dash-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--ha-space-4);
+  }
+
+  @media (min-width: 768px) {
+    .ha-dash-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+    .ha-dash-card[data-span="2"],
+    .ha-dash-card[data-span="3"],
+    .ha-dash-card[data-span="4"] { grid-column: span 2; }
+  }
+
+  @media (min-width: 1024px) {
+    .ha-dash-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .ha-dash-card[data-span="3"] { grid-column: span 3; }
+    .ha-dash-card[data-span="4"] { grid-column: span 4; }
+  }
+
+  /* --- Card frame ---------------------------------------------------------- */
+  .ha-dash-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ha-space-3);
+    min-inline-size: 0;
+    margin: 0;
+  }
+
+  .ha-dash-card__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--ha-space-2);
+  }
+
+  .ha-dash-card__head .ha-h4 {
+    margin: 0;
+    min-inline-size: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .ha-dash-card__tools {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--ha-space-1);
+    margin-inline-start: auto;
+  }
+
+  .ha-dash-card__foot { margin-block-start: auto; }
+
+  .ha-dash-card__open {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ha-space-1);
+    font-size: var(--ha-font-size-sm);
+    color: var(--ha-color-primary-text);
+  }
+
+  .ha-dash-card__move {
+    display: inline-flex;
+    gap: var(--ha-space-1);
+    margin: 0;
+  }
+
+  .ha-dash-card__btn {
+    padding: 0;
+    min-inline-size: var(--ha-control-height-compact);
+    color: var(--ha-color-text-muted);
+  }
+
+  .ha-dash-card__btn[aria-disabled="true"] {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  .ha-dash-card__handle { cursor: grab; touch-action: none; }
+  .ha-dash-card__handle[hidden] { display: none; }
+
+  @media (pointer: coarse) {
+    .ha-dash-card__btn {
+      min-inline-size: var(--ha-target-touch);
+      min-block-size: var(--ha-target-touch);
+    }
+  }
+
+  .ha-dash-card__body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-inline-size: 0;
+  }
+
+  /* While dragging: the placeholder left in the grid, and the card in hand. */
+  .ha-dash-card--ghost { opacity: 0.4; }
+  .ha-dash-card--chosen { box-shadow: var(--ha-shadow-md); }
+
+  /* --- Loading skeleton ---------------------------------------------------- */
+  .ha-dash-lazy {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ha-space-3);
+  }
+
+  .ha-dash-lazy__value { block-size: 30px; inline-size: 60%; }
+  .ha-dash-lazy__line { inline-size: 40%; }
+
+  /* --- Stat body ----------------------------------------------------------- */
+  .ha-stat {
+    display: flex;
+    flex-direction: column;
+    gap: var(--ha-space-1);
+  }
+
+  .ha-stat__value {
+    font-size: 30px;
+    line-height: 38px;
+    font-weight: var(--ha-font-semibold);
+    letter-spacing: -0.015em;
+    color: var(--ha-color-text-strong);
+    font-variant-numeric: tabular-nums;
+    overflow-wrap: anywhere;
+  }
+
+  .ha-stat__value.ha-muted { color: var(--ha-color-text-muted); }
+
+  /* --- Quick actions ------------------------------------------------------- */
+  .ha-dash-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--ha-space-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  /* --- Error and forbidden states ----------------------------------------- */
+  .ha-dash-state { padding: var(--ha-space-4) var(--ha-space-2); }
+
+  .ha-dash-state--error .ha-empty-glyph {
+    background-color: var(--ha-color-danger-light);
+    color: var(--ha-color-danger-text);
+  }
+
+  /* --- A report chart inside a card: the card is the frame ----------------- */
+  .ha-dash-card__body > .ha-chartframe {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    box-shadow: none;
+  }
+
+  .ha-dash-card__body > .ha-chartframe > .ha-card__head {
+    margin: 0 0 var(--ha-space-3);
+    padding: 0;
+    border: 0;
+  }
+
+  /* The card header already shows the title; the frame's stays for screen readers. */
+  .ha-dash-card__body > .ha-chartframe > .ha-card__head .ha-h4 {
+    position: absolute;
+    inline-size: 1px;
+    block-size: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}

@@ -1,0 +1,15 @@
+{#-
+    QuickActionsWidget body: the shortcut links the user may use.
+
+    Context: widget, actions ([{label, url, icon}]).
+-#}
+{%- from "components/_icons.html" import icon -%}
+{%- if actions %}
+<ul class="ha-dash-actions" aria-label="{{ widget.title }}" data-testid="widget-actions">
+    {%- for action in actions %}
+    <li><a href="{{ action.url }}" class="ha-btn ha-btn-secondary">{% if action.icon %}{{ icon(action.icon) }}{% endif %}{{ action.label }}</a></li>
+    {%- endfor %}
+</ul>
+{%- else %}
+<p class="ha-caption ha-muted" data-testid="widget-actions-empty">{{ _("No actions available.") }}</p>
+{%- endif %}
