@@ -13,6 +13,13 @@ import importlib
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
+    from hyperadmin.auth.exceptions import (
+        AccountLinkRequiredError,
+        MFARequiredError,
+        OAuthConfigError,
+        OAuthProviderError,
+    )
+    from hyperadmin.auth.oauth.backend import OAuthBackend, OAuthIdentity
     from hyperadmin.auth.oauth.providers import (
         OAuthProviderConfig,
         github_provider,
@@ -24,9 +31,17 @@ if TYPE_CHECKING:
         token_cipher,
     )
 
+_BACKEND_MODULE = "hyperadmin.auth.oauth.backend"
+_EXCEPTIONS_MODULE = "hyperadmin.auth.exceptions"
 _PROVIDERS_MODULE = "hyperadmin.auth.oauth.providers"
 _TOKENS_MODULE = "hyperadmin.auth.oauth.tokens"
 _LAZY_EXPORTS: dict[str, str] = {
+    "OAuthBackend": _BACKEND_MODULE,
+    "OAuthIdentity": _BACKEND_MODULE,
+    "AccountLinkRequiredError": _EXCEPTIONS_MODULE,
+    "MFARequiredError": _EXCEPTIONS_MODULE,
+    "OAuthConfigError": _EXCEPTIONS_MODULE,
+    "OAuthProviderError": _EXCEPTIONS_MODULE,
     "OAuthProviderConfig": _PROVIDERS_MODULE,
     "github_provider": _PROVIDERS_MODULE,
     "google_provider": _PROVIDERS_MODULE,
@@ -36,8 +51,14 @@ _LAZY_EXPORTS: dict[str, str] = {
 }
 
 __all__ = [
+    "AccountLinkRequiredError",
     "FernetTokenCipher",
+    "MFARequiredError",
+    "OAuthBackend",
+    "OAuthConfigError",
+    "OAuthIdentity",
     "OAuthProviderConfig",
+    "OAuthProviderError",
     "configure_token_cipher",
     "github_provider",
     "google_provider",
