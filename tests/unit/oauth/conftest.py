@@ -18,7 +18,7 @@ from starlette.responses import JSONResponse, Response
 
 from hyperadmin.auth.oauth.backend import OAuthBackend
 from hyperadmin.auth.oauth.providers import github_provider, google_provider
-from hyperadmin.auth.oauth.session import OAUTH_FLOW_KEY, OAUTH_SESSION_KEY
+from hyperadmin.auth.oauth.session import OAUTH_FLOW_KEY
 from hyperadmin.auth.oauth.tokens import configure_token_cipher
 from tests.conftest import with_csrf
 
@@ -240,17 +240,10 @@ def build_app(engine: AsyncEngine, backend: OAuthBackend) -> Callable[..., OAuth
             request.session[OAUTH_FLOW_KEY] = flow
             return Response(status_code=204)
 
-        async def expire_token(request: Request) -> Response:
-            marker = dict(request.session[OAUTH_SESSION_KEY])
-            marker["expires_at"] = float(request.query_params["at"])
-            request.session[OAUTH_SESSION_KEY] = marker
-            return Response(status_code=204)
-
         # Under /login: public, and inside the admin sub-app, where the session lives.
         router = admin.asgi_app.router
         router.add_route("/login/_test/session", dump_session, methods=["GET"])
         router.add_route("/login/_test/backdate", backdate_flow, methods=["GET"])
-        router.add_route("/login/_test/expire", expire_token, methods=["GET"])
         return OAuthApp(app, admin, oauth_backend, sender)
 
     return build
