@@ -12,6 +12,8 @@ from typing import Any
 from starlette.requests import Request  # noqa: TC002
 
 from hyperadmin.auth.exceptions import OAuthConfigError
+from hyperadmin.auth.oauth.refresh import OAuthRefreshMiddleware
+from hyperadmin.auth.oauth.session import pop_flash
 from hyperadmin.auth.oauth.tokens import TOKEN_SECRET_ENV, configure_token_cipher
 from hyperadmin.auth.oauth.views import CALLBACK_ROUTE, OAuthViews
 from hyperadmin.core.rate_limit import InMemoryRateLimiter
@@ -104,6 +106,21 @@ def register_routes(admin: Any, path: str) -> None:
     router.add_api_route(
         "/oauth/unlink/{provider}", unlink_post, methods=["POST"], name="admin-oauth-unlink"
     )
+    # The login page shows the one-shot message the refresh middleware leaves.
+    admin.templates.env.globals["oauth_flash"] = pop_flash
 
 
-__all__ = ["PUBLIC_PATHS", "configure", "register_routes"]
+def add_refresh_middleware(admin: Any, target: Any) -> None:
+    """Add the token refresh middleware to ``target``.
+
+    Call it after the authentication middleware and before the session middleware
+    are added (``add_middleware`` prepends), so it runs between the two.
+    """
+    target.add_middleware(
+        OAuthRefreshMiddleware,
+        backend=admin.oauth_backend,
+        leeway_seconds=admin.settings.oauth_refresh_leeway_seconds,
+    )
+
+
+__all__ = ["PUBLIC_PATHS", "add_refresh_middleware", "configure", "register_routes"]
