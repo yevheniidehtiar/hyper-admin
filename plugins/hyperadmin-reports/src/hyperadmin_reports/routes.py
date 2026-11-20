@@ -39,12 +39,12 @@ from urllib.parse import urlencode
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse, StreamingResponse
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.ext.asyncio import async_sessionmaker
 from starlette.responses import Response
 
 from hyperadmin.filters import FilterBinding
 from hyperadmin.views.template_filters import TIMEZONE_GLOBAL, request_tz
 from hyperadmin.views.urls import admin_url_for
+from hyperadmin_reports.admin_context import has_permission, session_source
 from hyperadmin_reports.bucketing import PERIODS, TimeBucket, describe_span
 from hyperadmin_reports.chart_data import ChartUnavailableError, build_chart, chartable, placeholder
 from hyperadmin_reports.charts import PeriodOption
@@ -55,10 +55,6 @@ from hyperadmin_reports.grid import build_grid
 from hyperadmin_reports.view import get_report, registered_reports
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-
-    from sqlalchemy.ext.asyncio import AsyncSession
-
     from hyperadmin_reports.bucketing import PeriodOrAuto
     from hyperadmin_reports.export import ReportTable
     from hyperadmin_reports.view import ReportResult, ReportView
@@ -72,28 +68,9 @@ logger = logging.getLogger(__name__)
 PAGE_TARGET = "#report-page"
 
 
-def _permission_checker(admin: Any) -> Any:
-    """The checker admin model views use: none unless the admin has auth configured."""
-    if getattr(admin, "auth", None) is None and getattr(admin, "auth_backend", None) is None:
-        return None
-    return admin.permission_checker
-
-
 async def can_view(admin: Any, request: Request, report: type[ReportView]) -> bool:
     """Whether the request's user holds ``report``'s permission codename."""
-    checker = _permission_checker(admin)
-    if checker is None:
-        return True
-    user = getattr(request.state, "user", None)
-    if user is None:
-        raise HTTPException(status_code=403, detail="Authentication required")
-    return bool(await checker.has_permission(user, report.get_permission()))
-
-
-def _session_source(admin: Any) -> Callable[[], AsyncSession]:
-    if admin.session_factory is not None:
-        return admin.session_factory
-    return async_sessionmaker(admin.engine, expire_on_commit=False)
+    return await has_permission(admin, request, report.get_permission())
 
 
 def parse_period(value: str | None) -> PeriodOrAuto | None:
@@ -147,7 +124,7 @@ async def filter_panel(
     """Context of the page's filter sidebar, or ``None`` for a report without filters."""
     if not report.filters:
         return None
-    async with _session_source(admin)() as session:
+    async with session_source(admin)() as session:
         return await build_filter_panel(
             report,
             session,
@@ -250,7 +227,7 @@ def build_router(admin: Any) -> APIRouter:
     async def run(report: type[ReportView], request: Request) -> ReportResult:
         """Run ``report`` narrowed by the request's filters; callers check the permission first."""
         return await report.run(
-            _session_source(admin),
+            session_source(admin),
             period=parse_period(request.query_params.get("period")),
             filters=request.query_params,
             binding=filter_binding(admin, request),
