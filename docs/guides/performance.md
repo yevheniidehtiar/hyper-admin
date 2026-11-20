@@ -224,6 +224,11 @@ its own (`"customer"`) or through a dotted accessor (`"customer.name"`), is load
 `SELECT ... IN (...)` for the page, whatever the page size. Other relations are not loaded, which
 saves one query per relation on every request.
 
+!!! note "Dotted accessors are loaded, not rendered"
+    A dotted accessor such as `"customer.name"` loads the relation, but the list cell does not
+    follow the dot yet and stays empty. Name the relation itself (`"customer"`) to show the
+    related row's display name.
+
 ```python
 class OrderAdmin(ModelAdmin):
     options = AdminOptions(

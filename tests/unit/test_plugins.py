@@ -556,6 +556,32 @@ def test_unknown_hook_name_raises() -> None:
         PluginRegistry().dispatch_hook("on_befor_create")
 
 
+@pytest.mark.parametrize("hook", sorted(plugins_mod.LIFECYCLE_HOOKS))
+def test_every_reserved_lifecycle_hook_is_dispatchable(hook: str) -> None:
+    """
+    Scenario: a plugin implements a reserved lifecycle hook
+      Given a plugin whose method is named after an entry of LIFECYCLE_HOOKS
+      When  the registry dispatches that hook with keyword arguments
+      Then  the plugin's method receives them
+    """
+    calls: list[dict[str, Any]] = []
+
+    class HookPlugin:
+        name = "hooked"
+
+        def on_register(self, admin: Any) -> None:
+            """Contribute nothing."""
+
+    plugin = HookPlugin()
+    setattr(plugin, hook, lambda **kwargs: calls.append(kwargs))
+    registry = PluginRegistry()
+    registry.register(plugin, admin=ADMIN)
+
+    registry.dispatch_hook(hook, admin=ADMIN, model=int)
+
+    assert calls == [{"admin": ADMIN, "model": int}]
+
+
 def test_async_and_non_callable_hooks_are_ignored(caplog: pytest.LogCaptureFixture) -> None:
     """
     Scenario: plugin defines an async hook or a non-callable attribute

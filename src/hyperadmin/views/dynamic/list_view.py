@@ -11,7 +11,7 @@ from markupsafe import Markup
 from pydantic import BaseModel
 from sqlalchemy.exc import SQLAlchemyError
 from starlette.datastructures import QueryParams
-from starlette.responses import RedirectResponse
+from starlette.responses import RedirectResponse, Response
 
 from hyperadmin.core.adapters import InvalidCursorError, PaginationMode
 from hyperadmin.core.choices import ChoiceItem
@@ -411,7 +411,7 @@ class ListViewMixin(SavedViewsMixin):
         sort_by: str = Query(None),
         sort_direction: str = Query("asc", pattern="^(asc|desc)$"),
         cursor: str = Query(""),
-    ):
+    ) -> Response:
         """Renders the list view for the model with pagination, sorting, and filtering.
 
         Filtering runs two pipelines over one whitelist: legacy ``list_filter``

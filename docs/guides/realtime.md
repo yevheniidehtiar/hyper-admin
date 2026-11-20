@@ -23,7 +23,7 @@ The browser opens two connections under the admin prefix:
 and the most common one, plain `uvicorn`, has no WebSocket support on its own. Install one of:
 
 ```bash
-pip install "hyperadmin[realtime]"   # adds `websockets`, which uvicorn picks up automatically
+pip install "hyper-admin[realtime]"   # adds `websockets`, which uvicorn picks up automatically
 pip install "uvicorn[standard]"      # or uvicorn with its standard extras
 ```
 
@@ -100,7 +100,7 @@ Events and presence live in memory by default, so they only reach browsers conne
 worker process. With more than one worker (or several instances), move both to Redis:
 
 ```bash
-pip install "hyperadmin[redis]"
+pip install "hyper-admin[redis]"
 ```
 
 ```python

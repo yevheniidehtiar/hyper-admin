@@ -28,7 +28,9 @@ from hyperadmin.views.route import make_admin_route_class
 from hyperadmin.views.template_filters import register_template_filters
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
+    from collections.abc import Awaitable, Callable
+
+    from starlette.responses import Response
 
     from hyperadmin.core.adapters import SessionFactory
     from hyperadmin.core.plugins import PluginHomePage
@@ -493,7 +495,7 @@ class HyperAdminRouter:
         concurrency_use_updated_at: bool = False,
         occ_render_dialog: bool = True,
         home_page: "Callable[[], PluginHomePage | None] | None" = None,
-    ):
+    ) -> None:
         self.engine = engine
         #: Lookup of the plugin home page (read per request); ``None`` = the welcome page.
         self.home_page = home_page
@@ -630,7 +632,8 @@ class HyperAdminRouter:
         # HyperAdmin.mount() rebuilds it with the plugin entries and nav_groups.
         self.templates.env.globals["nav_tree"] = build_nav_tree(self.nav_sources, ())
 
-    def get_admin_dashboard_view(self):
+    def get_admin_dashboard_view(self) -> "Callable[[Request], Awaitable[Response]]":
+        """Return the endpoint that renders the admin home page (``dashboard.html``)."""
         from hyperadmin.views.dynamic import admin_dashboard
 
         async def admin_dashboard_view(request: Request):

@@ -37,6 +37,8 @@ admin.mount("/admin")
 | `realtime` | `RealtimeSettings` | `None` | SSE / WebSocket and pub/sub configuration; see [Realtime](../guides/realtime.md) |
 | `disabled_plugins` | `Iterable[str]` | `()` | Keyword-only. Plugin names to skip, for example `["tasks"]` |
 | `plugin_settings` | `Mapping[str, Mapping]` | `None` | Keyword-only. Settings for each plugin, by plugin name |
+| `nav_groups` | `Iterable[NavGroup]` | `()` | Keyword-only. Sidebar sections; see [Navigation](../guides/navigation.md) |
+| `rate_limiter` | `RateLimiter` | `None` | Keyword-only. A limiter shared between workers; see [Rate limiting](../guides/performance.md#rate-limiting) |
 
 ## Settings
 

@@ -28,7 +28,7 @@ class DetailViewMixin(FileViewMixin):
     """The detail view and its panels."""
 
     @_request_scoped
-    async def detail_view(self, request: Request, item_id: Any):
+    async def detail_view(self, request: Request, item_id: Any) -> Response:
         """Renders the detail view for a single item, keyed by the model's primary key."""
         pk = self._resolve_pk(item_id)
         await self._check_permission(request, "view")

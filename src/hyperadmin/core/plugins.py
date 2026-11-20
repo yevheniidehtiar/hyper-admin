@@ -72,7 +72,12 @@ class Plugin(Protocol):
 
     name: str
 
-    def on_register(self, admin: Any) -> None: ...
+    def on_register(self, admin: Any) -> None:
+        """Contribute pages, nav entries, templates, static files and permissions.
+
+        Called once per ``Admin``, in plugin order, before the admin is mounted. Use the
+        ``add_*`` and ``set_static_dir`` methods of ``admin.plugins`` (a ``PluginRegistry``).
+        """
 
 
 @dataclass(frozen=True)

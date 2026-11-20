@@ -58,7 +58,7 @@ class UpdateViewMixin(RelationViewMixin, InlineViewMixin):
         status_code: int = 200,
         inline_formsets: list[InlineFormset] | None = None,
         version: str | None = None,
-    ):
+    ) -> Response:
         """Renders the update form, optionally pre-filled with submitted values and errors.
 
         ``version`` is the ``__version`` the user's form was loaded with: a validation
@@ -145,7 +145,7 @@ class UpdateViewMixin(RelationViewMixin, InlineViewMixin):
         )
 
     @_request_scoped
-    async def update_view(self, request: Request, item_id: Any):
+    async def update_view(self, request: Request, item_id: Any) -> Response:
         """Handles form submission for updating an item."""
         pk = self._resolve_pk(item_id)
         await self._check_permission(request, "change")
@@ -271,7 +271,7 @@ class UpdateViewMixin(RelationViewMixin, InlineViewMixin):
         return RedirectResponse(url=redirect_url, status_code=303)
 
     @_request_scoped
-    async def delete_action(self, request: Request, item_id: Any):
+    async def delete_action(self, request: Request, item_id: Any) -> Response:
         """Deletes an item."""
         pk = self._resolve_pk(item_id)
         await self._check_permission(request, "delete")

@@ -188,6 +188,8 @@ class HyperAdminSettings(BaseSettings):
 
     # ── UI ────────────────────────────────────────────────────────────────────
     theme: ThemeLiteral = "auto"
+    #: Accepted but not read yet: the list view's page size comes from its
+    #: ``page_size`` query parameter (10 by default).
     items_per_page: int = Field(default=20, gt=0)
 
     # ── Uploads ───────────────────────────────────────────────────────────────

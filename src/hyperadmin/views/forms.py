@@ -38,6 +38,7 @@ except ImportError:
 if TYPE_CHECKING:
     from collections.abc import Callable, Mapping
 
+    from starlette.requests import Request
     from starlette.templating import Jinja2Templates
 
     from hyperadmin.core.fieldsets import FieldsetSpec
@@ -166,7 +167,8 @@ class HtmxWidget:
     htmx_attrs: Mapping[str, str] | None = None
     input_type: ClassVar[str] = "text"
 
-    def render(self, templates: Jinja2Templates, form_field: FormField, request) -> Markup:
+    def render(self, templates: Jinja2Templates, form_field: FormField, request: Request) -> Markup:
+        """Render ``template_path`` with ``request``, the bound ``field`` and this ``widget``."""
         context = {
             "request": request,
             "field": form_field,
@@ -547,6 +549,12 @@ class FieldsetGroup:
 
 
 class PydanticForm:
+    """A form over a Pydantic or SQLModel class: picks a widget per field, binds and validates.
+
+    The admin builds one per create and update page. ``bind`` fills the fields with values,
+    ``validate`` turns submitted strings into a model instance or per-field error lists.
+    """
+
     def __init__(
         self,
         model: type[BaseModel],
@@ -780,6 +788,7 @@ class PydanticForm:
         return groups
 
     def bind(self, data: dict[str, Any]) -> None:
+        """Set each field's value from ``data`` (missing keys become ``None``)."""
         for f in self.fields:
             f.value = data.get(f.name)
 
@@ -825,6 +834,12 @@ class PydanticForm:
         return errors
 
     def validate(self, data: dict[str, Any]) -> tuple[BaseModel | None, dict[str, ErrorList]]:
+        """Validate submitted ``data`` against the model.
+
+        Blank optional inputs become ``None`` and datetimes are parsed in the form's
+        timezone first. Returns ``(instance, {})`` on success, or ``(None, errors)`` with
+        the error list of each failing field (also stored on the fields for re-rendering).
+        """
         cleaned_data = data.copy()
         for f in self.fields:
             if not f.required and cleaned_data.get(f.name) == "" and _accepts_none(f.model_field):

@@ -48,7 +48,7 @@ class MyAdapter(BaseAdapter):
 `list[FilterCondition]` (ops: exact/gte/lte/in/isnull) before building your
 query.
 
-Register it with the adapter registry so HyperAdmin can discover it automatically:
+Register it with `adapter_registry` so HyperAdmin can discover it automatically:
 
 ```python
 from hyperadmin.adapters.registry import adapter_registry

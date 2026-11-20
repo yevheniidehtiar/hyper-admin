@@ -66,3 +66,29 @@ The `DynamicModelView` handles all CRUD views for a registered model: list, deta
 The base widget class. Pairs a Jinja2 template with optional HTMX attributes and static assets.
 
 ::: hyperadmin.views.forms.HtmxWidget
+## Detail panels
+
+Decorate a `ModelAdmin` method with `panel` to add a tab to the detail page, or pass panel
+definitions in `AdminOptions.panels`. `pdf_stream_panel` builds a ready-made panel definition
+that streams a PDF inline; `PDFStreamPanel` is the same function under a class-style name.
+
+::: hyperadmin.core.panels.panel
+
+::: hyperadmin.panels.pdf_stream_panel
+
+## Filters
+
+`AdminOptions.list_filter` takes field names or filter definitions from `hyperadmin.filters`,
+for example `DateRangeFilter(field="created_at")`. Every filter subclasses `FilterDef`.
+
+::: hyperadmin.filters.FilterDef
+
+::: hyperadmin.filters.DateRangeFilter
+
+## Admin URLs
+
+`admin_url_for(request, name, **path_params)` resolves a route name in the `hyperadmin:`
+namespace for the current request, for example
+`admin_url_for(request, "product-detail", item_id=1)`.
+
+::: hyperadmin.views.urls.admin_url_for

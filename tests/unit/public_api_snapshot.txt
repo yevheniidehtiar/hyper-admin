@@ -1,0 +1,478 @@
+cli hyperadmin createsuperuser database_url :: --database-url
+cli hyperadmin createsuperuser email :: --email (required)
+cli hyperadmin createsuperuser password :: --password (required)
+cli hyperadmin createsuperuser username :: --username (required)
+cli hyperadmin init-db all_tables :: --all (flag)
+cli hyperadmin init-db database_url :: --database-url (required)
+env hyperadmin.HyperAdminSettings :: env_prefix = 'HYPERADMIN_'
+hyperadmin.Admin :: class (app: FastAPI, engine: Any = None, settings: HyperAdminSettings | None = None, auth_backend: Any = None, permission_checker: Any = None, permission_registry: Any = None, storage: Any = None, otp_service: Any = None, realtime: RealtimeSettings | None = None, *, session_factory: SessionFactory | None = None, auth: ExternalAuth | None = None, disabled_plugins: Iterable[str] = (), plugin_settings: Mapping[str, Mapping[str, Any]] | None = None, nav_groups: Iterable[NavGroup] = (), rate_limiter: RateLimiter | None = None) -> None
+hyperadmin.Admin.asgi_app :: property -> FastAPI | None
+hyperadmin.Admin.create_tables :: async def (self, scope: TableScope = 'all') -> None
+hyperadmin.Admin.csrf_mode :: property -> EffectiveCsrfMode
+hyperadmin.Admin.dispatch_hook :: def (self, hook: str, /, **kwargs: Any) -> None
+hyperadmin.Admin.lifespan :: def (self) -> AbstractAsyncContextManager[None]
+hyperadmin.Admin.mount :: def (self, path: str = '/admin') -> None
+hyperadmin.Admin.publish_event :: def (self, event: RealtimeEvent) -> None
+hyperadmin.Admin.shutdown :: async def (self) -> None
+hyperadmin.Admin.startup :: async def (self) -> None
+hyperadmin.Admin.theme :: property -> str
+hyperadmin.ConcurrencyConfigurationError :: class(ValueError)
+hyperadmin.HyperAdminSettings :: class(BaseSettings)
+hyperadmin.HyperAdminSettings.auto_discover :: field: bool = False
+hyperadmin.HyperAdminSettings.aws_access_key_id :: field: str | None = None
+hyperadmin.HyperAdminSettings.aws_s3_bucket_name :: field: str | None = None
+hyperadmin.HyperAdminSettings.aws_s3_custom_domain :: field: str | None = None
+hyperadmin.HyperAdminSettings.aws_s3_default_acl :: field: str | None = None
+hyperadmin.HyperAdminSettings.aws_s3_endpoint_url :: field: str | None = None
+hyperadmin.HyperAdminSettings.aws_s3_querystring_auth :: field: bool = True
+hyperadmin.HyperAdminSettings.aws_s3_region :: field: str | None = None
+hyperadmin.HyperAdminSettings.aws_secret_access_key :: field: SecretStr | None = None
+hyperadmin.HyperAdminSettings.concurrency_use_updated_at :: field: bool = False
+hyperadmin.HyperAdminSettings.cookie_secure :: field: Literal['auto'] | bool = 'auto'
+hyperadmin.HyperAdminSettings.count_cache_max_entries :: field: int = 1024
+hyperadmin.HyperAdminSettings.create_tables :: field: bool = False
+hyperadmin.HyperAdminSettings.csrf_cookie_name :: field: str = 'hyperadmin_csrf'
+hyperadmin.HyperAdminSettings.csrf_field_name :: field: str = 'csrf_token'
+hyperadmin.HyperAdminSettings.csrf_header_name :: field: str = 'X-CSRF-Token'
+hyperadmin.HyperAdminSettings.csrf_mode :: field: Literal['auto', 'enforce', 'report', 'off'] = 'auto'
+hyperadmin.HyperAdminSettings.csrf_trusted_origins :: field: list[str] = list()
+hyperadmin.HyperAdminSettings.database_engine_kwargs :: property -> dict[str, Any]
+hyperadmin.HyperAdminSettings.database_max_overflow :: field: int | None = None
+hyperadmin.HyperAdminSettings.database_pool_pre_ping :: field: bool = False
+hyperadmin.HyperAdminSettings.database_pool_recycle :: field: int | None = None
+hyperadmin.HyperAdminSettings.database_pool_size :: field: int | None = None
+hyperadmin.HyperAdminSettings.database_pool_timeout :: field: float | None = None
+hyperadmin.HyperAdminSettings.database_url :: field: str = 'sqlite+aiosqlite:///:memory:'
+hyperadmin.HyperAdminSettings.date_format :: field: str = '%Y-%m-%d'
+hyperadmin.HyperAdminSettings.datetime_format :: field: str = '%Y-%m-%d %H:%M:%S'
+hyperadmin.HyperAdminSettings.debug :: field: bool = False
+hyperadmin.HyperAdminSettings.default_locale :: field: str = 'en'
+hyperadmin.HyperAdminSettings.discover_apps :: field: list[str] = list()
+hyperadmin.HyperAdminSettings.is_default_secret_key :: property -> bool
+hyperadmin.HyperAdminSettings.items_per_page :: field: int = 20
+hyperadmin.HyperAdminSettings.locale_response_header :: field: bool = True
+hyperadmin.HyperAdminSettings.mount_mode :: field: Literal['isolated', 'router'] = 'isolated'
+hyperadmin.HyperAdminSettings.nav_pins_max :: field: int = 20
+hyperadmin.HyperAdminSettings.occ_render_dialog :: field: bool = True
+hyperadmin.HyperAdminSettings.permissions_matrix_codename :: field: str = 'change_groups_permissions'
+hyperadmin.HyperAdminSettings.permissions_matrix_enabled :: field: bool = True
+hyperadmin.HyperAdminSettings.plugins_enabled :: field: bool = True
+hyperadmin.HyperAdminSettings.public_uploads_path :: field: str | None = None
+hyperadmin.HyperAdminSettings.rate_limit_login_requests :: field: int | None = None
+hyperadmin.HyperAdminSettings.rate_limit_requests :: field: int | None = None
+hyperadmin.HyperAdminSettings.rate_limit_window_seconds :: field: int = 60
+hyperadmin.HyperAdminSettings.register_auth_models :: field: bool | None = None
+hyperadmin.HyperAdminSettings.route_namespace :: field: str = 'hyperadmin'
+hyperadmin.HyperAdminSettings.secret_key :: field: str = 'hyperadmin-default-secret'
+hyperadmin.HyperAdminSettings.session_cookie :: field: str = 'hyperadmin_session'
+hyperadmin.HyperAdminSettings.session_max_age :: field: int = 1209600
+hyperadmin.HyperAdminSettings.session_same_site :: field: Literal['lax', 'strict', 'none'] = 'lax'
+hyperadmin.HyperAdminSettings.site_header :: field: str = 'HyperAdmin'
+hyperadmin.HyperAdminSettings.site_title :: field: str = 'HyperAdmin'
+hyperadmin.HyperAdminSettings.storage_backend :: field: Literal['local', 's3'] = 'local'
+hyperadmin.HyperAdminSettings.supported_locales :: field: list[str] = HyperAdminSettings.<lambda>()
+hyperadmin.HyperAdminSettings.template_dirs :: field: list[str] = list()
+hyperadmin.HyperAdminSettings.theme :: field: Literal['auto', 'light', 'dark'] = 'auto'
+hyperadmin.HyperAdminSettings.timezone :: field: str = 'UTC'
+hyperadmin.HyperAdminSettings.tzinfo :: property -> ZoneInfo
+hyperadmin.HyperAdminSettings.upload_dir :: field: str = 'uploads'
+hyperadmin.HyperAdminSettings.user_cache_ttl :: field: int = 0
+hyperadmin.NavGroup :: class (label: str | babel.support.LazyProxy, icon: str | None = None, order: int = 0, collapsed: bool = False) -> None
+hyperadmin.NavGroup.collapsed :: field: bool = False
+hyperadmin.NavGroup.icon :: field: str | None = None
+hyperadmin.NavGroup.label :: field: str | babel.support.LazyProxy
+hyperadmin.NavGroup.order :: field: int = 0
+hyperadmin.PDFStreamPanel :: alias of hyperadmin.pdf_stream_panel
+hyperadmin.Plugin :: class(Protocol)
+hyperadmin.Plugin.name :: attr: str
+hyperadmin.Plugin.on_register :: def (self, admin: Any) -> None
+hyperadmin.PluginError :: class(Exception)
+hyperadmin.PluginRegistry :: class () -> None
+hyperadmin.PluginRegistry.add_nav_entry :: def (self, plugin: Plugin, *, label: str, url_name: str, icon: str | None = None, permission: str | None = None, section: str | None = None, order: int = 0, url_params: Mapping[str, Any] | None = None, testid: str | None = None) -> NavEntry
+hyperadmin.PluginRegistry.add_page :: def (self, plugin: Plugin, router: Any, *, prefix: str | None = None) -> PluginPage
+hyperadmin.PluginRegistry.add_permission :: def (self, plugin: Plugin, codename: str, name: str | None = None) -> PluginPermission
+hyperadmin.PluginRegistry.add_template_dir :: def (self, plugin: Plugin, path: str | os.PathLike[str]) -> PluginTemplateDir
+hyperadmin.PluginRegistry.discover :: classmethod (cls, *, admin: Any, disabled: Iterable[str] = (), settings: Mapping[str, Mapping[str, Any]] | None = None) -> PluginRegistry
+hyperadmin.PluginRegistry.dispatch_hook :: def (self, hook: str, /, **kwargs: Any) -> None
+hyperadmin.PluginRegistry.has_handlers :: def (self, hook: str) -> bool
+hyperadmin.PluginRegistry.home_page :: property -> PluginHomePage | None
+hyperadmin.PluginRegistry.load_entry_points :: def (self, *, admin: Any, disabled: Iterable[str] = (), settings: Mapping[str, Mapping[str, Any]] | None = None) -> None
+hyperadmin.PluginRegistry.names :: def (self) -> list[str]
+hyperadmin.PluginRegistry.nav_entries :: property -> list[NavEntry]
+hyperadmin.PluginRegistry.origin :: def (self, name: str) -> str
+hyperadmin.PluginRegistry.pages :: property -> list[PluginPage]
+hyperadmin.PluginRegistry.permissions :: property -> list[PluginPermission]
+hyperadmin.PluginRegistry.register :: def (self, plugin: Plugin, *, admin: Any, settings: Mapping[str, Any] | None = None, origin: str | None = None) -> bool
+hyperadmin.PluginRegistry.set_home_page :: def (self, plugin: Plugin, endpoint: HomePageEndpoint) -> PluginHomePage
+hyperadmin.PluginRegistry.set_static_dir :: def (self, plugin: Plugin, path: str | os.PathLike[str]) -> PluginStaticDir
+hyperadmin.PluginRegistry.settings :: def (self, name: str) -> Any
+hyperadmin.PluginRegistry.skipped :: property -> dict[str, SkipReason]
+hyperadmin.PluginRegistry.static_dirs :: property -> list[PluginStaticDir]
+hyperadmin.PluginRegistry.template_dirs :: property -> list[PluginTemplateDir]
+hyperadmin.RealtimeSettings :: class(BaseModel)
+hyperadmin.RealtimeSettings.channel_prefix :: field: str = 'hyperadmin:'
+hyperadmin.RealtimeSettings.enable_test_endpoints :: field: bool = False
+hyperadmin.RealtimeSettings.heartbeat_interval :: field: float = 15.0
+hyperadmin.RealtimeSettings.max_connections :: field: int | None = None
+hyperadmin.RealtimeSettings.notifications :: field: bool = True
+hyperadmin.RealtimeSettings.presence :: field: PresenceBackend | None = None
+hyperadmin.RealtimeSettings.presence_redis_url :: field: str | None = None
+hyperadmin.RealtimeSettings.presence_ttl :: field: float = 30.0
+hyperadmin.RealtimeSettings.pubsub :: field: PubSubBackend | None = None
+hyperadmin.RealtimeSettings.pubsub_redis_url :: field: str | None = None
+hyperadmin.RealtimeSettings.resolve_presence :: def (self) -> PresenceBackend
+hyperadmin.RealtimeSettings.resolve_pubsub :: def (self) -> PubSubBackend
+hyperadmin.StaleRecordError :: class(Exception) (*, model: type, pk: Any, expected: Any, current: Any) -> None
+hyperadmin.StaleRecordError.current_version :: property -> Any
+hyperadmin.StaleRecordError.expected_version :: property -> Any
+hyperadmin.adapters.registry.adapter_registry :: instance of AdapterRegistry
+hyperadmin.adapters.sqlalchemy.SQLAlchemyAdapter :: class(BaseAdapter) (model: type[SQLModel], engine: AsyncEngine | None = None, *, session_factory: Callable[[], AbstractAsyncContextManager[AsyncSessionLike]] | None = None) -> None
+hyperadmin.adapters.sqlalchemy.SQLAlchemyAdapter.count_cache :: attr: CountCache | None = None
+hyperadmin.adapters.sqlalchemy.SQLAlchemyAdapter.count_cache_ttl :: attr: int = 0
+hyperadmin.adapters.sqlalchemy.SQLAlchemyAdapter.count_estimate_threshold :: attr: int | None = None
+hyperadmin.adapters.sqlalchemy.SQLAlchemyAdapter.create :: async def (self, data: dict[str, Any]) -> Any
+hyperadmin.adapters.sqlalchemy.SQLAlchemyAdapter.datetime_kind :: def (self, field: str) -> DateTimeKind | None
+hyperadmin.adapters.sqlalchemy.SQLAlchemyAdapter.delete :: async def (self, pk: Any) -> None
+hyperadmin.adapters.sqlalchemy.SQLAlchemyAdapter.ensure_inline_rows_owned :: async def (self, spec: InlineModelSpec, rows: builtins.list[dict[str, Any]], parent_pk: Any) -> None
+hyperadmin.adapters.sqlalchemy.SQLAlchemyAdapter.estimate_row_count :: async def (self) -> int
+hyperadmin.adapters.sqlalchemy.SQLAlchemyAdapter.estimates_row_count :: attr: bool = False
+hyperadmin.adapters.sqlalchemy.SQLAlchemyAdapter.filter_cache_ttl :: attr: int = 0
+hyperadmin.adapters.sqlalchemy.SQLAlchemyAdapter.for_model :: def (self, model: Any) -> BaseAdapter
+hyperadmin.adapters.sqlalchemy.SQLAlchemyAdapter.get :: async def (self, pk: Any, *, load_relations: list[str] | None = None) -> Any
+hyperadmin.adapters.sqlalchemy.SQLAlchemyAdapter.get_choices :: async def (self, field: str, q: str = '', limit: int = 50, offset: int = 0, label_fn: Callable[[Any], str] | None = None, **filters: Any) -> list[ChoiceItem]
+hyperadmin.adapters.sqlalchemy.SQLAlchemyAdapter.get_queryset :: def (self, request: Request | None = None) -> dict[str, Any]
+hyperadmin.adapters.sqlalchemy.SQLAlchemyAdapter.get_related :: async def (self, pk: Any, field: str) -> list[Any]
+hyperadmin.adapters.sqlalchemy.SQLAlchemyAdapter.get_schema :: async def (self) -> dict[str, Any]
+hyperadmin.adapters.sqlalchemy.SQLAlchemyAdapter.inline_child_pks :: async def (self, spec: InlineModelSpec, parent_pk: Any) -> set[Any]
+hyperadmin.adapters.sqlalchemy.SQLAlchemyAdapter.invalidate_count_cache :: async def (self) -> None
+hyperadmin.adapters.sqlalchemy.SQLAlchemyAdapter.list :: async def (self, page: int = 1, page_size: int = 10, search: str | None = None, filters: Mapping[str, Any] | Sequence[FilterCondition] | None = None, order_by: str | None = None, search_fields: list[str] | None = None, load_relations: list[str] | None = None) -> tuple[list[Any], int]
+hyperadmin.adapters.sqlalchemy.SQLAlchemyAdapter.list_paginated :: async def (self, *, page: int = 1, page_size: int = 10, cursor: str | None = None, search: str | None = None, filters: Mapping[str, Any] | Sequence[FilterCondition] | None = None, order_by: str | None = None, search_fields: builtins.list[str] | None = None, load_relations: builtins.list[str] | None = None) -> ListResult
+hyperadmin.adapters.sqlalchemy.SQLAlchemyAdapter.model :: attr: Any
+hyperadmin.adapters.sqlalchemy.SQLAlchemyAdapter.pagination_mode :: attr: PaginationMode = 'offset'
+hyperadmin.adapters.sqlalchemy.SQLAlchemyAdapter.pk :: attr: PrimaryKeyInfo
+hyperadmin.adapters.sqlalchemy.SQLAlchemyAdapter.save_inline_rows :: async def (self, spec: InlineModelSpec, rows: list[dict[str, Any]], parent_pk: Any) -> None
+hyperadmin.adapters.sqlalchemy.SQLAlchemyAdapter.set_queryset_filter :: def (self, filter_fn: QuerysetFilter) -> None
+hyperadmin.adapters.sqlalchemy.SQLAlchemyAdapter.total_is_estimate :: def (self) -> bool
+hyperadmin.adapters.sqlalchemy.SQLAlchemyAdapter.update :: async def (self, pk: Any, data: dict[str, Any], *, expected_version: Any | None = None) -> Any
+hyperadmin.adapters.sqlalchemy.SQLAlchemyAdapter.version_field :: attr: str | None = None
+hyperadmin.adapters.sqlmodel.SQLModelAdapter :: class(BaseAdapter) (model: type[SQLModel], engine: AsyncEngine | None = None, *, session_factory: Callable[[], AbstractAsyncContextManager[AsyncSessionLike]] | None = None) -> None
+hyperadmin.adapters.sqlmodel.SQLModelAdapter.count_cache :: attr: CountCache | None = None
+hyperadmin.adapters.sqlmodel.SQLModelAdapter.count_cache_ttl :: attr: int = 0
+hyperadmin.adapters.sqlmodel.SQLModelAdapter.count_estimate_threshold :: attr: int | None = None
+hyperadmin.adapters.sqlmodel.SQLModelAdapter.create :: async def (self, data: dict[str, Any]) -> Any
+hyperadmin.adapters.sqlmodel.SQLModelAdapter.datetime_kind :: def (self, field: str) -> DateTimeKind | None
+hyperadmin.adapters.sqlmodel.SQLModelAdapter.delete :: async def (self, pk: Any) -> None
+hyperadmin.adapters.sqlmodel.SQLModelAdapter.ensure_inline_rows_owned :: async def (self, spec: InlineModelSpec, rows: builtins.list[dict[str, Any]], parent_pk: Any) -> None
+hyperadmin.adapters.sqlmodel.SQLModelAdapter.estimate_row_count :: async def (self) -> int
+hyperadmin.adapters.sqlmodel.SQLModelAdapter.estimates_row_count :: attr: bool = False
+hyperadmin.adapters.sqlmodel.SQLModelAdapter.filter_cache_ttl :: attr: int = 0
+hyperadmin.adapters.sqlmodel.SQLModelAdapter.for_model :: def (self, model: Any) -> BaseAdapter
+hyperadmin.adapters.sqlmodel.SQLModelAdapter.get :: async def (self, pk: Any, *, load_relations: list[str] | None = None) -> Any
+hyperadmin.adapters.sqlmodel.SQLModelAdapter.get_choices :: async def (self, field: str, q: str = '', limit: int = 50, offset: int = 0, label_fn: Callable[[Any], str] | None = None, **filters: Any) -> list[ChoiceItem]
+hyperadmin.adapters.sqlmodel.SQLModelAdapter.get_queryset :: def (self, request: Request | None = None) -> dict[str, Any]
+hyperadmin.adapters.sqlmodel.SQLModelAdapter.get_related :: async def (self, pk: Any, field: str) -> list[Any]
+hyperadmin.adapters.sqlmodel.SQLModelAdapter.get_schema :: async def (self) -> dict[str, Any]
+hyperadmin.adapters.sqlmodel.SQLModelAdapter.inline_child_pks :: async def (self, spec: InlineModelSpec, parent_pk: Any) -> set[Any]
+hyperadmin.adapters.sqlmodel.SQLModelAdapter.invalidate_count_cache :: async def (self) -> None
+hyperadmin.adapters.sqlmodel.SQLModelAdapter.list :: async def (self, page: int = 1, page_size: int = 10, search: str | None = None, filters: Mapping[str, Any] | Sequence[FilterCondition] | None = None, order_by: str | None = None, search_fields: list[str] | None = None, load_relations: list[str] | None = None) -> tuple[list[Any], int]
+hyperadmin.adapters.sqlmodel.SQLModelAdapter.list_paginated :: async def (self, *, page: int = 1, page_size: int = 10, cursor: str | None = None, search: str | None = None, filters: Mapping[str, Any] | Sequence[FilterCondition] | None = None, order_by: str | None = None, search_fields: list[str] | None = None, load_relations: list[str] | None = None) -> ListResult
+hyperadmin.adapters.sqlmodel.SQLModelAdapter.model :: attr: Any
+hyperadmin.adapters.sqlmodel.SQLModelAdapter.pagination_mode :: attr: PaginationMode = 'offset'
+hyperadmin.adapters.sqlmodel.SQLModelAdapter.pk :: attr: PrimaryKeyInfo
+hyperadmin.adapters.sqlmodel.SQLModelAdapter.save_inline_rows :: async def (self, spec: InlineModelSpec, rows: list[dict[str, Any]], parent_pk: Any) -> None
+hyperadmin.adapters.sqlmodel.SQLModelAdapter.set_queryset_filter :: def (self, filter_fn: QuerysetFilter) -> None
+hyperadmin.adapters.sqlmodel.SQLModelAdapter.total_is_estimate :: def (self) -> bool
+hyperadmin.adapters.sqlmodel.SQLModelAdapter.update :: async def (self, pk: Any, data: dict[str, Any], *, expected_version: Any | None = None) -> Any
+hyperadmin.adapters.sqlmodel.SQLModelAdapter.version_field :: attr: str | None = None
+hyperadmin.auth.ExternalAuth :: class (*, get_user: Callable[..., Any], can_access: Callable[[Any], MaybeAwaitable[bool]] = default_can_access, has_permission: Callable[[Any, str], MaybeAwaitable[bool]] | PermissionChecker | None = None, login_url: str | None = None, logout_url: str | None = None, next_param: str = 'next', display_name: Callable[[Any], str] = default_display_name, user_key: Callable[[Any], Hashable] = default_user_key, token_cookie: TokenCookie | None = None, websocket_user: Callable[[WebSocket], Awaitable[Any | None]] | None = None, allow_full_access: bool = False) -> None
+hyperadmin.auth.ExternalAuth.allow_full_access :: field: bool = False
+hyperadmin.auth.ExternalAuth.can_access :: field: Callable[[Any], MaybeAwaitable[bool]] = default_can_access
+hyperadmin.auth.ExternalAuth.display_name :: field: Callable[[Any], str] = default_display_name
+hyperadmin.auth.ExternalAuth.get_user :: field: Callable[..., Any]
+hyperadmin.auth.ExternalAuth.has_permission :: field: Callable[[Any, str], MaybeAwaitable[bool]] | PermissionChecker | None = None
+hyperadmin.auth.ExternalAuth.login_url :: field: str | None = None
+hyperadmin.auth.ExternalAuth.logout_url :: field: str | None = None
+hyperadmin.auth.ExternalAuth.next_param :: field: str = 'next'
+hyperadmin.auth.ExternalAuth.token_cookie :: field: TokenCookie | None = None
+hyperadmin.auth.ExternalAuth.user_key :: field: Callable[[Any], Hashable] = default_user_key
+hyperadmin.auth.ExternalAuth.websocket_user :: field: Callable[[WebSocket], Awaitable[Any | None]] | None = None
+hyperadmin.auth.Group :: class(SQLModel)
+hyperadmin.auth.Group.created_at :: field: datetime = utc_now()
+hyperadmin.auth.Group.description :: field: str | None = None
+hyperadmin.auth.Group.group_permissions :: attr: Mapped[list[GroupPermission]]
+hyperadmin.auth.Group.id :: field: int | None = None
+hyperadmin.auth.Group.is_active :: field: bool = True
+hyperadmin.auth.Group.name :: field: str
+hyperadmin.auth.Group.permissions_version :: field: int = 0
+hyperadmin.auth.Group.user_groups :: attr: Mapped[list[UserGroup]]
+hyperadmin.auth.Permission :: class(SQLModel)
+hyperadmin.auth.Permission.codename :: field: str
+hyperadmin.auth.Permission.content_type :: field: str | None = None
+hyperadmin.auth.Permission.created_at :: field: datetime = utc_now()
+hyperadmin.auth.Permission.group_permissions :: attr: Mapped[list[GroupPermission]]
+hyperadmin.auth.Permission.id :: field: int | None = None
+hyperadmin.auth.Permission.name :: field: str
+hyperadmin.auth.Permission.user_permissions :: attr: Mapped[list[UserPermission]]
+hyperadmin.auth.TokenCookie :: class (*, name: str = 'hyperadmin_token', scheme: str = 'Bearer', max_age: int | None = 28800, handoff_path: str = '/auth/session', token_endpoint: str | Callable[[str, str], MaybeAwaitable[str | None]] | None = None) -> None
+hyperadmin.auth.TokenCookie.handoff_path :: field: str = '/auth/session'
+hyperadmin.auth.TokenCookie.max_age :: field: int | None = 28800
+hyperadmin.auth.TokenCookie.name :: field: str = 'hyperadmin_token'
+hyperadmin.auth.TokenCookie.scheme :: field: str = 'Bearer'
+hyperadmin.auth.TokenCookie.token_endpoint :: field: str | Callable[[str, str], MaybeAwaitable[str | None]] | None = None
+hyperadmin.auth.User :: class(SQLModel)
+hyperadmin.auth.User.created_at :: field: datetime = utc_now()
+hyperadmin.auth.User.email :: field: str
+hyperadmin.auth.User.first_name :: field: str = ''
+hyperadmin.auth.User.id :: field: int | None = None
+hyperadmin.auth.User.is_active :: field: bool = True
+hyperadmin.auth.User.is_superuser :: field: bool = False
+hyperadmin.auth.User.last_name :: field: str = ''
+hyperadmin.auth.User.mfa_enabled :: field: bool = False
+hyperadmin.auth.User.mfa_method :: field: str | None = None
+hyperadmin.auth.User.password_hash :: field: str
+hyperadmin.auth.User.updated_at :: field: datetime | None = None
+hyperadmin.auth.User.user_groups :: attr: Mapped[list[UserGroup]]
+hyperadmin.auth.User.user_permissions :: attr: Mapped[list[UserPermission]]
+hyperadmin.auth.User.username :: field: str
+hyperadmin.auth.metadata :: def () -> MetaData
+hyperadmin.auth.permissions.ModelPermissionChecker :: class (engine: AsyncEngine | None = None, *, session_factory: SessionFactory | None = None) -> None
+hyperadmin.auth.permissions.ModelPermissionChecker.get_user_permissions :: async def (self, user: User) -> set[str]
+hyperadmin.auth.permissions.ModelPermissionChecker.has_permission :: async def (self, user: User, codename: str) -> bool
+hyperadmin.auth.permissions.PermissionSyncService :: class (engine: AsyncEngine | None = None, *, session_factory: SessionFactory | None = None) -> None
+hyperadmin.auth.permissions.PermissionSyncService.sync_codenames :: async def (self, permissions: Iterable[tuple[str, str, str | None]]) -> None
+hyperadmin.auth.permissions.PermissionSyncService.sync_permissions :: async def (self, registered_models: list[Any]) -> None
+hyperadmin.auth.permissions.forget_user_permissions :: def (user: Any) -> None
+hyperadmin.auth.session.SessionAuthBackend :: class (engine: AsyncEngine | None = None, *, session_factory: SessionFactory | None = None) -> None
+hyperadmin.auth.session.SessionAuthBackend.authenticate :: async def (self, username: str, password: str) -> User | None
+hyperadmin.auth.session.SessionAuthBackend.get_current_user :: async def (self, request: Any) -> User | None
+hyperadmin.auth.session.SessionAuthBackend.login :: async def (self, request: Any, user: User) -> None
+hyperadmin.auth.session.SessionAuthBackend.logout :: async def (self, request: Any) -> None
+hyperadmin.auth.user_cache.invalidate_user :: def (user_id: Any) -> None
+hyperadmin.core.actions.action :: def (label: str, *, requires_selection: bool = <object object>, bulk: bool = False, form: type[BaseModel] | None = None) -> Callable[[Callable[..., Any]], Callable[..., Any]]
+hyperadmin.core.adapters.BaseAdapter :: class(ABC) (model: Any, engine: Any = None, *, session_factory: SessionFactory | None = None) -> None
+hyperadmin.core.adapters.BaseAdapter.count_cache :: attr: CountCache | None = None
+hyperadmin.core.adapters.BaseAdapter.count_cache_ttl :: attr: int = 0
+hyperadmin.core.adapters.BaseAdapter.count_estimate_threshold :: attr: int | None = None
+hyperadmin.core.adapters.BaseAdapter.create :: async def (self, data: dict[str, Any]) -> Any
+hyperadmin.core.adapters.BaseAdapter.datetime_kind :: def (self, field: str) -> DateTimeKind | None
+hyperadmin.core.adapters.BaseAdapter.delete :: async def (self, pk: Any) -> None
+hyperadmin.core.adapters.BaseAdapter.ensure_inline_rows_owned :: async def (self, spec: InlineModelSpec, rows: builtins.list[dict[str, Any]], parent_pk: Any) -> None
+hyperadmin.core.adapters.BaseAdapter.estimate_row_count :: async def (self) -> int
+hyperadmin.core.adapters.BaseAdapter.estimates_row_count :: attr: bool = False
+hyperadmin.core.adapters.BaseAdapter.filter_cache_ttl :: attr: int = 0
+hyperadmin.core.adapters.BaseAdapter.for_model :: def (self, model: Any) -> BaseAdapter
+hyperadmin.core.adapters.BaseAdapter.get :: async def (self, pk: Any) -> Any
+hyperadmin.core.adapters.BaseAdapter.get_choices :: async def (self, field: str, q: str = '', limit: int = 50, offset: int = 0, label_fn: Callable[[Any], str] | None = None, **filters: Any) -> builtins.list[ChoiceItem]
+hyperadmin.core.adapters.BaseAdapter.get_queryset :: def (self, request: Request | None = None) -> dict[str, Any]
+hyperadmin.core.adapters.BaseAdapter.get_related :: async def (self, pk: Any, field: str) -> builtins.list[Any]
+hyperadmin.core.adapters.BaseAdapter.get_schema :: async def (self) -> dict[str, Any]
+hyperadmin.core.adapters.BaseAdapter.inline_child_pks :: async def (self, spec: InlineModelSpec, parent_pk: Any) -> set[Any]
+hyperadmin.core.adapters.BaseAdapter.invalidate_count_cache :: async def (self) -> None
+hyperadmin.core.adapters.BaseAdapter.list :: async def (self, page: int = 1, page_size: int = 10, search: str | None = None, filters: Mapping[str, Any] | Sequence[FilterCondition] | None = None, order_by: str | None = None, search_fields: builtins.list[str] | None = None, load_relations: builtins.list[str] | None = None) -> tuple[builtins.list[Any], int]
+hyperadmin.core.adapters.BaseAdapter.list_paginated :: async def (self, *, page: int = 1, page_size: int = 10, cursor: str | None = None, search: str | None = None, filters: Mapping[str, Any] | Sequence[FilterCondition] | None = None, order_by: str | None = None, search_fields: builtins.list[str] | None = None, load_relations: builtins.list[str] | None = None) -> ListResult
+hyperadmin.core.adapters.BaseAdapter.model :: attr: Any
+hyperadmin.core.adapters.BaseAdapter.pagination_mode :: attr: PaginationMode = 'offset'
+hyperadmin.core.adapters.BaseAdapter.pk :: attr: PrimaryKeyInfo
+hyperadmin.core.adapters.BaseAdapter.save_inline_rows :: async def (self, spec: InlineModelSpec, rows: builtins.list[dict[str, Any]], parent_pk: Any) -> None
+hyperadmin.core.adapters.BaseAdapter.set_queryset_filter :: def (self, filter_fn: QuerysetFilter) -> None
+hyperadmin.core.adapters.BaseAdapter.total_is_estimate :: def (self) -> bool
+hyperadmin.core.adapters.BaseAdapter.update :: async def (self, pk: Any, data: dict[str, Any], *, expected_version: Any | None = None) -> Any
+hyperadmin.core.adapters.BaseAdapter.version_field :: attr: str | None = None
+hyperadmin.core.adapters.scoped_queryset_filters :: def (model: Any, request: Any = None) -> dict[str, Any]
+hyperadmin.core.app.Admin :: alias of hyperadmin.Admin
+hyperadmin.core.concurrency.ConcurrencyConfigurationError :: alias of hyperadmin.ConcurrencyConfigurationError
+hyperadmin.core.concurrency.StaleRecordError :: alias of hyperadmin.StaleRecordError
+hyperadmin.core.fieldsets.FieldsetSpec :: class (name: str, fields: list[str] = <factory>, collapsed: bool = False, description: str | None = None) -> None
+hyperadmin.core.fieldsets.FieldsetSpec.collapsed :: field: bool = False
+hyperadmin.core.fieldsets.FieldsetSpec.description :: field: str | None = None
+hyperadmin.core.fieldsets.FieldsetSpec.fields :: field: list[str] = list()
+hyperadmin.core.fieldsets.FieldsetSpec.name :: field: str
+hyperadmin.core.filtering.normalize_filters :: def (filters: Mapping[str, Any] | Sequence[FilterCondition] | None) -> list[FilterCondition]
+hyperadmin.core.inlines.InlineModelSpec :: class (model: Any, fk_field: str, fields: list[str] = <factory>, max_num: int = 0, extra: int = 1, title: str = '', relationship_name: str = '') -> None
+hyperadmin.core.inlines.InlineModelSpec.extra :: field: int = 1
+hyperadmin.core.inlines.InlineModelSpec.fields :: field: list[str] = list()
+hyperadmin.core.inlines.InlineModelSpec.fk_field :: field: str
+hyperadmin.core.inlines.InlineModelSpec.get_display_fields :: def (self, *, pk_attr: str = 'id') -> list[str]
+hyperadmin.core.inlines.InlineModelSpec.max_num :: field: int = 0
+hyperadmin.core.inlines.InlineModelSpec.model :: field: Any
+hyperadmin.core.inlines.InlineModelSpec.model_name :: property -> str
+hyperadmin.core.inlines.InlineModelSpec.relationship_name :: field: str = ''
+hyperadmin.core.inlines.InlineModelSpec.title :: field: str = ''
+hyperadmin.core.inlines.InlineModelSpec.verbose_name :: property -> str
+hyperadmin.core.model.ModelAdmin :: class (model: Any) -> None
+hyperadmin.core.model.ModelAdmin.adapter_class :: attr: type[BaseAdapter]
+hyperadmin.core.model.ModelAdmin.get_queryset :: def (self, request: Request | None = None) -> dict[str, Any]
+hyperadmin.core.model.ModelAdmin.get_verbose_name :: classmethod (cls, model: Any) -> str | babel.support.LazyProxy
+hyperadmin.core.model.ModelAdmin.get_verbose_name_plural :: classmethod (cls, model: Any) -> str | babel.support.LazyProxy
+hyperadmin.core.model.ModelAdmin.icon :: attr: str = ''
+hyperadmin.core.model.ModelAdmin.nav_group :: attr: str | babel.support.LazyProxy | None = None
+hyperadmin.core.model.ModelAdmin.nav_order :: attr: int = 0
+hyperadmin.core.model.ModelAdmin.verbose_name :: attr: str | babel.support.LazyProxy | None = None
+hyperadmin.core.model.ModelAdmin.verbose_name_plural :: attr: str | babel.support.LazyProxy | None = None
+hyperadmin.core.model.ModelAdmin.view_class :: class
+hyperadmin.core.navigation.NavGroup :: alias of hyperadmin.NavGroup
+hyperadmin.core.options.AdminOptions :: class(BaseModel)
+hyperadmin.core.options.AdminOptions.auto_select_related :: field: bool = True
+hyperadmin.core.options.AdminOptions.can_create :: field: bool = True
+hyperadmin.core.options.AdminOptions.can_delete :: field: bool = True
+hyperadmin.core.options.AdminOptions.can_detail :: field: bool = True
+hyperadmin.core.options.AdminOptions.can_edit :: field: bool = True
+hyperadmin.core.options.AdminOptions.can_list :: field: bool = True
+hyperadmin.core.options.AdminOptions.count_cache_ttl :: field: int = 0
+hyperadmin.core.options.AdminOptions.count_estimate_threshold :: field: int | None = None
+hyperadmin.core.options.AdminOptions.dependent_fields :: field: dict[str, str] = {}
+hyperadmin.core.options.AdminOptions.detail_select_related :: field: list[str] | None = None
+hyperadmin.core.options.AdminOptions.enforce_occ :: field: bool = False
+hyperadmin.core.options.AdminOptions.fieldsets :: field: list[FieldsetSpec] = []
+hyperadmin.core.options.AdminOptions.filter_cache_ttl :: field: int = 60
+hyperadmin.core.options.AdminOptions.form_fields :: field: list[str] = []
+hyperadmin.core.options.AdminOptions.form_layout :: field: FormLayout = FormLayout.SINGLE
+hyperadmin.core.options.AdminOptions.inlines :: field: list[InlineModelSpec] = []
+hyperadmin.core.options.AdminOptions.list_display :: field: list[str] | None = None
+hyperadmin.core.options.AdminOptions.list_editable :: field: list[str] = list()
+hyperadmin.core.options.AdminOptions.list_filter :: field: Sequence[Any | str] | None = None
+hyperadmin.core.options.AdminOptions.list_select_related :: field: list[str] | None = None
+hyperadmin.core.options.AdminOptions.object_permission_checker :: field: ObjectPermissionChecker | None = None
+hyperadmin.core.options.AdminOptions.pagination_mode :: field: Literal['offset', 'cursor'] = 'offset'
+hyperadmin.core.options.AdminOptions.palette_search :: field: bool = False
+hyperadmin.core.options.AdminOptions.panels :: field: list[PanelDef] | None = None
+hyperadmin.core.options.AdminOptions.preload_threshold :: field: int | None = 500
+hyperadmin.core.options.AdminOptions.realtime_notifications :: field: bool | None = None
+hyperadmin.core.options.AdminOptions.relation_display :: field: dict[str, str | Callable[[Any], str]] | None = None
+hyperadmin.core.options.AdminOptions.relation_filters :: field: dict[str, RelationDependency] | None = None
+hyperadmin.core.options.AdminOptions.saved_views_enabled :: field: bool = True
+hyperadmin.core.options.AdminOptions.search_fields :: field: list[str] | None = None
+hyperadmin.core.options.AdminOptions.sensitive_fields :: field: dict[str, bool] = dict()
+hyperadmin.core.options.AdminOptions.use_autocomplete_widget :: field: bool = True
+hyperadmin.core.options.AdminOptions.validate_against_model :: def (self, model: type) -> None
+hyperadmin.core.options.AdminOptions.warn_unsaved_changes :: field: bool = True
+hyperadmin.core.panels.panel :: def (label: str, *, slug: str | None = None, icon: str | None = None, permission: str | None = None, enabled: Callable[[Any], bool] | None = None) -> Callable[[Callable[..., Any]], Callable[..., Any]]
+hyperadmin.core.plugins.LIFECYCLE_HOOKS :: = frozenset({'on_after_adapter_call', 'on_after_create', 'on_after_delete', 'on_after_update', 'on_before_adapter_call', 'on_before_create', 'on_before_delete', 'on_before_update', 'on_model_register'})
+hyperadmin.core.plugins.Plugin :: alias of hyperadmin.Plugin
+hyperadmin.core.plugins.PluginError :: alias of hyperadmin.PluginError
+hyperadmin.core.plugins.PluginRegistry :: alias of hyperadmin.PluginRegistry
+hyperadmin.core.rate_limit.RateLimitDecision :: class (allowed: bool, retry_after: int = 0) -> None
+hyperadmin.core.rate_limit.RateLimitDecision.allowed :: field: bool
+hyperadmin.core.rate_limit.RateLimitDecision.retry_after :: field: int = 0
+hyperadmin.core.rate_limit.RateLimiter :: class(Protocol)
+hyperadmin.core.rate_limit.RateLimiter.acquire :: async def (self, key: str) -> RateLimitDecision
+hyperadmin.core.registry.SiteRegistry :: class () -> None
+hyperadmin.core.registry.SiteRegistry.get_registered_models :: def (self) -> list[Any]
+hyperadmin.core.registry.SiteRegistry.register :: def (self, model: Any, admin_class: Any = None, options: AdminOptions | None = None, app_label: str | None = None) -> None
+hyperadmin.core.registry.SiteRegistry.unregister :: def (self, model: Any) -> None
+hyperadmin.core.registry.site :: instance of SiteRegistry
+hyperadmin.core.schema_for :: def (model: type) -> type[BaseModel]
+hyperadmin.core.settings.HyperAdminSettings :: alias of hyperadmin.HyperAdminSettings
+hyperadmin.db.build_engine :: def (url: str | URL, engine_kwargs: Mapping[str, Any] | None = None) -> AsyncEngine
+hyperadmin.filters.DateRangeFilter :: class(FilterDef) (*, field: str, label: str | None = None, presets: tuple[str, ...] = ('today', 'this_week', 'this_month', 'last_month', 'this_quarter')) -> None
+hyperadmin.filters.DateRangeFilter.bounds :: def (self, parsed: dict[str, Any], binding: FilterBinding | None = None) -> tuple[date | None, date | None]
+hyperadmin.filters.DateRangeFilter.compile :: def (self, parsed: dict[str, Any], binding: FilterBinding | None = None) -> list[FilterCondition]
+hyperadmin.filters.DateRangeFilter.context :: def (self, ctx: FilterRenderContext) -> dict[str, Any]
+hyperadmin.filters.DateRangeFilter.describe :: def (self, parsed: dict[str, Any]) -> str | None
+hyperadmin.filters.DateRangeFilter.error :: def (self, qs: Any) -> str | None
+hyperadmin.filters.DateRangeFilter.field :: field: str
+hyperadmin.filters.DateRangeFilter.label :: field: str | None = None
+hyperadmin.filters.DateRangeFilter.parse :: def (self, qs: Any) -> dict[str, Any]
+hyperadmin.filters.DateRangeFilter.presets :: field: tuple[str, ...] = ('today', 'this_week', 'this_month', 'last_month', 'this_quarter')
+hyperadmin.filters.DateRangeFilter.query_keys :: property -> tuple[str, ...]
+hyperadmin.filters.DateRangeFilter.render :: def (self, ctx: FilterRenderContext) -> str
+hyperadmin.filters.DateRangeFilter.slug :: property -> str
+hyperadmin.filters.DateRangeFilter.template :: attr: ClassVar[str] = 'components/filters/date_range.html'
+hyperadmin.filters.DateRangeFilter.title :: property -> str
+hyperadmin.filters.DateRangeFilter.typed_conditions :: def (self, binding: FilterBinding | None, params: Mapping[str, str | Sequence[str]]) -> list[FilterCondition]
+hyperadmin.filters.DateRangeFilter.value_type :: attr: ClassVar[Any]
+hyperadmin.filters.FilterDef :: class(ABC) (*, field: str, label: str | None = None) -> None
+hyperadmin.filters.FilterDef.compile :: def (self, parsed: dict[str, Any], binding: FilterBinding | None = None) -> list[FilterCondition]
+hyperadmin.filters.FilterDef.context :: def (self, ctx: FilterRenderContext) -> dict[str, Any]
+hyperadmin.filters.FilterDef.describe :: def (self, parsed: dict[str, Any]) -> str | None
+hyperadmin.filters.FilterDef.error :: def (self, qs: Any) -> str | None
+hyperadmin.filters.FilterDef.field :: field: str
+hyperadmin.filters.FilterDef.label :: field: str | None = None
+hyperadmin.filters.FilterDef.parse :: def (self, qs: Any) -> dict[str, Any]
+hyperadmin.filters.FilterDef.query_keys :: property -> tuple[str, ...]
+hyperadmin.filters.FilterDef.render :: def (self, ctx: FilterRenderContext) -> str
+hyperadmin.filters.FilterDef.slug :: property -> str
+hyperadmin.filters.FilterDef.template :: attr: ClassVar[str]
+hyperadmin.filters.FilterDef.title :: property -> str
+hyperadmin.filters.FilterDef.typed_conditions :: def (self, binding: FilterBinding | None, params: Mapping[str, str | Sequence[str]]) -> list[FilterCondition]
+hyperadmin.filters.FilterDef.value_type :: attr: ClassVar[Any]
+hyperadmin.gettext_lazy :: def (message: str) -> babel.support.LazyProxy
+hyperadmin.i18n.gettext_lazy :: alias of hyperadmin.gettext_lazy
+hyperadmin.panels.pdf_stream_panel :: alias of hyperadmin.pdf_stream_panel
+hyperadmin.pdf_stream_panel :: def (*, slug: str, label: str, path_resolver: Callable[[Any], Path | str], enabled: Callable[[Any], bool] | None = None, icon: str | None = None, permission: str | None = None) -> PanelDef
+hyperadmin.realtime.RealtimeAction :: class(str, Enum)
+hyperadmin.realtime.RealtimeAction.CREATED :: = 'created'
+hyperadmin.realtime.RealtimeAction.DELETED :: = 'deleted'
+hyperadmin.realtime.RealtimeAction.UPDATED :: = 'updated'
+hyperadmin.realtime.RealtimeEvent :: class (model_name: str, pk: PrimaryKey, action: RealtimeAction, html_fragment: str | None = None, actor_id: str | None = None, actor_name: str | None = None) -> None
+hyperadmin.realtime.RealtimeEvent.action :: field: RealtimeAction
+hyperadmin.realtime.RealtimeEvent.actor_id :: field: str | None = None
+hyperadmin.realtime.RealtimeEvent.actor_name :: field: str | None = None
+hyperadmin.realtime.RealtimeEvent.from_bytes :: classmethod (cls, data: bytes) -> RealtimeEvent
+hyperadmin.realtime.RealtimeEvent.from_dict :: classmethod (cls, data: object) -> RealtimeEvent
+hyperadmin.realtime.RealtimeEvent.html_fragment :: field: str | None = None
+hyperadmin.realtime.RealtimeEvent.model_name :: field: str
+hyperadmin.realtime.RealtimeEvent.pk :: field: PrimaryKey
+hyperadmin.realtime.RealtimeEvent.to_bytes :: def (self) -> bytes
+hyperadmin.realtime.RealtimeEvent.to_dict :: def (self) -> dict[str, str | None]
+hyperadmin.realtime.RealtimeSettings :: alias of hyperadmin.RealtimeSettings
+hyperadmin.routing.HyperAdminRouter :: class (engine: Any, templates: Jinja2Templates, permission_checker: Any = None, storage: Any = None, timezone: tzinfo | None = None, datetime_format: str = '%Y-%m-%d %H:%M:%S', session_factory: SessionFactory | None = None, *, debug: bool = False, route_class: type[APIRoute] | None = None, realtime_emitter: RealtimeEmitter | None = None, realtime_settings: RealtimeSettings | None = None, count_cache: CountCache | None = None, concurrency_use_updated_at: bool = False, occ_render_dialog: bool = True, home_page: Callable[[], PluginHomePage | None] | None = None) -> None
+hyperadmin.routing.HyperAdminRouter.generate_routes :: def (self) -> None
+hyperadmin.routing.HyperAdminRouter.get_admin_dashboard_view :: def (self) -> Callable[[Request], Awaitable[Response]]
+hyperadmin.routing.HyperAdminRouter.get_routers :: def (self) -> list[APIRouter]
+hyperadmin.uploads.FileValidationError :: class(ValueError)
+hyperadmin.uploads.ImageTooLargeError :: class(FileValidationError)
+hyperadmin.uploads.S3StorageBackend :: class(S3Storage) (*, bucket_name: str, access_key_id: str | None = None, secret_access_key: str | None = None, region: str | None = None, endpoint_url: str | None = None, custom_domain: str | None = None, querystring_auth: bool = True, default_acl: str | None = None, client: Any = None) -> None
+hyperadmin.uploads.S3StorageBackend.delete :: def (self, name: str) -> None
+hyperadmin.uploads.S3StorageBackend.from_settings :: classmethod (cls, settings: HyperAdminSettings, *, client: Any = None) -> S3StorageBackend
+hyperadmin.uploads.S3StorageBackend.get_name :: def (self, name: str) -> str
+hyperadmin.uploads.S3StorageBackend.get_path :: def (self, name: str) -> str
+hyperadmin.uploads.S3StorageBackend.get_size :: def (self, name: str) -> int
+hyperadmin.uploads.S3StorageBackend.write :: def (self, file: BinaryIO, name: str) -> str
+hyperadmin.uploads.auto_rotate :: def (image: Image.Image) -> Image.Image
+hyperadmin.uploads.extract_metadata :: def (source: str | Path | IO[bytes] | UploadFile, *, max_pixels: int = 89478485) -> ImageMetadata | None
+hyperadmin.uploads.generate_thumbnail :: def (storage: Any, filename: str, max_size: tuple[int, int] = (200, 200), *, max_pixels: int = 89478485, placeholder: str = 'icons/file-text.svg') -> str
+hyperadmin.uploads.prepare_image_upload :: def (upload: UploadFile, *, max_pixels: int = 89478485) -> ImageMetadata | None
+hyperadmin.uploads.storage.S3StorageBackend :: alias of hyperadmin.uploads.S3StorageBackend
+hyperadmin.uploads.validate_upload :: def (file: UploadFile, *, allowed_types: list[str] | None = None, max_size: int | None = None) -> None
+hyperadmin.views.dynamic.DynamicModelView :: class(ListViewMixin, DetailViewMixin, CreateViewMixin, UpdateViewMixin, ActionViewMixin, PaletteSearchMixin)
+hyperadmin.views.dynamic.DynamicModelView.choices_view :: async def (self, request: Request, field_name: str, q: str = '', limit: int = 50, offset: int = 0) -> Response
+hyperadmin.views.dynamic.DynamicModelView.confirm_bulk_action :: async def (self, request: Request, action_name: str) -> Response
+hyperadmin.views.dynamic.DynamicModelView.create_form_view :: async def (self, request: Request, values: dict | None = None, errors: dict | None = None, status_code: int = 200, inline_formsets: list[InlineFormset] | None = None) -> Response
+hyperadmin.views.dynamic.DynamicModelView.create_popup_view :: async def (self, request: Request) -> Response
+hyperadmin.views.dynamic.DynamicModelView.create_view :: async def (self, request: Request) -> Response
+hyperadmin.views.dynamic.DynamicModelView.delete_action :: async def (self, request: Request, item_id: Any) -> Response
+hyperadmin.views.dynamic.DynamicModelView.delete_file_view :: async def (self, request: Request, item_id: Any, field_name: str) -> Response
+hyperadmin.views.dynamic.DynamicModelView.detail_view :: async def (self, request: Request, item_id: Any) -> Response
+hyperadmin.views.dynamic.DynamicModelView.download_file_view :: async def (self, request: Request, item_id: Any, field_name: str, thumb: str | None = Query(None)) -> Response
+hyperadmin.views.dynamic.DynamicModelView.inline_add_row_view :: async def (self, request: Request, inline_prefix: str, index: int = 0) -> Response
+hyperadmin.views.dynamic.DynamicModelView.inline_edit_form_view :: async def (self, request: Request, item_id: Any, field: str, cancel: int = Query(0)) -> Response
+hyperadmin.views.dynamic.DynamicModelView.inline_save_view :: async def (self, request: Request, item_id: Any, field: str) -> Response
+hyperadmin.views.dynamic.DynamicModelView.list_view :: async def (self, request: Request, page: int = Query(1), page_size: int = Query(10), search: str = Query(), sort_by: str = Query(None), sort_direction: str = Query(asc), cursor: str = Query()) -> Response
+hyperadmin.views.dynamic.DynamicModelView.occ_render_dialog :: attr: bool = True
+hyperadmin.views.dynamic.DynamicModelView.palette_records :: async def (self, request: Request, query: str, limit: int) -> list[dict[str, str]] | None
+hyperadmin.views.dynamic.DynamicModelView.render_panel_view :: async def (self, request: Request, item_id: Any, slug: str) -> Response
+hyperadmin.views.dynamic.DynamicModelView.run_action :: async def (self, request: Request, item_id: Any, action_name: str) -> Response
+hyperadmin.views.dynamic.DynamicModelView.run_bulk_action :: async def (self, request: Request, action_name: str) -> Response
+hyperadmin.views.dynamic.DynamicModelView.saved_view_create :: async def (self, request: Request) -> Response
+hyperadmin.views.dynamic.DynamicModelView.saved_view_delete :: async def (self, request: Request, view_id: int) -> Response
+hyperadmin.views.dynamic.DynamicModelView.saved_views_list :: async def (self, request: Request) -> Response
+hyperadmin.views.dynamic.DynamicModelView.stream_panel_view :: async def (self, request: Request, item_id: Any, slug: str) -> Response
+hyperadmin.views.dynamic.DynamicModelView.update_form_view :: async def (self, request: Request, item_id: Any, values: dict | None = None, errors: dict | None = None, status_code: int = 200, inline_formsets: list[InlineFormset] | None = None, version: str | None = None) -> Response
+hyperadmin.views.dynamic.DynamicModelView.update_view :: async def (self, request: Request, item_id: Any) -> Response
+hyperadmin.views.dynamic.DynamicModelView.upload_file_view :: async def (self, request: Request, field_name: str) -> Response
+hyperadmin.views.forms.HtmxWidget :: class (template_path: str, static_list: tuple[str, ...] = (), htmx_attrs: Mapping[str, str] | None = None) -> None
+hyperadmin.views.forms.HtmxWidget.htmx_attrs :: field: Mapping[str, str] | None = None
+hyperadmin.views.forms.HtmxWidget.input_type :: attr: ClassVar[str] = 'text'
+hyperadmin.views.forms.HtmxWidget.render :: def (self, templates: Jinja2Templates, form_field: FormField, request: Request) -> Markup
+hyperadmin.views.forms.HtmxWidget.static_list :: field: tuple[str, ...] = ()
+hyperadmin.views.forms.HtmxWidget.template_path :: field: str
+hyperadmin.views.forms.PydanticForm :: class (model: type[BaseModel], *, widgets: dict[str, HtmxWidget] | None = None, include: list[str] | None = None, exclude: list[str] | None = None, initial: dict[str, Any] | None = None, choices_base_url: str = '', fieldsets: list[FieldsetSpec] | None = None, form_layout: FormLayout | None = None, form_fields: list[str] | None = None, pk_attr: str = 'id', pk_editable: bool = False, timezone: tzinfo = datetime.timezone.utc, datetime_kind: Callable[[str], DateTimeKind | None] | None = None) -> None
+hyperadmin.views.forms.PydanticForm.auto_now_field_names :: property -> frozenset[str]
+hyperadmin.views.forms.PydanticForm.bind :: def (self, data: dict[str, Any]) -> None
+hyperadmin.views.forms.PydanticForm.fields :: property -> list[FormField]
+hyperadmin.views.forms.PydanticForm.fieldset_groups :: property -> list[FieldsetGroup]
+hyperadmin.views.forms.PydanticForm.layout_css_class :: property -> str
+hyperadmin.views.forms.PydanticForm.media :: property -> tuple[str, ...]
+hyperadmin.views.forms.PydanticForm.validate :: def (self, data: dict[str, Any]) -> tuple[BaseModel | None, dict[str, ErrorList]]
+hyperadmin.views.urls.admin_url_for :: def (request: Request, name: str, /, **path_params: Any) -> URL

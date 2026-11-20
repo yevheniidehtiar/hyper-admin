@@ -54,7 +54,7 @@ class SQLModelAdapter(BaseAdapter):
         engine: AsyncEngine | None = None,
         *,
         session_factory: SessionFactory | None = None,
-    ):
+    ) -> None:
         super().__init__(model, engine, session_factory=session_factory)
         self.inspector = inspect(model)
         self.pk = introspect_primary_key(model)
