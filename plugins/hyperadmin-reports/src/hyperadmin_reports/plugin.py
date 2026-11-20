@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any, ClassVar
 
 from hyperadmin_reports.routes import build_router
+from hyperadmin_reports.settings import ReportsSettings
 from hyperadmin_reports.view import registered_reports
 
 _PACKAGE_DIR = Path(__file__).parent
@@ -34,6 +35,7 @@ class ReportsPlugin:
     """The ``reports`` plugin: OLAP / pivot reports for HyperAdmin."""
 
     name: ClassVar[str] = "reports"
+    settings_model: ClassVar[type[ReportsSettings]] = ReportsSettings
 
     def on_register(self, admin: Any) -> None:
         """Contribute templates, static files, the report pages, nav and permissions."""

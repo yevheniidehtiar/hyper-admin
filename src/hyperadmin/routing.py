@@ -6,7 +6,7 @@ from datetime import tzinfo
 from typing import TYPE_CHECKING, Any
 from urllib.parse import quote
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.routing import APIRoute
 from fastapi.templating import Jinja2Templates
 from sqlmodel import SQLModel
@@ -28,7 +28,10 @@ from hyperadmin.views.route import make_admin_route_class
 from hyperadmin.views.template_filters import register_template_filters
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     from hyperadmin.core.adapters import SessionFactory
+    from hyperadmin.core.plugins import PluginHomePage
     from hyperadmin.realtime.config import RealtimeSettings
     from hyperadmin.realtime.emitting import RealtimeEmitter
 
@@ -489,8 +492,11 @@ class HyperAdminRouter:
         count_cache: CountCache | None = None,
         concurrency_use_updated_at: bool = False,
         occ_render_dialog: bool = True,
+        home_page: "Callable[[], PluginHomePage | None] | None" = None,
     ):
         self.engine = engine
+        #: Lookup of the plugin home page (read per request); ``None`` = the welcome page.
+        self.home_page = home_page
         self.debug = debug
         # The admin's own HyperAdminRoute (auth bridge, CSRF), or a default one
         # bound to these templates when the router is used on its own.
@@ -628,6 +634,16 @@ class HyperAdminRouter:
         from hyperadmin.views.dynamic import admin_dashboard
 
         async def admin_dashboard_view(request: Request):
+            home = self.home_page() if self.home_page is not None else None
+            if home is not None:
+                try:
+                    return await home.endpoint(request)
+                except HTTPException:
+                    raise
+                except Exception:
+                    logger.exception(
+                        "plugin %r home page raised", home.plugin, extra={"plugin": home.plugin}
+                    )
             return await admin_dashboard(request, self.templates)
 
         return admin_dashboard_view
