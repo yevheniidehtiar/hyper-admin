@@ -12,6 +12,12 @@ from hyperadmin_reports.aggregates import (
 from hyperadmin_reports.bucketing import AUTO_THRESHOLDS, Period, TimeBucket, resolve_period
 from hyperadmin_reports.cache import FactTableSource
 from hyperadmin_reports.crosstab import Pivot, pivot
+from hyperadmin_reports.dashboard import (
+    LayoutStore,
+    LayoutUnavailableError,
+    create_layout_table,
+    dashboard_metadata,
+)
 from hyperadmin_reports.export import (
     ReportTable,
     build_table,
@@ -41,6 +47,8 @@ __all__ = [
     "GridRow",
     "Group",
     "HeaderCell",
+    "LayoutStore",
+    "LayoutUnavailableError",
     "Many2One",
     "Max",
     "Min",
@@ -55,6 +63,8 @@ __all__ = [
     "TimeBucket",
     "build_grid",
     "build_table",
+    "create_layout_table",
+    "dashboard_metadata",
     "flatten_grid",
     "get_report",
     "pivot",
