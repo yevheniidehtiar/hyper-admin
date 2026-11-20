@@ -246,6 +246,12 @@ class ProbePlugin:
             self.result = await self.call(request)
             return {"ok": True}
 
+        # Stands in for the dashboard's widget route when no widget was registered
+        # before the admin was built (the real route is found first otherwise).
+        @router.get("/widgets/{key}", name="dashboard-widget")
+        async def widget(key: str) -> dict[str, str]:
+            return {"key": key}
+
         admin.plugins.add_page(self, router)
 
 
