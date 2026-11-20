@@ -1,0 +1,24 @@
+{%- extends "_base.html" -%}
+
+{%- block title -%}{{ _("Account exists") }} — {{ site_title | default("HyperAdmin") }}{%- endblock -%}
+
+{%- block messages -%}{%- endblock -%}
+{%- block navbar -%}{%- endblock -%}
+{%- block sidebar -%}{%- endblock -%}
+
+{%- block content -%}
+<div class="ha-login-container">
+    <div class="ha-login-card" data-testid="oauth-link-required">
+        <h1 id="oauth-link-required-title" class="ha-login-title">{{ _("Account exists") }}</h1>
+        <div class="ha-alert ha-alert-error" role="alert">
+            {{ error }}
+        </div>
+        <p class="ha-text-muted">
+            {{ _("An account with this email address already exists, so it was not linked automatically.") }}
+        </p>
+        <a href="{{ admin_prefix }}/login" class="ha-btn ha-btn-primary ha-btn-block" data-testid="oauth-back-to-login">
+            {{ _("Back to sign in") }}
+        </a>
+    </div>
+</div>
+{%- endblock -%}

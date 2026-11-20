@@ -50,3 +50,34 @@
 .ha-login-card .ha-btn {
   margin-top: var(--ha-space-2);
 }
+
+/* Sign-in methods page (OAuth link / unlink) */
+
+.ha-oauth-identities {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ha-space-2);
+  margin: var(--ha-space-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ha-oauth-identity {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ha-space-3);
+  padding: var(--ha-space-3);
+  border: var(--ha-border-width) solid var(--ha-color-border-light);
+  border-radius: var(--ha-radius-lg);
+}
+
+.ha-oauth-identity-name {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.ha-oauth-identity .ha-btn {
+  margin-top: 0;
+}
