@@ -7,6 +7,7 @@ A real admin is mounted with the ``reports`` plugin discovered from its entry po
 
 from __future__ import annotations
 
+import hashlib
 import logging
 import re
 from collections.abc import Iterator
@@ -29,10 +30,14 @@ from sqlalchemy.ext.asyncio import AsyncEngine
 
 from hyperadmin_reports import LayoutStore, StatWidget, register_widget
 from hyperadmin_reports.dashboard.layout import LAYOUT_TABLE_NAME
+from hyperadmin_reports.plugin import STATIC_DIR
 
 WELCOME = "Welcome to HyperAdmin Dashboard"
 GRID = 'data-testid="dashboard-grid"'
 ALICE = {"x-user": "alice"}
+#: SHA-256 of ``Sortable.min.js`` in the sortablejs 1.15.6 npm release.
+SORTABLE_SHA256 = "6d0a831fc19b4bae851797ad3393157e861afb7862459c11226359b27e2c4337"
+SORTABLE_PATH = "/admin/static/plugins/reports/vendor/sortable-1.15.6.min.js"
 
 
 @pytest.fixture(autouse=True)
@@ -404,3 +409,49 @@ def test_a_custom_dashboard_prefix_moves_the_page(tmp_path: Path) -> None:
     assert 'action="/admin/home/layout/move"' in page.text
     assert 'hx-get="/admin/home/widgets/a"' in page.text
     assert mounted.client.get("/admin/dashboard/").status_code == 404
+
+
+def test_the_vendored_library_is_served_with_the_plugins_static_files(tmp_path: Path) -> None:
+    """
+    Scenario: the vendored library is served with the plugin's static files
+      When  GET {prefix}/static/plugins/reports/vendor/sortable-1.15.6.min.js
+      Then  the response is 200
+      And   the file is the unmodified minified build of the 1.15.6 release, with its licence
+    """
+    mounted, _ = _dashboard(tmp_path)
+
+    response = mounted.client.get(SORTABLE_PATH)
+
+    assert response.status_code == 200
+    assert hashlib.sha256(response.content).hexdigest() == SORTABLE_SHA256
+    assert response.content.startswith(b"/*! Sortable 1.15.6 - MIT")
+    licence = (STATIC_DIR / "vendor" / "LICENSE-sortablejs.txt").read_text()
+    assert licence.startswith("MIT License")
+    assert mounted.client.get("/admin/static/plugins/reports/dashboard.js").status_code == 200
+
+
+def test_the_reorder_scripts_load_only_when_controls_are_rendered(tmp_path: Path) -> None:
+    """
+    Scenario: the drag and drop scripts load only with the reorder controls
+      Given alice, who can save an order, and nobody, who may view no widget
+      When  each opens the dashboard
+      Then  the signed-in page loads SortableJS and dashboard.js with defer and no inline script
+      And   nobody's page, which has no controls, loads neither
+    """
+    signed_in, _ = _dashboard(tmp_path)
+    page = signed_in.client.get("/admin/").text
+    content = page.split('data-testid="page-header"', 1)[1].split("</main>", 1)[0]
+
+    assert f'<script src="http://testserver{SORTABLE_PATH}" defer></script>' in content
+    assert 'src="http://testserver/admin/static/plugins/reports/dashboard.js" defer' in content
+    assert content.count("<script") == 2
+    assert 'data-layout-url="/admin/dashboard/layout"' in content
+    assert 'data-moved="Moved __title__ to position __position__ of __total__"' in content
+    handle = next(tag for tag in content.split("<button ") if "data-drag-handle" in tag)
+    assert 'type="button"' in handle
+    assert 'aria-label="Drag to reorder A"' in handle
+    assert 'data-testid="widget-drag-handle"' in handle
+
+    empty = signed_in.client.get("/admin/", headers={"x-user": "nobody"}).text
+    assert "sortable-1.15.6.min.js" not in empty
+    assert "dashboard.js" not in empty

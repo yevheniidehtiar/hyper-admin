@@ -201,6 +201,13 @@ end. Saving needs a signed-in user (`request.state.user_key`) and the layout tab
 **Failures.** A widget whose `render()` raises shows "Widget unavailable" with a Retry button
 and is logged with its traceback; the other cards are not affected.
 
+Drag and drop uses [SortableJS](https://github.com/SortableJS/Sortable) 1.15.6 (MIT), vendored
+unmodified as `static/hyperadmin_reports/vendor/sortable-1.15.6.min.js` next to its licence
+(`LICENSE-sortablejs.txt`). It is `Sortable.min.js` of the `sortablejs@1.15.6` npm release
+(<https://registry.npmjs.org/sortablejs/-/sortablejs-1.15.6.tgz>, SHA-256
+`6d0a831fc19b4bae851797ad3393157e861afb7862459c11226359b27e2c4337`). No CDN request is made and
+the script loads only on a dashboard that shows reorder controls.
+
 Design: [`docs/specs/dashboard-builder.md`](../../docs/specs/dashboard-builder.md).
 
 ## Dashboard layouts

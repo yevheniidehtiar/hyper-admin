@@ -27,4 +27,15 @@
     <p class="ha-sr-only" aria-live="polite" data-dashboard-live data-testid="dashboard-live"></p>
     {%- endif %}
     {%- include "dashboard/_grid.html" %}
+    {%- if can_reorder and cards %}
+    {#- Drag and drop (SortableJS, vendored at an exact version) and focus / announcements for
+        the move buttons; the buttons work without these scripts. -#}
+    <script src="{{ url_for('static', path='/plugins/reports/vendor/sortable-1.15.6.min.js') }}" defer></script>
+    <script src="{{ url_for('static', path='/plugins/reports/dashboard.js') }}" defer
+            data-title="{{ _('Not saved') }}"
+            data-save-error="{{ _('The order could not be saved. The cards are back where they were.') }}"
+            data-move-error="{{ _('The card could not be moved.') }}"
+            data-moved="{{ _('Moved %(title)s to position %(position)s of %(total)s', title='__title__', position='__position__', total='__total__') }}"
+            data-close="{{ _('Close') }}"></script>
+    {%- endif %}
 {%- endblock -%}
