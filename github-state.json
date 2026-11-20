@@ -1,6 +1,6 @@
 {
   "repo": "yevheniidehtiar/hyper-admin",
-  "last_sync": "2026-11-12T17:07:25.624Z",
+  "last_sync": "2026-11-20T20:19:57.078Z",
   "entities": {
     "dqmi_70iAUbv": {
       "local_hash": "sha256:0c241e5668b04857314c6bf866015a7d5715e683844b27f32c24f0fe99ce1743",
@@ -2546,9 +2546,9 @@
       "closed_on_remote": true
     },
     "n0i4JG7BXNtK": {
-      "local_hash": "sha256:f215c6332276602155df6dc0455eb3bb695bd50c77fd7c3835c9f5663f1645f5",
-      "remote_hash": "sha256:f215c6332276602155df6dc0455eb3bb695bd50c77fd7c3835c9f5663f1645f5",
-      "synced_at": "2026-11-01T20:43:35.184Z",
+      "local_hash": "sha256:99a225d9b65bd443aa0d17c647d981e40e59e5a0d10910bfe94f662f7fc33198",
+      "remote_hash": "sha256:99a225d9b65bd443aa0d17c647d981e40e59e5a0d10910bfe94f662f7fc33198",
+      "synced_at": "2026-11-20T20:19:53.855Z",
       "github_milestone_number": 10
     },
     "R0snJmL9dKU-": {
@@ -2649,9 +2649,9 @@
     },
     "u7FfchwTlMzT": {
       "github_milestone_number": 25,
-      "local_hash": "sha256:6f6c7072e12ded3b6b44103ca552e9b94bbc70452bc8251b2c17b5600ed7bd7b",
-      "remote_hash": "sha256:6f6c7072e12ded3b6b44103ca552e9b94bbc70452bc8251b2c17b5600ed7bd7b",
-      "synced_at": "2026-11-01T20:18:02.067Z"
+      "local_hash": "sha256:ec2337da7f4db757bf57fe841115fa011a757bd26c68f1d0b10e840d72941c59",
+      "remote_hash": "sha256:ec2337da7f4db757bf57fe841115fa011a757bd26c68f1d0b10e840d72941c59",
+      "synced_at": "2026-11-20T20:19:54.066Z"
     },
     "8DidH5NiN6cP": {
       "github_milestone_number": 26,
@@ -2685,9 +2685,9 @@
     },
     "v060a-occ-01": {
       "github_milestone_number": 31,
-      "local_hash": "sha256:7b0699b098aa33b5a888e5990597e4143db9881df71afef867cac4c0eef422fa",
-      "remote_hash": "sha256:7b0699b098aa33b5a888e5990597e4143db9881df71afef867cac4c0eef422fa",
-      "synced_at": "2026-11-01T20:18:03.651Z"
+      "local_hash": "sha256:4f8e360e6084d784a6bdeb7fb5a0c1134c3c4860e4df46c06357697da61a816d",
+      "remote_hash": "sha256:4f8e360e6084d784a6bdeb7fb5a0c1134c3c4860e4df46c06357697da61a816d",
+      "synced_at": "2026-11-20T20:19:54.284Z"
     },
     "v070b-scale-02": {
       "github_milestone_number": 32,
@@ -4070,6 +4070,36 @@
       "local_hash": "sha256:de0d597507634bfff315ade9870efa1586146b133152ef825f2efec4bd9093e1",
       "remote_hash": "sha256:de0d597507634bfff315ade9870efa1586146b133152ef825f2efec4bd9093e1",
       "synced_at": "2026-11-12T17:07:25.616Z"
+    },
+    "ep-v100-freeze-01": {
+      "github_issue_number": 1115,
+      "local_hash": "sha256:9354e3f8763b85dd59ebc3995eb0f6f5cb4ef661bbab40b0947f43fbe91f8797",
+      "remote_hash": "sha256:9354e3f8763b85dd59ebc3995eb0f6f5cb4ef661bbab40b0947f43fbe91f8797",
+      "synced_at": "2026-11-20T20:19:55.097Z"
+    },
+    "st-v100-freeze-02": {
+      "github_issue_number": 1116,
+      "local_hash": "sha256:353ee570547792608be2350472e3d5cc35db4ad9159293e4223809928de33b88",
+      "remote_hash": "sha256:353ee570547792608be2350472e3d5cc35db4ad9159293e4223809928de33b88",
+      "synced_at": "2026-11-20T20:19:55.635Z"
+    },
+    "st-v100-freeze-04": {
+      "github_issue_number": 1117,
+      "local_hash": "sha256:ec5fec394f8fc78848556b9e89604fdd3eb6545086323df161fa0ee0e7fbe4c9",
+      "remote_hash": "sha256:ec5fec394f8fc78848556b9e89604fdd3eb6545086323df161fa0ee0e7fbe4c9",
+      "synced_at": "2026-11-20T20:19:56.137Z"
+    },
+    "st-v100-freeze-01": {
+      "github_issue_number": 1118,
+      "local_hash": "sha256:6565326b5b1395bc1865340f5651201f8e93b68b17887d41d4ed6a1e52559469",
+      "remote_hash": "sha256:6565326b5b1395bc1865340f5651201f8e93b68b17887d41d4ed6a1e52559469",
+      "synced_at": "2026-11-20T20:19:56.586Z"
+    },
+    "st-v100-freeze-03": {
+      "github_issue_number": 1119,
+      "local_hash": "sha256:6797735a2cfe47d79513526a85955eb0bae111f3c5288e11eafe943309982655",
+      "remote_hash": "sha256:6797735a2cfe47d79513526a85955eb0bae111f3c5288e11eafe943309982655",
+      "synced_at": "2026-11-20T20:19:57.072Z"
     }
   }
 }
