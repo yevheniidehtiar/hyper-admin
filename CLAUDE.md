@@ -191,6 +191,13 @@ E2E tests use Playwright's accessibility-first locators. Query priority (highest
 | Field error list | `{field_name}-errors` |
 | Form error summary (lists invalid fields) | `error-summary` |
 | Detail fields container | `detail-fields` |
+| Login page OAuth provider button | `oauth-btn-{provider}` |
+| Login page OAuth divider / button group | `oauth-divider` / `oauth-buttons` |
+| Login page notice (session expired) | `login-notice` |
+| OAuth account-exists page | `oauth-link-required` |
+| OAuth settings: provider row | `oauth-identity-{provider}` |
+| OAuth settings: link / unlink control | `oauth-link-{provider}` / `oauth-unlink-{provider}` |
+| OAuth settings: flash / error | `oauth-settings-flash` / `oauth-settings-error` |
 | Request-failure alert (5xx / network error on an HTMX request) | `request-error-toast` |
 | Status pill in a list row | `row-status` |
 | ERP dashboard figures grid / its live region | `dashboard-figures` / `dashboard-figures-region` |

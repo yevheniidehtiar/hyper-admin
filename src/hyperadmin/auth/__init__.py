@@ -37,6 +37,8 @@ if TYPE_CHECKING:
         UserGroup,
         UserPermission,
     )
+    from hyperadmin.auth.oauth.backend import OAuthBackend
+    from hyperadmin.auth.oauth.providers import OAuthProviderConfig
 
 _logger = logging.getLogger("hyperadmin")
 
@@ -60,6 +62,8 @@ _LAZY_EXPORTS: dict[str, str] = {
     "default_can_access": _BRIDGE_MODULE,
     "default_display_name": _BRIDGE_MODULE,
     "default_user_key": _BRIDGE_MODULE,
+    "OAuthBackend": "hyperadmin.auth.oauth.backend",
+    "OAuthProviderConfig": "hyperadmin.auth.oauth.providers",
 }
 
 __all__ = [
@@ -69,6 +73,8 @@ __all__ = [
     "Group",
     "GroupPermission",
     "HostUserModelGuard",
+    "OAuthBackend",
+    "OAuthProviderConfig",
     "Permission",
     "TokenCookie",
     "User",
