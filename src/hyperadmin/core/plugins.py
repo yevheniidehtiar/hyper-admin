@@ -20,9 +20,14 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, Protocol, runtime_checkable
 
 if TYPE_CHECKING:
-    from collections.abc import Callable, Iterable, Mapping
+    from collections.abc import Awaitable, Callable, Iterable, Mapping
 
     from pydantic import BaseModel
+    from starlette.requests import Request
+    from starlette.responses import Response
+
+    #: A plugin home page: called by the admin index route, not through dependency injection.
+    HomePageEndpoint = Callable[[Request], Awaitable[Response]]
 
 logger = logging.getLogger(__name__)
 
@@ -125,6 +130,14 @@ class PluginPermission:
     name: str
 
 
+@dataclass(frozen=True)
+class PluginHomePage:
+    """An endpoint a plugin serves at the admin index ``{prefix}/`` instead of the welcome page."""
+
+    plugin: str
+    endpoint: HomePageEndpoint
+
+
 @dataclass
 class _Contributions:
     pages: list[PluginPage] = field(default_factory=list)
@@ -132,6 +145,7 @@ class _Contributions:
     template_dirs: list[PluginTemplateDir] = field(default_factory=list)
     static_dir: PluginStaticDir | None = None
     permissions: list[PluginPermission] = field(default_factory=list)
+    home_page: PluginHomePage | None = None
 
 
 def parse_disabled_env(value: str | None) -> set[str]:
@@ -408,6 +422,25 @@ class PluginRegistry:
         contrib.permissions.append(perm)
         return perm
 
+    def set_home_page(self, plugin: Plugin, endpoint: HomePageEndpoint) -> PluginHomePage:
+        """Serve ``endpoint`` at the admin index ``{prefix}/`` (one plugin per admin).
+
+        ``endpoint`` is ``async (request) -> Response``. The index route keeps its name
+        (``admin-dashboard``) and falls back to the welcome page if the endpoint raises
+        anything but an ``HTTPException``.
+
+        Raises:
+            PluginError: If a home page is already set, or outside ``on_register()``.
+        """
+        contrib = self._contributing(plugin)
+        if not callable(endpoint):
+            raise PluginError(f"{endpoint!r} is not a home page endpoint")
+        taken = next((c.home_page for c in (*self._all(), contrib) if c.home_page), None)
+        if taken is not None:
+            raise PluginError(f"the admin home page is already set by plugin {taken.plugin!r}")
+        contrib.home_page = PluginHomePage(plugin=plugin.name, endpoint=endpoint)
+        return contrib.home_page
+
     # -- collected seams (consumed by Admin wiring) -------------------------------
 
     @property
@@ -431,6 +464,11 @@ class PluginRegistry:
     @property
     def permissions(self) -> list[PluginPermission]:
         return [p for c in self._all() for p in c.permissions]
+
+    @property
+    def home_page(self) -> PluginHomePage | None:
+        """The plugin endpoint serving the admin index, or ``None`` for the welcome page."""
+        return next((c.home_page for c in self._all() if c.home_page is not None), None)
 
     # -- lifecycle hooks ----------------------------------------------------------
 

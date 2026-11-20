@@ -279,6 +279,20 @@ them **before** `on_register`, so the plugin reads `admin.plugins.settings(self.
 `on_register`. Invalid settings → ERROR, plugin skipped. Settings for unknown or disabled
 plugins are ignored.
 
+#### Home page (addendum, 2026-11-20)
+
+`set_home_page(self, endpoint)` — serve `endpoint` (`async (request) -> Response`) at the admin
+index `{prefix}/` instead of the welcome page. One plugin per admin: a second claim raises
+`PluginError`, so that plugin is skipped (`register_error`) and the first keeps the page. The
+claim is part of the plugin's contributions, so a failed `on_register` drops it.
+`PluginRegistry.home_page` returns the `PluginHomePage(plugin, endpoint)` or `None`.
+
+The core index route keeps its name (`admin-dashboard`) and reads the claim per request. The
+endpoint is called directly (no dependency injection) inside the admin route, so it has the
+session, `request.state.user`, CSRF and the admin error pages. An `HTTPException` propagates;
+any other exception is logged with the plugin name and the welcome page is rendered. Added for
+the dashboard of `hyperadmin-reports` (`docs/specs/dashboard-builder.md`).
+
 ### Lifecycle hooks
 
 Signatures (documented contract; plugins type-hint explicitly; all keyword arguments):
