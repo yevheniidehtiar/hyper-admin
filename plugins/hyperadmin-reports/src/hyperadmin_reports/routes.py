@@ -16,6 +16,11 @@ to ask for. Without auth every report is open, as model views are.
 report's time buckets for that request; the export links carry the page's
 query string, so a download matches what is on screen.
 
+A report that declares ``filters`` gets the list view's filter sidebar on its
+page. Every route reads the same querystring through the same pipeline
+(:mod:`hyperadmin_reports.filtering`) *after* the permission check, so the
+grid, the chart and both exports are narrowed alike, before the aggregate.
+
 ``GET {slug}/chart`` is the chart fragment: the report's chart frame (see
 :mod:`hyperadmin_reports.chart_data`), run with the same query string as the page, so the
 chart and the grid always show the same period. The report page lazy-loads it over HTMX
@@ -37,18 +42,26 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import async_sessionmaker
 from starlette.responses import Response
 
+from hyperadmin.filters import FilterBinding
+from hyperadmin.views.template_filters import TIMEZONE_GLOBAL, request_tz
 from hyperadmin.views.urls import admin_url_for
 from hyperadmin_reports.bucketing import PERIODS, TimeBucket, describe_span
 from hyperadmin_reports.chart_data import ChartUnavailableError, build_chart, chartable, placeholder
 from hyperadmin_reports.charts import PeriodOption
 from hyperadmin_reports.export import XLSX_MEDIA_TYPE, flatten_grid, stream_csv, stream_xlsx
+from hyperadmin_reports.filter_panel import build_filter_panel
+from hyperadmin_reports.filtering import describe_filters
 from hyperadmin_reports.grid import build_grid
 from hyperadmin_reports.view import get_report, registered_reports
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from sqlalchemy.ext.asyncio import AsyncSession
+
     from hyperadmin_reports.bucketing import PeriodOrAuto
     from hyperadmin_reports.export import ReportTable
-    from hyperadmin_reports.view import ReportResult, ReportView, SessionSource
+    from hyperadmin_reports.view import ReportResult, ReportView
 
 #: ``?period=`` values the bucket switch offers, in display order.
 PERIOD_CHOICES: tuple[PeriodOrAuto, ...] = ("auto", *PERIODS)
@@ -77,7 +90,7 @@ async def can_view(admin: Any, request: Request, report: type[ReportView]) -> bo
     return bool(await checker.has_permission(user, report.get_permission()))
 
 
-def _session_source(admin: Any) -> SessionSource:
+def _session_source(admin: Any) -> Callable[[], AsyncSession]:
     if admin.session_factory is not None:
         return admin.session_factory
     return async_sessionmaker(admin.engine, expire_on_commit=False)
@@ -98,9 +111,59 @@ def _time_bucket(report: type[ReportView]) -> TimeBucket | None:
     return None
 
 
+def _query(request: Request, **changes: str) -> str:
+    """The request's query string with ``changes`` applied in place, repeated keys kept.
+
+    A repeated key (``sku__in=A&sku__in=B``, a filter checklist) survives; a
+    changed key keeps its position and collapses to the one new value.
+    """
+    pending = dict(changes)
+    pairs: list[tuple[str, str]] = []
+    for key, value in request.query_params.multi_items():
+        if key not in changes:
+            pairs.append((key, value))
+        elif key in pending:
+            pairs.append((key, pending.pop(key)))
+    return urlencode([*pairs, *pending.items()])
+
+
 def _page_url(request: Request, **changes: str) -> str:
     """The page's path with its query string, with ``changes`` applied."""
-    return f"{request.url.path}?{urlencode({**request.query_params, **changes})}"
+    return f"{request.url.path}?{_query(request, **changes)}"
+
+
+def filter_binding(admin: Any, request: Request) -> FilterBinding:
+    """Per-request facts the report's filters compile against (timezone, the user's key)."""
+    return FilterBinding(
+        tz=request_tz(request, admin.templates.env.globals.get(TIMEZONE_GLOBAL)),
+        user=getattr(request.state, "user", None),
+        user_key=getattr(request.state, "user_key", None),
+    )
+
+
+async def filter_panel(
+    admin: Any, report: type[ReportView], request: Request
+) -> dict[str, Any] | None:
+    """Context of the page's filter sidebar, or ``None`` for a report without filters."""
+    if not report.filters:
+        return None
+    async with _session_source(admin)() as session:
+        return await build_filter_panel(
+            report,
+            session,
+            request.query_params,
+            binding=filter_binding(admin, request),
+            templates=admin.templates.env,
+        )
+
+
+def filters_used(report: type[ReportView], request: Request) -> dict[str, Any] | None:
+    """Rows of the XLSX "Filters used" sheet: the applied filters, then the period override."""
+    used: dict[str, Any] = dict(describe_filters(report, request.query_params))
+    override = parse_period(request.query_params.get("period"))
+    if override:
+        used["period"] = override
+    return used or None
 
 
 def chart_periods(
@@ -184,11 +247,17 @@ def build_router(admin: Any) -> APIRouter:
             return forbidden(request, report)
         return report
 
-    async def run(report: type[ReportView], period: str | None) -> ReportResult:
-        return await report.run(_session_source(admin), period=parse_period(period))
+    async def run(report: type[ReportView], request: Request) -> ReportResult:
+        """Run ``report`` narrowed by the request's filters; callers check the permission first."""
+        return await report.run(
+            _session_source(admin),
+            period=parse_period(request.query_params.get("period")),
+            filters=request.query_params,
+            binding=filter_binding(admin, request),
+        )
 
-    async def table(report: type[ReportView], period: str | None) -> ReportTable:
-        return flatten_grid(build_grid(report, await run(report, period)))
+    async def table(report: type[ReportView], request: Request) -> ReportTable:
+        return flatten_grid(build_grid(report, await run(report, request)))
 
     def attachment(report: type[ReportView], extension: str) -> dict[str, str]:
         # The slug is URL-safe ([a-z0-9_-]), so it needs no quoting here.
@@ -205,7 +274,7 @@ def build_router(admin: Any) -> APIRouter:
         if isinstance(report, Response):
             return report
         override = parse_period(period)
-        result = await run(report, period)
+        result = await run(report, request)
         # The bucket each TimeBucket ran with ("auto" already resolved), by dimension label.
         periods = [
             (dim.label, result.periods[dim.name])
@@ -217,7 +286,7 @@ def build_router(admin: Any) -> APIRouter:
         if chartable(report) and result.records:
             chart = {
                 "url": admin_url_for(request, "report-chart", slug=slug).path,
-                "query": f"?{urlencode({**request.query_params, 'embed': '1'})}",
+                "query": f"?{_query(request, embed='1')}",
                 "placeholder": placeholder(report),
             }
         template = (
@@ -232,6 +301,7 @@ def build_router(admin: Any) -> APIRouter:
                 "periods": periods,
                 "bucket": bucket_switch(request, report, result, override),
                 "export_query": query,
+                "filters": await filter_panel(admin, report, request),
                 "chart": chart,
             },
         )
@@ -245,7 +315,7 @@ def build_router(admin: Any) -> APIRouter:
             return report
         context: dict[str, Any] = {"state": "ready", "message": "", "caption": "", "periods": []}
         try:
-            built = build_chart(report, await run(report, period))
+            built = build_chart(report, await run(report, request))
         except ChartUnavailableError as exc:
             context |= {"state": "error", "chart": placeholder(report), "message": str(exc)}
         except SQLAlchemyError:
@@ -264,29 +334,27 @@ def build_router(admin: Any) -> APIRouter:
         return admin.templates.TemplateResponse(request, "reports/chart.html", context)
 
     @router.get("/{slug}/export.csv", name="report-export-csv")
-    async def report_export_csv(request: Request, slug: str, period: str | None = None) -> Response:
+    async def report_export_csv(request: Request, slug: str) -> Response:
         report = await authorized(request, slug)
         if isinstance(report, Response):
             return report
         return StreamingResponse(
-            stream_csv(await table(report, period)),
+            stream_csv(await table(report, request)),
             media_type="text/csv",
             headers=attachment(report, "csv"),
         )
 
     @router.get("/{slug}/export.xlsx", name="report-export-xlsx")
-    async def report_export_xlsx(
-        request: Request, slug: str, period: str | None = None
-    ) -> Response:
+    async def report_export_xlsx(request: Request, slug: str) -> Response:
         report = await authorized(request, slug)
         if isinstance(report, Response):
             return report
-        # ``ReportView.filters`` is not applied until the filter library lands, so
-        # the cover sheet lists only the period override, when there is one.
-        override = parse_period(period)
-        filters = {"period": override} if override else None
         return StreamingResponse(
-            stream_xlsx(await table(report, period), title=report.get_label(), filters=filters),
+            stream_xlsx(
+                await table(report, request),
+                title=report.get_label(),
+                filters=filters_used(report, request),
+            ),
             media_type=XLSX_MEDIA_TYPE,
             headers=attachment(report, "xlsx"),
         )

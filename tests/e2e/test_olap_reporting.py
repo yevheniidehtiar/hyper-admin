@@ -1,8 +1,9 @@
 """E2E: OLAP-style report pages, exports and permission gating (st-v054-olap-04).
 
 Runs against :mod:`tests.e2e.apps.olap_reporting`: generic Order data, no consumer schema.
-Filter assertions are out of scope until filters ship. Uses accessibility-first selectors
-per CLAUDE.md E2E Selector Convention.
+The last test is the scenario of ``featreports-filter-integration`` (st-v054-olap-05), driven
+through the page's filter sidebar. Uses accessibility-first selectors per CLAUDE.md E2E
+Selector Convention.
 """
 
 from __future__ import annotations
@@ -169,3 +170,55 @@ def test_permission_gates_report_access(page: Page, olap_reporting_base_url: str
     # And the export is refused as well
     export = page.request.get(f"{olap_reporting_base_url}/admin/reports/olap-by-product/export.csv")
     assert export.status == 403
+
+
+def test_filters_are_applied_before_the_aggregate(page: Page, olap_reporting_base_url: str) -> None:
+    """Scenario: filters are applied before the aggregate."""
+    # Given a report with a date-range filter and a Sum aggregate, over orders from Jan to Dec
+    _login(page, olap_reporting_base_url)
+    page.goto(f"{olap_reporting_base_url}/admin/reports/olap-filtered/")
+    grid = page.get_by_test_id("report-grid")
+    expect(grid.get_by_role("columnheader", name="2025-01")).to_be_visible()
+    widget = grid.get_by_role("row", name="Widget")
+    expect(widget.get_by_role("cell", name="150")).to_be_visible()
+
+    # When the user filters to orders from 2025-02-01
+    filters = page.get_by_test_id("report-filters")
+    filters.get_by_label("From").fill("2025-02-01")
+    filters.get_by_role("button", name="Apply filters").click()
+
+    # Then the filter is in the URL and shown as applied
+    expect(page).to_have_url(
+        f"{olap_reporting_base_url}/admin/reports/olap-filtered/"
+        "?created_at__gte=2025-02-01&created_at__lte=&filter_supplier="
+    )
+    expect(page.get_by_test_id("report-applied-filters")).to_contain_text(
+        "Ordered: from 2025-02-01"
+    )
+    # And the result excludes pre-February rows: no January bucket, and Widget sums 50, not 150
+    expect(grid.get_by_role("columnheader", name="2025-02")).to_be_visible()
+    expect(grid.get_by_role("columnheader", name="2025-01")).to_have_count(0)
+    expect(widget.get_by_role("cell", name="150")).to_have_count(0)
+    expect(widget.get_by_role("cell", name="50").first).to_be_visible()
+
+    # And the CSV export is narrowed the same way
+    content = _download_text(page, olap_reporting_base_url, "olap-filtered", "csv")
+    rows = list(csv.reader(io.StringIO(content.decode("utf-8-sig"))))
+    assert "2025-01" not in rows[0]
+    widget_row = next(row for row in rows if row[0] == "Widget")
+    assert [cell for cell in widget_row if cell] == ["Widget", "50", "50"]
+
+    # When the user also picks a supplier
+    filters.get_by_label("Supplier").select_option("Globex")
+    filters.get_by_role("button", name="Apply filters").click()
+
+    # Then only that supplier's rows are aggregated
+    expect(grid.get_by_role("row", name="Gadget")).to_be_visible()
+    expect(grid.get_by_role("row", name="Widget")).to_have_count(0)
+
+    # When the filters are reset
+    filters.get_by_role("link", name="Reset").click()
+
+    # Then the whole dataset is back
+    expect(grid.get_by_role("columnheader", name="2025-01")).to_be_visible()
+    expect(page.get_by_test_id("report-applied-filters")).to_have_count(0)

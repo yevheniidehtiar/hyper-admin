@@ -18,6 +18,13 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
   (no hover) they stay tappable on every row, dimmed until current, focused or pinned.
 
 ### Added
+- **Report filters** (#883). A `hyperadmin-reports` `ReportView` can declare `filters` (field
+  names or `hyperadmin.filters` definitions, as in `list_filter`). They are applied before the
+  aggregate, on the fact table when the report has a `cache`, and the report page gets the list
+  view's filter sidebar. The grid, the chart and the CSV / XLSX exports read the same
+  querystring, and the XLSX "Filters used" sheet lists what was applied.
+  `ReportView.run(filters=..., binding=...)` does the same from code.
+
 - **Estimated list totals** (#211). `AdminOptions(count_estimate_threshold=1_000_000)` makes an
   unfiltered list of a table the database estimates at that many rows or more skip `count(*)`
   and show the planner estimate, marked `~4200000` in the pager. Filtered and searched lists,

@@ -14,8 +14,9 @@ Gizmo     Acme      200     Jul
 Gizmo     Acme      10      Dec
 ========  ========  ======  =======
 
-Reports: ``olap-by-product`` (sum per product), ``olap-by-month`` (product x month) and
-``olap-auto`` (product x auto-bucketed ``created_at``; a full year picks quarter).
+Reports: ``olap-by-product`` (sum per product), ``olap-by-month`` (product x month),
+``olap-auto`` (product x auto-bucketed ``created_at``; a full year picks quarter) and
+``olap-filtered`` (product x month, with a date-range and a supplier filter).
 """
 
 from collections.abc import AsyncIterator
@@ -32,6 +33,7 @@ from hyperadmin.auth.permissions import ModelPermissionChecker, PermissionSyncSe
 from hyperadmin.auth.session import SessionAuthBackend
 from hyperadmin.core.app import Admin
 from hyperadmin.core.settings import HyperAdminSettings
+from hyperadmin.filters import DateRangeFilter
 from hyperadmin_reports import Group, ReportView, Sum, TimeBucket, register_report
 
 engine = create_async_engine(
@@ -79,7 +81,18 @@ class AutoBucket(ReportView):
     values = [Sum("amount")]
 
 
-for _report in (ByProduct, ByMonth, AutoBucket):
+class Filtered(ReportView):
+    slug = "olap-filtered"
+    label = "Filtered revenue"
+    description = "Revenue per product and month, narrowed by date and supplier."
+    model = OlapOrder
+    rows = [Group("product")]
+    cols = [TimeBucket("created_at", period="month")]
+    values = [Sum("amount")]
+    filters = [DateRangeFilter(field="created_at", label="Ordered"), "supplier"]
+
+
+for _report in (ByProduct, ByMonth, AutoBucket, Filtered):
     register_report(_report)
 
 #: Seed rows as product, supplier, amount, month.

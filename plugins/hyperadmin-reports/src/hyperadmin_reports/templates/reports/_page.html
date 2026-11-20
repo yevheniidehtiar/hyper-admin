@@ -5,7 +5,11 @@
     links always carry the period on screen.
 
     Context: report, grid (ReportGrid), periods ([(label, period)]), bucket
-    ({options, note, selected} or none), export_query ("?..." or "").
+    ({options, note, selected} or none), export_query ("?..." or ""), filters
+    (the filter sidebar's {groups, applied, kept, reset_query}, or none).
+
+    With filters the chart, grid and key sit in the list view's filter layout,
+    next to the sidebar (reports/_filters.html); applying swaps this fragment.
 -#}
 {%- from "components/_icons.html" import icon -%}
 {%- from "components/seg.html" import seg -%}
@@ -63,6 +67,25 @@
         <span class="ha-report-controls__auto" id="report-period-note" data-testid="report-period-note">{{ icon('info', 'ha-icon--sm') }}<span>{{ bucket.note }}</span></span>
         {%- endif %}
     </div>
+    {%- endif %}
+    {%- if filters %}
+    <div class="ha-filterlayout" x-data="{ filtersOpen: false }">
+        <div class="ha-filterlayout__grid">
+            <div class="ha-filterlayout__main" style="min-inline-size:0">
+                <button class="ha-btn ha-filterlayout__toggle" type="button" aria-controls="report-filters"
+                        :aria-expanded="filtersOpen" @click="filtersOpen = !filtersOpen" style="margin-block-end:12px">
+                    {{ icon('sliders-horizontal', 'ha-icon--sm') }}{{ _("Filters") }}{% if filters.applied %} <span class="ha-count">{{ filters.applied|length }}</span>{% endif %}
+                </button>
+                {%- for group in filters.groups if group.error %}
+                <p class="ha-errmsg" role="alert" data-testid="report-filter-ignored" style="margin-block-end:12px">{{ icon('circle-x', 'ha-icon--sm') }}{{ _("%(label)s filter ignored.", label=group.title) }} {{ _(group.error) }}</p>
+                {%- endfor %}
+                {%- if filters.applied %}
+                <div class="ha-chips" aria-label="{{ _('Applied filters') }}" data-testid="report-applied-filters" style="margin-block-end:12px">
+                    {%- for chip in filters.applied %}
+                    <span class="ha-chip"><span class="ha-chip__text">{{ chip.label }}: {{ chip.value }}</span><a href="{{ chip.clear_href }}" aria-label="{{ _('Remove filter %(label)s', label=chip.label|lower) }}">{{ icon('x', 'ha-icon--sm') }}</a></span>
+                    {%- endfor %}
+                </div>
+                {%- endif %}
     {%- endif %}
     {%- if chart %}
     {#- Lazy chart: the skeleton frame requests the fragment on load and is replaced by it.
@@ -151,4 +174,10 @@
         <li>{{ item }}</li>
         {%- endfor %}
     </ul>
+    {%- if filters %}
+            </div>
+            {%- include "reports/_filters.html" %}
+        </div>
+    </div>
+    {%- endif %}
 </div>

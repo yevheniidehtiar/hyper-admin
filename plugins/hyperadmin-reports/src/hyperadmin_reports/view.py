@@ -16,6 +16,11 @@ A report is declared in code by subclassing :class:`ReportView`::
 Declaring ``cache = FactTableSource(model=OrderRevenueFact)`` makes the source
 dispatcher read the same grouped query from the fact table instead of ``model``.
 
+Declaring ``filters = [DateRangeFilter(field="created_at")]`` (the core filter
+library, as in ``AdminOptions.list_filter``) lets a querystring narrow the rows
+before they are aggregated: ``await Report.run(session, filters={"created_at__gte":
+"2026-02-01"})``. See :mod:`hyperadmin_reports.filtering`.
+
 The caller owns the database session: :meth:`ReportView.run` takes an
 ``AsyncSession`` or a zero-argument session factory (e.g. an
 ``async_sessionmaker``) and never reaches for a module-level engine.
@@ -36,11 +41,19 @@ from hyperadmin.core.display import get_display_name, get_field_label
 from hyperadmin_reports.aggregates import Aggregate, Many2One
 from hyperadmin_reports.bucketing import Period, PeriodOrAuto, TimeBucket, range_days
 from hyperadmin_reports.crosstab import Pivot, pivot
+from hyperadmin_reports.filtering import (
+    compile_filters,
+    filter_clauses,
+    filtered_span,
+    validate_filters,
+)
 
 if TYPE_CHECKING:
     from sqlalchemy.orm import Mapper
     from sqlalchemy.sql.elements import ColumnElement, Label
 
+    from hyperadmin.core.filtering import FilterCondition
+    from hyperadmin.filters import FilterBinding, FilterDef
     from hyperadmin_reports.cache import FactTableSource
 
 DateRange = tuple[date | datetime | str, date | datetime | str]
@@ -105,9 +118,11 @@ class ReportResult:
 class ReportView:
     """Base class for a declarative aggregated report over one model.
 
-    ``filters`` is reserved for the v0.5.6 filter library integration and is
-    not applied yet; until then callers narrow a report with ``run(where=...)``.
-    ``cache`` swaps the queried table for a pre-built fact table.
+    ``filters`` declares the filter library definitions (or plain field names)
+    a querystring may narrow the report with; ``run(filters=...)`` applies them
+    before the aggregate, next to any ``run(where=...)`` clauses.
+    ``cache`` swaps the queried table for a pre-built fact table, which the
+    filters then target too.
     """
 
     slug: ClassVar[str] = ""
@@ -118,7 +133,7 @@ class ReportView:
     rows: ClassVar[Sequence[Dimension]] = ()
     cols: ClassVar[Sequence[Dimension]] = ()
     values: ClassVar[Sequence[Aggregate]] = ()
-    filters: ClassVar[Sequence[Any] | None] = None
+    filters: ClassVar[Sequence[FilterDef | str] | None] = None
     cache: ClassVar[FactTableSource | None] = None
     permission: ClassVar[str | None] = None
 
@@ -159,7 +174,8 @@ class ReportView:
         columns = set(_mapper(cls.model).columns.keys())
         fields = [d.field for d in (*cls.rows, *cls.cols)]
         fields += [a.field for a in cls.values if a.field != "*"]
-        unknown = [f for f in fields if f not in columns]
+        fields += validate_filters(cls)
+        unknown = list(dict.fromkeys(f for f in fields if f not in columns))
         if unknown:
             raise ValueError(
                 f"{cls.__name__} references unknown field(s) of {cls.model.__name__}: "
@@ -205,19 +221,31 @@ class ReportView:
         date_range: DateRange | None = None,
         where: Sequence[ColumnElement[bool]] = (),
         period: PeriodOrAuto | None = None,
+        filters: Any = None,
+        binding: FilterBinding | None = None,
     ) -> ReportResult:
         """Execute the grouped query and return the flat result set.
 
         ``date_range`` (inclusive) drives ``TimeBucket(period="auto")``; without
-        it the range is the bucketed column's min/max in the data. ``where``
-        takes SQLAlchemy clauses built against :meth:`source_model`. ``period``
-        overrides the declared period of every :class:`TimeBucket` dimension for
-        this run (the page's bucket switch).
+        it the range is the one a filter puts on the bucketed column, else that
+        column's min/max in the data. ``where`` takes SQLAlchemy clauses built
+        against :meth:`source_model`. ``period`` overrides the declared period
+        of every :class:`TimeBucket` dimension for this run (the page's bucket
+        switch).
+
+        ``filters`` is a querystring (a mapping or Starlette ``QueryParams``)
+        read by the declared :attr:`filters`; the matching clauses are added to
+        ``where``, so they apply before the aggregate. ``None`` skips the filter
+        pipeline altogether (not even a ``CurrentPeriodDefault`` applies).
+        ``binding`` carries the per-request facts the filters compile against
+        (display timezone, today, the current user's key).
         """
+        conditions = [] if filters is None else compile_filters(cls, filters, binding)
+        clauses = [*where, *filter_clauses(cls, conditions)]
         if isinstance(session, AsyncSession):
-            return await cls._run(session, date_range, where, period)
+            return await cls._run(session, date_range, clauses, period, conditions)
         async with session() as owned:
-            return await cls._run(owned, date_range, where, period)
+            return await cls._run(owned, date_range, clauses, period, conditions)
 
     @classmethod
     async def _run(
@@ -226,6 +254,7 @@ class ReportView:
         date_range: DateRange | None,
         where: Sequence[ColumnElement[bool]],
         override: PeriodOrAuto | None = None,
+        conditions: Sequence[FilterCondition] = (),
     ) -> ReportResult:
         cls.validate()
         dialect = session.get_bind().dialect.name
@@ -235,6 +264,8 @@ class ReportView:
             if isinstance(dim, TimeBucket):
                 span = date_range
                 if (override or dim.period) == "auto":
+                    if span is None:
+                        span = filtered_span(conditions, dim.field)
                     if span is None:
                         span = await cls._data_range(session, dim.field, where)
                     if span is not None:
@@ -283,15 +314,11 @@ class ReportView:
         cls, session: AsyncSession, agg: Many2One, records: list[dict[str, Any]]
     ) -> None:
         """Replace FK ids in ``records[agg.name]`` with the related rows' display names."""
-        target = agg.target or _fk_target(cls.model, agg.field)
+        target = agg.target or fk_target(cls.model, agg.field)
         ids = {r[agg.name] for r in records if r[agg.name] is not None}
         if target is None or not ids:
             return
-        target_mapper = _mapper(target)
-        pk_column = target_mapper.primary_key[0]
-        pk_attr = target_mapper.get_property_by_column(pk_column).key
-        found = (await session.execute(select(target).where(pk_column.in_(ids)))).scalars()
-        names = {getattr(obj, pk_attr): get_display_name(obj, pk_attr=pk_attr) for obj in found}
+        names = await display_names(session, target, ids)
         for record in records:
             record[agg.name] = names.get(record[agg.name], record[agg.name])
 
@@ -348,7 +375,16 @@ def _target_label(agg: Aggregate) -> str:
     return "rows" if agg.field == "*" else get_field_label(agg.field)
 
 
-def _fk_target(model: type[Any], field: str) -> type[Any] | None:
+async def display_names(session: AsyncSession, target: type[Any], ids: set[Any]) -> dict[Any, str]:
+    """Display name of every ``target`` row whose primary key is in ``ids``, keyed by it."""
+    target_mapper = _mapper(target)
+    pk_column = target_mapper.primary_key[0]
+    pk_attr = target_mapper.get_property_by_column(pk_column).key
+    found = (await session.execute(select(target).where(pk_column.in_(ids)))).scalars()
+    return {getattr(obj, pk_attr): get_display_name(obj, pk_attr=pk_attr) for obj in found}
+
+
+def fk_target(model: type[Any], field: str) -> type[Any] | None:
     """Mapped class of the table ``model.field`` references, if any."""
     mapper = _mapper(model)
     foreign_keys = mapper.columns[field].foreign_keys
