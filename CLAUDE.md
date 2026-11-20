@@ -191,6 +191,9 @@ E2E tests use Playwright's accessibility-first locators. Query priority (highest
 | Field error list | `{field_name}-errors` |
 | Form error summary (lists invalid fields) | `error-summary` |
 | Detail fields container | `detail-fields` |
+| Report filter sidebar / its form / Apply button | `report-filters` / `report-filter-form` / `report-filter-apply` |
+| Report filter Reset / Clear all links | `report-filters-reset` / `report-filters-clear` |
+| Report applied-filter chips / count / ignored-filter alert | `report-applied-filters` / `report-filter-count` / `report-filter-ignored` |
 | Request-failure alert (5xx / network error on an HTMX request) | `request-error-toast` |
 | Status pill in a list row | `row-status` |
 | ERP dashboard figures grid / its live region | `dashboard-figures` / `dashboard-figures-region` |

@@ -40,7 +40,7 @@ A declarative report: aggregates per row group and time bucket, with period and 
   - 36 months: compact density, with the wrapper focusable (`tabindex="0"`, `role="region"`, a label that mentions it scrolls).
 - **RTL:** the sticky column moves to the right, and the numbers and bucket labels stay LTR.
 
-**Test ids:** `sidebar`, `nav-report-{slug}`, `report-index`, `report-export`, `report-export-csv`, `report-export-xlsx`, `report-period`, `report-grid`, `report-no-data`, `report-forbidden`, `filter-{field}-error`, plus the chart ids (`chart-frame`, `chart-{key}`, `chart-data-table-{key}`).
+**Test ids:** `sidebar`, `nav-report-{slug}`, `report-index`, `report-export`, `report-export-csv`, `report-export-xlsx`, `report-period`, `report-grid`, `report-no-data`, `report-forbidden`, `report-filters`, `report-filter-form`, `report-filter-apply`, `report-filters-reset`, `report-filters-clear`, `report-filter-count`, `report-applied-filters`, `report-filter-ignored`, `filter-{field}-error`, plus the chart ids (`chart-frame`, `chart-{key}`, `chart-data-table-{key}`).
 
 **Don't:**
 - Colour cells by value, which would be a heatmap. That is not in scope, and colour alone would carry meaning.

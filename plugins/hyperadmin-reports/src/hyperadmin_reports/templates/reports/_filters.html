@@ -1,0 +1,31 @@
+{#-
+    The report's filter sidebar: the list view's FilterSidebar, driving a report.
+    Each group is rendered by the filter library's own partial. Applying swaps
+    the whole report page (hx-target="#report-page") and pushes the URL, so the
+    chart, the grid and the export links all follow; without JavaScript the
+    form is a plain GET.
+
+    Context: report, filters ({groups, applied, kept, reset_query}).
+-#}
+{%- from "components/_icons.html" import icon -%}
+{%- set page_url = url_for('report-detail', slug=report.slug) -%}
+{%- set reset_url = page_url ~ filters.reset_query -%}
+<aside id="report-filters" class="ha-filterside" :class="{ 'is-open': filtersOpen }" aria-labelledby="report-filters-t" data-testid="report-filters">
+    <form method="get" action="{{ page_url }}" role="search" aria-labelledby="report-filters-t" style="display:contents"
+          hx-get="{{ page_url }}" hx-target="#report-page" hx-swap="outerHTML" hx-push-url="true" data-testid="report-filter-form">
+        {%- for key, value in filters.kept %}
+        <input type="hidden" name="{{ key }}" value="{{ value }}">
+        {%- endfor %}
+        <div class="ha-filterside__head">
+            <h2 id="report-filters-t">{{ icon('sliders-horizontal', 'ha-icon--sm') }}{{ _("Filters") }}{% if filters.applied %} <span class="ha-count" data-testid="report-filter-count">{{ filters.applied|length }}</span>{% endif %}</h2>
+            <a class="ha-btn ha-btn--sm ha-btn--ghost" href="{{ reset_url }}" data-testid="report-filters-reset">{{ icon('rotate-ccw', 'ha-icon--sm') }}{{ _("Reset") }}</a>
+        </div>
+        <div class="ha-filterside__body">
+            {%- for group in filters.groups %}{{ group.html }}{% endfor %}
+        </div>
+        <div class="ha-filterside__foot">
+            <a class="ha-btn ha-btn--sm ha-btn--ghost" href="{{ reset_url }}" data-testid="report-filters-clear">{{ _("Clear all") }}</a>
+            <button class="ha-btn ha-btn-primary" type="submit" data-testid="report-filter-apply">{{ _("Apply filters") }}</button>
+        </div>
+    </form>
+</aside>
