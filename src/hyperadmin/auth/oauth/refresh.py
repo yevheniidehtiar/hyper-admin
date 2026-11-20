@@ -96,7 +96,12 @@ class OAuthRefreshMiddleware:
                 logger.warning("OAuth token refresh postponed: %s", exc)
                 session[OAUTH_SESSION_KEY] = {**marker, "retry_at": now + self._retry_cooldown}
                 return
-            logger.info("OAuth session of user %s ended: %s", marker["user_id"], exc)
+            # Nothing read from the session is logged, only the provider's own answer.
+            logger.info(
+                "OAuth session ended: %s refused the token refresh (%s)",
+                exc.provider,
+                exc.error_code or "no error code",
+            )
             session.clear()
             set_flash(session, SESSION_EXPIRED_MESSAGE)
             return
