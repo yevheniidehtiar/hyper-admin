@@ -183,6 +183,7 @@ Prefer to click around first? **[Try the live demo](https://hyper-admin-demo.onr
 | 🤝 **Contributing** | [`CONTRIBUTING.md`](https://github.com/yevheniidehtiar/hyper-admin/blob/master/CONTRIBUTING.md) · [`CODE_OF_CONDUCT.md`](https://github.com/yevheniidehtiar/hyper-admin/blob/master/CODE_OF_CONDUCT.md) |
 | 🔒 **Security** | [`SECURITY.md`](https://github.com/yevheniidehtiar/hyper-admin/blob/master/SECURITY.md) |
 | 📓 **Changelog** | [docs › Changelog](https://yevheniidehtiar.github.io/hyper-admin/changelog/) |
+| 🏷️ **Versioning** | [docs › Versioning & Deprecation Policy](https://yevheniidehtiar.github.io/hyper-admin/versioning/) |
 
 ## Tech stack
 

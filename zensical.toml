@@ -43,6 +43,7 @@ nav = [
   { "Community" = [
     { "Contributing" = "contributing.md" },
     { "Changelog" = "changelog.md" },
+    { "Versioning & Deprecation" = "versioning.md" },
     { "Roadmap" = "roadmap.md" },
     { "Agentic Workflow" = [
       { "Overview" = "agentic-workflow/index.md" },

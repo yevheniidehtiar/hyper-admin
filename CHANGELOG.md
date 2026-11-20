@@ -222,6 +222,9 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
   with the `ModelAdmin` / `AdminOptions` fields.
 - Quickstarts pass `create_tables=True`, because tables are no longer created by default.
 - Install lines use the distribution name `hyper-admin`.
+- New **Versioning & Deprecation Policy** page (`docs/versioning.md`): what the public API is,
+  what a major, minor and patch release may change before and after 1.0, how a feature is
+  deprecated and removed, and the supported Python and dependency versions.
 
 ## [0.5.0a1] - not yet published
 

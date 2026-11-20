@@ -51,6 +51,7 @@ admin.mount("/admin")
 - [Frontend](frontend/overview.md): templates, CSS tokens, widgets, HTMX patterns
 - [API Reference](api/index.md): classes and methods
 - [Roadmap](roadmap.md): what has shipped and what comes next
+- [Versioning & Deprecation Policy](versioning.md): what is public API and what a release may change
 
 ## Key features
 
