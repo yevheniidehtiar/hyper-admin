@@ -69,6 +69,7 @@ class AuthenticationMiddleware:
         admin_path: Callable[[Request], str] | None = None,
         user_cache_ttl: int = 0,
         clock: Callable[[], float] = time.monotonic,
+        public_paths: tuple[str, ...] = (),
     ) -> None:
         """Build the middleware.
 
@@ -96,8 +97,11 @@ class AuthenticationMiddleware:
                 holding only column data (no relationships), and an inactive user is
                 rejected.
             clock: Monotonic clock of the cache (injectable for tests).
+            public_paths: Further path prefixes (below the admin prefix) that need no
+                authentication, next to ``PUBLIC_SUFFIXES`` (the OAuth sign-in routes).
         """
         self.app = app
+        self._public_paths = (*self.PUBLIC_SUFFIXES, *public_paths)
         self.auth_backend = auth_backend
         self.admin_prefix = admin_prefix.rstrip("/")
         self.permission_checker = permission_checker
@@ -160,9 +164,7 @@ class AuthenticationMiddleware:
             return None
 
         # Allow public paths (login page, static assets)
-        if any(
-            relative == suffix or relative.startswith(suffix) for suffix in self.PUBLIC_SUFFIXES
-        ):
+        if any(relative == suffix or relative.startswith(suffix) for suffix in self._public_paths):
             request.state.user = None
             return None
 

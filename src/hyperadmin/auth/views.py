@@ -17,6 +17,7 @@ from sqlmodel import select
 from starlette.responses import RedirectResponse
 
 from hyperadmin.auth.models import User
+from hyperadmin.auth.oauth.session import OAUTH_SESSION_KEY, read_oauth_session
 from hyperadmin.auth.otp import (
     OTP_SESSION_KEY,
     PARTIAL_AUTH_SESSION_KEY,
@@ -261,7 +262,11 @@ async def mfa_verify_view(
     if ok:
         # Clear partial marker FIRST, then grant full auth — see docstring.
         request.session.pop(PARTIAL_AUTH_SESSION_KEY, None)
+        oauth_session = read_oauth_session(request.session, user_id=user.id)
         await auth_backend.login(request, user)
+        if oauth_session is not None:
+            # An OAuth sign-in that went through MFA keeps its token-refresh marker.
+            request.session[OAUTH_SESSION_KEY] = oauth_session
         return RedirectResponse(url=f"{admin_prefix}/", status_code=302)
 
     return _challenge_response(

@@ -42,6 +42,7 @@ if TYPE_CHECKING:
     from fastapi.routing import APIRoute
 
     from hyperadmin.auth.bridge import ExternalAuth
+    from hyperadmin.auth.oauth.backend import OAuthBackend
     from hyperadmin.core.adapters import SessionFactory
     from hyperadmin.core.csrf import EffectiveCsrfMode
     from hyperadmin.core.rate_limit import RateLimiter
@@ -97,6 +98,7 @@ class Admin:
         plugin_settings: "Mapping[str, Mapping[str, Any]] | None" = None,
         nav_groups: "Iterable[NavGroup]" = (),
         rate_limiter: "RateLimiter | None" = None,
+        oauth_backend: "OAuthBackend | None" = None,
     ) -> None:
         """Initialise HyperAdmin and attach it to a FastAPI application.
 
@@ -148,11 +150,15 @@ class Admin:
                 When ``None``, ``settings.rate_limit_requests`` builds an in-memory one
                 (and no limit applies if that is unset either). Pass a shared
                 implementation to enforce one limit across several workers.
+            oauth_backend: Opt-in OAuth2/OIDC sign-in (``OAuthBackend``) for the
+                built-in users, next to ``auth_backend``. Needs the ``oauth`` extra
+                and ``settings.oauth_token_secret``. See ``docs/specs/oauth-sso.md``.
 
         Raises:
             ValueError: ``auth`` is combined with ``auth_backend`` or
                 ``otp_service``, or with a ``ModelPermissionChecker`` while
-                ``settings.register_auth_models`` is not ``True``.
+                ``settings.register_auth_models`` is not ``True``; or
+                ``oauth_backend`` is misconfigured (``OAuthConfigError``).
         """
         self.settings = settings or HyperAdminSettings()
         self.app = app
@@ -190,6 +196,7 @@ class Admin:
         self._notification_models: set[str] = set()
 
         self._validate_secret_key()
+        self.oauth_backend = self._configure_oauth(oauth_backend)
 
         template_dirs = self.settings.template_dirs
         template_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "templates")
@@ -888,6 +895,7 @@ class Admin:
             isolated=isolated,
             admin_path=admin_path,
             user_cache_ttl=settings.user_cache_ttl,
+            public_paths=self._oauth_public_paths(),
         )
         target.add_middleware(
             AdminSessionMiddleware,
@@ -898,6 +906,22 @@ class Admin:
             cookie_secure=settings.cookie_secure,
             admin_path=admin_path if scoped_cookie else None,
         )
+
+    def _configure_oauth(self, oauth_backend: "OAuthBackend | None") -> "OAuthBackend | None":
+        """Validate and bind ``oauth_backend`` (``docs/specs/oauth-sso.md``); ``None`` is off."""
+        if oauth_backend is not None:
+            from hyperadmin.auth.oauth import wiring as oauth_wiring
+
+            oauth_wiring.configure(self, oauth_backend)
+        return oauth_backend
+
+    def _oauth_public_paths(self) -> tuple[str, ...]:
+        """Admin paths OAuth opens to signed-out visitors; none without ``oauth_backend``."""
+        if self.oauth_backend is None:
+            return ()
+        from hyperadmin.auth.oauth.wiring import PUBLIC_PATHS
+
+        return PUBLIC_PATHS
 
     def _add_rate_limit_middleware(self, target: FastAPI, admin_prefix: str) -> None:
         """Add the rate-limit middleware to ``target`` when a limit is configured.
@@ -1274,6 +1298,10 @@ class Admin:
 
         if self.auth_backend:
             self._register_auth_routes(path)
+        if self.oauth_backend is not None:
+            from hyperadmin.auth.oauth import wiring as oauth_wiring
+
+            oauth_wiring.register_routes(self, path)
         if self.auth is not None:
             self._register_bridge_routes(path, self.auth)
         if self._should_register_auth_models():

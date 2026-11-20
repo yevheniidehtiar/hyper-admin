@@ -1,0 +1,55 @@
+{%- extends "_base.html" -%}
+
+{%- block title -%}{{ _("Sign-in methods") }} — {{ site_title | default("HyperAdmin") }}{%- endblock -%}
+
+{%- block content -%}
+<div class="ha-login-container">
+    <div id="oauth-settings-card" class="ha-login-card">
+        <h1 id="oauth-settings-title" class="ha-login-title">{{ _("Sign-in methods") }}</h1>
+        <p class="ha-text-muted">
+            {{ _("Link an account to sign in with it next time.") }}
+        </p>
+
+        <div id="oauth-settings-messages" aria-live="polite">
+            {%- if error -%}
+            <div class="ha-alert ha-alert-error" data-testid="oauth-settings-error" role="alert">
+                {{ error }}
+            </div>
+            {%- endif -%}
+            {%- if flash -%}
+            <div class="ha-alert ha-alert-info" data-testid="oauth-settings-flash" role="status">
+                {{ flash }}
+            </div>
+            {%- endif -%}
+        </div>
+
+        <ul class="ha-oauth-identities" data-testid="oauth-identities" aria-labelledby="oauth-settings-title">
+            {%- for identity in identities %}
+            <li class="ha-oauth-identity" data-testid="oauth-identity-{{ identity.name }}" data-linked="{{ 'true' if identity.linked else 'false' }}">
+                <span class="ha-oauth-identity-name">
+                    <strong>{{ identity.label }}</strong>
+                    <span class="ha-text-muted">
+                        {%- if identity.linked %}{{ _("Linked") }}{% else %}{{ _("Not linked") }}{% endif -%}
+                    </span>
+                </span>
+                {%- if identity.linked %}
+                <form method="post" action="{{ admin_prefix }}/oauth/unlink/{{ identity.name }}">
+                    {{ csrf_input() if csrf_input is defined }}
+                    <button type="submit" class="ha-btn ha-btn-danger" data-testid="oauth-unlink-{{ identity.name }}"
+                            aria-label="{{ _('Unlink %(provider)s', provider=identity.label) }}">
+                        {{ _("Unlink") }}
+                    </button>
+                </form>
+                {%- else %}
+                <a href="{{ admin_prefix }}/oauth/link/{{ identity.name }}" class="ha-btn ha-btn-secondary"
+                   data-testid="oauth-link-{{ identity.name }}"
+                   aria-label="{{ _('Link %(provider)s', provider=identity.label) }}">
+                    {{ _("Link") }}
+                </a>
+                {%- endif %}
+            </li>
+            {%- endfor %}
+        </ul>
+    </div>
+</div>
+{%- endblock -%}
