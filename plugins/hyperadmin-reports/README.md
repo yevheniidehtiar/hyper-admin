@@ -110,5 +110,59 @@ Each report route requires the report's codename (`view_report_{slug}` with `-` 
 a user who lacks it gets a 403 card naming the permission to ask for (`data-testid="report-forbidden"`).
 Without auth every report is open.
 
+## Dashboard layouts
+
+The dashboard remembers each user's widget order in one table the plugin owns,
+`hyperadmin_reports_dashboard_layout`. The table is declared on the plugin's own `MetaData`
+(`hyperadmin_reports.dashboard_metadata()`), not on `SQLModel.metadata`, so upgrading the
+plugin never adds a table to your migrations. Create it when you want saved orders; without
+it the dashboard shows the default order, hides the reorder controls and logs one warning.
+
+Without Alembic, create it once at start-up:
+
+```python
+from hyperadmin_reports import create_layout_table
+
+await create_layout_table(engine)  # an AsyncEngine or an open AsyncConnection; idempotent
+```
+
+With Alembic, add a hand-written revision:
+
+```python
+import sqlalchemy as sa
+from alembic import op
+
+
+def upgrade() -> None:
+    op.create_table(
+        "hyperadmin_reports_dashboard_layout",
+        sa.Column("id", sa.Integer(), primary_key=True),
+        sa.Column("user_key", sa.String(255), nullable=False),
+        sa.Column("dashboard", sa.String(64), nullable=False),
+        sa.Column("widgets", sa.JSON(), nullable=False),
+        sa.Column("updated_at", sa.DateTime(), nullable=False),
+        sa.UniqueConstraint(
+            "user_key", "dashboard", name="uq_hyperadmin_reports_dashboard_layout"
+        ),
+    )
+    op.create_index(
+        "ix_hyperadmin_reports_dashboard_layout_user_key",
+        "hyperadmin_reports_dashboard_layout",
+        ["user_key"],
+    )
+
+
+def downgrade() -> None:
+    op.drop_index(
+        "ix_hyperadmin_reports_dashboard_layout_user_key",
+        table_name="hyperadmin_reports_dashboard_layout",
+    )
+    op.drop_table("hyperadmin_reports_dashboard_layout")
+```
+
+A row holds `user_key` (`request.state.user_key` as text), `dashboard` (always `"home"` today)
+and `widgets`, the ordered list of widget keys. To let autogenerate manage the table instead,
+add `dashboard_metadata()` to your `target_metadata` list.
+
 The package is discovered through the `hyperadmin.plugins` entry point (`reports`).
 Design: [`docs/specs/olap-reporting.md`](../../docs/specs/olap-reporting.md).
