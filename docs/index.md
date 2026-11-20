@@ -47,6 +47,7 @@ admin.mount("/admin")
 - [Getting Started](getting-started.md): install HyperAdmin and build your first admin
 - [Add HyperAdmin to an existing app](guides/existing-app.md): your models, keys, engine, migrations and auth
 - [Compatibility & Performance](compatibility.md): supported stacks, results on real open-source apps, timings
+- [Migrating to HyperAdmin](migration/index.md): from Django admin, SQLAdmin or Flask-Admin
 - [Examples](examples.md): five runnable apps, from a single model to an ERP
 - [Frontend](frontend/overview.md): templates, CSS tokens, widgets, HTMX patterns
 - [API Reference](api/index.md): classes and methods
