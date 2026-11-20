@@ -19,6 +19,7 @@ from hyperadmin.core.display import get_field_label
 from hyperadmin.core.introspection import infer_list_display, infer_list_filter, infer_search_fields
 from hyperadmin.core.navigation import ModelNavSource, build_nav_tree, model_nav_label
 from hyperadmin.core.options import AdminOptions
+from hyperadmin.core.plugins import wrap_adapter_with_hooks
 from hyperadmin.realtime.emitting import EventEmittingAdapter, notifications_enabled
 from hyperadmin.views.dynamic import DynamicModelView
 from hyperadmin.views.navigation import register_nav_globals
@@ -132,6 +133,8 @@ def create_admin_router(  # noqa: PLR0912, PLR0913, PLR0915, PLR0917
     concurrency_use_updated_at: bool = False,
     occ_render_dialog: bool = True,
     palette_search: PaletteSearch | None = None,
+    hook_dispatcher: Any = None,
+    plugins: Any = None,
 ) -> APIRouter:
     """Creates an APIRouter for a given model with the specified admin options.
 
@@ -163,6 +166,13 @@ def create_admin_router(  # noqa: PLR0912, PLR0913, PLR0915, PLR0917
             )
     elif realtime_settings is not None and notifications_enabled(options, realtime_settings):
         adapter = EventEmittingAdapter(adapter, realtime_emitter)
+    if hook_dispatcher is not None:
+        adapter = wrap_adapter_with_hooks(
+            adapter,
+            plugins=plugins,
+            dispatch=hook_dispatcher,
+            model=model,
+        )
     pk = adapter.pk
 
     # Composite keys (BYOA SDD A.5 point 4): item-scoped routes are never
@@ -204,6 +214,7 @@ def create_admin_router(  # noqa: PLR0912, PLR0913, PLR0915, PLR0917
         admin_lookup=admin_lookup,
         debug=debug,
         occ_render_dialog=occ_render_dialog,
+        hook_dispatcher=hook_dispatcher,
     )
     model_name = model.__name__.lower()
     if palette_search is not None and options.palette_search and options.can_list:
@@ -489,8 +500,12 @@ class HyperAdminRouter:
         count_cache: CountCache | None = None,
         concurrency_use_updated_at: bool = False,
         occ_render_dialog: bool = True,
+        hook_dispatcher: Any = None,
+        plugins: Any = None,
     ):
         self.engine = engine
+        self.hook_dispatcher = hook_dispatcher
+        self.plugins = plugins
         self.debug = debug
         # The admin's own HyperAdminRoute (auth bridge, CSRF), or a default one
         # bound to these templates when the router is used on its own.
@@ -593,6 +608,8 @@ class HyperAdminRouter:
                 concurrency_use_updated_at=self.concurrency_use_updated_at,
                 occ_render_dialog=self.occ_render_dialog,
                 palette_search=palette_search,
+                hook_dispatcher=self.hook_dispatcher,
+                plugins=self.plugins,
             )
             self.routers.append(router)
             if (

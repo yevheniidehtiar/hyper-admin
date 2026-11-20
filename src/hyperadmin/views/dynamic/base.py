@@ -68,8 +68,11 @@ class DynamicModelViewBase:
         admin_lookup: Callable[[Any], Any] | None = None,
         debug: bool = False,
         occ_render_dialog: bool = True,
+        hook_dispatcher: Callable[..., None] | None = None,
     ):
         self.adapter = adapter
+        # ``Admin.dispatch_hook``: fires the app-level plugin lifecycle hooks.
+        self._hook_dispatcher = hook_dispatcher
         # ``settings.debug``: list_view re-raises database errors instead of
         # rendering the list-error banner (BYOA SDD D.2).
         self.debug = debug
@@ -105,6 +108,26 @@ class DynamicModelViewBase:
         )
         self.panels: list[PanelDef] = resolve_panels(panel_source, self.model)
         self._panel_map: dict[str, PanelDef] = {p.slug: p for p in self.panels}
+
+    def _fire_hook(self, hook: str, **kwargs: Any) -> None:
+        """Fire an app-level plugin hook for this view's model (no-op without an admin)."""
+        if self._hook_dispatcher is not None:
+            self._hook_dispatcher(hook, model=self.model, **kwargs)
+
+    def _fire_validation_error(self, form: Any) -> None:
+        """Fire ``on_validation_error`` with pydantic error types only (never input values)."""
+        self._fire_hook("on_validation_error", field_errors=dict(form.error_types))
+
+    def _fire_permission_denied(self, request: Request) -> None:
+        """Fire ``on_auth_event("permission_denied")`` for the request's user."""
+        user = getattr(request.state, "user", None)
+        self._fire_hook(
+            "on_auth_event",
+            event="permission_denied",
+            user=user,
+            username=getattr(user, "username", None),
+            request=request,
+        )
 
     def _verbose_labels(self) -> dict[str, str]:
         """Template context with the model's readable names.
@@ -157,6 +180,7 @@ class DynamicModelViewBase:
         """
         codename = f"{action}_{model_name or self._model_name_lower}"
         if not await self._has_permission(request, codename):
+            self._fire_permission_denied(request)
             raise HTTPException(status_code=403, detail="Permission denied")
 
     async def _check_any_permission(self, request: Request, actions: tuple[str, ...]) -> None:
@@ -164,6 +188,7 @@ class DynamicModelViewBase:
         for action in actions:
             if await self._has_permission(request, f"{action}_{self._model_name_lower}"):
                 return
+        self._fire_permission_denied(request)
         raise HTTPException(status_code=403, detail="Permission denied")
 
     async def _record_actions(self, request: Request) -> dict[str, bool]:

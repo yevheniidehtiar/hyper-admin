@@ -521,6 +521,8 @@ class Admin:
             count_cache=InMemoryTTLCache(self.settings.count_cache_max_entries),
             concurrency_use_updated_at=self.settings.concurrency_use_updated_at,
             occ_render_dialog=self.settings.occ_render_dialog,
+            hook_dispatcher=self.dispatch_hook,
+            plugins=self.plugins,
         )
         admin_router.generate_routes()
         self._nav_sources = admin_router.nav_sources
@@ -545,15 +547,19 @@ class Admin:
         # host served under a root_path (e.g. "/api/admin/", not "/admin/").
         async def login_get(request: Request):
             base = request_admin_path(request, admin_prefix)
-            return await login_view(request, templates, auth_backend, base, otp_service)
+            return await login_view(
+                request, templates, auth_backend, base, otp_service, self.dispatch_hook
+            )
 
         async def login_post(request: Request):
             base = request_admin_path(request, admin_prefix)
-            return await login_view(request, templates, auth_backend, base, otp_service)
+            return await login_view(
+                request, templates, auth_backend, base, otp_service, self.dispatch_hook
+            )
 
         async def logout_post(request: Request):
             base = request_admin_path(request, admin_prefix)
-            return await logout_view(request, auth_backend, base)
+            return await logout_view(request, auth_backend, base, self.dispatch_hook)
 
         self.router.add_api_route("/login", login_get, methods=["GET"], name="admin-login")
         self.router.add_api_route("/login", login_post, methods=["POST"], name="admin-login-post")
@@ -1261,6 +1267,12 @@ class Admin:
         """
         admin_prefix = path.rstrip("/")
         isolated = self._resolve_mount_mode(admin_prefix)
+
+        from hyperadmin.core.registry import site
+
+        # Plugins hear about every model from here on, and once about those
+        # registered earlier (``on_model_register``).
+        site.attach_hook_dispatcher(self.dispatch_hook)
 
         # Every admin route uses HyperAdminRoute (SDD B.2): 403/404/409 render inside
         # the admin layout for people (JSON stays for API callers), and it is the one
