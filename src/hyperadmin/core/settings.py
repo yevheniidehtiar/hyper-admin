@@ -112,6 +112,21 @@ class HyperAdminSettings(BaseSettings):
     #: proxy uvicorn does not trust.
     cookie_secure: CookieSecure = "auto"
 
+    # ── OAuth sign-in (docs/specs/oauth-sso.md) ───────────────────────────────
+    # Read only with ``Admin(oauth_backend=...)``; providers are wired in code.
+    #: Fernet key (32 url-safe base64 bytes) that encrypts stored OAuth tokens;
+    #: required with OAuth. Several keys separated by commas rotate it: the first
+    #: encrypts, all decrypt.
+    oauth_token_secret: SecretStr | None = None
+    #: Seconds a sign-in may take between the redirect to the provider and its callback.
+    oauth_state_ttl_seconds: int = Field(default=600, ge=1)
+    #: An access token is refreshed when it expires within this many seconds.
+    oauth_refresh_leeway_seconds: int = Field(default=60, ge=0)
+    #: Where a completed OAuth sign-in lands; ``None`` is the admin index.
+    oauth_login_redirect: str | None = None
+    #: ``(requests, seconds)`` one client may send to the OAuth callback.
+    oauth_callback_rate_limit: tuple[int, int] = (20, 60)
+
     # ── Database ─────────────────────────────────────────────────────────────
     database_url: str = _DEFAULT_DATABASE_URL
     #: Connection pool of the engine HyperAdmin builds from ``database_url`` (no
