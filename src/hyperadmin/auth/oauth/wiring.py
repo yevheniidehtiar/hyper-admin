@@ -106,8 +106,13 @@ def register_routes(admin: Any, path: str) -> None:
     router.add_api_route(
         "/oauth/unlink/{provider}", unlink_post, methods=["POST"], name="admin-oauth-unlink"
     )
-    # The login page shows the one-shot message the refresh middleware leaves.
+    # The login page shows the one-shot message the refresh middleware leaves,
+    # and one "Sign in with ..." button per configured provider.
     admin.templates.env.globals["oauth_flash"] = pop_flash
+    admin.templates.env.globals["oauth_providers"] = [
+        {"name": config.name, "label": config.label, "icon": config.button_icon}
+        for config in admin.oauth_backend.providers.values()
+    ]
 
 
 def add_refresh_middleware(admin: Any, target: Any) -> None:

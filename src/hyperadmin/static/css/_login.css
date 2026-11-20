@@ -51,6 +51,35 @@
   margin-top: var(--ha-space-2);
 }
 
+/* OAuth provider buttons below the password form */
+
+.ha-login-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--ha-space-3);
+  margin: var(--ha-space-4) 0 var(--ha-space-2);
+  color: var(--ha-color-text-muted);
+  font-size: var(--ha-font-size-sm);
+}
+
+.ha-login-divider::before,
+.ha-login-divider::after {
+  content: "";
+  flex: 1;
+  border-top: var(--ha-border-width) solid var(--ha-color-border-light);
+}
+
+.ha-login-providers {
+  display: flex;
+  flex-direction: column;
+}
+
+.ha-login-provider-icon {
+  width: 18px;
+  height: 18px;
+  margin-inline-end: var(--ha-space-2);
+}
+
 /* Sign-in methods page (OAuth link / unlink) */
 
 .ha-oauth-identities {

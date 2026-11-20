@@ -57,6 +57,23 @@
                 {{ _("Sign in") }}
             </button>
         </form>
+        {%- if oauth_providers %}
+        <div class="ha-login-divider" role="separator" data-testid="oauth-divider">
+            <span>{{ _("or sign in with") }}</span>
+        </div>
+        <div class="ha-login-providers" data-testid="oauth-buttons">
+            {%- for provider in oauth_providers %}
+            <a href="{{ admin_prefix }}/oauth/authorize/{{ provider.name }}"
+               class="ha-btn ha-btn-secondary ha-btn-block"
+               data-testid="oauth-btn-{{ provider.name }}">
+                {%- if provider.icon %}
+                <img class="ha-login-provider-icon" src="{{ provider.icon }}" alt="" width="18" height="18">
+                {%- endif %}
+                {{ _("Sign in with %(provider)s", provider=provider.label) }}
+            </a>
+            {%- endfor %}
+        </div>
+        {%- endif %}
     </div>
 </div>
 {%- endblock -%}

@@ -194,6 +194,13 @@ E2E tests use Playwright's accessibility-first locators. Query priority (highest
 | Report filter sidebar / its form / Apply button | `report-filters` / `report-filter-form` / `report-filter-apply` |
 | Report filter Reset / Clear all links | `report-filters-reset` / `report-filters-clear` |
 | Report applied-filter chips / count / ignored-filter alert | `report-applied-filters` / `report-filter-count` / `report-filter-ignored` |
+| Login page OAuth provider button | `oauth-btn-{provider}` |
+| Login page OAuth divider / button group | `oauth-divider` / `oauth-buttons` |
+| Login page notice (session expired) | `login-notice` |
+| OAuth account-exists page | `oauth-link-required` |
+| OAuth settings: provider row | `oauth-identity-{provider}` |
+| OAuth settings: link / unlink control | `oauth-link-{provider}` / `oauth-unlink-{provider}` |
+| OAuth settings: flash / error | `oauth-settings-flash` / `oauth-settings-error` |
 | Request-failure alert (5xx / network error on an HTMX request) | `request-error-toast` |
 | Status pill in a list row | `row-status` |
 | ERP dashboard figures grid / its live region | `dashboard-figures` / `dashboard-figures-region` |
