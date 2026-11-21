@@ -242,6 +242,7 @@ input[type="file"].ha-input {
   display: inline-flex;
   align-items: center;
   gap: var(--ha-space-1);
+  min-block-size: var(--ha-target-min);
   font-weight: var(--ha-font-medium);
 }
 
@@ -425,13 +426,13 @@ input[type="file"].ha-input {
 
 .ha-combobox__control > .ha-icon:first-child {
   position: absolute;
-  inset-inline-start: 10px;
+  inset-inline-start: var(--ha-search-icon-inset);
   color: var(--ha-color-text-muted);
   pointer-events: none;
 }
 
 .ha-combobox__control > .ha-input {
-  padding-inline-start: 36px;
+  padding-inline-start: var(--ha-search-text-inset);
   padding-inline-end: calc(var(--ha-space-2) + var(--ha-target-min) + 24px);
 }
 
@@ -564,13 +565,24 @@ input[type="file"].ha-input {
   }
 }
 
-.ha-autocomplete--combobox > .ha-autocomplete__select option[data-ha-active],
-.ha-autocomplete--combobox > .ha-autocomplete__select option:hover {
-  background: var(--ha-surface-hover);
-}
-
+/* The chosen option. Chromium paints a selected option of an unfocused listbox in
+   its own grey; only a background-image overrides that, hence the flat gradient. */
 .ha-autocomplete--combobox > .ha-autocomplete__select option:checked {
   font-weight: 600;
+  color: var(--ha-color-text-strong);
+  background: linear-gradient(var(--ha-surface-selected), var(--ha-surface-selected));
+}
+
+.ha-autocomplete--combobox > .ha-autocomplete__select option[data-ha-active],
+.ha-autocomplete--combobox > .ha-autocomplete__select option:hover {
+  background: linear-gradient(var(--ha-surface-hover), var(--ha-surface-hover));
+}
+
+/* The hidden select carries the error; the visible search input shows it,
+   like every other invalid field. */
+.ha-autocomplete--combobox:has(> .ha-autocomplete__select[aria-invalid="true"]) .ha-autocomplete__search {
+  border-color: var(--ha-color-danger-text);
+  border-width: 2px;
 }
 
 /* ==========================================================================
