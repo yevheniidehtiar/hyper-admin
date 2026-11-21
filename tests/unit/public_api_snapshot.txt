@@ -308,6 +308,7 @@ hyperadmin.core.model.ModelAdmin.get_verbose_name_plural :: classmethod (cls, mo
 hyperadmin.core.model.ModelAdmin.icon :: attr: str = ''
 hyperadmin.core.model.ModelAdmin.nav_group :: attr: str | babel.support.LazyProxy | None = None
 hyperadmin.core.model.ModelAdmin.nav_order :: attr: int = 0
+hyperadmin.core.model.ModelAdmin.permissions :: attr: Sequence[tuple[str, str]] = ()
 hyperadmin.core.model.ModelAdmin.verbose_name :: attr: str | babel.support.LazyProxy | None = None
 hyperadmin.core.model.ModelAdmin.verbose_name_plural :: attr: str | babel.support.LazyProxy | None = None
 hyperadmin.core.model.ModelAdmin.view_class :: class

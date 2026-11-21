@@ -997,14 +997,17 @@ class Admin:
         sync_codenames = getattr(self.permission_registry, "sync_codenames", None)
         if not self.plugins.permissions or sync_codenames is None:
             return
-        from hyperadmin.auth.permissions import generate_default_permissions
+        from hyperadmin.auth.permissions import (
+            generate_admin_permissions,
+            generate_default_permissions,
+        )
 
         taken = {
             codename
             for model_name, admin_class in models
             for codename, _ in [
                 *generate_default_permissions(model_name),
-                *(getattr(admin_class, "permissions", None) or []),
+                *generate_admin_permissions(model_name, admin_class),
             ]
         }
         await sync_codenames(plugin_permission_rows(self.plugins, taken=taken))

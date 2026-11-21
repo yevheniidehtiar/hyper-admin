@@ -348,7 +348,7 @@ bearer tokens and single-page apps.
 | `AuthenticationBackend.login` and the built-in login page | `TokenCookie(token_endpoint=...)`, or your app's own login page with `ExternalAuth(login_url="/login")` |
 | `AuthenticationBackend.logout` | `ExternalAuth(logout_url="/")` |
 | Everyone who passes `authenticate` can open the admin | `ExternalAuth(can_access=...)`. By default the user needs a truthy `is_superuser` or `is_staff` |
-| `ModelView.is_accessible(request)` | `ExternalAuth(has_permission=...)`: a function `has_permission(user, codename)` asked for `view_post`, `add_post`, `change_post`, `delete_post` and `action_<name>` |
+| `ModelView.is_accessible(request)` | `ExternalAuth(has_permission=...)`: a function `has_permission(user, codename)` asked for `view_post`, `add_post`, `change_post`, `delete_post` and `action_<name>_post` |
 | `ModelView.is_visible(request)` | The sidebar lists only the models the user holds `view_<model>` on |
 | No per-row rule | `AdminOptions(object_permission_checker=...)` and `ModelAdmin.get_queryset(request)` |
 

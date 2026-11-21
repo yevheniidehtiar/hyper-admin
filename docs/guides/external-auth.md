@@ -75,7 +75,8 @@ comes from user input.
 
 The admin asks for codenames of the form `<action>_<model>`, where `<model>` is
 the lowercased model class name: `view_project`, `add_project`,
-`change_project`, `delete_project`, and `action_<name>` for custom actions.
+`change_project`, `delete_project`, and `action_<name>_<model>` for custom actions
+(`action_archive_project`).
 
 The permission checker is chosen in this order:
 

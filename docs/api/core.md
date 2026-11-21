@@ -59,7 +59,7 @@ field from a `HYPERADMIN_<FIELD>` environment variable. The settings table is in
 ## Actions, fieldsets and inlines
 
 Decorate a `ModelAdmin` method with `action` to add a custom single-record or bulk action; it
-checks the `action_<name>` permission
+checks the `action_<name>_<model>` permission
 (see [Authentication & Permissions](auth.md#permission-codenames)). Use `FieldsetSpec` in
 `AdminOptions.fieldsets` to group form fields, and `InlineModelSpec` in `AdminOptions.inlines`
 to edit related rows on the parent's form.

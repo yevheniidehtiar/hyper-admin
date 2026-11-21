@@ -19,7 +19,9 @@ from hyperadmin.auth.models import (
     UserGroup,
     UserPermission,
 )
+from hyperadmin.core.actions import action_permission_codename, collect_actions
 from hyperadmin.core.adapters import open_session, require_engine_or_session_factory
+from hyperadmin.core.panels import collect_panels
 
 if TYPE_CHECKING:
     from collections.abc import Iterable
@@ -66,6 +68,32 @@ def generate_default_permissions(model_name: str) -> list[tuple[str, str]]:
     return [(f"{action}_{name}", f"Can {action} {name}") for action in _ACTIONS]
 
 
+def generate_admin_permissions(model_name: str, admin_class: Any) -> list[tuple[str, str]]:
+    """Return the (codename, human_name) tuples a ``ModelAdmin`` adds to the four defaults.
+
+    In order, without duplicates:
+
+    - ``ModelAdmin.permissions``: extra ``(codename, name)`` tuples declared by hand;
+    - one ``action_<name>_<model>`` per ``@action`` method;
+    - one codename per detail panel (``AdminOptions.panels`` and ``@panel`` methods):
+      the panel's ``permission=``, or ``view_<model>_panel_<slug>``.
+    """
+    rows: dict[str, str] = {}
+    for codename, name in getattr(admin_class, "permissions", None) or []:
+        rows.setdefault(codename, name)
+    if isinstance(admin_class, type):
+        for action_def in collect_actions(admin_class):
+            rows.setdefault(
+                action_permission_codename(action_def.name, model_name),
+                f"Can run {action_def.name} on {model_name}",
+            )
+        options = getattr(admin_class, "options", None)
+        for panel_def in [*(getattr(options, "panels", None) or []), *collect_panels(admin_class)]:
+            codename = panel_def.permission or f"view_{model_name}_panel_{panel_def.slug}"
+            rows.setdefault(codename, f"Can view the {panel_def.slug} panel of {model_name}")
+    return list(rows.items())
+
+
 class PermissionSyncService:
     """Syncs auto-generated and custom permissions to the database on startup."""
 
@@ -100,9 +128,8 @@ class PermissionSyncService:
                         )
                         existing_set.add(codename)
 
-                # Custom permissions from ModelAdmin.permissions
-                custom = getattr(admin_class, "permissions", None) or []
-                for codename, name in custom:
+                # ModelAdmin.permissions, @action and detail-panel codenames
+                for codename, name in generate_admin_permissions(model_name, admin_class):
                     if codename not in existing_set:
                         to_create.append(
                             Permission(codename=codename, name=name, content_type=model_name)

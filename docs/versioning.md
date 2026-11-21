@@ -38,7 +38,7 @@ The compatibility rules on this page cover the public API and nothing else.
 | Theming | The `--ha-*` CSS custom properties listed under [Design Tokens](frontend/overview.md#design-tokens) |
 | Plugins | The `hyperadmin.plugins` entry-point group; the `Plugin` protocol (`name`, `on_register(admin)`, the optional `settings_model`); the `PluginRegistry` methods a plugin calls from `on_register` (`add_page`, `add_nav_entry`, `add_template_dir`, `set_static_dir`, `add_permission`); and the lifecycle hook names in `hyperadmin.core.plugins.LIFECYCLE_HOOKS`. Hooks are called with keyword arguments only |
 | Command line | The `hyperadmin` commands `createsuperuser` and `init-db`, their option names, and an exit status of `0` for success and non-zero for failure |
-| Permissions | The codename format `<action>_<model>` (`view_`, `add_`, `change_`, `delete_` and `action_<name>`) described in [Bring Your Own Auth](guides/external-auth.md#permissions) |
+| Permissions | The codename format `<action>_<model>` (`view_`, `add_`, `change_`, `delete_` and `action_<name>_<model>`), the detail-panel codename `view_<model>_panel_<slug>`, and the `ModelAdmin.permissions` list of extra codenames described in [Bring Your Own Auth](guides/external-auth.md#permissions) |
 | Database tables | The names of the built-in `hyperadmin_*` tables. A release that adds a column or a table lists it under [Upgrading the built-in auth tables](guides/existing-app.md#upgrading-the-built-in-auth-tables) |
 
 ### What is not public
