@@ -18,6 +18,10 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
   reports plugin's index said "No reports available"; it now registers "Invoices by status" and
   "Bills by status". `hyperadmin-reports` now shows an enum dimension by its value ("Paid")
   instead of the member ("InvoiceStatus.PAID") in the grid, charts and exports.
+- **Second select under an autocomplete after a failed submit.** A 422 form re-render was
+  written into the page a second time with raw `innerHTML`, after htmx had swapped and enhanced
+  it, so the autocomplete came back un-enhanced: its native `<select>` showed under the search
+  box and the search no longer fetched choices. htmx now does the only swap.
 - **Phone navbar and touch targets** (#1018, #1014, #1026). Below 640px the language and theme
   controls move into the account menu and the brand shrinks to its mark (the link keeps the site
   name as its label), so pages no longer scroll sideways at 360px. Sidebar group toggles, pin

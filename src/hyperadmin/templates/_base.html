@@ -50,14 +50,12 @@
             return;
           }
           if (xhr && xhr.status === 422) {
-            // Force swap of the response HTML into the target and clear error state
+            // Swap the re-rendered form through htmx itself, so the new markup is
+            // processed (hx-* attributes) and htmx:load re-inits widgets such as
+            // the autocomplete. Writing innerHTML here would replace that work with
+            // inert, un-enhanced markup.
             evt.detail.shouldSwap = true;
             evt.detail.isError = false;
-            // Fallback: ensure the target gets updated even if default swapping is skipped
-            var target = evt.detail && evt.detail.target;
-            if (target && typeof xhr.responseText === 'string') {
-              requestAnimationFrame(function(){ target.innerHTML = xhr.responseText; });
-            }
           }
         } catch (e) {
           // no-op: defensive guard to avoid breaking the page if something goes wrong
