@@ -70,7 +70,11 @@ The base widget class. Pairs a Jinja2 template with optional HTMX attributes and
 
 Decorate a `ModelAdmin` method with `panel` to add a tab to the detail page, or pass panel
 definitions in `AdminOptions.panels`. `pdf_stream_panel` builds a ready-made panel definition
-that streams a PDF inline; `PDFStreamPanel` is the same function under a class-style name.
+that streams a PDF inline.
+
+!!! warning "`PDFStreamPanel` is deprecated"
+    `hyperadmin.PDFStreamPanel` is the same function under a class-style name. It emits a
+    `DeprecationWarning` and will be removed in 0.6; use `pdf_stream_panel`.
 
 ::: hyperadmin.core.panels.panel
 
