@@ -2,7 +2,9 @@
 type: epic
 id: Plo-enMpTWhB
 title: "epic(plugin-logfire): hyperadmin-logfire — first official plugin"
-status: todo
+status: in_progress
+locked_by: autopilot
+branch: epic/epic-plugin-logfire-first-plugin
 priority: high
 owner: null
 labels:
