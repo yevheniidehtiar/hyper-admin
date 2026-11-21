@@ -169,6 +169,10 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
   `sliders-horizontal`) available through `icon(name)`.
 
 ### Changed
+- `HyperAdminSettings.items_per_page` (`HYPERADMIN_ITEMS_PER_PAGE`) now sets the rows a list
+  page shows when the URL has no `page_size` parameter; it was accepted but never read. Its
+  default is now `10`, the page size lists already used, so nothing changes unless you set it.
+  Values above 100 are capped at 100 (st-v100-freeze-03).
 - `action(requires_selection=...)` is annotated `bool | None` and defaults to `None` (derive
   it from `bulk`), so the public signature no longer shows an `object()` sentinel. Behaviour is
   unchanged (st-v100-freeze-03).

@@ -22,7 +22,7 @@ class TestDefaults:
         assert settings.template_dirs == []
         assert settings.create_tables is False
         assert settings.theme == "auto"
-        assert settings.items_per_page == 20
+        assert settings.items_per_page == 10
         assert settings.date_format == "%Y-%m-%d"
         assert settings.datetime_format == "%Y-%m-%d %H:%M:%S"
         assert settings.default_locale == "en"

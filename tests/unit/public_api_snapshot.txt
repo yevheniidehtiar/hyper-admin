@@ -49,7 +49,7 @@ hyperadmin.HyperAdminSettings.debug :: field: bool = False
 hyperadmin.HyperAdminSettings.default_locale :: field: str = 'en'
 hyperadmin.HyperAdminSettings.discover_apps :: field: list[str] = list()
 hyperadmin.HyperAdminSettings.is_default_secret_key :: property -> bool
-hyperadmin.HyperAdminSettings.items_per_page :: field: int = 20
+hyperadmin.HyperAdminSettings.items_per_page :: field: int = 10
 hyperadmin.HyperAdminSettings.locale_response_header :: field: bool = True
 hyperadmin.HyperAdminSettings.mount_mode :: field: Literal['isolated', 'router'] = 'isolated'
 hyperadmin.HyperAdminSettings.nav_pins_max :: field: int = 20
@@ -416,7 +416,7 @@ hyperadmin.realtime.RealtimeEvent.pk :: field: PrimaryKey
 hyperadmin.realtime.RealtimeEvent.to_bytes :: def (self) -> bytes
 hyperadmin.realtime.RealtimeEvent.to_dict :: def (self) -> dict[str, str | None]
 hyperadmin.realtime.RealtimeSettings :: alias of hyperadmin.RealtimeSettings
-hyperadmin.routing.HyperAdminRouter :: class (engine: Any, templates: Jinja2Templates, permission_checker: Any = None, storage: Any = None, timezone: tzinfo | None = None, datetime_format: str = '%Y-%m-%d %H:%M:%S', session_factory: SessionFactory | None = None, *, debug: bool = False, route_class: type[APIRoute] | None = None, realtime_emitter: RealtimeEmitter | None = None, realtime_settings: RealtimeSettings | None = None, count_cache: CountCache | None = None, concurrency_use_updated_at: bool = False, occ_render_dialog: bool = True, home_page: Callable[[], PluginHomePage | None] | None = None) -> None
+hyperadmin.routing.HyperAdminRouter :: class (engine: Any, templates: Jinja2Templates, permission_checker: Any = None, storage: Any = None, timezone: tzinfo | None = None, datetime_format: str = '%Y-%m-%d %H:%M:%S', session_factory: SessionFactory | None = None, *, debug: bool = False, route_class: type[APIRoute] | None = None, realtime_emitter: RealtimeEmitter | None = None, realtime_settings: RealtimeSettings | None = None, count_cache: CountCache | None = None, concurrency_use_updated_at: bool = False, occ_render_dialog: bool = True, home_page: Callable[[], PluginHomePage | None] | None = None, default_page_size: int = 10) -> None
 hyperadmin.routing.HyperAdminRouter.generate_routes :: def (self) -> None
 hyperadmin.routing.HyperAdminRouter.get_admin_dashboard_view :: def (self) -> Callable[[Request], Awaitable[Response]]
 hyperadmin.routing.HyperAdminRouter.get_routers :: def (self) -> list[APIRouter]
@@ -448,7 +448,7 @@ hyperadmin.views.dynamic.DynamicModelView.download_file_view :: async def (self,
 hyperadmin.views.dynamic.DynamicModelView.inline_add_row_view :: async def (self, request: Request, inline_prefix: str, index: int = 0) -> Response
 hyperadmin.views.dynamic.DynamicModelView.inline_edit_form_view :: async def (self, request: Request, item_id: Any, field: str, cancel: int = Query(0)) -> Response
 hyperadmin.views.dynamic.DynamicModelView.inline_save_view :: async def (self, request: Request, item_id: Any, field: str) -> Response
-hyperadmin.views.dynamic.DynamicModelView.list_view :: async def (self, request: Request, page: int = Query(1), page_size: int = Query(10), search: str = Query(), sort_by: str = Query(None), sort_direction: str = Query(asc), cursor: str = Query()) -> Response
+hyperadmin.views.dynamic.DynamicModelView.list_view :: async def (self, request: Request, page: int = Query(1), page_size: int | None = Query(None), search: str = Query(), sort_by: str = Query(None), sort_direction: str = Query(asc), cursor: str = Query()) -> Response
 hyperadmin.views.dynamic.DynamicModelView.occ_render_dialog :: attr: bool = True
 hyperadmin.views.dynamic.DynamicModelView.palette_records :: async def (self, request: Request, query: str, limit: int) -> list[dict[str, str]] | None
 hyperadmin.views.dynamic.DynamicModelView.render_panel_view :: async def (self, request: Request, item_id: Any, slug: str) -> Response

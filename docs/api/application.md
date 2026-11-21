@@ -58,6 +58,7 @@ keyword arguments.
 | `session_max_age` | `int` | `1209600` | Session cookie lifetime in seconds (14 days) |
 | `session_same_site` | `"lax" \| "strict" \| "none"` | `"lax"` | `SameSite` attribute of the session cookie |
 | `user_cache_ttl` | `int` | `0` | Seconds the signed-in user and its permission set are cached per worker (`HYPERADMIN_USER_CACHE_TTL`, 0 to 60; `0` = off). Built-in session auth and permission checker with integer user ids only. Other workers can serve a stale user for up to the TTL; see [Going to production](../guides/existing-app.md#8-going-to-production) |
+| `items_per_page` | `int` | `10` | Rows a list page shows when the URL has no `page_size` parameter (`HYPERADMIN_ITEMS_PER_PAGE`). Values above 100 are capped at 100 |
 | `nav_pins_max` | `int` | `20` | Most sidebar pages one user may pin (`HYPERADMIN_NAV_PINS_MAX`, at least 1). Pins need auth (built-in or `auth=`) and the `hyperadmin_nav_pin` table |
 | `cookie_secure` | `"auto" \| bool` | `"auto"` | `Secure` flag for every admin cookie. `"auto"` sets it when the request scheme is https, so plain-http development and `TestClient` keep working; set `true` in production behind a TLS proxy |
 

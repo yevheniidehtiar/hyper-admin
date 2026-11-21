@@ -203,9 +203,9 @@ class HyperAdminSettings(BaseSettings):
 
     # ── UI ────────────────────────────────────────────────────────────────────
     theme: ThemeLiteral = "auto"
-    #: Accepted but not read yet: the list view's page size comes from its
-    #: ``page_size`` query parameter (10 by default).
-    items_per_page: int = Field(default=20, gt=0)
+    #: Rows a list page shows when the request has no ``page_size`` query parameter.
+    #: A value above 100 (the most a list page shows) is capped at 100.
+    items_per_page: int = Field(default=10, gt=0)
 
     # ── Uploads ───────────────────────────────────────────────────────────────
     upload_dir: str = "uploads"
