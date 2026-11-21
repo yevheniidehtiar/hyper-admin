@@ -15,7 +15,12 @@ from hyperadmin.adapters._search import contains_clause, detect_search_columns
 from hyperadmin.adapters.filtering import build_clauses
 from hyperadmin.adapters.introspection import coerce_column_value, introspect_primary_key
 from hyperadmin.adapters.introspection import datetime_kind as _introspect_datetime_kind
-from hyperadmin.core.adapters import BaseAdapter, SessionFactory, scoped_queryset_filters
+from hyperadmin.core.adapters import (
+    BaseAdapter,
+    SessionFactory,
+    run_save_hook,
+    scoped_queryset_filters,
+)
 from hyperadmin.core.choices import ChoiceItem
 from hyperadmin.core.display import get_display_name
 from hyperadmin.core.filtering import FilterCondition, normalize_filters
@@ -188,11 +193,13 @@ class SQLAlchemyAdapter(BaseAdapter):
             if issubclass(self.model, SQLModel)
             else self.model(**data)
         )
+        await run_save_hook(db_obj, "before_save")
         async with self._session() as session:
             session.add(db_obj)
             await session.commit()
             await self.invalidate_count_cache()
             await session.refresh(db_obj)
+        await run_save_hook(db_obj, "after_save")
         return db_obj
 
     async def update(
@@ -227,10 +234,12 @@ class SQLAlchemyAdapter(BaseAdapter):
             if db_obj:
                 for key, value in data.items():
                     setattr(db_obj, key, value)
+                await run_save_hook(db_obj, "before_save")
                 session.add(db_obj)
                 await session.commit()
                 await self.invalidate_count_cache()
                 await session.refresh(db_obj)
+                await run_save_hook(db_obj, "after_save")
             return db_obj
 
     async def delete(self, pk: Any) -> None:
