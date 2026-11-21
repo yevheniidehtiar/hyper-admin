@@ -68,8 +68,11 @@ class DynamicModelViewBase:
         admin_lookup: Callable[[Any], Any] | None = None,
         debug: bool = False,
         occ_render_dialog: bool = True,
+        default_page_size: int = 10,
     ) -> None:
         self.adapter = adapter
+        # ``settings.items_per_page``: the list page size without a ``page_size`` query.
+        self.default_page_size = default_page_size
         # ``settings.debug``: list_view re-raises database errors instead of
         # rendering the list-error banner (BYOA SDD D.2).
         self.debug = debug

@@ -137,6 +137,7 @@ def create_admin_router(  # noqa: PLR0912, PLR0913, PLR0915, PLR0917
     concurrency_use_updated_at: bool = False,
     occ_render_dialog: bool = True,
     palette_search: PaletteSearch | None = None,
+    default_page_size: int = 10,
 ) -> APIRouter:
     """Creates an APIRouter for a given model with the specified admin options.
 
@@ -209,6 +210,7 @@ def create_admin_router(  # noqa: PLR0912, PLR0913, PLR0915, PLR0917
         admin_lookup=admin_lookup,
         debug=debug,
         occ_render_dialog=occ_render_dialog,
+        default_page_size=default_page_size,
     )
     model_name = model.__name__.lower()
     if palette_search is not None and options.palette_search and options.can_list:
@@ -469,6 +471,8 @@ class HyperAdminRouter:
             errors instead of rendering the list-error banner (BYOA SDD D.2).
         route_class: The admin's ``HyperAdminRoute`` (``views/route.py``), set
             on every generated router. Defaults to one bound to ``templates``.
+        default_page_size: The admin's ``settings.items_per_page``: rows a list
+            page shows when the request has no ``page_size`` (capped at 100).
 
     The timezone and datetime format reach the view layer by living on the
     shared Jinja environment (as the ``hyperadmin_timezone`` /
@@ -495,6 +499,7 @@ class HyperAdminRouter:
         concurrency_use_updated_at: bool = False,
         occ_render_dialog: bool = True,
         home_page: "Callable[[], PluginHomePage | None] | None" = None,
+        default_page_size: int = 10,
     ) -> None:
         self.engine = engine
         #: Lookup of the plugin home page (read per request); ``None`` = the welcome page.
@@ -511,6 +516,7 @@ class HyperAdminRouter:
         self.count_cache: CountCache = count_cache or InMemoryTTLCache()
         self.concurrency_use_updated_at = concurrency_use_updated_at
         self.occ_render_dialog = occ_render_dialog
+        self.default_page_size = default_page_size
         self.notification_models: set[str] = set()
         #: Registered models in registry order, for the sidebar nav tree.
         self.nav_sources: list[ModelNavSource] = []
@@ -601,6 +607,7 @@ class HyperAdminRouter:
                 concurrency_use_updated_at=self.concurrency_use_updated_at,
                 occ_render_dialog=self.occ_render_dialog,
                 palette_search=palette_search,
+                default_page_size=self.default_page_size,
             )
             self.routers.append(router)
             if (

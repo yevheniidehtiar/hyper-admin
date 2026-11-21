@@ -42,6 +42,9 @@ from hyperadmin.views.template_filters import TIMEZONE_GLOBAL, request_tz
 logger = logging.getLogger(__name__)
 
 #: Pager keys of a list with no cursor links (offset pages and failed queries).
+#: The most rows one list page shows (``page_size`` and ``settings.items_per_page``).
+_MAX_PAGE_SIZE = 100
+
 _NO_NEIGHBOURS: dict[str, Any] = {
     "cursor": None,
     "has_next": False,
@@ -406,7 +409,7 @@ class ListViewMixin(SavedViewsMixin):
         self,
         request: Request,
         page: int = Query(1, ge=1),
-        page_size: int = Query(10, ge=1, le=100),
+        page_size: int | None = Query(None, ge=1, le=_MAX_PAGE_SIZE),
         search: str = Query(""),
         sort_by: str = Query(None),
         sort_direction: str = Query("asc", pattern="^(asc|desc)$"),
@@ -423,7 +426,8 @@ class ListViewMixin(SavedViewsMixin):
 
         With ``pagination_mode="cursor"`` the page comes from ``?cursor=`` (keyset over
         ``(sort_col, pk)``, no total); a malformed cursor is a 400. In ``"offset"`` mode
-        ``cursor`` is ignored and ``page`` selects the page.
+        ``cursor`` is ignored and ``page`` selects the page. Without ``page_size`` the page
+        holds ``settings.items_per_page`` rows (at most 100).
         """
         await self._check_permission(request, "view")
         query = request.query_params
@@ -455,6 +459,8 @@ class ListViewMixin(SavedViewsMixin):
         # Format order_by for adapter (use negative prefix for descending)
         order_by = f"-{sort_by}" if sort_direction == "desc" else sort_by
         page = min(page, _MAX_LIST_PAGE)
+        if page_size is None:
+            page_size = min(self.default_page_size, _MAX_PAGE_SIZE)
         list_error: dict[str, bool] | None = None
 
         try:

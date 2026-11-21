@@ -49,10 +49,10 @@ site.register(Product, ProductAdmin)
 field from a `HYPERADMIN_<FIELD>` environment variable. The settings table is in
 [Application](application.md#settings).
 
-!!! note "`items_per_page` is not used"
-    `HyperAdminSettings.items_per_page` (`HYPERADMIN_ITEMS_PER_PAGE`) is accepted but no code
-    reads it in this release. The list view's page size comes from the `page_size` query
-    parameter (10 by default, 100 at most).
+!!! note "List page size"
+    `HyperAdminSettings.items_per_page` (`HYPERADMIN_ITEMS_PER_PAGE`, default `10`) is the number
+    of rows a list page shows when the URL has no `page_size` query parameter. A `page_size` in
+    the URL wins. Either value is capped at 100 rows.
 
 ::: hyperadmin.core.settings.HyperAdminSettings
 
