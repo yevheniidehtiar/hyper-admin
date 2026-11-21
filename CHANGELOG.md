@@ -14,6 +14,10 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
   `add_<model>`, so a read-only user saw "Create <model>" and got a 403. The button now follows
   the same permission the create routes check (and `AdminOptions.can_create`). The ERP example's
   dashboard quick actions follow each `add_<model>` permission too.
+- **Second select under an autocomplete after a failed submit.** A 422 form re-render was
+  written into the page a second time with raw `innerHTML`, after htmx had swapped and enhanced
+  it, so the autocomplete came back un-enhanced: its native `<select>` showed under the search
+  box and the search no longer fetched choices. htmx now does the only swap.
 - **Phone navbar and touch targets** (#1018, #1014, #1026). Below 640px the language and theme
   controls move into the account menu and the brand shrinks to its mark (the link keeps the site
   name as its label), so pages no longer scroll sideways at 360px. Sidebar group toggles, pin
