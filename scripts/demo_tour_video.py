@@ -1,51 +1,89 @@
 """Render the demo tour of the docs: feature screenshots and a captioned MP4/WebM video.
 
-Starts the ERP example (``examples.erp.main``, in-memory database, demo accounts seeded)
-on a free port, walks through it with Playwright and writes:
+The video shows what sets HyperAdmin apart for a backend-only team (presence, conflict
+resolution, speed on large tables, load testing, plugins, auth, the widget set), not the
+create/edit/delete pages every admin has. It boots the apps it needs from this repository,
+each on a free port with a throwaway database:
 
-* ``docs/assets/demo/*.png``: the screenshot tour of ``docs/demo.md`` and the README
-* ``docs/assets/screenshots/{code-to-ui,list-search-filters,...}.png``: feature shots
+=============  ==============================================  ==============================
+key            app                                             used by
+=============  ==============================================  ==============================
+``erp``        ``examples.erp.main`` (demo accounts, realtime)  most scenes
+``occ``        ``tests.e2e.apps.occ_conflict``                 the conflict dialog
+``scale``      ``tests.e2e.apps.scalability`` (1.2 M rows)     the speed scene
+``dashboard``  ``tests.e2e.apps.dashboard_builder``            dashboard widgets
+``reports``    ``examples/full-demo`` (with Logfire)           pivot report, Logfire spans
+``tasks``      ``tests.e2e.apps.tasks_monitoring``             the tasks plugin
+``oauth``      ``tests.e2e.apps.oauth``                        the SSO login button
+=============  ==============================================  ==============================
+
+Every figure on screen is measured during the run (response times, SQL statements, the
+seeding and the Locust run) or quoted from ``docs/compatibility.md`` and labelled so.
+
+Outputs:
+
 * ``docs/assets/demo/hyperadmin-demo.{mp4,webm}`` and ``hyperadmin-demo-poster.jpg``
+* ``docs/assets/demo/*.png``: the screenshot tour of ``docs/demo.md`` and the README
+* ``docs/assets/screenshots/*.png``: one shot per feature scene (``Reel.shot(save_as=...)``)
 
 Usage::
 
-    uv run python scripts/demo_tour_video.py              # screenshots and video
-    uv run python scripts/demo_tour_video.py --no-video   # screenshots only
+    uv sync --all-extras --all-packages
+    uv run python scripts/demo_tour_video.py                   # everything
+    uv run python scripts/demo_tour_video.py --no-screenshots  # the video only
+    uv run python scripts/demo_tour_video.py --no-video        # the docs screenshots only
+    uv run python scripts/demo_tour_video.py --list-scenes
+    uv run python scripts/demo_tour_video.py --scenes presence,conflict --frames /tmp/f
 
-Needs Chromium for Playwright (``uv run playwright install chromium``) and ``ffmpeg``
-with ``libx264`` and ``libvpx-vp9`` on ``PATH`` for the video. The video is a sequence
-of still frames (crisp text, small files) joined with short cross-fades; each frame
-carries a caption that names the feature on screen. All data is synthetic seed data.
+``--scenes`` renders a subset into ``--frames`` (PNG frames, no encoding) to check one
+scene after a UI change. A full run takes about four minutes, most of it the Locust run.
 
-On macOS, Chromium renders date and number inputs in the system locale. For en-US
-inputs (as the committed assets have), render with the Linux browser of the Playwright
-image, matching the installed Playwright version::
+Each scene is one ``scene_*`` function listed in ``SCENES``: reorder, drop or retime
+scenes there. Needs Chromium for Playwright (``uv run playwright install chromium``),
+``ffmpeg`` with ``libx264`` and ``libvpx-vp9`` on ``PATH``, and ``locust`` (the
+``loadtest`` extra). The video is a sequence of still frames (crisp text, small files)
+joined with short cross-fades; captions are DOM overlays.
+
+On macOS, Chromium renders date and number inputs in the system locale. For en-US inputs
+(as the committed assets have), render with the Linux browser of the Playwright image,
+matching the installed Playwright version::
 
     docker run -d --rm --name tour-browser -p 127.0.0.1:3555:3000 --init --ipc=host \\
         mcr.microsoft.com/playwright:v1.63.0-noble \\
         npx -y playwright@1.63.0 run-server --port 3000 --host 0.0.0.0
     uv run python scripts/demo_tour_video.py --browser-ws ws://127.0.0.1:3555/
+
+The OAuth scene always uses a local Chromium: its stand-in identity provider is served by
+the app itself, and the server must reach it under the same address as the browser.
 """
 
 from __future__ import annotations
 
 import argparse
 import base64
+import csv
 import html
+import os
+import re
 import shutil
+import statistics
 import subprocess
 import sys
 import tempfile
+import time
+from contextlib import ExitStack
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-from erp_screenshots import erp_server, optimise_png
+from erp_screenshots import _free_port, app_server, optimise_png
+from PIL import Image
 from playwright.sync_api import (
     Browser,
     BrowserContext,
     Locator,
     Page,
+    Playwright,
     ViewportSize,
     expect,
     sync_playwright,
@@ -55,9 +93,11 @@ from pygments.formatters import HtmlFormatter
 from pygments.lexers import PythonLexer
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
+    from collections.abc import Callable, Sequence
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))  # tests.e2e.apps.scalability_models seeds the large tables
+
 DEMO_DIR = ROOT / "docs" / "assets" / "demo"
 SHOTS_DIR = ROOT / "docs" / "assets" / "screenshots"
 
@@ -67,10 +107,17 @@ PHONE: ViewportSize = {"width": 390, "height": 844}
 # Video frames: 1440x810 CSS pixels rendered at 4/3 -> 1920x1080.
 VIDEO_VIEWPORT: ViewportSize = {"width": 1440, "height": 810}
 VIDEO_SCALE = 4 / 3
+# One browser of a two-user scene, shown at half width next to the other.
+PAIR_VIEWPORT: ViewportSize = {"width": 1200, "height": 960}
 FADE = 0.4  # seconds of cross-fade into a new scene
 CUT = 0.05  # near-instant transition between frames of one scene (typing, clicks)
 FPS = 25
 OUTPUT_SIZE = "1600:900"  # sharp enough for UI text, keeps the files a few MB
+SCALE = 100  # multiplier of tests.e2e.apps.scalability_models: 100 gives 1.2 M rows
+LOCUST_USERS = 20
+LOCUST_SECONDS = 20
+# Montage crops left out of the closing grid of the widgets scene.
+GRID_SKIP = ("Bulk actions", "Pagination", "Enum select", "Grouped sidebar", "Task queues")
 
 # The backend code the tour starts from: an excerpt of examples/erp/sales.
 MODEL_CODE = """\
@@ -120,8 +167,8 @@ CAPTION_JS = """([title, sub, where]) => {
   el.setAttribute('aria-hidden', 'true');
   const vertical = where === 'top' ? 'top:84px' : 'bottom:30px';
   el.style.cssText = `position:fixed;left:50%;${vertical};transform:translateX(-50%);
-    z-index:2147483647;max-width:78%;padding:14px 28px;border-radius:14px;
-    background:rgba(15,23,42,.93);color:#fff;text-align:center;pointer-events:none;
+    z-index:2147483647;max-width:80%;padding:14px 28px;border-radius:14px;
+    background:rgba(15,23,42,.94);color:#fff;text-align:center;pointer-events:none;
     font-family:Inter,system-ui,sans-serif;box-shadow:0 12px 32px rgba(0,0,0,.35);`;
   const t = document.createElement('div');
   t.textContent = title;
@@ -130,7 +177,7 @@ CAPTION_JS = """([title, sub, where]) => {
   if (sub) {
     const s = document.createElement('div');
     s.textContent = sub;
-    s.style.cssText = 'font-size:16px;font-weight:450;opacity:.82;margin-top:4px';
+    s.style.cssText = 'font-size:16px;font-weight:450;opacity:.84;margin-top:4px';
     el.appendChild(s);
   }
   document.body.appendChild(el);
@@ -147,9 +194,43 @@ RING_JS = """(box) => {
   document.body.appendChild(el);
 }"""
 
+# A card of measured figures, pinned to the top right of the page.
+METRICS_JS = """([title, rows, note]) => {
+  const el = document.createElement('div');
+  el.className = 'demo-metrics';
+  el.setAttribute('aria-hidden', 'true');
+  el.style.cssText = `position:fixed;right:22px;top:76px;width:410px;z-index:2147483646;
+    padding:18px 22px;border-radius:14px;background:rgba(15,23,42,.95);color:#e2e8f0;
+    font-family:Inter,system-ui,sans-serif;box-shadow:0 16px 40px rgba(0,0,0,.4);
+    pointer-events:none;`;
+  const h = document.createElement('div');
+  h.textContent = title;
+  h.style.cssText = 'font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#2dd4bf;margin-bottom:10px';
+  el.appendChild(h);
+  for (const [label, value] of rows) {
+    const r = document.createElement('div');
+    r.style.cssText = 'display:flex;justify-content:space-between;gap:16px;padding:6px 0;border-top:1px solid rgba(148,163,184,.18);font-size:15px';
+    const l = document.createElement('span'); l.textContent = label; l.style.opacity = '.85';
+    const v = document.createElement('b'); v.textContent = value; v.style.cssText = 'color:#fff;white-space:nowrap';
+    r.append(l, v); el.appendChild(r);
+  }
+  if (note) {
+    const n = document.createElement('div');
+    n.textContent = note;
+    n.style.cssText = 'font-size:12px;opacity:.65;margin-top:10px;line-height:1.4';
+    el.appendChild(n);
+  }
+  document.body.appendChild(el);
+}"""
+
 CLEAR_JS = """() => {
   document.getElementById('demo-caption')?.remove();
   document.querySelectorAll('.demo-ring').forEach((el) => el.remove());
+}"""
+
+TTFB_JS = """() => {
+  const nav = performance.getEntriesByType('navigation')[0];
+  return nav.responseStart - nav.requestStart;
 }"""
 
 
@@ -160,8 +241,9 @@ class Reel:
     workdir: Path
     frames: list[tuple[Path, float, float]] = field(default_factory=list)
     poster: Path | None = None
+    save_shots: bool = True
 
-    def shot(
+    def shot(  # noqa: PLR0913 - every keyword is a per-frame choice of a scene
         self,
         page: Page,
         seconds: float,
@@ -171,14 +253,20 @@ class Reel:
         fade: float = FADE,
         where: str = "bottom",
         ring: Locator | None = None,
+        save_as: Path | None = None,
     ) -> None:
-        """Caption the page, take one frame and add it to the reel."""
+        """Caption the page, take one frame and add it to the reel.
+
+        ``save_as`` also writes the uncaptioned page (with its ring) as a docs screenshot.
+        """
         page.wait_for_timeout(200)
         page.evaluate(CLEAR_JS)
         if ring is not None:
             box = ring.bounding_box()
             if box is not None:
                 page.evaluate(RING_JS, box)
+        if save_as is not None and self.save_shots:
+            _save(page, save_as)
         page.evaluate(CAPTION_JS, [title, sub, where])
         path = self.workdir / f"frame-{len(self.frames):03d}.png"
         page.screenshot(path=path)
@@ -192,6 +280,118 @@ class Reel:
         return sum(s for _, s, _ in self.frames) - sum(f for _, _, f in self.frames[1:])
 
 
+# ── Apps ────────────────────────────────────────────────────────────────────────────
+
+
+@dataclass
+class Apps:
+    """Starts each app the first time a scene asks for it; stops them all at the end."""
+
+    stack: ExitStack
+    work: Path
+    browser_host: str | None = None  # host name a remote browser uses for this machine
+    urls: dict[str, str] = field(default_factory=dict)
+    facts: dict[str, Any] = field(default_factory=dict)  # measured while starting apps
+
+    def url(self, key: str, *, for_browser: bool = True) -> str:
+        """Base URL of app ``key``, as the (possibly remote) browser reaches it."""
+        if key not in self.urls:
+            self.urls[key] = self._start(key)
+        base = self.urls[key]
+        if for_browser and self.browser_host and key != "oauth":
+            return base.replace("127.0.0.1", self.browser_host)
+        return base
+
+    def log(self, key: str) -> Path:
+        return self.work / f"{key}.log"
+
+    def _start(self, key: str) -> str:
+        e2e = {"E2E_TESTING": "1"}
+        if key == "erp":
+            env = {
+                **e2e,
+                "HYPERADMIN_DEMO": "1",
+                "HYPERADMIN_ADMIN_PASSWORD": "admin",
+                "DEMO_REALTIME": "1",
+            }
+            return self._run("examples.erp.main", env, ready="/")
+        if key == "scale":
+            from tests.e2e.apps.scalability_models import seed_database  # noqa: PLC0415
+
+            db = self.work / "scale.db"
+            started = time.perf_counter()
+            rows = seed_database(db, SCALE)
+            self.facts["seed_rows"] = rows
+            self.facts["seed_seconds"] = time.perf_counter() - started
+            env = {**e2e, "E2E_SCALABILITY_DB": str(db), "E2E_SCALABILITY_SCALE": str(SCALE)}
+            return self._run("tests.e2e.apps.scalability", env)
+        if key == "oauth":
+            port = _free_port()
+            env = {**e2e, "E2E_OAUTH_IDP_URL": f"http://127.0.0.1:{port}"}
+            return self._run("tests.e2e.apps.oauth", env, port=port)
+        if key == "reports":
+            # Without E2E_TESTING the full demo turns on Logfire, which prints its spans to
+            # the log; it then keeps examples/full-demo/full_demo.db, removed again below.
+            db = ROOT / "examples" / "full-demo" / "full_demo.db"
+            if not db.exists():
+                self.stack.callback(db.unlink, missing_ok=True)
+            return self._run("tests.e2e.apps.full_demo", {"E2E_TESTING": ""})
+        modules = {
+            "occ": "tests.e2e.apps.occ_conflict",
+            "tasks": "tests.e2e.apps.tasks_monitoring",
+            "dashboard": "tests.e2e.apps.dashboard_builder",
+        }
+        return self._run(modules[key], e2e)
+
+    def _run(
+        self, module: str, env: dict[str, str], *, port: int | None = None, ready: str = ""
+    ) -> str:
+        key = module.rsplit(".", 1)[-1]
+        server = app_server(
+            module,
+            env=env,
+            port=port,
+            log=self.work / f"{key}.log",
+            ready_path=ready or "/admin/login",
+        )
+        base = self.stack.enter_context(server)
+        sys.stdout.write(f"started {module} at {base}\n")
+        return base
+
+
+# ── Helpers ─────────────────────────────────────────────────────────────────────────
+
+
+@dataclass
+class Tour:
+    """Everything a scene needs."""
+
+    pw: Playwright
+    browser: Browser
+    apps: Apps
+    reel: Reel
+    work: Path
+    _local: Browser | None = None
+
+    def local_browser(self) -> Browser:
+        """A Chromium on this machine (the OAuth scene's provider must share its address)."""
+        if self._local is None:
+            self._local = self.pw.chromium.launch(args=["--lang=en-US"])
+        return self._local
+
+    def page(self, *, dark: bool = False, browser: Browser | None = None) -> Page:
+        return _context(browser or self.browser, video=True, dark=dark).new_page()
+
+    def slide(self, body: str) -> Page:
+        """A fresh page showing a full-screen slide."""
+        page = self.page()
+        base = self.apps.url("erp")
+        page.goto(base + "/admin/login")  # same origin, so the slide can load the fonts
+        page.set_content(_slide_page(base, body))
+        page.wait_for_timeout(250)
+        return page
+
+
 def _save(page: Page, path: Path) -> None:
     page.wait_for_timeout(200)
     page.screenshot(path=path)
@@ -200,10 +400,17 @@ def _save(page: Page, path: Path) -> None:
 
 
 def _context(
-    browser: Browser, *, video: bool = False, dark: bool = False, phone: bool = False
+    browser: Browser,
+    *,
+    video: bool = False,
+    dark: bool = False,
+    phone: bool = False,
+    pair: bool = False,
 ) -> BrowserContext:
     if phone:
         viewport, scale = PHONE, 2.0
+    elif pair:
+        viewport, scale = PAIR_VIEWPORT, 1.0
     elif video:
         viewport, scale = VIDEO_VIEWPORT, VIDEO_SCALE
     else:
@@ -235,7 +442,7 @@ def _code_html(code: str) -> str:
 
 
 def _slide_page(base: str, body: str, *, dark_bg: bool = True) -> str:
-    """A full-screen HTML slide in the admin's fonts, for title and code frames."""
+    """A full-screen HTML slide in the admin's fonts, for title, code and terminal frames."""
     style = HtmlFormatter(style="github-dark").get_style_defs(".code")
     bg = "#0b1220" if dark_bg else "#f6f8fa"
     fg = "#e6edf3" if dark_bg else "#0f172a"
@@ -246,7 +453,7 @@ def _slide_page(base: str, body: str, *, dark_bg: bool = True) -> str:
 html, body {{ margin: 0; height: 100%; background: {bg}; color: {fg}; font-family: Inter, sans-serif; }}
 .wrap {{ height: 100%; display: flex; flex-direction: column; justify-content: center; padding: 48px 64px; }}
 .title {{ font-size: 64px; font-weight: 750; letter-spacing: -0.02em; margin: 0; }}
-.lead {{ font-size: 28px; opacity: .8; margin: 18px 0 0; max-width: 1100px; line-height: 1.35; }}
+.lead {{ font-size: 28px; opacity: .8; margin: 18px 0 0; max-width: 1150px; line-height: 1.35; }}
 .accent {{ color: #2dd4bf; }}
 .label {{ font-size: 20px; font-weight: 650; text-transform: uppercase; letter-spacing: .08em;
           color: #2dd4bf; margin: 0 0 14px; }}
@@ -258,10 +465,32 @@ html, body {{ margin: 0; height: 100%; background: {bg}; color: {fg}; font-famil
 .shot {{ width: 100%; border-radius: 12px; border: 1px solid #30363d;
          box-shadow: 0 20px 50px rgba(0,0,0,.45); display: block; }}
 .arrow {{ font-size: 18px; opacity: .75; margin: 14px 0 0; }}
+.pair {{ display: grid; grid-template-columns: 1fr 1fr; gap: 26px; padding: 30px 32px 0; }}
+.pair figure {{ margin: 0; }}
+.pair figcaption {{ font-size: 17px; font-weight: 650; margin: 0 0 8px; color: #94a3b8; }}
+.pair figcaption b {{ color: #2dd4bf; }}
 .phones {{ display: flex; gap: 56px; justify-content: center; align-items: center; height: 100%; }}
 .phones img {{ height: 700px; border-radius: 34px; border: 10px solid #1e293b;
                box-shadow: 0 20px 50px rgba(0,0,0,.5); }}
 .small {{ font-size: 22px; opacity: .75; margin-top: 26px; font-family: JBMono, monospace; }}
+.term {{ background: #0d1117; border: 1px solid #30363d; border-radius: 14px; padding: 20px 24px;
+         font-family: JBMono, monospace; font-size: 15px; line-height: 1.55; white-space: pre;
+         color: #c9d1d9; margin: 0; overflow: hidden; }}
+.term .cmd {{ color: #7ee787; }}
+.term .dim {{ color: #8b949e; }}
+.term .hi {{ color: #fff; font-weight: 700; }}
+.cards {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 22px; }}
+.card {{ background: #111827; border: 1px solid #30363d; border-radius: 12px; padding: 14px 18px; }}
+.card b {{ display: block; font-size: 30px; color: #fff; }}
+.card span {{ font-size: 15px; opacity: .75; }}
+.widget {{ height: 100%; display: flex; flex-direction: column; align-items: center;
+           justify-content: center; padding: 40px 60px 150px; }}
+.widget img {{ max-width: 1150px; max-height: 560px; border-radius: 12px; background: #fff;
+               box-shadow: 0 20px 50px rgba(0,0,0,.5); }}
+.widget .label {{ margin-bottom: 22px; }}
+.grid {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; padding: 30px 40px 0; }}
+.grid figure {{ margin: 0; background: #fff; border-radius: 10px; overflow: hidden; height: 196px; }}
+.grid img {{ width: 100%; height: 100%; object-fit: cover; object-position: left top; }}
 {style}
 </style></head><body>{body}</body></html>"""
 
@@ -278,114 +507,766 @@ def _split_body(code: str, image: Path, caption: str) -> str:
 </div></div>"""
 
 
-# ── Docs screenshots ────────────────────────────────────────────────────────────────
-
-
-def render_screenshots(browser: Browser, base: str, work: Path) -> None:
-    """Refresh docs/assets/demo/*.png and add the feature shots to docs/assets/screenshots."""
-    DEMO_DIR.mkdir(parents=True, exist_ok=True)
-
-    ctx = _context(browser)
-    page = ctx.new_page()
-    page.goto(base + "/admin/login")
-    _save(page, DEMO_DIR / "login.png")
-    _sign_in(page, base)
-    expect(page.get_by_test_id("figure-overdue-invoices")).to_be_visible()
-    _save(page, SHOTS_DIR / "dashboard.png")
-
-    page.goto(base + "/admin/invoice")
-    _save(page, DEMO_DIR / "list.png")
-    page.screenshot(path=work / "list-for-split.png")
-
-    # Search, a filter and a sort, all in the URL.
-    page.goto(
-        base + "/admin/invoice?search=INV-1&filter_status=Sent&sort_by=date_due&sort_direction=desc"
+def _pair_body(left: tuple[str, Path], right: tuple[str, Path]) -> str:
+    """Two browsers side by side, each under a ``<b>who</b> · what`` label."""
+    figures = "".join(
+        f'<figure><figcaption>{label}</figcaption><img class="shot" src="{_data_uri(img)}" alt="">'
+        "</figure>"
+        for label, img in (left, right)
     )
-    _save(page, SHOTS_DIR / "list-search-filters.png")
+    return f'<div class="pair">{figures}</div>'
 
-    # Bulk selection with the action bar.
+
+def _pair_frame(t: Tour, left: tuple[str, Page], right: tuple[str, Page], name: str) -> Page:
+    """Screenshot two pages and return a slide that shows them side by side."""
+    shots = []
+    for i, (label, page) in enumerate((left, right)):
+        page.wait_for_timeout(150)
+        path = t.work / f"{name}-{i}.png"
+        page.screenshot(path=path)
+        shots.append((label, path))
+    return t.slide(_pair_body(shots[0], shots[1]))
+
+
+def _ttfb(page: Page, url: str, runs: int = 5) -> float:
+    """Median time to first byte of ``url`` over ``runs`` loads, as the browser measured it."""
+    samples = []
+    for _ in range(runs):
+        page.goto(url)
+        samples.append(float(page.evaluate(TTFB_JS)))
+    return statistics.median(samples)
+
+
+def _ms(value: float) -> str:
+    return f"{value:.0f} ms" if value >= 10 else f"{value:.1f} ms"
+
+
+# ── Scenes ──────────────────────────────────────────────────────────────────────────
+# Each scene adds its frames to the reel. Keep them independent: --scenes runs any subset.
+
+
+def scene_title(t: Tour) -> None:
+    """Title card, also rendered with a play button as the video poster."""
+    title = (
+        '<div class="wrap"><p class="label">HyperAdmin · product tour</p>'
+        '<h1 class="title">Define the backend.<br><span class="accent">Get the admin UI.</span></h1>'
+        '<p class="lead">A Django-admin style interface for FastAPI, generated from your '
+        "SQLModel or SQLAlchemy models. No frontend code, no JavaScript build.</p></div>"
+    )
+    play = (
+        '<div style="position:fixed;right:120px;top:50%;transform:translateY(-50%);width:150px;'
+        "height:150px;border-radius:50%;background:#2dd4bf;display:flex;align-items:center;"
+        'justify-content:center;box-shadow:0 16px 40px rgba(0,0,0,.45)">'
+        '<div style="margin-left:14px;width:0;height:0;border-top:34px solid transparent;'
+        'border-bottom:34px solid transparent;border-left:56px solid #0b1220"></div></div>'
+    )
+    page = t.slide(title + play)
+    t.reel.poster = t.work / "poster.png"
+    page.screenshot(path=t.reel.poster)
+    page.set_content(_slide_page(t.apps.url("erp"), title))
+    page.wait_for_timeout(200)
+    t.reel.shot(page, 4.0, fade=0)
+    page.context.close()
+
+
+def scene_code(t: Tour) -> None:
+    """The model and admin code next to the list it generates."""
+    base = t.apps.url("erp")
+    page = t.page()
+    _sign_in(page, base)
     page.goto(base + "/admin/invoice")
-    rows = page.get_by_test_id("list-row")
-    for i in range(3):
-        rows.nth(i).get_by_test_id("bulk-checkbox").check()
-    expect(page.get_by_test_id("bulk-bar")).to_be_visible()
-    page.get_by_test_id("bulk-action-select").select_option(label="Mark paid")
-    _save(page, SHOTS_DIR / "bulk-actions.png")
+    list_png = t.work / "list-for-split.png"
+    page.screenshot(path=list_png)
+    page.set_content(
+        _slide_page(
+            base,
+            _split_body(
+                MODEL_CODE + "\n" + ADMIN_CODE,
+                list_png,
+                "That is the whole admin for invoices: list, filters, search, forms, actions.",
+            ),
+        )
+    )
+    page.wait_for_timeout(250)
+    t.reel.shot(
+        page,
+        6.0,
+        "You write models and a few options",
+        "HyperAdmin generates every page from them. Nobody on the team writes frontend code.",
+        save_as=SHOTS_DIR / "code-to-ui.png",
+    )
+    page.context.close()
 
-    # Detail, then the edit form with the inline invoice items.
-    page.goto(base + "/admin/invoice/1")  # the detail page; a row click opens the edit form
-    expect(page.get_by_test_id("detail-fields")).to_be_visible()
-    _save(page, DEMO_DIR / "detail.png")
-    page.get_by_test_id("detail-edit-link").click()
-    form = page.get_by_test_id("model-form")
-    expect(form).to_be_visible()
-    page.get_by_test_id("inline-invoiceitem").scroll_into_view_if_needed()
-    _save(page, SHOTS_DIR / "form-inlines.png")
 
-    # Create form, then the validation errors of an empty submit.
-    page.goto(base + "/admin/invoice/create")
-    expect(page.get_by_test_id("model-form")).to_be_visible()
-    _save(page, DEMO_DIR / "create.png")
-    _submit_empty(page)
-    _save(page, SHOTS_DIR / "form-validation.png")
+def scene_sso(t: Tour) -> None:
+    """The login page with an OAuth provider button (local browser, see the docstring)."""
+    base = t.apps.url("oauth")
+    page = t.page(browser=t.local_browser())
+    page.goto(base + "/admin/login")
+    button = page.get_by_test_id("oauth-btn-google")
+    expect(button).to_be_visible()
+    t.reel.shot(
+        page,
+        3.4,
+        "Sign-in built in: passwords, MFA and OAuth single sign-on",
+        "Google and GitHub presets, or any OAuth 2 provider; a first SSO login creates the user",
+        ring=button,
+        save_as=SHOTS_DIR / "oauth-login.png",
+    )
+    page.context.close()
 
-    # Permissions: a group in the matrix.
+
+def scene_permissions(t: Tour) -> None:
+    """The permissions matrix, then the same list as a read-only user."""
+    base = t.apps.url("erp")
+    page = t.page()
+    _sign_in(page, base)
     _ensure_group(page, base)
     page.goto(base + "/admin/permissions-matrix/")
     expect(page.get_by_test_id("pmatrix-table")).to_be_visible()
     _tick_matrix(page)
-    _save(page, SHOTS_DIR / "permission-matrix.png")
+    t.reel.shot(
+        page,
+        3.4,
+        "Permissions per group and model, on one screen",
+        "View, add, change and delete for every model, plus actions and detail panels",
+    )
+    page.context.close()
 
-    page.goto(base + "/admin/erp/profit-loss")
-    _save(page, SHOTS_DIR / "profit-loss.png")
-    ctx.close()
-
-    # The read-only demo account: no create, edit or delete controls.
-    ctx = _context(browser)
-    page = ctx.new_page()
+    page = t.page()
     _sign_in(page, base, "demo_ro", "demo_ro")
     page.goto(base + "/admin/invoice")
     expect(page.get_by_test_id("list-table")).to_be_visible()
-    _save(page, SHOTS_DIR / "read-only-list.png")
-    ctx.close()
-
-    # Dark mode.
-    ctx = _context(browser, dark=True)
-    page = ctx.new_page()
-    _sign_in(page, base)
-    page.goto(base + "/admin/invoice")
-    _save(page, DEMO_DIR / "list-dark.png")
-    page.goto(base + "/admin/invoice/create")
-    _submit_empty(page)
-    _save(page, SHOTS_DIR / "form-validation-dark.png")
-    ctx.close()
-
-    # Phone.
-    ctx = _context(browser, phone=True)
-    page = ctx.new_page()
-    _sign_in(page, base)
-    page.goto(base + "/admin/invoice")
-    _save(page, DEMO_DIR / "list-mobile.png")
-    ctx.close()
-
-    # Code next to the UI it produces.
-    ctx = browser.new_context(viewport={"width": 1600, "height": 900}, device_scale_factor=2)
-    page = ctx.new_page()
-    page.goto(base + "/admin/login")
-    body = _split_body(
-        MODEL_CODE + "\n\n" + ADMIN_CODE,
-        work / "list-for-split.png",
-        "Columns, filters, search, inline items and the bulk action all come from these lines.",
+    t.reel.shot(
+        page,
+        3.2,
+        "A read-only user gets a read-only admin",
+        "Rows open read-only, no delete buttons; the server refuses what is not granted",
     )
-    page.set_content(_slide_page(base, body))
+    page.context.close()
+
+
+def scene_presence(t: Tour) -> None:
+    """Two users on the same invoice see each other, then a save refreshes the other's list."""
+    base = t.apps.url("erp")
+    alice = _context(t.browser, pair=True).new_page()
+    bob = _context(t.browser, pair=True).new_page()
+    _sign_in(alice, base, "admin", "admin")
+    _sign_in(bob, base, "demo2", "demo2")
+    edit = base + "/admin/invoice/1/edit"
+    alice.goto(edit)
+    bob.goto(edit)
+    expect(alice.get_by_test_id("presence-banner")).to_contain_text("demo2", timeout=15000)
+    expect(bob.get_by_test_id("presence-banner")).to_contain_text("admin", timeout=15000)
+    slide = _pair_frame(
+        t,
+        ("<b>admin</b> · editing invoice 1", alice),
+        ("<b>demo2</b> · same invoice, another browser", bob),
+        "presence",
+    )
+    t.reel.shot(
+        slide,
+        5.0,
+        "Presence: see who else is on a record, live",
+        "One WebSocket, no extra service, no frontend code: realtime=RealtimeSettings()",
+        save_as=SHOTS_DIR / "presence.png",
+    )
+    slide.context.close()
+
+    # Live list: admin watches the list while demo2 saves a change.
+    alice.goto(base + "/admin/invoice")
+    alice.get_by_test_id("sidebar-rail-toggle").click()  # room for the Status column
+    expect(alice.get_by_test_id("realtime-status")).to_be_visible()
+    alice.wait_for_timeout(800)
+    form = bob.get_by_test_id("model-form")
+    status = form.get_by_label("Status")
+    current = status.input_value()
+    new_status = "Cancelled" if current != "Cancelled" else "Draft"
+    status.select_option(new_status)
+    form.get_by_role("button", name="Update").click()
+    row = alice.locator('tr[data-pk="1"]')
+    expect(row).to_contain_text(new_status, timeout=15000)
+    alice.evaluate(RING_JS, row.bounding_box())
+    slide = _pair_frame(
+        t,
+        ("<b>admin</b> · on the invoice list, no reload", alice),
+        (f"<b>demo2</b> · set invoice 1 to {new_status}", bob),
+        "live",
+    )
+    t.reel.shot(
+        slide,
+        4.6,
+        "Live lists: other people's changes appear without a reload",
+        "The row updates in place; creates and deletes also show a toast naming who did it",
+        fade=0.3,
+        save_as=SHOTS_DIR / "live-updates.png",
+    )
+    slide.context.close()
+    alice.context.close()
+    bob.context.close()
+
+
+def scene_conflict(t: Tour) -> None:
+    """Optimistic concurrency: the second of two saves gets the conflict dialog."""
+    base = t.apps.url("occ")
+    alice = _context(t.browser, pair=True).new_page()
+    bob = _context(t.browser, pair=True).new_page()
+    for page in (alice, bob):
+        _sign_in(page, base, "alice", "secret123")
+        page.goto(base + "/admin/order/42/edit")
+    alice.get_by_label("Customer").fill("Acme Holding")
+    bob.get_by_label("Customer").fill("Acme Ltd")
+    slide = _pair_frame(
+        t,
+        ("<b>Browser 1</b> · editing order ORD-1042", alice),
+        ("<b>Browser 2</b> · the same order, at the same time", bob),
+        "race",
+    )
+    t.reel.shot(slide, 3.2, "Two people edit the same record", "Most admins: the last save wins")
+    slide.context.close()
+
+    bob.get_by_role("button", name="Update").click()
+    expect(bob).to_have_url(base + "/admin/order")
+    alice.get_by_role("button", name="Update").click()
+    expect(alice.get_by_test_id("conflict-dialog")).to_be_visible()
+    alice.close()
+
+    # The dialog on a full-size page.
+    page = t.page()
+    _sign_in(page, base, "alice", "secret123")
+    page.goto(base + "/admin/order/42/edit")
+    page.get_by_label("Customer").fill("Acme Holding")
+    other = _context(t.browser).new_page()
+    _sign_in(other, base, "alice", "secret123")
+    other.goto(base + "/admin/order/42/edit")
+    other.get_by_label("Customer").fill("Acme Ltd")
+    other.get_by_role("button", name="Update").click()
+    other.context.close()
+    page.get_by_role("button", name="Update").click()
+    dialog = page.get_by_test_id("conflict-dialog")
+    expect(dialog).to_be_visible()
+    t.reel.shot(
+        page,
+        5.0,
+        "No silent overwrites: the second save gets a conflict dialog",
+        "Your edit next to the stored value, field by field. One option: enforce_occ=True",
+        ring=page.get_by_test_id("conflict-diff"),
+        save_as=SHOTS_DIR / "conflict-dialog.png",
+    )
+    page.get_by_test_id("conflict-override").click()
+    expect(page).to_have_url(base + "/admin/order")
+    t.reel.shot(
+        page,
+        2.4,
+        "Resolved in one click",
+        "Override with your value, or discard your edits and reload the current row",
+        fade=0.3,
+    )
+    page.context.close()
+    bob.context.close()
+
+
+def scene_scale(t: Tour) -> None:
+    """A 1.2-million-row database: cursor pages, relations in one query, cached totals."""
+    base = t.apps.url("scale")
+    rows = t.apps.facts["seed_rows"]
+    page = t.page()
+    _sign_in(page, base, "alice", "secret123")
+    movements = 3_000 * SCALE
+    products = 9_000 * SCALE
+
+    # Cursor pagination: the first page and one 25 rows from the end cost the same.
+    from hyperadmin.core.adapters import encode_cursor  # noqa: PLC0415
+
+    after = movements - 25
+    deep = f"{base}/admin/movement?cursor={encode_cursor(after, after, 'next')}"
+    first_ms = _ttfb(page, base + "/admin/movement")
+    deep_ms = _ttfb(page, deep)
+    page.request.post(base + "/_test/reset")
+    page.goto(deep)
+    reads = _statements(page, base, "e2e_sc_movement")
+    page.evaluate(
+        METRICS_JS,
+        [
+            "Measured in this recording",
+            [
+                ["Rows in the database", f"{rows:,}"],
+                [f"Page 1 of {movements:,} movements", _ms(first_ms)],
+                [f"Row {after:,} (keyset page)", _ms(deep_ms)],
+                ["SQL reads of the table, deep page", str(len(reads))],
+                ["count(*) on cursor pages", "none"],
+            ],
+            (
+                "Server time to first byte, median of 5 loads. SQLite file, one uvicorn "
+                'worker, on a laptop. pagination_mode="cursor".'
+            ),
+        ],
+    )
+    t.reel.shot(
+        page,
+        5.8,
+        "Fast on large tables, out of the box",
+        "Keyset pagination: the last pages cost the same as page 1",
+        save_as=SHOTS_DIR / "scale-cursor.png",
+    )
+    page.evaluate("() => document.querySelectorAll('.demo-metrics').forEach(e => e.remove())")
+
+    # Relations in one query whatever the page size, and a cached total.
+    counts = {}
+    for size in (10, 100):
+        page.request.post(base + "/_test/reset")
+        page.goto(f"{base}/admin/product?page_size={size}")
+        counts[size] = len(_statements(page, base, "e2e_sc_supplier"))
+    page.request.post(base + "/_test/reset")
+    cold = _ttfb(page, f"{base}/admin/product?search=SKU-0000&page_size=10", runs=1)
+    warm = _ttfb(page, f"{base}/admin/product?search=SKU-0000&page_size=10", runs=5)
+    page.goto(f"{base}/admin/product?page_size=10")
+    page.evaluate(
+        METRICS_JS,
+        [
+            "Measured in this recording",
+            [
+                [f"{products:,} products, with supplier", ""],
+                ["Supplier queries, 10 rows per page", str(counts[10])],
+                ["Supplier queries, 100 rows per page", str(counts[100])],
+                ["Search, first request (counts)", _ms(cold)],
+                ["Same search, total cached", _ms(warm)],
+            ],
+            (
+                "Relations in list_display load with one SELECT ... IN per page (no N+1). "
+                "count_cache_ttl=60 reuses the total."
+            ),
+        ],
+    )
+    t.reel.shot(
+        page,
+        5.4,
+        "No N+1 queries, cached totals",
+        "On by default; tune per model in AdminOptions",
+        save_as=SHOTS_DIR / "scale-relations.png",
+    )
+    page.context.close()
+
+
+def scene_loadtest(t: Tour) -> None:
+    """The load-test tooling: the seeding above and a short real Locust run against the ERP."""
+    t.apps.url("scale")  # seeds the large tables, timed
+    rows, seconds = t.apps.facts["seed_rows"], t.apps.facts["seed_seconds"]
+    locust = _run_locust(t)
+    body = (
+        '<div class="wrap"><p class="label">Load testing ships with it</p>'
+        '<pre class="term">'
+        '<span class="cmd">$ hyperadmin seed --plan erp --count 1000000</span>'
+        '<span class="dim">   # hyperadmin.loadtest: realistic rows, skewed foreign keys</span>\n'
+        f'  this run: <span class="hi">{rows:,} rows</span> in '
+        f'<span class="hi">{seconds:.1f} s</span> (BulkSeeder, SQLite)\n\n'
+        f'<span class="cmd">$ locust -f examples/erp/loadtest/locustfile.py --headless '
+        f"-u {LOCUST_USERS} -t {LOCUST_SECONDS}s</span>\n"
+        f"{html.escape(locust['table'])}</pre>"
+        '<div class="cards">'
+        f'<div class="card"><b>{locust["median"]} ms median</b><span>this run: '
+        f"{LOCUST_USERS} users for {LOCUST_SECONDS} s, SQLite, one worker</span></div>"
+        f'<div class="card"><b>{locust["p95"]} ms p95</b><span>{locust["requests"]} requests, '
+        f"{locust['fails']} failed; includes the {LOCUST_USERS} logins (password hashing)"
+        "</span></div>"
+        '<div class="card"><b>296 req/s</b><span>PostgreSQL, 400 users, 9 CPUs: 21 ms median '
+        "(load-test matrix, docs/compatibility.md)</span></div>"
+        "</div></div>"
+    )
+    page = t.slide(body)
+    t.reel.shot(
+        page,
+        6.0,
+        "Know your capacity before go-live",
+        "Seed millions of rows, run the bundled Locust suite, compare against a baseline",
+        save_as=SHOTS_DIR / "loadtest.png",
+    )
+    page.context.close()
+
+
+def scene_plugins(t: Tour) -> None:
+    """Dashboard widgets, a pivot report with its chart, the tasks plugin and Logfire spans."""
+    base = t.apps.url("dashboard")
+    page = t.page()
+    _sign_in(page, base, "alice", "secret123")
+    grid = page.get_by_test_id("dashboard-grid")
+    expect(grid).to_be_visible()
+    expect(page.get_by_test_id("widget-loading")).to_have_count(0, timeout=15000)
+    t.reel.shot(
+        page,
+        3.6,
+        "Plugins: dashboard widgets from your reports",
+        "Stats, charts and quick actions per permission; a failing widget never breaks the page",
+        save_as=SHOTS_DIR / "dashboard-widgets.png",
+    )
+    page.context.close()
+
+    base = t.apps.url("reports")
+    page = t.page()
+    _sign_in(page, base, "alice", "secret123")
+    page.goto(base + "/admin/reports/sales-by-sku/")
+    expect(page.get_by_test_id("chart-frame").first).to_be_visible(timeout=15000)
+    t.reel.shot(
+        page,
+        3.6,
+        "Pivot reports with a chart and CSV / XLSX export",
+        "Declare dimensions and measures in Python; the grid, chart and exports follow",
+        save_as=SHOTS_DIR / "report-chart.png",
+    )
+    # Logfire: the span tree of a list request, as the running app printed it.
+    page.goto(base + "/admin/order")
+    page.wait_for_timeout(1200)
+    spans = _logfire_spans(t.apps.log("full_demo"), "GET /admin/order")
+    page.context.close()
+
+    base = t.apps.url("tasks")
+    page = t.page()
+    _sign_in(page, base, "alice", "secret123")
+    page.goto(base + "/admin/tasks/list")
+    expect(page.get_by_test_id("tasks-list-row").first).to_be_visible()
+    t.reel.shot(
+        page,
+        3.2,
+        "Background tasks, monitored in the admin",
+        "Queues, states, schedules and failed tasks with their traceback and a Retry button",
+        save_as=SHOTS_DIR / "tasks.png",
+    )
+    page.context.close()
+
+    body = (
+        '<div class="wrap"><p class="label">hyperadmin-logfire · instrument_admin(admin)</p>'
+        f'<pre class="term">{spans}</pre>'
+        '<p class="arrow">The full-demo example\'s own console output for one list request.</p>'
+        "</div>"
+    )
+    page = t.slide(body)
+    t.reel.shot(
+        page,
+        3.8,
+        "Logfire traces: a span per request, its SQL nested",
+        "One call after admin.mount(); no token needed to see them locally",
+        save_as=SHOTS_DIR / "logfire-spans.png",
+    )
+    page.context.close()
+
+
+def scene_palette(t: Tour) -> None:
+    """The command palette, typed in short steps."""
+    base = t.apps.url("erp")
+    page = t.page()
+    _sign_in(page, base)
+    page.goto(base + "/admin/invoice")
+    page.keyboard.press("ControlOrMeta+k")
+    palette = page.get_by_test_id("palette-input")
+    expect(palette).to_be_visible()
+    caption = ("⌘K command palette", "Jump to any model, page or record from the keyboard")
+    t.reel.shot(page, 1.0, *caption, where="top")
+    for text in ("j", "jou", "journal"):
+        palette.fill(text)
+        page.wait_for_timeout(350 if text == "journal" else 120)
+        t.reel.shot(page, 0.5, *caption, fade=CUT, where="top")
+    t.reel.shot(page, 1.4, *caption, fade=CUT, where="top")
+    page.context.close()
+
+
+def scene_i18n(t: Tour) -> None:
+    """The same list in German, then in Arabic (right to left)."""
+    base = t.apps.url("erp")
+    page = t.page()
+    _sign_in(page, base)
+    page.goto(base + "/admin/invoice")
+    for locale, seconds, title in (
+        ("de", 2.4, "20 languages built in"),
+        ("ar", 2.6, "Right-to-left included"),
+    ):
+        page.get_by_label("Select language").select_option(locale)
+        page.wait_for_load_state("networkidle")
+        expect(page.locator("html")).to_have_attribute("lang", locale.replace("_", "-"))
+        t.reel.shot(
+            page,
+            seconds,
+            title,
+            "Per-user language from a switcher or the browser; your own labels translate too",
+            fade=FADE if locale == "de" else 0.3,
+            save_as=SHOTS_DIR / "i18n-rtl.png" if locale == "ar" else None,
+        )
+    page.get_by_label("Select language").select_option("en")
+    page.wait_for_load_state("networkidle")
+    page.context.close()
+
+
+def scene_dark(t: Tour) -> None:
+    """Dark mode with the navbar toggle."""
+    base = t.apps.url("erp")
+    page = t.page()
+    _sign_in(page, base)
+    page.goto(base + "/admin/invoice")
+    toggle = page.get_by_test_id("theme-toggle")
+    toggle.click()
     page.wait_for_timeout(300)
-    _save(page, SHOTS_DIR / "code-to-ui.png")
-    ctx.close()
+    t.reel.shot(page, 2.6, "Light and dark themes", "Follows the OS, or the toggle in the navbar")
+    toggle.click()
+    page.context.close()
 
 
-def _submit_empty(page: Page) -> None:
-    page.get_by_test_id("form-actions").get_by_role("button", name="Create").click()
-    expect(page.get_by_test_id("error-summary")).to_be_visible()
+def scene_mobile(t: Tour) -> None:
+    """The list and the sidebar drawer at phone width, side by side."""
+    base = t.apps.url("erp")
+    phone = _context(t.browser, phone=True).new_page()
+    _sign_in(phone, base)
+    phone.goto(base + "/admin/invoice")
+    phone.wait_for_timeout(300)
+    phone.screenshot(path=t.work / "phone-list.png")
+    phone.get_by_test_id("sidebar-toggle").click()
+    expect(phone.get_by_test_id("sidebar")).to_be_visible()
+    phone.wait_for_timeout(300)
+    phone.screenshot(path=t.work / "phone-sidebar.png")
+    phone.context.close()
+    page = t.slide(
+        '<div class="phones">'
+        f'<img src="{_data_uri(t.work / "phone-list.png")}" alt="">'
+        f'<img src="{_data_uri(t.work / "phone-sidebar.png")}" alt="">'
+        "</div>"
+    )
+    t.reel.shot(
+        page, 3.2, "Responsive down to phone width", "Rows become cards; the sidebar is a drawer"
+    )
+    page.context.close()
+
+
+def scene_widgets(t: Tour) -> None:
+    """A fast montage of the distinct widgets, each cropped from a real page, then all of them."""
+    crops = _widget_crops(t)
+    page = t.slide("")
+    erp = t.apps.url("erp")
+    for i, (name, path) in enumerate(crops):
+        page.set_content(
+            _slide_page(
+                erp,
+                f'<div class="widget"><p class="label">{html.escape(name)}</p>'
+                f'<img src="{_data_uri(path)}" alt=""></div>',
+            )
+        )
+        page.wait_for_timeout(120)
+        t.reel.shot(
+            page,
+            0.75,
+            "Every widget comes from your field types and options",
+            f"{i + 1} / {len(crops)}",
+            fade=0.15 if i else FADE,
+        )
+    tiles = "".join(
+        f'<figure><img src="{_data_uri(p)}" alt="" style="object-fit:{_tile_fit(p)}"></figure>'
+        for _, p in _grid_tiles(crops)
+    )
+    page.set_content(_slide_page(erp, f'<div class="grid">{tiles}</div>'))
+    page.wait_for_timeout(200)
+    t.reel.shot(
+        page,
+        2.8,
+        f"{len(crops)} components, zero lines of frontend code",
+        "Server-rendered HTML with HTMX: no build step, no JavaScript to maintain",
+        fade=0.3,
+        save_as=SHOTS_DIR / "widgets.png",
+    )
+    page.context.close()
+
+
+def scene_end(t: Tour) -> None:
+    """The closing card: the backend-only use case."""
+    page = t.slide(
+        '<div class="wrap"><h1 class="title">Your team writes the backend.<br>'
+        '<span class="accent">HyperAdmin ships the admin UI.</span></h1>'
+        '<p class="lead">Realtime, conflict handling, scale, plugins and auth are already in it.</p>'
+        '<p class="small">pip install hyper-admin</p>'
+        '<p class="lead">Docs: yevheniidehtiar.github.io/hyper-admin<br>'
+        "Live demo: hyper-admin-demo.onrender.com/admin (demo / demo)</p></div>"
+    )
+    t.reel.shot(page, 5.4)
+    page.context.close()
+
+
+SCENES: list[tuple[str, Callable[[Tour], None]]] = [
+    ("title", scene_title),
+    ("code", scene_code),
+    ("presence", scene_presence),
+    ("conflict", scene_conflict),
+    ("scale", scene_scale),
+    ("loadtest", scene_loadtest),
+    ("plugins", scene_plugins),
+    ("sso", scene_sso),
+    ("permissions", scene_permissions),
+    ("palette", scene_palette),
+    ("i18n", scene_i18n),
+    ("dark", scene_dark),
+    ("mobile", scene_mobile),
+    ("widgets", scene_widgets),
+    ("end", scene_end),
+]
+
+
+# ── Scene helpers ───────────────────────────────────────────────────────────────────
+
+
+def _statements(page: Page, base: str, table: str) -> list[dict[str, Any]]:
+    """SQL the scalability app ran since its last reset that reads from ``table``."""
+    statements = page.request.get(base + "/_test/queries").json()["statements"]
+    return [s for s in statements if f"FROM {table}" in s["sql"]]
+
+
+def _run_locust(t: Tour) -> dict[str, str]:
+    """Run the ERP Locust suite headless for a few seconds; return its aggregated figures."""
+    locust = shutil.which("locust")
+    if locust is None:
+        raise SystemExit("locust is not installed: uv sync --extra loadtest")
+    base = t.apps.url("erp", for_browser=False)
+    prefix = t.work / "locust"
+    out = subprocess.run(  # noqa: S603 - fixed argv
+        [
+            locust,
+            *("-f", "examples/erp/loadtest/locustfile.py", "--headless", "--only-summary"),
+            *("-u", str(LOCUST_USERS), "-r", str(LOCUST_USERS), "-t", f"{LOCUST_SECONDS}s"),
+            *("--host", base, "--csv", str(prefix)),
+        ],
+        cwd=ROOT,
+        env={**os.environ, "LOADTEST_USER": "admin", "LOADTEST_PASSWORD": "admin"},
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if out.returncode not in (0, 1):  # 1: some requests failed, still a finished run
+        raise RuntimeError(f"locust failed:\n{out.stderr[-2000:]}")
+    with (prefix.parent / f"{prefix.name}_stats.csv").open() as f:
+        stats = list(csv.DictReader(f))
+    total = stats[-1]
+    routes = sorted(stats[:-1], key=lambda r: -int(r["Request Count"]))[:7]
+    lines = [f"{'Name':<34}{'requests':>10}{'fails':>8}{'median':>10}{'p95':>9}"]
+    for row in [*routes, total]:
+        name = row["Name"] if row is not total else "All requests"
+        lines.append(
+            f"{name[:33]:<34}{row['Request Count']:>10}{row['Failure Count']:>8}"
+            f"{row['Median Response Time'] + ' ms':>10}{row['95%'] + ' ms':>9}"
+        )
+    return {
+        "table": "\n".join(lines),
+        "requests": total["Request Count"],
+        "median": f"{float(total['Median Response Time']):.0f}",
+        "p95": f"{float(total['95%']):.0f}",
+        "fails": total["Failure Count"],
+    }
+
+
+def _logfire_spans(log: Path, request: str) -> str:
+    """The span tree Logfire printed for the last ``request``, as escaped HTML lines."""
+    lines = log.read_text(errors="replace").splitlines()
+    top = re.compile(rf"^\d\d:\d\d:\d\d\.\d+ {re.escape(request)}$")
+    start = max(i for i, line in enumerate(lines) if top.match(line))
+    block = [lines[start]]
+    for line in lines[start + 1 :]:
+        if not re.match(r"^\d\d:\d\d:\d\d\.\d+\s{3,}", line):
+            break
+        block.append(line)
+    out = []
+    for line in block[:14]:
+        line = re.sub(r"/\S*/(full_demo\.db)", r"\1", line)  # noqa: PLW2901
+        stamp, _, rest = line.partition(" ")
+        out.append(f'<span class="dim">{html.escape(stamp)}</span> {html.escape(rest)}')
+    return "\n".join(out)
+
+
+def _grid_tiles(crops: list[tuple[str, Path]]) -> list[tuple[str, Path]]:
+    """The twelve crops that stay legible as small tiles (thin strips and wide forms do not)."""
+    return [(name, path) for name, path in crops if not name.startswith(GRID_SKIP)][:12]
+
+
+def _tile_fit(path: Path) -> str:
+    """Fill a montage tile with a crop, unless it is a thin strip that would blow up."""
+    with Image.open(path) as img:
+        return "contain;object-position:center" if img.width > 6 * img.height else "cover"
+
+
+def _widget_crops(t: Tour) -> list[tuple[str, Path]]:
+    """Crop one PNG per distinct component from the ERP and plugin apps."""
+    crops: list[tuple[str, Path]] = []
+
+    def crop(name: str, locator: Locator, pad: int = 8, max_height: float = 520) -> None:
+        locator.scroll_into_view_if_needed()
+        box = locator.bounding_box()
+        if box is None:
+            return
+        path = t.work / f"widget-{len(crops):02d}.png"
+        page = locator.page
+        page.wait_for_timeout(150)
+        page.screenshot(
+            path=path,
+            clip={
+                "x": max(box["x"] - pad, 0),
+                "y": max(box["y"] - pad, 0),
+                "width": box["width"] + 2 * pad,
+                "height": min(box["height"] + 2 * pad, max_height),
+            },
+        )
+        crops.append((name, path))
+
+    # The sticky save bar would cover the fieldsets near the bottom of a form.
+    no_sticky_bar = '[data-testid="form-actions"] { display: none !important; }'
+    base = t.apps.url("erp")
+    page = _context(t.browser).new_page()
+    _sign_in(page, base)
+    page.goto(base + "/admin/invoice?filter_status=Sent")
+    table = page.get_by_test_id("list-table")
+    crop("Status pills from an Enum", table.get_by_test_id("list-row").first.locator(".."), 0)
+    crop("Filter sidebar from list_filter", page.get_by_test_id("filter-sidebar"), max_height=400)
+    crop("Date range with quick ranges", page.get_by_test_id("filter-date_due"))
+    page.goto(base + "/admin/invoice")
+    rows = page.get_by_test_id("list-row")
+    for i in range(3):
+        rows.nth(i).get_by_test_id("bulk-checkbox").check()
+    crop("Bulk actions from @action(bulk=True)", page.get_by_test_id("bulk-bar"))
+    crop("Pagination and page size", page.get_by_test_id("pagination-info").locator(".."))
+    page.goto(base + "/admin/invoice/1")
+    crop("Detail page with custom actions", page.get_by_test_id("detail-fields").locator(".."))
+    page.goto(base + "/admin/invoice/1/edit")
+    page.add_style_tag(content=no_sticky_bar)
+    crop("Inline related rows", page.get_by_test_id("inline-invoiceitem"))
+    page.goto(base + "/admin/fieldshowcase/create")
+    page.add_style_tag(content=no_sticky_bar)
+    crop("Enum select, multi-select, number inputs", page.get_by_test_id("fieldset-attributes"))
+    crop("File and image upload", page.get_by_test_id("fieldset-media"))
+    page.get_by_test_id("autocomplete-category_id").click()
+    page.wait_for_timeout(500)
+    crop("Foreign-key autocomplete with “+” popup", page.get_by_test_id("fieldset-relations"))
+    page.goto(base + "/admin/invoice")
+    page.keyboard.press("?")
+    expect(page.get_by_test_id("shortcuts-overlay")).to_be_visible()
+    crop("Keyboard shortcuts", page.get_by_test_id("shortcuts-overlay"))
+    page.keyboard.press("Escape")
+    page.get_by_test_id("list-row").nth(1).get_by_test_id("row-delete-btn").click()
+    dialog = page.get_by_test_id("dialog-confirm-delete")
+    expect(dialog).to_be_visible()
+    crop("Confirm dialogs", dialog)
+    page.keyboard.press("Escape")
+    page.get_by_test_id("nav-pin-invoice").click()
+    expect(page.get_by_test_id("nav-pinned")).to_be_visible()
+    crop("Grouped sidebar with pins", page.get_by_test_id("sidebar"), 0, max_height=420)
+    _ensure_group(page, base)  # the matrix needs a group to show
+    page.goto(base + "/admin/permissions-matrix/")
+    crop("Permissions matrix", page.get_by_test_id("pmatrix-table"), max_height=420)
+    page.context.close()
+
+    page = _context(t.browser).new_page()
+    _sign_in(page, t.apps.url("dashboard"), "alice", "secret123")
+    expect(page.get_by_test_id("widget-loading")).to_have_count(0, timeout=15000)
+    crop("Stat widget", page.get_by_test_id("widget-stat-orders-revenue"), max_height=200)
+    crop("Chart widget", page.get_by_test_id("widget-chart-orders-by-month"))
+    page.context.close()
+
+    page = _context(t.browser).new_page()
+    _sign_in(page, t.apps.url("tasks"), "alice", "secret123")
+    page.goto(t.apps.url("tasks") + "/admin/tasks/")
+    crop("Task queues", page.get_by_test_id("tasks-dashboard"))
+    page.context.close()
+    return crops
 
 
 def _tick_matrix(page: Page) -> None:
@@ -407,297 +1288,80 @@ def _ensure_group(page: Page, base: str) -> None:
     page.wait_for_load_state("networkidle")
 
 
-# ── Video ───────────────────────────────────────────────────────────────────────────
+# ── Docs screenshots ────────────────────────────────────────────────────────────────
 
 
-def record_reel(browser: Browser, base: str, reel: Reel) -> None:
-    """Walk the ERP demo and collect the captioned frames of the video."""
-    ctx = _context(browser, video=True)
+def render_screenshots(browser: Browser, base: str) -> None:
+    """Refresh the docs/assets/demo tour and the ERP feature shots of docs/demo.md."""
+    DEMO_DIR.mkdir(parents=True, exist_ok=True)
+
+    ctx = _context(browser)
     page = ctx.new_page()
     page.goto(base + "/admin/login")
-
-    # 1. Title (and the poster: the same card with a play button), then the backend code.
-    title = (
-        '<div class="wrap"><p class="label">HyperAdmin · product tour</p>'
-        '<h1 class="title">Define the backend.<br><span class="accent">Get the admin UI.</span></h1>'
-        '<p class="lead">A Django-admin style interface for FastAPI, generated from your '
-        "SQLModel or SQLAlchemy models. No JavaScript build, no second schema.</p></div>"
-    )
-    play = (
-        '<div style="position:fixed;right:120px;top:50%;transform:translateY(-50%);width:150px;'
-        "height:150px;border-radius:50%;background:#2dd4bf;display:flex;align-items:center;"
-        'justify-content:center;box-shadow:0 16px 40px rgba(0,0,0,.45)">'
-        '<div style="margin-left:14px;width:0;height:0;border-top:34px solid transparent;'
-        'border-bottom:34px solid transparent;border-left:56px solid #0b1220"></div></div>'
-    )
-    page.set_content(_slide_page(base, title + play))
-    page.wait_for_timeout(200)
-    reel.poster = reel.workdir / "poster.png"
-    page.screenshot(path=reel.poster)
-    page.set_content(_slide_page(base, title))
-    reel.shot(page, 4.0, fade=0)
-    page.set_content(
-        _slide_page(
-            base,
-            '<div class="wrap"><p class="label">1 · Your models</p>'
-            f'<pre class="code">{_code_html(MODEL_CODE)}</pre></div>',
-        )
-    )
-    reel.shot(page, 5.0)
-    page.set_content(
-        _slide_page(
-            base,
-            '<div class="wrap"><p class="label">2 · A few admin options</p>'
-            f'<pre class="code">{_code_html(ADMIN_CODE)}</pre></div>',
-        )
-    )
-    reel.shot(page, 6.0)
-
-    # 2. Sign in and the dashboard.
-    page.goto(base + "/admin/login")
-    reel.shot(page, 2.5, "Built-in session login", "Or plug in your own auth with ExternalAuth")
+    _save(page, DEMO_DIR / "login.png")
     _sign_in(page, base)
     expect(page.get_by_test_id("figure-overdue-invoices")).to_be_visible()
-    reel.shot(
-        page, 3.2, "A dashboard page, added through the plugin API", "Figures load after the page"
-    )
+    _save(page, SHOTS_DIR / "dashboard.png")
 
-    # 3. The list.
     page.goto(base + "/admin/invoice")
-    page.screenshot(path=reel.workdir / "list-for-split.png")
-    page.set_content(
-        _slide_page(
-            base,
-            _split_body(
-                ADMIN_CODE, reel.workdir / "list-for-split.png", "These lines become this page."
-            ),
-        )
+    _save(page, DEMO_DIR / "list.png")
+    page.goto(
+        base + "/admin/invoice?search=INV-1&filter_status=Sent&sort_by=date_due&sort_direction=desc"
     )
-    reel.shot(page, 4.5)
-    page.goto(base + "/admin/invoice")
-    reel.shot(
-        page,
-        3.8,
-        "List view generated from list_display",
-        "Enum fields become coloured status pills; relations show their name",
-    )
-    search = page.get_by_test_id("search-input")
-    search.click()
-    for chunk in ("I", "NV-", "1"):
-        search.press_sequentially(chunk, delay=40)  # keyup drives the HTMX search
-        reel.shot(
-            page,
-            0.7,
-            "Search across search_fields",
-            "Results update as you type",
-            fade=CUT,
-            ring=search,
-        )
-    page.wait_for_timeout(1200)  # the 500 ms debounce plus the swap
-    reel.shot(
-        page,
-        1.8,
-        "Search across search_fields",
-        "Results update as you type",
-        fade=CUT,
-        ring=search,
-    )
+    _save(page, SHOTS_DIR / "list-search-filters.png")
 
-    page.goto(base + "/admin/invoice?filter_status=Sent")
-    reel.shot(
-        page,
-        3.4,
-        "Filters from list_filter",
-        "Status, customer, due-date range, and a custom Overdue filter",
-        ring=page.get_by_test_id("filter-sidebar"),
-    )
-    sort = page.get_by_test_id("sort-date_due")
-    sort.click()
-    page.wait_for_load_state("networkidle")
-    reel.shot(
-        page, 2.6, "Click a column to sort", "Sort, filters and page all live in the URL", ring=sort
-    )
-    nxt = page.get_by_test_id("pagination-next")
-    nxt.scroll_into_view_if_needed()
-    reel.shot(
-        page,
-        2.6,
-        "Pagination and page size",
-        where="top",
-        ring=page.get_by_test_id("pagination-info"),
-    )
-
-    # 4. Bulk action with a result per row.
     page.goto(base + "/admin/invoice")
     rows = page.get_by_test_id("list-row")
-    for i in range(4):
+    for i in range(3):
         rows.nth(i).get_by_test_id("bulk-checkbox").check()
     expect(page.get_by_test_id("bulk-bar")).to_be_visible()
     page.get_by_test_id("bulk-action-select").select_option(label="Mark paid")
-    reel.shot(
-        page,
-        3.2,
-        "Bulk actions from @action(bulk=True)",
-        "Select rows, pick the action, run it",
-        ring=page.get_by_test_id("bulk-bar"),
-    )
-    page.get_by_test_id("bulk-run-btn").click()
-    confirm = page.get_by_test_id("bulk-confirm-btn")
-    if confirm.is_visible():
-        confirm.click()
-    expect(page.get_by_test_id("bulk-result")).to_be_visible(timeout=15000)
-    reel.shot(
-        page,
-        3.6,
-        "A result for every row",
-        "Invoices that are not Sent are refused, with the reason",
-    )
+    _save(page, SHOTS_DIR / "bulk-actions.png")
 
-    # 5. Detail and edit with inlines.
-    page.goto(base + "/admin/invoice")
-    page.goto(base + "/admin/invoice/1")  # the detail page; a row click opens the edit form
+    page.goto(base + "/admin/invoice/1")
     expect(page.get_by_test_id("detail-fields")).to_be_visible()
-    reel.shot(page, 3.0, "Detail view with tabbed panels", "Custom actions sit next to the record")
+    _save(page, DEMO_DIR / "detail.png")
     page.get_by_test_id("detail-edit-link").click()
     expect(page.get_by_test_id("model-form")).to_be_visible()
-    reel.shot(
-        page,
-        3.2,
-        "Edit form generated from the field types",
-        "Dates, enums and foreign keys get the right widget",
-    )
     page.get_by_test_id("inline-invoiceitem").scroll_into_view_if_needed()
-    reel.shot(
-        page,
-        3.4,
-        "Related rows edited inline",
-        "InlineModelSpec: the invoice items on the invoice page",
-        ring=page.get_by_test_id("inline-invoiceitem"),
-    )
-
-    # 6. Create with validation.
+    _save(page, SHOTS_DIR / "form-inlines.png")
     page.goto(base + "/admin/invoice/create")
     expect(page.get_by_test_id("model-form")).to_be_visible()
-    reel.shot(page, 2.6, "Create form", "Required fields come from the model")
-    _submit_empty(page)
-    reel.shot(
-        page,
-        3.6,
-        "Server-side validation",
-        "An error summary and an error under each field",
-        ring=page.get_by_test_id("error-summary"),
-    )
+    _save(page, DEMO_DIR / "create.png")
 
-    # 7. Command palette.
-    page.goto(base + "/admin/invoice")
-    page.keyboard.press("ControlOrMeta+k")
-    palette = page.get_by_test_id("palette-input")
-    expect(palette).to_be_visible()
-    reel.shot(page, 1.4, "⌘K command palette", "Jump to any model, page or record", where="top")
-    for text in ("j", "jou", "journal"):
-        palette.fill(text)
-        page.wait_for_timeout(350 if text == "journal" else 120)
-        reel.shot(
-            page,
-            0.6,
-            "⌘K command palette",
-            "Jump to any model, page or record",
-            fade=CUT,
-            where="top",
-        )
-    reel.shot(
-        page, 1.6, "⌘K command palette", "Jump to any model, page or record", fade=CUT, where="top"
-    )
-    page.keyboard.press("Escape")
-
-    # 8. Dark mode.
-    page.goto(base + "/admin/invoice")
-    toggle = page.get_by_test_id("theme-toggle")
-    reel.shot(page, 1.4, "Light and dark themes", ring=toggle)
-    toggle.click()
-    page.wait_for_timeout(300)
-    reel.shot(
-        page, 3.0, "Light and dark themes", "Follows the OS, or the toggle in the navbar", fade=0.3
-    )
-    toggle.click()
-
-    # 9. Permissions.
     _ensure_group(page, base)
     page.goto(base + "/admin/permissions-matrix/")
     expect(page.get_by_test_id("pmatrix-table")).to_be_visible()
     _tick_matrix(page)
-    reel.shot(
-        page, 3.6, "Permissions matrix", "Grant view, add, change and delete per group and model"
-    )
+    _save(page, SHOTS_DIR / "permission-matrix.png")
+    page.goto(base + "/admin/erp/profit-loss")
+    _save(page, SHOTS_DIR / "profit-loss.png")
     ctx.close()
 
-    ro = _context(browser, video=True)
-    page = ro.new_page()
+    ctx = _context(browser)
+    page = ctx.new_page()
     _sign_in(page, base, "demo_ro", "demo_ro")
     page.goto(base + "/admin/invoice")
-    reel.shot(
-        page,
-        3.4,
-        "A read-only user: rows open read-only, no delete buttons",
-        "The server refuses anything their permissions do not allow",
-    )
-    ro.close()
+    expect(page.get_by_test_id("list-table")).to_be_visible()
+    _save(page, SHOTS_DIR / "read-only-list.png")
+    ctx.close()
 
-    # 10. Phone width.
-    phone = _context(browser, phone=True)
-    page = phone.new_page()
+    ctx = _context(browser, dark=True)
+    page = ctx.new_page()
     _sign_in(page, base)
     page.goto(base + "/admin/invoice")
-    page.wait_for_timeout(300)
-    page.screenshot(path=reel.workdir / "phone-list.png")
-    page.get_by_test_id("sidebar-toggle").click()
-    expect(page.get_by_test_id("sidebar")).to_be_visible()
-    page.wait_for_timeout(300)
-    page.screenshot(path=reel.workdir / "phone-sidebar.png")
-    phone.close()
-
-    ctx = _context(browser, video=True)
-    page = ctx.new_page()
-    page.goto(base + "/admin/login")
-    page.set_content(
-        _slide_page(
-            base,
-            '<div class="phones">'
-            f'<img src="{_data_uri(reel.workdir / "phone-list.png")}" alt="">'
-            f'<img src="{_data_uri(reel.workdir / "phone-sidebar.png")}" alt="">'
-            "</div>",
-        )
-    )
-    reel.shot(
-        page,
-        3.6,
-        "Responsive down to phone width",
-        "Rows become cards; the sidebar becomes a drawer",
-    )
-
-    # 11. Reports.
-    _sign_in(page, base)
-    page.goto(base + "/admin/erp/profit-loss")
-    reel.shot(
-        page,
-        3.2,
-        "Your own pages inside the admin",
-        "A Profit & Loss report, linked from the sidebar",
-    )
-
-    # 12. End card.
-    page.set_content(
-        _slide_page(
-            base,
-            '<div class="wrap"><h1 class="title">Define the backend.<br>'
-            '<span class="accent">Get the admin UI.</span></h1>'
-            '<p class="small">pip install hyper-admin</p>'
-            '<p class="lead">Docs: yevheniidehtiar.github.io/hyper-admin<br>'
-            "Live demo: hyper-admin-demo.onrender.com/admin (demo / demo)</p></div>",
-        )
-    )
-    reel.shot(page, 5.0)
+    _save(page, DEMO_DIR / "list-dark.png")
     ctx.close()
+
+    ctx = _context(browser, phone=True)
+    page = ctx.new_page()
+    _sign_in(page, base)
+    page.goto(base + "/admin/invoice")
+    _save(page, DEMO_DIR / "list-mobile.png")
+    ctx.close()
+
+
+# ── Encoding ────────────────────────────────────────────────────────────────────────
 
 
 def encode(reel: Reel, out_dir: Path) -> None:
@@ -754,42 +1418,58 @@ def encode(reel: Reel, out_dir: Path) -> None:
 
 
 def render(
-    base: str,
     *,
     screenshots: bool,
     video: bool,
+    scenes: Sequence[str] | None = None,
+    frames_dir: Path | None = None,
     browser_ws: str | None = None,
     browser_host: str | None = None,
 ) -> None:
-    """Render the screenshots and/or the video against a running ERP example."""
-    with tempfile.TemporaryDirectory(prefix="hyperadmin-tour-") as tmp, sync_playwright() as pw:
+    """Boot the apps, render the scenes into a reel and encode it (unless ``scenes``)."""
+    chosen = [(name, fn) for name, fn in SCENES if scenes is None or name in scenes]
+    with (
+        tempfile.TemporaryDirectory(prefix="hyperadmin-tour-") as tmp,
+        ExitStack() as stack,
+        sync_playwright() as pw,
+    ):
         work = Path(tmp)
         if browser_ws:
             # A remote (Linux) browser: en-US date and number inputs on any host OS.
             browser = pw.chromium.connect(browser_ws)
-            if browser_host:
-                base = base.replace("127.0.0.1", browser_host)
         else:
             # On macOS date and number inputs follow the system locale, whatever --lang says.
             browser = pw.chromium.launch(args=["--lang=en-US"])
-        if screenshots:
-            render_screenshots(browser, base, work)
-        if video:
-            reel = Reel(work)
-            record_reel(browser, base, reel)
-            encode(reel, DEMO_DIR)
+            browser_host = None
+        apps = Apps(stack, work, browser_host=browser_host)
+        reel = Reel(frames_dir or work, save_shots=screenshots)
+        tour = Tour(pw, browser, apps, reel, work)
+        if screenshots and scenes is None:
+            render_screenshots(browser, apps.url("erp"))
+        if video or scenes is not None:
+            reel.workdir.mkdir(parents=True, exist_ok=True)
+            for name, scene in chosen:
+                sys.stdout.write(f"── {name}\n")
+                scene(tour)
+            sys.stdout.write(f"reel length {reel.length:.1f}s, {len(reel.frames)} frames\n")
+            if scenes is None and video:
+                encode(reel, DEMO_DIR)
         browser.close()
+        if tour._local is not None:
+            tour._local.close()
 
 
 def main(argv: Sequence[str] | None = None) -> None:
-    """Parse arguments, start the ERP example and render the tour."""
+    """Parse arguments and render the tour."""
     parser = argparse.ArgumentParser(description=(__doc__ or "").splitlines()[0])
     parser.add_argument("--no-video", action="store_true", help="only render the screenshots")
     parser.add_argument("--no-screenshots", action="store_true", help="only render the video")
+    parser.add_argument("--list-scenes", action="store_true", help="print the scene names")
     parser.add_argument(
-        "--base-url",
-        help="use a running ERP example started with HYPERADMIN_DEMO=1 and the admin password 'admin'",
+        "--scenes",
+        help="comma-separated scene names to render into --frames, without encoding",
     )
+    parser.add_argument("--frames", type=Path, help="keep the video frames in this directory")
     parser.add_argument(
         "--browser-ws",
         help="connect to a Playwright browser server instead of launching Chromium "
@@ -801,23 +1481,22 @@ def main(argv: Sequence[str] | None = None) -> None:
         help="host name the remote browser uses to reach this machine",
     )
     args = parser.parse_args(argv)
-
-    def run(base: str) -> None:
-        render(
-            base,
-            screenshots=not args.no_screenshots,
-            video=not args.no_video,
-            browser_ws=args.browser_ws,
-            browser_host=args.browser_host,
-        )
-
-    if args.base_url:
-        run(args.base_url.rstrip("/"))
+    if args.list_scenes:
+        for name, scene in SCENES:
+            sys.stdout.write(f"{name:12} {(scene.__doc__ or '').splitlines()[0]}\n")
         return
-    with erp_server(
-        extra_env={"HYPERADMIN_DEMO": "1", "HYPERADMIN_ADMIN_PASSWORD": "admin"}
-    ) as base:
-        run(base)
+    scenes = [s.strip() for s in args.scenes.split(",")] if args.scenes else None
+    unknown = set(scenes or []) - {name for name, _ in SCENES}
+    if unknown:
+        parser.error(f"unknown scenes: {', '.join(sorted(unknown))}")
+    render(
+        screenshots=not args.no_screenshots,
+        video=not args.no_video,
+        scenes=scenes,
+        frames_dir=args.frames,
+        browser_ws=args.browser_ws,
+        browser_host=args.browser_host,
+    )
 
 
 if __name__ == "__main__":

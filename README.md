@@ -42,8 +42,10 @@
 
 ## Define the backend, get the UI
 
-Write the models and a few admin options; the list, filters, forms, inline rows, bulk actions
-and permissions are generated. Watch the 80-second tour:
+Write the models and a few admin options; the pages are generated, with what a backend-only
+team would otherwise skip: presence and live lists, a conflict dialog instead of silent
+overwrites, fast lists on millions of rows, load-testing tools, plugins and SSO sign-in.
+Watch the 95-second tour:
 
 <p align="center">
   <a href="https://yevheniidehtiar.github.io/hyper-admin/demo/#video-tour">

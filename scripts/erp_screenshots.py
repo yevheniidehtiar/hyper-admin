@@ -40,32 +40,52 @@ def _free_port() -> int:
 
 
 @contextmanager
-def erp_server(timeout: float = 120.0, extra_env: dict[str, str] | None = None) -> Iterator[str]:
-    """Run the ERP example with a fresh in-memory database; yield its base URL."""
-    port = _free_port()
-    env = {**os.environ, "E2E_TESTING": "1", "DEMO_REALTIME": "0", **(extra_env or {})}
-    proc = subprocess.Popen(  # noqa: S603 - fixed argv
-        [sys.executable, "-m", "uvicorn", "examples.erp.main:app", "--port", str(port)],
-        cwd=ROOT,
-        env=env,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
+def app_server(
+    module: str,
+    *,
+    env: dict[str, str] | None = None,
+    port: int | None = None,
+    log: Path | None = None,
+    ready_path: str = "/admin/login",
+    timeout: float = 120.0,
+) -> Iterator[str]:
+    """Run ``uvicorn <module>:app`` from the repository root on a free port; yield its URL.
+
+    ``env`` is merged over this process's environment. Output goes to ``log`` (or is
+    dropped). The server counts as up once ``ready_path`` answers.
+    """
+    port = port or _free_port()
+    with log.open("w") if log else open(os.devnull, "w") as out:
+        proc = subprocess.Popen(  # noqa: S603 - fixed argv
+            [sys.executable, "-m", "uvicorn", f"{module}:app", "--port", str(port)],
+            cwd=ROOT,
+            env={**os.environ, **(env or {})},
+            stdout=out,
+            stderr=subprocess.STDOUT,
+        )
     base = f"http://127.0.0.1:{port}"
     try:
         deadline = time.monotonic() + timeout
         while True:
             try:
-                urllib.request.urlopen(base + "/", timeout=2)  # noqa: S310 - local URL
+                urllib.request.urlopen(base + ready_path, timeout=2)  # noqa: S310 - local URL
                 break
             except OSError:
                 if proc.poll() is not None or time.monotonic() > deadline:
-                    raise RuntimeError("the ERP example did not start") from None
-                time.sleep(1)
+                    raise RuntimeError(f"{module} did not start") from None
+                time.sleep(0.5)
         yield base
     finally:
         proc.terminate()
         proc.wait(timeout=10)
+
+
+@contextmanager
+def erp_server(timeout: float = 120.0, extra_env: dict[str, str] | None = None) -> Iterator[str]:
+    """Run the ERP example with a fresh in-memory database; yield its base URL."""
+    env = {"E2E_TESTING": "1", "DEMO_REALTIME": "0", **(extra_env or {})}
+    with app_server("examples.erp.main", env=env, ready_path="/", timeout=timeout) as base:
+        yield base
 
 
 def _sign_in(page: Page, base: str) -> None:
