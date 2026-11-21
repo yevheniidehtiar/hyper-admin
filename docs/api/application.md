@@ -46,8 +46,37 @@ Pass these through `HyperAdminSettings(...)`, or set them as environment variabl
 `HYPERADMIN_` prefix (for example `HYPERADMIN_CREATE_TABLES=true`). They are not `Admin()`
 keyword arguments.
 
+Settings that belong to one feature are described with it: the database pool and rate limiting
+in [Performance](../guides/performance.md), `upload_dir`, `public_uploads_path`,
+`storage_backend` and the `aws_*` settings in [File uploads](../guides/file-uploads.md).
+`database_engine_kwargs`, `is_default_secret_key` and `tzinfo` are read-only properties derived
+from the settings below, not settings; they have no environment variable.
+
 | Setting | Type | Default | Description |
 |-----------|------|---------|-------------|
+| `site_title` | `str` | `"HyperAdmin"` | Admin name shown in the navbar, on the login page and in browser tab titles |
+| `site_header` | `str` | `"HyperAdmin"` | Not shown by the built-in templates; custom templates can read it as the `site_header` Jinja global |
+| `secret_key` | `str` | a built-in placeholder | Signs the session cookie and the CSRF tokens. Required (startup fails) when the admin has an `auth_backend` or `csrf_mode="enforce"`, unless `debug` is on; set `HYPERADMIN_SECRET_KEY` in production |
+| `debug` | `bool` | `False` | Development mode: a list page re-raises database errors instead of showing the list-error banner, and the placeholder `secret_key` only logs a warning |
+| `database_url` | `str` | `"sqlite+aiosqlite:///:memory:"` | Database the admin connects to when no `engine=` or `session_factory=` is passed. Pool settings are in [Performance](../guides/performance.md) |
+| `register_auth_models` | `bool \| None` | `None` | Register the built-in `User`, `Group` and `Permission` admins. `None` turns them on with `auth_backend=` and off with `auth=` or no auth |
+| `csrf_mode` | `"auto" \| "enforce" \| "report" \| "off"` | `"auto"` | When unsafe requests are checked for a CSRF token; see [CSRF protection](#csrf-protection) |
+| `csrf_cookie_name` | `str` | `"hyperadmin_csrf"` | Name of the cookie that carries the CSRF token |
+| `csrf_header_name` | `str` | `"X-CSRF-Token"` | Request header the admin's HTMX requests send the token in |
+| `csrf_field_name` | `str` | `"csrf_token"` | Form field that carries the token in a plain form post |
+| `csrf_trusted_origins` | `list[str]` | `[]` | Extra origins (`"https://admin.example"`) the `Origin` check accepts besides the admin's own |
+| `plugins_enabled` | `bool` | `True` | Load the plugins installed under the `hyperadmin.plugins` entry point when the `Admin` is built. `False` skips discovery; plugins can still be registered by hand |
+| `permissions_matrix_enabled` | `bool` | `True` | Register the permissions matrix page and its sidebar entry (built-in groups only). `False` leaves its URL unrouted (404) |
+| `permissions_matrix_codename` | `str` | `"change_groups_permissions"` | Codename a non-superuser needs to open and save the permissions matrix. Lowercase letters, digits and `_` |
+| `theme` | `"auto" \| "light" \| "dark"` | `"auto"` | Colour scheme. `"auto"` follows the operating system; users can still switch it in the navbar |
+| `date_format` | `str` | `"%Y-%m-%d"` | Accepted but not read in this release: date values are shown as `YYYY-MM-DD` |
+| `datetime_format` | `str` | `"%Y-%m-%d %H:%M:%S"` | `strftime` format of timezone-aware datetimes on list and detail pages |
+| `timezone` | `str` | `"UTC"` | IANA zone (case-sensitive, for example `"Europe/Berlin"`) aware datetimes are shown and entered in |
+| `concurrency_use_updated_at` | `bool` | `False` | Use an `updated_at` column as the version field of models without a `version` column, for stale-save detection. Approximate: two writes within the column's resolution can go undetected |
+| `occ_render_dialog` | `bool` | `True` | On a stale save, show the HTML conflict dialog. `False` answers with a JSON 409 body, for API clients |
+| `default_locale` | `str` | `"en"` | Language used when neither the language cookie nor `Accept-Language` matches a supported locale |
+| `supported_locales` | `list[str]` | the 20 bundled locales | Locales the language switcher offers and `Accept-Language` is matched against |
+| `locale_response_header` | `bool` | `True` | Send a `Content-Language` header with the resolved locale on every admin response |
 | `discover_apps` | `list[str]` | `[]` | Packages whose `admin.py` modules are imported |
 | `auto_discover` | `bool` | `False` | Register every SQLModel `table=True` model found, with smart defaults |
 | `create_tables` | `bool` | `False` | Create every SQLModel table in `admin.startup()`. In demo mode (no `engine=`/`session_factory=`), tables are created automatically only for SQLite URLs. Otherwise use `admin.create_tables(scope=...)` or `hyperadmin init-db` |
