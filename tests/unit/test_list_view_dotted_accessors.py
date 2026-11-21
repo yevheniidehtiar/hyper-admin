@@ -118,6 +118,30 @@ def test_dotted_accessor_past_the_loaded_relation_is_empty() -> None:
     assert _cells(response, "customer.region.code")[1] is None
 
 
+def test_follow_accessor_stops_at_a_relation_the_query_did_not_load() -> None:
+    """
+    Scenario: an unloaded relation is never lazy-loaded on a closed session
+      Given a customer read in a session that is now closed, without its region
+      When  the accessor "customer.region.code" is followed from an order holding it
+      Then  the result is None and no DetachedInstanceError is raised
+    """
+    from types import SimpleNamespace
+
+    from hyperadmin.views.dynamic.list_view import _follow_accessor
+
+    async def _detached_customer() -> DaCustomer:
+        engine = await _seed_engine()
+        async with AsyncSession(engine) as session:
+            customer = await session.get(DaCustomer, 1)
+        assert customer is not None
+        return customer
+
+    order = SimpleNamespace(customer=anyio.run(_detached_customer))
+
+    assert _follow_accessor(order, "customer.region.code") is None
+    assert _follow_accessor(order, "customer.name") == "Ada Lovelace"
+
+
 def test_dotted_accessor_is_empty_when_the_relation_is_unset() -> None:
     """
     Scenario: a missing related row leaves the cell empty
