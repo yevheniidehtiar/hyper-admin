@@ -32,6 +32,7 @@ import re
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import date, datetime
+from enum import Enum
 from typing import TYPE_CHECKING, Any, ClassVar
 
 from sqlalchemy import Select, func, inspect, literal_column, select
@@ -274,9 +275,15 @@ class ReportView:
 
         result = await session.execute(cls.build_query(dialect, periods, where))
         records = [dict(row._mapping) for row in result]
+        groups = [d.name for d in (*cls.rows, *cls.cols) if not isinstance(d, TimeBucket)]
         for record in records:
             for name, period in periods.items():
                 record[name] = TimeBucket.format_key(record[name], period)
+            for name in groups:
+                # An Enum column comes back as members; the grid, charts and exports
+                # show the value ("Paid"), not str() of the member ("Status.PAID").
+                if isinstance(record[name], Enum):
+                    record[name] = record[name].value
         for agg in cls.values:
             if isinstance(agg, Many2One):
                 await cls._resolve_many2one(session, agg, records)
