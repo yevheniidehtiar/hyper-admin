@@ -6,7 +6,8 @@
   display: inline-block;
   width: 10px;
   height: 10px;
-  margin-inline-end: var(--ha-space-2);
+  /* Even space on both sides, so the dot does not crowd the search trigger. */
+  margin-inline: var(--ha-space-2);
   border-radius: var(--ha-radius-pill);
   background: var(--ha-color-text-muted);
   vertical-align: middle;

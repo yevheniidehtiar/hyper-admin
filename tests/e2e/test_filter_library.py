@@ -43,7 +43,16 @@ def _login(page: Page, base_url: str, username: str = "alice") -> None:
     expect(page).to_have_url(f"{base_url}/admin/")
 
 
+def _keep_filter_panel_expanded(page: Page) -> None:
+    """Start every page with the filter panel expanded, as for a viewer who opened it once.
+
+    At the 1280px default viewport the panel starts collapsed; these steps work inside it.
+    """
+    page.add_init_script("try { localStorage.setItem('ha-filters', 'expanded'); } catch (e) {}")
+
+
 def _open_orders(page: Page, base_url: str, username: str = "alice", query: str = "") -> None:
+    _keep_filter_panel_expanded(page)
     _login(page, base_url, username)
     page.goto(f"{base_url}{ORDER_LIST}{query}")
     expect(page.get_by_test_id("filter-sidebar")).to_be_visible()

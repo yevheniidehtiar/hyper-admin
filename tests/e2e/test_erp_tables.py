@@ -46,6 +46,14 @@ def _open(page: Page, base_url: str, path: str) -> None:
     expect(page.get_by_test_id("list-table")).to_be_visible()
 
 
+def _keep_filter_panel_expanded(page: Page) -> None:
+    """Start every page with the filter panel expanded, as for a viewer who opened it once.
+
+    At the 1280px default viewport the panel starts collapsed; these steps work inside it.
+    """
+    page.add_init_script("try { localStorage.setItem('ha-filters', 'expanded'); } catch (e) {}")
+
+
 def test_amounts_are_formatted(page: Page, erp_url: str) -> None:
     """
     Scenario: amounts are formatted
@@ -248,6 +256,7 @@ def test_invoice_list_offers_customer_and_due_date_filters(page: Page, erp_url: 
       Then  the filter sidebar offers customer, due-date and status filters
     """
     # Given the invoice list
+    _keep_filter_panel_expanded(page)
     _open(page, erp_url, "/admin/invoice")
 
     # Then the sidebar has the customer, due-date, status and overdue filters
@@ -267,6 +276,7 @@ def test_overdue_filter_lists_only_overdue_invoices(page: Page, erp_url: str) ->
       Then  every row on the page shows the Overdue pill
     """
     # Given the invoice list
+    _keep_filter_panel_expanded(page)
     _open(page, erp_url, "/admin/invoice")
 
     # When the clerk turns on Overdue only

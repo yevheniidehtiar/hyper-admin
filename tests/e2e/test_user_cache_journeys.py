@@ -85,7 +85,8 @@ def test_browsing_as_a_staff_user_behaves_the_same_with_the_cache(
       Then  every step shows the same result with the cache on as with it off
     """
     base = user_cache_base_url
-    # Given staff is signed in
+    # Given staff is signed in, with the filter panel kept expanded (it starts collapsed at 1280px)
+    page.add_init_script("try { localStorage.setItem('ha-filters', 'expanded'); } catch (e) {}")
     _sign_in(page, base, "staff")
 
     # When staff opens the list

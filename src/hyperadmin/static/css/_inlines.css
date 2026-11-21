@@ -150,3 +150,11 @@
   color: var(--ha-color-danger-text);
   background-color: var(--ha-color-danger-soft);
 }
+
+/* In the table layout Remove matches the row's inputs, so its label lines up
+   with theirs instead of sitting 4px above (it was a 28px compact button). */
+@media (min-width: 768px) {
+  .ha-inline-table .ha-inline-remove-btn {
+    min-block-size: var(--ha-ctl-h);
+  }
+}

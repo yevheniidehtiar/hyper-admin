@@ -18,7 +18,7 @@
 
 .ha-search-field > .ha-icon {
   position: absolute;
-  inset-inline-start: 10px;
+  inset-inline-start: var(--ha-search-icon-inset);
   top: 50%;
   transform: translateY(-50%);
   color: var(--ha-color-text-muted);
@@ -29,7 +29,7 @@
   width: 100%;
   min-height: var(--ha-ctl-h);
   padding: 0 var(--ha-space-3);
-  padding-inline-start: 36px;
+  padding-inline-start: var(--ha-search-text-inset);
   border: var(--ha-border-width) solid var(--ha-color-border-strong);
   border-radius: var(--ha-radius-md);
   font: inherit;

@@ -114,6 +114,8 @@
   --ha-target-min: 24px;
   --ha-target-touch: 44px;
   --ha-icon-size: 20px;
+  --ha-search-icon-inset: 12px;
+  --ha-search-text-inset: 40px;
   --ha-navbar-height: 56px;
   --ha-sidebar-width: 256px;
   --ha-sidebar-width-collapsed: 64px;

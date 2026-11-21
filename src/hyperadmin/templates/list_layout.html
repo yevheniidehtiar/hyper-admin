@@ -15,18 +15,53 @@
         {%- endif -%}
     </div>
 
-    {%- include "components/search_input.html" -%}
-
     {%- set sidebar_filters = filter_groups|default([])|rejectattr("filter.template", "equalto", "components/filters/select.html")|list -%}
     {%- set use_sidebar = sidebar_filters|length > 0 -%}
     {%- if use_sidebar -%}
-    <div class="ha-filterlayout" x-data="{ filtersOpen: false }">
+    {#- The Filters button works in two modes, chosen by the width of this block (720px, the
+        same breakpoint as the ha-filters container query in _filter.css):
+        folded (narrower): the panel is hidden and the button opens it above the list;
+        side by side (wider): the button collapses the panel so the table gets the whole width.
+        The side-by-side choice is kept per viewer in localStorage "ha-filters"; without one the
+        panel starts expanded on screens 1440px and wider, collapsed below. -#}
+    <div class="ha-filterlayout"
+         x-data="{
+            filtersOpen: false,
+            collapsed: false,
+            folded: false,
+            init() {
+                this.collapsed = this.$el.classList.contains('is-collapsed');
+                this.folded = this.$el.clientWidth < 720;
+                new ResizeObserver(() => { this.folded = this.$el.clientWidth < 720; }).observe(this.$el);
+            },
+            toggleFilters() {
+                if (this.folded) { this.filtersOpen = !this.filtersOpen; return; }
+                this.collapsed = !this.collapsed;
+                try { localStorage.setItem('ha-filters', this.collapsed ? 'collapsed' : 'expanded'); } catch (e) { /* storage blocked */ }
+            }
+         }"
+         :class="{ 'is-collapsed': collapsed }">
+        <script>
+          // Before the panel is parsed, so a collapsed panel never flashes open.
+          (function (layout) {
+            if (!layout) return;
+            var stored = null;
+            try { stored = localStorage.getItem('ha-filters'); } catch (e) { /* storage blocked */ }
+            var collapsed = stored ? stored === 'collapsed' : !window.matchMedia('(min-width: 1440px)').matches;
+            if (collapsed) layout.classList.add('is-collapsed');
+          })(document.currentScript && document.currentScript.parentElement);
+        </script>
+        <div class="ha-filterlayout__bar">
+            {%- include "components/search_input.html" -%}
+            {#- Outside the grid: the opened panel then sits between this button and the list. -#}
+            <button class="ha-btn ha-filterlayout__toggle" type="button" aria-controls="filter-sidebar"
+                    aria-expanded="false" :aria-expanded="folded ? filtersOpen : !collapsed"
+                    @click="toggleFilters()" data-testid="filters-toggle">
+                {{ icon('sliders-horizontal') }}{{ _("Filters") }}{% if applied_filters %} <span class="ha-count" data-testid="filters-toggle-count">{{ applied_filters|length }}</span>{% endif %}
+            </button>
+        </div>
         <div class="ha-filterlayout__grid">
             <div class="ha-filterlayout__main" style="min-inline-size:0">
-                <button class="ha-btn ha-filterlayout__toggle" type="button" aria-controls="filter-sidebar-t"
-                        :aria-expanded="filtersOpen" @click="filtersOpen = !filtersOpen" style="margin-block-end:12px">
-                    {{ icon('sliders-horizontal', 'ha-icon--sm') }}{{ _("Filters") }}{% if applied_filters %} <span class="ha-count">{{ applied_filters|length }}</span>{% endif %}
-                </button>
                 {%- if applied_filters %}
                 <div class="ha-chips" aria-label="{{ _('Applied filters') }}" data-testid="applied-filters" style="margin-block-end:12px">
                     {%- for chip in applied_filters %}
@@ -35,6 +70,7 @@
                 </div>
                 {%- endif %}
     {%- else -%}
+    {%- include "components/search_input.html" -%}
     {%- include "components/filter_bar.html" -%}
     {%- endif -%}
 

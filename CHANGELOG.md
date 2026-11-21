@@ -18,6 +18,9 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
   written into the page a second time with raw `innerHTML`, after htmx had swapped and enhanced
   it, so the autocomplete came back un-enhanced: its native `<select>` showed under the search
   box and the search no longer fetched choices. htmx now does the only swap.
+- **Autocomplete list gap** (#1130). A single-value autocomplete's options list opened 40px below
+  its field; it now starts at the field's edge and flips above the field near the viewport bottom.
+  A multi-value autocomplete's list joins its search field.
 - **Phone navbar and touch targets** (#1018, #1014, #1026). Below 640px the language and theme
   controls move into the account menu and the brand shrinks to its mark (the link keeps the site
   name as its label), so pages no longer scroll sideways at 360px. Sidebar group toggles, pin
@@ -26,6 +29,10 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
   (no hover) they stay tappable on every row, dimmed until current, focused or pinned.
 
 ### Added
+- **Collapsible filter panel** (#1130). The Filters button in a list's search row collapses the
+  filter panel so the table takes the whole content width. The panel starts expanded from 1440px,
+  collapsed below; each viewer's choice is kept in `localStorage`, and the button shows the active
+  filter count while the panel is collapsed. No new option.
 - `hyperadmin.adapters.filtering.build_clauses(model, conditions)` is public: it turns typed
   `FilterCondition` objects into SQLAlchemy clauses, so a plugin that queries a model itself can
   apply the list page's filters. `hyperadmin-reports` uses it instead of the private
