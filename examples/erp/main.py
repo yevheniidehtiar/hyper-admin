@@ -6,6 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 
 from examples.erp.db import engine
+from examples.erp.reports.pivots import register_reports
 from examples.erp.reports.plugin import ErpPagesPlugin
 from examples.erp.showcase.models import showcase_storage
 from hyperadmin import Admin, NavGroup
@@ -100,6 +101,10 @@ def _realtime_settings() -> RealtimeSettings | None:
     redis_url = os.environ.get("REDIS_URL")
     return RealtimeSettings(pubsub_redis_url=redis_url, presence_redis_url=redis_url)
 
+
+# Pivot reports for the reports plugin's "All reports" page; registered before Admin()
+# is built, because the plugin declares each report's permission and sidebar link on load.
+register_reports()
 
 admin = Admin(
     app,

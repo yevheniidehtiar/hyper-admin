@@ -21,6 +21,10 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
 - **Autocomplete list gap** (#1130). A single-value autocomplete's options list opened 40px below
   its field; it now starts at the field's edge and flips above the field near the viewport bottom.
   A multi-value autocomplete's list joins its search field.
+- **Empty "All reports" page in the ERP example.** The example registered no `ReportView`, so the
+  reports plugin's index said "No reports available"; it now registers "Invoices by status" and
+  "Bills by status". `hyperadmin-reports` now shows an enum dimension by its value ("Paid")
+  instead of the member ("InvoiceStatus.PAID") in the grid, charts and exports.
 - **Phone navbar and touch targets** (#1018, #1014, #1026). Below 640px the language and theme
   controls move into the account menu and the brand shrinks to its mark (the link keeps the site
   name as its label), so pages no longer scroll sideways at 360px. Sidebar group toggles, pin
