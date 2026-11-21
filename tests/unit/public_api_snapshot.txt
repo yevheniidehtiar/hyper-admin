@@ -82,7 +82,7 @@ hyperadmin.NavGroup.collapsed :: field: bool = False
 hyperadmin.NavGroup.icon :: field: str | None = None
 hyperadmin.NavGroup.label :: field: str | babel.support.LazyProxy
 hyperadmin.NavGroup.order :: field: int = 0
-hyperadmin.PDFStreamPanel :: alias of hyperadmin.pdf_stream_panel
+hyperadmin.PDFStreamPanel :: def (*, slug: str, label: str, path_resolver: Callable[[Any], Path | str], enabled: Callable[[Any], bool] | None = None, icon: str | None = None, permission: str | None = None) -> PanelDef
 hyperadmin.Plugin :: class(Protocol)
 hyperadmin.Plugin.name :: attr: str
 hyperadmin.Plugin.on_register :: def (self, admin: Any) -> None

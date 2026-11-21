@@ -8,6 +8,7 @@ stand-in auth backend, so permission, object-permission and the
 
 from __future__ import annotations
 
+import warnings
 from collections.abc import AsyncIterator
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -592,7 +593,7 @@ def test_pdf_stream_panel_returns_a_panel_def() -> None:
     """
     Scenario: pdf_stream_panel factory in hyperadmin.panels returns a PanelDef
       Given the keyword arguments of the spec
-      Then  a PanelDef carrying them is returned, and PDFStreamPanel is the same factory
+      Then  a PanelDef carrying them is returned
     """
     enabled = lambda o: True  # noqa: E731 - identity matters in the assertion
 
@@ -613,9 +614,53 @@ def test_pdf_stream_panel_returns_a_panel_def() -> None:
         "custom_codename",
     )
     assert pd.enabled is enabled
-    assert PDFStreamPanel is pdf_stream_panel
     assert hyperadmin.pdf_stream_panel is pdf_stream_panel
-    assert hyperadmin.PDFStreamPanel is pdf_stream_panel
+
+
+def test_pdf_stream_panel_alias_warns_and_builds_the_same_panel() -> None:
+    """
+    Scenario: the deprecated PDFStreamPanel name warns and still works
+      Given code that calls hyperadmin.PDFStreamPanel(...)
+      When  the call runs
+      Then  a DeprecationWarning names pdf_stream_panel and the 0.6 removal
+      And   the returned PanelDef matches what pdf_stream_panel builds
+    """
+    enabled = lambda o: True  # noqa: E731 - identity matters in the assertion
+    kwargs: dict[str, Any] = {
+        "slug": "invoice",
+        "label": "Invoice",
+        "path_resolver": lambda o: Path("/x.pdf"),
+        "enabled": enabled,
+        "icon": "file-text",
+        "permission": "custom_codename",
+    }
+
+    with pytest.warns(
+        DeprecationWarning, match=r"removed in 0\.6; use hyperadmin\.pdf_stream_panel"
+    ):
+        pd = PDFStreamPanel(**kwargs)
+
+    assert hyperadmin.PDFStreamPanel is PDFStreamPanel
+    assert isinstance(pd, PanelDef)
+    assert (pd.slug, pd.label, pd.icon, pd.permission, pd.enabled) == (
+        "invoice",
+        "Invoice",
+        "file-text",
+        "custom_codename",
+        enabled,
+    )
+
+
+def test_pdf_stream_panel_does_not_warn() -> None:
+    """
+    Scenario: the supported factory name emits no deprecation warning
+      Given code that calls pdf_stream_panel(...)
+      When  the call runs
+      Then  no DeprecationWarning is emitted
+    """
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", DeprecationWarning)
+        pdf_stream_panel(slug="invoice", label="Invoice", path_resolver=lambda o: Path("/x.pdf"))
 
 
 def test_pdf_stream_panel_streams_the_file_inline(pdf_path: Path) -> None:

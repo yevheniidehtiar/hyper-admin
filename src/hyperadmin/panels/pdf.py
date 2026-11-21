@@ -9,6 +9,7 @@ served on demand from the ``/stream`` sub-route.
 
 from __future__ import annotations
 
+import warnings
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 from urllib.parse import quote
@@ -81,8 +82,35 @@ def pdf_stream_panel(
     )
 
 
-#: Class-style alias of :func:`pdf_stream_panel` (the spec names the factory both ways).
-PDFStreamPanel = pdf_stream_panel
+def PDFStreamPanel(  # noqa: N802 - deprecated class-style name, kept until 0.6
+    *,
+    slug: str,
+    label: str,
+    path_resolver: Callable[[Any], Path | str],
+    enabled: Callable[[Any], bool] | None = None,
+    icon: str | None = None,
+    permission: str | None = None,
+) -> PanelDef:
+    """Deprecated alias of :func:`pdf_stream_panel`; removed in 0.6.
+
+    The class-style name suggested a class, but it returns a :class:`PanelDef`
+    like :func:`pdf_stream_panel`, so ``isinstance`` and subclassing never
+    worked. Every call emits a :class:`DeprecationWarning`.
+    """
+    warnings.warn(
+        "hyperadmin.PDFStreamPanel is deprecated and will be removed in 0.6; "
+        "use hyperadmin.pdf_stream_panel instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return pdf_stream_panel(
+        slug=slug,
+        label=label,
+        path_resolver=path_resolver,
+        enabled=enabled,
+        icon=icon,
+        permission=permission,
+    )
 
 
 def pdf_stream_response(

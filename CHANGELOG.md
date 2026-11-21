@@ -215,6 +215,12 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
   the next request. If you change permissions and keep checking the same user object, call
   `hyperadmin.auth.permissions.forget_user_permissions(user)` (the permissions matrix does).
 
+### Deprecated
+- `hyperadmin.PDFStreamPanel` is deprecated and will be removed in 0.6. It was the same
+  function as `pdf_stream_panel` under a class-style name, so `isinstance` and subclassing never
+  worked; calling it now emits a `DeprecationWarning`. Use `hyperadmin.pdf_stream_panel`
+  (st-v100-freeze-03).
+
 ### Fixed
 - A foreign-key field keeps its stored value on the edit form even when the related row
   falls outside the 50 preloaded options (st-ux-erp-02, #1023); before, the select showed
