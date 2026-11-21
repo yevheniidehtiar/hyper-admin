@@ -241,3 +241,48 @@ def test_actiondef_bulk_and_form_defaults():
     ad = ActionDef(name="x", label="X", handler=handler)
     assert ad.bulk is False
     assert ad.form is None
+
+
+# ---------------------------------------------------------------------------
+# requires_selection: bool | None = None (v1.0 API audit, finding 9)
+# ---------------------------------------------------------------------------
+
+
+def test_action_signature_shows_none_as_requires_selection_default():
+    """
+    Scenario: the public signature shows a plain default
+      Given the @action decorator
+      When  its signature is inspected
+      Then  requires_selection is annotated ``bool | None`` and defaults to None
+    """
+    import inspect
+
+    param = inspect.signature(action).parameters["requires_selection"]
+    assert param.default is None
+    assert param.annotation in ("bool | None", bool | None)
+
+
+@pytest.mark.parametrize(
+    ("bulk", "requires_selection", "expected"),
+    [
+        (False, None, False),
+        (True, None, True),
+        (True, False, False),
+        (False, True, True),
+    ],
+)
+def test_requires_selection_none_derives_from_bulk(
+    bulk: bool, requires_selection: bool | None, expected: bool
+) -> None:
+    """
+    Scenario: None keeps the derived selection rule
+      Given an action declared with bulk and requires_selection
+      When  the decorator builds its ActionDef
+      Then  None follows bulk, and an explicit bool wins
+    """
+
+    @action(label="Run", bulk=bulk, requires_selection=requires_selection)
+    async def run(self, request, item_id, *, params=None):
+        pass
+
+    assert run._action_def.requires_selection is expected

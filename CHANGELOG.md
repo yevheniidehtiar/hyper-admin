@@ -169,6 +169,9 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
   `sliders-horizontal`) available through `icon(name)`.
 
 ### Changed
+- `action(requires_selection=...)` is annotated `bool | None` and defaults to `None` (derive
+  it from `bulk`), so the public signature no longer shows an `object()` sentinel. Behaviour is
+  unchanged (st-v100-freeze-03).
 - **BREAKING: list pages no longer load every relation** (#215, #216, #217, #218).
   `SQLModelAdapter.list()` used to `selectinload` every relationship, one extra query per
   relation on every request. It now loads none unless asked: the admin loads the relations named
