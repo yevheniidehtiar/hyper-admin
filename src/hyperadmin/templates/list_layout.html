@@ -21,12 +21,13 @@
     {%- set use_sidebar = sidebar_filters|length > 0 -%}
     {%- if use_sidebar -%}
     <div class="ha-filterlayout" x-data="{ filtersOpen: false }">
+        {#- Outside the grid: the opened panel then sits between this button and the list. -#}
+        <button class="ha-btn ha-filterlayout__toggle" type="button" aria-controls="filter-sidebar-t"
+                :aria-expanded="filtersOpen" @click="filtersOpen = !filtersOpen" style="margin-block-end:12px">
+            {{ icon('sliders-horizontal') }}{{ _("Filters") }}{% if applied_filters %} <span class="ha-count">{{ applied_filters|length }}</span>{% endif %}
+        </button>
         <div class="ha-filterlayout__grid">
             <div class="ha-filterlayout__main" style="min-inline-size:0">
-                <button class="ha-btn ha-filterlayout__toggle" type="button" aria-controls="filter-sidebar-t"
-                        :aria-expanded="filtersOpen" @click="filtersOpen = !filtersOpen" style="margin-block-end:12px">
-                    {{ icon('sliders-horizontal', 'ha-icon--sm') }}{{ _("Filters") }}{% if applied_filters %} <span class="ha-count">{{ applied_filters|length }}</span>{% endif %}
-                </button>
                 {%- if applied_filters %}
                 <div class="ha-chips" aria-label="{{ _('Applied filters') }}" data-testid="applied-filters" style="margin-block-end:12px">
                     {%- for chip in applied_filters %}
