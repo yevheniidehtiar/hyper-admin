@@ -166,6 +166,12 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
   `sliders-horizontal`) available through `icon(name)`.
 
 ### Changed
+- `HyperAdminModel.before_save()` and `after_save()` now run on every create and update made
+  through `SQLModelAdapter` and `SQLAlchemyAdapter` (forms, inline rows, quick-create and
+  list-editable cells): `before_save` just before the commit, `after_save` once the row is
+  committed and refreshed. The never-called `before_delete()` and `after_delete()` were removed.
+  `HyperAdminModel` stays outside the documented API; plugin lifecycle hooks are the supported
+  extension point (st-v100-freeze-03).
 - `HyperAdminSettings.items_per_page` (`HYPERADMIN_ITEMS_PER_PAGE`) now sets the rows a list
   page shows when the URL has no `page_size` parameter; it was accepted but never read. Its
   default is now `10`, the page size lists already used, so nothing changes unless you set it.

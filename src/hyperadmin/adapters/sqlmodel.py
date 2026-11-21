@@ -26,6 +26,7 @@ from hyperadmin.core.adapters import (
     SessionFactory,
     decode_cursor,
     encode_cursor,
+    run_save_hook,
     scoped_queryset_filters,
 )
 from hyperadmin.core.choices import ChoiceItem
@@ -408,10 +409,12 @@ class SQLModelAdapter(BaseAdapter):
         """
         async with self._session() as session:
             db_obj = self.model(**data)
+            await run_save_hook(db_obj, "before_save")
             session.add(db_obj)
             await session.commit()
             await self.invalidate_count_cache()
             await session.refresh(db_obj)
+            await run_save_hook(db_obj, "after_save")
             return db_obj
 
     async def update(
@@ -454,10 +457,12 @@ class SQLModelAdapter(BaseAdapter):
             if db_obj:
                 for key, value in data.items():
                     setattr(db_obj, key, value)
+                await run_save_hook(db_obj, "before_save")
                 session.add(db_obj)
                 await session.commit()
                 await self.invalidate_count_cache()
                 await session.refresh(db_obj)
+                await run_save_hook(db_obj, "after_save")
             return db_obj
 
     async def delete(self, pk: Any) -> None:

@@ -94,6 +94,21 @@ def open_session(
     return cast("AbstractAsyncContextManager[AsyncSessionLike]", AsyncSession(engine))
 
 
+async def run_save_hook(obj: Any, hook: Literal["before_save", "after_save"]) -> None:
+    """Await ``obj.before_save()`` / ``obj.after_save()`` when ``obj`` is a ``HyperAdminModel``.
+
+    The built-in adapters call ``before_save`` on the new or changed row just before
+    the commit, and ``after_save`` once the row is committed and refreshed, on every
+    create and update (forms, inline rows, quick-create, list-editable cells). Other
+    models are left alone, so a method that happens to share the name is never called.
+    """
+    # Lazy: core.model imports this module.
+    from hyperadmin.core.model import HyperAdminModel  # noqa: PLC0415
+
+    if isinstance(obj, HyperAdminModel):
+        await getattr(obj, hook)()
+
+
 class InlineRowNotOwnedError(LookupError):
     """A submitted inline child pk is not an existing child of the parent being saved.
 
