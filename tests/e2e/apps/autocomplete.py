@@ -24,6 +24,8 @@ Seeded rows: suppliers 42 "Acme" (Paris), 43 "Acme Packaging" (Lyon) and
 44 "Brabant Bakkerij" (Tilburg); variants 1 "Blue" (supplier 42) and 2 "Red"
 (supplier 43); brand 1 "Generic"; contacts 1-60 and invoice 1 whose customer is contact 60
 (past the 50-option preload window).
+
+``/admin/e2e/multi-widget`` renders a multi-value autocomplete (``Contacts``) on its own page.
 """
 
 # No `from __future__ import annotations`: SQLModel resolves `Mapped[...]` relationship
@@ -31,9 +33,11 @@ Seeded rows: suppliers 42 "Acme" (Paris), 43 "Acme Packaging" (Lyon) and
 import os
 import tempfile
 from contextlib import asynccontextmanager
+from types import SimpleNamespace
 from typing import TYPE_CHECKING, ClassVar
 
-from fastapi import FastAPI
+from fastapi import APIRouter, FastAPI, Request
+from fastapi.responses import HTMLResponse
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import Mapped
 from sqlmodel import Field, Relationship, SQLModel, select
@@ -48,6 +52,7 @@ from hyperadmin.core.model import ModelAdmin
 from hyperadmin.core.options import AdminOptions, RelationDependency
 from hyperadmin.core.registry import site
 from hyperadmin.core.settings import HyperAdminSettings
+from hyperadmin.views.forms import AutocompleteMultiWidget
 
 if TYPE_CHECKING:
     from collections.abc import AsyncIterator
@@ -207,6 +212,40 @@ admin = Admin(
     permission_checker=ModelPermissionChecker(engine=engine),
     permission_registry=PermissionSyncService(engine=engine),
 )
+
+# No demo model has a many-valued relation in its form, so the multi-value
+# autocomplete gets a page of its own: the shared widget template with
+# ``multiple`` set, fed by the invoice's contact choices.
+_MULTI_WIDGET_PAGE = """{%- extends "_base.html" -%}
+{%- block content -%}
+<h1 class="ha-page-title">Multi-value autocomplete</h1>
+<form class="ha-form" data-testid="model-form">{% include "widgets/autocomplete.html" %}</form>
+{%- endblock -%}"""
+
+multi_widget_router = APIRouter()
+
+
+@multi_widget_router.get("/multi-widget", response_class=HTMLResponse)
+async def multi_widget_page(request: Request) -> HTMLResponse:
+    widget = AutocompleteMultiWidget(
+        choices_url="/admin/invoice/choices/contact",
+        choices=[{"value": str(i), "label": f"Contact {i:02d}"} for i in range(1, 7)],
+    )
+    field = SimpleNamespace(
+        name="contacts", label="Contacts", required=False, help_text=None, errors=None
+    )
+    template = admin.templates.env.from_string(_MULTI_WIDGET_PAGE)
+    return HTMLResponse(template.render(request=request, field=field, widget=widget))
+
+
+class MultiWidgetPage:
+    name = "e2e-multi-widget"
+
+    def on_register(self, plugin_admin: Admin) -> None:
+        plugin_admin.plugins.add_page(self, multi_widget_router, prefix="/e2e")
+
+
+admin.plugins.register(MultiWidgetPage(), admin=admin)
 admin.mount(path="/admin")
 
 
