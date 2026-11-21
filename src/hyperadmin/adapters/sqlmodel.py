@@ -10,10 +10,10 @@ from sqlalchemy.orm import selectinload
 from sqlmodel import SQLModel, select
 
 from hyperadmin.adapters._estimate import estimate_table_rows
-from hyperadmin.adapters._filter_clause import build_clauses
 from hyperadmin.adapters._occ import claim_version
 from hyperadmin.adapters._relation_loading import relation_load_options
 from hyperadmin.adapters._search import contains_clause, detect_search_columns
+from hyperadmin.adapters.filtering import build_clauses
 from hyperadmin.adapters.introspection import coerce_column_value, introspect_primary_key
 from hyperadmin.adapters.introspection import datetime_kind as _introspect_datetime_kind
 from hyperadmin.core.adapters import (
@@ -133,7 +133,7 @@ class SQLModelAdapter(BaseAdapter):
         ``filters`` accepts either the legacy ``{column: value}`` equality
         mapping or a ``Sequence[FilterCondition]``; both are resolved through
         :func:`hyperadmin.core.filtering.normalize_filters` and compiled to
-        clauses via :mod:`hyperadmin.adapters._filter_clause`, shared with
+        clauses via :mod:`hyperadmin.adapters.filtering`, shared with
         :class:`~hyperadmin.adapters.sqlalchemy.SQLAlchemyAdapter`.
         """
         queryset_filters = self._resolve_queryset_filters()

@@ -20,7 +20,7 @@ from __future__ import annotations
 from dataclasses import replace
 from typing import TYPE_CHECKING, Any
 
-from hyperadmin.adapters._filter_clause import build_clauses
+from hyperadmin.adapters.filtering import build_clauses
 from hyperadmin.adapters.introspection import datetime_kind
 from hyperadmin.core.filters_compat import collect_filters
 from hyperadmin.filters import FilterBinding, IsOwnerFilter

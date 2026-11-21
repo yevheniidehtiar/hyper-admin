@@ -125,6 +125,7 @@ hyperadmin.RealtimeSettings.resolve_pubsub :: def (self) -> PubSubBackend
 hyperadmin.StaleRecordError :: class(Exception) (*, model: type, pk: Any, expected: Any, current: Any) -> None
 hyperadmin.StaleRecordError.current_version :: property -> Any
 hyperadmin.StaleRecordError.expected_version :: property -> Any
+hyperadmin.adapters.filtering.build_clauses :: def (model: Any, conditions: Sequence[FilterCondition]) -> list[ColumnElement[bool]]
 hyperadmin.adapters.registry.adapter_registry :: instance of AdapterRegistry
 hyperadmin.adapters.sqlalchemy.SQLAlchemyAdapter :: class(BaseAdapter) (model: type[SQLModel], engine: AsyncEngine | None = None, *, session_factory: Callable[[], AbstractAsyncContextManager[AsyncSessionLike]] | None = None) -> None
 hyperadmin.adapters.sqlalchemy.SQLAlchemyAdapter.count_cache :: attr: CountCache | None = None

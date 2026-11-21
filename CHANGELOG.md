@@ -18,6 +18,10 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
   (no hover) they stay tappable on every row, dimmed until current, focused or pinned.
 
 ### Added
+- `hyperadmin.adapters.filtering.build_clauses(model, conditions)` is public: it turns typed
+  `FilterCondition` objects into SQLAlchemy clauses, so a plugin that queries a model itself can
+  apply the list page's filters. `hyperadmin-reports` uses it instead of the private
+  `hyperadmin.adapters._filter_clause`, which still imports (st-v100-freeze-03).
 - **Report filters** (#883). A `hyperadmin-reports` `ReportView` can declare `filters` (field
   names or `hyperadmin.filters` definitions, as in `list_filter`). They are applied before the
   aggregate, on the fact table when the report has a `cache`, and the report page gets the list

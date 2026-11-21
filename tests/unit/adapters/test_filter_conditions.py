@@ -1,6 +1,6 @@
 """``BaseAdapter.list()`` applies ``FilterCondition`` lists with dict back-compat.
 
-Covers story ``st-v058-byoa-24``: ``adapters/_filter_clause.build_clause(s)``,
+Covers story ``st-v058-byoa-24``: ``adapters/filtering.build_clause(s)``,
 shared by ``SQLModelAdapter`` and ``SQLAlchemyAdapter``, compiles either the
 legacy ``{column: value}`` equality mapping or a ``Sequence[FilterCondition]``
 (``core/filtering.py``, story st-v058-byoa-19) to SQLAlchemy clauses. The
@@ -22,7 +22,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 from sqlalchemy.inspection import inspect as sa_inspect
 from sqlmodel import Field, Relationship, SQLModel
 
-from hyperadmin.adapters._filter_clause import build_clause
+from hyperadmin.adapters.filtering import build_clause
 from hyperadmin.adapters.introspection import coerce_column_value
 from hyperadmin.adapters.sqlalchemy import SQLAlchemyAdapter
 from hyperadmin.adapters.sqlmodel import SQLModelAdapter
@@ -556,3 +556,44 @@ async def test_any_of_condition_applies(
 
     assert total == 2
     assert {item.name for item in items} == {"Widget A", "Widget B"}
+
+
+# ---------------------------------------------------------------------------
+# Public home of build_clauses (v1.0 API audit, finding 5)
+# ---------------------------------------------------------------------------
+
+
+def test_build_clauses_is_importable_from_its_public_home() -> None:
+    """
+    Scenario: a plugin compiles list filters through the public module
+      Given two typed conditions on FilterProduct
+      When  hyperadmin.adapters.filtering.build_clauses compiles them
+      Then  one SQL clause per condition comes back, in order
+    """
+    from hyperadmin.adapters.filtering import build_clauses
+
+    conditions = [
+        FilterCondition("name", "exact", "Widget"),
+        FilterCondition("quantity", "gte", 5),
+    ]
+
+    clauses = build_clauses(FilterProduct, conditions)
+
+    rendered = [str(clause.compile(compile_kwargs={"literal_binds": True})) for clause in clauses]
+    assert len(rendered) == 2
+    assert "name" in rendered[0]
+    assert "Widget" in rendered[0]
+    assert "quantity" in rendered[1]
+
+
+def test_the_old_private_import_path_still_works() -> None:
+    """
+    Scenario: code importing the former private module keeps working
+      Given code written against hyperadmin.adapters._filter_clause
+      When  it imports build_clause and build_clauses from there
+      Then  it gets the same functions as hyperadmin.adapters.filtering
+    """
+    from hyperadmin.adapters import _filter_clause, filtering
+
+    assert _filter_clause.build_clauses is filtering.build_clauses
+    assert _filter_clause.build_clause is filtering.build_clause
