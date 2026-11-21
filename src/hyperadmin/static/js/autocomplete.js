@@ -166,10 +166,20 @@
     w.select.size = Math.max(2, Math.min(6, comboOptions(w).length));
   }
 
+  // The list opens flush under the field, or flush above it when the viewport
+  // bottom leaves less room than the list needs and the top leaves more.
+  function placeList(w) {
+    var field = w.widget.getBoundingClientRect();
+    var below = window.innerHeight - field.bottom;
+    var above = w.select.offsetHeight > below && field.top > below;
+    w.widget.classList.toggle("is-above", above);
+  }
+
   function openList(w) {
     if (w.input.disabled || w.widget.classList.contains("is-open")) return;
     sizeList(w);
     w.widget.classList.add("is-open");
+    placeList(w);
     w.input.setAttribute("aria-expanded", "true");
     w.select.removeAttribute("aria-hidden");
   }
@@ -316,7 +326,10 @@
     } else {
       select.selectedIndex = 0;
     }
-    if (isCombo(widget)) sizeList(parts(widget));
+    if (isCombo(widget)) {
+      sizeList(parts(widget));
+      if (widget.classList.contains("is-open")) placeList(parts(widget));
+    }
   });
 
 
