@@ -121,13 +121,20 @@
 
 .ha-filterlayout { container: ha-filters / inline-size; }
 .ha-filterlayout__grid { display: grid; grid-template-columns: minmax(0, 1fr) 18rem; gap: var(--ha-space-5); align-items: start; }
-.ha-filterlayout__toggle { display: none; }
+/* Toolbar row: search at the start, the Filters button at the end, above the panel it controls. */
+.ha-filterlayout__bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--ha-space-3); margin-block-end: var(--ha-space-3); }
+.ha-filterlayout__bar > .ha-search-group { flex: 1 1 240px; margin-block-end: 0; }
 @container ha-filters (max-width: 719px) {
   .ha-filterlayout__grid { grid-template-columns: minmax(0, 1fr); }
   .ha-filterlayout__grid > .ha-filterside:not(.is-open) { display: none; }
   /* Opened from the Filters button: the panel shows under the button, not below the whole list. */
   .ha-filterlayout__grid > .ha-filterside.is-open { order: -1; position: static; max-block-size: none; }
-  .ha-filterlayout__toggle { display: inline-flex; }
+}
+/* Side by side: the Filters button collapses the panel and the table takes the whole width. */
+@container ha-filters (min-width: 720px) {
+  .ha-filterlayout.is-collapsed .ha-filterlayout__grid { grid-template-columns: minmax(0, 1fr); }
+  .ha-filterlayout.is-collapsed .ha-filterlayout__grid > .ha-filterside { display: none; }
+  .ha-filterlayout:not(.is-collapsed) .ha-filterlayout__toggle { background: var(--ha-color-primary-soft); border-color: var(--ha-color-primary-text); color: var(--ha-color-primary-text); }
 }
 .ha-filterside { display: flex; flex-direction: column; background: var(--ha-surface-raised); border: 1px solid var(--ha-color-border); border-radius: var(--ha-radius-lg); position: sticky; inset-block-start: var(--ha-space-4); max-block-size: calc(100vh - 2 * var(--ha-space-4)); min-inline-size: 0; }
 .ha-filterside__head { display: flex; align-items: center; justify-content: space-between; gap: var(--ha-space-2); padding: var(--ha-space-3) var(--ha-space-4); border-block-end: 1px solid var(--ha-color-border); }

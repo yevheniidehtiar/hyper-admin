@@ -155,6 +155,16 @@ A custom template can reuse the dialog: any element with
 `data-ha-confirm-delete="<DELETE url>"` and `data-ha-label="<record name>"` opens it, and on
 confirm the dialog sends the DELETE request with the CSRF header.
 
+### Filter panel
+
+Filters from `list_filter` sit in a panel beside the table. The Filters button at the end of the
+search row collapses it, so the table gets the whole content width, and expands it again. The
+panel starts expanded on screens 1440px and wider and collapsed below that; each viewer's last
+choice is kept in their browser (`localStorage` key `ha-filters`) and wins over the default. While
+the panel is collapsed, the button shows how many filters are active, and the applied filters stay
+listed as chips above the table. When the list itself is narrower than 720px, the panel folds
+away and the same button opens it above the rows.
+
 ## Keyboard
 
 Press <kbd>?</kbd> on any admin page to list the shortcuts. On macOS, Cmd replaces Ctrl.

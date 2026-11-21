@@ -26,6 +26,10 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
   (no hover) they stay tappable on every row, dimmed until current, focused or pinned.
 
 ### Added
+- **Collapsible filter panel** (#1130). The Filters button in a list's search row collapses the
+  filter panel so the table takes the whole content width. The panel starts expanded from 1440px,
+  collapsed below; each viewer's choice is kept in `localStorage`, and the button shows the active
+  filter count while the panel is collapsed. No new option.
 - `hyperadmin.adapters.filtering.build_clauses(model, conditions)` is public: it turns typed
   `FilterCondition` objects into SQLAlchemy clauses, so a plugin that queries a model itself can
   apply the list page's filters. `hyperadmin-reports` uses it instead of the private
