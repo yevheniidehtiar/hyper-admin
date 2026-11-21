@@ -242,7 +242,9 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
   to the four CRUD codenames and `ModelAdmin.permissions`; before, only a superuser could run a
   custom action or open a panel unless the codename was added by hand. `ModelAdmin.permissions`
   is now declared and documented. The docs named the action codename `action_<name>`; the views
-  have always checked `action_<name>_<model>` (st-v100-freeze-03).
+  have always checked `action_<name>_<model>`. Upgrade note: if your app inserts these
+  codenames into `hyperadmin_permissions` itself after the admin has started, drop that code,
+  or the second insert fails on the unique `codename` (st-v100-freeze-03).
 - A dotted `list_display` accessor such as `"customer.name"` now shows the related value in
   the list cell; the relation was loaded but the cell stayed empty. A hop the list did not load
   and a sensitive related field both show an empty cell (st-v100-freeze-03).

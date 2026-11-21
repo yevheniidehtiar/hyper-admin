@@ -49,14 +49,6 @@ SAMPLE_PDF = Path(__file__).resolve().parents[2] / "_fixtures" / "sample.pdf"
 #: What bob may do: the detail page and the History panel, nothing else.
 BOB_PERMISSIONS = ("view_order", "view_order_panel_history")
 
-#: Panel codenames ``PermissionSyncService`` does not derive; seeded by hand.
-PANEL_PERMISSIONS = (
-    "view_order_panel_invoice",
-    "view_order_panel_history",
-    "view_order_panel_refused",
-    "view_order_panel_receipt",
-)
-
 engine = create_async_engine(
     "sqlite+aiosqlite:///:memory:",
     connect_args={"check_same_thread": False},
@@ -118,11 +110,8 @@ async def _seed() -> None:
             password_hash=hash_password("secret123"),
             is_superuser=False,
         )
+        # The panel codenames come from PermissionSyncService at startup.
         session.add_all([alice, bob])
-        session.add_all(
-            Permission(codename=codename, name=codename.replace("_", " "), content_type="order")
-            for codename in PANEL_PERMISSIONS
-        )
         session.add_all(
             [Order(id=1, title="unpaid", paid=False), Order(id=2, title="paid", paid=True)]
         )
