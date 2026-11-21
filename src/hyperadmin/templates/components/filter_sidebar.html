@@ -5,7 +5,7 @@
     form is a plain GET. -#}
 {%- from "components/_icons.html" import icon -%}
 {%- set list_url = url_for(model_name|lower ~ '-list') -%}
-<aside class="ha-filterside" :class="{ 'is-open': filtersOpen }" aria-labelledby="filter-sidebar-t" data-testid="filter-sidebar">
+<aside id="filter-sidebar" class="ha-filterside" :class="{ 'is-open': filtersOpen }" aria-labelledby="filter-sidebar-t" data-testid="filter-sidebar">
     <form method="get" action="{{ list_url }}" role="search" aria-labelledby="filter-sidebar-t" style="display:contents"
           hx-get="{{ list_url }}" hx-target="#{{ list_body_id }}" hx-swap="outerHTML" hx-push-url="true">
         {%- if search_query %}<input type="hidden" name="search" value="{{ search_query }}">{% endif %}
