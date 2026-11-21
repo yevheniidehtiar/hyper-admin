@@ -12,9 +12,6 @@ if TYPE_CHECKING:
     from pydantic import BaseModel
 
 
-_UNSET: Any = object()
-
-
 @dataclass(frozen=True, slots=True)
 class ActionDef:
     """Metadata for a custom admin action registered on a ModelAdmin class.
@@ -47,7 +44,7 @@ class ActionDef:
 def action(
     label: str,
     *,
-    requires_selection: bool = _UNSET,
+    requires_selection: bool | None = None,
     bulk: bool = False,
     form: type[BaseModel] | None = None,
 ) -> Callable[[Callable[..., Any]], Callable[..., Any]]:
@@ -77,7 +74,8 @@ def action(
 
     Args:
         label: Human-readable label shown on the action button.
-        requires_selection: Override the auto-derived selection requirement.
+        requires_selection: Whether the action needs selected rows. ``None`` (default)
+            derives it from ``bulk``; ``True`` or ``False`` overrides that.
         bulk: Whether this is a multi-row action invoked from the list view.
         form: Pydantic model used to collect parameters before the handler runs.
 
@@ -91,7 +89,7 @@ def action(
         raise TypeError("form= requires bulk=True")
 
     resolved_requires_selection: bool = (
-        bool(bulk) if requires_selection is _UNSET else bool(requires_selection)
+        bool(bulk) if requires_selection is None else bool(requires_selection)
     )
 
     def decorator(fn: Callable[..., Any]) -> Callable[..., Any]:

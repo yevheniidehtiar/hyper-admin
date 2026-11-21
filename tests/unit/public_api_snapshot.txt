@@ -248,7 +248,7 @@ hyperadmin.auth.session.SessionAuthBackend.get_current_user :: async def (self, 
 hyperadmin.auth.session.SessionAuthBackend.login :: async def (self, request: Any, user: User) -> None
 hyperadmin.auth.session.SessionAuthBackend.logout :: async def (self, request: Any) -> None
 hyperadmin.auth.user_cache.invalidate_user :: def (user_id: Any) -> None
-hyperadmin.core.actions.action :: def (label: str, *, requires_selection: bool = <object object>, bulk: bool = False, form: type[BaseModel] | None = None) -> Callable[[Callable[..., Any]], Callable[..., Any]]
+hyperadmin.core.actions.action :: def (label: str, *, requires_selection: bool | None = None, bulk: bool = False, form: type[BaseModel] | None = None) -> Callable[[Callable[..., Any]], Callable[..., Any]]
 hyperadmin.core.adapters.BaseAdapter :: class(ABC) (model: Any, engine: Any = None, *, session_factory: SessionFactory | None = None) -> None
 hyperadmin.core.adapters.BaseAdapter.count_cache :: attr: CountCache | None = None
 hyperadmin.core.adapters.BaseAdapter.count_cache_ttl :: attr: int = 0
