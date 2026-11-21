@@ -95,3 +95,19 @@ the request; call `forget_user_permissions(user)` after a write that changes it.
 ::: hyperadmin.auth.Group
 
 ::: hyperadmin.auth.Permission
+
+### OAuth sign-in
+
+These names need the `oauth` extra and are imported from `hyperadmin` on first access.
+
+::: hyperadmin.auth.oauth.OAuthBackend
+
+::: hyperadmin.auth.oauth.OAuthProviderConfig
+
+::: hyperadmin.auth.oauth.github_provider
+
+::: hyperadmin.auth.oauth.google_provider
+
+::: hyperadmin.auth.oauth.OAuthProviderError
+
+::: hyperadmin.auth.oauth.AccountLinkRequiredError

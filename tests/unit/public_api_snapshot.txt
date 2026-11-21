@@ -5,7 +5,8 @@ cli hyperadmin createsuperuser username :: --username (required)
 cli hyperadmin init-db all_tables :: --all (flag)
 cli hyperadmin init-db database_url :: --database-url (required)
 env hyperadmin.HyperAdminSettings :: env_prefix = 'HYPERADMIN_'
-hyperadmin.Admin :: class (app: FastAPI, engine: Any = None, settings: HyperAdminSettings | None = None, auth_backend: Any = None, permission_checker: Any = None, permission_registry: Any = None, storage: Any = None, otp_service: Any = None, realtime: RealtimeSettings | None = None, *, session_factory: SessionFactory | None = None, auth: ExternalAuth | None = None, disabled_plugins: Iterable[str] = (), plugin_settings: Mapping[str, Mapping[str, Any]] | None = None, nav_groups: Iterable[NavGroup] = (), rate_limiter: RateLimiter | None = None) -> None
+hyperadmin.AccountLinkRequiredError :: class(HyperAdminAuthError) (provider: str, email: str) -> None
+hyperadmin.Admin :: class (app: FastAPI, engine: Any = None, settings: HyperAdminSettings | None = None, auth_backend: Any = None, permission_checker: Any = None, permission_registry: Any = None, storage: Any = None, otp_service: Any = None, realtime: RealtimeSettings | None = None, *, session_factory: SessionFactory | None = None, auth: ExternalAuth | None = None, disabled_plugins: Iterable[str] = (), plugin_settings: Mapping[str, Mapping[str, Any]] | None = None, nav_groups: Iterable[NavGroup] = (), rate_limiter: RateLimiter | None = None, oauth_backend: OAuthBackend | None = None) -> None
 hyperadmin.Admin.asgi_app :: property -> FastAPI | None
 hyperadmin.Admin.create_tables :: async def (self, scope: TableScope = 'all') -> None
 hyperadmin.Admin.csrf_mode :: property -> EffectiveCsrfMode
@@ -53,6 +54,11 @@ hyperadmin.HyperAdminSettings.items_per_page :: field: int = 10
 hyperadmin.HyperAdminSettings.locale_response_header :: field: bool = True
 hyperadmin.HyperAdminSettings.mount_mode :: field: Literal['isolated', 'router'] = 'isolated'
 hyperadmin.HyperAdminSettings.nav_pins_max :: field: int = 20
+hyperadmin.HyperAdminSettings.oauth_callback_rate_limit :: field: tuple[int, int] = (20, 60)
+hyperadmin.HyperAdminSettings.oauth_login_redirect :: field: str | None = None
+hyperadmin.HyperAdminSettings.oauth_refresh_leeway_seconds :: field: int = 60
+hyperadmin.HyperAdminSettings.oauth_state_ttl_seconds :: field: int = 600
+hyperadmin.HyperAdminSettings.oauth_token_secret :: field: SecretStr | None = None
 hyperadmin.HyperAdminSettings.occ_render_dialog :: field: bool = True
 hyperadmin.HyperAdminSettings.permissions_matrix_codename :: field: str = 'change_groups_permissions'
 hyperadmin.HyperAdminSettings.permissions_matrix_enabled :: field: bool = True
@@ -82,6 +88,38 @@ hyperadmin.NavGroup.collapsed :: field: bool = False
 hyperadmin.NavGroup.icon :: field: str | None = None
 hyperadmin.NavGroup.label :: field: str | babel.support.LazyProxy
 hyperadmin.NavGroup.order :: field: int = 0
+hyperadmin.OAuthBackend :: class (providers: Mapping[str, OAuthProviderConfig], session_factory: SessionFactory | None = None, *, engine: Any = None, tenant_resolver: Callable[[Any], Any] | None = None, transport: Any = None, timeout: float = 10.0) -> None
+hyperadmin.OAuthBackend.authorization_url :: async def (self, provider: str, redirect_uri: str, state: str, code_verifier: str) -> str
+hyperadmin.OAuthBackend.bind :: def (self, *, engine: Any = None, session_factory: SessionFactory | None = None) -> None
+hyperadmin.OAuthBackend.exchange_code :: async def (self, provider: str, code: str, redirect_uri: str, code_verifier: str | None = None) -> dict[str, Any]
+hyperadmin.OAuthBackend.get_userinfo :: async def (self, provider: str, access_token: str) -> dict[str, Any]
+hyperadmin.OAuthBackend.identity :: def (self, provider: str, userinfo: Mapping[str, Any]) -> OAuthIdentity
+hyperadmin.OAuthBackend.link_identity :: async def (self, provider: str, user_id: int, userinfo: Mapping[str, Any], token: Mapping[str, Any]) -> None
+hyperadmin.OAuthBackend.linked_providers :: async def (self, user_id: int) -> set[str]
+hyperadmin.OAuthBackend.provider :: def (self, name: str) -> OAuthProviderConfig | None
+hyperadmin.OAuthBackend.provision_user :: async def (self, provider: str, userinfo: Mapping[str, Any], token: Mapping[str, Any]) -> User
+hyperadmin.OAuthBackend.refresh_token :: async def (self, provider: str, user_id: int, *, leeway: float) -> float | None
+hyperadmin.OAuthBackend.unlink_identity :: async def (self, provider: str, user_id: int) -> bool
+hyperadmin.OAuthProviderConfig :: class (name: str, client_id: str, client_secret: str, scopes: tuple[str, ...], authorize_url: str, token_url: str, userinfo_url: str, sub_claim: str = 'sub', email_claim: str = 'email', tenant_id_claim: str | None = None, button_label: str | None = None, button_icon: str | None = None, redirect_uri: str | None = None, emails_url: str | None = None, authorize_params: tuple[tuple[str, str], ...] = (), required_claims: tuple[tuple[str, str], ...] = (), allow_signup: bool = True) -> None
+hyperadmin.OAuthProviderConfig.allow_signup :: field: bool = True
+hyperadmin.OAuthProviderConfig.authorize_params :: field: tuple[tuple[str, str], ...] = ()
+hyperadmin.OAuthProviderConfig.authorize_url :: field: str
+hyperadmin.OAuthProviderConfig.button_icon :: field: str | None = None
+hyperadmin.OAuthProviderConfig.button_label :: field: str | None = None
+hyperadmin.OAuthProviderConfig.client_id :: field: str
+hyperadmin.OAuthProviderConfig.client_secret :: field: str
+hyperadmin.OAuthProviderConfig.email_claim :: field: str = 'email'
+hyperadmin.OAuthProviderConfig.emails_url :: field: str | None = None
+hyperadmin.OAuthProviderConfig.label :: property -> str
+hyperadmin.OAuthProviderConfig.name :: field: str
+hyperadmin.OAuthProviderConfig.redirect_uri :: field: str | None = None
+hyperadmin.OAuthProviderConfig.required_claims :: field: tuple[tuple[str, str], ...] = ()
+hyperadmin.OAuthProviderConfig.scopes :: field: tuple[str, ...]
+hyperadmin.OAuthProviderConfig.sub_claim :: field: str = 'sub'
+hyperadmin.OAuthProviderConfig.tenant_id_claim :: field: str | None = None
+hyperadmin.OAuthProviderConfig.token_url :: field: str
+hyperadmin.OAuthProviderConfig.userinfo_url :: field: str
+hyperadmin.OAuthProviderError :: class(HyperAdminAuthError) (provider: str, detail: str, *, error_code: str | None = None, transient: bool = False) -> None
 hyperadmin.PDFStreamPanel :: def (*, slug: str, label: str, path_resolver: Callable[[Any], Path | str], enabled: Callable[[Any], bool] | None = None, icon: str | None = None, permission: str | None = None) -> PanelDef
 hyperadmin.Plugin :: class(Protocol)
 hyperadmin.Plugin.name :: attr: str
@@ -230,12 +268,19 @@ hyperadmin.auth.User.is_superuser :: field: bool = False
 hyperadmin.auth.User.last_name :: field: str = ''
 hyperadmin.auth.User.mfa_enabled :: field: bool = False
 hyperadmin.auth.User.mfa_method :: field: str | None = None
+hyperadmin.auth.User.oauth_only :: property -> bool
 hyperadmin.auth.User.password_hash :: field: str
 hyperadmin.auth.User.updated_at :: field: datetime | None = None
 hyperadmin.auth.User.user_groups :: attr: Mapped[list[UserGroup]]
 hyperadmin.auth.User.user_permissions :: attr: Mapped[list[UserPermission]]
 hyperadmin.auth.User.username :: field: str
 hyperadmin.auth.metadata :: def () -> MetaData
+hyperadmin.auth.oauth.AccountLinkRequiredError :: alias of hyperadmin.AccountLinkRequiredError
+hyperadmin.auth.oauth.OAuthBackend :: alias of hyperadmin.OAuthBackend
+hyperadmin.auth.oauth.OAuthProviderConfig :: alias of hyperadmin.OAuthProviderConfig
+hyperadmin.auth.oauth.OAuthProviderError :: alias of hyperadmin.OAuthProviderError
+hyperadmin.auth.oauth.github_provider :: alias of hyperadmin.github_provider
+hyperadmin.auth.oauth.google_provider :: alias of hyperadmin.google_provider
 hyperadmin.auth.permissions.ModelPermissionChecker :: class (engine: AsyncEngine | None = None, *, session_factory: SessionFactory | None = None) -> None
 hyperadmin.auth.permissions.ModelPermissionChecker.get_user_permissions :: async def (self, user: User) -> set[str]
 hyperadmin.auth.permissions.ModelPermissionChecker.has_permission :: async def (self, user: User, codename: str) -> bool
@@ -399,6 +444,8 @@ hyperadmin.filters.FilterDef.title :: property -> str
 hyperadmin.filters.FilterDef.typed_conditions :: def (self, binding: FilterBinding | None, params: Mapping[str, str | Sequence[str]]) -> list[FilterCondition]
 hyperadmin.filters.FilterDef.value_type :: attr: ClassVar[Any]
 hyperadmin.gettext_lazy :: def (message: str) -> babel.support.LazyProxy
+hyperadmin.github_provider :: def (client_id: str, client_secret: str, *, scopes: tuple[str, ...] = ('read:user', 'user:email'), redirect_uri: str | None = None, allow_signup: bool = True) -> OAuthProviderConfig
+hyperadmin.google_provider :: def (client_id: str, client_secret: str, *, hosted_domain: str | None = None, tenant_id_claim: str | None = None, scopes: tuple[str, ...] = ('openid', 'email', 'profile'), redirect_uri: str | None = None, allow_signup: bool = True) -> OAuthProviderConfig
 hyperadmin.i18n.gettext_lazy :: alias of hyperadmin.gettext_lazy
 hyperadmin.panels.pdf_stream_panel :: alias of hyperadmin.pdf_stream_panel
 hyperadmin.pdf_stream_panel :: def (*, slug: str, label: str, path_resolver: Callable[[Any], Path | str], enabled: Callable[[Any], bool] | None = None, icon: str | None = None, permission: str | None = None) -> PanelDef
