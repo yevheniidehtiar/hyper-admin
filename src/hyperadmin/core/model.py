@@ -15,6 +15,8 @@ else:
 from pydantic import BaseModel
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     import babel.support
     from starlette.requests import Request
 
@@ -125,6 +127,12 @@ class ModelAdmin:
 
     #: Position inside the sidebar group; items with the same order sort by label.
     nav_order: int = 0
+
+    #: Extra ``(codename, name)`` permissions for this model, for checks your own code
+    #: makes (``[("refund_order", "Can refund orders")]``). Built-in auth creates them at
+    #: startup next to the CRUD, ``@action`` and detail-panel codenames, and the
+    #: permissions matrix shows them as extra columns.
+    permissions: "Sequence[tuple[str, str]]" = ()
 
     def __init__(self, model: Any) -> None:
         self.model = model

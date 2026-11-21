@@ -115,6 +115,22 @@ def action(
     return decorator
 
 
+def action_permission_codename(name: str, model_name: str) -> str:
+    """Return the permission codename that lets a user run action ``name`` on a model.
+
+    The views check it before running the action (single-row and bulk), and
+    ``PermissionSyncService`` creates it at startup. The codename carries the model,
+    so two models with an action of the same name get separate permissions.
+    ``model_name`` is the lowercased model class name. The object-level check
+    (``AdminOptions.object_permission_checker``) receives ``action_<name>`` instead.
+
+    Example:
+        >>> action_permission_codename("archive", "order")
+        'action_archive_order'
+    """
+    return f"action_{name}_{model_name}"
+
+
 def collect_actions(cls: type) -> list[ActionDef]:
     """Return all :class:`ActionDef` instances registered on *cls* via :func:`action`.
 

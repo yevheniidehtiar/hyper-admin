@@ -411,7 +411,7 @@ How the pieces map:
 | `current_user` from Flask-Login | The object your `get_user` dependency returns. It is also `request.state.user` in `get_queryset` and in actions |
 | `is_accessible()` returning `False` for a signed-in user | `can_access(user)` returning `False`: the admin answers 403 |
 | `inaccessible_callback()` redirecting to the login view | `login_url`: an anonymous browser is redirected to `/login?next=/admin/...` |
-| The same `is_accessible()` on every view | `has_permission(user, codename)`, asked for `view_post`, `add_post`, `change_post`, `delete_post` and `action_publish` |
+| The same `is_accessible()` on every view | `has_permission(user, codename)`, asked for `view_post`, `add_post`, `change_post`, `delete_post` and `action_publish_post` |
 
 The admin's CSRF protection is on in this mode, so set `HYPERADMIN_SECRET_KEY` in the
 environment.

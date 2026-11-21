@@ -236,6 +236,13 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
   (st-v100-freeze-03).
 
 ### Fixed
+- Built-in auth now creates the permissions custom actions and detail panels check. At startup
+  `PermissionSyncService` adds one `action_<name>_<model>` codename per `@action` method and
+  the codename of every detail panel (`view_<model>_panel_<slug>`, or its `permission=`), next
+  to the four CRUD codenames and `ModelAdmin.permissions`; before, only a superuser could run a
+  custom action or open a panel unless the codename was added by hand. `ModelAdmin.permissions`
+  is now declared and documented. The docs named the action codename `action_<name>`; the views
+  have always checked `action_<name>_<model>` (st-v100-freeze-03).
 - A dotted `list_display` accessor such as `"customer.name"` now shows the related value in
   the list cell; the relation was loaded but the cell stayed empty. A hop the list did not load
   and a sensitive related field both show an empty cell (st-v100-freeze-03).

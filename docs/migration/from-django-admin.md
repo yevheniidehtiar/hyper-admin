@@ -358,7 +358,7 @@ Django admin uses `django.contrib.auth`. HyperAdmin has two modes, and you pick 
 | `is_superuser` | `User.is_superuser`: every permission | A truthy `is_superuser` attribute on your user: every permission |
 | `is_staff` | No such field. Every active user can sign in, and sees the models they hold `view_*` on | `ExternalAuth(can_access=...)`; by default `is_superuser` or `is_staff` must be truthy |
 | `is_active` | `User.is_active` | Your `get_user` decides |
-| Codenames `add_post`, `change_post`, `delete_post`, `view_post` | The same four codenames per model, created in `hyperadmin_permissions` at startup. A custom action checks `action_<name>` | The same codenames, passed to your `has_permission(user, codename)` |
+| Codenames `add_post`, `change_post`, `delete_post`, `view_post` | The same four codenames per model, created in `hyperadmin_permissions` at startup. A custom action checks `action_<name>_<model>` | The same codenames, passed to your `has_permission(user, codename)` |
 | `manage.py createsuperuser` | `hyperadmin createsuperuser --database-url ...` | Not needed |
 | `manage.py migrate` for the auth tables | `hyperadmin init-db --database-url ...`, or `hyperadmin.auth.metadata()` in Alembic | Not needed: no `hyperadmin_*` user tables |
 | The admin login page | Built in, at `/admin/login` | Your app's login page (`login_url`), or a form the admin serves for your token endpoint |

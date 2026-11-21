@@ -25,19 +25,45 @@ admin = Admin(
 ## Permission codenames
 
 The admin asks for `view_<model>`, `add_<model>`, `change_<model>`, `delete_<model>` and, for a
-custom action, `action_<name>`. `<model>` is the lowercased model class name.
+custom action, `action_<name>_<model>` (for example `action_archive_order`). `<model>` is the
+lowercased model class name, so two models with an action of the same name have separate
+permissions.
 
 A detail-page panel checks `view_<model>_panel_<slug>`, or the `permission=` it was declared with.
 
-!!! warning "Built-in auth does not create action and panel permissions"
-    At startup `PermissionSyncService` creates the four `view_`, `add_`, `change_` and `delete_`
-    codenames for every registered model, plus the `(codename, name)` pairs listed in a
-    `permissions` attribute of the model's `ModelAdmin`. It does not create the
-    `action_<name>` codename a custom action checks, or the codename of a detail panel, so with
-    built-in auth only a superuser can run such an action or see such a panel until the
-    codename exists in `hyperadmin_permissions` (create it yourself, or list it in
-    `permissions`). The `action_<name>` codename does not include the model name, so two models
-    with an action of the same name share one permission.
+At startup `PermissionSyncService` creates, for every registered model:
+
+- the four `view_`, `add_`, `change_` and `delete_` codenames;
+- one `action_<name>_<model>` codename per `@action` method of its `ModelAdmin`;
+- the codename of every detail panel (`AdminOptions.panels` and `@panel` methods);
+- the extra codenames listed in `ModelAdmin.permissions`.
+
+Existing rows are never changed or removed. Grant the new codenames to a group or a user like
+the four defaults.
+
+!!! note "Earlier docs said `action_<name>`"
+    The model-level check has always been `action_<name>_<model>`; earlier versions of these
+    pages named it `action_<name>`. The object-level check
+    (`AdminOptions.object_permission_checker`) receives `action_<name>`, without the model,
+    because the checker is already given the object.
+
+### Extra codenames: `ModelAdmin.permissions`
+
+A `ModelAdmin` can declare codenames of its own, for checks you make in your own code (an
+action handler, a custom view, a template). Set `permissions` to a list of
+`(codename, name)` pairs; `PermissionSyncService` creates them at startup and the permissions
+matrix shows them as extra columns of the model's row:
+
+```python
+class OrderAdmin(ModelAdmin):
+    permissions = [
+        ("export_order", "Can export orders"),
+        ("refund_order", "Can refund orders"),
+    ]
+```
+
+Check one with the admin's permission checker, for example
+`await admin.permission_checker.has_permission(user, "refund_order")`.
 
 ## Caches
 
