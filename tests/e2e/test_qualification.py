@@ -176,6 +176,14 @@ def test_h4_detail_panels_with_pdf(page: Page, full_demo_base_url: str) -> None:
     assert response.body().startswith(b"%PDF-")
 
 
+def _keep_filter_panel_expanded(page: Page) -> None:
+    """Start every page with the filter panel expanded, as for a viewer who opened it once.
+
+    At the 1280px default viewport the panel starts collapsed; these steps work inside it.
+    """
+    page.add_init_script("try { localStorage.setItem('ha-filters', 'expanded'); } catch (e) {}")
+
+
 def test_h5_list_filter_by_owner(page: Page, full_demo_base_url: str) -> None:
     """
     Scenario: IsOwnerFilter restricts the list to the signed-in user's orders
@@ -183,6 +191,7 @@ def test_h5_list_filter_by_owner(page: Page, full_demo_base_url: str) -> None:
       When  each of them turns on "Mine only"
       Then  they see exactly their own orders
     """
+    _keep_filter_panel_expanded(page)
     for username, expected in (("alice", ["ORD-1", "ORD-3", "ORD-5"]), ("bob", ["ORD-2", "ORD-4"])):
         # Given the user on the unfiltered list
         _login(page, full_demo_base_url, username)
@@ -244,6 +253,7 @@ def test_h12_filter_sidebar_and_saved_view(page: Page, full_demo_base_url: str) 
       Then  the view is listed and loading it later restores the same rows
     """
     # Given the unfiltered list
+    _keep_filter_panel_expanded(page)
     _login(page, full_demo_base_url)
     page.goto(full_demo_base_url + ORDER_LIST)
     expect(page.get_by_test_id("list-row")).to_have_count(5)
