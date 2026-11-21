@@ -14,6 +14,10 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
   `add_<model>`, so a read-only user saw "Create <model>" and got a 403. The button now follows
   the same permission the create routes check (and `AdminOptions.can_create`). The ERP example's
   dashboard quick actions follow each `add_<model>` permission too.
+- **Empty "All reports" page in the ERP example.** The example registered no `ReportView`, so the
+  reports plugin's index said "No reports available"; it now registers "Invoices by status" and
+  "Bills by status". `hyperadmin-reports` now shows an enum dimension by its value ("Paid")
+  instead of the member ("InvoiceStatus.PAID") in the grid, charts and exports.
 - **Phone navbar and touch targets** (#1018, #1014, #1026). Below 640px the language and theme
   controls move into the account menu and the brand shrinks to its mark (the link keeps the site
   name as its label), so pages no longer scroll sideways at 360px. Sidebar group toggles, pin

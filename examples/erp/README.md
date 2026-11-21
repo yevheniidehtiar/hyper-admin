@@ -150,3 +150,11 @@ groups them by account type (Revenue / Expense).
 
 Open **Reports → Profit & Loss** in the sidebar, or visit:
 [http://127.0.0.1:8000/admin/erp/profit-loss](http://127.0.0.1:8000/admin/erp/profit-loss)
+
+## Pivot reports
+
+`reports/pivots.py` declares two `ReportView`s for the `hyperadmin-reports` plugin: **Invoices by
+status** and **Bills by status** (count per status and month). `main.py` registers them before
+`Admin(...)` is built, so the plugin adds their sidebar links and `view_report_*` permissions.
+They are what **Reports → All reports** lists; the P&L page above is a hand-built page, not a
+`ReportView`, so that index does not show it.
