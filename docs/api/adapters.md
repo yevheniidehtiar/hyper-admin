@@ -69,7 +69,26 @@ Row scoping from `ModelAdmin.get_queryset` reaches adapters through
 `hyperadmin.core.adapters.scoped_queryset_filters(model)` (for related models,
 for example in `get_choices`). Apply both as equality filters on every read.
 
+### Applying list filters in your own query
+
+A plugin or a custom view that queries a model itself (a report, an export) can apply the same
+filters the list page applies. `FilterDef.compile` turns a filter's querystring into typed
+`FilterCondition` objects, and `build_clauses` turns those into SQLAlchemy clauses for a
+SQLModel or SQLAlchemy model:
+
+```python
+from sqlmodel import select
+
+from hyperadmin.adapters.filtering import build_clauses
+
+statement = select(Order).where(*build_clauses(Order, conditions))
+```
+
+`build_clauses` lives under `hyperadmin.adapters` because `hyperadmin.core` imports no ORM.
+
 ## API Reference
+
+::: hyperadmin.adapters.filtering.build_clauses
 
 ::: hyperadmin.core.adapters.BaseAdapter
 
