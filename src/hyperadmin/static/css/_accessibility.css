@@ -103,6 +103,12 @@
   .ha-navbar-brand {
     justify-content: flex-start;
   }
+
+  /* A checkbox with a visible label (filter checklists) stays start-aligned:
+     centring it scattered the list on phones and tablets. */
+  .ha-checklist .ha-check {
+    justify-content: flex-start;
+  }
 }
 
 /* ==========================================================================

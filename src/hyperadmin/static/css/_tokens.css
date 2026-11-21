@@ -205,6 +205,10 @@
   --ha-target-min: 1.5rem;
   --ha-target-touch: 2.75rem;
   --ha-icon-size: 1.25rem;
+  /* Every field with a leading search icon (navbar trigger, list search,
+     autocomplete, command palette, filter search) places it the same way. */
+  --ha-search-icon-inset: 0.75rem;
+  --ha-search-text-inset: 2.5rem;
 
   /* ---- Layout ---- */
   --ha-sidebar-width: 16rem;

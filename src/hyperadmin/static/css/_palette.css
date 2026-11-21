@@ -60,12 +60,15 @@
   border-block-end: var(--ha-border-width) solid var(--ha-color-border-light);
 }
 
-.ha-palette__control > .ha-icon:first-child {
-  inset-inline-start: calc(var(--ha-space-3) + 14px);
+/* `.ha-palette >` outranks the generic combobox rules in _forms.css, which load later
+   in the same layer: without it the icon sat on the input's border. The icon keeps the
+   search-field inset (see _search.css), offset by the control's own padding. */
+.ha-palette > .ha-palette__control > .ha-icon:first-child {
+  inset-inline-start: calc(var(--ha-space-3) + var(--ha-search-icon-inset));
 }
 
-.ha-palette__control > .ha-input {
-  padding-inline-start: 46px;
+.ha-palette > .ha-palette__control > .ha-input {
+  padding-inline-start: var(--ha-search-text-inset);
   padding-inline-end: calc(var(--ha-space-3) + 40px);
   font-size: var(--ha-font-size-base);
 }
@@ -236,7 +239,7 @@
     min-inline-size: 13rem;
     min-block-size: var(--ha-ctl-h);
     justify-content: flex-start;
-    padding-inline: var(--ha-space-3) var(--ha-space-2);
+    padding-inline: var(--ha-search-icon-inset) var(--ha-space-2);
     background-color: var(--ha-surface-sunken);
     border-color: var(--ha-color-border-light);
   }

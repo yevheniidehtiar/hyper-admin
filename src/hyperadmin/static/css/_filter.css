@@ -125,6 +125,8 @@
 @container ha-filters (max-width: 719px) {
   .ha-filterlayout__grid { grid-template-columns: minmax(0, 1fr); }
   .ha-filterlayout__grid > .ha-filterside:not(.is-open) { display: none; }
+  /* Opened from the Filters button: the panel shows under the button, not below the whole list. */
+  .ha-filterlayout__grid > .ha-filterside.is-open { order: -1; position: static; max-block-size: none; }
   .ha-filterlayout__toggle { display: inline-flex; }
 }
 .ha-filterside { display: flex; flex-direction: column; background: var(--ha-surface-raised); border: 1px solid var(--ha-color-border); border-radius: var(--ha-radius-lg); position: sticky; inset-block-start: var(--ha-space-4); max-block-size: calc(100vh - 2 * var(--ha-space-4)); min-inline-size: 0; }
@@ -151,8 +153,8 @@
 .ha-checklist .ha-check:hover { background: var(--ha-surface-hover); }
 .ha-checklist .ha-count { margin-inline-start: auto; background: transparent; color: var(--ha-color-text-muted); font-weight: 500; }
 .ha-checklist__search { position: relative; }
-.ha-checklist__search .ha-icon { position: absolute; inset-inline-start: 8px; inset-block-start: 50%; translate: 0 -50%; color: var(--ha-color-text-muted); pointer-events: none; }
-.ha-checklist__search .ha-input { padding-inline-start: 32px; min-block-size: var(--ha-control-height-compact); font-size: 13px; }
+.ha-checklist__search .ha-icon { position: absolute; inset-inline-start: var(--ha-search-icon-inset); inset-block-start: 50%; translate: 0 -50%; color: var(--ha-color-text-muted); pointer-events: none; }
+.ha-checklist__search .ha-input { padding-inline-start: var(--ha-search-text-inset); min-block-size: var(--ha-ctl-h); }
 .ha-checklist__more { align-self: flex-start; font-size: 13px; font-weight: 500; min-block-size: var(--ha-target-min); display: inline-flex; align-items: center; gap: var(--ha-space-1); }
 .ha-filter-hint { display: flex; gap: var(--ha-space-2); align-items: flex-start; padding: var(--ha-space-2) var(--ha-space-3); border-radius: var(--ha-radius-md); background: var(--ha-color-info-soft); color: var(--ha-color-info-text); font-size: 12px; line-height: 18px; }
 .ha-filter-hint p { margin: 0; color: var(--ha-color-text); }
