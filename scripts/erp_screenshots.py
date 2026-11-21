@@ -22,6 +22,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from PIL import Image
 from playwright.sync_api import Browser, Page, ViewportSize, expect, sync_playwright
 
 if TYPE_CHECKING:
@@ -39,10 +40,10 @@ def _free_port() -> int:
 
 
 @contextmanager
-def erp_server(timeout: float = 120.0) -> Iterator[str]:
+def erp_server(timeout: float = 120.0, extra_env: dict[str, str] | None = None) -> Iterator[str]:
     """Run the ERP example with a fresh in-memory database; yield its base URL."""
     port = _free_port()
-    env = {**os.environ, "E2E_TESTING": "1", "DEMO_REALTIME": "0"}
+    env = {**os.environ, "E2E_TESTING": "1", "DEMO_REALTIME": "0", **(extra_env or {})}
     proc = subprocess.Popen(  # noqa: S603 - fixed argv
         [sys.executable, "-m", "uvicorn", "examples.erp.main:app", "--port", str(port)],
         cwd=ROOT,
@@ -87,17 +88,25 @@ def _new_page(browser: Browser, base: str, *, dark: bool = False, phone: bool = 
     return page
 
 
+def optimise_png(path: Path) -> None:
+    """Shrink a UI screenshot in place: a 256-colour palette keeps flat UI and text crisp."""
+    with Image.open(path) as img:
+        palette = img.convert("RGB").quantize(colors=256, method=Image.Quantize.MEDIANCUT)
+    palette.save(path, optimize=True)
+
+
 def _shoot(page: Page, out: Path, name: str) -> None:
     page.wait_for_timeout(150)  # let focus rings and tooltips settle
     page.screenshot(path=out / f"{name}.png")
+    optimise_png(out / f"{name}.png")
     sys.stdout.write(f"saved {name}\n")
 
 
-def render(base: str, out: Path) -> None:
-    """Save every screenshot to ``out``."""
+def render(base: str, out: Path, browser_ws: str | None = None) -> None:
+    """Save every screenshot to ``out``, with a local or a remote (``browser_ws``) Chromium."""
     out.mkdir(parents=True, exist_ok=True)
     with sync_playwright() as pw:
-        browser = pw.chromium.launch()
+        browser = pw.chromium.connect(browser_ws) if browser_ws else pw.chromium.launch()
 
         # Grouped sidebar with pinned pages, light and dark.
         page = _new_page(browser, base)
@@ -174,12 +183,22 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--out", type=Path, default=ROOT / "docs" / "assets" / "screenshots")
     parser.add_argument("--base-url", help="use a running ERP example instead of starting one")
+    parser.add_argument(
+        "--browser-ws",
+        help="connect to a Playwright browser server (see scripts/demo_tour_video.py)",
+    )
+    parser.add_argument(
+        "--browser-host",
+        default="host.docker.internal",
+        help="host name the remote browser uses to reach this machine",
+    )
     args = parser.parse_args()
     if args.base_url:
-        render(args.base_url.rstrip("/"), args.out)
+        render(args.base_url.rstrip("/"), args.out, args.browser_ws)
         return
-    with erp_server() as base:
-        render(base, args.out)
+    with erp_server() as local_base:
+        base = local_base.replace("127.0.0.1", args.browser_host) if args.browser_ws else local_base
+        render(base, args.out, args.browser_ws)
 
 
 if __name__ == "__main__":

@@ -60,6 +60,12 @@ admin.mount("/admin")
 
 Navigate to `http://localhost:8000/admin/` to see your admin panel.
 
+With a few more fields and admin options, the same few lines grow into pages like this
+invoice list from the ERP example. [Define the backend, get the UI](demo.md#define-the-backend-get-the-ui)
+shows the code behind it, and the [video tour](demo.md#video-tour) shows it in use.
+
+![Invoice list generated from an SQLModel model, with search, filters and pagination](assets/demo/list.png)
+
 ## Registering models
 
 ### Option A — direct registration

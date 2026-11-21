@@ -40,6 +40,24 @@
   </picture>
 </div>
 
+## Define the backend, get the UI
+
+Write the models and a few admin options; the list, filters, forms, inline rows, bulk actions
+and permissions are generated. Watch the 80-second tour:
+
+<p align="center">
+  <a href="https://yevheniidehtiar.github.io/hyper-admin/demo/#video-tour">
+    <img src="https://raw.githubusercontent.com/yevheniidehtiar/hyper-admin/develop/docs/assets/demo/hyperadmin-demo-poster.jpg" alt="Play the HyperAdmin video tour" width="820"/>
+  </a>
+</p>
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/yevheniidehtiar/hyper-admin/develop/docs/assets/screenshots/code-to-ui.png" alt="Model and admin code next to the generated invoice list" width="820"/>
+</p>
+
+The [Live Demo page](https://yevheniidehtiar.github.io/hyper-admin/demo/#define-the-backend-get-the-ui)
+walks through the code line by line.
+
 ---
 
 ## The story
