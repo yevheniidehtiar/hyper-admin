@@ -19,6 +19,25 @@ name is `hyperadmin`.
 generates list, detail, create and edit pages with search, filters and auth, and mounts them
 at a path in your app. It uses **HTMX** for interactivity, so there is no JavaScript build step.
 
+## Define the backend, get the UI
+
+<video controls preload="none" width="100%" poster="assets/demo/hyperadmin-demo-poster.jpg">
+  <source src="assets/demo/hyperadmin-demo.webm" type="video/webm">
+  <source src="assets/demo/hyperadmin-demo.mp4" type="video/mp4">
+  Your browser cannot play this video.
+  <a href="assets/demo/hyperadmin-demo.mp4">Download the MP4</a> instead.
+</video>
+
+You write the models and a few admin options; HyperAdmin generates the pages, and the parts a
+backend-only team would otherwise skip come with them: presence and live lists, a conflict
+dialog instead of silent overwrites, fast lists on millions of rows, load-testing tools,
+plugins for reports, dashboards, tasks and traces, and sign-in with SSO. The video above shows
+each one. The [Live Demo](demo.md#define-the-backend-get-the-ui) page walks through the code
+line by line, and you can
+[try the hosted demo](https://hyper-admin-demo.onrender.com/admin/) with `demo` / `demo`.
+
+![Model and admin code next to the generated invoice list](assets/screenshots/code-to-ui.png)
+
 ## Quick example
 
 ```python
