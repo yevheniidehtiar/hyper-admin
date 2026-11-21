@@ -219,6 +219,9 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
   (st-v100-freeze-03).
 
 ### Fixed
+- A dotted `list_display` accessor such as `"customer.name"` now shows the related value in
+  the list cell; the relation was loaded but the cell stayed empty. A hop the list did not load
+  and a sensitive related field both show an empty cell (st-v100-freeze-03).
 - A foreign-key field keeps its stored value on the edit form even when the related row
   falls outside the 50 preloaded options (st-ux-erp-02, #1023); before, the select showed
   `---------` and saving failed with "Input should be a valid integer".

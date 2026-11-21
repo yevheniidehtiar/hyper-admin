@@ -224,10 +224,11 @@ its own (`"customer"`) or through a dotted accessor (`"customer.name"`), is load
 `SELECT ... IN (...)` for the page, whatever the page size. Other relations are not loaded, which
 saves one query per relation on every request.
 
-!!! note "Dotted accessors are loaded, not rendered"
-    A dotted accessor such as `"customer.name"` loads the relation, but the list cell does not
-    follow the dot yet and stays empty. Name the relation itself (`"customer"`) to show the
-    related row's display name.
+A dotted accessor shows the related row's attribute in the cell: `"customer.name"` shows the
+customer's name, and `"customer"` alone shows the customer's display name. The list loads the
+first relation of the path only, so a deeper path such as `"customer.region.code"` shows an
+empty cell unless a custom adapter loads `customer.region` too. A dotted accessor never shows a
+sensitive field of the related model (`"customer.password_hash"` stays empty).
 
 ```python
 class OrderAdmin(ModelAdmin):

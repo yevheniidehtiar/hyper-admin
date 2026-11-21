@@ -9,7 +9,9 @@ from urllib.parse import urlencode
 from fastapi import HTTPException, Query, Request
 from markupsafe import Markup
 from pydantic import BaseModel
+from sqlalchemy import inspect as sa_inspect
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import InstanceState
 from starlette.datastructures import QueryParams
 from starlette.responses import RedirectResponse, Response
 
@@ -24,6 +26,7 @@ from hyperadmin.core.filtering import (
 )
 from hyperadmin.core.filters_compat import LegacyFieldFilter, collect_filters
 from hyperadmin.core.schema import schema_for
+from hyperadmin.core.sensitive import effective_sensitive_field_names
 from hyperadmin.filters.base import FilterBinding, FilterDef, FilterRenderContext, clear_href
 from hyperadmin.filters.choice import MultiChoiceFilter
 from hyperadmin.filters.date import CurrentPeriodDefault
@@ -41,7 +44,32 @@ from hyperadmin.views.template_filters import TIMEZONE_GLOBAL, request_tz
 
 logger = logging.getLogger(__name__)
 
+
 #: Pager keys of a list with no cursor links (offset pages and failed queries).
+def _follow_accessor(item: Any, path: str) -> Any:
+    """Read a ``list_display`` column, following a dotted accessor (``"customer.name"``).
+
+    Each dot reads one attribute of the related row. The list query loads the
+    first relation of the path; a hop the query did not load (``"customer.region.code"``
+    without ``customer.region`` loaded) gives ``None`` instead of a lazy load on a
+    closed session. Returns ``None`` too when a hop is ``None`` or missing, and when a
+    hop past the first names a sensitive field of the related model, so a dotted
+    column can never show ``customer.password_hash``.
+    """
+    value = item
+    for depth, attr in enumerate(path.split(".")):
+        if value is None:
+            return None
+        if depth:
+            if attr in effective_sensitive_field_names(type(value)):
+                return None
+            state = sa_inspect(value, raiseerr=False)
+            if isinstance(state, InstanceState) and attr in state.unloaded:
+                return None
+        value = getattr(value, attr, None)
+    return value
+
+
 #: The most rows one list page shows (``page_size`` and ``settings.items_per_page``).
 _MAX_PAGE_SIZE = 100
 
@@ -269,7 +297,7 @@ class ListViewMixin(SavedViewsMixin):
                 if field == "__str__":
                     row[field] = get_display_name(item)
                 else:
-                    val = getattr(item, field, None)
+                    val = _follow_accessor(item, field)
                     if field in file_fields and val is not None:
                         val = val.name if hasattr(val, "name") else str(val)
                     elif isinstance(val, BaseModel):
