@@ -446,8 +446,8 @@ async def test_an_editors_rows_target_the_edit_page(mock_templates, mock_request
 
     assert context["row_target"] == "update"
     assert context["user_can_delete"] is True
-    # The view gate plus at most two row-access checks, never one per row.
-    assert len(checker.calls) <= 3
+    # The view gate, at most two row-access checks and the Create check, never one per row.
+    assert len(checker.calls) <= 4
     assert context["can_edit"] is True
 
 

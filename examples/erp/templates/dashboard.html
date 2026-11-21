@@ -32,10 +32,14 @@
         <div class="ha-card">
             <div class="ha-card-header"><h3 class="ha-card-title">Quick Actions</h3></div>
             <div class="ha-card-body">
+                {#- Only what this user may do: the create pages answer 403 without add_<model>. None = unrestricted. -#}
+                {%- set perms = request.state.user_permissions if request.state.user_permissions is defined else none -%}
                 <ul class="ha-list">
-                    <li><a href="{{ admin_prefix }}/invoice/create">Create New Invoice</a></li>
-                    <li><a href="{{ admin_prefix }}/bill/create">Record New Bill</a></li>
-                    <li><a href="{{ admin_prefix }}/contact/create">Add New Contact</a></li>
+                    {%- for model, label in [("invoice", "Create New Invoice"), ("bill", "Record New Bill"), ("contact", "Add New Contact")] -%}
+                    {%- if perms is none or ("add_" ~ model) in perms %}
+                    <li><a href="{{ admin_prefix }}/{{ model }}/create">{{ label }}</a></li>
+                    {%- endif -%}
+                    {%- endfor %}
                 </ul>
             </div>
         </div>

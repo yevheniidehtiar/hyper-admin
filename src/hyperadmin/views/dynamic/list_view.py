@@ -356,6 +356,15 @@ class ListViewMixin(SavedViewsMixin):
         )
         return row_target, can_delete
 
+    async def _user_can_create(self, request: Request) -> bool:
+        """Whether the list offers "Create": the page is on and the user holds ``add_<model>``.
+
+        The same codename the create routes check, so the button never leads to a 403.
+        """
+        return self.options.can_create and await self._has_permission(
+            request, f"add_{self._model_name_lower}"
+        )
+
     @property
     def _pagination_mode(self) -> PaginationMode:
         """``options.pagination_mode``, ``"offset"`` for options objects that predate it."""
@@ -581,7 +590,7 @@ class ListViewMixin(SavedViewsMixin):
             "filter_query": self._explicit_query(filters.explicit, query),
             "list_body_id": LIST_BODY_ID,
             **await self._saved_views_context(request, loaded=list_error is None),
-            "can_create": self.options.can_create,
+            "can_create": await self._user_can_create(request),
             "can_edit": self.options.can_edit,
             "can_delete": self.options.can_delete,
             "can_detail": self.options.can_detail,
