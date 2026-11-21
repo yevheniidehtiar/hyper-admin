@@ -109,3 +109,17 @@
     justify-content: center;
   }
 }
+
+/* Labels never break mid-phrase ("Rows / per / page"); when a narrow table
+   cannot hold the footer on one row, whole groups wrap instead. */
+.ha-pagination-sizes > span,
+.ha-pagination-page {
+  white-space: nowrap;
+}
+
+@media (min-width: 768px) {
+  .ha-pagination {
+    flex-wrap: wrap;
+    row-gap: var(--ha-space-2);
+  }
+}
