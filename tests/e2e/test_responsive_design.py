@@ -430,9 +430,9 @@ def test_navigation_controls_are_touch_sized(browser: Browser, demo_base_url: st
       Given a touch device (pointer: coarse)
       Then  sidebar group toggles, pin buttons, the rail toggle and sort links are at least 44px tall
     """
-    # Given a touch device
+    # Given a touch device (wide enough that the sidebar starts expanded, not as the rail)
     context = browser.new_context(
-        viewport={"width": 1024, "height": 768}, has_touch=True, is_mobile=True
+        viewport={"width": 1280, "height": 800}, has_touch=True, is_mobile=True
     )
     page = context.new_page()
     try:
