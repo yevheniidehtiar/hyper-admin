@@ -131,6 +131,18 @@
         </header>
         <div class="ha-layout" data-collapsed="{{ 'true' if sidebar_rail is defined and sidebar_rail() else 'false' }}">
             {% block sidebar %}{% include "_sidebar.html" %}{% endblock %}
+            <script>
+              // Tablet and laptop (768–1279px): the sidebar starts as the icon rail
+              // until the user picks a width with the rail toggle (ha-sidebar-rail cookie).
+              (function () {
+                if (/(?:^|;\s*)ha-sidebar-rail=/.test(document.cookie)) return;
+                if (!window.matchMedia('(min-width: 768px) and (max-width: 1279.98px)').matches) return;
+                var layout = document.currentScript.parentNode;
+                layout.setAttribute('data-collapsed', 'true');
+                var toggle = layout.querySelector('[data-ha-rail-toggle]');
+                if (toggle) toggle.setAttribute('aria-pressed', 'true');
+              })();
+            </script>
             <main id="main-content" role="main" tabindex="-1" class="ha-content">
                 {% block content %}{% endblock %}
             </main>

@@ -144,3 +144,66 @@ def test_permission_filtering_removes_empty_groups(page: Page, nav_base_url: str
     expect(sidebar.get_by_role("heading", name="Accounting")).to_have_count(0)
     expect(page.get_by_test_id("nav-group-accounting")).to_have_count(0)
     expect(page.get_by_test_id("nav-invoice")).to_have_count(0)
+
+
+def test_the_sidebar_starts_as_the_rail_on_a_laptop(page: Page, nav_base_url: str) -> None:
+    """
+    Scenario: the sidebar starts as the rail on a laptop
+      Given a 1024px wide viewport and no rail preference
+      When  the user opens the admin
+      Then  the sidebar is the icon rail
+      And   nav links keep their accessible names
+    """
+    # Given a 1024px wide viewport and no rail preference
+    _login(page, nav_base_url)
+    page.set_viewport_size({"width": 1024, "height": 800})
+
+    # When the user opens the admin
+    page.reload()
+
+    # Then the sidebar is the icon rail
+    toggle = page.get_by_test_id("sidebar-rail-toggle")
+    expect(toggle).to_have_attribute("aria-pressed", "true")
+    expect(page.get_by_role("heading", name="Sales")).to_be_hidden()
+
+    # And nav links keep their accessible names
+    expect(page.get_by_test_id("sidebar").get_by_role("link", name="Orders")).to_be_visible()
+
+
+def test_a_chosen_sidebar_width_wins_over_the_laptop_default(page: Page, nav_base_url: str) -> None:
+    """
+    Scenario: a chosen sidebar width wins over the laptop default
+      Given a 1024px wide viewport where the sidebar starts as the rail
+      When  the user expands the sidebar with the rail toggle and reloads
+      Then  the sidebar stays expanded
+    """
+    # Given a 1024px wide viewport where the sidebar starts as the rail
+    _login(page, nav_base_url)
+    page.set_viewport_size({"width": 1024, "height": 800})
+    page.reload()
+    toggle = page.get_by_test_id("sidebar-rail-toggle")
+    expect(toggle).to_have_attribute("aria-pressed", "true")
+
+    # When the user expands the sidebar with the rail toggle and reloads
+    toggle.click()
+    page.reload()
+
+    # Then the sidebar stays expanded
+    expect(page.get_by_test_id("sidebar-rail-toggle")).to_have_attribute("aria-pressed", "false")
+    expect(page.get_by_role("heading", name="Sales")).to_be_visible()
+
+
+def test_the_sidebar_starts_expanded_on_a_desktop(page: Page, nav_base_url: str) -> None:
+    """
+    Scenario: the sidebar starts expanded on a desktop
+      Given a 1280px wide viewport and no rail preference
+      When  the user opens the admin
+      Then  the sidebar shows its labels
+    """
+    # Given a 1280px wide viewport and no rail preference
+    # When the user opens the admin
+    _login(page, nav_base_url)
+
+    # Then the sidebar shows its labels
+    expect(page.get_by_test_id("sidebar-rail-toggle")).to_have_attribute("aria-pressed", "false")
+    expect(page.get_by_role("heading", name="Sales")).to_be_visible()

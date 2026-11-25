@@ -401,6 +401,11 @@
     transform: translateX(0);
   }
 
+  /* The closed drawer sits just off-screen: its shadow would bleed onto the page edge. */
+  .ha-sidebar:not(.ha-sidebar-mobile-open) {
+    box-shadow: none;
+  }
+
   .ha-sidebar-close {
     display: inline-flex;
   }
