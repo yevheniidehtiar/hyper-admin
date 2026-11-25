@@ -54,5 +54,14 @@ and warns once.
 - **Admin built from a `session_factory` only?** There is no engine to instrument; call
   `logfire.instrument_sqlalchemy(engine=...)` on your own engine.
 
-Adapter spans (`admin.adapter.<op>`) and validation/auth events follow once core fires the
-lifecycle hooks. See `docs/specs/plugin-logfire.md`.
+## Adapter spans
+
+Every data operation of an admin model view also gets an `admin.adapter.<op>` span (`list`,
+`get`, `create`, `update`, `delete`, `get_related`, `get_choices`, ...). The plugin records them
+through the core adapter-call hooks as soon as it is installed and `logfire.configure()` has run;
+the SQL spans that `instrument_admin` adds nest under them. Attributes are the model name, the operation
+and its non-personal arguments: `page`, `page_size`, `search`, `has_filters` and `result_count`
+for a list, `pk` for a single record, the number of fields written (never their values), and the
+relation `field`. An adapter call that raises ends its span with the exception.
+
+Validation-error and sign-in events are not recorded yet. See `docs/specs/plugin-logfire.md`.

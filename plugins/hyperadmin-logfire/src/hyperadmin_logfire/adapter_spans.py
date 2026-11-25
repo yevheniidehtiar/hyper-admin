@@ -24,13 +24,37 @@ def model_name(model: Any) -> str:
     return getattr(model, "__name__", None) or type(model).__name__
 
 
+#: Parameter names of the ``BaseAdapter`` methods, in positional order, per hook ``op``. The
+#: adapter-call hooks pass positional arguments under ``kwargs["args"]``; core calls
+#: ``get_choices(field, ...)`` that way, for example.
+_POSITIONAL_PARAMS: dict[str, tuple[str, ...]] = {
+    "get": ("pk",),
+    "delete": ("pk",),
+    "update": ("pk", "data"),
+    "create": ("data",),
+    "get_related": ("pk", "field"),
+    "get_choices": ("field", "q", "limit"),
+    "list": ("page", "page_size", "search", "filters"),
+}
+
+
+def call_arguments(op: str, kwargs: dict[str, Any]) -> dict[str, Any]:
+    """The adapter call's arguments by name: positional ones under ``"args"`` are named."""
+    named = {k: v for k, v in kwargs.items() if k != "args"}
+    for param, value in zip(_POSITIONAL_PARAMS.get(op, ()), kwargs.get("args") or (), strict=False):
+        named.setdefault(param, value)
+    return named
+
+
 def safe_attributes(op: str, kwargs: dict[str, Any]) -> dict[str, Any]:
     """Whitelisted span attributes per operation: no field values, no payloads.
 
+    ``op`` is the hook's operation name (``list`` covers ``list`` and ``list_paginated``).
     The list search term is recorded as ``search`` because the spec requires it; drop it here if
     search terms must be treated as personal data.
     """
-    if op in ("list", "list_paginated"):
+    kwargs = call_arguments(op, kwargs)
+    if op == "list":
         return {
             "page": kwargs.get("page"),
             "page_size": kwargs.get("page_size"),
@@ -72,7 +96,7 @@ def close_span(*, model: Any, op: str, result: Any, error: BaseException | None 
     span = stack[-1]
     _open_spans.set(stack[:-1])
     if error is None:
-        if op in ("list", "list_paginated"):
+        if op == "list":
             items = result[0] if isinstance(result, tuple) else getattr(result, "items", result)
             if isinstance(items, list | tuple):
                 span.set_attribute("result_count", len(items))

@@ -189,6 +189,34 @@ def test_instrument_admin_emits_http_and_sql_spans(
     assert http_span["context"]["trace_id"] in sql_traces
 
 
+def test_list_view_emits_an_adapter_span_with_sql_under_it(
+    exporter: TestExporter, engine: AsyncEngine
+) -> None:
+    """
+    Scenario: list view emits an adapter span
+      Given logfire is configured with a test exporter
+      And   instrument_admin(admin) has been called
+      When  GET /admin/tracedorder is requested
+      Then  the exporter holds a span "admin.adapter.list" with model="TracedOrder", op="list"
+      And   the list query's SQL span is its child
+    """
+    admin = _admin(engine)
+    instrument_admin(admin)
+
+    _list_orders(admin)
+
+    (adapter_span,) = [s for s in _spans(exporter) if s["name"] == "admin.adapter.list"]
+    assert adapter_span["attributes"]["model"] == "TracedOrder"
+    assert adapter_span["attributes"]["op"] == "list"
+    assert adapter_span["attributes"]["result_count"] == 1
+    children = [
+        s
+        for s in _sql_spans(exporter)
+        if (s.get("parent") or {}).get("span_id") == adapter_span["context"]["span_id"]
+    ]
+    assert children
+
+
 class _PlainBase(DeclarativeBase):
     pass
 
