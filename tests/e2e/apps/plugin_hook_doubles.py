@@ -12,6 +12,8 @@ the registry's ``entry_points`` lookup (the subprocess equivalent of a pytest
 from __future__ import annotations
 
 import logging
+from collections.abc import Iterator
+from contextlib import contextmanager
 from importlib.metadata import EntryPoint
 from typing import Any
 
@@ -118,11 +120,15 @@ class _LogCapture(logging.Handler):
 _LOG_CAPTURE = _LogCapture()
 
 
-def install_entry_points(plugins: dict[str, Any], *, disabled_name: str) -> None:
+@contextmanager
+def install_entry_points(plugins: dict[str, Any], *, disabled_name: str) -> Iterator[None]:
     """Make the registry discover ``plugins`` plus one extra entry point to be disabled.
 
     ``plugins`` maps entry-point name to the plugin instance; the loader is the
-    patched ``EntryPoint.load`` so no real distribution is needed.
+    patched ``EntryPoint.load`` so no real distribution is needed. Both patches are
+    undone on exit: pytest's ``--doctest-modules`` imports this app module in the
+    collecting process too, where a leftover patch would hide the installed plugins
+    from every app imported after it.
     """
     logging.getLogger(plugins_module.__name__).addHandler(_LOG_CAPTURE)
     group = plugins_module.PLUGIN_ENTRY_POINT_GROUP
@@ -135,5 +141,12 @@ def install_entry_points(plugins: dict[str, Any], *, disabled_name: str) -> None
     def _load(self: EntryPoint) -> Any:
         return loaded[self.value]
 
+    original_load = EntryPoint.load
+    original_entry_points = plugins_module.entry_points
     EntryPoint.load = _load  # type: ignore[method-assign]
     plugins_module.entry_points = lambda **_kw: eps  # type: ignore[assignment]
+    try:
+        yield
+    finally:
+        EntryPoint.load = original_load  # type: ignore[method-assign]
+        plugins_module.entry_points = original_entry_points

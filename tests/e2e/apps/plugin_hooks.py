@@ -47,14 +47,14 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
 
 app = FastAPI(lifespan=lifespan)
 
-install_entry_points(
+with install_entry_points(
     {"recording": RecordingPlugin(), "broken": BrokenPlugin()}, disabled_name="muted"
-)
-admin = Admin(
-    app,
-    engine=engine,
-    settings=HyperAdminSettings(create_tables=False, secret_key="e2e-test-secret"),
-    disabled_plugins=["muted"],
-)
+):
+    admin = Admin(
+        app,
+        engine=engine,
+        settings=HyperAdminSettings(create_tables=False, secret_key="e2e-test-secret"),
+        disabled_plugins=["muted"],
+    )
 site.register(Widget, WidgetAdmin)
 admin.mount(path="/admin")
