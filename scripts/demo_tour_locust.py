@@ -31,6 +31,7 @@ from typing import Any
 
 import gevent
 from locust import HttpUser, between, events, task
+from locust.stats import StatsEntry
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -145,16 +146,25 @@ def _measure(environment: Any) -> None:
     gevent.sleep(SECONDS)
     seconds = time.monotonic() - started
     stats = environment.runner.stats
+    endpoints = {
+        name: entry
+        for (name, _), entry in stats.entries.items()
+        if entry.num_requests  # the logins were reset away with the warm-up
+    }
     figures = {
         "users": USERS,
         "seconds": seconds,
         "total": _row(stats.total, seconds),
-        "endpoints": {
-            name: _row(entry, seconds)
-            for (name, _), entry in stats.entries.items()
-            if entry.num_requests  # the logins were reset away with the warm-up
-        },
+        "endpoints": {name: _row(entry, seconds) for name, entry in endpoints.items()},
     }
+    if "search" in endpoints:
+        # On SQLite the search is a table scan; list and detail without it, so the read
+        # total is not read as the search's figure.
+        browse = StatsEntry(stats, "list+detail", "")
+        for name in ("list", "detail"):
+            if name in endpoints:
+                browse.extend(endpoints[name])
+        figures["without_search"] = _row(browse, seconds)
     OUT.write_text(json.dumps(figures, indent=2))
     environment.runner.quit()
 
