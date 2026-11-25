@@ -34,17 +34,11 @@ From `on_register` a plugin may call `add_page`, `add_nav_entry`, `add_template_
 
 ## Lifecycle hooks
 
-`LIFECYCLE_HOOKS` reserves the names of the model and adapter lifecycle hooks a plugin may
-implement as methods. Hooks are called with keyword arguments only, so write them to accept
-extra keyword arguments (`**kwargs`).
-
-!!! warning "Reserved, not fired yet"
-    In this release HyperAdmin does not call the lifecycle hooks: no core code path dispatches
-    `on_model_register`, `on_before_create`, `on_after_create`, `on_before_update`,
-    `on_after_update`, `on_before_delete`, `on_after_delete`, `on_before_adapter_call` or
-    `on_after_adapter_call`. The names and the keyword arguments below are reserved so that a
-    plugin written against them keeps working once they are wired up. `on_register` is the
-    only hook that runs today.
+`LIFECYCLE_HOOKS` lists the names of the lifecycle hooks a plugin may implement as methods.
+HyperAdmin calls them with keyword arguments only, so write them to accept extra keyword
+arguments (`**kwargs`). A hook that raises is logged on the `hyperadmin.core.plugins` logger
+and skipped; it never breaks the request or the other plugins. When each hook fires is
+described in the [hook reference](../plugins/hooks.md).
 
 | Hook | Keyword arguments |
 |---|---|
@@ -53,6 +47,8 @@ extra keyword arguments (`**kwargs`).
 | `on_before_update` / `on_after_update` | `admin, model, pk, data` / `admin, model, instance` |
 | `on_before_delete` / `on_after_delete` | `admin, model, pk` |
 | `on_before_adapter_call` / `on_after_adapter_call` | `admin, model, op, kwargs` / `admin, model, op, result, error` |
+| `on_validation_error` | `admin, model, field_errors` |
+| `on_auth_event` | `admin, event, user, username, request` (and `model` for `permission_denied`) |
 
 ## API Reference
 

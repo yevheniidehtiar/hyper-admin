@@ -236,8 +236,8 @@ def test_create_is_logged(admin: Admin, caplog: pytest.LogCaptureFixture) -> Non
 
 Points to note:
 
-- Patch `hyperadmin.core.plugins.entry_points`, the name the registry looks up, not
-  `importlib.metadata.entry_points`.
+- Patch `entry_points` in the `hyperadmin.core.plugins` module, the name the registry looks
+  up, not `importlib.metadata.entry_points`.
 - The fake must accept the `group` keyword. A real `EntryPoint` imports your class through its
   `value`, so the test also proves that the path in `pyproject.toml` is right.
 - Clear `HYPERADMIN_DISABLED_PLUGINS`, so a variable in the developer's shell cannot disable the
