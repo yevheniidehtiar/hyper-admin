@@ -38,7 +38,9 @@ Usage::
     uv run python scripts/demo_tour_video.py --scenes presence,conflict --frames /tmp/f
 
 ``--scenes`` renders a subset into ``--frames`` (PNG frames, no encoding) to check one
-scene after a UI change. A full run takes about four minutes, most of it the Locust run.
+scene after a UI change. A full run takes ten minutes or more, most of it the load-test
+scene: it waits for a quiet host (up to 25 minutes, then stops) and runs each Locust
+measurement twice.
 
 Each scene is one ``scene_*`` function listed in ``SCENES``: reorder, drop or retime
 scenes there. Needs Chromium for Playwright (``uv run playwright install chromium``),
@@ -118,6 +120,12 @@ OUTPUT_SIZE = "1600:900"  # sharp enough for UI text, keeps the files a few MB
 SCALE = 100  # multiplier of tests.e2e.apps.scalability_models: 100 gives 1.2 M rows
 LOCUST_USERS = 20
 LOCUST_SECONDS = 30
+LOCUST_REPEATS = 2  # the first run of each measurement warms the file cache; the last one shows
+# The runs start only on a quiet host: load average and CPU idle, held for QUIET_HOLD seconds.
+QUIET_LOAD = 2.0
+QUIET_IDLE = 85.0
+QUIET_HOLD = 120.0
+QUIET_WAIT = 25 * 60.0
 # Montage crops left out of the closing grid of the widgets scene.
 GRID_SKIP = ("Bulk actions", "Pagination", "Enum select", "Grouped sidebar", "Task queues")
 
@@ -863,9 +871,8 @@ def scene_loadtest(t: Tour) -> None:
     t.apps.url("scale")  # seeds the large tables, timed
     rows, seconds = t.apps.facts["seed_rows"], t.apps.facts["seed_seconds"]
     host = _host_facts()
-    read = _run_locust(t, "ReadUser")
-    write = _run_locust(t, "WriteUser")
-    busy = f" Host busy: load average {host['load']:.1f} before the runs." if host["busy"] else ""
+    read = _measure(t, "ReadUser", QUIET_HOLD)
+    write = _measure(t, "WriteUser", 30.0)
     body = (
         '<div class="wrap" style="padding-bottom:150px">'
         '<p class="label">Load testing ships with it</p>'
@@ -884,9 +891,11 @@ def scene_loadtest(t: Tour) -> None:
         "9 CPUs, 21 ms median, 170 ms p95 (load-test matrix, docs/compatibility.md)</span></div>"
         "</div>"
         f'<p class="arrow" style="font-size:15px">This run: {LOCUST_USERS} users, {LOCUST_SECONDS} s per measurement, '
-        f"logins and warm-up excluded; {host['machine']}, SQLite file, one uvicorn worker, "
-        f"Locust on the same machine.{busy} Search is a substring match (ILIKE '%term%') over "
-        f"{9_000 * SCALE:,} SKUs: a table scan, see the Performance guide.</p></div>"
+        f"logins and warm-up excluded, each measurement run {LOCUST_REPEATS} times and the last "
+        f"shown (the first warms the file cache); {host['machine']}, idle host (load below "
+        f"{QUIET_LOAD:.0f}, CPU idle above {QUIET_IDLE:.0f}% before the runs), SQLite file, one "
+        "uvicorn worker, Locust on the same machine. Search is a substring match "
+        f"(ILIKE '%term%') over {9_000 * SCALE:,} SKUs: a table scan, see the Performance guide.</p></div>"
     )
     page = t.slide(body)
     t.reel.shot(
@@ -1160,10 +1169,64 @@ def _statements(page: Page, base: str, table: str) -> list[dict[str, Any]]:
     return [s for s in statements if f"FROM {table}" in s["sql"]]
 
 
+def _cpu_idle() -> float | None:
+    """CPU idle percent over the next two seconds (macOS ``top``, Linux ``/proc/stat``)."""
+    if os.uname().sysname == "Darwin":
+        out = subprocess.run(
+            ["/usr/bin/top", "-l", "2", "-n", "0", "-s", "2"],
+            capture_output=True,
+            text=True,
+            check=False,
+        ).stdout
+        found = re.findall(r"([\d.]+)% idle", out)
+        return float(found[-1]) if found else None
+    stat = Path("/proc/stat")
+    if not stat.exists():
+        return None
+    before = [int(x) for x in stat.read_text().split()[1:8]]
+    time.sleep(2)
+    after = [int(x) for x in stat.read_text().split()[1:8]]
+    delta = [b - a for a, b in zip(before, after, strict=True)]
+    return 100 * (delta[3] + delta[4]) / max(sum(delta), 1)
+
+
+def _host_sample() -> dict[str, float | None]:
+    """Load average (1 minute) and CPU idle percent right now."""
+    return {"load": os.getloadavg()[0], "idle": _cpu_idle()}
+
+
+def _quiet(sample: dict[str, float | None]) -> bool:
+    load, idle = sample["load"] or 0.0, sample["idle"]
+    return load < QUIET_LOAD and (idle is None or idle > QUIET_IDLE)
+
+
+def _wait_for_quiet(hold: float) -> None:
+    """Block until the host has been quiet for ``hold`` seconds, or stop the tour.
+
+    A busy host queues the requests behind other processes and the percentiles measure the
+    machine, not the admin. Quiet: 1-minute load average below ``QUIET_LOAD`` and CPU idle
+    above ``QUIET_IDLE`` percent at every check, 30 s apart.
+    """
+    deadline = time.monotonic() + QUIET_WAIT
+    since: float | None = None
+    while True:
+        sample = _host_sample()
+        now = time.monotonic()
+        sys.stdout.write(f"host load {sample['load']:.2f}, idle {sample['idle']}%\n")
+        since = (since or now) if _quiet(sample) else None
+        if since is not None and now - since >= hold:
+            return
+        if now > deadline:
+            top = subprocess.run(
+                ["/bin/ps", "-Ao", "pcpu,comm", "-r"], capture_output=True, text=True, check=False
+            ).stdout.splitlines()[:12]
+            raise SystemExit("host never got quiet; busiest processes:\n" + "\n".join(top))
+        time.sleep(30)
+
+
 def _host_facts() -> dict[str, Any]:
-    """The machine the numbers come from, and whether it was busy when the runs started."""
+    """The machine the numbers come from."""
     cpus = os.cpu_count() or 1
-    load = os.getloadavg()[0]
     try:
         chip = subprocess.run(
             ["/usr/sbin/sysctl", "-n", "machdep.cpu.brand_string"],
@@ -1173,18 +1236,38 @@ def _host_facts() -> dict[str, Any]:
         ).stdout.strip()
     except (OSError, subprocess.CalledProcessError):
         chip = sys.platform
-    sys.stdout.write(f"host {chip}, {cpus} CPUs, load average {load:.1f}\n")
-    return {"machine": f"{chip}, {cpus} CPUs", "load": load, "busy": load > cpus / 2}
+    sys.stdout.write(f"host {chip}, {cpus} CPUs\n")
+    return {"machine": f"{chip}, {cpus} CPUs"}
 
 
-def _run_locust(t: Tour, user_class: str) -> dict[str, Any]:
+def _measure(t: Tour, user_class: str, hold: float) -> dict[str, Any]:
+    """Run one user class ``LOCUST_REPEATS`` times on a quiet host; keep the last run.
+
+    The first runs warm the SQLite file cache. Each run records the host's load average and
+    CPU idle right before it starts and right after Locust exits.
+    """
+    runs = []
+    for i in range(LOCUST_REPEATS):
+        _wait_for_quiet(hold if i == 0 else 30.0)
+        start = _host_sample()
+        figures = _run_locust(t, user_class, f"{user_class}-{i + 1}")
+        figures["host"] = {"start": start, "end": _host_sample()}
+        sys.stdout.write(f"locust {user_class} run {i + 1}: {json.dumps(figures)}\n")
+        runs.append(figures)
+    return runs[-1]
+
+
+def _run_locust(t: Tour, user_class: str, label: str) -> dict[str, Any]:
     """Measure one user class of scripts/demo_tour_locust.py against the 1.2 M-row app."""
     locust = shutil.which("locust")
     if locust is None:
         raise SystemExit("locust is not installed: uv sync --extra loadtest")
-    out = t.work / f"locust-{user_class}.json"
+    out = t.work / f"locust-{label}.json"
+    # An idle Mac can sleep mid-run: the clock stops and the run measures seconds, not 30.
+    awake = ["/usr/bin/caffeinate", "-i"] if Path("/usr/bin/caffeinate").exists() else []
     run = subprocess.run(  # noqa: S603 - fixed argv
         [
+            *awake,
             locust,
             *("-f", "scripts/demo_tour_locust.py", "--headless", "--only-summary"),
             *("-u", str(LOCUST_USERS), "-r", str(LOCUST_USERS), "-t", "300s"),
@@ -1214,12 +1297,14 @@ def _run_locust(t: Tour, user_class: str) -> dict[str, Any]:
 def _locust_table(title: str, figures: dict[str, Any]) -> str:
     """Per-endpoint rows of one measurement, then its total."""
     lines = [
-        f"{title:<10}{'requests':>10}{'fails':>7}{'req/s':>8}{'median':>11}{'p95':>11}{'p99':>11}"
+        f"{title:<14}{'requests':>10}{'fails':>7}{'req/s':>8}{'median':>11}{'p95':>11}{'p99':>11}"
     ]
     rows = [*figures["endpoints"].items(), ("all", figures["total"])]
+    if "without_search" in figures:
+        rows.append(("list+detail", figures["without_search"]))
     for name, row in rows:
         lines.append(
-            f"  {name:<8}{row['requests']:>10}{row['failures']:>7}{row['rps']:>8.0f}"
+            f"  {name:<12}{row['requests']:>10}{row['failures']:>7}{row['rps']:>8.0f}"
             f"{row['p50']:>8.0f} ms{row['p95']:>8.0f} ms{row['p99']:>8.0f} ms"
         )
     return "\n".join(lines)
@@ -1230,11 +1315,25 @@ def _locust_card(title: str, figures: dict[str, Any]) -> str:
     ops = ", ".join(
         f"{name} {row['p50']:.0f}/{row['p95']:.0f}" for name, row in figures["endpoints"].items()
     )
+    browse = figures.get("without_search")
+    split = (
+        f" Without search (list + detail): median {browse['p50']:.0f} ms, p95 {browse['p95']:.0f} ms."
+        if browse
+        else ""
+    )
+    host = figures["host"]
     return (
         f'<div class="card"><b>{total["rps"]:.0f} req/s</b><span>{title}: median '
         f"{total['p50']:.0f} ms, p95 {total['p95']:.0f} ms, p99 {total['p99']:.0f} ms, "
-        f"{total['failures']} of {total['requests']} failed. Median/p95 ms: {ops}</span></div>"
+        f"{total['failures']} of {total['requests']} failed. Median/p95 ms: {ops}.{split} "
+        f"Host load/idle: {_host_text(host['start'])} before, {_host_text(host['end'])} after"
+        "</span></div>"
     )
+
+
+def _host_text(sample: dict[str, float | None]) -> str:
+    idle = sample["idle"]
+    return f"{sample['load']:.1f}/{idle:.0f}%" if idle is not None else f"{sample['load']:.1f}"
 
 
 def _logfire_spans(log: Path, request: str) -> str:
