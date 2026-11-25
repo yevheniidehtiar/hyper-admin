@@ -7,7 +7,7 @@
 | Issue | TBD |
 | Milestone | v0.8.0 — Plugins & AI |
 | Created | 2026-05-05 |
-| Last updated | 2026-11-11 |
+| Last updated | 2026-11-25 |
 
 ---
 
@@ -28,9 +28,10 @@ registry SDD is wrong and gets revised first. That is the design pressure on thi
 
 - **Second plugin, not first.** Reports and tasks shipped first on the phase 1 seams
   (registry SDD, Decision Log 2026-10-18).
-- **Phase 2 is still not fired.** `Admin.dispatch_hook()` and `LIFECYCLE_HOOKS` exist, but no
-  core call site calls them yet. This SDD now splits into phase A (ships on today's core) and
-  phase B (needs registry phase 2).
+- **Phase 2 was not fired yet (2026-11-07).** `Admin.dispatch_hook()` and `LIFECYCLE_HOOKS`
+  existed, but no core call site called them. This SDD split into phase A (ships on that core)
+  and phase B (needs registry phase 2). Registry phase 2 (phase B0 below) merged to `develop` on
+  2026-11-25: every hook in the table under "Hook usage" now fires.
 - **Logfire API checked against logfire 5.5.0** (2026-11-07 probe; see Decision Log):
   - `instrument_sqlalchemy(engine=...)` accepts an `AsyncEngine`. SQL spans nest under an open
     `admin.adapter.*` span.
@@ -88,7 +89,7 @@ registry SDD is wrong and gets revised first. That is the design pressure on thi
 | Phase | Scope | Needs core change? |
 |---|---|---|
 | A — `lf-scaffold` | Package, entry point, `LogfirePlugin` (`on_register` only), `instrument_admin()` (HTTP + SQL), built-in SQL spans for engines the instrumentor cannot take, README, docs page. Unit tests with logfire's `TestExporter`. | No |
-| B0 — registry phase 2 (registry epic) | `_AdapterHookWrapper`, CRUD hook call sites, and the two new hooks `on_validation_error` and `on_auth_event`, with their call sites. | Yes, in the registry epic |
+| B0 — registry phase 2 (registry epic) | `_AdapterHookWrapper`, CRUD hook call sites, and the two new hooks `on_validation_error` and `on_auth_event`, with their call sites. Merged 2026-11-25. | Yes, in the registry epic |
 | B — `lf-hooks` | Plugin hook methods for adapter spans, validation events and auth events. E2E against a test sink. | No |
 
 Phase A is useful on its own (request and query traces of the admin) and proves the package,
@@ -165,19 +166,18 @@ Monorepo subpath `plugins/hyperadmin-logfire/`, same layout as `hyperadmin-tasks
 ```
 plugins/hyperadmin-logfire/
   pyproject.toml               # name="hyperadmin-logfire"; deps: hyper-admin, logfire[fastapi,sqlalchemy]>=5,<6
-                               # entry point: [project.entry-points."hyperadmin.plugins"] logfire = "hyperadmin_logfire:LogfirePlugin"
+                               # entry point: [project.entry-points."hyperadmin.plugins"] logfire = "hyperadmin_logfire.plugin:LogfirePlugin"
   README.md
   src/hyperadmin_logfire/
     __init__.py                # exports LogfirePlugin, instrument_admin
     plugin.py                  # LogfirePlugin: on_register (A); hook methods (B)
     instrument.py              # instrument_admin(), FastAPI-native detection, engine bookkeeping (A)
     sql_spans.py               # built-in SQL spans (SQLAlchemy 2.1, extra engines) (A)
-    spans.py                   # ContextVar span bridge and attribute builders, pure functions (B)
-  tests/
-    conftest.py                # logfire.configure(send_to_logfire=False, console=False, additional_span_processors=[SimpleSpanProcessor(TestExporter())])
-    unit/test_instrument.py    # A
-    unit/test_spans.py         # B
-    e2e/test_spans_e2e.py      # B
+    adapter_spans.py           # ContextVar span bridge and attribute builders, pure functions (B)
+  tests/                       # each test configures logfire with a TestExporter
+    test_instrument_admin.py   # A, plus the list-view adapter span through a real admin
+    test_adapter_spans.py      # B
+    e2e/test_spans_e2e.py      # B (not written yet)
 ```
 
 The root `pyproject.toml` adds `plugins/hyperadmin-logfire` to `[tool.uv.workspace.members]`.
@@ -189,15 +189,24 @@ protocol) and `logfire`. Nothing in `hyperadmin` imports the plugin.
 
 ### Hook usage
 
-| Plugin behaviour | Hook | Exists today? |
-|---|---|---|
-| Adapter span open | `on_before_adapter_call(admin, model, op, kwargs)` | Name in `LIFECYCLE_HOOKS`, never fired |
-| Adapter span close | `on_after_adapter_call(admin, model, op, result, error)` | Same; `error` is **new in this revision** |
-| Validation event | `on_validation_error(admin, model, field_errors)` | **New**; added to the registry SDD by this PR |
-| Auth events | `on_auth_event(admin, event, user, username, request)` | **New**; added to the registry SDD by this PR |
-| HTTP and SQL spans | none (public Logfire APIs, called from `instrument_admin`) | n/a |
+| Plugin behaviour | Hook | Fired by core? | Plugin method |
+|---|---|---|---|
+| Adapter span open | `on_before_adapter_call(admin, model, op, kwargs)` | Yes (2026-11-25) | Done |
+| Adapter span close | `on_after_adapter_call(admin, model, op, result, error)` | Yes, in `finally` | Done |
+| Validation event | `on_validation_error(admin, model, field_errors)` | Yes | Not yet |
+| Auth events | `on_auth_event(admin, event, user, username, request)` (plus `model` on `permission_denied`) | Yes | Not yet |
+| HTTP and SQL spans | none (public Logfire APIs, called from `instrument_admin`) | n/a | Done |
 
-Changes this PR makes to the registry SDD (doc only; the code lands with phase B0):
+The fired contract is documented in `docs/plugins/hooks.md`. Two points from it that the plugin
+relies on:
+
+- Hook methods end in `**kwargs`: core may pass more keyword arguments in a later release.
+- `kwargs` of an adapter call holds the call's keyword arguments, and its positional ones under
+  `"args"` (core calls `get_choices(field, ...)` positionally). The plugin names them by the
+  `BaseAdapter` signature before it picks span attributes. `op` is `list` for both `list` and
+  `list_paginated`.
+
+Changes revision 2 made to the registry SDD (doc only; the code landed with phase B0):
 
 - `on_after_adapter_call` gains `error: BaseException | None`. `_AdapterHookWrapper` fires it
   in `finally`, with `result=None` and the exception when the call raises, then re-raises.
@@ -273,9 +282,8 @@ uv add "hyperadmin-logfire @ git+https://github.com/yevheniidehtiar/hyper-admin#
 
 ## Migration & Backward Compatibility
 
-Pure addition, with one contract change to an unfired hook. The `error` argument on
-`on_after_adapter_call` changes a hook no core code fires yet and no shipped plugin implements,
-so nothing breaks.
+Pure addition. The `error` argument on `on_after_adapter_call` was added before core fired the
+hook, so no released plugin had to change.
 
 ## Open Questions
 
@@ -308,3 +316,4 @@ so nothing breaks.
 | Leave HTTP spans to FastAPI's native telemetry when it has one (2026-11-08) | Native spans carry the full route and don't suppress other apps' spans process-wide | Always call `instrument_fastapi` (coarser `/admin` route, process-wide suppression); version-pin FastAPI (we don't know the first release with native telemetry, and the `telemetry=` parameter is the public signal) |
 | Record `username` on `login_failure`, never the password (2026-11-11, architect) | It makes brute-force patterns visible; Logfire scrubbing owns redaction; trivially reversible | Omit it (loses the main security signal); hash it (unreadable, still personal data) |
 | CI workflow edit stays an owner task (2026-11-11, architect) | Bot token lacks `workflow` scope and `.github/**` is a hotspot; package work does not depend on it | Skip CI for the plugin |
+| Name positional adapter-call arguments by the `BaseAdapter` signature (2026-11-25) | Core passes positional arguments under `kwargs["args"]`; without naming them, `get_choices` spans lost their `field` | Read only keyword arguments (wrong attributes for positional calls); ask core to always call by keyword (a core change for an observer's convenience) |
