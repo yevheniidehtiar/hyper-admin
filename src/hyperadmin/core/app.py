@@ -1360,6 +1360,7 @@ class Admin:
             self._notification_model_labels()
         )
         self.templates.env.globals["theme"] = self.settings.theme
+        self.templates.env.globals["theme_preset"] = self.settings.theme_preset
         self.templates.env.globals["site_title"] = self.settings.site_title
         self.templates.env.globals["site_header"] = self.settings.site_header
         self.templates.env.globals["supported_locales"] = self.settings.supported_locales

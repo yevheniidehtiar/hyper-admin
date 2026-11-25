@@ -134,6 +134,17 @@ class TestValidation:
             s = HyperAdminSettings(theme=theme)
             assert s.theme == theme
 
+    def test_theme_preset_default_is_terminal(self) -> None:
+        assert HyperAdminSettings().theme_preset == "terminal"
+
+    def test_invalid_theme_preset_raises(self) -> None:
+        with pytest.raises(ValidationError):
+            HyperAdminSettings(theme_preset="neon")  # type: ignore[arg-type]
+
+    def test_theme_preset_from_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("HYPERADMIN_THEME_PRESET", "classic")
+        assert HyperAdminSettings().theme_preset == "classic"
+
     def test_invalid_theme_from_env_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setenv("HYPERADMIN_THEME", "neon")
         with pytest.raises(ValidationError):

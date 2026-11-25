@@ -1,0 +1,330 @@
+/* ==========================================================================
+   Theme preset "terminal" (HyperAdmin v2, the default preset)
+
+   Near-black ground, square corners, one acid-green signal. Applies when
+   <html data-ha-preset="terminal">, set from HyperAdminSettings(theme_preset=...).
+   Token names are the classic ones, so templates and host overrides keep
+   working; only values change. Dark is the primary theme of this preset.
+
+   Values mirror the "HyperAdmin v2" design system tokens.json. In light the
+   primary pair inverts (near-black fill, acid label) and acid as a colour on
+   a light ground drops to olive, because #b8f23e on white is 1.3:1.
+   Contrast: text tokens hold 4.5:1 on surface-base and surface-raised in both
+   themes; border-strong and brand hold 3:1.
+   ========================================================================== */
+
+/* Private palette, defined once and mapped into both dark selector blocks */
+:root[data-ha-preset="terminal"] {
+  --_term-dark-surface-base: #0e100d;
+  --_term-dark-surface-raised: #161915;
+  --_term-dark-surface-sunken: #0a0b09;
+  --_term-dark-surface-overlay: #1c2018;
+  --_term-dark-surface-hover: #1e231b;
+  --_term-dark-surface-selected: #1f2a12;
+  --_term-dark-color-border-light: #2a2f27;
+  --_term-dark-color-border-strong: #6f786a;
+  --_term-dark-color-text-strong: #f1f3ec;
+  --_term-dark-color-text: #d3d8cc;
+  --_term-dark-color-text-muted: #9aa293;
+  --_term-dark-color-text-disabled: #5a6155;
+  --_term-dark-color-brand: #b8f23e;
+  --_term-dark-color-primary: #b8f23e;
+  --_term-dark-color-primary-hover: #cfff6b;
+  --_term-dark-color-on-primary: #0e100d;
+  --_term-dark-color-primary-text: #b8f23e;
+  --_term-dark-color-primary-light: #1e2914;
+  --_term-dark-color-accent: #5ce1e6;
+  --_term-dark-color-on-accent: #0e100d;
+  --_term-dark-color-accent-soft: #0f2a2b;
+  --_term-dark-color-danger: #ff6b5e;
+  --_term-dark-color-danger-hover: #ff8a7e;
+  --_term-dark-color-on-danger: #0e100d;
+  --_term-dark-color-danger-text: #ff8a7e;
+  --_term-dark-color-danger-light: #331512;
+  --_term-dark-color-success: #7fe0a0;
+  --_term-dark-color-success-text: #7fe0a0;
+  --_term-dark-color-success-light: #10291a;
+  --_term-dark-color-warning: #ffb547;
+  --_term-dark-color-warning-text: #ffb547;
+  --_term-dark-color-warning-light: #33240a;
+  --_term-dark-color-info: #8ec7ff;
+  --_term-dark-color-info-text: #8ec7ff;
+  --_term-dark-color-info-light: #0e2336;
+  --_term-dark-color-info-border: #8ec7ff;
+  --_term-dark-color-link: #b8f23e;
+  --_term-dark-color-link-hover: #cfff6b;
+  --_term-dark-color-bg-light: #161915;
+  --_term-dark-color-scrim: rgba(0, 0, 0, 0.72);
+  --_term-dark-chart-1: #b8f23e;
+  --_term-dark-chart-2: #3e8fd9;
+  --_term-dark-chart-3: #ffb547;
+  --_term-dark-chart-4: #b06fe0;
+  --_term-dark-chart-5: #5ce1e6;
+  --_term-dark-chart-6: #d9536a;
+  --_term-dark-chart-grid: #23281f;
+  --_term-dark-chart-axis: #9aa293;
+  --_term-dark-shadow-md: 0 8px 16px -4px rgba(0, 0, 0, 0.6);
+  --_term-dark-shadow-lg: 0 24px 48px -8px rgba(0, 0, 0, 0.7);
+  --_term-dark-shadow-xl: 0 24px 48px -8px rgba(0, 0, 0, 0.7);
+  --_term-dark-shadow-focus: 0 0 0 4px rgba(184, 242, 62, 0.28);
+}
+
+/* Light values, plus everything that does not change with the colour scheme */
+:root[data-ha-preset="terminal"] {
+  --ha-surface-base: #f3f4ef;
+  --ha-surface-raised: #ffffff;
+  --ha-surface-sunken: #e8eae3;
+  --ha-surface-overlay: #ffffff;
+  --ha-surface-hover: #eceee7;
+  --ha-surface-selected: #eaf3da;
+  --ha-color-border-light: #d3d7cc;
+  --ha-color-border-strong: #7a8274;
+  --ha-color-text-strong: #0e100d;
+  --ha-color-text: #2e332b;
+  --ha-color-text-muted: #565d51;
+  --ha-color-text-disabled: #9aa293;
+  --ha-color-brand: #4f7d00;
+  --ha-color-primary: #0e100d;
+  --ha-color-primary-hover: #2a2f27;
+  --ha-color-on-primary: #b8f23e;
+  --ha-color-primary-text: #3f6600;
+  --ha-color-primary-light: #eaf3da;
+  --ha-color-accent: #00666b;
+  --ha-color-on-accent: #ffffff;
+  --ha-color-accent-soft: #ddf1f1;
+  --ha-color-danger: #c42b1c;
+  --ha-color-danger-hover: #b42318;
+  --ha-color-on-danger: #ffffff;
+  --ha-color-danger-text: #b42318;
+  --ha-color-danger-light: #fcebe8;
+  --ha-color-success: #1e6b3a;
+  --ha-color-success-text: #1e6b3a;
+  --ha-color-success-light: #e3f1e7;
+  --ha-color-warning: #c77700;
+  --ha-color-warning-text: #8a4b00;
+  --ha-color-warning-light: #fbefd9;
+  --ha-color-info: #1f5fa8;
+  --ha-color-info-text: #1f5fa8;
+  --ha-color-info-light: #e4eef9;
+  --ha-color-info-border: #1f5fa8;
+  --ha-color-link: #3f6600;
+  --ha-color-link-hover: #0e100d;
+  --ha-color-bg-light: #ffffff;
+  --ha-color-scrim: rgba(14, 16, 13, 0.56);
+  --ha-chart-1: #6a9c10;
+  --ha-chart-2: #1f5fa8;
+  --ha-chart-3: #c77700;
+  --ha-chart-4: #6b3fa0;
+  --ha-chart-5: #00838a;
+  --ha-chart-6: #a3263a;
+  --ha-chart-grid: #e2e5dc;
+  --ha-chart-axis: #565d51;
+  --ha-shadow-md: 0 8px 16px -4px rgba(14, 16, 13, 0.14);
+  --ha-shadow-lg: 0 24px 48px -8px rgba(14, 16, 13, 0.18);
+  --ha-shadow-xl: 0 24px 48px -8px rgba(14, 16, 13, 0.18);
+  --ha-shadow-focus: 0 0 0 4px rgba(79, 125, 0, 0.28);
+
+  /* aliases re-declared so they resolve to this preset's values */
+  --ha-color-border: var(--ha-color-border-strong);
+  --ha-color-focus-ring: var(--ha-color-brand);
+  --ha-color-bg: var(--ha-surface-base);
+  --ha-color-surface: var(--ha-surface-raised);
+  --ha-color-primary-soft: var(--ha-color-primary-light);
+  --ha-color-success-soft: var(--ha-color-success-light);
+  --ha-color-warning-soft: var(--ha-color-warning-light);
+  --ha-color-danger-soft: var(--ha-color-danger-light);
+  --ha-color-info-soft: var(--ha-color-info-light);
+  --ha-color-bg-subtle: var(--ha-surface-sunken);
+  --ha-color-muted: var(--ha-color-text-muted);
+  --ha-color-fg-muted: var(--ha-color-text-muted);
+  --ha-color-success-bg: var(--ha-color-success-light);
+  --ha-color-danger-bg: var(--ha-color-danger-light);
+  --ha-color-danger-subtle: var(--ha-color-danger-light);
+  --ha-color-primary-50: var(--ha-color-primary-light);
+  --ha-color-primary-700: var(--ha-color-primary-text);
+  --ha-color-primary-800: var(--ha-color-link-hover);
+
+  /* Shape: every radius is 0; tokens stay so a host can round things back */
+  --ha-radius-sm: 0;
+  --ha-radius: 0;
+  --ha-radius-md: 0;
+  --ha-radius-lg: 0;
+  --ha-radius-xl: 0;
+  --ha-radius-2xl: 0;
+  --ha-radius-full: 0;
+  --ha-radius-pill: 0;
+
+  /* Elevation: cards and tables sit flat on a hairline; floating layers keep a shadow */
+  --ha-shadow-xs: none;
+  --ha-shadow-sm: none;
+  --ha-shadow: none;
+
+  /* Type: Inter reads, JetBrains Mono structures */
+  --ha-font-mono: "JetBrains Mono", "Noto Sans Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-sans: var(--ha-font-family);
+  --font-mono: var(--ha-font-mono);
+}
+
+[data-ha-preset="terminal"] .ha-theme-dark,
+:root[data-ha-preset="terminal"][data-theme="dark"] {
+  color-scheme: dark;
+
+  --ha-surface-base: var(--_term-dark-surface-base);
+  --ha-surface-raised: var(--_term-dark-surface-raised);
+  --ha-surface-sunken: var(--_term-dark-surface-sunken);
+  --ha-surface-overlay: var(--_term-dark-surface-overlay);
+  --ha-surface-hover: var(--_term-dark-surface-hover);
+  --ha-surface-selected: var(--_term-dark-surface-selected);
+  --ha-color-border-light: var(--_term-dark-color-border-light);
+  --ha-color-border-strong: var(--_term-dark-color-border-strong);
+  --ha-color-text-strong: var(--_term-dark-color-text-strong);
+  --ha-color-text: var(--_term-dark-color-text);
+  --ha-color-text-muted: var(--_term-dark-color-text-muted);
+  --ha-color-text-disabled: var(--_term-dark-color-text-disabled);
+  --ha-color-brand: var(--_term-dark-color-brand);
+  --ha-color-primary: var(--_term-dark-color-primary);
+  --ha-color-primary-hover: var(--_term-dark-color-primary-hover);
+  --ha-color-on-primary: var(--_term-dark-color-on-primary);
+  --ha-color-primary-text: var(--_term-dark-color-primary-text);
+  --ha-color-primary-light: var(--_term-dark-color-primary-light);
+  --ha-color-accent: var(--_term-dark-color-accent);
+  --ha-color-on-accent: var(--_term-dark-color-on-accent);
+  --ha-color-accent-soft: var(--_term-dark-color-accent-soft);
+  --ha-color-danger: var(--_term-dark-color-danger);
+  --ha-color-danger-hover: var(--_term-dark-color-danger-hover);
+  --ha-color-on-danger: var(--_term-dark-color-on-danger);
+  --ha-color-danger-text: var(--_term-dark-color-danger-text);
+  --ha-color-danger-light: var(--_term-dark-color-danger-light);
+  --ha-color-success: var(--_term-dark-color-success);
+  --ha-color-success-text: var(--_term-dark-color-success-text);
+  --ha-color-success-light: var(--_term-dark-color-success-light);
+  --ha-color-warning: var(--_term-dark-color-warning);
+  --ha-color-warning-text: var(--_term-dark-color-warning-text);
+  --ha-color-warning-light: var(--_term-dark-color-warning-light);
+  --ha-color-info: var(--_term-dark-color-info);
+  --ha-color-info-text: var(--_term-dark-color-info-text);
+  --ha-color-info-light: var(--_term-dark-color-info-light);
+  --ha-color-info-border: var(--_term-dark-color-info-border);
+  --ha-color-link: var(--_term-dark-color-link);
+  --ha-color-link-hover: var(--_term-dark-color-link-hover);
+  --ha-color-bg-light: var(--_term-dark-color-bg-light);
+  --ha-color-scrim: var(--_term-dark-color-scrim);
+  --ha-chart-1: var(--_term-dark-chart-1);
+  --ha-chart-2: var(--_term-dark-chart-2);
+  --ha-chart-3: var(--_term-dark-chart-3);
+  --ha-chart-4: var(--_term-dark-chart-4);
+  --ha-chart-5: var(--_term-dark-chart-5);
+  --ha-chart-6: var(--_term-dark-chart-6);
+  --ha-chart-grid: var(--_term-dark-chart-grid);
+  --ha-chart-axis: var(--_term-dark-chart-axis);
+  --ha-shadow-md: var(--_term-dark-shadow-md);
+  --ha-shadow-lg: var(--_term-dark-shadow-lg);
+  --ha-shadow-xl: var(--_term-dark-shadow-xl);
+  --ha-shadow-focus: var(--_term-dark-shadow-focus);
+
+  /* aliases re-declared so they resolve to this preset's values */
+  --ha-color-border: var(--_term-dark-color-border-strong);
+  --ha-color-focus-ring: var(--_term-dark-color-brand);
+  --ha-color-bg: var(--_term-dark-surface-base);
+  --ha-color-surface: var(--_term-dark-surface-raised);
+  --ha-color-primary-soft: var(--_term-dark-color-primary-light);
+  --ha-color-success-soft: var(--_term-dark-color-success-light);
+  --ha-color-warning-soft: var(--_term-dark-color-warning-light);
+  --ha-color-danger-soft: var(--_term-dark-color-danger-light);
+  --ha-color-info-soft: var(--_term-dark-color-info-light);
+  --ha-color-bg-subtle: var(--_term-dark-surface-sunken);
+  --ha-color-muted: var(--_term-dark-color-text-muted);
+  --ha-color-fg-muted: var(--_term-dark-color-text-muted);
+  --ha-color-success-bg: var(--_term-dark-color-success-light);
+  --ha-color-danger-bg: var(--_term-dark-color-danger-light);
+  --ha-color-danger-subtle: var(--_term-dark-color-danger-light);
+  --ha-color-primary-50: var(--_term-dark-color-primary-light);
+  --ha-color-primary-700: var(--_term-dark-color-primary-text);
+  --ha-color-primary-800: var(--_term-dark-color-link-hover);
+  --ha-shadow-xs: none;
+  --ha-shadow-sm: none;
+  --ha-shadow: none;
+}
+
+/* Auto mode: follow the OS when no explicit theme is set */
+@media (prefers-color-scheme: dark) {
+  :root[data-ha-preset="terminal"]:not(.ha-theme-light):not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --ha-surface-base: var(--_term-dark-surface-base);
+    --ha-surface-raised: var(--_term-dark-surface-raised);
+    --ha-surface-sunken: var(--_term-dark-surface-sunken);
+    --ha-surface-overlay: var(--_term-dark-surface-overlay);
+    --ha-surface-hover: var(--_term-dark-surface-hover);
+    --ha-surface-selected: var(--_term-dark-surface-selected);
+    --ha-color-border-light: var(--_term-dark-color-border-light);
+    --ha-color-border-strong: var(--_term-dark-color-border-strong);
+    --ha-color-text-strong: var(--_term-dark-color-text-strong);
+    --ha-color-text: var(--_term-dark-color-text);
+    --ha-color-text-muted: var(--_term-dark-color-text-muted);
+    --ha-color-text-disabled: var(--_term-dark-color-text-disabled);
+    --ha-color-brand: var(--_term-dark-color-brand);
+    --ha-color-primary: var(--_term-dark-color-primary);
+    --ha-color-primary-hover: var(--_term-dark-color-primary-hover);
+    --ha-color-on-primary: var(--_term-dark-color-on-primary);
+    --ha-color-primary-text: var(--_term-dark-color-primary-text);
+    --ha-color-primary-light: var(--_term-dark-color-primary-light);
+    --ha-color-accent: var(--_term-dark-color-accent);
+    --ha-color-on-accent: var(--_term-dark-color-on-accent);
+    --ha-color-accent-soft: var(--_term-dark-color-accent-soft);
+    --ha-color-danger: var(--_term-dark-color-danger);
+    --ha-color-danger-hover: var(--_term-dark-color-danger-hover);
+    --ha-color-on-danger: var(--_term-dark-color-on-danger);
+    --ha-color-danger-text: var(--_term-dark-color-danger-text);
+    --ha-color-danger-light: var(--_term-dark-color-danger-light);
+    --ha-color-success: var(--_term-dark-color-success);
+    --ha-color-success-text: var(--_term-dark-color-success-text);
+    --ha-color-success-light: var(--_term-dark-color-success-light);
+    --ha-color-warning: var(--_term-dark-color-warning);
+    --ha-color-warning-text: var(--_term-dark-color-warning-text);
+    --ha-color-warning-light: var(--_term-dark-color-warning-light);
+    --ha-color-info: var(--_term-dark-color-info);
+    --ha-color-info-text: var(--_term-dark-color-info-text);
+    --ha-color-info-light: var(--_term-dark-color-info-light);
+    --ha-color-info-border: var(--_term-dark-color-info-border);
+    --ha-color-link: var(--_term-dark-color-link);
+    --ha-color-link-hover: var(--_term-dark-color-link-hover);
+    --ha-color-bg-light: var(--_term-dark-color-bg-light);
+    --ha-color-scrim: var(--_term-dark-color-scrim);
+    --ha-chart-1: var(--_term-dark-chart-1);
+    --ha-chart-2: var(--_term-dark-chart-2);
+    --ha-chart-3: var(--_term-dark-chart-3);
+    --ha-chart-4: var(--_term-dark-chart-4);
+    --ha-chart-5: var(--_term-dark-chart-5);
+    --ha-chart-6: var(--_term-dark-chart-6);
+    --ha-chart-grid: var(--_term-dark-chart-grid);
+    --ha-chart-axis: var(--_term-dark-chart-axis);
+    --ha-shadow-md: var(--_term-dark-shadow-md);
+    --ha-shadow-lg: var(--_term-dark-shadow-lg);
+    --ha-shadow-xl: var(--_term-dark-shadow-xl);
+    --ha-shadow-focus: var(--_term-dark-shadow-focus);
+
+    /* aliases re-declared so they resolve to this preset's values */
+    --ha-color-border: var(--_term-dark-color-border-strong);
+    --ha-color-focus-ring: var(--_term-dark-color-brand);
+    --ha-color-bg: var(--_term-dark-surface-base);
+    --ha-color-surface: var(--_term-dark-surface-raised);
+    --ha-color-primary-soft: var(--_term-dark-color-primary-light);
+    --ha-color-success-soft: var(--_term-dark-color-success-light);
+    --ha-color-warning-soft: var(--_term-dark-color-warning-light);
+    --ha-color-danger-soft: var(--_term-dark-color-danger-light);
+    --ha-color-info-soft: var(--_term-dark-color-info-light);
+    --ha-color-bg-subtle: var(--_term-dark-surface-sunken);
+    --ha-color-muted: var(--_term-dark-color-text-muted);
+    --ha-color-fg-muted: var(--_term-dark-color-text-muted);
+    --ha-color-success-bg: var(--_term-dark-color-success-light);
+    --ha-color-danger-bg: var(--_term-dark-color-danger-light);
+    --ha-color-danger-subtle: var(--_term-dark-color-danger-light);
+    --ha-color-primary-50: var(--_term-dark-color-primary-light);
+    --ha-color-primary-700: var(--_term-dark-color-primary-text);
+    --ha-color-primary-800: var(--_term-dark-color-link-hover);
+    --ha-shadow-xs: none;
+    --ha-shadow-sm: none;
+    --ha-shadow: none;
+  }
+}

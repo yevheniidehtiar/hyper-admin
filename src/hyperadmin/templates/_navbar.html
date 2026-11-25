@@ -40,7 +40,7 @@
             {{ icon('menu') }}
         </button>
         <a href="{{ admin_prefix }}/" class="ha-navbar-brand" aria-label="{{ site_title | default('HyperAdmin') }}" data-testid="navbar-brand">
-            <img class="ha-navbar-brand-mark" src="{{ url_for('static', path='/img/hyperadmin-mark.svg') }}" alt="" width="24" height="24">
+            <img class="ha-navbar-brand-mark" src="{{ url_for('static', path=('/img/terminal/' if (theme_preset | default('terminal')) == 'terminal' else '/img/') ~ 'hyperadmin-mark.svg') }}" alt="" width="24" height="24">
             <span class="ha-navbar-brand-text">{{ site_title | default('HyperAdmin') }}</span>
         </a>
         <div class="ha-navbar-actions">

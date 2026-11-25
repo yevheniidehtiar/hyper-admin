@@ -69,6 +69,7 @@ from the settings below, not settings; they have no environment variable.
 | `permissions_matrix_enabled` | `bool` | `True` | Register the permissions matrix page and its sidebar entry (built-in groups only). `False` leaves its URL unrouted (404) |
 | `permissions_matrix_codename` | `str` | `"change_groups_permissions"` | Codename a non-superuser needs to open and save the permissions matrix. Lowercase letters, digits and `_` |
 | `theme` | `"auto" \| "light" \| "dark"` | `"auto"` | Colour scheme. `"auto"` follows the operating system; users can still switch it in the navbar |
+| `theme_preset` | `"terminal" \| "classic"` | `"terminal"` | Visual theme. `"terminal"`: near-black ground, square corners, acid-green accent, JetBrains Mono for headings, labels and buttons. `"classic"`: the earlier teal look with rounded corners. Works with every `theme` |
 | `date_format` | `str` | `"%Y-%m-%d"` | Accepted but not read in this release: date values are shown as `YYYY-MM-DD` |
 | `datetime_format` | `str` | `"%Y-%m-%d %H:%M:%S"` | `strftime` format of timezone-aware datetimes on list and detail pages |
 | `timezone` | `str` | `"UTC"` | IANA zone (case-sensitive, for example `"Europe/Berlin"`) aware datetimes are shown and entered in |

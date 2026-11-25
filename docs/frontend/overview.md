@@ -154,6 +154,19 @@ Tokens are CSS custom properties on `:root`. Override them to theme HyperAdmin w
 }
 ```
 
+### Theme Presets
+
+`HyperAdminSettings(theme_preset=...)` writes `data-ha-preset` on `<html>`:
+
+- `"terminal"` (default): `_theme-terminal.css` re-points the tokens (near-black ground, acid green
+  `#b8f23e`, every radius `0`, flat cards) and `_theme-terminal-type.css` sets the structure
+  (headings, nav, labels, column headers, buttons, pills, numbers) in JetBrains Mono, with status pills
+  told apart by marker shape (● success, ▲ warning, ○ info, ■ danger).
+- `"classic"`: the base values in `_tokens.css` and `_dark-mode.css` (teal and violet, rounded).
+
+Token names are the same in both, so host overrides work with either preset. Overrides for the terminal
+preset must match its selectors (`:root[data-ha-preset="terminal"]`, plus `[data-theme="dark"]` for dark).
+
 ### Dark Mode
 
 Dark mode uses a three-way system:
