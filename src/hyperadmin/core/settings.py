@@ -38,6 +38,8 @@ _DEFAULT_SUPPORTED_LOCALES = [
 ]
 
 ThemeLiteral = Literal["auto", "light", "dark"]
+#: Visual theme presets: ``"terminal"`` (HyperAdmin v2, default) or ``"classic"`` (teal).
+ThemePresetLiteral = Literal["terminal", "classic"]
 MountModeLiteral = Literal["isolated", "router"]
 StorageBackendLiteral = Literal["local", "s3"]
 #: ``cookie_secure`` setting values (SDD C.4).
@@ -203,6 +205,9 @@ class HyperAdminSettings(BaseSettings):
 
     # ── UI ────────────────────────────────────────────────────────────────────
     theme: ThemeLiteral = "auto"
+    #: Visual theme preset, independent of the light/dark ``theme``: ``"terminal"``
+    #: (near-black, square, acid green; the default) or ``"classic"`` (the teal look).
+    theme_preset: ThemePresetLiteral = "terminal"
     #: Rows a list page shows when the request has no ``page_size`` query parameter.
     #: A value above 100 (the most a list page shows) is capped at 100.
     items_per_page: int = Field(default=10, gt=0)

@@ -79,6 +79,7 @@ hyperadmin.HyperAdminSettings.storage_backend :: field: Literal['local', 's3'] =
 hyperadmin.HyperAdminSettings.supported_locales :: field: list[str] = HyperAdminSettings.<lambda>()
 hyperadmin.HyperAdminSettings.template_dirs :: field: list[str] = list()
 hyperadmin.HyperAdminSettings.theme :: field: Literal['auto', 'light', 'dark'] = 'auto'
+hyperadmin.HyperAdminSettings.theme_preset :: field: Literal['terminal', 'classic'] = 'terminal'
 hyperadmin.HyperAdminSettings.timezone :: field: str = 'UTC'
 hyperadmin.HyperAdminSettings.tzinfo :: property -> ZoneInfo
 hyperadmin.HyperAdminSettings.upload_dir :: field: str = 'uploads'

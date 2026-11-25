@@ -137,6 +137,30 @@ def test_admin_theme_exposed_to_templates() -> None:
     assert admin.templates.env.globals["theme"] == "dark"
 
 
+def test_admin_theme_preset_defaults_to_terminal() -> None:
+    """
+    Scenario: the terminal preset is the default look
+      Given an admin mounted with default settings
+      When  the template globals are read
+      Then  theme_preset is "terminal"
+    """
+    admin = Admin(app=FastAPI())
+    admin.mount("/admin")
+    assert admin.templates.env.globals["theme_preset"] == "terminal"
+
+
+def test_admin_theme_preset_classic_exposed_to_templates() -> None:
+    """
+    Scenario: the classic preset can be chosen
+      Given settings with theme_preset="classic"
+      When  the admin is mounted
+      Then  templates see theme_preset "classic"
+    """
+    admin = Admin(app=FastAPI(), settings=HyperAdminSettings(theme_preset="classic"))
+    admin.mount("/admin")
+    assert admin.templates.env.globals["theme_preset"] == "classic"
+
+
 # ---------------------------------------------------------------------------
 # Settings auto-instantiation
 # ---------------------------------------------------------------------------

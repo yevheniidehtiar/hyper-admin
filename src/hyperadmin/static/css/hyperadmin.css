@@ -4,7 +4,11 @@
  * Framework-independent CSS using design tokens (custom properties).
  * No build tooling required — this entry file imports all partials.
  *
- * Palette: HyperAdmin teal (#0d9488 brand, #0f766e actions) + "hyper" violet accent (#6841ea)
+ * Theme presets (<html data-ha-preset>, HyperAdminSettings.theme_preset):
+ *   "terminal" (default): near-black ground, square corners, acid green (#b8f23e)
+ *     — _theme-terminal.css (tokens) + _theme-terminal-type.css (type and shape)
+ *   "classic": HyperAdmin teal (#0d9488 brand, #0f766e actions) + violet accent (#6841ea)
+ *     — the base values in _tokens.css and _dark-mode.css
  * Design system (tokens, components, logo): docs/design/system/README.md
  * Token values mirror docs/design/system/tokens.json.
  *
@@ -16,6 +20,7 @@
 @import "_fonts.css";
 @import "_tokens.css"        layer(tokens);
 @import "_dark-mode.css"     layer(tokens);
+@import "_theme-terminal.css" layer(tokens);
 @import "_reset.css"         layer(reset);
 @import "_layout.css"        layer(layout);
 @import "_navbar.css"        layer(components);
@@ -46,6 +51,7 @@
 @import "_pill.css"          layer(components);
 @import "_panels.css"        layer(components);
 @import "_permissions.css" layer(components);
+@import "_theme-terminal-type.css" layer(components);
 @import "_utilities.css"     layer(utilities);
 @import "_accessibility.css" layer(accessibility);
 @import "_responsive.css"    layer(responsive);
