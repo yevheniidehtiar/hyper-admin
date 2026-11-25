@@ -190,6 +190,14 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
   "Wave 2" section of `components/bundle.css`. Six more Lucide icons
   (`bookmark`, `external-link`, `history`, `rotate-ccw`, `shield-check`,
   `sliders-horizontal`) available through `icon(name)`.
+- **Plugin lifecycle hooks fire.** `on_model_register`, `on_before/after_create`,
+  `on_before/after_update`, `on_before/after_delete` and `on_before/after_adapter_call` are now
+  called by the admin, and two hooks are new in `LIFECYCLE_HOOKS`: `on_validation_error` (field
+  error types only, never input values) and `on_auth_event` (`login_success`, `login_failure`,
+  `logout`, `permission_denied`; never the password). A failing hook is logged and does not
+  affect the request. `hyperadmin plugins list` prints the discovered plugins and whether each is
+  disabled.
+  See [the hook reference](docs/plugins/hooks.md) and the new plugin author guide.
 
 ### Changed
 - `HyperAdminModel.before_save()` and `after_save()` now run on every create and update made

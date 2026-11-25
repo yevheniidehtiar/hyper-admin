@@ -101,6 +101,13 @@ These hooks do **not** fire for writes that bypass the three forms:
 
 The adapter-call hooks see all of these except code that does not go through the admin's adapter.
 
+A model that subclasses `HyperAdminModel` can also define `before_save()` and `after_save()`.
+Those are methods of the record, not plugin hooks: the built-in adapters await them inside the
+adapter `create` or `update` call, on every write including the ones listed above. For a form
+save the order is `on_before_create`, `on_before_adapter_call`, `before_save`, commit,
+`after_save`, `on_after_adapter_call`, `on_after_create` (the same for updates). A `before_save`
+that raises aborts the save, so `on_after_create` does not fire.
+
 ## Adapter calls
 
 ### `on_before_adapter_call(*, admin, model, op, kwargs, **kw)`
@@ -179,6 +186,7 @@ Not reported in this release:
 
 - a sign-in completed with a second factor (MFA): the password step redirects to the challenge
   and no `login_success` follows;
+- a sign-in with an OAuth provider;
 - sign-in and sign-out when the host application owns authentication (`Admin(auth=...)`);
 - a denied object-level permission, and denials on plugin pages.
 

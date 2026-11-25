@@ -394,7 +394,8 @@ hyperadmin.core.options.AdminOptions.use_autocomplete_widget :: field: bool = Tr
 hyperadmin.core.options.AdminOptions.validate_against_model :: def (self, model: type) -> None
 hyperadmin.core.options.AdminOptions.warn_unsaved_changes :: field: bool = True
 hyperadmin.core.panels.panel :: def (label: str, *, slug: str | None = None, icon: str | None = None, permission: str | None = None, enabled: Callable[[Any], bool] | None = None) -> Callable[[Callable[..., Any]], Callable[..., Any]]
-hyperadmin.core.plugins.LIFECYCLE_HOOKS :: = frozenset({'on_after_adapter_call', 'on_after_create', 'on_after_delete', 'on_after_update', 'on_before_adapter_call', 'on_before_create', 'on_before_delete', 'on_before_update', 'on_model_register'})
+hyperadmin.core.plugins :: instance of module
+hyperadmin.core.plugins.LIFECYCLE_HOOKS :: = frozenset({'on_after_adapter_call', 'on_after_create', 'on_after_delete', 'on_after_update', 'on_auth_event', 'on_before_adapter_call', 'on_before_create', 'on_before_delete', 'on_before_update', 'on_model_register', 'on_validation_error'})
 hyperadmin.core.plugins.Plugin :: alias of hyperadmin.Plugin
 hyperadmin.core.plugins.PluginError :: alias of hyperadmin.PluginError
 hyperadmin.core.plugins.PluginRegistry :: alias of hyperadmin.PluginRegistry
@@ -404,6 +405,7 @@ hyperadmin.core.rate_limit.RateLimitDecision.retry_after :: field: int = 0
 hyperadmin.core.rate_limit.RateLimiter :: class(Protocol)
 hyperadmin.core.rate_limit.RateLimiter.acquire :: async def (self, key: str) -> RateLimitDecision
 hyperadmin.core.registry.SiteRegistry :: class () -> None
+hyperadmin.core.registry.SiteRegistry.attach_hook_dispatcher :: def (self, dispatcher: Callable[..., None] | None) -> None
 hyperadmin.core.registry.SiteRegistry.get_registered_models :: def (self) -> list[Any]
 hyperadmin.core.registry.SiteRegistry.register :: def (self, model: Any, admin_class: Any = None, options: AdminOptions | None = None, app_label: str | None = None) -> None
 hyperadmin.core.registry.SiteRegistry.unregister :: def (self, model: Any) -> None
@@ -465,7 +467,7 @@ hyperadmin.realtime.RealtimeEvent.pk :: field: PrimaryKey
 hyperadmin.realtime.RealtimeEvent.to_bytes :: def (self) -> bytes
 hyperadmin.realtime.RealtimeEvent.to_dict :: def (self) -> dict[str, str | None]
 hyperadmin.realtime.RealtimeSettings :: alias of hyperadmin.RealtimeSettings
-hyperadmin.routing.HyperAdminRouter :: class (engine: Any, templates: Jinja2Templates, permission_checker: Any = None, storage: Any = None, timezone: tzinfo | None = None, datetime_format: str = '%Y-%m-%d %H:%M:%S', session_factory: SessionFactory | None = None, *, debug: bool = False, route_class: type[APIRoute] | None = None, realtime_emitter: RealtimeEmitter | None = None, realtime_settings: RealtimeSettings | None = None, count_cache: CountCache | None = None, concurrency_use_updated_at: bool = False, occ_render_dialog: bool = True, home_page: Callable[[], PluginHomePage | None] | None = None, default_page_size: int = 10) -> None
+hyperadmin.routing.HyperAdminRouter :: class (engine: Any, templates: Jinja2Templates, permission_checker: Any = None, storage: Any = None, timezone: tzinfo | None = None, datetime_format: str = '%Y-%m-%d %H:%M:%S', session_factory: SessionFactory | None = None, *, debug: bool = False, route_class: type[APIRoute] | None = None, realtime_emitter: RealtimeEmitter | None = None, realtime_settings: RealtimeSettings | None = None, count_cache: CountCache | None = None, concurrency_use_updated_at: bool = False, occ_render_dialog: bool = True, home_page: Callable[[], PluginHomePage | None] | None = None, default_page_size: int = 10, hook_dispatcher: Any = None, plugins: Any = None) -> None
 hyperadmin.routing.HyperAdminRouter.generate_routes :: def (self) -> None
 hyperadmin.routing.HyperAdminRouter.get_admin_dashboard_view :: def (self) -> Callable[[Request], Awaitable[Response]]
 hyperadmin.routing.HyperAdminRouter.get_routers :: def (self) -> list[APIRouter]
