@@ -5,6 +5,7 @@ SDD ``docs/specs/plugin-registry.md``, "Adapter wrapping strategy".
 
 from __future__ import annotations
 
+from importlib.metadata import entry_points
 from typing import Any
 
 import anyio
@@ -17,7 +18,11 @@ from sqlmodel import Field, SQLModel
 from hyperadmin import Admin
 from hyperadmin.adapters.sqlmodel import SQLModelAdapter
 from hyperadmin.core.model import ModelAdmin
-from hyperadmin.core.plugins import _AdapterHookWrapper, wrap_adapter_with_hooks
+from hyperadmin.core.plugins import (
+    PLUGIN_ENTRY_POINT_GROUP,
+    _AdapterHookWrapper,
+    wrap_adapter_with_hooks,
+)
 from hyperadmin.core.registry import site
 from hyperadmin.core.settings import HyperAdminSettings
 
@@ -58,7 +63,7 @@ def cleanup_registry():
     site._registry = {}
 
 
-def _build(plugin: Any | None) -> tuple[Admin, TestClient]:
+def _build(plugin: Any | None, **admin_kwargs: Any) -> tuple[Admin, TestClient]:
     app = FastAPI()
     engine = create_async_engine("sqlite+aiosqlite:///:memory:")
 
@@ -67,7 +72,9 @@ def _build(plugin: Any | None) -> tuple[Admin, TestClient]:
             await conn.run_sync(SQLModel.metadata.create_all)
 
     anyio.run(create_schema)
-    admin = Admin(app=app, engine=engine, settings=HyperAdminSettings(create_tables=False))
+    admin = Admin(
+        app=app, engine=engine, settings=HyperAdminSettings(create_tables=False), **admin_kwargs
+    )
     if plugin is not None:
         assert admin.plugins.register(plugin, admin=admin)
     site.register(AdapterHookItem, AdapterHookItemAdmin)
@@ -116,7 +123,9 @@ def test_wrapper_is_transparent_when_no_plugin_listens() -> None:
       Then  the view's adapter is not an _AdapterHookWrapper
     """
     adapter = object()
-    admin, _ = _build(None)
+    # Installed plugins (the workspace's hyperadmin-logfire listens to adapter calls) are off.
+    installed = [ep.name for ep in entry_points(group=PLUGIN_ENTRY_POINT_GROUP)]
+    admin, _ = _build(None, disabled_plugins=installed)
     wrapped = wrap_adapter_with_hooks(
         adapter, plugins=admin.plugins, dispatch=admin.dispatch_hook, model=AdapterHookItem
     )
