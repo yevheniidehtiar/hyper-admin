@@ -1,8 +1,9 @@
 """Entry point the HyperAdmin plugin loader discovers (``hyperadmin.plugins`` group).
 
 The plugin contributes no UI seams. HTTP and SQL spans come from ``instrument_admin()``;
-adapter spans and validation/auth events come from lifecycle hook methods once core fires
-them (``docs/specs/plugin-logfire.md``, phases A and B).
+adapter spans come from the ``on_before/after_adapter_call`` lifecycle hooks
+(``docs/specs/plugin-logfire.md``, phases A and B). Hook methods end in ``**kwargs``, as the hook
+contract asks (``docs/plugins/hooks.md``), so a later core release can pass more arguments.
 """
 
 from __future__ import annotations
@@ -27,18 +28,18 @@ class LogfirePlugin:
     def on_register(self, admin: Any) -> None:
         """Nothing to contribute: the plugin adds no pages, nav entries or permissions."""
 
-    def on_before_adapter_call(self, *, admin: Any, model: Any, op: str, kwargs: Any) -> None:  # noqa: ARG002
+    def on_before_adapter_call(self, *, model: Any, op: str, kwargs: Any, **_: Any) -> None:
         """Open an ``admin.adapter.<op>`` span."""
         open_span(model=model, op=op, kwargs=dict(kwargs or {}))
 
     def on_after_adapter_call(
         self,
         *,
-        admin: Any,  # noqa: ARG002
         model: Any,
         op: str,
         result: Any,
         error: BaseException | None = None,
+        **_: Any,
     ) -> None:
         """Close the innermost adapter span, recording ``error`` when the call raised."""
         close_span(model=model, op=op, result=result, error=error)

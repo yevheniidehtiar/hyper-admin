@@ -10,6 +10,7 @@ import pytest
 from logfire.testing import TestExporter
 from opentelemetry.sdk.trace.export import SimpleSpanProcessor
 
+from hyperadmin.core.plugins import PluginRegistry, wrap_adapter_with_hooks
 from hyperadmin_logfire import LogfirePlugin, adapter_spans
 
 
@@ -68,14 +69,14 @@ def test_list_paginated_result_object_counts_items(exporter: TestExporter) -> No
     """
     Scenario: a paginated result records its item count
       Given a logfire test sink
-      When  a list_paginated call returns an object with items
+      When  a list call (op "list" also covers list_paginated) returns an object with items
       Then  the span carries result_count
     """
     result = type("Result", (), {"items": [1, 2]})()
 
-    _call(LogfirePlugin(), "list_paginated", {"page": 2}, result=result)
+    _call(LogfirePlugin(), "list", {"page": 2}, result=result)
 
-    assert _by_name(exporter, "admin.adapter.list_paginated")["attributes"]["result_count"] == 2
+    assert _by_name(exporter, "admin.adapter.list")["attributes"]["result_count"] == 2
 
 
 def test_list_result_without_sequence_records_no_count(exporter: TestExporter) -> None:
@@ -100,6 +101,11 @@ def test_list_result_without_sequence_records_no_count(exporter: TestExporter) -
         ("get_related", {"pk": 1, "field": "items"}, {"pk": "1", "field": "items"}),
         ("get_choices", {"field": "owner", "limit": 5, "q": "bob"}, {"field": "owner", "limit": 5}),
         ("get_schema", {"anything": 1}, {}),
+        # Positional arguments arrive under "args" (hook contract).
+        ("get", {"args": (7,)}, {"pk": "7"}),
+        ("update", {"args": (7, {"a": 1})}, {"pk": "7", "field_count": 1}),
+        ("get_choices", {"args": ("owner",), "limit": 5}, {"field": "owner", "limit": 5}),
+        ("get_related", {"args": (1,), "field": "items"}, {"pk": "1", "field": "items"}),
     ],
 )
 def test_span_attributes_are_whitelisted(op: str, kwargs: dict[str, Any], expected: Any) -> None:
@@ -163,3 +169,33 @@ def test_missing_close_span_is_logged_and_does_not_crash(
         LogfirePlugin().on_after_adapter_call(admin=None, model=Product, op="get", result=None)
 
     assert "no open span found" in caplog.text
+
+
+@pytest.mark.anyio
+async def test_positional_adapter_call_through_core_hooks_names_its_field(
+    exporter: TestExporter,
+) -> None:
+    """
+    Scenario: a positional adapter call is traced with its arguments
+      Given an adapter wrapped by core's adapter-call hooks with the logfire plugin registered
+      When  core calls get_choices("owner") positionally
+      Then  the sink holds "admin.adapter.get_choices" with field="owner"
+    """
+
+    class _Adapter:
+        async def get_choices(self, field: str, q: str = "", limit: int = 50) -> list[Any]:
+            return []
+
+    registry = PluginRegistry()
+    assert registry.register(LogfirePlugin(), admin=None)
+    adapter = wrap_adapter_with_hooks(
+        _Adapter(),
+        plugins=registry,
+        dispatch=lambda hook, **kw: registry.dispatch_hook(hook, admin=None, **kw),
+        model=Product,
+    )
+
+    await adapter.get_choices("owner")
+
+    attributes = _by_name(exporter, "admin.adapter.get_choices")["attributes"]
+    assert attributes["field"] == "owner"
