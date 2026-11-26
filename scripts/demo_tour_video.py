@@ -903,15 +903,17 @@ def scene_loadtest(t: Tour) -> None:
         f"{html.escape(_locust_table('WRITE', write))}</pre>"
         '<div class="cards">'
         f"{_locust_card('Reads', read)}{_locust_card('Writes', write)}"
-        '<div class="card"><b>296 req/s</b><span>Quoted, not this run: PostgreSQL, 400 users, '
-        "9 CPUs, 21 ms median, 170 ms p95 (load-test matrix, docs/compatibility.md)</span></div>"
+        # Quoted from the database comparison of scripts/loadtest_scale.py (same users).
+        '<div class="card"><b>PostgreSQL 17</b><span>Quoted, not this run: same users on this '
+        "machine (docs/compatibility.md). Search median/p95 410/520 ms; with a pg_trgm index "
+        "32/51 ms. List + detail p95 68 ms, 33 ms with it. Writes p95 82 ms.</span></div>"
         "</div>"
         f'<p class="arrow" style="font-size:15px">This run: {LOCUST_USERS} users, {LOCUST_SECONDS} s per measurement, '
         f"logins and warm-up excluded, each measurement run {LOCUST_REPEATS} times and the last "
         f"shown (the first warms the file cache); {host['machine']}, idle host (load below "
         f"{QUIET_LOAD:.0f}, CPU idle above {QUIET_IDLE:.0f}% before the runs), SQLite file, one "
-        "uvicorn worker, Locust on the same machine. Search is a substring match "
-        f"(ILIKE '%term%') over {9_000 * SCALE:,} SKUs: a table scan, see the Performance guide.</p></div>"
+        "uvicorn worker, Locust on the same machine. Search is a substring match over "
+        f"{9_000 * SCALE:,} SKUs: a table scan on SQLite (plain LIKE), see the Performance guide.</p></div>"
     )
     page = t.slide(body)
     t.reel.shot(
@@ -1274,7 +1276,11 @@ def _measure(t: Tour, user_class: str, hold: float) -> dict[str, Any]:
 
 
 def _run_locust(t: Tour, user_class: str, label: str) -> dict[str, Any]:
-    """Measure one user class of scripts/demo_tour_locust.py against the 1.2 M-row app."""
+    """Measure one user class of scripts/loadtest_scale_locust.py against the 1.2 M-row app.
+
+    The users are the ones of ``scripts/loadtest_scale.py``, so the tour and the database
+    comparison in ``docs/compatibility.md`` measure the same load.
+    """
     locust = shutil.which("locust")
     if locust is None:
         raise SystemExit("locust is not installed: uv sync --extra loadtest")
@@ -1285,7 +1291,7 @@ def _run_locust(t: Tour, user_class: str, label: str) -> dict[str, Any]:
         [
             *awake,
             locust,
-            *("-f", "scripts/demo_tour_locust.py", "--headless", "--only-summary"),
+            *("-f", "scripts/loadtest_scale_locust.py", "--headless", "--only-summary"),
             *("-u", str(LOCUST_USERS), "-r", str(LOCUST_USERS), "-t", "300s"),
             *("--host", t.apps.url("scale", for_browser=False), user_class),
         ],
@@ -1295,9 +1301,9 @@ def _run_locust(t: Tour, user_class: str, label: str) -> dict[str, Any]:
             "LOADTEST_USER": "alice",
             "LOADTEST_PASSWORD": "secret123",
             "E2E_SCALABILITY_SCALE": str(SCALE),
-            "TOUR_USERS": str(LOCUST_USERS),
-            "TOUR_SECONDS": str(LOCUST_SECONDS),
-            "TOUR_OUT": str(out),
+            "SCALE_USERS": str(LOCUST_USERS),
+            "SCALE_SECONDS": str(LOCUST_SECONDS),
+            "SCALE_OUT": str(out),
         },
         capture_output=True,
         text=True,
@@ -1315,9 +1321,11 @@ def _locust_table(title: str, figures: dict[str, Any]) -> str:
     lines = [
         f"{title:<14}{'requests':>10}{'fails':>7}{'req/s':>8}{'median':>11}{'p95':>11}{'p99':>11}"
     ]
-    rows = [*figures["endpoints"].items(), ("all", figures["total"])]
-    if "without_search" in figures:
-        rows.append(("list+detail", figures["without_search"]))
+    endpoints = dict(figures["endpoints"])
+    browse = endpoints.pop("list+detail", None)
+    rows = [*endpoints.items(), ("all", figures["total"])]
+    if browse is not None:
+        rows.append(("list+detail", browse))
     for name, row in rows:
         lines.append(
             f"  {name:<12}{row['requests']:>10}{row['failures']:>7}{row['rps']:>8.0f}"
@@ -1328,7 +1336,7 @@ def _locust_table(title: str, figures: dict[str, Any]) -> str:
 
 def _locust_card(title: str, figures: dict[str, Any]) -> str:
     total = figures["total"]
-    browse = figures.get("without_search")
+    browse = figures["endpoints"].get("list+detail")
     split = (
         f" Without search (list + detail): median {browse['p50']:.0f} ms, p95 {browse['p95']:.0f} ms."
         if browse
