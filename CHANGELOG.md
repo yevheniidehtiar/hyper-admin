@@ -40,6 +40,12 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
   (no hover) they stay tappable on every row, dimmed until current, focused or pinned.
 
 ### Added
+- **Database comparison load test** (#989). `scripts/loadtest_scale.py` seeds 1.2 million rows
+  into SQLite, PostgreSQL 17 (a throwaway Docker container) and PostgreSQL 17 with a `pg_trgm`
+  GIN index on the searched column, then measures reads (list, detail, search) and writes
+  (create, update, delete) separately, twice each, only on an idle host. The scalability test
+  app reads `E2E_SCALABILITY_DATABASE_URL` to run on a database seeded elsewhere. Results are in
+  the load-testing section of the compatibility guide.
 - **Collapsible filter panel** (#1130). The Filters button in a list's search row collapses the
   filter panel so the table takes the whole content width. The panel starts expanded from 1440px,
   collapsed below; each viewer's choice is kept in `localStorage`, and the button shows the active

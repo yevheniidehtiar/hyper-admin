@@ -158,7 +158,13 @@ def build_plan(multiplier: int = 1) -> SeedPlan:
 
 def seed_database(path: Path, multiplier: int = 1) -> int:
     """Create the four tables in the SQLite file at ``path``, fill them and return the row count."""
-    engine = create_engine(f"sqlite:///{path}")
+    return seed_url(f"sqlite:///{path}", path.with_suffix(".seed.json"), multiplier)
+
+
+def seed_url(url: str, state_file: Path, multiplier: int = 1) -> int:
+    """Create the four tables in the database at ``url`` (a sync SQLAlchemy URL), fill them
+    and return the row count. ``state_file`` is the seeder's resume checkpoint."""
+    engine = create_engine(url)
     try:
         SQLModel.metadata.create_all(
             engine,
@@ -167,7 +173,7 @@ def seed_database(path: Path, multiplier: int = 1) -> int:
         summary = BulkSeeder(
             plan=build_plan(multiplier),
             engine=engine,
-            state_file=path.with_suffix(".seed.json"),
+            state_file=state_file,
             install_signal_handlers=False,
         ).run()
     finally:
