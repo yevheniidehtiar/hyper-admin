@@ -26,7 +26,9 @@ from starlette.testclient import TestClient
 from hyperadmin.i18n.loader import install_jinja_i18n
 from hyperadmin.i18n.middleware import RTL_LOCALES
 
-_SRC = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "src", "hyperadmin")
+_SRC = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "src", "hyperadmin"
+)
 _CSS_DIR = os.path.join(_SRC, "static", "css")
 
 
