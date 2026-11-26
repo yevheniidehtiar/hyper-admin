@@ -178,11 +178,14 @@ CAPTION_JS = """([title, sub, where]) => {
   // A popover joins the top layer above an open modal <dialog> (the command palette),
   // which would otherwise cover or dim the caption.
   el.setAttribute('popover', 'manual');
-  const vertical = where === 'top' ? 'top:84px' : 'bottom:30px';
-  el.style.cssText = `position:fixed;inset:auto;margin:0;border:0;left:50%;${vertical};
-    transform:translateX(-50%);
-    z-index:2147483647;max-width:80%;padding:14px 28px;border-radius:14px;
-    background:rgba(15,23,42,.94);color:#fff;text-align:center;pointer-events:none;
+  // 'right': bottom right, over the empty space under the screenshot of a split slide.
+  const place = where === 'top' ? 'left:50%;top:84px;transform:translateX(-50%);max-width:80%'
+    : where === 'right' ? 'right:64px;bottom:60px;max-width:640px'
+    : 'left:50%;bottom:30px;transform:translateX(-50%);max-width:80%';
+  el.style.cssText = `position:fixed;inset:auto;margin:0;border:0;${place};
+    z-index:2147483647;padding:14px 28px;border-radius:0;
+    background:rgba(14,16,13,.95);color:#f1f3ec;text-align:center;pointer-events:none;
+    border:1px solid #2a2f27;border-top:3px solid #b8f23e;
     font-family:Inter,system-ui,sans-serif;box-shadow:0 12px 32px rgba(0,0,0,.35);`;
   const t = document.createElement('div');
   t.textContent = title;
@@ -203,8 +206,8 @@ RING_JS = """(box) => {
   el.className = 'demo-ring';
   el.setAttribute('aria-hidden', 'true');
   el.style.cssText = `position:fixed;left:${box.x - 6}px;top:${box.y - 6}px;
-    width:${box.width + 12}px;height:${box.height + 12}px;border:3px solid #f59e0b;
-    border-radius:12px;box-shadow:0 0 0 6px rgba(245,158,11,.22);
+    width:${box.width + 12}px;height:${box.height + 12}px;border:3px solid #ffb547;
+    border-radius:0;box-shadow:0 0 0 6px rgba(255,181,71,.24);
     z-index:2147483646;pointer-events:none;`;
   document.body.appendChild(el);
 }"""
@@ -215,18 +218,19 @@ METRICS_JS = """([title, rows, note]) => {
   el.className = 'demo-metrics';
   el.setAttribute('aria-hidden', 'true');
   el.style.cssText = `position:fixed;right:22px;top:76px;width:410px;z-index:2147483646;
-    padding:18px 22px;border-radius:14px;background:rgba(15,23,42,.95);color:#e2e8f0;
+    padding:18px 22px;border-radius:0;background:rgba(14,16,13,.96);color:#d3d8cc;
+    border:1px solid #2a2f27;
     font-family:Inter,system-ui,sans-serif;box-shadow:0 16px 40px rgba(0,0,0,.4);
     pointer-events:none;`;
   const h = document.createElement('div');
   h.textContent = title;
-  h.style.cssText = 'font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#2dd4bf;margin-bottom:10px';
+  h.style.cssText = 'font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#b8f23e;margin-bottom:10px;font-family:JetBrains Mono,ui-monospace,monospace';
   el.appendChild(h);
   for (const [label, value] of rows) {
     const r = document.createElement('div');
-    r.style.cssText = 'display:flex;justify-content:space-between;gap:16px;padding:6px 0;border-top:1px solid rgba(148,163,184,.18);font-size:15px';
+    r.style.cssText = 'display:flex;justify-content:space-between;gap:16px;padding:6px 0;border-top:1px solid #2a2f27;font-size:15px';
     const l = document.createElement('span'); l.textContent = label; l.style.opacity = '.85';
-    const v = document.createElement('b'); v.textContent = value; v.style.cssText = 'color:#fff;white-space:nowrap';
+    const v = document.createElement('b'); v.textContent = value; v.style.cssText = 'color:#f1f3ec;white-space:nowrap;font-family:JetBrains Mono,ui-monospace,monospace;font-weight:500';
     r.append(l, v); el.appendChild(r);
   }
   if (note) {
@@ -462,54 +466,62 @@ def _code_html(code: str) -> str:
 def _slide_page(base: str, body: str, *, dark_bg: bool = True) -> str:
     """A full-screen HTML slide in the admin's fonts, for title, code and terminal frames."""
     style = HtmlFormatter(style="github-dark").get_style_defs(".code")
-    bg = "#0b1220" if dark_bg else "#f6f8fa"
-    fg = "#e6edf3" if dark_bg else "#0f172a"
+    # The terminal theme preset's palette (src/hyperadmin/static/css/_theme-terminal.css).
+    bg = "#0e100d" if dark_bg else "#f3f4ef"
+    fg = "#f1f3ec" if dark_bg else "#0e100d"
     return f"""<!doctype html><html><head><meta charset="utf-8"><style>
 @font-face {{ font-family: Inter; src: url({base}/admin/static/fonts/InterVariable.woff2); }}
 @font-face {{ font-family: JBMono; src: url({base}/admin/static/fonts/JetBrainsMonoVariable.woff2); }}
 * {{ box-sizing: border-box; }}
 html, body {{ margin: 0; height: 100%; background: {bg}; color: {fg}; font-family: Inter, sans-serif; }}
 .wrap {{ height: 100%; display: flex; flex-direction: column; justify-content: center; padding: 48px 64px; }}
-.title {{ font-size: 64px; font-weight: 750; letter-spacing: -0.02em; margin: 0; }}
+.title {{ font-size: 58px; font-weight: 500; letter-spacing: -0.01em; margin: 0;
+          font-family: JBMono, monospace; line-height: 1.2; }}
 .lead {{ font-size: 28px; opacity: .8; margin: 18px 0 0; max-width: 1150px; line-height: 1.35; }}
-.accent {{ color: #2dd4bf; }}
-.label {{ font-size: 20px; font-weight: 650; text-transform: uppercase; letter-spacing: .08em;
-          color: #2dd4bf; margin: 0 0 14px; }}
-.code {{ background: #0d1117; border: 1px solid #30363d; border-radius: 14px; padding: 22px 26px;
+.accent {{ color: #b8f23e; }}
+.label {{ font-size: 18px; font-weight: 500; text-transform: uppercase; letter-spacing: .08em;
+          color: #b8f23e; margin: 0 0 14px; font-family: JBMono, monospace;
+          display: flex; align-items: center; gap: 14px; }}
+.label img {{ width: 40px; height: 40px; }}
+.code {{ background: #0a0b09; border: 1px solid #2a2f27; border-radius: 0; padding: 22px 26px;
          font-family: JBMono, monospace; font-size: 19px; line-height: 1.5; white-space: pre;
          color: #e6edf3; margin: 0; overflow: hidden; }}
 .split {{ display: grid; grid-template-columns: 630px 1fr; gap: 36px; align-items: center; height: 100%; }}
 .split .code {{ font-size: 12.5px; padding: 16px 18px; }}
-.shot {{ width: 100%; border-radius: 12px; border: 1px solid #30363d;
+.shot {{ width: 100%; border-radius: 0; border: 1px solid #2a2f27;
          box-shadow: 0 20px 50px rgba(0,0,0,.45); display: block; }}
 .arrow {{ font-size: 18px; opacity: .75; margin: 14px 0 0; }}
 .pair {{ display: grid; grid-template-columns: 1fr 1fr; gap: 26px; padding: 30px 32px 0; }}
 .pair figure {{ margin: 0; }}
-.pair figcaption {{ font-size: 17px; font-weight: 650; margin: 0 0 8px; color: #94a3b8; }}
-.pair figcaption b {{ color: #2dd4bf; }}
+.pair figcaption {{ font-size: 16px; font-weight: 500; margin: 0 0 8px; color: #9aa293;
+                     font-family: JBMono, monospace; }}
+.pair figcaption b {{ color: #b8f23e; font-weight: 500; }}
 .phones {{ display: flex; gap: 56px; justify-content: center; align-items: center; height: 100%; }}
-.phones img {{ height: 700px; border-radius: 34px; border: 10px solid #1e293b;
+.phones img {{ height: 700px; border-radius: 34px; border: 10px solid #1c2018;
                box-shadow: 0 20px 50px rgba(0,0,0,.5); }}
 .small {{ font-size: 22px; opacity: .75; margin-top: 26px; font-family: JBMono, monospace; }}
-.term {{ background: #0d1117; border: 1px solid #30363d; border-radius: 14px; padding: 20px 24px;
+.term {{ background: #0a0b09; border: 1px solid #2a2f27; border-radius: 0; padding: 20px 24px;
          font-family: JBMono, monospace; font-size: 15px; line-height: 1.55; white-space: pre;
-         color: #c9d1d9; margin: 0; overflow: hidden; }}
-.term .cmd {{ color: #7ee787; }}
-.term .dim {{ color: #8b949e; }}
-.term .hi {{ color: #fff; font-weight: 700; }}
+         color: #d3d8cc; margin: 0; overflow: hidden; }}
+.term .cmd {{ color: #b8f23e; }}
+.term .dim {{ color: #9aa293; }}
+.term .hi {{ color: #f1f3ec; font-weight: 700; }}
 .cards {{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 22px; }}
-.card {{ background: #111827; border: 1px solid #30363d; border-radius: 12px; padding: 14px 18px; }}
-.card b {{ display: block; font-size: 30px; color: #fff; }}
+.card {{ background: #161915; border: 1px solid #2a2f27; border-radius: 0; padding: 14px 18px; }}
+.card b {{ display: block; font-size: 28px; color: #b8f23e; font-family: JBMono, monospace;
+           font-weight: 500; }}
 .card span {{ font-size: 15px; opacity: .75; }}
 .widget {{ height: 100%; display: flex; flex-direction: column; align-items: center;
            justify-content: center; padding: 40px 60px 150px; }}
-.widget img {{ max-width: 1150px; max-height: 560px; border-radius: 12px; background: #fff;
+.widget img {{ max-width: 1150px; max-height: 560px; border-radius: 0; background: #fff;
                box-shadow: 0 20px 50px rgba(0,0,0,.5); }}
 .widget .label {{ margin-bottom: 22px; }}
 .grid {{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; padding: 30px 40px 0; }}
-.grid figure {{ margin: 0; background: #fff; border-radius: 10px; overflow: hidden; height: 196px; }}
+.grid figure {{ margin: 0; background: #fff; border-radius: 0; overflow: hidden; height: 196px;
+                border: 1px solid #2a2f27; }}
 .grid img {{ width: 100%; height: 100%; object-fit: cover; object-position: left top; }}
 {style}
+.code {{ background: #0a0b09; }}
 </style></head><body>{body}</body></html>"""
 
 
@@ -566,17 +578,19 @@ def _ms(value: float) -> str:
 def scene_title(t: Tour) -> None:
     """Title card, also rendered with a play button as the video poster."""
     title = (
-        '<div class="wrap"><p class="label">HyperAdmin · product tour</p>'
+        '<div class="wrap"><p class="label">'
+        f'<img src="{t.apps.url("erp")}/admin/static/img/terminal/hyperadmin-mark.svg" alt="">'
+        "HyperAdmin · product tour</p>"
         '<h1 class="title">Define the backend.<br><span class="accent">Get the admin UI.</span></h1>'
         '<p class="lead">A Django-admin style interface for FastAPI, generated from your '
         "SQLModel or SQLAlchemy models. No frontend code, no JavaScript build.</p></div>"
     )
     play = (
         '<div style="position:fixed;right:120px;top:50%;transform:translateY(-50%);width:150px;'
-        "height:150px;border-radius:50%;background:#2dd4bf;display:flex;align-items:center;"
+        "height:150px;border-radius:0;background:#b8f23e;display:flex;align-items:center;"
         'justify-content:center;box-shadow:0 16px 40px rgba(0,0,0,.45)">'
         '<div style="margin-left:14px;width:0;height:0;border-top:34px solid transparent;'
-        'border-bottom:34px solid transparent;border-left:56px solid #0b1220"></div></div>'
+        'border-bottom:34px solid transparent;border-left:56px solid #0e100d"></div></div>'
     )
     page = t.slide(title + play)
     t.reel.poster = t.work / "poster.png"
@@ -611,6 +625,7 @@ def scene_code(t: Tour) -> None:
         6.0,
         "You write models and a few options",
         "HyperAdmin generates every page from them. Nobody on the team writes frontend code.",
+        where="right",
         save_as=SHOTS_DIR / "code-to-ui.png",
     )
     page.context.close()
