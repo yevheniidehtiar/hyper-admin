@@ -173,8 +173,8 @@ delete of the rows the run itself creates, so the table keeps its size). The car
 reads without search (list and detail only). Runs start only once the host has been idle for
 two minutes, and each measurement runs twice so the second one sees a warm file cache. Every user logs in
 before the clock starts and the statistics are reset after a warm-up, so password hashing and
-cold caches stay out of the percentiles. The users are in
-[`scripts/demo_tour_locust.py`](https://github.com/yevheniidehtiar/hyper-admin/blob/develop/scripts/demo_tour_locust.py).
+cold caches stay out of the percentiles. The users are the ones of the database comparison,
+[`scripts/loadtest_scale_locust.py`](https://github.com/yevheniidehtiar/hyper-admin/blob/develop/scripts/loadtest_scale_locust.py).
 On SQLite, the product search (`ILIKE '%term%'` over 900,000 SKUs) is a table scan and shows
 as the slowest read; see [Search](guides/performance.md#search). See also
 [Load testing your own deployment](compatibility.md#load-testing-your-own-deployment).
