@@ -344,8 +344,8 @@ def test_search_finds_a_row_through_the_configured_search_fields(
     ]
     assert searches, "the search ran no LIKE statement"
     for sql in searches:
-        assert "lower(e2e_sc_product.sku) LIKE" in sql
-        assert "e2e_sc_product.name) LIKE" not in sql
+        assert "e2e_sc_product.sku LIKE" in sql  # plain LIKE on SQLite: no lower() per row
+        assert "e2e_sc_product.name LIKE" not in sql
 
 
 def test_search_ignores_columns_outside_the_configured_search_fields(
