@@ -227,6 +227,45 @@ log shows overload (`Exceeded concurrency limit`, `QueuePool limit`, `database i
 traceback), skipping heavier rows for that setup. Run it on an otherwise idle machine: Locust
 runs on the host, and other work there starves it and skews the numbers.
 
+To compare databases at 1.2 million rows, `scripts/loadtest_scale.py` seeds the scalability
+test app (900,000 products, 300,000 movements) into SQLite, PostgreSQL 17 and PostgreSQL 17
+with a `pg_trgm` GIN index on the searched column, and measures reads (list, detail, search)
+and writes (create, update, delete) separately:
+
+```bash
+uv sync --all-extras
+uv run python scripts/loadtest_scale.py                          # all three databases
+uv run python scripts/loadtest_scale.py --configs postgres-trgm  # one of them
+```
+
+PostgreSQL runs in a throwaway `postgres:17` container on a free local port, removed when the
+script ends. Before every Locust run the script waits for a quiet host (1-minute load average
+below 2, CPU idle above 85%) and runs each measurement twice, keeping the second run. Results
+land in `reports/loadtest-scale/summary.md`.
+
+A substring search (`ILIKE '%term%'`) cannot use a B-tree index, so on a large table it scans
+every row. On PostgreSQL, a trigram index lets it use an index instead:
+
+```sql
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+CREATE INDEX ix_product_sku_trgm ON product USING gin (sku gin_trgm_ops);
+```
+
+One run on an idle Apple M3 Pro (11 CPUs), 20 users, 30 s per measurement, one uvicorn worker,
+SQLAlchemy's default pool, Locust on the same machine, no failures. The SQLite row includes the
+plain-`LIKE` search fix; before it, SQLite search had a p95 of 14 s and list and detail a p95 of
+3.9 s, because the slow searches held every pool connection.
+
+| Database | list+detail median / p95 | search median / p95 | reads req/s | writes median / p95 | writes req/s |
+|---|---:|---:|---:|---:|---:|
+| SQLite | 9 / 19 ms | 110 / 120 ms | 45 | 40 / 110 ms | 111 |
+| PostgreSQL 17 | 22 / 68 ms | 410 / 520 ms | 38 | 32 / 82 ms | 117 |
+| PostgreSQL 17 + `pg_trgm` | 16 / 33 ms | 32 / 51 ms | 47 | 33 / 88 ms | 115 |
+
+Without the trigram index, PostgreSQL scans the 900,000 products on every search, and the
+searches slow down list and detail pages too. Writes (create, update and delete of one row) cost
+about the same on all three.
+
 ## Known limitations
 
 | Limitation | Workaround | Issue |

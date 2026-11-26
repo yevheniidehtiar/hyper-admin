@@ -4,6 +4,8 @@ Started by the ``scalability_base_url`` fixture in ``tests/e2e/test_scalability.
 the SQLite file named by ``E2E_SCALABILITY_DB`` first (see
 :mod:`tests.e2e.apps.scalability_models` for the tables and their sizes). Started on its own,
 the app seeds the default dataset into a temporary file at startup.
+``E2E_SCALABILITY_DATABASE_URL`` (an async URL) points it at a database seeded elsewhere
+instead, e.g. PostgreSQL in ``scripts/loadtest_scale.py``.
 
 Auth is on (superuser ``alice / secret123``). Every scalability option is set the way a host
 with large tables would set it:
@@ -57,14 +59,21 @@ if TYPE_CHECKING:
     from collections.abc import AsyncIterator
 
 _db_path = os.environ.get("E2E_SCALABILITY_DB", "")
+# An async URL of an already seeded database instead of the SQLite file, e.g.
+# ``postgresql+asyncpg://...`` for the PostgreSQL rows of ``scripts/loadtest_scale.py``.
+_db_url = os.environ.get("E2E_SCALABILITY_DATABASE_URL", "")
 # Without a database from the test fixture, the app seeds its own at startup.
-_seed_at_startup = not _db_path
+_seed_at_startup = not _db_path and not _db_url
 if _seed_at_startup:
     _db_path = os.path.join(tempfile.mkdtemp(prefix="hyperadmin_e2e_scalability_"), "app.db")
 
-engine = create_async_engine(
-    f"sqlite+aiosqlite:///{_db_path}",
-    connect_args={"check_same_thread": False},
+engine = (
+    create_async_engine(_db_url)
+    if _db_url
+    else create_async_engine(
+        f"sqlite+aiosqlite:///{_db_path}",
+        connect_args={"check_same_thread": False},
+    )
 )
 
 STATEMENTS: list[dict[str, Any]] = []
