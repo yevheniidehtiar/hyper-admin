@@ -10,6 +10,13 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
 ## [Unreleased]
 
 ### Fixed
+- **Slow concurrent search on SQLite.** List search, autocomplete and record search ran
+  `lower(column) LIKE lower(?)` on SQLite, and `lower()` stops concurrent scans of a large
+  table from running in parallel: on 900,000 rows one search scan took 89 ms alone and 1.4 s
+  each with five at once, and the slow searches held pool connections so list and detail
+  pages queued behind them. On SQLite the search is now a plain `LIKE`, which ignores ASCII
+  case just as `lower()` does (5 scans at once: 45 ms each). PostgreSQL keeps `ILIKE`. With
+  `PRAGMA case_sensitive_like = ON`, SQLite search becomes case-sensitive.
 - **"Create" button for read-only users.** The list page hid nothing when the user lacked
   `add_<model>`, so a read-only user saw "Create <model>" and got a 403. The button now follows
   the same permission the create routes check (and `AdminOptions.can_create`). The ERP example's
