@@ -889,9 +889,10 @@ def scene_loadtest(t: Tour) -> None:
     read = _measure(t, "ReadUser", QUIET_HOLD)
     write = _measure(t, "WriteUser", 30.0)
     body = (
-        '<div class="wrap" style="padding-bottom:150px">'
+        '<div class="wrap" style="padding-top:24px;padding-bottom:150px">'
         '<p class="label">Load testing ships with it</p>'
-        '<pre class="term">'
+        # Two runs of per-endpoint rows: a tighter terminal, so no row is cut off.
+        '<pre class="term" style="font-size:13.5px;line-height:1.42;padding:14px 22px;flex:none">'
         '<span class="cmd">$ hyperadmin seed</span>'
         '<span class="dim">   # hyperadmin.loadtest BulkSeeder: realistic rows, skewed foreign keys</span>\n'
         f'  this run: <span class="hi">{rows:,} rows</span> in '
@@ -1327,9 +1328,6 @@ def _locust_table(title: str, figures: dict[str, Any]) -> str:
 
 def _locust_card(title: str, figures: dict[str, Any]) -> str:
     total = figures["total"]
-    ops = ", ".join(
-        f"{name} {row['p50']:.0f}/{row['p95']:.0f}" for name, row in figures["endpoints"].items()
-    )
     browse = figures.get("without_search")
     split = (
         f" Without search (list + detail): median {browse['p50']:.0f} ms, p95 {browse['p95']:.0f} ms."
@@ -1340,7 +1338,7 @@ def _locust_card(title: str, figures: dict[str, Any]) -> str:
     return (
         f'<div class="card"><b>{total["rps"]:.0f} req/s</b><span>{title}: median '
         f"{total['p50']:.0f} ms, p95 {total['p95']:.0f} ms, p99 {total['p99']:.0f} ms, "
-        f"{total['failures']} of {total['requests']} failed. Median/p95 ms: {ops}.{split} "
+        f"{total['failures']} of {total['requests']} failed (per endpoint above).{split} "
         f"Host load/idle: {_host_text(host['start'])} before, {_host_text(host['end'])} after"
         "</span></div>"
     )
