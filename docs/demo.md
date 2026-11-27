@@ -175,8 +175,11 @@ two minutes, and each measurement runs twice so the second one sees a warm file 
 before the clock starts and the statistics are reset after a warm-up, so password hashing and
 cold caches stay out of the percentiles. The users are the ones of the database comparison,
 [`scripts/loadtest_scale_locust.py`](https://github.com/yevheniidehtiar/hyper-admin/blob/develop/scripts/loadtest_scale_locust.py).
-On SQLite, the product search (`ILIKE '%term%'` over 900,000 SKUs) is a table scan and shows
-as the slowest read; see [Search](guides/performance.md#search). See also
+In the recorded run (one uvicorn worker on a laptop, no failed requests) reads reached 46 req/s:
+list and detail have a median of 9 ms and a p95 of 23 ms, and search a median of 110 ms and a
+p95 of 130 ms. Writes reached 112 req/s with a median of 38 ms and a p95 of 110 ms. On SQLite
+the product search (a plain `LIKE '%term%'` over 900,000 SKUs) is a table scan and shows as the
+slowest read; see [Search](guides/performance.md#search). See also
 [Load testing your own deployment](compatibility.md#load-testing-your-own-deployment).
 
 ![Terminal output of a seeding run, then a read run and a write run with per-endpoint request counts, req/s, median, p95 and p99](assets/screenshots/loadtest.png)

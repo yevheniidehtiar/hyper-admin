@@ -138,12 +138,6 @@ The measured results, the database comparison at 1.2 million rows
 deployment are in [Compatibility & Performance](compatibility.md#under-load). The database
 comparison runs only on an idle host and measures everything twice.
 
-!!! note "Load-test card in the demo video"
-    The SQLite load-test card in the [demo video](demo.md) was recorded before the SQLite
-    search fix ([#1133](https://github.com/yevheniidehtiar/hyper-admin/pull/1133)), so its
-    search figures are slower than the current code. The card will be re-recorded; the
-    figures in Compatibility & Performance are current.
-
 ## Demo tour and screenshots
 
 The screenshots and the video in these docs are generated from seeded apps in this repository,
