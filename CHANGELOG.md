@@ -329,6 +329,12 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
 - `get_display_name` skips attributes that can't load on a detached row (#773).
 
 ### Documentation
+- **Demo load-test card re-recorded after the SQLite search fix.** The demo video and the
+  load-test screenshot show the current SQLite figures (1.2 million rows, 20 users, 30 s, second
+  of two runs): reads 46 req/s with list and detail at a 9 ms median, search 110 ms median and
+  130 ms p95; writes 112 req/s at a 38 ms median and 110 ms p95. Demo Tour quotes them, "How it is
+  verified" drops its note about the outdated card, and Compatibility & Performance gives the
+  macOS CI Python versions per trigger (pull requests: 3.11 and 3.14).
 - **Reference fixes before 1.0.** The Views reference lists the `ModelAdmin` attributes and the
   ten `AdminOptions` fields it was missing (`enforce_occ`, `palette_search`, `pagination_mode`,
   `count_cache_ttl`, `count_estimate_threshold`, `filter_cache_ttl`, `list_select_related`,
