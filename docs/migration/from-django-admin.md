@@ -40,7 +40,7 @@ Django's side of each comparison follows
 | `list_select_related` | `AdminOptions(list_select_related=[...])` | Relations named in `list_display` are loaded automatically. See [Large Tables & Performance](../guides/performance.md) |
 | `actions` | `@action(label="...", bulk=True)` methods | `from hyperadmin.core.actions import action`. See [Actions](#actions) |
 | `ordering` | No option | Users sort by clicking a column heading |
-| `list_per_page` | No option | |
+| `list_per_page` | No per-model option | Global only: `HyperAdminSettings(items_per_page=...)` (`HYPERADMIN_ITEMS_PER_PAGE`, default 10, at most 100). Users pick 10, 25, 50 or 100 rows below the table |
 
 ### Forms and detail page
 
@@ -432,7 +432,8 @@ HyperAdmin does not have these Django admin features today. Check the
 | `save_model`, `delete_model`, `save_formset`, `response_add` and the other per-admin hooks | No per-admin save or delete hook. Rules that must always run belong in the model layer or the database |
 | A queryset in `get_queryset` (joins, `Q` objects, annotations) | Equality filters on the model's own columns only |
 | Computed columns: a `ModelAdmin` method or a callable in `list_display` | `list_display` reads attributes of the model only. A property on the model can be listed; it cannot be sorted on |
-| `ordering`, `list_per_page`, `list_max_show_all` | No option |
+| `ordering`, `list_max_show_all` | No option |
+| `list_per_page` | No per-model option; the global `items_per_page` setting sets the default page size |
 | `date_hierarchy` drill-down | `DateRangeFilter` only |
 | `StackedInline` versus `TabularInline`, nested inline options | One inline layout |
 | `formfield_overrides`, custom `ModelForm`, `prepopulated_fields` | Forms are generated from the model |

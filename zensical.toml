@@ -16,6 +16,7 @@ nav = [
     { "Tutorial" = "tutorial.md" },
     { "Navigation, Lists & Keyboard" = "guides/navigation.md" },
     { "File Uploads" = "guides/file-uploads.md" },
+    { "List Filters" = "guides/filters.md" },
     { "Existing FastAPI App" = "guides/existing-app.md" },
     { "Bring Your Own Auth" = "guides/external-auth.md" },
     { "OAuth Sign-In" = "guides/oauth-sso.md" },

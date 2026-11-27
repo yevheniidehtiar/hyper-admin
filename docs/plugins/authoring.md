@@ -56,9 +56,16 @@ where a plugin can add to the admin's UI, through `admin.plugins`:
 | `add_template_dir(self, path)` | A template directory, searched after the host's and HyperAdmin's own. |
 | `set_static_dir(self, path)` | One static directory, served at `{prefix}/static/plugins/<name>/`. |
 | `add_permission(self, codename, name=None)` | A permission codename that can be granted to groups. |
+| `set_home_page(self, endpoint)` | The page served at the admin index `{prefix}/`, instead of the built-in welcome page. |
 
 Each method takes the plugin itself as the first argument. Calling one outside your own
 `on_register` raises `PluginError`.
+
+`set_home_page` takes an `async (request) -> Response` endpoint. Only one plugin per admin can set
+it: a second call raises `PluginError`. The index route keeps its name (`admin-dashboard`), and if
+the endpoint raises anything other than an `HTTPException`, the admin logs it and serves the
+welcome page instead. The [reports plugin](https://github.com/yevheniidehtiar/hyper-admin/tree/develop/plugins/hyperadmin-reports)
+uses it for its dashboard.
 
 Here is the audit plugin with a page, a sidebar link, a permission and a setting:
 

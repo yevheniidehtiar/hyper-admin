@@ -39,6 +39,7 @@ admin.mount("/admin")
 | `plugin_settings` | `Mapping[str, Mapping]` | `None` | Keyword-only. Settings for each plugin, by plugin name |
 | `nav_groups` | `Iterable[NavGroup]` | `()` | Keyword-only. Sidebar sections; see [Navigation](../guides/navigation.md) |
 | `rate_limiter` | `RateLimiter` | `None` | Keyword-only. A limiter shared between workers; see [Rate limiting](../guides/performance.md#rate-limiting) |
+| `oauth_backend` | `OAuthBackend` | `None` | Keyword-only. "Sign in with Google / GitHub" on the built-in login page; see [OAuth Sign-In](../guides/oauth-sso.md) |
 
 ## Settings
 

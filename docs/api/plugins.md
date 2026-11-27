@@ -27,7 +27,7 @@ class ReportsPlugin:
 ```
 
 From `on_register` a plugin may call `add_page`, `add_nav_entry`, `add_template_dir`,
-`set_static_dir` and `add_permission`. These are the public registry methods
+`set_static_dir`, `add_permission` and `set_home_page`. These are the public registry methods
 (see [What is public API](../versioning.md#what-is-public-api)); the other methods of
 `PluginRegistry` are used by `Admin` itself. Pass `disabled_plugins=` or set
 `HYPERADMIN_DISABLED_PLUGINS` to skip a plugin, and `plugin_settings=` to configure one.
