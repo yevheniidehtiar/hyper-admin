@@ -7,6 +7,8 @@ scenario of the heartbeat contract documented in ``realtime/ws.py``.
 
 from __future__ import annotations
 
+import asyncio
+from collections.abc import Iterator
 from dataclasses import dataclass
 from typing import Any
 
@@ -33,9 +35,16 @@ class _User:
 
 
 class _Auth:
-    """Resolves the user from the ``?u=<id>`` query param (``0`` -> anonymous)."""
+    """Resolves the user from the ``?u=<id>`` query param (``0`` -> anonymous).
+
+    Records the event loop each socket's handler runs on in ``loops``.
+    """
+
+    def __init__(self) -> None:
+        self.loops: list[asyncio.AbstractEventLoop] = []
 
     async def get_current_user(self, websocket: Any) -> _User | None:
+        self.loops.append(asyncio.get_running_loop())
         uid = int(websocket.query_params.get("u", "1"))
         if uid == 0:
             return None
@@ -45,10 +54,11 @@ class _Auth:
 class _Harness:
     def __init__(self) -> None:
         self.presence = InMemoryPresence()
+        self.auth = _Auth()
         handler = make_ws_handler(
             ConnectionRegistry(),
             RealtimeSettings(),
-            _Auth(),
+            self.auth,
             presence=self.presence,
             pubsub=InMemoryPubSub(),
         )
@@ -64,8 +74,30 @@ def _users(msg: dict[str, Any]) -> list[tuple[str, str, str]]:
 
 
 @pytest.fixture
-def h() -> _Harness:
-    return _Harness()
+def h() -> Iterator[_Harness]:
+    # Entering the client gives every socket one shared portal, so all handlers run on one
+    # event loop. Without it each socket gets its own loop and thread, and a publish from
+    # one socket's loop into another's asyncio queue does not wake it: the roster then waits
+    # for the 15 s heartbeat timer and the zero-byte ping arrives first.
+    harness = _Harness()
+    with harness.client:
+        yield harness
+
+
+def test_sockets_of_one_harness_share_one_event_loop(h: _Harness) -> None:
+    """
+    Scenario: two sockets of the harness run on one event loop
+      Given the harness's shared in-memory presence and PubSub backends
+      When  Ada and Bob connect at the same time
+      Then  both handlers run on the same event loop
+    """
+    # Given the harness's shared in-memory backends (asyncio queues, one loop only)
+    # When Ada and Bob connect at the same time
+    with h.client.websocket_connect("/ws?u=7"), h.client.websocket_connect("/ws?u=8"):
+        pass
+    # Then both handlers ran on one loop, so a publish wakes the other socket's forwarder
+    assert len(h.auth.loops) == 2
+    assert h.auth.loops[0] is h.auth.loops[1]
 
 
 def test_heartbeat_sets_presence_and_broadcasts_roster(h: _Harness) -> None:
