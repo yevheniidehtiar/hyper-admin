@@ -40,6 +40,14 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
   (no hover) they stay tappable on every row, dimmed until current, focused or pinned.
 
 ### Added
+- **Claude Code skills and agents for HyperAdmin users.** The repository now ships, in
+  top-level `skills/` and `agents/` folders and as a Claude Code plugin (`.claude-plugin/`),
+  six skills (`hyperadmin-getting-started`, `hyperadmin-define-ui`, `hyperadmin-extend-ui`,
+  `hyperadmin-new-plugin`, `hyperadmin-migrate-from-django`, `hyperadmin-migrate-from-flask`)
+  and two agents (`django-migration-agent`, `flask-migration-agent`) that inventory a Django or
+  Flask-Admin project, report the mapping and the gaps, and generate the HyperAdmin app after
+  approval. Install steps: [Claude Code Skills](docs/guides/ai-skills.md). A unit test checks
+  their frontmatter, code blocks and `hyperadmin` imports.
 - **Database comparison load test** (#989). `scripts/loadtest_scale.py` seeds 1.2 million rows
   into SQLite, PostgreSQL 17 (a throwaway Docker container) and PostgreSQL 17 with a `pg_trgm`
   GIN index on the searched column, then measures reads (list, detail, search) and writes

@@ -1,0 +1,15 @@
+{
+  "name": "hyperadmin",
+  "version": "0.1.0",
+  "description": "Skills and agents for building on HyperAdmin: getting started, declarative UI options, UI extension, plugins, and migration from Django admin and Flask-Admin.",
+  "author": {
+    "name": "HyperAdmin"
+  },
+  "homepage": "https://yevheniidehtiar.github.io/hyper-admin",
+  "repository": "https://github.com/yevheniidehtiar/hyper-admin",
+  "license": "MIT",
+  "keywords": ["hyperadmin", "fastapi", "admin", "htmx", "sqlmodel", "migration"],
+  "skills": "./skills/",
+  "agents": ["./agents/django-migration-agent.md", "./agents/flask-migration-agent.md"],
+  "mcpServers": {}
+}
