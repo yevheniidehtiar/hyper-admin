@@ -24,7 +24,6 @@ activated virtual environment.
 |--------|---------|
 | `develop` | Integration branch. Pull requests from contributors target it. |
 | `master` | Released code. Updated only by the maintainer at release time. |
-| `epic/<slug>` | One branch per epic, used by the project's automation. Story PRs merge into it, and the epic lands on `develop` as a single reviewed PR. Do not target these branches unless a maintainer asks you to. |
 
 ## Workflow
 

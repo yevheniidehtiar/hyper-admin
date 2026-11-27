@@ -28,13 +28,12 @@ If `CLAUDE_GH_TOKEN` is not set, stop and tell the user — do not create the PR
 
 | PR type | Branch from | PR base | Merged by |
 |---------|-------------|---------|-----------|
-| Story of an epic | `origin/epic/<slug>` | `epic/<slug>` | autopilot tick: `gh pr merge --rebase --delete-branch` once all checks are green and the PR has `ai-approved` |
-| Epic integration | `epic/<slug>` itself | `develop` | owner approves once; `gh pr merge --auto --rebase` is already enabled |
-| Hotfix, `fix/develop-<run-id>`, standalone story, planning (`.meta` only), dependencies | `origin/develop` | `develop` | owner approves |
+| Feature, fix, docs, planning (`.meta` only), dependencies | `origin/develop` | `develop` | owner approves |
 | Release | `develop` | `master` | owner only |
 
-- Story PR bodies carry a `Story: <story-id>` line and a `## Assumptions` section.
 - Merges are rebase-only. Squash and merge commits are not available.
+- Dependency, ignore-file, lint/coverage config and CI changes ship as their own small PR.
+- Never hand-merge `uv.lock`: take `origin/develop`'s lock, rebase, then run `uv lock` and commit the result.
 - Never open a PR against `master` and never push to the public mirror from an agent session.
 
 ### Commit message format

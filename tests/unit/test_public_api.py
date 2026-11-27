@@ -46,7 +46,7 @@ SNAPSHOT_PATH = Path(__file__).with_name("public_api_snapshot.txt")
 UPDATE_ENV = "HYPERADMIN_UPDATE_API_SNAPSHOT"
 
 #: Docs that record designs, plans or history, not the supported API (docs/versioning.md).
-NON_REFERENCE_DOCS = ("specs", "design", "agentic-workflow", "changelog.md", "roadmap.md")
+NON_REFERENCE_DOCS = ("specs", "design", "changelog.md", "roadmap.md")
 #: Packages documented as *not* public even though the docs mention them.
 NOT_PUBLIC_PREFIXES = ("hyperadmin.loadtest",)
 #: The commands of the ``hyperadmin`` CLI that are public (docs/versioning.md, "Command line").

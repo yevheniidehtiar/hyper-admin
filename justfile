@@ -65,106 +65,6 @@ build:
 # ── Docker ────────────────────────────────────────────────────
 
 
-# ── Claude Code ───────────────────────────────────────────────
-
-_compose := "docker compose -f .claude/container/docker-compose.yml"
-
-# Stage host Claude memory into build context (snapshot for container use)
-_stage-memory:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    HOST_MEM="$HOME/.claude/projects/$(pwd | tr '/.' '-')/memory"
-    STAGE=".claude/container/host-memory"
-    # Clean previous snapshot but keep .dockerkeep (ensures COPY works on fresh checkouts)
-    find "$STAGE" -mindepth 1 ! -name '.dockerkeep' -delete 2>/dev/null || true
-    mkdir -p "$STAGE"
-    if [ -d "$HOST_MEM" ] && [ "$(ls -A "$HOST_MEM" 2>/dev/null)" ]; then
-        cp "$HOST_MEM"/* "$STAGE/" 2>/dev/null || true
-        echo "[memory] Staged $(find "$STAGE" -name '*.md' | wc -l | tr -d ' ') files from host memory"
-    else
-        echo "[memory] No host memory found — staging empty directory"
-    fi
-
-# Build the Claude Code remote container image
-cc-build: _stage-memory
-    {{ _compose }} build
-
-# Start Claude Code remote-control server (requires prior `just cc-login`)
-cc-up:
-    {{ _compose }} up -d
-
-# Build, rotate deploy key, and start in one step
-cc-start: cc-build cc-rotate-key cc-up
-
-# One-time OAuth login for Max subscription
-cc-login:
-    {{ _compose }} run --rm claude claude login
-
-# One-time GitHub CLI login inside the container
-cc-gh-auth:
-    {{ _compose }} run --rm claude gh auth login
-
-# Open an interactive shell inside the container
-cc-shell:
-    {{ _compose }} run --rm claude bash
-
-# Interactive YOLO session in the container (full TUI, no task arg needed)
-cc-local:
-    {{ _compose }} run --rm claude claude --dangerously-skip-permissions
-
-# Run a headless YOLO task: just cc-run "fix the lint errors"
-cc-run task:
-    {{ _compose }} run --rm claude claude --dangerously-skip-permissions -p "{{ task }}"
-
-# Rotate SSH deploy key for the container (generates new key, registers with GitHub)
-cc-rotate-key repo="yevheniidehtiar/hyper-admin":
-    #!/usr/bin/env bash
-    set -euo pipefail
-    SSH_DIR=".claude/container/ssh"
-    KEY_FILE="${SSH_DIR}/id_ed25519"
-    TITLE="claude-sandbox-$(date +%Y%m%d)"
-
-    mkdir -p "$SSH_DIR"
-
-    # Remove old deploy key from GitHub if one exists
-    if [ -f "${KEY_FILE}.pub" ]; then
-        OLD_FP=$(ssh-keygen -lf "${KEY_FILE}.pub" | awk '{print $2}')
-        OLD_ID=$(gh repo deploy-key list --repo "{{ repo }}" \
-            | grep "$OLD_FP" | awk '{print $1}' || true)
-        if [ -n "$OLD_ID" ]; then
-            gh repo deploy-key delete "$OLD_ID" --repo "{{ repo }}" --yes
-            echo "Removed old deploy key (ID: $OLD_ID)"
-        fi
-    fi
-
-    # Generate new key
-    rm -f "$KEY_FILE" "${KEY_FILE}.pub"
-    ssh-keygen -t ed25519 -N "" -C "$TITLE" -f "$KEY_FILE" -q
-    chmod 600 "$KEY_FILE"
-    chmod 644 "${KEY_FILE}.pub"
-
-    # Write ssh config so git uses this key for github.com
-    cat > "${SSH_DIR}/config" <<CFG
-    Host github.com
-        IdentityFile /root/.ssh/id_ed25519
-        UserKnownHostsFile /root/.ssh/known_hosts
-        StrictHostKeyChecking accept-new
-    CFG
-    chmod 644 "${SSH_DIR}/config"
-
-    # Pre-seed known_hosts so the read-only mount works
-    ssh-keyscan -t ed25519 github.com > "${SSH_DIR}/known_hosts" 2>/dev/null
-    chmod 644 "${SSH_DIR}/known_hosts"
-
-    # Register as read-write deploy key
-    gh repo deploy-key add "${KEY_FILE}.pub" \
-        --repo "{{ repo }}" --title "$TITLE" --allow-write
-    echo "Deploy key rotated: $TITLE"
-
-# Run container security tests
-cc-test:
-    UV_PROJECT_ENVIRONMENT=.venv uv run pytest .claude/container/tests/test_container_security.py -v
-
 # ── Docs ──────────────────────────────────────────────────────
 
 # Serve documentation locally (Zensical)
@@ -198,7 +98,7 @@ release:
 
 # ── Infrastructure ────────────────────────────────────────────
 
-# Configure GitHub labels for the 8-agent workflow
+# Create the GitHub labels the project uses (size, epic, community, lifecycle)
 setup-github repo="":
     bash scripts/setup-github.sh {{ repo }}
 
@@ -206,32 +106,6 @@ setup-github repo="":
 # Harden repository security and branch rules
 secure repo="":
     bash scripts/secure-repo.sh {{ repo }}
-
-# ── Autopilot ─────────────────────────────────────────────────
-
-# Run one autopilot tick now (see ops/autopilot/README.md)
-autopilot-tick:
-    uv run poe autopilot:tick
-
-# Print what an autopilot tick would do; changes nothing
-autopilot-dry-run:
-    uv run poe autopilot:dry-run
-
-# Show autopilot state and the launchd agent
-autopilot-status:
-    uv run poe autopilot:status
-
-# Show the tail of the autopilot tick log
-autopilot-logs:
-    uv run poe autopilot:logs
-
-# Load the autopilot launchd agent (tick every 15 minutes)
-autopilot-install:
-    uv run poe autopilot:install
-
-# Unload the autopilot launchd agent
-autopilot-uninstall:
-    uv run poe autopilot:uninstall
 
 # -- Local dev -------------────────────────────────────────────
 

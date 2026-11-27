@@ -74,8 +74,7 @@ auth — at a mount point in your existing app. No second schema to maintain, no
 build step. The models are the single source of truth; the UI can't drift from them
 because it's derived from them.
 
-It's built model-first (domain → logic → views → UI) and developed with an AI-assisted
-[agentic workflow](https://yevheniidehtiar.github.io/hyper-admin/agentic-workflow/).
+It's built model-first (domain → logic → views → UI).
 
 ## Features
 
