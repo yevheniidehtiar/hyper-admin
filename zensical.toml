@@ -11,6 +11,7 @@ repo_name = "yevheniidehtiar/hyper-admin"
 nav = [
   { "Home" = "index.md" },
   { "Live Demo" = "demo.md" },
+  { "How it is verified" = "how-it-works.md" },
   { "Guide" = [
     { "Getting Started" = "getting-started.md" },
     { "Tutorial" = "tutorial.md" },

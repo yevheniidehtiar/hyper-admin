@@ -344,6 +344,11 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
 - New **migration guides** from Django admin, SQLAdmin and Flask-Admin (`docs/migration/`,
   RFC #274): concept mapping tables, a blog admin ported step by step, the auth and permission
   mapping, and what has no equivalent yet.
+- New **How it is verified** page (`docs/how-it-works.md`): the unit, plugin and E2E suites
+  with their counts, the CI matrix (Python versions with highest and lowest-direct dependency
+  resolution), the 100% changed-line coverage gate, the visual-regression baselines, the public
+  API snapshot, the translation catalog checks, the load tests and the generated demo tour, each
+  linked to the code that runs it.
 
 ## [0.5.0a1] - not yet published
 
