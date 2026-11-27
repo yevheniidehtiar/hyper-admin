@@ -1,31 +1,11 @@
-# Project Constitution
+# HyperAdmin — Project Guide
 
 For architectural principles, naming conventions, module boundaries, and dependency rules,
-see [`CONSTITUTION.md`](CONSTITUTION.md). All planning and code generation must comply with it.
+see [`CONSTITUTION.md`](CONSTITUTION.md). All code must comply with it. Build bottom-up:
+domain models → business logic → API/views → UI.
 
-The Software Architect agent role and its review checklist are defined in
-[`.claude/agents/software-architect.md`](.claude/agents/software-architect.md).
-
----
-
-## Development Methodologies
-
-All planning, issue creation, and implementation in this project follows three joint methodologies:
-
-### BDD — Behavior-Driven Development (`.claude/rules/bdd-conventions.md`)
-- Every `feat` or `test(e2e)` issue **must** contain a `## Scenarios` section with Given/When/Then scenarios before any tasks are created.
-- E2E tests (Playwright) map 1:1 to scenarios. Each test function is named after its scenario.
-- Inline `# Given / # When / # Then` comments are mandatory in E2E tests.
-- Size estimate derived from scenario count: 1–2 → S, 3–5 → M, 6+ → L.
-
-### SDD — Specification-Driven Development (`.claude/rules/sdd-conventions.md`)
-- Any `size:L` issue or epic touching ≥ 2 top-level modules **must** have a Design Doc at `docs/specs/{slug}.md` before implementation starts.
-- SDD template: `docs/specs/TEMPLATE.md`.
-- First sub-task of any SDD-required epic is `review(spec): approve SDD` — the **spec gate**, passed by the architect agent (the owner can veto on the epic PR).
-- All implementation sub-tasks are `blocked_by` the spec review task.
-
-### Bottom-Up Architecture (`.claude/rules/planning-playbook.md`)
-- Domain models → Business logic → API/Views → UI (never reversed).
+Design documents for larger features live in `docs/specs/` (template: `docs/specs/TEMPLATE.md`);
+they are developer-only and not published to the docs site.
 
 ---
 
@@ -72,69 +52,10 @@ This command:
 ## Branch and Commit Conventions
 
 See [`.claude/rules/git-workflow.md`](.claude/rules/git-workflow.md) for commit message format,
-commit authorship, and PR creation conventions.
-
----
-
-# Hook-First Planning Instructions
-
-## Hook-First Rule
-
-Before answering any request that may lead to planning, code generation,
-refactoring, architecture, or tests, you MUST first use the hook-injected
-context tagged `[Coding Rules from Rippletide]` when it is present.
-
-This requirement applies especially to plan mode requests such as:
-
-- `/plan ...`
-- requests that ask for a step-by-step implementation plan
-- requests that ask what should be built before writing code
-
-## Required Behavior Before Plan Mode
-
-When the user enters a plan-style request, the assistant must treat the
-hook result as input that is processed before producing the plan.
-
-If hook rules are present:
-
-1. Begin the response by explicitly naming the rules being applied.
-2. Make the plan consistent with those rules.
-3. Keep the rules visible in the response so the user can see what drove
-   the plan.
-
-Use a direct format such as:
-
-`Applying rules: Rule A, Rule B, Rule C`
-
-If the hook returns no rules, say so explicitly before continuing:
-
-`Applying rules: none returned by hook`
-
-## Required Behavior Before Code Generation
-
-Before generating code, examples, patches, refactors, or tests:
-
-1. Read the hook-injected rules first.
-2. State which rules are being applied.
-3. Ensure the implementation follows those rules.
-4. If relevant, explain which rule changed the implementation or plan.
-
-## Query Source
-
-The hook query should use the user's current request text, not a fixed
-prompt. For example, if the user submits:
-
-`/plan write a hello world`
-
-then the hook query should contain that exact text as the request being
-evaluated.
-
-## Enforcement
-
-Do not produce planning or code output silently.
-
-Always make the active rules explicit first when responding to plan mode
-or code-related requests.
+commit authorship, and PR creation conventions. Code style lives in
+[`.claude/rules/code-style.md`](.claude/rules/code-style.md), testing rules (TDD, 100% patch
+coverage) in [`.claude/rules/testing.md`](.claude/rules/testing.md), and the Given/When/Then
+scenario format for tests in [`.claude/rules/bdd-conventions.md`](.claude/rules/bdd-conventions.md).
 
 ---
 
@@ -219,32 +140,11 @@ When adding new interactive or assertable elements to templates, add a `data-tes
 
 ---
 
-## Agentic Workflow
-
-Delivery runs unattended from a local autopilot (`ops/autopilot/`, launchd label
-`com.hyperadmin.autopilot`). Each tick does deterministic `gh`/`git` checks and starts headless
-jobs only when there is work. See `docs/agentic-workflow/` and `.claude/project-config.md`:
-
-1. **Implementer** (`implement-feature` skill) → one story per job, PR to `epic/<slug>` (Opus)
-2. **Code Reviewer** → review against CONSTITUTION.md; verdict label `ai-approved` / `ai-changes-requested` (Sonnet)
-3. **Software Architect** → approves SDDs on the epic branch, structural review (Opus)
-4. **Project Manager** → daily owner digest (Haiku when run as the `digest` job)
-5. **OSS Triage Auditor** → detect AI-slop, enforce labels (Sonnet, optional)
-
-Branch model: one `epic/<slug>` branch per epic. Story PRs merge into it without a human; the
-owner approves one PR per epic (`epic/<slug>` → `develop`). Agents do not stop to ask: they follow
-the decision ladder in the `implement-feature` skill and escalate only its hard stops with the
-`needs-human` label.
-
-## MCP Servers in Use
-
-See `.mcp.json` for active MCP servers. Default model: `claude-sonnet-4-6`.
-
 ## Project Management: GitPM
 
 All issue, epic, and milestone state is managed via **GitPM** (`.meta/` files).
-Agents read/write `.meta/` directly instead of using `gh issue` or GitHub Projects API.
-PRs are still managed via `gh pr`. See `.claude/project-config.md` for full reference.
+Read and write `.meta/` directly instead of using `gh issue` or the GitHub Projects API.
+PRs are still managed via `gh pr`.
 
 ```bash
 ./scripts/gitpm.sh validate                        # Validate .meta/ tree (run before committing .meta/)
@@ -261,11 +161,12 @@ GitHub are overwritten the next time that entity changes.
 
 | Path | Purpose |
 |------|---------|
+| `CONSTITUTION.md` | Architecture, module boundaries, naming and dependency rules |
 | `.meta/` | Git-native project state (stories, epics, milestones) |
 | `scripts/gitpm.sh` | GitPM CLI wrapper |
 | `pyproject.toml` (`[tool.poe.tasks]`) | All dev tasks (`poe <task>`) |
-| `ops/autopilot/` | Local autopilot: tick script, job prompts, launchd template |
-| `scripts/` | Automation helpers |
-| `.claude/commands/` | Claude slash commands |
+| `scripts/` | Automation helpers (load tests, demo media, release smoke test) |
+| `.claude/commands/` | Claude slash commands (lint, test, refactor, optimize, scaffold, docs-maintain, bootstrap, release, wt) |
+| `.claude/rules/` | Code style, testing, BDD scenario format, git workflow |
 | `docs/` | Zensical documentation source (config: `zensical.toml`) |
-| `docs/agentic-workflow/` | OSS agentic workflow specs |
+| `docs/specs/` | Developer-only design documents |

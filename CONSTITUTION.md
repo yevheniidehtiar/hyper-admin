@@ -123,8 +123,7 @@ These rules prevent premature expansion and future refactoring pain:
 
 Parallel PRs must merge without conflicts. Features are additive: they add files and register through an
 extension point instead of appending to shared lists; hotspot files have one owner per wave; dependency
-changes ship in their own PR. The full rule set is in
-[`.claude/rules/conflict-avoidance.md`](.claude/rules/conflict-avoidance.md).
+changes ship in their own PR. Merges are rebase-only, so do not stack PRs on each other.
 
 ---
 
@@ -138,5 +137,5 @@ A constitution violation is any change that:
 4. Adds business logic (data transformation, validation rules) directly inside a view handler.
 5. Adds a new ORM integration by modifying `core/` rather than adding to `adapters/`.
 
-The Software Architect agent (defined in `AGENTS.md`) is responsible for detecting these on
-structural PRs.
+Reviewers check structural PRs (new or moved modules, public API changes, new dependencies) for
+these.

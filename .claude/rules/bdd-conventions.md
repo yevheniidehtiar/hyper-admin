@@ -1,7 +1,7 @@
 # BDD (Behavior-Driven Development) Conventions
 
-All features in HyperAdmin are specified, planned, and tested using Behavior-Driven Development.
-BDD scenarios are the contract between planning, implementation, and QA.
+Features in HyperAdmin are specified and tested with Given/When/Then scenarios.
+The scenarios are the contract between the issue, the implementation and the tests.
 
 ---
 
@@ -12,7 +12,6 @@ BDD scenarios are **required** for:
 - Every GitHub issue of type `feat` or `test(e2e)`
 - Every `fix` issue (the scenario describes the expected behavior that was broken)
 - Every `perf` issue that changes observable behavior (e.g. response time thresholds, pagination limits)
-- Every epic sub-issue that describes observable user behavior
 - Every E2E Playwright test (`tests/e2e/`)
 
 BDD scenarios are **optional** (but encouraged) for:
@@ -112,20 +111,6 @@ async def test_authenticate_returns_none_for_wrong_password() -> None:
 
 ---
 
-## Planning Agent Rules
-
-When the Roadmap Planning Agent creates issues:
-
-1. Before writing acceptance criteria, draft the BDD scenarios first.
-2. Each scenario becomes one checkbox in `## Acceptance criteria`.
-3. The scenario set must be complete: happy path + at least one failure path per feature.
-4. Size estimates are derived from scenario count:
-   - 1–2 scenarios → `size:S`
-   - 3–5 scenarios → `size:M`
-   - 6+ scenarios → `size:L` (consider splitting the epic)
-
----
-
 ## BDD and the TDD Loop
 
 BDD scenarios define **what** to test. TDD defines **when**:
@@ -137,10 +122,6 @@ BDD scenarios define **what** to test. TDD defines **when**:
 4. Refactor                                  ← TDD refactor
 5. Confirm all scenarios checked off in the issue
 ```
-
-The sub-task split mandated by the planning playbook maps exactly:
-- Sub-task 1 (test): translate scenarios to failing tests
-- Sub-task 2 (impl): make the tests pass
 
 ---
 

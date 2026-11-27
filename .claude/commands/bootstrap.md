@@ -110,10 +110,9 @@ Check which of these are set. Print their presence (not their values):
 |----------|---------|-------------|
 | `CLAUDE_GH_TOKEN` | GitHub bot token for PR creation | Creating PRs as the bot account |
 | `GITHUB_TOKEN` | General GitHub API access | `gh` CLI, issue/label operations |
-| `ANTHROPIC_API_KEY` | Claude API access | Any agent that calls Claude directly |
 
 ```bash
-for var in CLAUDE_GH_TOKEN GITHUB_TOKEN ANTHROPIC_API_KEY; do
+for var in CLAUDE_GH_TOKEN GITHUB_TOKEN; do
   if [ -n "${!var}" ]; then echo "$var: SET"; else echo "$var: MISSING"; fi
 done
 ```
@@ -123,7 +122,6 @@ For any missing variable that is needed for the planned work, instruct the user 
 ```bash
 export CLAUDE_GH_TOKEN="ghp_..."     # add to ~/.zshrc / ~/.bashrc for persistence
 export GITHUB_TOKEN="ghp_..."
-export ANTHROPIC_API_KEY="sk-ant-..."
 ```
 
 ---

@@ -11,7 +11,7 @@ from hyperadmin.core.settings import HyperAdminSettings
 
 DOCS = Path(__file__).resolve().parents[2] / "docs"
 #: Developer-only folders; not published, so a row there documents nothing.
-_UNPUBLISHED = ("specs", "design", "agentic-workflow")
+_UNPUBLISHED = ("specs", "design")
 #: A table row naming a field: ``| `items_per_page` |`` or ``| `HYPERADMIN_ITEMS_PER_PAGE` |``.
 _ROW = re.compile(r"^\|\s*`(?:HYPERADMIN_)?([A-Za-z0-9_]+)`", re.MULTILINE)
 #: Read-only properties derived from the fields; not settings, no environment variable.

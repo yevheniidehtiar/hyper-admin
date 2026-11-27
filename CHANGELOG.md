@@ -275,6 +275,13 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
   worked; calling it now emits a `DeprecationWarning`. Use `hyperadmin.pdf_stream_panel`
   (st-v100-freeze-03).
 
+### Removed
+- **Agentic delivery tooling.** The local autopilot (`ops/autopilot/` and its `autopilot:*` poe
+  tasks and `just` recipes), the AI reviewer, architect, project-manager and triage agent
+  definitions, the planning workflows and their slash commands, the Claude Code container, the
+  triage audit script (`triage:audit` task) and the "Agentic Workflow" section of the docs site
+  are gone. `.meta/` and GitPM stay. No library change.
+
 ### Fixed
 - Built-in auth now creates the permissions custom actions and detail panels check. At startup
   `PermissionSyncService` adds one `action_<name>_<model>` codename per `@action` method and

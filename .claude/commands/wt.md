@@ -3,17 +3,16 @@ description: "Start work in a new isolated worktree branched from develop (or a 
 argument-hint: "<branch-name> [base-branch]"
 ---
 
-Start a new isolated worktree session for feature work. This ensures parallel agents
-don't collide and keeps the main working tree clean.
+Start a new isolated worktree session for feature work. This keeps parallel sessions from
+colliding and keeps the main working tree clean.
 
 ## Arguments
 
 `$ARGUMENTS`
 
 - First token: the branch name (`BRANCH`). If it is missing, generate a random name
-  (e.g., `work/agent-<4-random-hex-chars>`).
-- Optional second token: the base branch (`BASE`). Default: `develop`. Story work for an epic
-  passes `epic/<slug>`.
+  (e.g., `work/wt-<4-random-hex-chars>`).
+- Optional second token: the base branch (`BASE`). Default: `develop`.
 
 ## Steps
 
