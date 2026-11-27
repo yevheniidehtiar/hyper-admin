@@ -414,6 +414,41 @@ hyperadmin.core.registry.site :: instance of SiteRegistry
 hyperadmin.core.schema_for :: def (model: type) -> type[BaseModel]
 hyperadmin.core.settings.HyperAdminSettings :: alias of hyperadmin.HyperAdminSettings
 hyperadmin.db.build_engine :: def (url: str | URL, engine_kwargs: Mapping[str, Any] | None = None) -> AsyncEngine
+hyperadmin.filters.BooleanFilter :: class(FilterDef) (*, field: str, label: str | None = None) -> None
+hyperadmin.filters.BooleanFilter.compile :: def (self, parsed: dict[str, Any], binding: FilterBinding | None = None) -> list[FilterCondition]
+hyperadmin.filters.BooleanFilter.context :: def (self, ctx: FilterRenderContext) -> dict[str, Any]
+hyperadmin.filters.BooleanFilter.describe :: def (self, parsed: dict[str, Any]) -> str | None
+hyperadmin.filters.BooleanFilter.error :: def (self, qs: Any) -> str | None
+hyperadmin.filters.BooleanFilter.field :: field: str
+hyperadmin.filters.BooleanFilter.label :: field: str | None = None
+hyperadmin.filters.BooleanFilter.parse :: def (self, qs: Any) -> dict[str, Any]
+hyperadmin.filters.BooleanFilter.query_keys :: property -> tuple[str, ...]
+hyperadmin.filters.BooleanFilter.render :: def (self, ctx: FilterRenderContext) -> str
+hyperadmin.filters.BooleanFilter.slug :: property -> str
+hyperadmin.filters.BooleanFilter.template :: attr: ClassVar[str] = 'components/filters/boolean.html'
+hyperadmin.filters.BooleanFilter.title :: property -> str
+hyperadmin.filters.BooleanFilter.typed_conditions :: def (self, binding: FilterBinding | None, params: Mapping[str, str | Sequence[str]]) -> list[FilterCondition]
+hyperadmin.filters.BooleanFilter.value_type :: attr: ClassVar[Any]
+hyperadmin.filters.CurrentPeriodDefault :: class(FilterDef) (*, field: str, label: str | None = None, period: Period = 'month') -> None
+hyperadmin.filters.CurrentPeriodDefault.applies :: def (self, qs: Any) -> bool
+hyperadmin.filters.CurrentPeriodDefault.compile :: def (self, parsed: dict[str, Any], binding: FilterBinding | None = None) -> list[FilterCondition]
+hyperadmin.filters.CurrentPeriodDefault.context :: def (self, ctx: FilterRenderContext) -> dict[str, Any]
+hyperadmin.filters.CurrentPeriodDefault.default_bounds :: def (self, binding: FilterBinding | None = None) -> tuple[date, date]
+hyperadmin.filters.CurrentPeriodDefault.default_params :: def (self, binding: FilterBinding | None = None) -> dict[str, str]
+hyperadmin.filters.CurrentPeriodDefault.describe :: def (self, parsed: dict[str, Any]) -> str | None
+hyperadmin.filters.CurrentPeriodDefault.error :: def (self, qs: Any) -> str | None
+hyperadmin.filters.CurrentPeriodDefault.field :: field: str
+hyperadmin.filters.CurrentPeriodDefault.label :: field: str | None = None
+hyperadmin.filters.CurrentPeriodDefault.parse :: def (self, qs: Any) -> dict[str, Any]
+hyperadmin.filters.CurrentPeriodDefault.period :: field: Period = 'month'
+hyperadmin.filters.CurrentPeriodDefault.query_keys :: property -> tuple[str, ...]
+hyperadmin.filters.CurrentPeriodDefault.redirect_query :: def (self, qs: Any, binding: FilterBinding | None = None) -> str | None
+hyperadmin.filters.CurrentPeriodDefault.render :: def (self, ctx: FilterRenderContext) -> str
+hyperadmin.filters.CurrentPeriodDefault.slug :: property -> str
+hyperadmin.filters.CurrentPeriodDefault.template :: attr: ClassVar[str] = 'components/filters/current_period.html'
+hyperadmin.filters.CurrentPeriodDefault.title :: property -> str
+hyperadmin.filters.CurrentPeriodDefault.typed_conditions :: def (self, binding: FilterBinding | None, params: Mapping[str, str | Sequence[str]]) -> list[FilterCondition]
+hyperadmin.filters.CurrentPeriodDefault.value_type :: attr: ClassVar[Any]
 hyperadmin.filters.DateRangeFilter :: class(FilterDef) (*, field: str, label: str | None = None, presets: tuple[str, ...] = ('today', 'this_week', 'this_month', 'last_month', 'this_quarter')) -> None
 hyperadmin.filters.DateRangeFilter.bounds :: def (self, parsed: dict[str, Any], binding: FilterBinding | None = None) -> tuple[date | None, date | None]
 hyperadmin.filters.DateRangeFilter.compile :: def (self, parsed: dict[str, Any], binding: FilterBinding | None = None) -> list[FilterCondition]
@@ -431,6 +466,14 @@ hyperadmin.filters.DateRangeFilter.template :: attr: ClassVar[str] = 'components
 hyperadmin.filters.DateRangeFilter.title :: property -> str
 hyperadmin.filters.DateRangeFilter.typed_conditions :: def (self, binding: FilterBinding | None, params: Mapping[str, str | Sequence[str]]) -> list[FilterCondition]
 hyperadmin.filters.DateRangeFilter.value_type :: attr: ClassVar[Any]
+hyperadmin.filters.FilterBinding :: class (*, model: Any = None, tz: tzinfo = datetime.timezone.utc, today: date | None = None, datetime_kind: DateTimeKindResolver | None = None, user: Any = None, user_key: Any = None) -> None
+hyperadmin.filters.FilterBinding.datetime_kind :: field: DateTimeKindResolver | None = None
+hyperadmin.filters.FilterBinding.model :: field: Any = None
+hyperadmin.filters.FilterBinding.today :: field: date | None = None
+hyperadmin.filters.FilterBinding.today_date :: property -> date
+hyperadmin.filters.FilterBinding.tz :: field: tzinfo = datetime.timezone.utc
+hyperadmin.filters.FilterBinding.user :: field: Any = None
+hyperadmin.filters.FilterBinding.user_key :: field: Any = None
 hyperadmin.filters.FilterDef :: class(ABC) (*, field: str, label: str | None = None) -> None
 hyperadmin.filters.FilterDef.compile :: def (self, parsed: dict[str, Any], binding: FilterBinding | None = None) -> list[FilterCondition]
 hyperadmin.filters.FilterDef.context :: def (self, ctx: FilterRenderContext) -> dict[str, Any]
@@ -446,6 +489,56 @@ hyperadmin.filters.FilterDef.template :: attr: ClassVar[str]
 hyperadmin.filters.FilterDef.title :: property -> str
 hyperadmin.filters.FilterDef.typed_conditions :: def (self, binding: FilterBinding | None, params: Mapping[str, str | Sequence[str]]) -> list[FilterCondition]
 hyperadmin.filters.FilterDef.value_type :: attr: ClassVar[Any]
+hyperadmin.filters.IsOwnerFilter :: class(FilterDef) (*, label: str | None = 'Mine only', owner_fields: tuple[str, ...] | list[str] | str, help_text: str | None = None) -> None
+hyperadmin.filters.IsOwnerFilter.compile :: def (self, parsed: dict[str, Any], binding: FilterBinding | None = None) -> list[FilterCondition]
+hyperadmin.filters.IsOwnerFilter.context :: def (self, ctx: FilterRenderContext) -> dict[str, Any]
+hyperadmin.filters.IsOwnerFilter.describe :: def (self, parsed: dict[str, Any]) -> str | None
+hyperadmin.filters.IsOwnerFilter.error :: def (self, qs: Any) -> str | None
+hyperadmin.filters.IsOwnerFilter.field :: field: str = ''
+hyperadmin.filters.IsOwnerFilter.help_text :: field: str | None = None
+hyperadmin.filters.IsOwnerFilter.label :: field: str | None = 'Mine only'
+hyperadmin.filters.IsOwnerFilter.owner_fields :: field: tuple[str, ...] | list[str] | str
+hyperadmin.filters.IsOwnerFilter.parse :: def (self, qs: Any) -> dict[str, Any]
+hyperadmin.filters.IsOwnerFilter.query_keys :: property -> tuple[str, ...]
+hyperadmin.filters.IsOwnerFilter.render :: def (self, ctx: FilterRenderContext) -> str
+hyperadmin.filters.IsOwnerFilter.slug :: property -> str
+hyperadmin.filters.IsOwnerFilter.template :: attr: ClassVar[str] = 'components/filters/is_owner.html'
+hyperadmin.filters.IsOwnerFilter.title :: property -> str
+hyperadmin.filters.IsOwnerFilter.typed_conditions :: def (self, binding: FilterBinding | None, params: Mapping[str, str | Sequence[str]]) -> list[FilterCondition]
+hyperadmin.filters.IsOwnerFilter.value_type :: attr: ClassVar[Any]
+hyperadmin.filters.MultiChoiceFilter :: class(FilterDef) (*, field: str, label: str | None = None, choices: type[Enum] | Sequence[tuple[str, str]] | None = None) -> None
+hyperadmin.filters.MultiChoiceFilter.choices :: field: type[Enum] | Sequence[tuple[str, str]] | None = None
+hyperadmin.filters.MultiChoiceFilter.compile :: def (self, parsed: dict[str, Any], binding: FilterBinding | None = None) -> list[FilterCondition]
+hyperadmin.filters.MultiChoiceFilter.context :: def (self, ctx: FilterRenderContext) -> dict[str, Any]
+hyperadmin.filters.MultiChoiceFilter.describe :: def (self, parsed: dict[str, Any]) -> str | None
+hyperadmin.filters.MultiChoiceFilter.error :: def (self, qs: Any) -> str | None
+hyperadmin.filters.MultiChoiceFilter.field :: field: str
+hyperadmin.filters.MultiChoiceFilter.label :: field: str | None = None
+hyperadmin.filters.MultiChoiceFilter.options :: property -> list[tuple[str, str]]
+hyperadmin.filters.MultiChoiceFilter.parse :: def (self, qs: Any) -> dict[str, Any]
+hyperadmin.filters.MultiChoiceFilter.query_keys :: property -> tuple[str, ...]
+hyperadmin.filters.MultiChoiceFilter.render :: def (self, ctx: FilterRenderContext) -> str
+hyperadmin.filters.MultiChoiceFilter.slug :: property -> str
+hyperadmin.filters.MultiChoiceFilter.template :: attr: ClassVar[str] = 'components/filters/multi_choice.html'
+hyperadmin.filters.MultiChoiceFilter.title :: property -> str
+hyperadmin.filters.MultiChoiceFilter.typed_conditions :: def (self, binding: FilterBinding | None, params: Mapping[str, str | Sequence[str]]) -> list[FilterCondition]
+hyperadmin.filters.MultiChoiceFilter.value_type :: attr: ClassVar[Any]
+hyperadmin.filters.MultiFKFilter :: class(FilterDef) (*, field: str, label: str | None = None, searchable: bool = True) -> None
+hyperadmin.filters.MultiFKFilter.compile :: def (self, parsed: dict[str, Any], binding: FilterBinding | None = None) -> list[FilterCondition]
+hyperadmin.filters.MultiFKFilter.context :: def (self, ctx: FilterRenderContext) -> dict[str, Any]
+hyperadmin.filters.MultiFKFilter.describe :: def (self, parsed: dict[str, Any]) -> str | None
+hyperadmin.filters.MultiFKFilter.error :: def (self, qs: Any) -> str | None
+hyperadmin.filters.MultiFKFilter.field :: field: str
+hyperadmin.filters.MultiFKFilter.label :: field: str | None = None
+hyperadmin.filters.MultiFKFilter.parse :: def (self, qs: Any) -> dict[str, Any]
+hyperadmin.filters.MultiFKFilter.query_keys :: property -> tuple[str, ...]
+hyperadmin.filters.MultiFKFilter.render :: def (self, ctx: FilterRenderContext) -> str
+hyperadmin.filters.MultiFKFilter.searchable :: field: bool = True
+hyperadmin.filters.MultiFKFilter.slug :: property -> str
+hyperadmin.filters.MultiFKFilter.template :: attr: ClassVar[str] = 'components/filters/multi_relation.html'
+hyperadmin.filters.MultiFKFilter.title :: property -> str
+hyperadmin.filters.MultiFKFilter.typed_conditions :: def (self, binding: FilterBinding | None, params: Mapping[str, str | Sequence[str]]) -> list[FilterCondition]
+hyperadmin.filters.MultiFKFilter.value_type :: attr: ClassVar[Any]
 hyperadmin.gettext_lazy :: def (message: str) -> babel.support.LazyProxy
 hyperadmin.github_provider :: def (client_id: str, client_secret: str, *, scopes: tuple[str, ...] = ('read:user', 'user:email'), redirect_uri: str | None = None, allow_signup: bool = True) -> OAuthProviderConfig
 hyperadmin.google_provider :: def (client_id: str, client_secret: str, *, hosted_domain: str | None = None, tenant_id_claim: str | None = None, scopes: tuple[str, ...] = ('openid', 'email', 'profile'), redirect_uri: str | None = None, allow_signup: bool = True) -> OAuthProviderConfig

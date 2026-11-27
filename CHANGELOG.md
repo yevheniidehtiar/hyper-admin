@@ -221,6 +221,13 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
   See [the hook reference](docs/plugins/hooks.md) and the new plugin author guide.
 
 ### Changed
+- **New default look: the "terminal" theme preset** (#1132). `HyperAdminSettings.theme_preset`
+  (`HYPERADMIN_THEME_PRESET`) picks the visual theme: `"terminal"` (the new default: near-black
+  ground, acid-green accent, square corners, flat cards, JetBrains Mono for headings, labels and
+  buttons, status pills told apart by shape) or `"classic"` (the earlier teal look with rounded
+  corners). It works with every light / dark `theme`, and token names are the same in both, so
+  host CSS overrides keep working; overrides aimed at the terminal preset must match
+  `:root[data-ha-preset="terminal"]`. Set `theme_preset="classic"` to keep the old look.
 - `HyperAdminModel.before_save()` and `after_save()` now run on every create and update made
   through `SQLModelAdapter` and `SQLAlchemyAdapter` (forms, inline rows, quick-create and
   list-editable cells): `before_save` just before the commit, `after_save` once the row is
@@ -322,6 +329,17 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
 - `get_display_name` skips attributes that can't load on a detached row (#773).
 
 ### Documentation
+- **Reference fixes before 1.0.** The Views reference lists the `ModelAdmin` attributes and the
+  ten `AdminOptions` fields it was missing (`enforce_occ`, `palette_search`, `pagination_mode`,
+  `count_cache_ttl`, `count_estimate_threshold`, `filter_cache_ttl`, `list_select_related`,
+  `auto_select_related`, `detail_select_related`, `preload_threshold`), and the Application
+  reference the `oauth_backend` argument. New **List Filters** guide: every built-in filter in
+  `hyperadmin.filters` and how to write a `FilterDef` subclass; the built-in filters join the
+  API reference and the public API snapshot. The plugin guide documents
+  `PluginRegistry.set_home_page()`. Getting Started says per-model template overrides need
+  `site.register(..., app_label=...)`. The migration guides point `list_per_page` / `page_size`
+  at the global `items_per_page` setting. The hook reference no longer presents
+  `HyperAdminModel.before_save()` / `after_save()` as an extension point.
 - **Public API audit** (st-v100-freeze-03). A snapshot test (`tests/unit/test_public_api.py`)
   records the public API defined in the versioning policy and fails on any change to it. New
   API reference pages for authentication and permissions, plugins, uploads and realtime; the

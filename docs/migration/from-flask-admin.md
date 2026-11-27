@@ -48,7 +48,8 @@ comparison follows [the Flask-Admin documentation](https://flask-admin.readthedo
 | `inaccessible_callback()` | `ExternalAuth(login_url="/login")` | Anonymous browsers are redirected there with `?next=` |
 | `column_exclude_list`, `form_excluded_columns` | No option | List the fields you want in `list_display` and `form_fields` |
 | `column_sortable_list` | No option | Every listed column that is a model field can be sorted |
-| `column_default_sort`, `page_size` | No option | |
+| `column_default_sort` | No option | |
+| `page_size` | No per-model option | Global only: `HyperAdminSettings(items_per_page=...)` (`HYPERADMIN_ITEMS_PER_PAGE`, default 10, at most 100). Users pick 10, 25, 50 or 100 rows below the table |
 | `column_labels`, `column_formatters`, `column_descriptions` | No option | See [No equivalent yet](#no-equivalent-yet) |
 | `on_model_change`, `after_model_change`, `on_model_delete` | No hook | See [No equivalent yet](#no-equivalent-yet) |
 | `can_export`, `export_types` | No export | |
@@ -471,7 +472,8 @@ before you plan around one.
 | Export (`can_export`, `export_types`) | No export |
 | `column_formatters`, `column_type_formatters` | No per-column formatter. A property on the model can be listed in `list_display` |
 | `column_labels`, `column_descriptions` | No per-column label or description. Labels are derived from the field name |
-| `column_default_sort`, `page_size`, `can_set_page_size` | No option |
+| `column_default_sort` | No option |
+| `page_size`, `can_set_page_size` | No per-model option; the global `items_per_page` setting sets the default page size and users can always pick 10, 25, 50 or 100 rows |
 | `on_model_change`, `after_model_change`, `on_model_delete`, `after_model_delete` | No per-admin save or delete hook. Rules that must always run belong in the model layer or the database |
 | `get_query()` returning a query (joins, arbitrary conditions) | `get_queryset(request)` returns equality filters on the model's own columns only |
 | WTForms customisation: `form_args`, `form_widget_args`, `form_overrides`, `form_extra_fields`, a custom `form` | Forms are generated from the model. Widgets are chosen from the field type; see [Widgets](../frontend/widgets.md) |

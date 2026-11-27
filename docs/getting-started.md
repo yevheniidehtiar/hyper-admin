@@ -232,8 +232,17 @@ HyperAdmin resolves templates in this order:
 5. `{view_name}.html`
 6. `default.html`
 
-For example, to override the list view for a `User` model in a `users` app, create:
-`my_templates/users/user/list.html`
+`{view_name}` is `list`, `detail`, `create` or `update`, and `{model_name}` is the model's class
+name in lower case. Steps 1 to 4 apply only to a model registered with an `app_label`. Without an `app_label`, only `{view_name}.html` and
+`default.html` are looked up, so a `list.html` in your template directory replaces the list page
+of every model. To override the list view of the `User` model alone, register it with a label:
+
+```python
+site.register(User, app_label="users")
+```
+
+and create `my_templates/users/user/list.html`. The `app_label` also names the model's sidebar
+group unless its `ModelAdmin` sets `nav_group`.
 
 ---
 

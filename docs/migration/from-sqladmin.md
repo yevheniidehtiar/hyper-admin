@@ -41,7 +41,8 @@ what has [no equivalent yet](#no-equivalent-yet). SQLAdmin's side of each compar
 | `list_query`, `count_query` | `get_queryset(request)` returning a `dict` | Equality filters, `{"column": value}`, added to every list and detail query |
 | `is_accessible(request)`, `is_visible(request)` | Permission codenames | See [Authentication and permissions](#authentication-and-permissions) |
 | `column_exclude_list`, `form_excluded_columns` | No option | List the fields you want in `list_display` and `form_fields` |
-| `column_default_sort`, `page_size`, `page_size_options` | No option | |
+| `column_default_sort` | No option | |
+| `page_size`, `page_size_options` | No per-model option | Global only: `HyperAdminSettings(items_per_page=...)` (`HYPERADMIN_ITEMS_PER_PAGE`, default 10, at most 100). Users pick 10, 25, 50 or 100 rows below the table; the choices are fixed |
 | `column_labels`, `column_formatters`, `column_details_list` | No option | See [No equivalent yet](#no-equivalent-yet) |
 | `on_model_change`, `after_model_change`, `on_model_delete`, `after_model_delete` | No hook | See [No equivalent yet](#no-equivalent-yet) |
 | `can_export`, `column_export_list` | No export | |
@@ -389,7 +390,8 @@ before you plan around one.
 | `column_formatters`, `column_formatters_detail` | No per-column formatter. A property on the model can be listed in `list_display` |
 | `column_labels` | No per-column label. Labels are derived from the field name |
 | `column_details_list`, `column_details_exclude_list` | No per-model field list for the detail page. `AdminOptions(sensitive_fields=...)` hides a field everywhere |
-| `column_default_sort`, `page_size`, `page_size_options` | No option |
+| `column_default_sort` | No option |
+| `page_size`, `page_size_options` | No per-model option; the global `items_per_page` setting sets the default page size, and the 10 / 25 / 50 / 100 choices are fixed |
 | `on_model_change`, `after_model_change`, `on_model_delete`, `after_model_delete` | No per-admin save or delete hook. Rules that must always run belong in the model layer or the database |
 | `list_query`, `count_query`, `search_query` returning statements | `get_queryset(request)` returns equality filters on the model's own columns only |
 | `form_overrides`, `form_args`, `form_widget_args`, a custom `form` | Forms are generated from the model |

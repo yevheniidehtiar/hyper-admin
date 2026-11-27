@@ -101,12 +101,12 @@ These hooks do **not** fire for writes that bypass the three forms:
 
 The adapter-call hooks see all of these except code that does not go through the admin's adapter.
 
-A model that subclasses `HyperAdminModel` can also define `before_save()` and `after_save()`.
-Those are methods of the record, not plugin hooks: the built-in adapters await them inside the
-adapter `create` or `update` call, on every write including the ones listed above. For a form
-save the order is `on_before_create`, `on_before_adapter_call`, `before_save`, commit,
-`after_save`, `on_after_adapter_call`, `on_after_create` (the same for updates). A `before_save`
-that raises aborts the save, so `on_after_create` does not fire.
+!!! note "Record save methods are not public API"
+    The built-in adapters also await `before_save()` and `after_save()` on records whose class
+    subclasses the internal `HyperAdminModel` base, inside the adapter `create` or `update` call.
+    That base class is not part of the [public API](../versioning.md#what-is-public-api): it is not
+    exported, it may change or go away in any release, and no deprecation period applies. Use the
+    hooks on this page, model validation or database constraints instead.
 
 ## Adapter calls
 
