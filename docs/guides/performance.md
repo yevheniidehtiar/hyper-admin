@@ -230,6 +230,8 @@ first relation of the path only, so a deeper path such as `"customer.region.code
 empty cell unless a custom adapter loads `customer.region` too. A dotted accessor never shows a
 sensitive field of the related model (`"customer.password_hash"` stays empty).
 
+![Product list in the ERP example with a card showing one supplier query at 10 and at 100 rows per page](../assets/screenshots/scale-relations.png)
+
 ```python
 class OrderAdmin(ModelAdmin):
     options = AdminOptions(
@@ -318,6 +320,8 @@ By default a list pages by number: page 5,000 of a list asks the database to rea
 the 49,990 rows before it. `pagination_mode="cursor"` pages by key instead. Each page starts
 after the last row of the previous one, by sort column and primary key, so every page costs the
 same and no page counts the table.
+
+![Movement list of 1.2 million rows near its last page, with a card of measured response times](../assets/screenshots/scale-cursor.png)
 
 ```python
 class EventAdmin(ModelAdmin):

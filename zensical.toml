@@ -21,6 +21,7 @@ nav = [
     { "Existing FastAPI App" = "guides/existing-app.md" },
     { "Bring Your Own Auth" = "guides/external-auth.md" },
     { "OAuth Sign-In" = "guides/oauth-sso.md" },
+    { "Languages & RTL" = "guides/i18n.md" },
     { "Realtime" = "guides/realtime.md" },
     { "Background Tasks" = "plugins/tasks.md" },
     { "Large Tables & Performance" = "guides/performance.md" },
@@ -41,6 +42,8 @@ nav = [
     { "Overview" = "plugins/index.md" },
     { "Writing a Plugin" = "plugins/authoring.md" },
     { "Hook Reference" = "plugins/hooks.md" },
+    { "Reports & Dashboard" = "plugins/reports.md" },
+    { "Logfire Traces" = "plugins/logfire.md" },
   ] },
   { "Frontend" = [
     { "Overview" = "frontend/overview.md" },
@@ -117,6 +120,7 @@ pymdownx.superfences.custom_fences = [
 ]
 pymdownx.tabbed.alternate_style = true
 tables = {}
+attr_list = {}
 pymdownx.highlight = {}
 
 [project.markdown_extensions.mdx_include]

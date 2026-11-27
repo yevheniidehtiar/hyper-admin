@@ -14,8 +14,8 @@ install only plugins you would also import by hand.
 | Plugin | What it adds | Docs |
 |---|---|---|
 | `hyperadmin-tasks` | A background task dashboard backed by Postgres | [Background Tasks](tasks.md) |
-| `hyperadmin-reports` | Crosstab reports, SVG charts, CSV and XLSX export | [README](https://github.com/yevheniidehtiar/hyper-admin/tree/develop/plugins/hyperadmin-reports) |
-| `hyperadmin-logfire` | Admin traces in Pydantic Logfire | [README](https://github.com/yevheniidehtiar/hyper-admin/tree/develop/plugins/hyperadmin-logfire) |
+| `hyperadmin-reports` | Crosstab reports, SVG charts, CSV and XLSX export, a home-page dashboard | [Reports and Dashboard](reports.md) |
+| `hyperadmin-logfire` | Admin traces in Pydantic Logfire | [Logfire Traces](logfire.md) |
 
 ## Install a plugin
 

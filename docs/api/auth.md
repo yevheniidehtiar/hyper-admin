@@ -65,6 +65,21 @@ class OrderAdmin(ModelAdmin):
 Check one with the admin's permission checker, for example
 `await admin.permission_checker.has_permission(user, "refund_order")`.
 
+## Permissions matrix
+
+With built-in auth (or bring-your-own-auth with `register_auth_models=True`), the "Access"
+sidebar group has a permissions matrix at `{prefix}/permissions-matrix/`: one row per model, one
+column per codename, for the group you pick. A save writes only the cells that changed. When
+someone else saved the same group in the meantime, the page shows a conflict banner instead of
+overwriting their change. Every change is written to the `hyperadmin_permission_audit` table.
+
+![Permission matrix: view, add, change and delete grants per model for the Bookkeepers group](../assets/screenshots/permission-matrix.png)
+
+Superusers can always open it; other users need the `permissions_matrix_codename` permission
+(`change_groups_permissions` by default). `permissions_matrix_enabled=False` leaves the page
+out. The tables it needs are listed in
+[Upgrading the built-in auth tables](../guides/existing-app.md#upgrading-the-built-in-auth-tables).
+
 ## Caches
 
 `ModelPermissionChecker` remembers the permission set it read on the user object for the rest of

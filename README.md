@@ -83,6 +83,7 @@ It's built model-first (domain → logic → views → UI).
 - Mounts as an isolated sub-application: your routes, `/static`, cookies and OpenAPI schema stay untouched
 - `int`, UUID and natural `str` primary keys; reuses your engine or `session_factory`; creates no tables unless asked
 - Bring your own auth (`ExternalAuth`, JWT-friendly) or use the built-in session auth with groups, permissions and email-OTP MFA
+- Optional "Sign in with Google / GitHub" (OAuth2 / OIDC with PKCE) on the built-in login page
 
 **CRUD and data entry**
 - List, detail, create, edit and delete, with search, sorting and pagination
@@ -103,14 +104,32 @@ It's built model-first (domain → logic → views → UI).
 **Security and permissions**
 - CSRF protection that works behind TLS proxies; password, token and secret fields hidden by default
 - Object-level permissions, row-level security through `get_queryset`, and a model × action permissions matrix with an audit trail
+- Optimistic concurrency: a stale save gets a conflict dialog instead of overwriting a newer change
+- Rate limits for the admin and its login
 
 **Collaboration and reporting**
 - Live CRUD notifications over SSE / WebSocket (in-memory or Redis pub/sub), plus presence: who else is editing a record
-- `hyperadmin-reports` plugin: crosstab reports, server-rendered SVG charts, CSV / XLSX export
-- Plugin registry for adding pages, navigation, templates and permissions
+- `hyperadmin-reports` plugin: crosstab reports with filters, server-rendered SVG charts, CSV / XLSX export, and a home-page dashboard of stat, chart and quick-action cards
+- `hyperadmin-tasks` plugin: a background task dashboard on Postgres (experimental); `hyperadmin-logfire` plugin: request, adapter and SQL spans in Pydantic Logfire
+- Plugin registry for adding pages, navigation, templates, permissions and the home page, plus lifecycle hooks
+
+**Large tables**
+- Relations loaded only for the columns shown, cursor pagination, cached and estimated totals, lazy foreign-key options
 
 **Interface**
-- Light / dark themes (the `terminal` preset by default, `classic` on request), responsive mobile layout, WCAG 2.1 AA, 20 locales with RTL
+- Light / dark themes (the `terminal` preset by default, `classic` on request), responsive mobile layout, WCAG 2.1 AA
+- 20 locales with right-to-left layout for Arabic and Hebrew; Ukrainian is reviewed, the other catalogs are drafts that show English until reviewed
+
+<table>
+  <tr>
+    <td><img src="https://raw.githubusercontent.com/yevheniidehtiar/hyper-admin/develop/docs/assets/screenshots/command-palette.png" alt="Command palette searching for &quot;acco&quot;" width="400"/></td>
+    <td><img src="https://raw.githubusercontent.com/yevheniidehtiar/hyper-admin/develop/docs/assets/screenshots/conflict-dialog.png" alt="Conflict dialog showing the user's edit next to the current value" width="400"/></td>
+  </tr>
+  <tr>
+    <td><img src="https://raw.githubusercontent.com/yevheniidehtiar/hyper-admin/develop/docs/assets/screenshots/report-chart.png" alt="Pivot report with a chart of invoices per month by status" width="400"/></td>
+    <td><img src="https://raw.githubusercontent.com/yevheniidehtiar/hyper-admin/develop/docs/assets/screenshots/i18n-rtl.png" alt="Invoice list in Arabic, laid out right to left" width="400"/></td>
+  </tr>
+</table>
 
 ## Proven on real open-source apps
 
@@ -137,6 +156,8 @@ takes 0.8 s.
 9 uvicorn workers, Locust with 90% reads and 10% writes): 400 concurrent users get about
 **300 requests per second at a median of 21 ms and a p95 of 170 ms, with no errors**. That is
 the box's ceiling: at 800 users throughput stays near 300 req/s and requests queue instead.
+A second run compares SQLite, PostgreSQL 17 and PostgreSQL 17 with a trigram index on 1.2 million
+rows.
 
 Supported stacks, the full results, the timings and known limitations are on
 **[Compatibility & Performance](https://yevheniidehtiar.github.io/hyper-admin/compatibility/)**.
@@ -180,8 +201,9 @@ site.register(Product)
 admin.mount("/admin")        # full CRUD admin now live at /admin
 ```
 
-Requires Python 3.11+. Optional extras: `hyper-admin[redis]` (Redis pub/sub for realtime and
-presence) and `hyper-admin[s3]` (S3-compatible upload storage). Adding the admin to an app you
+Requires Python 3.11+. Optional extras: `hyper-admin[realtime]` (WebSocket transport),
+`hyper-admin[redis]` (Redis pub/sub for realtime and presence), `hyper-admin[s3]`
+(S3-compatible upload storage) and `hyper-admin[oauth]` (Google / GitHub sign-in). Adding the admin to an app you
 already have, with your own models, keys and auth, is covered in
 [Add HyperAdmin to an existing app](https://yevheniidehtiar.github.io/hyper-admin/guides/existing-app/).
 

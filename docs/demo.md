@@ -35,9 +35,9 @@ a backend-only team gets on top, without writing frontend code:
 | Conflict dialog | Two people save the same order; the second gets a field-by-field diff | `AdminOptions(enforce_occ=True)` |
 | Large tables | 1.2 million rows: keyset pages, relations in one query, cached totals | [Performance](guides/performance.md) |
 | Load testing | `hyperadmin seed`, then a read run and a write run with Locust, logins excluded | [Load testing](compatibility.md#load-testing-your-own-deployment) |
-| Plugins | Dashboard widgets, the ERP's pivot reports with a chart, background tasks, Logfire traces | [Plugin API](api/plugins.md), [Background tasks](plugins/tasks.md) |
+| Plugins | Dashboard widgets, the ERP's pivot reports with a chart, background tasks, Logfire traces | [Reports and dashboard](plugins/reports.md), [Background tasks](plugins/tasks.md), [Logfire](plugins/logfire.md) |
 | Auth | OAuth sign-in, the permissions matrix, a read-only user without Create or Delete buttons | [OAuth SSO](guides/oauth-sso.md) |
-| Everyday UI | ⌘K palette, the language switcher (Ukrainian, then Arabic right to left), dark mode, phone layout | |
+| Everyday UI | ⌘K palette, the language switcher (Ukrainian, then Arabic right to left), dark mode, phone layout | [Navigation](guides/navigation.md), [Languages](guides/i18n.md) |
 | Widgets | A montage of 17 generated components | [Widgets](frontend/widgets.md) |
 
 Every figure in the video was measured during the recording (server response times, SQL
@@ -181,10 +181,11 @@ as the slowest read; see [Search](guides/performance.md#search). See also
 
 ![Terminal output of a seeding run, then a read run and a write run with per-endpoint request counts, req/s, median, p95 and p99](assets/screenshots/loadtest.png)
 
-**Plugins.** Dashboard widgets and pivot reports with charts (`hyperadmin-reports`; the ERP lists
+**Plugins.** Dashboard widgets and pivot reports with charts
+([`hyperadmin-reports`](plugins/reports.md); the ERP lists
 its "Invoices by status" and "Bills by status" reports under All reports), background
 task monitoring ([`hyperadmin-tasks`](plugins/tasks.md)) and request traces
-(`hyperadmin-logfire`).
+([`hyperadmin-logfire`](plugins/logfire.md)).
 
 | ![Dashboard with stat, chart and quick-action widgets](assets/screenshots/dashboard-widgets.png) | ![Invoices by status pivot report with a chart of invoices per month](assets/screenshots/report-chart.png) |
 |---|---|
@@ -192,9 +193,10 @@ task monitoring ([`hyperadmin-tasks`](plugins/tasks.md)) and request traces
 
 **Sign-in and languages.** Passwords, MFA and OAuth single sign-on
 ([OAuth SSO](guides/oauth-sso.md)). Each user picks one of 20 bundled locales from the navbar.
-Ukrainian is reviewed and fully rendered; the other 18 ship machine drafts that render English
-until a native speaker reviews them, so the Arabic shot shows the right-to-left layout with
-English text. Your own labels translate through `gettext_lazy`.
+Ukrainian is reviewed for most strings (the few still in review, such as "Filters", show in
+English); the other locales ship drafts that render English until a native speaker reviews
+them, so the Arabic shot shows the right-to-left layout with English text. See
+[Languages and right-to-left](guides/i18n.md).
 
 ![Login page with a "Sign in with Google" button under the password form](assets/screenshots/oauth-login.png)
 

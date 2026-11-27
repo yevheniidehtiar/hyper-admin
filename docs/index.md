@@ -85,7 +85,8 @@ admin.mount("/admin")
 - **Your keys, engine and migrations.** Integer, UUID and string primary keys work. Pass in your
   own engine or `session_factory`. HyperAdmin creates no tables unless you ask it to.
 - **Your auth, or ours.** Plug in your own login with `ExternalAuth`, or use the built-in
-  session auth with users, groups, permissions and email-OTP MFA.
+  session auth with users, groups, permissions, email-OTP MFA and optional
+  [Google / GitHub sign-in](guides/oauth-sso.md).
 - **Tested on real apps.** Polar (138 models), Langflow, Mealie and Open WebUI run with
   their models unchanged, and every model's pages render without errors.
 
@@ -117,20 +118,42 @@ admin.mount("/admin")
 
 - CSRF protection that works behind a TLS proxy, and sensitive fields hidden by default
 - Object-level permissions and row-level security through a `get_queryset` hook
-- A permissions matrix to edit model × action grants for each group, with an audit trail
+- A [permissions matrix](api/auth.md#permissions-matrix) to edit model × action grants for each
+  group, with an audit trail
+- A [conflict dialog](guides/realtime.md#conflicting-saves) instead of a silent overwrite when
+  two people save the same record
 
 **Collaboration and reporting**
 
-- Live CRUD notifications over SSE or WebSocket, with in-memory or Redis pub/sub
+- [Live CRUD notifications](guides/realtime.md) over SSE or WebSocket, with in-memory or Redis
+  pub/sub
 - Presence: see who else is editing a record
-- The `hyperadmin-reports` plugin: crosstab reports, server-rendered SVG charts, CSV and XLSX
-  export
-- A plugin registry for adding pages, navigation, templates and permissions
+- [`hyperadmin-reports`](plugins/reports.md): crosstab reports with filters, server-rendered SVG
+  charts, CSV and XLSX export, and a home-page dashboard
+- [`hyperadmin-tasks`](plugins/tasks.md) (background task dashboard, experimental) and
+  [`hyperadmin-logfire`](plugins/logfire.md) (request, adapter and SQL traces)
+- A [plugin registry](plugins/index.md) for adding pages, navigation, templates and permissions
+
+| Presence | Dashboard |
+|---|---|
+| ![Two browsers on the same invoice, each showing that the other user is also editing it](assets/screenshots/presence.png) | ![Dashboard with stat, chart and quick-action cards](assets/screenshots/dashboard-widgets.png) |
+
+**Large tables**
+
+- [Relations loaded only for the columns shown, cursor pagination, cached and estimated totals,
+  and foreign-key options fetched as you type](guides/performance.md)
 
 **Interface**
 
-- Light and dark themes, a responsive layout for mobile, WCAG 2.1 AA
-- 20 locales with right-to-left support, and translated validation messages
+- [Two theme presets](frontend/overview.md#theme-presets) (`terminal` by default, `classic`), each
+  in light and dark, a [responsive layout for phones](frontend/overview.md#small-screens),
+  WCAG 2.1 AA
+- [20 locales](guides/i18n.md) with right-to-left layout for Arabic and Hebrew; Ukrainian is
+  reviewed, the other catalogs are drafts that show English until reviewed
+
+| Dark mode | Phone |
+|---|---|
+| ![Invoice list in dark mode](assets/screenshots/list-rows-dark.png) | ![Invoice list on a phone, one card per invoice](assets/screenshots/phone-list.png){ width="260" } |
 
 ---
 

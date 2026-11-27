@@ -11,13 +11,16 @@ Source: [`examples/erp/`](https://github.com/yevheniidehtiar/hyper-admin/tree/ma
 ## What it demonstrates
 
 - **Multi-module auto-discovery** — each domain (`contacts`, `sales`, `purchases`, `accounting`)
-  is a standalone Python package; `Admin(discover_apps=[...])` wires them all automatically.
+  is a standalone Python package; `HyperAdminSettings(discover_apps=[...])` wires them all automatically.
 - **Relational data** — invoices belong to contacts, invoice items belong to invoices, journal
   lines belong to journal entries. HyperAdmin handles all FK list/detail views out of the box.
 - **Built-in RBAC** — `hyperadmin.auth` is added as a discovered app; a `SessionAuthBackend` and
   `ModelPermissionChecker` guard every route.
 - **Custom report** — the Annual Profit & Loss view shows how to add a page of your own (a FastAPI
-  router and a Jinja2 template) inside the admin and link it from a sidebar group.
+  router and a Jinja2 template) inside the admin and link it from a sidebar group. With
+  `hyperadmin-reports` installed, two pivot reports ("Invoices by status", "Bills by status")
+  join it under Reports.
+- **Bulk actions** — "Mark paid" on invoices and bills, refused row by row for the wrong status.
 - **Navigation** — models grouped by domain with icons, per-user pinned pages, a collapsible icon
   rail and a <kbd>⌘K</kbd> command palette.
 - **Lists and forms** — rows that open on click, a red delete icon with a confirmation, keyboard
@@ -163,6 +166,13 @@ The template at `templates/reports/profit_loss.html` extends `{% extends "base.h
 inherits the sidebar, header, and HTMX bindings without any extra setup.
 
 Visit `/admin/erp/profit-loss?year=2024` (or leave `year` blank for the current year).
+
+| | |
+|---|---|
+| ![Profit and loss statement of the ERP example](../assets/screenshots/profit-loss.png) | ![ERP home page with figures for open and overdue invoices](../assets/screenshots/dashboard.png) |
+| ![Invoices by status pivot report with a chart of invoices per month](../assets/screenshots/report-chart.png) | ![Bulk action bar with three invoices selected and "Mark paid" chosen](../assets/screenshots/bulk-actions.png) |
+
+The pivot reports are declared in `reports/pivots.py`; see [Reports and Dashboard](../plugins/reports.md).
 
 ---
 

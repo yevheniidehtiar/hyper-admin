@@ -21,6 +21,8 @@ Under `/admin/tasks` you get:
 
 Two permissions gate the pages: `view_tasks` for reading and `manage_tasks` for the actions.
 
+![Task list with succeeded, failed, pending and running tasks](../assets/screenshots/tasks.png)
+
 ## Install
 
 The plugin is not on PyPI yet. Install it from the repository, with the `[pgtask]` extra:

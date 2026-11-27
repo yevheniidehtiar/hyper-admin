@@ -65,15 +65,30 @@ All widgets follow the same outer wrapper pattern:
 
 `PydanticForm` picks a widget automatically based on the field's Python type annotation and name. Override by passing `widgets={"field_name": MyWidget()}` to `PydanticForm`.
 
+The column checks run first, then the name and type checks:
+
 | Condition | Widget selected |
 |---|---|
+| A file upload column (`FileType`) | `FileInputWidget` |
+| An image upload column (`ImageType`) | `ImagePreviewWidget`: drag-and-drop with a preview |
+| A foreign key | `AutocompleteWidget` (a search box over a `<select>`, and, when the related model is registered, a "+" that creates the related row in a popup); `RelationSelectWidget` with `AdminOptions(use_autocomplete_widget=False)` |
+| A many-to-many relation | `AutocompleteMultiWidget`; `RelationMultiSelectWidget` with `use_autocomplete_widget=False` |
+| An `Enum` column, or a list of an `Enum` | `SelectWidget`, or `MultiSelectWidget` for a list |
 | Field name is `description`, `text`, `body`, or `content` | `Textarea` |
 | Annotation is `bool` | `CheckboxInput` |
 | Annotation is `int` | `NumberInput` |
 | Annotation is `float` | `FloatInput` |
 | Annotation is `datetime` | `DateTimeInput` |
-| Annotation is an `Enum` subclass | `SelectInput` |
+| Annotation is `date` | `DateInput` |
+| Annotation is an `Enum` subclass (no column information) | `SelectInput` |
 | Anything else | `TextInput` |
+
+A foreign key to a table with at least `AdminOptions.preload_threshold` rows (500 by default)
+fetches its options as the user types instead of embedding them in the form.
+
+![Invoice edit form with the invoice items edited inline below the invoice fields](../assets/screenshots/form-inlines.png)
+
+![Grid of generated components: status pills, filters, date ranges, detail page, inline rows, uploads, autocomplete, shortcuts, dialogs, permissions matrix and dashboard widgets](../assets/screenshots/widgets.png)
 
 ### TextInput
 

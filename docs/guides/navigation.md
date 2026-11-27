@@ -155,6 +155,35 @@ A custom template can reuse the dialog: any element with
 `data-ha-confirm-delete="<DELETE url>"` and `data-ha-label="<record name>"` opens it, and on
 confirm the dialog sends the DELETE request with the CSRF header.
 
+### Bulk actions
+
+Selecting rows with their checkboxes (or <kbd>x</kbd> on the focused row) opens a bar with the
+model's bulk actions. An action is a `ModelAdmin` method decorated with
+`@action(label=..., bulk=True)`; the handler runs once per selected row, and a `form=` Pydantic
+model asks for parameters first. The result page lists each row as done, failed (with the
+error's detail) or forbidden, so one bad row does not hide the others. Running an action needs
+the `action_<name>_<model>` permission.
+
+```python
+from typing import Any
+
+from fastapi import HTTPException, Request
+
+from hyperadmin.core.actions import action
+from hyperadmin.core.model import ModelAdmin
+
+
+class InvoiceAdmin(ModelAdmin):
+    @action(label="Mark paid", bulk=True)
+    async def mark_paid(self, request: Request, item_id: int, *, params: Any = None) -> None:
+        invoice = await self.adapter.get(item_id)
+        if invoice is None or invoice.status != InvoiceStatus.SENT:
+            raise HTTPException(status_code=409, detail="Only Sent invoices can be marked paid")
+        await self.adapter.update(item_id, {"status": InvoiceStatus.PAID})
+```
+
+![Bulk action bar with three invoices selected and "Mark paid" chosen](../assets/screenshots/bulk-actions.png)
+
 ### Filter panel
 
 Filters from `list_filter` sit in a panel beside the table. The Filters button at the end of the
@@ -164,6 +193,8 @@ choice is kept in their browser (`localStorage` key `ha-filters`) and wins over 
 the panel is collapsed, the button shows how many filters are active, and the applied filters stay
 listed as chips above the table. When the list itself is narrower than 720px, the panel folds
 away and the same button opens it above the rows.
+
+![Invoice list filtered by status, searched for "INV-1" and sorted by due date, with the filter panel open](../assets/screenshots/list-search-filters.png)
 
 ## Keyboard
 
@@ -178,6 +209,8 @@ Press <kbd>?</kbd> on any admin page to list the shortcuts. On macOS, Cmd replac
 | <kbd>x</kbd> | lists | Select the focused row for a bulk action |
 | <kbd>c</kbd> | lists | Create a new record |
 | <kbd>Ctrl+S</kbd> | forms | Save the form (or the open "+" popup form) |
+
+![Invoice list with the second row focused by the j key](../assets/screenshots/keyboard-row-focus.png)
 
 ![Keyboard shortcuts overlay](../assets/screenshots/shortcuts-overlay.png)
 
