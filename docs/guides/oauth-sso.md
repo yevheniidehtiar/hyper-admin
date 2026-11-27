@@ -68,6 +68,8 @@ The extra adds `httpx-oauth` and `cryptography`.
 The login page now shows a "Sign in with ..." button per provider. `Admin` refuses to
 start when the key is missing.
 
+![Login page with a "Sign in with Google" button under the password form](../assets/screenshots/oauth-login.png)
+
 ## Who can sign in
 
 | Situation | Result |

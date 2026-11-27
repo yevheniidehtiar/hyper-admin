@@ -10,6 +10,10 @@ three things:
 
 Realtime is off by default. Leaving `Admin(realtime=None)` disables every realtime code path.
 
+| Presence | Live list |
+|---|---|
+| ![Two browsers on the same invoice, each showing that the other user is also editing it](../assets/screenshots/presence.png) | ![A save in one browser updates the invoice row in the other browser's list](../assets/screenshots/live-updates.png) |
+
 ## Requirements
 
 The browser opens two connections under the admin prefix:
@@ -93,6 +97,22 @@ admin.publish_event(
 ```
 
 `publish_event` is a no-op when realtime is off or the model has notifications disabled.
+
+## Conflicting saves
+
+Presence tells people that someone else is editing; it does not stop two saves from
+overwriting each other. `AdminOptions(enforce_occ=True)` does, with or without realtime. The edit
+form carries the row's version, and a save made against an out-of-date version is refused with
+HTTP 409 and a dialog that shows the user's edit next to the current value of each changed
+field. The user then discards their edits or overrides the newer values.
+
+![Conflict dialog: "This record was changed by someone else", with the user's edit and the current value side by side](../assets/screenshots/conflict-dialog.png)
+
+The model needs a `version: int` column, or a `__version_field__` class attribute naming another
+column. With `HyperAdminSettings(concurrency_use_updated_at=True)` an `updated_at` column works
+too. A model with `enforce_occ=True` and none of these fails at startup with
+`ConcurrencyConfigurationError`. Set `HyperAdminSettings(occ_render_dialog=False)` to answer a
+stale save with a JSON 409 body instead of the dialog, for API clients.
 
 ## Several workers
 

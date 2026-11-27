@@ -332,6 +332,16 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
   used by the built-in pages. The realtime guide installs `hyper-admin[realtime]` and
   `hyper-admin[redis]` (it named the wrong distribution).
 - README and docs list the shipped features, supported stacks and real-app results.
+- **Screenshots in the pages they illustrate, and pages for reports, Logfire and languages.**
+  The current screenshots now sit in the realtime, performance, OAuth, tasks, navigation,
+  widgets, frontend, auth and ERP pages. New pages: Reports & Dashboard
+  (`hyperadmin-reports`), Logfire Traces (`hyperadmin-logfire`) and Languages & RTL, which says
+  plainly that Ukrainian is the only reviewed catalog and the other locales show English until
+  reviewed. New sections: bulk actions, conflicting saves (`enforce_occ`), the permissions
+  matrix and small screens; the widget auto-selection table lists upload, relation, autocomplete
+  and date widgets. The docs build now enables `attr_list`, so image widths apply instead of
+  showing as text. README lists OAuth, concurrency, rate limits, the large-table features and
+  the plugins.
 - Fixed code samples that called `Admin()` with settings that are not constructor
   arguments (`discover_apps=`, `template_dirs=`): these go through `HyperAdminSettings`.
 - Replaced the `ModelView` attribute table, which listed attributes HyperAdmin never read,

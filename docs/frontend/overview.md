@@ -167,6 +167,12 @@ Tokens are CSS custom properties on `:root`. Override them to theme HyperAdmin w
 Token names are the same in both, so host overrides work with either preset. Overrides for the terminal
 preset must match its selectors (`:root[data-ha-preset="terminal"]`, plus `[data-theme="dark"]` for dark).
 
+| Terminal preset, light | Terminal preset, dark |
+|---|---|
+| ![Invoice list in the terminal preset, light: white ground, square corners, acid-green accent](../assets/screenshots/list-rows.png) | ![The same invoice list in the terminal preset, dark: near-black ground](../assets/screenshots/list-rows-dark.png) |
+
+Every screenshot on this site uses the default `"terminal"` preset.
+
 ### Dark Mode
 
 Dark mode uses a three-way system:
@@ -176,6 +182,16 @@ Dark mode uses a three-way system:
 3. **OS preference**: `@media (prefers-color-scheme: dark)` with `.ha-theme-light` guard
 
 Dark values are defined once as `--_dark-*` private tokens, then mapped to semantic tokens in both the explicit and OS-preference selectors. This eliminates value duplication.
+
+### Small Screens
+
+Below 640px a list renders each row as a card (the title, a status pill and the other columns as
+labelled values), the sidebar becomes a drawer behind the menu button, and the language and theme
+controls move into the account menu. Touch targets reach 44px under a coarse pointer.
+
+| Phone list | Phone sidebar |
+|---|---|
+| ![Invoice list on a phone: each invoice is a card with its number, customer, status, amount and dates](../assets/screenshots/phone-list.png){ width="300" } | ![Sidebar drawer open on a phone, with pinned pages above the grouped navigation](../assets/screenshots/phone-sidebar.png){ width="300" } |
 
 ### Class Catalogue
 
