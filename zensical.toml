@@ -23,6 +23,7 @@ nav = [
     { "Background Tasks" = "plugins/tasks.md" },
     { "Large Tables & Performance" = "guides/performance.md" },
     { "Compatibility & Performance" = "compatibility.md" },
+    { "Claude Code Skills" = "guides/ai-skills.md" },
     { "Migrating" = [
       { "Overview" = "migration/index.md" },
       { "From Django Admin" = "migration/from-django-admin.md" },

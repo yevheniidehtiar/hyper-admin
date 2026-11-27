@@ -1,0 +1,14 @@
+{
+  "name": "hyperadmin",
+  "description": "The HyperAdmin Claude Code plugin: skills and agents for people building on HyperAdmin.",
+  "owner": {
+    "name": "HyperAdmin"
+  },
+  "plugins": [
+    {
+      "name": "hyperadmin",
+      "source": "./",
+      "description": "Skills and agents for building on HyperAdmin and for migrating from Django admin or Flask-Admin."
+    }
+  ]
+}
