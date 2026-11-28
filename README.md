@@ -1,8 +1,8 @@
 <div align="center">
   <a href="https://yevheniidehtiar.github.io/hyper-admin/" target="_blank">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/yevheniidehtiar/hyper-admin/develop/src/hyperadmin/static/img/hyperadmin-wordmark-dark.svg">
-      <img src="https://raw.githubusercontent.com/yevheniidehtiar/hyper-admin/develop/src/hyperadmin/static/img/hyperadmin-wordmark.svg" alt="HyperAdmin" width="330"/>
+      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/yevheniidehtiar/hyper-admin/develop/src/hyperadmin/static/img/terminal/hyperadmin-wordmark-dark.svg">
+      <img src="https://raw.githubusercontent.com/yevheniidehtiar/hyper-admin/develop/src/hyperadmin/static/img/terminal/hyperadmin-wordmark.svg" alt="HyperAdmin" width="328"/>
     </picture>
   </a>
   <p><strong>The Django-admin experience for FastAPI — generated straight from your Pydantic, SQLModel or SQLAlchemy models.</strong><br/>

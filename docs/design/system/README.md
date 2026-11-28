@@ -77,6 +77,8 @@ Values tuned from the brief, so contrast holds: light `ha-color-primary` is #0F7
 
 ## Logo
 
+The files below belong to the **`classic`** theme preset. The default **`terminal`** preset, the docs site and the README use the "h:" mark from `src/hyperadmin/static/img/terminal/`: an off-white "h" and two acid-green (#B8F23E) squares on a near-black (#0E100D) tile, in `hyperadmin-mark.svg`, `hyperadmin-favicon.svg`, `hyperadmin-favicon-16.svg` (pixel-snapped for 16px tabs) and `hyperadmin-wordmark.svg` / `-dark.svg` (mark plus "HyperAdmin" in JetBrains Mono SemiBold, outlined).
+
 The mark is an **"H" built from table rows**: two cells, a full-width row, two cells, knocked out of a rounded tile. It reads at 16px, works in one colour and is not related to any other project's logo.
 
 - `hyperadmin-mark.svg`: full colour, teal tile with white rows. Sidebar, login, docs.

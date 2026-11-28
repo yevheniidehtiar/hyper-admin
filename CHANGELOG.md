@@ -221,6 +221,12 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
   See [the hook reference](docs/plugins/hooks.md) and the new plugin author guide.
 
 ### Changed
+- **The "h:" mark everywhere outside the `classic` preset.** The docs site logo, favicon
+  (`.ico` with 16/32/48 px), 16/32 px PNG favicons, Apple touch icon and Android icons now show
+  the terminal mark, and the README shows a new wordmark
+  (`static/img/terminal/hyperadmin-wordmark.svg` and `-dark.svg`: the mark plus "HyperAdmin"
+  outlined from JetBrains Mono). The ERP example's login page follows `theme_preset` like the
+  built-in one. The `classic` preset keeps its teal files in `static/img/`.
 - **New default look: the "terminal" theme preset** (#1132). `HyperAdminSettings.theme_preset`
   (`HYPERADMIN_THEME_PRESET`) picks the visual theme: `"terminal"` (the new default: near-black
   ground, acid-green accent, square corners, flat cards, JetBrains Mono for headings, labels and

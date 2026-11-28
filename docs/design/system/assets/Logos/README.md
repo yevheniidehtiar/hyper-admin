@@ -8,4 +8,6 @@ The HyperAdmin mark is an "H" built from table rows, knocked out of a rounded ti
 
 Clear space on every side: one sixth of the mark's height. Inside a host app, the navbar shows the host's `site_title` next to the mark, not the wordmark.
 
+**Theme presets:** these files are the `classic` preset's mark. The default `terminal` preset, the docs site and the README use the "h:" mark in `src/hyperadmin/static/img/terminal/` (`hyperadmin-mark.svg`, `hyperadmin-favicon.svg`, `hyperadmin-favicon-16.svg`, `hyperadmin-wordmark.svg`, `hyperadmin-wordmark-dark.svg`).
+
 **In this repository:** the shipped files are in `src/hyperadmin/static/img/`. The repository copy of `hyperadmin-favicon.svg` keeps its `prefers-color-scheme: dark` switch to #2DD4BF (the design-system artifact store strips `<style>` from SVGs, so its copy has none).
