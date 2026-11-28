@@ -178,10 +178,10 @@ admin.add_view(PostAdmin)
 
 ### Step 1: install
 
-HyperAdmin is in pre-release, so pin the version:
+Install HyperAdmin:
 
 ```bash
-pip install hyper-admin==0.5.0a1
+pip install hyper-admin==1.0.0
 ```
 
 Both admins can be mounted on the same app at different paths while you migrate.

@@ -5,9 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
-`0.5.0a1`); while the major version is `0`, breaking changes bump the minor version.
+`1.0.0`). From 1.0.0, breaking changes to the public API bump the major version; before 1.0,
+they bumped the minor version.
 
 ## [Unreleased]
+
+## [1.0.0] - 2026-11-28
+
+First stable release. From 1.0.0 HyperAdmin follows semantic versioning as described in the
+[Versioning & Deprecation Policy](docs/versioning.md): the public API is recorded in
+`tests/unit/public_api_snapshot.txt`, and a snapshot test fails on any change to it. The plugin
+contract is part of that API: the `hyperadmin.plugins` entry-point group, the `Plugin` protocol,
+the `PluginRegistry` methods a plugin calls, and the lifecycle hooks in `LIFECYCLE_HOOKS`, which
+the admin now fires. The default look is the new `terminal` theme preset
+(`theme_preset="classic"` keeps the earlier one). The first-party plugins `hyperadmin-reports`
+(reports, report filters, dashboard), `hyperadmin-tasks` and `hyperadmin-logfire` keep their own
+version numbers. Performance work: list pages load only the relations they show, permissions are
+read once per request, large tables can show estimated totals, the connection pool is
+configurable, SQLite search no longer serializes concurrent scans, and load-test results are
+published. Claude Code skills and agents for HyperAdmin users ship in `skills/` and `agents/`.
+Features deprecated during 0.x with a "removed in 0.6" warning stay at least until 2.0. Read the
+**BREAKING** entry under Changed before upgrading from 0.5.0a1.
 
 ### Fixed
 - **Slow concurrent search on SQLite.** List search, autocomplete and record search ran

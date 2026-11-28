@@ -23,7 +23,7 @@ this skill is the source of truth for mappings and gaps.
 2. **Map and report gaps** with the tables below. Every option either maps, maps with a
    difference, or is in "No equivalent yet". Decide with the user what to do about each gap
    before generating code.
-3. **Install** in the FastAPI project: `pip install hyper-admin==0.5.0a1` plus the async driver
+3. **Install** in the FastAPI project: `pip install hyper-admin==1.0.0` plus the async driver
    (`asyncpg` for PostgreSQL, `aiosqlite` is bundled, `aiomysql` for MySQL).
 4. **Convert the models** to SQLModel, one Django app at a time, with `__tablename__` set to the
    Django table (`<app_label>_<model_name>` unless `Meta.db_table` is set).

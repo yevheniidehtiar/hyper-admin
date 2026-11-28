@@ -32,7 +32,7 @@ You need:
 Install the package. The distribution is `hyper-admin`; the import name is `hyperadmin`:
 
 ```bash
-pip install hyper-admin==0.5.0a1
+pip install hyper-admin==1.0.0
 ```
 
 ## The minimal wiring

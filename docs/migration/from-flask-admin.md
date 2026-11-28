@@ -173,10 +173,10 @@ The app's own `login` view is left out.
 
 ### Step 1: install
 
-HyperAdmin is in pre-release, so pin the version:
+Install HyperAdmin:
 
 ```bash
-pip install hyper-admin==0.5.0a1
+pip install hyper-admin==1.0.0
 ```
 
 The Flask app and the new FastAPI app can run side by side on the same database while you
