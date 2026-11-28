@@ -32,7 +32,6 @@ class InvoiceAdmin(ModelAdmin):
     list_display: ClassVar[list[str]] = [
         "number",
         "customer",
-        "date_issued",
         "date_due",
         "status",
         "total_amount",

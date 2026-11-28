@@ -47,7 +47,7 @@ WRITE_TASK_WEIGHTS: dict[str, int] = {
 # Sortable columns per model (valid sort_by values).
 SORT_FIELDS: dict[str, tuple[str, ...]] = {
     "contact": ("name", "email", "contact_type"),
-    "invoice": ("number", "date_issued", "date_due", "status"),
+    "invoice": ("number", "date_due", "status"),
     "journalline": ("debit", "credit"),
 }
 

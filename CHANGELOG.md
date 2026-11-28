@@ -329,6 +329,10 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
 - `get_display_name` skips attributes that can't load on a detached row (#773).
 
 ### Documentation
+- **The ERP invoice list fits next to the filter panel.** The example's Invoices list drops the
+  Date Issued column (Date Due, its filter and the detail and edit pages keep the dates), so the
+  README hero shot and the other invoice-list screenshots show Total Amount whole instead of a
+  clipped, scrolling table. The ERP load test no longer sorts invoices by issue date.
 - **Demo load-test card re-recorded after the SQLite search fix.** The demo video and the
   load-test screenshot show the current SQLite figures (1.2 million rows, 20 users, 30 s, second
   of two runs): reads 46 req/s with list and detail at a 9 ms median, search 110 ms median and
