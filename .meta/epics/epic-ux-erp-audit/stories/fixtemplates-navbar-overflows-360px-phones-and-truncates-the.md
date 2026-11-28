@@ -2,7 +2,7 @@
 type: story
 id: st-ux-erp-05
 title: "fix(templates): navbar overflows 360px phones and truncates the brand"
-status: backlog
+status: done
 priority: high
 assignee: null
 labels:

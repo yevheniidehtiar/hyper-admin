@@ -2,7 +2,7 @@
 type: epic
 id: ep-ux-erp-01
 title: "epic(ux): ERP showcase UX audit fixes"
-status: backlog
+status: done
 priority: high
 owner: null
 labels:

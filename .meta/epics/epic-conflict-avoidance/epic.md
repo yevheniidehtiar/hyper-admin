@@ -2,7 +2,7 @@
 type: epic
 id: ep-conflict-avoidance-01
 title: "epic(ci): conflict avoidance — automate the hotspots parallel PRs keep colliding on"
-status: todo
+status: cancelled
 priority: high
 owner: null
 labels:

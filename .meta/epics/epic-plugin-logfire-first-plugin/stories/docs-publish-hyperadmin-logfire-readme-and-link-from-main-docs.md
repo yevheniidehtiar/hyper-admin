@@ -2,7 +2,7 @@
 type: story
 id: mhoRScF5hYQN
 title: "docs: publish hyperadmin-logfire README and link from main docs"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

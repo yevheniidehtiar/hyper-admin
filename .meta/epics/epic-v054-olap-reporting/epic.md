@@ -2,7 +2,7 @@
 type: epic
 id: ep-v054-olap-01
 title: "epic(reports): OLAP / pivot reporting with CSV+XLSX export"
-status: in_progress
+status: done
 priority: high
 owner: null
 labels:

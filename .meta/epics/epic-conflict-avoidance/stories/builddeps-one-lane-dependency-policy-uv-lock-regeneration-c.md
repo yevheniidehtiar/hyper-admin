@@ -2,7 +2,7 @@
 type: story
 id: st-conflict-01
 title: "build(deps): one-lane dependency policy + uv.lock regeneration check in CI"
-status: todo
+status: cancelled
 priority: high
 assignee: null
 labels:

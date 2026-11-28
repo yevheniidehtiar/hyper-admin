@@ -2,7 +2,7 @@
 type: story
 id: AYSXLSFa6mYm
 title: "feat(auth): create structured auth exceptions"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

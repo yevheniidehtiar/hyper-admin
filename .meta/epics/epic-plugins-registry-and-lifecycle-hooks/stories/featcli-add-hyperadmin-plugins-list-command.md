@@ -2,7 +2,7 @@
 type: story
 id: 4ET1aIsAtQUl
 title: "feat(cli): add `hyperadmin plugins list` command"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

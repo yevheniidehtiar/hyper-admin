@@ -2,7 +2,7 @@
 type: story
 id: Z25Hv4DjTrKr
 title: "feat(auth): create OAuth2/OIDC backend"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

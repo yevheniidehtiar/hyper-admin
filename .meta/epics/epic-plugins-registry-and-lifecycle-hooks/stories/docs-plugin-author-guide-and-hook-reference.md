@@ -2,7 +2,7 @@
 type: story
 id: RxpZ4QbslvR5
 title: "docs: plugin author guide and hook reference"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

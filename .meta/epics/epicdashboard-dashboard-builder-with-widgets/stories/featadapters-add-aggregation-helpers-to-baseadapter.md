@@ -2,7 +2,7 @@
 type: story
 id: K3AnRMAHW2sv
 title: "feat(adapters): add aggregation helpers to BaseAdapter"
-status: todo
+status: cancelled
 priority: medium
 assignee: null
 labels:

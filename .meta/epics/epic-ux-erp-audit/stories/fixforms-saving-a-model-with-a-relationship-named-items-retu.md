@@ -2,7 +2,7 @@
 type: story
 id: st-ux-erp-01
 title: "fix(forms): saving a model with a relationship named `items` returns 500"
-status: backlog
+status: done
 priority: critical
 assignee: null
 labels:

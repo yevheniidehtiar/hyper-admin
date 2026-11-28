@@ -2,7 +2,7 @@
 type: epic
 id: ep-rh-01
 title: "epic(core): record history timeline with field diffs"
-status: backlog
+status: cancelled
 priority: medium
 owner: null
 labels:

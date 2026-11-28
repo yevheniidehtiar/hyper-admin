@@ -2,7 +2,7 @@
 type: story
 id: st-perf-04
 title: "feat(auth): optional short-TTL cache for the current user and permissions"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

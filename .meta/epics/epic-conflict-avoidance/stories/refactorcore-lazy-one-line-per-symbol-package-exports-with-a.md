@@ -2,7 +2,7 @@
 type: story
 id: st-conflict-06
 title: "refactor(core): lazy one-line-per-symbol package exports with a drift guard"
-status: todo
+status: cancelled
 priority: low
 assignee: null
 labels:

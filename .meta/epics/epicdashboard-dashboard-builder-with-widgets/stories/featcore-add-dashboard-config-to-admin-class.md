@@ -2,7 +2,7 @@
 type: story
 id: MiLd8X9lxIA2
 title: "feat(core): add dashboard config to Admin class"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

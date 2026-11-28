@@ -2,7 +2,7 @@
 type: story
 id: st-ux-erp-18
 title: "fix(templates): Permission matrix empty state offers to create a group"
-status: backlog
+status: done
 priority: low
 assignee: null
 labels:

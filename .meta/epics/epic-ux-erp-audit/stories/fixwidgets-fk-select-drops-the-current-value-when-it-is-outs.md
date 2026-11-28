@@ -2,7 +2,7 @@
 type: story
 id: st-ux-erp-02
 title: "fix(widgets): FK select drops the current value when it is outside the preloaded options"
-status: backlog
+status: done
 priority: critical
 assignee: null
 labels:

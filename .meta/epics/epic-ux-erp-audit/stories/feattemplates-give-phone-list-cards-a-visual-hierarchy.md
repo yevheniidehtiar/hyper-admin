@@ -2,7 +2,7 @@
 type: story
 id: st-ux-erp-14
 title: "feat(templates): give phone list cards a visual hierarchy"
-status: backlog
+status: done
 priority: medium
 assignee: null
 labels:

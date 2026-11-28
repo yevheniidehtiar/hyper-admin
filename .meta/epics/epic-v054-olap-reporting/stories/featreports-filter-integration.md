@@ -2,7 +2,7 @@
 type: story
 id: st-v054-olap-05
 title: "feat(reports): apply the report's filters before the aggregate"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

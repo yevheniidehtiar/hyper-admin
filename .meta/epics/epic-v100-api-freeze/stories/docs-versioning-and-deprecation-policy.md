@@ -2,7 +2,7 @@
 type: story
 id: st-v100-freeze-01
 title: "docs: versioning and deprecation policy"
-status: todo
+status: done
 priority: high
 assignee: null
 labels:

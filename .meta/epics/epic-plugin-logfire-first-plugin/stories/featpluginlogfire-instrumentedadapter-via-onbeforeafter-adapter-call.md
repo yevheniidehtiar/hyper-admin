@@ -2,7 +2,7 @@
 type: story
 id: UheQE0jlCmFL
 title: "feat(plugin-logfire): InstrumentedAdapter spans via on_before/after_adapter_call"
-status: todo
+status: done
 priority: high
 assignee: null
 labels:

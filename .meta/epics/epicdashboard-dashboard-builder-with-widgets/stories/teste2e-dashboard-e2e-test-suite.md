@@ -2,7 +2,7 @@
 type: story
 id: hv72do4RQve1
 title: "test(e2e): dashboard E2E test suite"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

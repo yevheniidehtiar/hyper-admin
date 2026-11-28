@@ -3,7 +3,7 @@ type: milestone
 id: y5aWINuIPslG
 title: "v0.7.0a — Scale Core"
 target_date: 2026-08-31T00:00:00Z
-status: in_progress
+status: done
 github:
   milestone_id: 8
   repo: yevheniidehtiar/hyper-admin

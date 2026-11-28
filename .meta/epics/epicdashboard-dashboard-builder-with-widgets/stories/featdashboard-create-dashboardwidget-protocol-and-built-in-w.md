@@ -2,7 +2,7 @@
 type: story
 id: Rvhb-sLANLaB
 title: "feat(dashboard): create DashboardWidget protocol and built-in widgets"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

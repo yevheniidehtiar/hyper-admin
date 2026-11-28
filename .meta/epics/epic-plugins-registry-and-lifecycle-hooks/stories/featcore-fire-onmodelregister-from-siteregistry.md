@@ -2,7 +2,7 @@
 type: story
 id: pjMf5_ic9HU3
 title: "feat(core): fire on_model_register from SiteRegistry"
-status: todo
+status: done
 priority: high
 assignee: null
 labels:

@@ -2,7 +2,7 @@
 type: story
 id: OmijXfanNGqT
 title: "feat(auth): create OAuthToken model"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

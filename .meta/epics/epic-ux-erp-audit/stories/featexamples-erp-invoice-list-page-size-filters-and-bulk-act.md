@@ -2,7 +2,7 @@
 type: story
 id: st-ux-erp-20
 title: "feat(examples): ERP invoice list page size, filters and bulk actions"
-status: backlog
+status: done
 priority: low
 assignee: null
 labels:

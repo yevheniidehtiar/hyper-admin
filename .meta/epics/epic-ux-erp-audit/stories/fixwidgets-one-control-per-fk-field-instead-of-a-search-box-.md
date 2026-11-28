@@ -2,7 +2,7 @@
 type: story
 id: st-ux-erp-12
 title: "fix(widgets): one control per FK field instead of a search box plus a select"
-status: backlog
+status: done
 priority: medium
 assignee: null
 labels:

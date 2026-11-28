@@ -2,7 +2,7 @@
 type: story
 id: N74iNzr5um1a
 title: "feat(ui): add Sortable.js drag-drop widget reordering"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

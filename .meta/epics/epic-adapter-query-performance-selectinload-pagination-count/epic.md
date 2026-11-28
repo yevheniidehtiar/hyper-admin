@@ -2,7 +2,7 @@
 type: epic
 id: fkINeqAy7AVG
 title: "epic: Adapter Query Performance (selectinload, pagination, count, search)"
-status: in_progress
+status: done
 priority: medium
 owner: null
 labels:

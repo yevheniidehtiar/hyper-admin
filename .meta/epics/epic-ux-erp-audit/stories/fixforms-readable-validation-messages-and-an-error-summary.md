@@ -2,7 +2,7 @@
 type: story
 id: st-ux-erp-06
 title: "fix(forms): readable validation messages and an error summary"
-status: backlog
+status: done
 priority: high
 assignee: null
 labels:

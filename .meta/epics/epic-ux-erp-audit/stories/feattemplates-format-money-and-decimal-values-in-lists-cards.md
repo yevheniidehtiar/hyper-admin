@@ -2,7 +2,7 @@
 type: story
 id: st-ux-erp-04
 title: "feat(templates): format money and decimal values in lists, cards and reports"
-status: backlog
+status: done
 priority: high
 assignee: null
 labels:

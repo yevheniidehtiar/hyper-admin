@@ -2,7 +2,7 @@
 type: story
 id: st-ux-erp-19
 title: "feat(examples): ERP dashboard with open, overdue and monthly figures"
-status: backlog
+status: done
 priority: low
 assignee: null
 labels:

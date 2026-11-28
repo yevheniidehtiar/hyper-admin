@@ -2,7 +2,7 @@
 type: story
 id: EUbD-9hQBaVC
 title: "feat(views): fire on_before/after_create/update/delete around CRUD views"
-status: todo
+status: done
 priority: high
 assignee: null
 labels:

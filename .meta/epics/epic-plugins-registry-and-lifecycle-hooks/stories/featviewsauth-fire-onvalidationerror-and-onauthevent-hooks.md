@@ -2,7 +2,7 @@
 type: story
 id: Vq7nTd2KxHs_
 title: "feat(views,auth): fire on_validation_error and on_auth_event hooks"
-status: todo
+status: done
 priority: high
 assignee: null
 labels:

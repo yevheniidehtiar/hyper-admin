@@ -2,7 +2,7 @@
 type: story
 id: _m2CkJKkcLig
 title: "test(e2e): OAuth login flow end-to-end"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

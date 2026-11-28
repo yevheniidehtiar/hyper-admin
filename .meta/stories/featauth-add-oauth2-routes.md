@@ -2,7 +2,7 @@
 type: story
 id: lMitnJy49VpS
 title: "feat(auth): add OAuth2 routes"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

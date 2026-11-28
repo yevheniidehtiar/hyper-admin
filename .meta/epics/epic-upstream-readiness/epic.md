@@ -2,7 +2,7 @@
 type: epic
 id: ups-readiness-01
 title: "epic(meta): Upstream Readiness — H2/H3/H4/H5/H6/H12/H13/H14/H15/H20"
-status: todo
+status: done
 priority: high
 owner: null
 labels:
