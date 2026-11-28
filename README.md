@@ -19,7 +19,7 @@
     <a href="https://github.com/astral-sh/ruff">
       <img src="https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json" alt="Ruff">
     </a>
-    <img src="https://img.shields.io/badge/status-alpha-orange.svg" alt="Status: Alpha">
+    <img src="https://img.shields.io/badge/status-stable-brightgreen.svg" alt="Status: Stable">
     <a href="https://github.com/yevheniidehtiar/hyper-admin/blob/master/LICENSE">
       <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT">
     </a>
@@ -28,7 +28,7 @@
     </a>
   </p>
 
-  <sub><strong>Alpha</strong> — under active development; APIs may change between releases.</sub>
+  <sub><strong>Stable</strong> — 1.0: the public API follows <a href="https://yevheniidehtiar.github.io/hyper-admin/versioning/">semantic versioning</a>.</sub>
 
   <p><a href="https://hyper-admin-demo.onrender.com/admin/"><strong>▶ Try the live demo</strong></a> — sign in with <code>demo</code> / <code>demo</code><br/>
   <sub>Free hosting: the first visit after a quiet spell takes about a minute to wake up. The data resets every night.</sub></p>
@@ -173,11 +173,11 @@ Supported stacks, the full results, the timings and known limitations are on
 
 ## Quickstart
 
-HyperAdmin is in pre-release, so pin the version (pip skips pre-releases otherwise).
+HyperAdmin follows semantic versioning from 1.0.0.
 The distribution is `hyper-admin`; the import name is `hyperadmin`.
 
 ```bash
-pip install hyper-admin==0.5.0a1
+pip install hyper-admin==1.0.0
 ```
 
 ```python
@@ -252,8 +252,7 @@ just docs        # serve docs locally on :8080
 
 ## Acknowledgements
 
-Standing on the shoulders of [Django](https://www.djangoproject.com/) (the original
-batteries-included admin), [FastAPI](https://fastapi.tiangolo.com/),
+Standing on the shoulders of [FastAPI](https://fastapi.tiangolo.com/),
 [Pydantic](https://docs.pydantic.dev/), [HTMX](https://htmx.org/), and
 [SQLModel](https://sqlmodel.tiangolo.com/) / [SQLAlchemy](https://www.sqlalchemy.org/) —
 and built with AI-assisted development via [Claude](https://www.anthropic.com/).

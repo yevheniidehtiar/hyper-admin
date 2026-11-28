@@ -148,10 +148,10 @@ class PostAdmin(admin.ModelAdmin):
 
 ### Step 1: install
 
-HyperAdmin is in pre-release, so pin the version:
+Install HyperAdmin:
 
 ```bash
-pip install hyper-admin==0.5.0a1
+pip install hyper-admin==1.0.0
 ```
 
 ### Step 2: rewrite the models

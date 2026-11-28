@@ -55,7 +55,7 @@ build-backend = "hatchling.build"
 name = "hyperadmin-audit"
 version = "0.1.0"
 requires-python = ">=3.11"
-dependencies = ["hyper-admin>=0.5.0a1"]
+dependencies = ["hyper-admin>=1.0.0"]
 
 [project.entry-points."hyperadmin.plugins"]
 audit = "hyperadmin_audit.plugin:AuditPlugin"   # entry-point name == plugin.name

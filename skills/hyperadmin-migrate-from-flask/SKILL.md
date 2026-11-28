@@ -21,7 +21,7 @@ this skill is the source of truth for mappings and gaps.
    `inaccessible_callback`, Flask-Login setup (user loader, login view), `db.Model` classes,
    the database URL and driver.
 2. **Map and report gaps** with the tables below. Agree with the user on each gap.
-3. **Install** in the FastAPI project: `pip install hyper-admin==0.5.0a1` plus an async driver
+3. **Install** in the FastAPI project: `pip install hyper-admin==1.0.0` plus an async driver
    (`asyncpg`, `aiomysql`; `aiosqlite` is bundled).
 4. **Move the models** to `class Base(DeclarativeBase)`; keep table and column names.
 5. **Port each `ModelView`** to `ModelAdmin` + `AdminOptions`.

@@ -28,5 +28,5 @@ yet.
 Every HyperAdmin code sample in these guides has been run end to end. The code for the other
 frameworks shows the starting point; their own documentation is the reference for it.
 
-HyperAdmin is in pre-release. Read the
+HyperAdmin follows semantic versioning from 1.0.0. Read the
 [Versioning & Deprecation Policy](../versioning.md) before you plan a production migration.

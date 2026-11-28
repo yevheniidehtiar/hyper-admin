@@ -4,22 +4,20 @@ This page says what you can rely on when you upgrade HyperAdmin: which parts of 
 are public API, what each kind of release may change, how a feature is retired, and which
 Python and dependency versions are supported.
 
-!!! note "Current status: pre-release"
-    HyperAdmin is at `0.5.0a1`, an alpha. The rules under [Before 1.0](#before-10) apply today.
-    The rules under [From 1.0](#from-10) take effect with the 1.0.0 release.
+HyperAdmin is stable: `1.0.0` is the first stable release, and the rules on this page apply
+from it on.
 
 ## Version numbers
 
-HyperAdmin follows [Semantic Versioning](https://semver.org/), written in the
+HyperAdmin follows [Semantic Versioning](https://semver.org/) from 1.0.0, written in the
 [PEP 440](https://peps.python.org/pep-0440/) form that Python packaging requires:
 `MAJOR.MINOR.PATCH`, with `aN`, `bN` and `rcN` suffixes for pre-releases (for example
-`0.5.0a1`).
+`1.1.0rc1`). Installers skip pre-releases unless you ask for one.
 
-Installers skip pre-releases unless you ask for one, so pin the exact version while you use an
-alpha, beta or release candidate:
+To take minor and patch releases but no breaking change, bound the major version:
 
 ```bash
-pip install hyper-admin==0.5.0a1
+pip install "hyper-admin>=1.0,<2"
 ```
 
 Every release is described in the [Changelog](changelog.md), which follows
@@ -27,7 +25,13 @@ Every release is described in the [Changelog](changelog.md), which follows
 
 ## What is public API
 
-The compatibility rules on this page cover the public API and nothing else.
+The compatibility rules on this page cover the public API and nothing else. The surface is
+recorded, one line per entry, in
+[`tests/unit/public_api_snapshot.txt`](https://github.com/yevheniidehtiar/hyper-admin/blob/master/tests/unit/public_api_snapshot.txt):
+the names in `hyperadmin.__all__`, every `hyperadmin` name the documentation imports or
+references, the public members of those classes, the settings fields, the plugin contract and the
+`hyperadmin` commands. A snapshot test fails on any change to it, so a change to the public API
+is always a deliberate, reviewed one.
 
 | Surface | What is public |
 |---|---|
@@ -36,7 +40,7 @@ The compatibility rules on this page cover the public API and nothing else.
 | Templates | The template names and the lookup order described in [Override templates](getting-started.md#override-templates), and the blocks of `_base.html` (`title`, `messages`, `navbar`, `sidebar`, `content`, `command_palette`, `shortcuts_overlay`), `list_layout.html` (`list_container`), `form_layout.html` (`form_title`, `form_header_actions`, `form_body`, `form_actions`) and `detail_layout.html` (`detail_title`, `detail_actions`, `detail_fields`) |
 | Test hooks | The `data-testid` values in the [`data-testid` reference](https://github.com/yevheniidehtiar/hyper-admin/blob/develop/CLAUDE.md#data-testid-reference). Use them, or accessible roles and labels, in your own browser tests |
 | Theming | The `--ha-*` CSS custom properties listed under [Design Tokens](frontend/overview.md#design-tokens) |
-| Plugins | The `hyperadmin.plugins` entry-point group; the `Plugin` protocol (`name`, `on_register(admin)`, the optional `settings_model`); the `PluginRegistry` methods a plugin calls from `on_register` (`add_page`, `add_nav_entry`, `add_template_dir`, `set_static_dir`, `add_permission`, `set_home_page`); and the lifecycle hook names in `hyperadmin.core.plugins.LIFECYCLE_HOOKS`. Hooks are called with keyword arguments only |
+| Plugins | The `hyperadmin.plugins` entry-point group; the `Plugin` protocol (`name`, `on_register(admin)`, the optional `settings_model`); the `PluginRegistry` methods a plugin calls from `on_register` (`add_page`, `add_nav_entry`, `add_template_dir`, `set_static_dir`, `add_permission`, `set_home_page`); and the lifecycle hook names in `hyperadmin.core.plugins.LIFECYCLE_HOOKS` (`on_model_register`, `on_before_create`, `on_after_create`, `on_before_update`, `on_after_update`, `on_before_delete`, `on_after_delete`, `on_before_adapter_call`, `on_after_adapter_call`, `on_validation_error`, `on_auth_event`). Hooks are called with keyword arguments only |
 | Command line | The `hyperadmin` commands `createsuperuser` and `init-db`, their option names, and an exit status of `0` for success and non-zero for failure |
 | Permissions | The codename format `<action>_<model>` (`view_`, `add_`, `change_`, `delete_` and `action_<name>_<model>`), the detail-panel codename `view_<model>_panel_<slug>`, and the `ModelAdmin.permissions` list of extra codenames described in [Bring Your Own Auth](guides/external-auth.md#permissions) |
 | Database tables | The names of the built-in `hyperadmin_*` tables. A release that adds a column or a table lists it under [Upgrading the built-in auth tables](guides/existing-app.md#upgrading-the-built-in-auth-tables) |
@@ -68,20 +72,6 @@ for the public API.
 
 ## What a release may change
 
-### Before 1.0
-
-While the major version is `0`:
-
-- A **minor** release (`0.5` to `0.6`) may contain breaking changes. Each one is listed in the
-  changelog under `Changed`, `Removed` or an `Upgrade note`.
-- A **patch** release (`0.5.0` to `0.5.1`) contains no intended breaking changes to the public
-  API.
-- **Pre-releases** of the same version (`0.5.0a1` to `0.5.0a2`) may break each other.
-
-Pin an exact version, and read the changelog before you upgrade.
-
-### From 1.0
-
 | Release | May contain |
 |---|---|
 | **Major** (`1.x` to `2.0`) | Breaking changes to the public API, and the removal of deprecated features |
@@ -102,6 +92,8 @@ These are **not** breaking changes, and can ship in a minor release:
 - Adding a column or a table to the built-in `hyperadmin_*` tables, with the migration step
   documented.
 
+**Pre-releases** of the same version (`1.1.0a1` to `1.1.0a2`) may break each other.
+
 **Security fixes** are the one exception to the table. When closing a vulnerability requires a
 breaking change, it can ship in a minor or patch release. The changelog lists it under
 `Security` with an upgrade note.
@@ -112,17 +104,14 @@ A public feature is deprecated before it is removed:
 
 1. **Warning.** Using the deprecated feature emits a `DeprecationWarning` through Python's
    `warnings` module. The message names the replacement and the release that removes the
-   feature, for example: `HyperAdmin mount_mode='router' is deprecated and will be removed in
-   0.6.`
+   feature, in the form `<feature> is deprecated and will be removed in 2.0; use
+   <replacement>`.
 2. **Changelog.** The release that introduces the deprecation lists it under a `### Deprecated`
    heading, with the replacement. The release that removes the feature lists it under
    `### Removed`.
 3. **Documentation.** The feature is marked as deprecated where it is documented.
-4. **Removal**, no earlier than:
-    - before 1.0: the next minor release (deprecated during `0.5`, removed in `0.6` at the
-      earliest);
-    - from 1.0: the next major release, and only after at least one minor release has shipped
-      with the warning.
+4. **Removal**, no earlier than the next major release, and only after at least one minor
+   release has shipped with the warning.
 
 A surface that cannot emit a Python warning (a template block, a `data-testid`, a design token)
 is deprecated through the changelog and the documentation only, with the same removal timing.
@@ -168,3 +157,10 @@ supports may work but are not covered until they are listed on the compatibility
 
 Security fixes are released for the latest version only; see the
 [security policy](https://github.com/yevheniidehtiar/hyper-admin/blob/master/SECURITY.md).
+
+## Before 1.0
+
+Releases before 1.0.0 (the `0.x` series) did not follow these rules: a minor release could
+break the public API, and each break was listed in the changelog. Features deprecated during
+`0.x` whose warning names a `0.6` removal stay until the next major release, as the
+deprecation rules above require.

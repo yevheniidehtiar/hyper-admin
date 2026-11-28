@@ -4,7 +4,7 @@ Run it with the interpreter of a clean virtualenv that holds only the built
 wheel (plus ``httpx`` for ``TestClient``), from a directory outside the source
 tree so ``import hyperadmin`` resolves to the installed wheel::
 
-    python scripts/smoke_test_wheel.py --expect-version 0.5.0a1
+    python scripts/smoke_test_wheel.py --expect-version 1.0.0
 
 A bare ``import hyperadmin`` is not enough: zero-config demo mode creates its
 ``sqlite+aiosqlite`` engine lazily, so a wheel missing a runtime dependency only

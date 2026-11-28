@@ -4,11 +4,11 @@ This tutorial will guide you through the process of setting up HyperAdmin and cu
 
 ## 1. Installation
 
-First, install HyperAdmin. It is in pre-release, so pin the version. The distribution is
+First, install HyperAdmin. The distribution is
 `hyper-admin`; the import name is `hyperadmin`:
 
 ```bash
-pip install hyper-admin==0.5.0a1
+pip install hyper-admin==1.0.0
 ```
 
 ## 2. Basic Setup

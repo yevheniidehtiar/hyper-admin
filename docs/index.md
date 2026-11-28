@@ -9,11 +9,11 @@
 ---
 
 ```bash
-pip install hyper-admin==0.5.0a1
+pip install hyper-admin==1.0.0
 ```
 
-HyperAdmin is in pre-release, so pin the version. The distribution is `hyper-admin`; the import
-name is `hyperadmin`.
+HyperAdmin is stable and follows [semantic versioning](versioning.md) from 1.0.0. The
+distribution is `hyper-admin`; the import name is `hyperadmin`.
 
 **HyperAdmin** adds a full admin to the FastAPI app you already have. It reads your models,
 generates list, detail, create and edit pages with search, filters and auth, and mounts them

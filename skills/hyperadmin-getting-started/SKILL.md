@@ -19,8 +19,8 @@ Reference pages on the docs site: Getting Started, Tutorial, Add HyperAdmin to a
    (`create_engine`, `psycopg2`, `pymysql`) needs an async counterpart for the admin
    (`sqlite+aiosqlite://`, `postgresql+asyncpg://`, `mysql+aiomysql://`). Both can point at the
    same database.
-2. **Install.** HyperAdmin is in pre-release, so pin the version:
-   `pip install hyper-admin==0.5.0a1` or `uv add hyper-admin==0.5.0a1`. Add the async driver
+2. **Install** (HyperAdmin follows semantic versioning from 1.0.0):
+   `pip install hyper-admin==1.0.0` or `uv add hyper-admin==1.0.0`. Add the async driver
    (`aiosqlite` ships with HyperAdmin; add `asyncpg` for PostgreSQL).
 3. **Mount the admin** (snippet below). Register models before `admin.mount()`.
 4. **Pick auth** (section below). Without one, the admin has no login.

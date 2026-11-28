@@ -66,26 +66,30 @@ def test_version_exposed() -> None:
     assert "__version__" in hyperadmin.__all__
 
 
-def test_first_release_is_the_pep440_prerelease_0_5_0a1() -> None:
+def test_release_is_the_stable_1_0_0() -> None:
     """
-    Scenario: the first PyPI release is an honest pre-release
+    Scenario: the release is the first stable version
       Given the pyproject metadata
-      When  the version is read
-      Then  it is the PEP 440 pre-release 0.5.0a1
+      When  the version and the classifiers are read
+      Then  the version is 1.0.0
+      And   the development status is Production/Stable
     """
-    assert _pyproject_version() == "0.5.0a1"
+    assert _pyproject_version() == "1.0.0"
+    assert '"Development Status :: 5 - Production/Stable"' in _PYPROJECT
+    assert "Development Status :: 3 - Alpha" not in _PYPROJECT
 
 
-def test_commitizen_uses_pep440_and_major_version_zero() -> None:
+def test_commitizen_uses_pep440_and_bumps_the_major_on_breaking_changes() -> None:
     """
-    Scenario: commitizen bumps stay pre-1.0 and PEP 440
+    Scenario: commitizen bumps follow semver from 1.0
       Given the commitizen configuration
       When  it is read
-      Then  version_scheme is pep440 and major_version_zero is true
+      Then  version_scheme is pep440
+      And   major_version_zero is not set, so a breaking change bumps the major version
     """
     section = _commitizen_section()
     assert 'version_scheme = "pep440"' in section
-    assert "major_version_zero = true" in section
+    assert "major_version_zero" not in section
 
 
 def test_install_docs_pin_the_released_distribution() -> None:
