@@ -2,7 +2,7 @@
 type: story
 id: 3mu2iRMIs2uh
 title: "feat(auth): create OAuth provider configuration"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

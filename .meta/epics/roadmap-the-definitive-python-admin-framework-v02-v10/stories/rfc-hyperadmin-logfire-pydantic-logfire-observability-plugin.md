@@ -2,7 +2,7 @@
 type: story
 id: PTGq0rtiWQH1
 title: "RFC: hyperadmin-logfire — Pydantic Logfire observability plugin (first official plugin)"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

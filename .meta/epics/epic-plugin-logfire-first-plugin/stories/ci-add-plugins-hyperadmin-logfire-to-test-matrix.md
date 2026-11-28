@@ -2,7 +2,7 @@
 type: story
 id: 7fh6lg_zbkke
 title: "ci: add plugins/hyperadmin-logfire to test matrix"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

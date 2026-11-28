@@ -2,7 +2,7 @@
 type: story
 id: ShBNm5KqpaWP
 title: "test(e2e): scalability smoke tests with large dataset"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

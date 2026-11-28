@@ -2,7 +2,7 @@
 type: story
 id: st-conflict-05
 title: "refactor(core): discover component stylesheets instead of a hand-maintained @import list"
-status: todo
+status: cancelled
 priority: medium
 assignee: null
 labels:

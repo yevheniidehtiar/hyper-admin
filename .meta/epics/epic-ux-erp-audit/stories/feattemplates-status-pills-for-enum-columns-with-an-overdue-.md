@@ -2,7 +2,7 @@
 type: story
 id: st-ux-erp-13
 title: "feat(templates): status pills for enum columns, with an overdue variant"
-status: backlog
+status: done
 priority: medium
 assignee: null
 labels:

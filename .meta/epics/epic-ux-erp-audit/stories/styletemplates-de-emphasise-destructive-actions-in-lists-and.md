@@ -2,7 +2,7 @@
 type: story
 id: st-ux-erp-15
 title: "style(templates): de-emphasise destructive actions in lists and inline rows"
-status: backlog
+status: done
 priority: medium
 assignee: null
 labels:

@@ -2,7 +2,7 @@
 type: epic
 id: _MkBhj2OoiGp
 title: "epic(dashboard): Dashboard Builder with Widgets"
-status: todo
+status: done
 priority: medium
 owner: null
 labels:

@@ -2,7 +2,7 @@
 type: epic
 id: hHg_npkJyrk7
 title: "epic(auth): OAuth SSO — Google & GitHub"
-status: in_progress
+status: done
 priority: medium
 owner: null
 labels:

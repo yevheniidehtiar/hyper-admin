@@ -2,7 +2,7 @@
 type: story
 id: st-v100-freeze-03
 title: "test(core): public API audit — every export documented, typed and covered"
-status: todo
+status: done
 priority: high
 assignee: null
 labels:

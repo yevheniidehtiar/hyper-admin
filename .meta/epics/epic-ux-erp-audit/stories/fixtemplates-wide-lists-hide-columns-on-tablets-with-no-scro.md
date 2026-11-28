@@ -2,7 +2,7 @@
 type: story
 id: st-ux-erp-08
 title: "fix(templates): wide lists hide columns on tablets with no scroll hint"
-status: backlog
+status: done
 priority: high
 assignee: null
 labels:

@@ -2,7 +2,7 @@
 type: story
 id: Md4cN4uup9FF
 title: "feat(dashboard): create DashboardService"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

@@ -2,7 +2,7 @@
 type: story
 id: st-conflict-07
 title: "refactor(core): route providers instead of hand-wired routes in core/app.py"
-status: todo
+status: cancelled
 priority: low
 assignee: null
 labels:

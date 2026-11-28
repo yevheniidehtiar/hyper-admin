@@ -2,7 +2,7 @@
 type: story
 id: kq5T3v-StZC6
 title: "test(unit): adapter spans, validation/auth events, no-config no-op"
-status: todo
+status: done
 priority: high
 assignee: null
 labels:

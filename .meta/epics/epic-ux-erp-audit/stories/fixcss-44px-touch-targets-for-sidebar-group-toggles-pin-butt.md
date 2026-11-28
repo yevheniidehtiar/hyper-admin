@@ -2,7 +2,7 @@
 type: story
 id: st-ux-erp-09
 title: "fix(css): 44px touch targets for sidebar group toggles, pin buttons and sort links"
-status: backlog
+status: done
 priority: high
 assignee: null
 labels:

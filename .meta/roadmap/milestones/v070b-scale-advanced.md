@@ -2,7 +2,7 @@
 type: milestone
 id: v070b-scale-02
 title: "v0.7.0b — Scale Advanced"
-status: todo
+status: done
 created_at: 2026-09-28T00:00:00Z
 updated_at: 2026-09-28T00:00:00Z
 ---

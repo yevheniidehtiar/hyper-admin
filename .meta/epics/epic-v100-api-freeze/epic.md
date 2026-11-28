@@ -2,7 +2,7 @@
 type: epic
 id: ep-v100-freeze-01
 title: "epic(release): v1.0 API freeze — public API audit, versioning policy, migration guides, docs"
-status: todo
+status: in_progress
 priority: high
 owner: null
 labels:

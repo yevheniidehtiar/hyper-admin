@@ -2,7 +2,7 @@
 type: story
 id: st-perf-03
 title: "refactor(core): convert the BaseHTTPMiddleware classes to plain ASGI"
-status: todo
+status: done
 priority: high
 assignee: null
 labels:

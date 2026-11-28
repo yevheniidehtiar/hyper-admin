@@ -2,7 +2,7 @@
 type: story
 id: u9gCkotlXdMy
 title: "docs: scalability configuration guide"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

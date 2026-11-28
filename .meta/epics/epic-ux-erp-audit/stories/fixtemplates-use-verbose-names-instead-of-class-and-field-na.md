@@ -2,7 +2,7 @@
 type: story
 id: st-ux-erp-11
 title: "fix(templates): use verbose names instead of class and field names in titles, buttons and FK labels"
-status: backlog
+status: done
 priority: medium
 assignee: null
 labels:

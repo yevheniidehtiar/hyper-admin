@@ -2,7 +2,7 @@
 type: story
 id: st-conflict-02
 title: "build(release): derive version from git tags"
-status: todo
+status: cancelled
 priority: medium
 assignee: null
 labels:

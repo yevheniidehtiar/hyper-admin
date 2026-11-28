@@ -2,7 +2,7 @@
 type: story
 id: st-ux-erp-16
 title: "style(templates): hide sidebar pin buttons until hover or focus"
-status: backlog
+status: done
 priority: low
 assignee: null
 labels:

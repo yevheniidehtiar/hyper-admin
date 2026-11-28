@@ -2,7 +2,7 @@
 type: story
 id: st-ux-erp-03
 title: "fix(templates): show an error when a form submit fails with a server error"
-status: backlog
+status: done
 priority: high
 assignee: null
 labels:

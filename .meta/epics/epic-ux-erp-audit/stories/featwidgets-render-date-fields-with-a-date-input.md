@@ -2,7 +2,7 @@
 type: story
 id: st-ux-erp-07
 title: "feat(widgets): render `date` fields with a date input"
-status: backlog
+status: done
 priority: high
 assignee: null
 labels:

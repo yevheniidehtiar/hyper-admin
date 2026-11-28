@@ -2,7 +2,7 @@
 type: story
 id: ZmEtqRqTuUZE
 title: "review(spec): approve SDD for hyperadmin-logfire"
-status: todo
+status: done
 priority: high
 assignee: null
 labels:

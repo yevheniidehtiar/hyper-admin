@@ -3,7 +3,7 @@ type: milestone
 id: 99CTiIt2Wnd1
 title: v0.5.2 — OAuth SSO
 target_date: 2026-07-30T00:00:00Z
-status: in_progress
+status: done
 created_at: 2026-03-29T09:35:05Z
 updated_at: 2026-09-28T00:00:00Z
 ---

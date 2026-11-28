@@ -2,7 +2,7 @@
 type: story
 id: nZS3hHHHPs5t
 title: "feat(views): create dashboard view handler"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

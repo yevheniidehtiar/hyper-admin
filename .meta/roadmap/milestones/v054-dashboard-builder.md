@@ -2,7 +2,7 @@
 type: milestone
 id: 8DidH5NiN6cP
 title: v0.5.4 — Reporting & Charts
-status: in_progress
+status: done
 created_at: 2026-04-02T13:44:25Z
 updated_at: 2026-10-18T00:00:00Z
 ---

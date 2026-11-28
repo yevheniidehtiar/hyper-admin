@@ -2,7 +2,7 @@
 type: story
 id: hmV2TrqHAkF1
 title: "RFC: Migration guides & examples (from Django Admin, SQLAdmin, Flask-Admin)"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

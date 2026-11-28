@@ -2,7 +2,7 @@
 type: story
 id: eCZImSMiZaIq
 title: "feat(ui): add OAuth login buttons to login page"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

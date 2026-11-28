@@ -2,7 +2,7 @@
 type: story
 id: cGk6vHhW7bZC
 title: "test(e2e): plugin hook firing and failure isolation through full request flow"
-status: todo
+status: done
 priority: high
 assignee: null
 labels:

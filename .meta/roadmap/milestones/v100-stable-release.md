@@ -2,7 +2,7 @@
 type: milestone
 id: v100-release-01
 title: "v1.0 — Stable Release"
-status: todo
+status: in_progress
 created_at: 2026-09-28T00:00:00Z
 updated_at: 2026-09-28T00:00:00Z
 ---

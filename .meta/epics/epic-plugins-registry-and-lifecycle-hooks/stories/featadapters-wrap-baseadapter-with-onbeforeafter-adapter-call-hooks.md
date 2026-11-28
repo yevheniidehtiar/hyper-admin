@@ -2,7 +2,7 @@
 type: story
 id: mzMHxg0eqXhQ
 title: "feat(adapters): wrap BaseAdapter with on_before/after_adapter_call hooks"
-status: todo
+status: done
 priority: high
 assignee: null
 labels:

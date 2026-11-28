@@ -2,7 +2,7 @@
 type: story
 id: st-perf-05
 title: "feat(auth): resolve a user's permissions once per request"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

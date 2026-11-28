@@ -2,7 +2,7 @@
 type: story
 id: st-rh-00
 title: "docs(spec): write and approve the record history SDD"
-status: backlog
+status: cancelled
 priority: medium
 assignee: null
 labels:

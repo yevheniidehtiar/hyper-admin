@@ -2,7 +2,7 @@
 type: story
 id: st-ux-erp-17
 title: "fix(examples): one name for the P&L report and a readable phone layout"
-status: backlog
+status: done
 priority: low
 assignee: null
 labels:

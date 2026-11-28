@@ -2,7 +2,7 @@
 type: story
 id: KolTP1g27vm9
 title: "feat(dashboard): create dashboard data models"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

@@ -2,7 +2,7 @@
 type: story
 id: XL2rTBZVsXbR
 title: "feat(ui): create dashboard template with widget cards"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:

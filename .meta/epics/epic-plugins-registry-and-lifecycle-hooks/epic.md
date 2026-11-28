@@ -2,7 +2,7 @@
 type: epic
 id: um1zqB0-b2AZ
 title: "epic(plugins): Plugin Registry & Lifecycle Hooks"
-status: in_progress
+status: done
 locked_by: autopilot
 branch: epic/epic-plugins-registry-and-lifecycle-hooks
 priority: high

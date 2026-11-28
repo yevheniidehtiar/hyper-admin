@@ -2,7 +2,7 @@
 type: story
 id: st-v100-freeze-02
 title: "docs: migration guides from Django admin, SQLAdmin and Flask-Admin"
-status: todo
+status: done
 priority: medium
 assignee: null
 labels:
