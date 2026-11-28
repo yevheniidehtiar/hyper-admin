@@ -335,6 +335,15 @@ Version numbers follow [PEP 440](https://peps.python.org/pep-0440/) (for example
 - `get_display_name` skips attributes that can't load on a detached row (#773).
 
 ### Documentation
+- **Roadmap rewritten for 1.0.** The Roadmap page now lists what 1.0 includes, what it leaves
+  out (the dropped JSON REST API and multi-tenancy, and unscheduled work such as record
+  history) and the known gaps it ships with (per-field form options, extra stylesheets, host
+  translation catalogs, fuzzy locale drafts, MySQL, an MFA guide). `ROADMAP.md` points to it.
+  Compatibility & Performance says which real-app runs and the MySQL check were not done,
+  Examples lists the background tasks app, the migration guides mention plugin lifecycle
+  hooks next to the missing per-admin save hooks, the existing-app guide no longer points at
+  internal design documents, the design system notes that it describes the `classic` preset,
+  and `CONTRIBUTING.md` gains the public API snapshot section from the docs site.
 - **The ERP invoice list fits next to the filter panel.** The example's Invoices list drops the
   Date Issued column (Date Due, its filter and the detail and edit pages keep the dates), so the
   README hero shot and the other invoice-list screenshots show Total Amount whole instead of a

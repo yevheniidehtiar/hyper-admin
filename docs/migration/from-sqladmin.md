@@ -392,7 +392,7 @@ before you plan around one.
 | `column_details_list`, `column_details_exclude_list` | No per-model field list for the detail page. `AdminOptions(sensitive_fields=...)` hides a field everywhere |
 | `column_default_sort` | No option |
 | `page_size`, `page_size_options` | No per-model option; the global `items_per_page` setting sets the default page size, and the 10 / 25 / 50 / 100 choices are fixed |
-| `on_model_change`, `after_model_change`, `on_model_delete`, `after_model_delete` | No per-admin save or delete hook. Rules that must always run belong in the model layer or the database |
+| `on_model_change`, `after_model_change`, `on_model_delete`, `after_model_delete` | No per-admin save or delete hook. Plugin [lifecycle hooks](../plugins/hooks.md) observe the create, edit and delete views (not bulk actions or inline edits) but cannot change or veto a save. Rules that must always run belong in the model layer or the database |
 | `list_query`, `count_query`, `search_query` returning statements | `get_queryset(request)` returns equality filters on the model's own columns only |
 | `form_overrides`, `form_args`, `form_widget_args`, a custom `form` | Forms are generated from the model |
 | A custom action that returns its own response | A bulk action returns nothing; the admin renders the per-row results |

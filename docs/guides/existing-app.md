@@ -363,8 +363,7 @@ logs one warning and renders the sidebar without pins. `HyperAdminSettings.nav_p
 every grid an operator loads carries the group's current value, and a save is
 only committed (and the stamp bumped, atomically with the permission rows) when
 that value is still current. A stale grid therefore cannot overwrite a newer
-save; it gets a 409 and reloads. Existing groups start at `0`. See
-`docs/specs/permission-matrix-ui.md`.
+save; it gets a 409 and reloads. Existing groups start at `0`.
 
 ## 6. Datetimes and timezones
 
@@ -445,9 +444,7 @@ Your existing tests keep working:
 | 422 on every admin page | `get_user` needs a query or path parameter. It must resolve from headers and cookies alone. |
 | A list page shows a "table does not exist" banner | Run your migrations (or `hyperadmin init-db` for built-in auth tables). |
 
-!!! note "Where the code differs from the design document"
-    This guide follows the code as released. Two details differ from
-    `docs/specs/bring-your-own-app.md`:
+!!! note "Two defaults to know"
 
     - `admin.create_tables()` defaults to `scope="all"` (every table on
       `SQLModel.metadata`), not `"hyperadmin"`. Pass the scope explicitly.

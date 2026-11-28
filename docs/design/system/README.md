@@ -1,3 +1,5 @@
+> **Preset note:** this system documents the `classic` theme preset (teal and violet, rounded corners). The default preset is now `terminal` (near-black ground, acid-green accent, square corners, JetBrains Mono for structure), set with `HyperAdminSettings(theme_preset=...)`. Token names, rules, voice, spacing and components below apply to both presets; the colour values, radii and type choices described here are the classic ones. See [Theme presets](../../frontend/overview.md#theme-presets) and `static/css/_theme-terminal.css`.
+
 HyperAdmin is the open-source admin you add to an existing FastAPI app in ten minutes without it taking over. This system is its look: calm, precise, fast. A back office that people trust with money and customer data for eight hours a day. Data gets the space and the contrast; chrome stays quiet; one bright violet accent appears rarely.
 
 Everything here ships as **CSS custom properties (`--ha-*`) plus Jinja2 markup**. No build step, no npm, no client framework. The component previews are the HTML the templates should emit; `components/bundle.css` is the stylesheet those templates use.
