@@ -24,8 +24,7 @@ Column types that work without configuration include enums (`SAEnum` and enums w
 `TypeDecorator`), JSON and JSONB, `server_default` timestamps, timezone-aware datetimes,
 deferred columns (left out of lists and forms), and single-table-inheritance subclasses.
 
-MySQL has not been verified yet. The run that covers it, on fastapi_best_architecture
-([#712](https://github.com/yevheniidehtiar/hyper-admin/issues/712)), is still to come.
+MySQL is not verified: neither CI nor a real-app run covers it.
 
 ## Tested on real open-source apps
 
@@ -48,9 +47,8 @@ Each run follows the same rules:
 Create counts leave out tables with a composite primary key (11 in Polar, 3 in Langflow, 7 in
 Mealie, 1 in Open WebUI). Those register as list-only by design.
 
-Polar is also the head-to-head benchmark: it has a hand-built FastAPI + HTMX back office, and
-the comparison write-up is tracked in
-[#703](https://github.com/yevheniidehtiar/hyper-admin/issues/703).
+Polar also has a hand-built FastAPI + HTMX back office of its own. No written comparison with it
+is published.
 
 ### What the runs fixed
 
@@ -68,11 +66,11 @@ and made the other targets work:
 | Columns annotated with a SQLAlchemy `TypeDecorator` (`Mapped[GUID]`) broke detail and edit | Mealie | [#772](https://github.com/yevheniidehtiar/hyper-admin/issues/772) |
 | A lazy relationship named `label` or `name` broke the row title | Mealie | [#773](https://github.com/yevheniidehtiar/hyper-admin/issues/773) |
 
-### Still to run
+### Not run
 
-Prefect, Arize Phoenix, Apache Airflow 3, freqtrade, fastapi_best_architecture (MySQL), Agenta,
-SkyPilot and the full-stack-fastapi-template. Progress is tracked in epic
-[#701](https://github.com/yevheniidehtiar/hyper-admin/issues/701).
+The real-app runs stopped at the four apps above. Prefect, Arize Phoenix, Apache Airflow 3,
+freqtrade, fastapi_best_architecture (the MySQL target), Agenta, SkyPilot and the
+full-stack-fastapi-template were shortlisted but not run, so nothing on this page covers them.
 
 ## Performance
 

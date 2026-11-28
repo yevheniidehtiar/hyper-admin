@@ -1,6 +1,6 @@
 # Examples
 
-Five runnable example apps ship with HyperAdmin.
+Six runnable example apps ship with HyperAdmin.
 
 ## simple — Basic CRUD
 
@@ -137,6 +137,25 @@ uv run examples/full-demo/main.py
 
 Open [http://localhost:8000/admin/](http://localhost:8000/admin/) and sign in as `alice` /
 `secret123` (superuser), or as `viewer` / `secret123` (limited permissions).
+
+---
+
+## tasks — Background tasks
+
+HyperAdmin with the [`hyperadmin-tasks`](plugins/tasks.md) plugin on pgtask and Postgres 16.
+One FastAPI process serves the admin and runs a pgtask worker; admin actions enqueue tasks in
+the same transaction as the row they change, and the Tasks dashboard shows each run. The
+plugin is experimental.
+
+**Run with Docker:**
+
+```bash
+docker compose -f examples/tasks/docker-compose.yml up --build
+```
+
+Open [http://127.0.0.1:8000/admin/report](http://127.0.0.1:8000/admin/report). The
+[example README](https://github.com/yevheniidehtiar/hyper-admin/tree/develop/examples/tasks)
+shows how to run it without Docker.
 
 ---
 

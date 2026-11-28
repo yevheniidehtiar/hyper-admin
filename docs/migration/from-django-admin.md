@@ -429,7 +429,7 @@ HyperAdmin does not have these Django admin features today. Check the
 | Django admin feature | Status in HyperAdmin |
 |---|---|
 | `readonly_fields` | No option. Leaving a field out of `form_fields` removes it from the forms, and the detail page still shows it |
-| `save_model`, `delete_model`, `save_formset`, `response_add` and the other per-admin hooks | No per-admin save or delete hook. Rules that must always run belong in the model layer or the database |
+| `save_model`, `delete_model`, `save_formset`, `response_add` and the other per-admin hooks | No per-admin save or delete hook. Plugin [lifecycle hooks](../plugins/hooks.md) observe the create, edit and delete views (not bulk actions or inline edits) but cannot change or veto a save. Rules that must always run belong in the model layer or the database |
 | A queryset in `get_queryset` (joins, `Q` objects, annotations) | Equality filters on the model's own columns only |
 | Computed columns: a `ModelAdmin` method or a callable in `list_display` | `list_display` reads attributes of the model only. A property on the model can be listed; it cannot be sorted on |
 | `ordering`, `list_max_show_all` | No option |

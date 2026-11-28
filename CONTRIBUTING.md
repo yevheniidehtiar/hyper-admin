@@ -57,11 +57,30 @@ activated virtual environment.
 - **Docstrings**: required on all public modules, classes, and functions
 - **Tests**: required for all new functionality
 
+## Public API snapshot
+
+`tests/unit/test_public_api.py` records the public API (as defined in
+[Versioning & Deprecation](docs/versioning.md#what-is-public-api)) in
+`tests/unit/public_api_snapshot.txt`: the names in `hyperadmin.__all__` and its lazy exports,
+every `hyperadmin` name the docs import or reference, their signatures and public members, the
+`HyperAdminSettings` fields, the plugin contract and the `hyperadmin` CLI options. It also checks
+that each of these names has a docstring, full type annotations, an entry under `docs/api/` and
+at least one test.
+
+When you change the public API on purpose, regenerate the snapshot and commit it with the change:
+
+```bash
+HYPERADMIN_UPDATE_API_SNAPSHOT=1 uv run pytest tests/unit/test_public_api.py
+```
+
+The regeneration run writes the file and then fails, so read the diff before you rerun the test.
+
 ## Pull request checklist
 
 - [ ] `poe lint` passes
 - [ ] `poe test:unit` passes
-- [ ] New public API has docstrings
+- [ ] New public API has docstrings, a `docs/api/` entry and an updated API snapshot
+- [ ] `poe docs:build` reports no issues (if docs changed)
 - [ ] Tests cover the new/changed behavior
 - [ ] CHANGELOG.md updated (if user-facing change)
 

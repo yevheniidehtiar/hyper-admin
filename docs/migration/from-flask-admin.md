@@ -474,7 +474,7 @@ before you plan around one.
 | `column_labels`, `column_descriptions` | No per-column label or description. Labels are derived from the field name |
 | `column_default_sort` | No option |
 | `page_size`, `can_set_page_size` | No per-model option; the global `items_per_page` setting sets the default page size and users can always pick 10, 25, 50 or 100 rows |
-| `on_model_change`, `after_model_change`, `on_model_delete`, `after_model_delete` | No per-admin save or delete hook. Rules that must always run belong in the model layer or the database |
+| `on_model_change`, `after_model_change`, `on_model_delete`, `after_model_delete` | No per-admin save or delete hook. Plugin [lifecycle hooks](../plugins/hooks.md) observe the create, edit and delete views (not bulk actions or inline edits) but cannot change or veto a save. Rules that must always run belong in the model layer or the database |
 | `get_query()` returning a query (joins, arbitrary conditions) | `get_queryset(request)` returns equality filters on the model's own columns only |
 | WTForms customisation: `form_args`, `form_widget_args`, `form_overrides`, `form_extra_fields`, a custom `form` | Forms are generated from the model. Widgets are chosen from the field type; see [Widgets](../frontend/widgets.md) |
 | Modal create and edit (`create_modal`, `edit_modal`) | Create and edit are pages |

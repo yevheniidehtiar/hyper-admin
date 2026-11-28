@@ -80,6 +80,7 @@ The regeneration run writes the file and then fails, so read the diff before you
 - [ ] `poe lint` passes
 - [ ] `poe test:unit` passes
 - [ ] New public API has docstrings, a `docs/api/` entry and an updated API snapshot
+- [ ] `poe docs:build` reports no issues (if docs changed)
 - [ ] Tests cover the new/changed behavior
 - [ ] CHANGELOG.md updated (if user-facing change)
 
